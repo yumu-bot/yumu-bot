@@ -30,7 +30,7 @@ public class OsuGetService {
     private String redirectUrl;
     @Value("${ppy.token}")
     private String oauthToken;
-    @Value("${ppy.path}")
+    @Value("${ppy.callbackpath}")
     private String url;
     @Value("${ppy.v1token:null}")
     private String tokenv1;
