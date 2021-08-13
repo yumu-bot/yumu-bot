@@ -6,7 +6,6 @@ import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.utils.BotConfiguration;
-import net.mamoe.mirai.utils.DeviceInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -48,10 +47,7 @@ class miraiBotConfig extends BotConfiguration {
             super();
             setHeartbeatStrategy(HeartbeatStrategy.STAT_HB);
             setProtocol(MiraiProtocol.ANDROID_PAD);
-            setDeviceInfo((bot) -> {
-                var dvi = DeviceInfo.from(new File(dir+"device.json"));
-                return dvi;
-            });
+            setWorkingDir(new File(dir));
             setCacheDir(new File(dir));
 //        setLoginSolver(new YourLoginSolver());
 //        noNetworkLog()

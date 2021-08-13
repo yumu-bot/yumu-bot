@@ -1,6 +1,9 @@
 package com.now.nowbot.service.msgServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.service.StarSetvice;
+import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -30,6 +33,10 @@ public class setuServiceImpl extends MessageService{
     CopyOnWriteArraySet<Long> openGreat;
     @Autowired
     RestTemplate template;
+
+    @Autowired
+    StarSetvice starSetvice;
+
     public setuServiceImpl() {
         super("涩图");
         time = 0L;
@@ -45,33 +52,34 @@ public class setuServiceImpl extends MessageService{
             from = event.getSender();
         }
         long qq = event.getSender().getId();
-        if(NowbotConfig.SUPER_USER.contains(event.getSender().getId()) && page.length>=2){
+        boolean issuper = NowbotConfig.SUPER_USER.contains(event.getSender().getId());
+        if(issuper && page.length>=2){
             switch (page[1]){
-                case "on": {
-                    if(page.length>=3) {
-                        openGreat.add(Long.parseLong(page[2]));
-                        from.sendMessage("已开启"+page[2]);
-                    }
-                    else {
-                        openGreat.add(from.getId());
-                        from.sendMessage("已开启本群");
-                    }
-                    return;
-                }
                 case "off": {
                     if(page.length>=3) {
-                        openGreat.remove(Long.parseLong(page[2]));
+                        openGreat.add(Long.parseLong(page[2]));
                         from.sendMessage("已禁用"+page[2]);
                     }
                     else {
-                        openGreat.remove(from.getId());
+                        openGreat.add(from.getId());
                         from.sendMessage("已禁用本群");
+                    }
+                    return;
+                }
+                case "on": {
+                    if(page.length>=3) {
+                        openGreat.remove(Long.parseLong(page[2]));
+                        from.sendMessage("已开启"+page[2]);
+                    }
+                    else {
+                        openGreat.remove(from.getId());
+                        from.sendMessage("已开启本群");
                     }
                     return;
                 }
                 case "list":{
                     StringBuffer s = new StringBuffer();
-                    s.append("开启群组有：\n");
+                    s.append("群组黑名单有：\n");
                     openGreat.forEach(e->{
                         s.append(e).append('\n');
                     });
@@ -79,7 +87,7 @@ public class setuServiceImpl extends MessageService{
                 } return;
             }
         }
-        if (!openGreat.contains(from.getId())){
+        if (openGreat.contains(from.getId())){
             try {
                 var img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH+"xxoo.jpg"));
                 from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(img),from));
@@ -101,6 +109,21 @@ public class setuServiceImpl extends MessageService{
             }else
                 time = System.currentTimeMillis();
         }
+        BinUser binUser = BindingUtil.readUser(qq);
+        if(binUser == null){
+            from.sendMessage("您未绑定，禁止使用！！！");
+            return;
+        }
+
+        StarSetvice.score score = starSetvice.getScore(binUser);
+        if(starSetvice.delStart(score,5)||issuper){
+            from.sendMessage("稍等片刻");
+        }else {
+            from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");
+            return;
+        }
+
+
 
         MessageChain chain = null;
         try {
@@ -115,7 +138,8 @@ public class setuServiceImpl extends MessageService{
             cin.close();
         } catch (IOException e) {
             e.printStackTrace();
-            from.sendMessage("api异常，请稍后再试");
+            from.sendMessage("api异常，请稍后再试，积分已退回");
+            starSetvice.addStart(score,5);
         }
         if (chain != null) {
             var msg = from.sendMessage(chain);
