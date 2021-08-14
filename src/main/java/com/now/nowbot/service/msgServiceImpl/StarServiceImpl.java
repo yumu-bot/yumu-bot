@@ -3,7 +3,7 @@ package com.now.nowbot.service.msgServiceImpl;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.StarSetvice;
+import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class StarServiceImpl extends MessageService{
     @Autowired
-    StarSetvice starSetvice;
+    StarService starService;
     @Autowired
     OsuGetService osuGetService;
     StarServiceImpl(){
@@ -37,11 +37,11 @@ public class StarServiceImpl extends MessageService{
             return;
         }
         StringBuffer sb = new StringBuffer();
-        StarSetvice.score sc = starSetvice.getScore(user);
-        if (starSetvice.isRefouse(sc)){
+        StarService.score sc = starService.getScore(user);
+        if (starService.isRefouse(sc)){
             JSONObject date = osuGetService.getPlayerInfo(user);
             float adsstar = date.getJSONObject("statistics").getFloatValue("pp")/100;
-            starSetvice.refouseStar(sc,adsstar);
+            starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点积分\n").append("24小时后再次刷新\n");
         }
 
@@ -63,7 +63,7 @@ public class StarServiceImpl extends MessageService{
                     sb.append("您获得了").append(pp).append("积分").append('\n');
                 }
 
-                starSetvice.addStart(sc, pp);
+                starService.addStart(sc, pp);
             }
         }
         sb.append("您有积分").append(sc.getStar()).append("点");

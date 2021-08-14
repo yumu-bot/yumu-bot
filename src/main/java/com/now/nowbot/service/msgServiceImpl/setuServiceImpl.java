@@ -2,7 +2,7 @@ package com.now.nowbot.service.msgServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
-import com.now.nowbot.service.StarSetvice;
+import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -10,7 +10,6 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
-import net.mamoe.mirai.message.data.MessageSource;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +34,7 @@ public class setuServiceImpl extends MessageService{
     RestTemplate template;
 
     @Autowired
-    StarSetvice starSetvice;
+    StarService starService;
 
     public setuServiceImpl() {
         super("涩图");
@@ -115,8 +114,8 @@ public class setuServiceImpl extends MessageService{
             return;
         }
 
-        StarSetvice.score score = starSetvice.getScore(binUser);
-        if(starSetvice.delStart(score,5)||issuper){
+        StarService.score score = starService.getScore(binUser);
+        if(starService.delStart(score,5)||issuper){
             from.sendMessage("稍等片刻");
         }else {
             from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");
@@ -139,17 +138,10 @@ public class setuServiceImpl extends MessageService{
         } catch (IOException e) {
             e.printStackTrace();
             from.sendMessage("api异常，请稍后再试，积分已退回");
-            starSetvice.addStart(score,5);
+            starService.addStart(score,5);
         }
         if (chain != null) {
-            var msg = from.sendMessage(chain);
-
-            try {
-                Thread.sleep(110 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            MessageSource.recall(msg.getSource());
+            from.sendMessage(chain).recallIn(110*1000);
         }
     }
 }

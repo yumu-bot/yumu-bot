@@ -311,7 +311,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONObject getFirsts(int bid, int id, String[] mods){
+    public JSONObject getScore(int bid, int id, String[] mods){
         var uribulid = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid+"/scores/users/"+id)
                 .queryParam("mode","osu");
         if(mods != null)
@@ -337,7 +337,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONObject getFirsts(int bid, int id){
+    public JSONObject getScore(int bid, int id){
         URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid+"/scores/users/"+id)
                 .queryParam("mode","osu")
                 .build().encode().toUri();
@@ -358,7 +358,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONObject getFirsts(int bid, BinUser user){
+    public JSONObject getScore(int bid, BinUser user){
         URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid+"/scores/users/"+user.getOsuID())
                 .queryParam("mode","osu")
                 .build().encode().toUri();
@@ -390,6 +390,68 @@ public class OsuGetService {
         InputStream cin = httpConn.getInputStream();
         byte[] datebyte = cin.readAllBytes();
         return new String(datebyte);
+    }
+
+    public JSONObject getMapInfo(int bid){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONObject> c = null;
+        try {
+            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
+        } catch (RestClientException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return c.getBody();
+    }
+
+    public JSONObject getMapInfo(int bid, BinUser uset){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + uset.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONObject> c = null;
+        try {
+            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
+        } catch (RestClientException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return c.getBody();
+    }
+
+    public Object getReplay(){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"scores/osu/82445750/download")
+//                .queryParam("mode","osu")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity c = null;
+        try {
+            System.out.println(uri);
+            c = template.exchange(uri, HttpMethod.GET, httpEntity, byte[].class);
+        } catch (RestClientException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return c.getBody();
     }
 
     public JSONObject ppPlus(String name){
