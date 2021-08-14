@@ -1,25 +1,16 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.msgServiceImpl.MessageService;
-import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.event.events.*;
 import net.mamoe.mirai.message.data.MessageChain;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 
 @Configuration
 public class MessageListener {
-    @Autowired
-    Bot bot;
-    @Autowired
-    OsuGetService osuGetService;
-
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
     @Async
