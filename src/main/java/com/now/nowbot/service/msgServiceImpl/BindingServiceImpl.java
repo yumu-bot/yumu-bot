@@ -34,6 +34,7 @@ public class BindingServiceImpl extends MessageService{
         try{
             while(true) {
                 wait(60 * 1000);
+
                 msgs.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
             }
         }catch (Exception e){

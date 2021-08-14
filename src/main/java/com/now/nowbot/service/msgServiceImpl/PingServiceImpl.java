@@ -1,11 +1,8 @@
 package com.now.nowbot.service.msgServiceImpl;
 
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.FriendMessageEvent;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.event.events.StrangerMessageEvent;
-import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.stereotype.Service;
@@ -37,6 +34,6 @@ public class PingServiceImpl extends MessageService{
 
             data = surface.makeImageSnapshot().encodeToData().getBytes();
         }catch (Exception e){}
-        if (data != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data), from));
+        if (data != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data), from)).recallIn(2000);
     }
 }
