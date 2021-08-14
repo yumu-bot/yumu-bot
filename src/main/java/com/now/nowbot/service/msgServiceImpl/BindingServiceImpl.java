@@ -51,13 +51,15 @@ public class BindingServiceImpl extends MessageService{
     @Override
     public void handleMsg(StrangerMessageEvent event) {
         String state = String.valueOf(event.getSender().getId());
-        event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        var e = event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        msgs.put(System.currentTimeMillis() ,e);
     }
 
     @Override
     public void handleMsg(GroupTempMessageEvent event) {
         String state = String.valueOf(event.getSender().getId());
-        event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        var e = event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        msgs.put(System.currentTimeMillis() ,e);
     }
 
     @Override
@@ -66,7 +68,8 @@ public class BindingServiceImpl extends MessageService{
         BinUser user = BindingUtil.readUser(event.getSender().getId());
         if(user == null){
             String state = event.getSender().getId() + "+" + event.getGroup().getId();
-            event.getGroup().sendMessage(osuGetService.getOauthUrl(state));
+            var e = event.getGroup().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
+            msgs.put(System.currentTimeMillis() ,e);
         }else {
             event.getGroup().sendMessage(MessageUtils.newChain(new At(event.getSender().getId()),new PlainText("您已经绑定，若要修改请私聊bot bind")));
         }
