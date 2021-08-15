@@ -30,7 +30,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -50,7 +49,6 @@ public class FriendServiceImpl extends MessageService{
     static Typeface face;
     static Font naf;
     static Font bigf;
-    private static HashMap<String, SVGDOM> flags = new HashMap<>();
     public FriendServiceImpl(){
         super("friend");
     }
