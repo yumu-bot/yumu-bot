@@ -164,7 +164,7 @@ public class FriendServiceImpl extends MessageService{
     }
 
     @Async
-    Future<Image> getImage(String name, String headUrl, String bgUrl, String ct, String pp){
+    Future<Image> getImage(String name, String headUrl, String bgUrl, String ct, String pp) {
         Image image = null;
         try(Surface pa = Surface.makeRasterN32Premul(290,120)) {
             var canvas = pa.getCanvas();
@@ -184,25 +184,27 @@ public class FriendServiceImpl extends MessageService{
             canvas.drawRRect(RRect.makeXYWH(0,0,290,120,10),new Paint().setARGB(80,0,0,0));
             head = SkiaUtil.getScaleImage(head, 100, 100);
             SkiaUtil.drowRRectImage(canvas, head, 10, 10, 10);
+            Path flagFile = Path.of(NowbotConfig.RUN_PATH+"flag/"+ct+".svg");
+            byte[] svgbytes;
             try {
-                SVGDOM flag;
-                Path flagFile = Path.of(NowbotConfig.RUN_PATH+"flag/"+ct+".svg");
                 if(Files.isRegularFile(flagFile)){
-                    flag = new SVGDOM(Data.makeFromBytes(Files.readAllBytes(flagFile)));
+                    svgbytes = Files.readAllBytes(flagFile);
                 }else {
                     URL url = new URL(getFlagUrl(ct));
                     HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
                     httpConn.connect();
                     InputStream cin = httpConn.getInputStream();
-                    byte[] svgbytes = cin.readAllBytes();
+                    svgbytes = cin.readAllBytes();
                     cin.close();
-                    flag = new SVGDOM(Data.makeFromBytes(svgbytes));
                     Files.createFile(flagFile);
                     Files.write(flagFile,svgbytes);
                 }
-                SkiaUtil.drowSvg(canvas, flag, 120, 2, 60, 60);
             } catch (IOException e) {
                 e.printStackTrace();
+                return null;
+            }
+            try (SVGDOM flag = new SVGDOM(Data.makeFromBytes(svgbytes))){
+                SkiaUtil.drowSvg(canvas, flag, 120, 2, 60, 60);
             }
             canvas.drawString("PP:"+pp.split("\\.")[0], 185, 40,naf, new Paint().setARGB(255,255,255,255));
             var ts = new TextStyle().setTypeface(face).setFontStyle(FontStyle.NORMAL).setLetterSpacing(-2f).setColor(0xffffffff).setFontSize(25);
