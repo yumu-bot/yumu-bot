@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -43,8 +42,6 @@ public class FriendServiceImpl extends MessageService{
     private final static Logger log = LoggerFactory.getLogger(FriendServiceImpl.class);
     @Autowired
     OsuGetService osuGetService;
-    @Autowired
-    ThreadPoolTaskExecutor threadPool;
 
     static Typeface face;
     static Font naf;
@@ -152,6 +149,9 @@ public class FriendServiceImpl extends MessageService{
                             ExternalResource.create(pngBytes), from
                     ));
         }
+
+        futureList.removeIf(f -> f.cancel(true) | true);
+        return;
     }
 
     public static String getFlagUrl(String ct){
