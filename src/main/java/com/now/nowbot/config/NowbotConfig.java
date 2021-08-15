@@ -19,6 +19,20 @@ import java.util.List;
 public class NowbotConfig {
     public static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
 
+    public static String RUN_PATH;
+    @Value("${dir.rundir}")
+    public void setRunPath(String RUN_PATH){
+        Path pt = Path.of(RUN_PATH);
+        if(!Files.isDirectory(pt)) {
+            try {
+                Files.createDirectories(pt);
+            } catch (IOException e) {
+                log.error(RUN_PATH+"创建失败",e);
+            }
+        }
+        NowbotConfig.RUN_PATH = RUN_PATH;
+    }
+
     public static String BOT_PATH;
     @Value("${dir.mirai}")
     public void setBotPath(String BOT_PATH){

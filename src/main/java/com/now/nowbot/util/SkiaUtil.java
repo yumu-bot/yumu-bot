@@ -168,13 +168,8 @@ public class SkiaUtil {
         httpConn.connect();
         InputStream cin = httpConn.getInputStream();
         byte[] svgbytes = cin.readAllBytes();
-        SVGDOM svg = new SVGDOM(Data.makeFromBytes(svgbytes));
-        return svg;
-    }
-    public static SVGDOM getSVGDOM(File svgFile) throws IOException {
-        byte[] svgbytes = java.nio.file.Files.readAllBytes(svgFile.toPath());
-        SVGDOM svg = new SVGDOM(Data.makeFromBytes(svgbytes));
-        return svg;
+        cin.close();
+        return new SVGDOM(Data.makeFromBytes(svgbytes));
     }
     public static void drawBlur(Canvas canvas, int x, int y, int w, int h,  int radius) {
         try (Bitmap bitmap = new Bitmap()) {

@@ -25,10 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -113,7 +117,6 @@ public class FriendServiceImpl extends MessageService{
         CopyOnWriteArrayList<Image> set = new CopyOnWriteArrayList<>();
         List<Future<Image>> futureList = new LinkedList<>();
         for(int i = start; i < end && i < jsons.size(); i++){
-//                    Future<Image> result = threadPool.submit(new getFriend(jsons.get(i).getString("username"),
                     Future<Image> result = getImage(jsons.get(i).getString("username"),
                     jsons.get(i).getString("avatar_url"),
                     jsons.get(i).getJSONObject("cover").getString("url"),
@@ -185,11 +188,19 @@ public class FriendServiceImpl extends MessageService{
             SkiaUtil.drowRRectImage(canvas, head, 10, 10, 10);
             try {
                 SVGDOM flag;
-                if (flags.containsKey(ct)) {
-                    flag = flags.get(ct);
-                } else {
-                    flag = SkiaUtil.lodeNetWorkSVGDOM(getFlagUrl(ct));
-                    flags.put(ct, flag);
+                Path flagFile = Path.of(NowbotConfig.RUN_PATH+"flag/"+ct+".svg");
+                if(Files.isRegularFile(flagFile)){
+                    flag = new SVGDOM(Data.makeFromBytes(Files.readAllBytes(flagFile)));
+                }else {
+                    URL url = new URL(getFlagUrl(ct));
+                    HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+                    httpConn.connect();
+                    InputStream cin = httpConn.getInputStream();
+                    byte[] svgbytes = cin.readAllBytes();
+                    cin.close();
+                    flag = new SVGDOM(Data.makeFromBytes(svgbytes));
+                    Files.createFile(flagFile);
+                    Files.write(flagFile,svgbytes);
                 }
                 SkiaUtil.drowSvg(canvas, flag, 120, 2, 60, 60);
             } catch (IOException e) {
@@ -211,70 +222,5 @@ public class FriendServiceImpl extends MessageService{
             image = pa.makeImageSnapshot();
         }
         return new AsyncResult<Image>(image);
-    }
-    class getFriend implements Callable<Image>{
-        String name;
-        String headUrl;
-        String bgUrl;
-        String ct;
-        String pp;
-        public getFriend(String name, String headUrl, String bgUrl, String ct, String pp) {
-            this.name = name;
-            this.headUrl = headUrl;
-            this.bgUrl = bgUrl;
-            this.ct = ct;
-            this.pp = pp;
-        }
-
-        @Override
-        public Image call() {
-            Image image = null;
-            try(Surface pa = Surface.makeRasterN32Premul(290,120)) {
-                var canvas = pa.getCanvas();
-                Image head = SkiaUtil.lodeNetWorkImage(headUrl);
-                Image bg = SkiaUtil.lodeNetWorkImage(bgUrl);
-
-                int imgWidth = bg.getWidth();
-                int imgHeight = bg.getHeight();
-
-
-                if (1f * imgWidth / imgHeight < 290f / 210) {
-                    bg = SkiaUtil.getScaleImage(bg, 290, 290 * imgHeight / imgWidth);
-                } else {
-                    bg = SkiaUtil.getScaleImage(bg, 210 * imgWidth / imgHeight, 210);
-                }
-                SkiaUtil.drowCutRRectImage(canvas, bg, 0, 0, (bg.getWidth() - 290) / 2, 0, 290, 120, 10,new Paint().setImageFilter(ImageFilter.makeBlur(10,10,FilterTileMode.REPEAT)));
-                canvas.drawRRect(RRect.makeXYWH(0,0,290,120,10),new Paint().setARGB(80,0,0,0));
-                head = SkiaUtil.getScaleImage(head, 100, 100);
-                SkiaUtil.drowRRectImage(canvas, head, 10, 10, 10);
-                try {
-                    SVGDOM flag;
-                    if (flags.containsKey(ct)) {
-                        flag = flags.get(ct);
-                    } else {
-                        flag = SkiaUtil.lodeNetWorkSVGDOM(getFlagUrl(ct));
-                        flags.put(ct, flag);
-                    }
-                    SkiaUtil.drowSvg(canvas, flag, 120, 2, 60, 60);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                canvas.drawString("PP:"+pp.split("\\.")[0], 185, 40,naf, new Paint().setARGB(255,255,255,255));
-                var ts = new TextStyle().setTypeface(face).setFontStyle(FontStyle.NORMAL).setLetterSpacing(-2f).setColor(0xffffffff).setFontSize(25);
-                try (ParagraphStyle ps   = new ParagraphStyle();
-                     ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));)
-                {
-                    pb.pushStyle(ts);
-                    pb.addText(name);
-                    try (Paragraph p = pb.build();) {
-                        p.layout(Float.POSITIVE_INFINITY);
-                        p.paint(canvas, 120, 60);
-                    }
-                }
-
-                image = pa.makeImageSnapshot();
-            }
-            return image;
-        }
     }
 }
