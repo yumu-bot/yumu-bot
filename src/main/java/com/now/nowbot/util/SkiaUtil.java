@@ -9,7 +9,9 @@ import java.io.*;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class SkiaUtil {
     /***
@@ -18,39 +20,34 @@ public class SkiaUtil {
      * @return
      */
     public static Image lodeNetWorkImage(String path){
-        Image img = null;
-        File nm = null;
-        if(NowbotConfig.IMGBUFFER_PATH != null){
-            try {
-                MessageDigest md = MessageDigest.getInstance("MD5");
-                md.update(path.getBytes());
-                md.getAlgorithm();
-                nm = new File(NowbotConfig.IMGBUFFER_PATH+new BigInteger(1, md.digest()).toString(16));
-                if (nm.isFile()){
-                    return fileToImage(nm);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        MessageDigest md = null;
         try {
-            URL url = new URL(path);
-            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.connect();
-            InputStream cin = httpConn.getInputStream();
-            byte[] data = cin.readAllBytes();
-            img = Image.makeFromEncoded(data);
-            cin.close();
-            if (nm != null){
-                OutputStream out = new FileOutputStream(nm);
-                out.write(data);
-                out.flush();
-                out.close();
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        md.update(path.getBytes());
+        md.getAlgorithm();
+        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH+new BigInteger(1, md.digest()).toString(16));
+        try {
+            if (Files.isRegularFile(pt)){
+                md.reset();
+                return Image.makeFromEncoded(Files.readAllBytes(pt));
+            }else {
+                URL url = new URL(path);
+                HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+                httpConn.connect();
+                InputStream cin = httpConn.getInputStream();
+                byte[] data = cin.readAllBytes();
+                cin.close();
+                Files.createFile(pt);
+                Files.write(pt,data);
+                return Image.makeFromEncoded(data);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return img;
+        return null;
     }
 
     public static Image getScaleImage(Image image, int width, int height){
@@ -83,13 +80,6 @@ public class SkiaUtil {
         canvas.drawImage(image, -1 * l, -1 * t);
         canvas.restore();
         return canvas;
-    }
-    public static Image fileToImage(File f) throws IOException {
-        long ln = f.length();
-        byte[] data = new byte[Math.toIntExact(ln)];
-        FileInputStream in = new FileInputStream(f);
-        in.read(data);
-        return Image.makeFromEncoded(data);
     }
     public static Image fileToImage(String path) throws IOException {
         File f = new File(path);
