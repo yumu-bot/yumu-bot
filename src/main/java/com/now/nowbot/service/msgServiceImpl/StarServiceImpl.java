@@ -39,13 +39,13 @@ public class StarServiceImpl extends MessageService{
         StringBuffer sb = new StringBuffer();
         StarService.score sc = starService.getScore(user);
         if (starService.isRefouse(sc)){
-            JSONObject date = osuGetService.getPlayerInfo(user);
+            JSONObject date = osuGetService.getPlayerOsuInfo(user);
             float adsstar = date.getJSONObject("statistics").getFloatValue("pp")/100;
             starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点积分\n").append("24小时后再次刷新\n");
         }
 
-        var date = osuGetService.getRecent(user,0,1);
+        var date = osuGetService.getOsuRecent(user,0,1);
         if (date.size()>0) {
             var re = date.getJSONObject(0);
             long bid = re.getLongValue("best_id");

@@ -138,7 +138,7 @@ public class OsuGetService {
     public int getOsuId(String name){
         int id = BindingUtil.readOsuID(name);
         if(id == 0){
-            var date = getPlayerInfo(name);
+            var date = getPlayerOsuInfo(name);
             id = date.getIntValue("id");
             BindingUtil.writeOsuID(date.getString("username"),id);
         }
@@ -160,8 +160,11 @@ public class OsuGetService {
      * @param user
      * @return
      */
-    public JSONObject getPlayerInfo(BinUser user){
-        String url = this.url+"me";
+    public JSONObject getPlayerOsuInfo(BinUser user){
+        return getPlayerInfo(user, "osu");
+    }
+    public JSONObject getPlayerInfo(BinUser user, String mode){
+        String url = this.url+"me"+'/'+mode;
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -179,9 +182,13 @@ public class OsuGetService {
      * @param id
      * @return
      */
-    public JSONObject getPlayerInfo(int id){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+id)
-                .queryParam("key","id").build().encode().toUri();
+    public JSONObject getPlayerOsuInfo(int id){
+        return getPlayerInfo(id, "osu");
+    }
+    public JSONObject getPlayerInfo(int id, String mode){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+id+'/'+mode)
+                .queryParam("key","id")
+                .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -198,9 +205,13 @@ public class OsuGetService {
      * @param name
      * @return
      */
-    public JSONObject getPlayerInfo(String name){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+name.trim()+"/osu")
-                .queryParam("key","name").build().encode().toUri();
+    public JSONObject getPlayerOsuInfo(String name){
+        return getPlayerInfo(name, "osu");
+    }
+    public JSONObject getPlayerInfo(String name, String mode){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+name+'/'+mode)
+                .queryParam("key","name")
+                .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -208,12 +219,9 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-
+        ResponseEntity<JSONObject> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
         return c.getBody();
     }
-
     /***
      * 获得个人bp
      * @param user
@@ -271,9 +279,13 @@ public class OsuGetService {
         ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
-    public JSONArray getRecent(BinUser user, int s, int e){
+    public JSONArray getOsuRecent(BinUser user, int s, int e){
+        return getRecent(user,"osu", s, e);
+    }
+
+    public JSONArray getRecent(BinUser user, String mode, int s, int e){
         URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+user.getOsuID()+"/scores/recent")
-                .queryParam("mode","osu")
+                .queryParam("mode",mode)
                 .queryParam("limit",e)
                 .queryParam("offset",s)
                 .build().encode().toUri();
@@ -288,9 +300,13 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONArray getRecent(int id, int s, int e){
+    public JSONArray getOsuRecent(int id, int s, int e){
+        return getRecent(id, "osu", s, e);
+    }
+
+    public JSONArray getRecent(int id, String mode, int s, int e){
         URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+id+"/scores/recent")
-                .queryParam("mode","osu")
+                .queryParam("mode",mode)
                 .queryParam("limit",e)
                 .queryParam("offset",s)
                 .build().encode().toUri();
@@ -311,9 +327,9 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONObject getScore(int bid, int id, String[] mods){
+    public JSONObject getScore(int bid, int id, String mode, String[] mods){
         var uribulid = UriComponentsBuilder.fromHttpUrl(this.url+"beatmaps/"+bid+"/scores/users/"+id)
-                .queryParam("mode","osu");
+                .queryParam("mode",mode);
         if(mods != null)
         for (int i = 0; i < mods.length; i++) {
             uribulid.queryParam("mods[]",mods[i]);

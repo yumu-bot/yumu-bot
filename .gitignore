@@ -2,3 +2,4 @@ src/test
 target
 data
 src/main/resources/application.yaml
+.gitignore

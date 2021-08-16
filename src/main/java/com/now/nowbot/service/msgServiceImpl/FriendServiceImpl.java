@@ -68,9 +68,9 @@ public class FriendServiceImpl extends MessageService{
             from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请发送bind绑定"));
             return;
         }
-        JSONArray jsonObject = null;
+        JSONArray friendList = null;
         try {
-            jsonObject = osuGetService.getFrendList(user);
+            friendList = osuGetService.getFrendList(user);
         } catch (HttpClientErrorException e) {
             from.sendMessage("您的令牌已过期,请私聊bot bind重新绑定！");
         }
@@ -82,34 +82,34 @@ public class FriendServiceImpl extends MessageService{
         if (m.find()) {
             if (m.group("sc") == null) {
                 end = Integer.parseInt(m.group("fr"));
-                if (end >= jsonObject.size()) {
-                    end = jsonObject.size();
+                if (end >= friendList.size()) {
+                    end = friendList.size();
                 }
                 if(end>100) end = 100;
-                from.sendMessage("正在处理好友:1-" + end+"\n您全部好友有"+jsonObject.size()+"个");
+                from.sendMessage("正在处理好友:1-" + end+"\n您全部好友有"+friendList.size()+"个");
             } else {
                 start = Integer.parseInt(m.group("fr"))-1;
                 end = Integer.parseInt(m.group("sc"));
                 if ((start < 0)) {
                     start = 0;
                 }
-                if (end >= jsonObject.size()) {
-                    end = jsonObject.size();
+                if (end >= friendList.size()) {
+                    end = friendList.size();
                 }
                 if((end - start) > 100){
                     end = start+100;
                 }
-                from.sendMessage("正在处理好友:" + (start+1) + "-" + (end)+"\n您全部好友有"+jsonObject.size()+"个");
+                from.sendMessage("正在处理好友:" + (start+1) + "-" + (end)+"\n您全部好友有"+friendList.size()+"个");
             }
 
         }
 
-        else from.sendMessage("正在处理，因为加载慢，所以默认加载前1-24个，可以使用[x-y]或[n]指定长度,最大处理100个\n您全部好友有"+jsonObject.size()+"个");
+        else from.sendMessage("正在处理，因为加载慢，所以默认加载前1-24个，可以使用[x-y]或[n]指定长度,最大处理100个\n您全部好友有"+friendList.size()+"个");
 
 
-        List<JSONObject> jsons = jsonObject.toJavaList(JSONObject.class);
+        List<JSONObject> jsons = friendList.toJavaList(JSONObject.class);
         byte[] pngBytes = null;
-        CopyOnWriteArrayList<Image> set = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<Image> images = new CopyOnWriteArrayList<>();
         List<Future<Image>> futureList = new LinkedList<>();
         for(int i = start; i < end && i < jsons.size(); i++){
                     Future<Image> result = getImage(jsons.get(i).getString("username"),
@@ -122,22 +122,22 @@ public class FriendServiceImpl extends MessageService{
         }
         futureList.forEach(future -> {
             try {
-                set.add(future.get());
+                images.add(future.get());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
         });
-        try(Surface surface = Surface.makeRasterN32Premul(1000,100 + (set.size()/3+1)*130)){
+        try(Surface surface = Surface.makeRasterN32Premul(1000,100 + (images.size()/3+1)*130)){
             var canvas = surface.getCanvas();
             canvas.clear(Color.makeRGB(62,57,70));
             TextLine text = TextLine.make(user.getOsuName(),bigf);
             canvas.drawTextLine(text,(1000-text.getWidth())/2, text.getHeight(),new Paint().setARGB(255,255,255,255));
 
 
-            for (int i = 0; i < set.size(); i++) {
-                canvas.drawImage(set.get(i),55+(i%3)*300,100+(i/3)*130);
+            for (int i = 0; i < images.size(); i++) {
+                canvas.drawImage(images.get(i),55+(i%3)*300,100+(i/3)*130);
             }
             pngBytes = surface.makeImageSnapshot().encodeToData().getBytes();
         }
@@ -221,6 +221,6 @@ public class FriendServiceImpl extends MessageService{
 
             image = pa.makeImageSnapshot();
         }
-        return new AsyncResult<Image>(image);
+        return new AsyncResult<>(image);
     }
 }

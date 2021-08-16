@@ -1,5 +1,9 @@
 package com.now.nowbot.config;
 
+import com.now.nowbot.listener.MessageListener;
+import net.mamoe.mirai.Bot;
+import net.mamoe.mirai.BotFactory;
+import net.mamoe.mirai.utils.BotConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -141,5 +146,27 @@ public class NowbotConfig {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+    @Value("${mirai.start}")
+    boolean isStart;
+    @Bean
+    public Bot bot(){
+        BotConfiguration botConfiguration = new BotConfiguration();
+        botConfiguration.setCacheDir(new File(BOT_PATH));
+        botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
+        botConfiguration.setWorkingDir(new File(BOT_PATH));
+        File logdir = new File(BOT_PATH+"log");
+        if (!logdir.isDirectory()) logdir.mkdirs();
+        botConfiguration.redirectBotLogToDirectory(logdir);
+        botConfiguration.redirectNetworkLogToDirectory(logdir);
+        botConfiguration.fileBasedDeviceInfo();
+        botConfiguration.enableContactCache();
+        botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
+        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
+        if (isStart) bot.login();
+        bot.getEventChannel().registerListenerHost(new MessageListener());
+
+        return bot;
     }
 }

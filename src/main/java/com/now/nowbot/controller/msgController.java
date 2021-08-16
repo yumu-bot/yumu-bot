@@ -36,7 +36,7 @@ public class msgController {
         if(data.length == 2) {
             BinUser bd = new BinUser(Long.valueOf(data[0]), code);
             osuGetService.getToken(bd);
-            osuGetService.getPlayerInfo(bd);
+            osuGetService.getPlayerOsuInfo(bd);
             BindingUtil.writeUser(bd);
             BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
             var msg = bin.msgs.get(Long.valueOf(data[1]));

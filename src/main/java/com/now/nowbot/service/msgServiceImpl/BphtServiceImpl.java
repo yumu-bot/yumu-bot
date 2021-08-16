@@ -55,7 +55,7 @@ public class BphtServiceImpl extends MessageService{
                 return;
             }
             if(nu.getOsuID() == 0){
-                osuGetService.getPlayerInfo(nu);
+                osuGetService.getPlayerOsuInfo(nu);
             }
         }
         JSONArray Bps;
