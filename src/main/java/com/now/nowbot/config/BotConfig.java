@@ -1,9 +1,9 @@
 package com.now.nowbot.config;
 
 
+import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
-import net.mamoe.mirai.event.Event;
 import net.mamoe.mirai.event.GlobalEventChannel;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +34,11 @@ public class BotConfig {
         if(isStart)
             bot.login();
         //事件监听
-        GlobalEventChannel.INSTANCE.subscribeAlways(Event.class, event -> {
-            applicationEventPublisher.publishEvent(event);
-        });
+//        GlobalEventChannel.INSTANCE.subscribeAlways(Event.class, event -> {
+//            applicationEventPublisher.publishEvent(event);
+//
+//        });
+        GlobalEventChannel.INSTANCE.registerListenerHost(new MessageListener());
         return bot;
     }
 

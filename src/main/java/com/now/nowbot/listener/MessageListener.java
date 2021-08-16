@@ -1,20 +1,26 @@
 package com.now.nowbot.listener;
 
 import com.now.nowbot.service.msgServiceImpl.MessageService;
+import kotlin.coroutines.CoroutineContext;
+import net.mamoe.mirai.event.EventHandler;
+import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
 import net.mamoe.mirai.message.data.MessageChain;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 
-@Configuration
-public class MessageListener {
+public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
+    @Override
+    public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
+        log.error(context.toString(),exception);
+    }
     @Async
-    @EventListener(GroupMessageEvent.class)
+    @EventHandler
     public void msg(GroupMessageEvent event){
         MessageChain data = event.getMessage();
         if ( data.size() >= 2 ){
@@ -26,7 +32,7 @@ public class MessageListener {
         }
     }
     @Async
-    @EventListener(FriendMessageEvent.class)
+    @EventHandler
     public void msg(FriendMessageEvent event){
         MessageChain data = event.getMessage();
         if ( data.size() >= 2 ){
@@ -38,7 +44,7 @@ public class MessageListener {
         }
     }
     @Async
-    @EventListener(StrangerMessageEvent.class)
+    @EventHandler
     public void msg(StrangerMessageEvent event){
         MessageChain data = event.getMessage();
         if ( data.size() >= 2 ){
@@ -50,7 +56,7 @@ public class MessageListener {
         }
     }
     @Async
-    @EventListener(GroupTempMessageEvent.class)
+    @EventHandler
     public void msg(GroupTempMessageEvent event){
         MessageChain data = event.getMessage();
         if ( data.size() >= 2 ){
@@ -65,7 +71,7 @@ public class MessageListener {
      * ImageUploadEvent 图片上传事件
      */
     @Async
-    @EventListener(ImageUploadEvent.class)
+    @EventHandler
     public void msg(ImageUploadEvent event){
         if(event instanceof ImageUploadEvent.Failed){
             log.info("图片上传失败");
