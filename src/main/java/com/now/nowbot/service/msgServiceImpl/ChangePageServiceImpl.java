@@ -36,9 +36,10 @@ public class ChangePageServiceImpl extends MessageService{
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        return;
+                        break;
                     }
                 }
+                return;
             }
             oldName = page[1];
             newName = page[2];
