@@ -50,7 +50,11 @@
             <artifactId>skija-linux</artifactId>
             <version>0.92.20</version>
         </dependency>
-
+<!--        <dependency>-->
+<!--            <groupId>org.jsoup</groupId>-->
+<!--            <artifactId>jsoup</artifactId>-->
+<!--            <version>1.11.2</version>-->
+<!--        </dependency>-->
     </dependencies>
     <build>
         <plugins>

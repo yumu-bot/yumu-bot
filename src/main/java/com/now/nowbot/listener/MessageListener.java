@@ -74,4 +74,10 @@ public class MessageListener {
             log.info("图片上传成功");
         }
     }
+    @Async
+    @EventListener(BotInvitedJoinGroupRequestEvent.class)
+    public void joinGroup(BotInvitedJoinGroupRequestEvent e){
+        e.getBot().getFriend(365246692L).sendMessage("被邀请了").recallIn(100*1000);
+        e.isIntercepted();
+    }
 }

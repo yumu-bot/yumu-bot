@@ -47,6 +47,7 @@ public class BindingServiceImpl extends MessageService{
         long d = System.currentTimeMillis();
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        e.recallIn(120*1000);
         msgs.put(d ,e);
     }
 
@@ -55,6 +56,7 @@ public class BindingServiceImpl extends MessageService{
         long d = System.currentTimeMillis();
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        e.recallIn(120*1000);
         msgs.put(d ,e);
     }
 
@@ -63,6 +65,7 @@ public class BindingServiceImpl extends MessageService{
         long d = System.currentTimeMillis();
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSender().sendMessage(osuGetService.getOauthUrl(state));
+        e.recallIn(120*1000);
         msgs.put(d ,e);
     }
 
@@ -74,6 +77,7 @@ public class BindingServiceImpl extends MessageService{
             long d = System.currentTimeMillis();
             String state = event.getSender().getId() + "+" + d;
             var e = event.getGroup().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
+            e.recallIn(120*1000);
             msgs.put(d ,e);
         }else {
             event.getGroup().sendMessage(MessageUtils.newChain(new At(event.getSender().getId()),new PlainText("您已经绑定，若要修改请私聊bot bind")));
