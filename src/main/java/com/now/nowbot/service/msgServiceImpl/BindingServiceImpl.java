@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service("bindservice")
+@Service("bin")
 public class BindingServiceImpl extends MessageService{
     public final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
     @Autowired

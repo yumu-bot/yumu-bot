@@ -61,13 +61,13 @@ public class BphtServiceImpl extends MessageService{
         JSONArray Bps;
         if(nu != null && nu.getAccessToken()!= null){
             try {
-                Bps = osuGetService.getBestMap(nu, 0,100);
+                Bps = osuGetService.getOsuBestMap(nu, 0,100);
             } catch (HttpClientErrorException e) {
                 from.sendMessage("您的令牌已过期,请私聊bot bind重新绑定！");
                 return;
             }
         }else {
-            Bps = osuGetService.getBestMap(nu.getOsuID(),0,100);
+            Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
         }
         if(Bps.size() != 100){
             from.sendMessage(new At(from.getId()).plus("您的BP尚未填满，请打完后尝试"));

@@ -96,6 +96,7 @@ public class ppPlusServiceImpl extends MessageService{
                 var line = TextLine.make(js.getString("UserName"),lagerFont);
                 canvas.drawTextLine(line,(600-line.getWidth())/2,line.getHeight(),new Paint().setARGB(255,255,255,255));
 
+                canvas.save();
                 canvas.translate(300,325);
                 canvas.drawPath(SkiaUtil.creat6(250, 0, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f), bg1);
                 canvas.drawPath(SkiaUtil.creat6(250, 0, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), bg1);
@@ -125,7 +126,8 @@ public class ppPlusServiceImpl extends MessageService{
                 canvas.drawRRect(RRect.makeXYWH(-270,-10,50,25,5),bg2);
                 canvas.drawString("pre",-261,7f,smileFont,wp);
 
-                canvas.translate(-300,250);
+                canvas.restore();
+                canvas.translate(0,575);
 
                 canvas.drawRRect(RRect.makeXYWH(50,0,225,50,10),edP);
                 canvas.drawString("jump:"+(int)js.getFloatValue("JumpAimTotal"),60,35,middleFont,wp);
@@ -142,7 +144,7 @@ public class ppPlusServiceImpl extends MessageService{
                 canvas.drawRRect(RRect.makeXYWH(325,150,225,50,10),edP);
                 canvas.drawString("pre:"+(int)js.getFloatValue("PrecisionTotal"),335,185,middleFont,wp);
 
-                canvas.save();
+                canvas.restore();
                 datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
             }
             if (datebyte != null ){

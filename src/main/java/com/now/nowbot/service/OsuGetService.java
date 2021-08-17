@@ -229,42 +229,16 @@ public class OsuGetService {
      * @param e 列表长度 1-100之间
      * @return
      */
-    public JSONArray getBestMap(BinUser user, int s, int e){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+user.getOsuID()+"/scores/best")
-                .queryParam("mode","osu")
-                .queryParam("limit",e)
-                .queryParam("offset",s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
+    public JSONArray getOsuBestMap(BinUser user, int s, int e){
+        return getBestMap(user,"osu", s, e);
     }
 
-    public JSONArray getBestMap(int id, int s, int e){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+id+"/scores/best")
-                .queryParam("mode","osu")
-                .queryParam("limit",e)
-                .queryParam("offset",s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
+    public JSONArray getOsuBestMap(int id, int s, int e){
+        return getBestMap(id,"osu", s, e);
     }
 
     @Deprecated
-    public JSONArray getBestMap(String name, int limit){
+    public JSONArray getOsuBestMap(String name, int limit){
         URI uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/api/get_user_best")
                 .queryParam("k", tokenv1)
                 .queryParam("u", name)
@@ -279,6 +253,40 @@ public class OsuGetService {
         ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
+    public JSONArray getBestMap(BinUser user, String mode, int s, int e){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+user.getOsuID()+"/scores/best")
+                .queryParam("mode",mode)
+                .queryParam("limit",e)
+                .queryParam("offset",s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
+    }
+
+    public JSONArray getBestMap(int id, String mode, int s, int e){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url+"users/"+id+"/scores/best")
+                .queryParam("mode",mode)
+                .queryParam("limit",e)
+                .queryParam("offset",s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c =  template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
+    }
+
     public JSONArray getOsuRecent(BinUser user, int s, int e){
         return getRecent(user,"osu", s, e);
     }
