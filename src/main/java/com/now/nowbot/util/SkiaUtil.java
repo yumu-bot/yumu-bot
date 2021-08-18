@@ -220,6 +220,18 @@ public class SkiaUtil {
     }
     public static Path creat6(float size, float lineWidth, float p1, float p2, float p3, float p4, float p5, float p6){
         var p = new Path();
+        if(p1>1) p1 = 1;
+        if(p2>1) p2 = 1;
+        if(p3>1) p3 = 1;
+        if(p4>1) p4 = 1;
+        if(p5>1) p5 = 1;
+        if(p6>1) p6 = 1;
+        if(p6<0) p6 = 0;
+        if(p5<0) p5 = 0;
+        if(p4<0) p4 = 0;
+        if(p3<0) p3 = 0;
+        if(p2<0) p2 = 0;
+        if(p1<0) p1 = 0;
         float[]ponX = new float[6];
         float[]ponY = new float[6];
         ponX[0] = -size*p1*0.5f;
