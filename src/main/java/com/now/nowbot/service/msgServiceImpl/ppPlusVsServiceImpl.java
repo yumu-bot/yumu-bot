@@ -3,6 +3,7 @@ package com.now.nowbot.service.msgServiceImpl;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
@@ -21,6 +22,8 @@ import java.util.regex.Pattern;
 public class ppPlusVsServiceImpl extends MessageService{
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    StarService starService;
     public ppPlusVsServiceImpl(){
         super("ppvs");
     }
@@ -41,9 +44,21 @@ public class ppPlusVsServiceImpl extends MessageService{
                 break;
             }
         }
+
         String name = null;
-        String name1 = null;
+        String name1;
+        BinUser us = BindingUtil.readUser(event.getSender().getId());
         String name2 = null;
+        if (us == null) {
+            from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
+            return;
+        }
+        StarService.score score = starService.getScore(us);
+        if(!starService.delStart(score,1)){
+            from.sendMessage("您的积分不够1积分！");
+            return;
+        }
+        name1 = us.getOsuName();
         if (at == null) {
             Pattern p = Pattern.compile(getKey().toLowerCase() + "\\s+(?<nm>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
             Matcher m = p.matcher(event.getMessage().contentToString());
@@ -51,30 +66,27 @@ public class ppPlusVsServiceImpl extends MessageService{
                 name = m.group("nm").trim();
             }
             if (name == null || name.equals("")) {
-                from.sendMessage("你个瓜娃子到底要vs那个嘞");
+                from.sendMessage("你个瓜娃子到底要vs那个嘞,扣你积分！");
                 return;
             }
         }else {
             BinUser r = BindingUtil.readUser(at.getTarget());
             if (r == null){
                 from.sendMessage(at.plus("该用户未绑定"));
+                starService.addStart(score,1);
                 return;
             }
             name = r.getOsuID()+"";
             name2 = r.getOsuName();
         }
-        BinUser us = BindingUtil.readUser(event.getSender().getId());
-        if (us == null) {
-            from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
-            return;
-        }
-        name1 = us.getOsuName();
+
         JSONObject user1 = null;
         JSONObject user2 = null;
         user1 = osuGetService.ppPlus(us.getOsuID()+"");
         user2 = osuGetService.ppPlus(name);
         if (user1 == null || user2 == null){
             from.sendMessage("api请求失败");
+            starService.addStart(score,1);
             return;
         }
         try {
