@@ -157,35 +157,35 @@ public class ppPlusVsServiceImpl extends MessageService{
                 canvas.translate(0,575);
 
                 TextLine temp;
-                canvas.drawRRect(RRect.makeXYWH(50,0,750,50,10),edP);
+                canvas.drawRRect(RRect.makeXYWH(50,0,500,50,10),edP);
                 canvas.drawString("jump:"+(int)user1.getFloatValue("JumpAimTotal"),60,35,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("JumpAimTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),35,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),35,wp2);
 
-                canvas.drawRRect(RRect.makeXYWH(50,75,750,50,10),edP);
-                canvas.drawString("flow:"+(int)user1.getFloatValue("FlowAimTotal"),335,110,middleFont,wp);
+                canvas.drawRRect(RRect.makeXYWH(50,75,500,50,10),edP);
+                canvas.drawString("flow:"+(int)user1.getFloatValue("FlowAimTotal"),335,110,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("FlowAimTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),110,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),110,wp2);
 
-                canvas.drawRRect(RRect.makeXYWH(50,150,750,50,10),edP);
-                canvas.drawString("acc:"+(int)user1.getFloatValue("AccuracyTotal"),60,185,middleFont,wp);
+                canvas.drawRRect(RRect.makeXYWH(50,150,500,50,10),edP);
+                canvas.drawString("acc:"+(int)user1.getFloatValue("AccuracyTotal"),60,185,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("AccuracyTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),185,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),185,wp2);
 
-                canvas.drawRRect(RRect.makeXYWH(50,225,750,50,10),edP);
-                canvas.drawString("sta:"+(int)user1.getFloatValue("StaminaTotal"),335,260,middleFont,wp);
+                canvas.drawRRect(RRect.makeXYWH(50,225,500,50,10),edP);
+                canvas.drawString("sta:"+(int)user1.getFloatValue("StaminaTotal"),335,260,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("StaminaTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),260,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),260,wp2);
 
-                canvas.drawRRect(RRect.makeXYWH(50,300,750,50,10),edP);
-                canvas.drawString("spd:"+(int)user1.getFloatValue("SpeedTotal"),60,345,middleFont,wp);
+                canvas.drawRRect(RRect.makeXYWH(50,300,500,50,10),edP);
+                canvas.drawString("spd:"+(int)user1.getFloatValue("SpeedTotal"),60,345,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("SpeedTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),345,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),345,wp2);
 
-                canvas.drawRRect(RRect.makeXYWH(50,375,750,50,10),edP);
+                canvas.drawRRect(RRect.makeXYWH(50,375,500,50,10),edP);
                 canvas.drawString("pre:"+(int)user1.getFloatValue("PrecisionTotal"),335,410,middleFont,wp);
                 temp = TextLine.make(""+(int)user2.getFloatValue("PrecisionTotal"), middleFont);
-                canvas.drawTextLine(temp,800-temp.getWidth(),410,wp2);
+                canvas.drawTextLine(temp,550-temp.getWidth(),410,wp2);
 
                 canvas.restore();
                 datebyte = surface.makeImageSnapshot().encodeToData().getBytes();

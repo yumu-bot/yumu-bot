@@ -498,7 +498,7 @@ public class OsuGetService {
     public float[] ppPlus(float[] ppP){
         if(ppP.length!=6)return null;
         float[] date = new float[6];
-        int[] fall = {5800,1400,2700,2800,3800,1200};
+        int[] fall = {5800,1400,3200,2800,3800,1200};
         for (int i = 0; i < date.length; i++) {
             date[i] = ppP[i]/fall[i];
             if (date[i]>1)date[i]=1;
