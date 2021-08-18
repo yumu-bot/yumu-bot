@@ -46,7 +46,7 @@ public class ppmServiceImpl extends MessageService{
         //1.2 1.2 潜力PTT potential 0-1 ptt
         double ptt;
         {
-            double bpmxd = Math.pow(0.9D, userinfo.ppv45 / (userinfo.accv0 - userinfo.ppv90 + 1));
+            double bpmxd = Math.pow(0.9D, userinfo.ppv45 / (userinfo.ppv0 - userinfo.ppv90 + 1));
             double rBPD = userinfo.rawpp / userinfo.ppv0;
             double BPD;
             if (rBPD <= 14) {
@@ -91,7 +91,6 @@ public class ppmServiceImpl extends MessageService{
             }
             sta = Math.pow((SPT*0.4 + fLEN*0.6),0.8D) + VLB * 0.2;
         }
-        
         //1.4 稳定STB stability (-0.16)-1.2 stb
         double stb;
         {
