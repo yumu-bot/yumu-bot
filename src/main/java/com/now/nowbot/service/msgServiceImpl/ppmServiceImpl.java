@@ -58,7 +58,7 @@ public class ppmServiceImpl extends MessageService{
             } else {
                 BPD = 0;
             }
-            ptt = Math.pow((BPD*0.4 + bpmxd*0.2 + 0.4),0.8D);
+            ptt = Math.pow((BPD*0.2 + bpmxd*0.4 + 0.4),0.8D);
         }
         //1.3 耐力STA stamina 0-1.2 sta
         double sta;
