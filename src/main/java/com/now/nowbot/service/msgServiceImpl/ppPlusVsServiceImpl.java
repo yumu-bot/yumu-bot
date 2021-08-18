@@ -115,9 +115,9 @@ public class ppPlusVsServiceImpl extends MessageService{
                 var line1 = TextLine.make(name1,lagerFont);
                 var line2 = TextLine.make(name2,lagerFont);
                 var vs = TextLine.make("VS",lagerFont);
-                canvas.drawTextLine(line1,0,line1.getHeight(),wp1);
-                canvas.drawTextLine(line2,600-line2.getWidth(),line2.getHeight(),wp2);
-                canvas.drawTextLine(vs,(600-vs.getWidth())/2,vs.getHeight(),wp);
+                canvas.drawTextLine(line1,40,line1.getHeight()+20,wp1);
+                canvas.drawTextLine(line2,560-line2.getWidth(),line2.getHeight()+20,wp2);
+                canvas.drawTextLine(vs,(600-vs.getWidth())/2,vs.getHeight()+20,wp);
 
                 canvas.save();
                 canvas.translate(300,325);
@@ -160,42 +160,42 @@ public class ppPlusVsServiceImpl extends MessageService{
                 canvas.drawRRect(RRect.makeXYWH(50,0,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("JumpAimTotal"),60,35,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("JumpAimTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),35,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),35,wp2);
                 temp = TextLine.make("jump", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,35,wp);
 
                 canvas.drawRRect(RRect.makeXYWH(50,75,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("FlowAimTotal"),60,110,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("FlowAimTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),110,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),110,wp2);
                 temp = TextLine.make("flow", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,110,wp);
 
                 canvas.drawRRect(RRect.makeXYWH(50,150,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("AccuracyTotal"),60,185,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("AccuracyTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),185,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),185,wp2);
                 temp = TextLine.make("acc", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,185,wp);
 
                 canvas.drawRRect(RRect.makeXYWH(50,225,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("StaminaTotal"),60,260,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("StaminaTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),260,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),260,wp2);
                 temp = TextLine.make("sta", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,260,wp);
 
                 canvas.drawRRect(RRect.makeXYWH(50,300,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("SpeedTotal"),60,345,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("SpeedTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),345,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),345,wp2);
                 temp = TextLine.make("spd", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,345,wp);
 
                 canvas.drawRRect(RRect.makeXYWH(50,375,500,50,10),edP);
                 canvas.drawString(""+(int)user1.getFloatValue("PrecisionTotal"),60,410,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("PrecisionTotal"), middleFont);
-                canvas.drawTextLine(temp,550-temp.getWidth(),410,wp2);
+                canvas.drawTextLine(temp,540-temp.getWidth(),410,wp2);
                 temp = TextLine.make("pre", middleFont);
                 canvas.drawTextLine(temp,50+(500-temp.getWidth())/2,410,wp);
 
