@@ -47,7 +47,7 @@ public class FriendServiceImpl extends MessageService{
     static Font naf;
     static Font bigf;
     public FriendServiceImpl(){
-        super("xf");
+        super("friend");
     }
 
     @Override

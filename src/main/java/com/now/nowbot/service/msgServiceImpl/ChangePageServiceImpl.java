@@ -41,17 +41,19 @@ public class ChangePageServiceImpl extends MessageService{
                 }
                 return;
             }
-            oldName = page[1];
-            newName = page[2];
-            MessageService old = MessageService.servicesName.get(oldName);
-            try {
-                MessageService.servicesName.put(newName, old);
-                MessageService.servicesName.remove(oldName);
-                old.setKey(newName);
-                event.getSender().sendMessage("ok");
-            } catch (Exception e) {
-                e.printStackTrace();
-                MessageService.servicesName.put(newName, old);
+            if(page.length == 3) {
+                oldName = page[1];
+                newName = page[2];
+                MessageService old = MessageService.servicesName.get(oldName);
+                try {
+                    MessageService.servicesName.put(newName, old);
+                    old.setKey(newName);
+                    MessageService.servicesName.remove(oldName);
+                    event.getSender().sendMessage("ok");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    MessageService.servicesName.put(newName, old);
+                }
             }
         }
     }

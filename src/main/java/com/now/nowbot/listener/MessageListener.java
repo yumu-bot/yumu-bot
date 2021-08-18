@@ -19,6 +19,21 @@ public class MessageListener extends SimpleListenerHost {
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         log.error(context.toString(),exception);
     }
+//    @Async
+//    @EventHandler
+//    public void msg(MessageEvent event){
+//        Contact from;
+//        if(event instanceof GroupMessageEvent) {
+//            from = ((GroupMessageEvent) event).getGroup();
+//        }else {
+//            from = event.getSender();
+//        }
+//        for( var g : event.getMessage()){
+//            if (g instanceof PlainText){
+//                g.contentToString().startsWith("");
+//            }
+//        }
+//    }
     @Async
     @EventHandler
     public void msg(GroupMessageEvent event){
