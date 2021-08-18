@@ -163,7 +163,7 @@ public class ppPlusVsServiceImpl extends MessageService{
                 canvas.drawTextLine(temp,550-temp.getWidth(),35,wp2);
 
                 canvas.drawRRect(RRect.makeXYWH(50,75,500,50,10),edP);
-                canvas.drawString("flow:"+(int)user1.getFloatValue("FlowAimTotal"),335,110,middleFont,wp1);
+                canvas.drawString("flow:"+(int)user1.getFloatValue("FlowAimTotal"),60,110,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("FlowAimTotal"), middleFont);
                 canvas.drawTextLine(temp,550-temp.getWidth(),110,wp2);
 
@@ -173,7 +173,7 @@ public class ppPlusVsServiceImpl extends MessageService{
                 canvas.drawTextLine(temp,550-temp.getWidth(),185,wp2);
 
                 canvas.drawRRect(RRect.makeXYWH(50,225,500,50,10),edP);
-                canvas.drawString("sta:"+(int)user1.getFloatValue("StaminaTotal"),335,260,middleFont,wp1);
+                canvas.drawString("sta:"+(int)user1.getFloatValue("StaminaTotal"),60,260,middleFont,wp1);
                 temp = TextLine.make(""+(int)user2.getFloatValue("StaminaTotal"), middleFont);
                 canvas.drawTextLine(temp,550-temp.getWidth(),260,wp2);
 
@@ -183,7 +183,7 @@ public class ppPlusVsServiceImpl extends MessageService{
                 canvas.drawTextLine(temp,550-temp.getWidth(),345,wp2);
 
                 canvas.drawRRect(RRect.makeXYWH(50,375,500,50,10),edP);
-                canvas.drawString("pre:"+(int)user1.getFloatValue("PrecisionTotal"),335,410,middleFont,wp);
+                canvas.drawString("pre:"+(int)user1.getFloatValue("PrecisionTotal"),60,410,middleFont,wp);
                 temp = TextLine.make(""+(int)user2.getFloatValue("PrecisionTotal"), middleFont);
                 canvas.drawTextLine(temp,550-temp.getWidth(),410,wp2);
 
