@@ -73,6 +73,14 @@ public class ppmServiceImpl extends MessageService{
                 SPT = 1;
             }
             double rLN = userinfo.lengv0*0.7 + userinfo.lengv45*0.2 + userinfo.lengv90*0.1;
+            double fLEN;
+            if(rLN<30){
+                fLEN = 0;
+            }else if(rLN<=180){
+                fLEN = 1 - Math.pow((180-rLN)/150, 2.357);
+            }else{
+                fLEN = 1;
+            }
             double VLB;
             if(rLN<180){
                 VLB = 0;
@@ -81,8 +89,9 @@ public class ppmServiceImpl extends MessageService{
             }else{
                 VLB = 1;
             }
-            sta = Math.pow(SPT,0.8D) + VLB * 0.2;
+            sta = Math.pow((SPT*0.4 + fLEN*0.6),0.8D) + VLB * 0.2;
         }
+        
         //1.4 稳定STB stability (-0.16)-1.2 stb
         double stb;
         {
