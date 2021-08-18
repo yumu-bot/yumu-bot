@@ -11,6 +11,8 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.DecimalFormat;
+
 @Service
 public class ppmServiceImpl extends MessageService{
     public ppmServiceImpl() {
@@ -82,7 +84,37 @@ public class ppmServiceImpl extends MessageService{
             sta = Math.pow(SPT,0.8D) + VLB * 0.2;
         }
         //1.4 稳定STB stability (-0.16)-1.2 stb
-//        double
+        double stb;
+        {
+            double GRD = (userinfo.xx + userinfo.xs*0.9 + userinfo.xa* 0.8 + userinfo.xb*0.4 + userinfo.xc*0.2 - userinfo.xd*0.2)/100;
+            double FCN = (100-userinfo.notfc)/100D;
+            double PFN = (userinfo.xs+ userinfo.xx)/100D;
+            stb = GRD*0.8+(FCN+PFN)*0.2;
+        }
+        //1.5 肝力ENG energy eng
+        double eng;
+        {
+            eng = userinfo.jiangli/416.6667;
+            if (eng>1)eng =1;
+        }
+        //1.6 实力STH strength sth
+        double sth;
+        {
+            double HPS = 1D*userinfo.thit/userinfo.pcont;
+            if(HPS>4.5) HPS =  4.5;
+            else if(HPS<2.5) HPS =  2.5;
+            sth = Math.pow((HPS-2.5)/2,0.2);
+        }
+        StringBuffer sb = new StringBuffer();
+        DecimalFormat dx = new DecimalFormat("0.00");
+        sb.append("计算结果：").append('\n')
+                .append("fACC ").append(dx.format(fa*100)).append('\n')
+                .append("PTT ").append(dx.format(ptt*100)).append('\n')
+                .append("STA ").append(dx.format(sta*100)).append('\n')
+                .append("STB ").append(dx.format(stb*100)).append('\n')
+                .append("ENG ").append(dx.format(eng*100)).append('\n')
+                .append("STH ").append(dx.format(sth*100)).append('\n');
+        from.sendMessage(sb.toString());
     }
     static class dates{
         float ppv0=0;
@@ -96,6 +128,7 @@ public class ppmServiceImpl extends MessageService{
         long lengv90=0;
         double bpp=0;
         double rawpp = 0;
+        double jiangli = 0;
         int xd=0;
         int xc=0;
         int xb=0;
@@ -161,8 +194,8 @@ public class ppmServiceImpl extends MessageService{
             double Oxy = sumOxy / sumX;
             double Ox2 = sumOx2 / sumX;
             for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
-                double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-                rawpp = bpp+val;
+                jiangli = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+                rawpp = bpp+jiangli;
             }
 
             ppv0 /= 10;
