@@ -1,13 +1,15 @@
 package com.now.nowbot.service.msgServiceImpl;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.entity.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.utils.ExternalResource;
+import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,202 +36,94 @@ public class ppmServiceImpl extends MessageService{
         if (user == null){
             from.sendMessage("您未绑定，请绑定后使用");
         }
-        dates userinfo;
+        PPmObject userinfo;
         {
             var userdate = osuGetService.getPlayerOsuInfo(user);
             var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
-            userinfo = new dates(userdate, bpdate);
+            userinfo = PPmObject.presOsu(userdate, bpdate);
         }
 
-        //1.1 准度fACC formulaic accuracy 0-1 fa
-        double fa = ((userinfo.acc/100)<0.6D?0:Math.pow((userinfo.acc/100-0.6)*2.5D,1.776D));
-        //1.2 1.2 潜力PTT potential 0-1 ptt
-        double ptt;
-        {
-            double bpmxd = Math.pow(0.9D, userinfo.ppv45 / (userinfo.ppv0 - userinfo.ppv90 + 1));
-            double rBPD = userinfo.rawpp / userinfo.ppv0;
-            double BPD;
-            if (rBPD <= 14) {
-                BPD = 1;
-            } else if (rBPD <= 18) {
-                BPD = (18 - rBPD) * 0.1D + 0.6D;
-            } else if (rBPD <= 19) {
-                BPD = (19 - rBPD) * 0.6D;
-            } else {
-                BPD = 0;
-            }
-            ptt = Math.pow((BPD*0.2 + bpmxd*0.4 + 0.4),0.8D);
-        }
-        //1.3 耐力STA stamina 0-1.2 sta
-        double sta;
-        {
-            double rSP = 1.0*userinfo.ptime/userinfo.pcont;
-            double SPT;
-            if(rSP<30){
-                SPT = 0;
-            }else if(rSP<=180){
-                SPT = 1 - Math.pow((180-rSP)/150, 2.357);
-            }else{
-                SPT = 1;
-            }
-            double rLN = userinfo.lengv0*0.7 + userinfo.lengv45*0.2 + userinfo.lengv90*0.1;
-            double fLEN;
-            if(rLN<30){
-                fLEN = 0;
-            }else if(rLN<=180){
-                fLEN = 1 - Math.pow((180-rLN)/150, 2.357);
-            }else{
-                fLEN = 1;
-            }
-            double VLB;
-            if(rLN<180){
-                VLB = 0;
-            }else if(rLN<=240){
-                VLB = Math.pow((rLN-180)/60,0.4);
-            }else{
-                VLB = 1;
-            }
-            sta = Math.pow((SPT*0.4 + fLEN*0.6),0.8D) + VLB * 0.2;
-        }
-        //1.4 稳定STB stability (-0.16)-1.2 stb
-        double stb;
-        {
-            double GRD = (userinfo.xx + userinfo.xs*0.9 + userinfo.xa* 0.8 + userinfo.xb*0.4 + userinfo.xc*0.2 - userinfo.xd*0.2)/100;
-            double FCN = (100-userinfo.notfc)/100D;
-            double PFN = (userinfo.xs+ userinfo.xx)/100D;
-            stb = GRD*0.8+(FCN+PFN)*0.2;
-        }
-        //1.5 肝力ENG energy eng
-        double eng;
-        {
-            eng = userinfo.bonus /416.6667;
-            if (eng>1)eng =1;
-            eng = Math.pow(eng, 0.4D);
-        }
-        //1.6 实力STH strength sth
-        double sth;
-        {
-            double HPS = 1D*userinfo.thit/userinfo.ptime;
-            if(HPS>4.5) HPS =  4.5;
-            else if(HPS<2.5) HPS =  2.5;
-            sth = Math.pow((HPS-2.5)/2,0.2);
-        }
-        StringBuffer sb = new StringBuffer();
-        DecimalFormat dx = new DecimalFormat("0.00");
-        sb.append("计算结果：").append('\n')
-                .append("fACC ").append(dx.format(fa*100)).append('\n')
-                .append("PTT ").append(dx.format(ptt*100)).append('\n')
-                .append("STA ").append(dx.format(sta*100)).append('\n')
-                .append("STB ").append(dx.format(stb*100)).append('\n')
-                .append("ENG ").append(dx.format(eng*100)).append('\n')
-                .append("STH ").append(dx.format(sth*100));
-        from.sendMessage(sb.toString());
-    }
-    static class dates{
-        float ppv0=0;
-        float ppv45=0;
-        float ppv90=0;
-        float accv0=0;
-        float accv45=0;
-        float accv90=0;
-        long lengv0=0;
-        long lengv45=0;
-        long lengv90=0;
-        double bpp=0;
-        double rawpp = 0;
-        double bonus = 0;
-        int xd=0;
-        int xc=0;
-        int xb=0;
-        int xa=0;
-        int xs=0;
-        int xx=0;
-        int notfc=0;
-        String name;
-        float pp ;
-        float acc;
-        int level;
-        int rank ;
-        int combo;
-        long thit;
-        long pcont;
-        long ptime;
-        dates(JSONObject prd, JSONArray prbp){
+        try(Surface surface = Surface.makeRasterN32Premul(600,830);
+            Font smileFont = new Font(FriendServiceImpl.face,20);
+            Font lagerFont = new Font(FriendServiceImpl.face,50);
+            Font middleFont = new Font(FriendServiceImpl.face, 30);
+            Paint bg1 = new Paint().setARGB(40,0,0,0);
+            Paint bg2 = new Paint().setARGB(220,0,0,0);
+            Paint wp = new Paint().setARGB(255,200,200,200);
+            Paint edP = new Paint().setARGB(200,0,0,0)){
 
-            double[] ys = new double[prbp.size()];
-            for (int j = 0; j < prbp.size(); j++) {
-                var jsb = prbp.getJSONObject(j);
-                bpp += jsb.getDoubleValue("pp")*Math.pow(0.95d,j);
-                ys[j] = Math.log10(jsb.getDoubleValue("pp") * Math.pow(0.95, j)) / Math.log10(100);
+            var canvas = surface.getCanvas();
+            canvas.clear(Color.makeRGB(65, 40, 49));
 
-                if (jsb.getString("rank").startsWith("D")) xd++;
-                if (jsb.getString("rank").startsWith("C")) xc++;
-                if (jsb.getString("rank").startsWith("B")) xb++;
-                if (jsb.getString("rank").startsWith("A")) xa++;
-                if (jsb.getString("rank").startsWith("S")) xs++;
-                if (jsb.getString("rank").startsWith("X")) xx++;
-                if(!jsb.getBoolean("perfect")) notfc++;
-                if(j < 10){
-                    ppv0 += jsb.getFloatValue("pp");
-                    accv0 += jsb.getFloatValue("accuracy");
-                    lengv0 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                }else if(j>=45 && j<55){
-                    ppv45 += jsb.getFloatValue("pp");
-                    accv45 += jsb.getFloatValue("accuracy");
-                    lengv45 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                }else if(j>=90){
-                    ppv90 += jsb.getFloatValue("pp");
-                    accv90 += jsb.getFloatValue("accuracy");
-                    lengv90 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                }
-            }
-            double sumOxy = 0.0D;
-            double sumOx2 = 0.0D;
-            double avgX = 0.0D;
-            double avgY = 0.0D;
-            double sumX = 0.0D;
-            for(int n = 1; n <= ys.length; n++){
-                double weight = Math.log1p(n + 1.0D);
-                sumX += weight;
-                avgX += n * weight;
-                avgY += ys[n - 1] * weight;
-            }
-            avgX /= sumX;
-            avgY /= sumX;
-            for(int n = 1; n <= ys.length; n++){
-                sumOxy += (n - avgX) * (ys[n - 1] - avgY) * Math.log1p(n + 1.0D);
-                sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
-            }
-            double Oxy = sumOxy / sumX;
-            double Ox2 = sumOx2 / sumX;
-            for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
-                double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-                if(val <= 0.0D){
-                    break;
-                }
-                bonus += val;
-            }
-            rawpp = bpp+ bonus;
+            var line = TextLine.make(userinfo.getName(),lagerFont);
+            canvas.drawTextLine(line,(600-line.getWidth())/2,line.getHeight(),new Paint().setARGB(255,255,255,255));
 
-            ppv0 /= 10;
-            ppv45 /= 10;
-            ppv90 /= 10;
-            accv0 /= 10;
-            accv45 /= 10;
-            accv90 /= 10;
-            lengv0 /= 10;
-            lengv45 /= 10;
-            lengv90 /= 10;
-            name = prd.getString("username").replace(' ','_');
-            pp = prd.getJSONObject("statistics").getFloatValue("pp");
-            bonus = pp - rawpp;
-            acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
-            level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
-            rank = prd.getJSONObject("statistics").getIntValue("global_rank");
-            combo = prd.getJSONObject("statistics").getIntValue("maximum_combo");
-            thit = prd.getJSONObject("statistics").getLongValue("total_hits");
-            pcont = prd.getJSONObject("statistics").getLongValue("play_count");
-            ptime = prd.getJSONObject("statistics").getLongValue("play_time");
+            canvas.save();
+            canvas.translate(300,325);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f), bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f), bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 1, 1, 1, 1, 1, 1), bg1);
+
+            Path pt = SkiaUtil.creat6(250, 3,(float) userinfo.getPtt(),(float) userinfo.getSta(),(float) userinfo.getStb(),(float) userinfo.getSth(),(float) userinfo.getEng(),(float) userinfo.getFa());
+
+            canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
+            canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
+
+            canvas.drawRRect(RRect.makeXYWH(-150,-226.5f,60,25,5),bg2);
+            canvas.drawString("成长值",-144,-208f,smileFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(100,-226.5f,60,25,5),bg2);
+            canvas.drawString("持久力",108,-208.5f,smileFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(230,-10,50,25,5),bg2);
+            canvas.drawString("稳定性",239,7,smileFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(105,206.5f,50,25,5),bg2);
+            canvas.drawString("实力",114,223.5f,smileFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(-145,206.5f,50,25,5),bg2);
+            canvas.drawString("努力值",-137,223.5f,smileFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(-270,-10,50,25,5),bg2);
+            canvas.drawString("精准度",-261,7f,smileFont,wp);
+
+            canvas.restore();
+            canvas.translate(0,575);
+
+            DecimalFormat dx = new DecimalFormat("0.00");
+            canvas.drawRRect(RRect.makeXYWH(50,0,225,50,10),edP);
+            canvas.drawString("成长值:"+dx.format(userinfo.getFa()*100),60,35,middleFont,wp);
+            canvas.drawRRect(RRect.makeXYWH(325,0,225,50,10),edP);
+            canvas.drawString("持久力:"+dx.format(userinfo.getFa()*100),335,35,middleFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(50,75,225,50,10),edP);
+            canvas.drawString("稳定性:"+dx.format(userinfo.getFa()*100),60,110,middleFont,wp);
+            canvas.drawRRect(RRect.makeXYWH(325,75,225,50,10),edP);
+            canvas.drawString("实力:"+dx.format(userinfo.getFa()*100),335,110,middleFont,wp);
+
+            canvas.drawRRect(RRect.makeXYWH(50,150,225,50,10),edP);
+            canvas.drawString("努力值:"+dx.format(userinfo.getFa()*100),60,185,middleFont,wp);
+            canvas.drawRRect(RRect.makeXYWH(325,150,225,50,10),edP);
+            canvas.drawString("精准度:"+dx.format(userinfo.getFa()*100),335,185,middleFont,wp);
+
+            var fromx = TextLine.make(userinfo.getName(),smileFont);
+            canvas.drawTextLine(fromx,(600-line.getWidth())/2,surface.getHeight()-line.getHeight(),new Paint().setARGB(255,255,255,255));
+            
+            var datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
+
         }
+
+//        StringBuffer sb = new StringBuffer();
+//        DecimalFormat dx = new DecimalFormat("0.00");
+//        sb.append("计算结果：").append('\n')
+//                .append("fACC ").append(dx.format(userinfo.getFa()*100)).append('\n')
+//                .append("PTT ").append(dx.format(userinfo.getPtt()*100)).append('\n')
+//                .append("STA ").append(dx.format(userinfo.getSta()*100)).append('\n')
+//                .append("STB ").append(dx.format(userinfo.getStb()*100)).append('\n')
+//                .append("ENG ").append(dx.format(userinfo.getEng()*100)).append('\n')
+//                .append("STH ").append(dx.format(userinfo.getSth()*100));
+//        from.sendMessage(sb.toString());
     }
 }
