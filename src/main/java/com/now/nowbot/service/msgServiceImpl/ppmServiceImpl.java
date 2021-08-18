@@ -104,6 +104,7 @@ public class ppmServiceImpl extends MessageService{
         {
             eng = userinfo.bonus /416.6667;
             if (eng>1)eng =1;
+            eng = Math.pow(eng, 0.4D);
         }
         //1.6 实力STH strength sth
         double sth;
