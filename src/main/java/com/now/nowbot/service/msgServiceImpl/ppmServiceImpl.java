@@ -77,16 +77,16 @@ public class ppmServiceImpl extends MessageService{
             canvas.drawString("sta",108,-208.5f,smileFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(230,-10,50,25,5),bg2);
-            canvas.drawString("stb",239,7,smileFont,wp);
+            canvas.drawString("stb",240,8,smileFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(105,206.5f,50,25,5),bg2);
-            canvas.drawString("sth",114,223.5f,smileFont,wp);
+            canvas.drawString("sth",114,224.5f,smileFont,wp);
 
-            canvas.drawRRect(RRect.makeXYWH(-145,206.5f,50,25,5),bg2);
-            canvas.drawString("eng",-137,223.5f,smileFont,wp);
+            canvas.drawRRect(RRect.makeXYWH(-145,206.5f,50,25   ,5),bg2);
+            canvas.drawString("eng",-139,223.5f,smileFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(-270,-10,50,25,5),bg2);
-            canvas.drawString("ffa",-261,7f,smileFont,wp);
+            canvas.drawString("acc",-260,8f,smileFont,wp);
 
             canvas.restore();
             canvas.translate(0,575);
@@ -100,7 +100,7 @@ public class ppmServiceImpl extends MessageService{
             canvas.drawRRect(RRect.makeXYWH(50,75,225,50,10),edP);
             canvas.drawString("STB:"+dx.format(userinfo.getStb()*100),60,110,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,75,225,50,10),edP);
-            canvas.drawString("FFA:"+dx.format(userinfo.getFa()*100),335,110,middleFont,wp);
+            canvas.drawString("ACC:"+dx.format(userinfo.getFa()*100),335,110,middleFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(50,150,225,50,10),edP);
             canvas.drawString("STH:"+dx.format(userinfo.getSth()*100),60,185,middleFont,wp);

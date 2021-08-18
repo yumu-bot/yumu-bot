@@ -105,7 +105,7 @@ public class PPmObject {
         lengv0 /= 10;
         lengv45 /= 10;
         lengv90 /= 10;
-        name = prd.getString("username").replace(' ','_');
+        name = prd.getString("username");
         pp = prd.getJSONObject("statistics").getFloatValue("pp");
         bonus = pp - rawpp;
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
