@@ -94,7 +94,7 @@ public class ppmServiceImpl extends MessageService{
         //1.5 肝力ENG energy eng
         double eng;
         {
-            eng = userinfo.jiangli/416.6667;
+            eng = userinfo.bonus /416.6667;
             if (eng>1)eng =1;
         }
         //1.6 实力STH strength sth
@@ -128,7 +128,7 @@ public class ppmServiceImpl extends MessageService{
         long lengv90=0;
         double bpp=0;
         double rawpp = 0;
-        double jiangli = 0;
+        double bonus = 0;
         int xd=0;
         int xc=0;
         int xb=0;
@@ -194,11 +194,11 @@ public class ppmServiceImpl extends MessageService{
             double Oxy = sumOxy / sumX;
             double Ox2 = sumOx2 / sumX;
             for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
-                jiangli = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-                rawpp = bpp+jiangli;
-                System.out.println(jiangli);
-                System.out.println(rawpp);
+                bonus += Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
             }
+            rawpp = bpp+ bonus;
+            System.out.println(bonus);
+            System.out.println(rawpp);
 
             ppv0 /= 10;
             ppv45 /= 10;
