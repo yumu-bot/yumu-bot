@@ -197,8 +197,7 @@ public class ppmServiceImpl extends MessageService{
                 bonus += Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
             }
             rawpp = bpp+ bonus;
-            System.out.println(bonus);
-            System.out.println(rawpp);
+            bonus = pp - rawpp;
 
             ppv0 /= 10;
             ppv45 /= 10;
