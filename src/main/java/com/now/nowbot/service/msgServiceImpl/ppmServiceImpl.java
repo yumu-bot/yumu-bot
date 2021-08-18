@@ -194,10 +194,17 @@ public class ppmServiceImpl extends MessageService{
             double Oxy = sumOxy / sumX;
             double Ox2 = sumOx2 / sumX;
             for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
-                bonus += Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+                double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+                if(val <= 0.0D){
+                    break;
+                }
+                bonus += val;
             }
             rawpp = bpp+ bonus;
             bonus = pp - rawpp;
+            System.out.println(bpp);
+            System.out.println(bonus);
+            System.out.println(rawpp);
 
             ppv0 /= 10;
             ppv45 /= 10;
