@@ -93,23 +93,23 @@ public class ppmServiceImpl extends MessageService{
 
             DecimalFormat dx = new DecimalFormat("0.00");
             canvas.drawRRect(RRect.makeXYWH(50,0,225,50,10),edP);
-            canvas.drawString("成长值:"+dx.format(userinfo.getFa()*100),60,35,middleFont,wp);
+            canvas.drawString("成长值:"+dx.format(userinfo.getPtt()*100),60,35,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,0,225,50,10),edP);
-            canvas.drawString("持久力:"+dx.format(userinfo.getFa()*100),335,35,middleFont,wp);
+            canvas.drawString("持久力:"+dx.format(userinfo.getStb()*100),335,35,middleFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(50,75,225,50,10),edP);
-            canvas.drawString("稳定性:"+dx.format(userinfo.getFa()*100),60,110,middleFont,wp);
+            canvas.drawString("稳定性:"+dx.format(userinfo.getStb()*100),60,110,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,75,225,50,10),edP);
             canvas.drawString("实力:"+dx.format(userinfo.getFa()*100),335,110,middleFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(50,150,225,50,10),edP);
-            canvas.drawString("努力值:"+dx.format(userinfo.getFa()*100),60,185,middleFont,wp);
+            canvas.drawString("努力值:"+dx.format(userinfo.getSth()*100),60,185,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,150,225,50,10),edP);
-            canvas.drawString("精准度:"+dx.format(userinfo.getFa()*100),335,185,middleFont,wp);
+            canvas.drawString("精准度:"+dx.format(userinfo.getEng()*100),335,185,middleFont,wp);
 
-            var fromx = TextLine.make(userinfo.getName(),smileFont);
+            var fromx = TextLine.make("感谢Muziyami提供计算方法",smileFont);
             canvas.drawTextLine(fromx,(600-line.getWidth())/2,surface.getHeight()-line.getHeight(),new Paint().setARGB(255,255,255,255));
-            
+
             var datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
 
