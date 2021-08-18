@@ -22,7 +22,7 @@ public class BindingUtil {
         } catch (IOException e) {
             log.error("写入文件异常",e);
         }
-
+        System.gc();
     }
     public static BinUser readUser(long qq){
         Path pt = Path.of(NowbotConfig.BIN_PATH + qq + ".json");
@@ -35,6 +35,7 @@ public class BindingUtil {
                 log.error("用户文件读取异常",e);
             }
         }
+        System.gc();
         return date;
     }
 
@@ -51,6 +52,7 @@ public class BindingUtil {
         } catch (IOException e) {
             log.error("osu id文件写入异常",e);
         }
+        System.gc();
     }
     public static int readOsuID(String name){
         Path pt = Path.of(NowbotConfig.OSU_ID + name);
@@ -70,6 +72,7 @@ public class BindingUtil {
         } catch (IOException e) {
             log.error("osu id文件读取异常",e);
         }
+        System.gc();
         return id;
     }
 }

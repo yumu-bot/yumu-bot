@@ -42,6 +42,7 @@ public class SkiaUtil {
                 cin.close();
                 Files.createFile(pt);
                 Files.write(pt,data);
+                System.gc();
                 return Image.makeFromEncoded(data);
             }
         } catch (IOException e) {

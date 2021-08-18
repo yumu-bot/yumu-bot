@@ -151,6 +151,7 @@ public class FriendServiceImpl extends MessageService{
         }
 
         futureList.removeIf(f -> f.cancel(true) | true);
+        System.gc();
         return;
     }
 
