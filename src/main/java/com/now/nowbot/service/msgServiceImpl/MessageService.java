@@ -1,5 +1,6 @@
 package com.now.nowbot.service.msgServiceImpl;
 
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.service.messageService;
 import net.mamoe.mirai.event.events.*;
 
@@ -23,6 +24,7 @@ public abstract class MessageService implements messageService {
     }
 
     @Override
+    @CheckPermission(isAdminOnly = true)
     public void handleMsg(GroupMessageEvent event) {
         handleMsg((MessageEvent) event);
     }
