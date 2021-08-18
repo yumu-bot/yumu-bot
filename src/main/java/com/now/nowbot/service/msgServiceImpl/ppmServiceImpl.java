@@ -42,7 +42,7 @@ public class ppmServiceImpl extends MessageService{
         }
 
         //1.1 准度fACC formulaic accuracy 0-1 fa
-        double fa = ((userinfo.acc/100)<0.6D?0:(userinfo.acc/100-0.6)*Math.pow(2.5D,1.776D));
+        double fa = ((userinfo.acc/100)<0.6D?0:Math.pow((userinfo.acc/100-0.6)*2.5D,1.776D));
         //1.2 1.2 潜力PTT potential 0-1 ptt
         double ptt;
         {
