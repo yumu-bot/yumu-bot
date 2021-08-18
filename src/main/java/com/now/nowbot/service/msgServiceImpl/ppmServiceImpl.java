@@ -42,7 +42,7 @@ public class ppmServiceImpl extends MessageService{
         }
 
         //1.1 准度fACC formulaic accuracy 0-1 fa
-        double fa = (userinfo.acc<0.6D?0:(userinfo.acc-0.6)*Math.pow(2.5D,1.776D));
+        double fa = ((userinfo.acc/100)<0.6D?0:(userinfo.acc/100-0.6)*Math.pow(2.5D,1.776D));
         //1.2 1.2 潜力PTT potential 0-1 ptt
         double ptt;
         {
@@ -113,7 +113,7 @@ public class ppmServiceImpl extends MessageService{
                 .append("STA ").append(dx.format(sta*100)).append('\n')
                 .append("STB ").append(dx.format(stb*100)).append('\n')
                 .append("ENG ").append(dx.format(eng*100)).append('\n')
-                .append("STH ").append(dx.format(sth*100)).append('\n');
+                .append("STH ").append(dx.format(sth*100));
         from.sendMessage(sb.toString());
     }
     static class dates{
@@ -196,6 +196,8 @@ public class ppmServiceImpl extends MessageService{
             for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
                 jiangli = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
                 rawpp = bpp+jiangli;
+                System.out.println(jiangli);
+                System.out.println(rawpp);
             }
 
             ppv0 /= 10;
