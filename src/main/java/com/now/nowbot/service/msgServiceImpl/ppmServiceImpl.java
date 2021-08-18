@@ -100,7 +100,7 @@ public class ppmServiceImpl extends MessageService{
         //1.6 实力STH strength sth
         double sth;
         {
-            double HPS = 1D*userinfo.thit/userinfo.pcont;
+            double HPS = 1D*userinfo.thit/userinfo.ptime;
             if(HPS>4.5) HPS =  4.5;
             else if(HPS<2.5) HPS =  2.5;
             sth = Math.pow((HPS-2.5)/2,0.2);
@@ -201,10 +201,6 @@ public class ppmServiceImpl extends MessageService{
                 bonus += val;
             }
             rawpp = bpp+ bonus;
-            bonus = pp - rawpp;
-            System.out.println(bpp);
-            System.out.println(bonus);
-            System.out.println(rawpp);
 
             ppv0 /= 10;
             ppv45 /= 10;
@@ -217,6 +213,7 @@ public class ppmServiceImpl extends MessageService{
             lengv90 /= 10;
             name = prd.getString("username").replace(' ','_');
             pp = prd.getJSONObject("statistics").getFloatValue("pp");
+            bonus = pp - rawpp;
             acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
             level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
             rank = prd.getJSONObject("statistics").getIntValue("global_rank");
