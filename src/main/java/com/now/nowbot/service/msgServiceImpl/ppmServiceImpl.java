@@ -66,22 +66,23 @@ public class ppmServiceImpl extends MessageService{
             canvas.drawPath(SkiaUtil.creat6(250, 0, 1, 1, 1, 1, 1, 1), bg1);
 
 
-//            Path pt = SkiaUtil.creat6(250, 3,
-//                    (float)Math.pow((userinfo.getPtt()-0.6)*2.5f,0.9),
-//                    (float)Math.pow((userinfo.getSta()-0.6)*2.5f,0.9),
-//                    (float)Math.pow((userinfo.getStb()-0.6)*2.5f,0.9),
-//                    (float)Math.pow((userinfo.getSth()-0.6)*2.5f,0.9),
-//                    (float)Math.pow((userinfo.getEng()-0.6)*2.5f,0.9),
-//                    (float)Math.pow((userinfo.getFa()-0.6)*2.5f,0.9));
-
 
             Path pt = SkiaUtil.creat6(250, 3,
-                    (float)Math.pow((userinfo.getPtt()),0.9),
-                    (float)Math.pow((userinfo.getSta()),0.9),
-                    (float)Math.pow((userinfo.getStb()),0.9),
-                    (float)Math.pow((userinfo.getSth()),0.9),
-                    (float)Math.pow((userinfo.getEng()),0.9),
-                    (float)Math.pow((userinfo.getFa()),0.9));
+                    (float)Math.pow((userinfo.getPtt()<0.6?0.61f:userinfo.getPtt()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getSta()<0.6?0.61f:userinfo.getSta()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getStb()<0.6?0.61f:userinfo.getStb()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getSth()<0.6?0.61f:userinfo.getSth()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getEng()<0.6?0.61f:userinfo.getEng()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getFa()<0.6?0.61f:userinfo.getFa()-0.6)*2.5f,0.8));
+
+
+//            Path pt = SkiaUtil.creat6(250, 3,
+//                    (float)Math.pow((userinfo.getPtt()),2),
+//                    (float)Math.pow((userinfo.getSta()),2),
+//                    (float)Math.pow((userinfo.getStb()),2),
+//                    (float)Math.pow((userinfo.getSth()),2),
+//                    (float)Math.pow((userinfo.getEng()),2),
+//                    (float)Math.pow((userinfo.getFa()),2));
 
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
