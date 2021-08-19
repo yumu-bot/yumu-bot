@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.msgServiceImpl.FriendServiceImpl;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -24,16 +24,15 @@ public class ppmService extends MsgSTemp implements MessageService {
     OsuGetService osuGetService;
 
     ppmService() {
-        super(Pattern.compile("[!！](?i)ppm(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("[!！](?i)ppm[^v](\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
     }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+
         PPmObject userinfo;
-
-
         if (at != null) {
             var user = BindingUtil.readUser(at.getTarget());
             if (user == null) {
@@ -63,9 +62,9 @@ public class ppmService extends MsgSTemp implements MessageService {
         }
 
         try(Surface surface = Surface.makeRasterN32Premul(600,830);
-            Font smileFont = new Font(FriendServiceImpl.face,20);
-            Font lagerFont = new Font(FriendServiceImpl.face,50);
-            Font middleFont = new Font(FriendServiceImpl.face, 30);
+            Font smileFont = new Font(FontCfg.face,20);
+            Font lagerFont = new Font(FontCfg.face,50);
+            Font middleFont = new Font(FontCfg.face, 30);
             Paint bg1 = new Paint().setARGB(40,0,0,0);
             Paint bg2 = new Paint().setARGB(220,0,0,0);
             Paint wp = new Paint().setARGB(255,200,200,200);

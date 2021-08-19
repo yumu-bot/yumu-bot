@@ -2,6 +2,7 @@ package com.now.nowbot.service.msgServiceImpl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
@@ -111,9 +112,9 @@ public class ppPlusVsServiceImpl extends MessageService{
 
             byte[] datebyte = null;
             try(Surface surface = Surface.makeRasterN32Premul(600,1025);
-                Font smileFont = new Font(FriendServiceImpl.face,20);
-                Font lagerFont = new Font(FriendServiceImpl.face,35);
-                Font middleFont = new Font(FriendServiceImpl.face, 30);
+                Font smileFont = new Font(FontCfg.face,20);
+                Font lagerFont = new Font(FontCfg.face,35);
+                Font middleFont = new Font(FontCfg.face, 30);
                 Paint bg1 = new Paint().setARGB(40,0,0,0);
                 Paint bg2 = new Paint().setARGB(220,0,0,0);
                 Paint wp = new Paint().setARGB(255,200,200,200);

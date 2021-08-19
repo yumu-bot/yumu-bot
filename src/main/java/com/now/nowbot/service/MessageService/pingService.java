@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.service.msgServiceImpl.FriendServiceImpl;
+import com.now.nowbot.entity.FontCfg;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
@@ -22,7 +22,7 @@ public class pingService  extends MsgSTemp implements MessageService{
         byte[] data = null;
         try (Surface surface = Surface.makeRasterN32Premul(500,180)){
             Canvas canvas = surface.getCanvas();
-            Typeface face = FriendServiceImpl.face;
+            Typeface face = FontCfg.face;
 
             canvas.clear(Color.makeRGB(0,169,248));
             Font x = new Font(face, 100);
