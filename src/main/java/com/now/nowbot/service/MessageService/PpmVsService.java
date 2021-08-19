@@ -8,9 +8,7 @@ import com.now.nowbot.service.msgServiceImpl.FriendServiceImpl;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.PokeMessage;
-import net.mamoe.mirai.message.data.QuoteReply;
+import net.mamoe.mirai.message.data.*;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +35,17 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         if (user == null){
             from.sendMessage(PokeMessage.ChuoYiChuo);
             from.sendMessage("您未绑定，请绑定后使用");
+            return;
         }
 
 
         PPmObject userinfo1;
         PPmObject userinfo2;
-        At at;
-        if((at = (At) event.getMessage().get(At.Key)) != null){
+        At at = null;
+        for (var v : event.getMessage()){
+            if(v instanceof At) at = (At) v;
+        }
+        if(at != null){
             BinUser user2 = BindingUtil.readUser(at.getTarget());
             if(user2 == null) {
                 from.sendMessage(new QuoteReply(event.getMessage()).plus("该用户没有绑定，无法查询！"));
