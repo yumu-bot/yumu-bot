@@ -24,7 +24,7 @@ public class ppmService extends MsgSTemp implements MessageService {
     OsuGetService osuGetService;
 
     ppmService() {
-        super(Pattern.compile("[!！](?i)ppm[^v](\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("[!！](?i)ppm\\s+((?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
     }
 
     @Override
