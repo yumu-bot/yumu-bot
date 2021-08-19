@@ -39,7 +39,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
                 return;
             }
         }else {
-            name = matcher.group("nm").trim();
+            name = matcher.group("name").trim();
             if(name == null || name.equals("")){
                 user = BindingUtil.readUser(event.getSender().getId());
                 if(user == null){

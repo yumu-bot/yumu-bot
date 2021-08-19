@@ -47,10 +47,8 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             return;
         }String fkid;
         if (at == null) {
-            Pattern p = Pattern.compile(getKey().toLowerCase() + "\\s+(?<nm>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-            Matcher m = p.matcher(event.getMessage().contentToString());
-            if (m.find()) {
-                name2 = m.group("nm").trim();
+            if (matcher.find()) {
+                name2 = matcher.group("name").trim();
             }
             if (name2 == null || name2.equals("")) {
                 from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
