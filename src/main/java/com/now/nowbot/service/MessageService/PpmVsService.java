@@ -73,7 +73,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
 
         try(Surface surface = Surface.makeRasterN32Premul(600,1025);
             Font smileFont = new Font(FriendServiceImpl.face,20);
-            Font lagerFont = new Font(FriendServiceImpl.face,50);
+            Font lagerFont = new Font(FriendServiceImpl.face,35);
             Font middleFont = new Font(FriendServiceImpl.face, 30);
             Paint bg1 = new Paint().setARGB(40,0,0,0);
             Paint bg2 = new Paint().setARGB(220,0,0,0);
@@ -91,7 +91,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 var vs = TextLine.make("VS", lagerFont);
                 var textk = (surface.getWidth() - vs.getWidth()) / 2;
                 canvas.drawTextLine(line1, (textk-line1.getWidth())/2, line1.getHeight() + 20, wp1);
-                canvas.drawTextLine(line2, (surface.getWidth() + vs.getWidth())/2+(textk-line1.getWidth())/2, line2.getHeight() + 20, wp2);
+                canvas.drawTextLine(line2, surface.getWidth() - (textk-line1.getWidth())/2 - 20, line2.getHeight() + 20, wp2);
                 canvas.drawTextLine(vs, (600 - vs.getWidth()) / 2, vs.getHeight() + 20, wp);
             }
             canvas.save();
@@ -111,12 +111,12 @@ public class PpmVsService extends MsgSTemp implements MessageService{
 
 
             Path pt2 = SkiaUtil.creat6(250, 3,
-                    (float)Math.pow((userinfo2.getPtt()<0.6?0.01f:userinfo1.getPtt()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getSta()<0.6?0.01f:userinfo1.getSta()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getStb()<0.6?0.01f:userinfo1.getStb()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getSth()<0.6?0.01f:userinfo1.getSth()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getEng()<0.6?0.01f:userinfo1.getEng()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getFa()<0.6?0.01f:userinfo1.getFa()-0.6)*2.5f,0.8));
+                    (float)Math.pow((userinfo2.getPtt()<0.6?0.01f:userinfo2.getPtt()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getSta()<0.6?0.01f:userinfo2.getSta()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getStb()<0.6?0.01f:userinfo2.getStb()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getSth()<0.6?0.01f:userinfo2.getSth()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getEng()<0.6?0.01f:userinfo2.getEng()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getFa()<0.6?0.01f:userinfo2.getFa()-0.6)*2.5f,0.8));
 
 
             canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
