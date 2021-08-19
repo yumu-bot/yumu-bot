@@ -24,7 +24,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     PpmVsService(){
-        super(Pattern.compile("(?i)ppmvs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("(?i)ppmvs\\s+((?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
     }
 
     @Override
