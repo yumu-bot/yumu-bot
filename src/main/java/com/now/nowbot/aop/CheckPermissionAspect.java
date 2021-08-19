@@ -20,8 +20,8 @@ public class CheckPermissionAspect {
     public void annotatedClasses() {
     }
 
-    @Before("annotatedClasses() || annotatedMethods() && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, CheckPermission CheckPermission){
+    @Before("(annotatedClasses() || annotatedMethods()) && @annotation(CheckPermission)")
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission){
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
@@ -38,8 +38,6 @@ public class CheckPermissionAspect {
                 }
             }
         }
-
-
         return args;
     }
 

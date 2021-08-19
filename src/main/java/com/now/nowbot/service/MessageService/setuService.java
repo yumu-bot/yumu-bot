@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.StarService;
@@ -43,6 +44,7 @@ public class setuService extends MsgSTemp implements MessageService{
     }
 
     @Override
+    @CheckPermission(openBG = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         if(event instanceof GroupMessageEvent) {

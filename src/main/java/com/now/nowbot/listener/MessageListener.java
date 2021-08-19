@@ -13,18 +13,22 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MessageListener extends SimpleListenerHost implements ApplicationContextAware {
+public class MessageListener extends SimpleListenerHost{
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
     ApplicationContext applicationContext;
+    @Autowired
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         log.error(context.toString(),exception);
@@ -69,8 +73,4 @@ public class MessageListener extends SimpleListenerHost implements ApplicationCo
         e.isIntercepted();
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 }
