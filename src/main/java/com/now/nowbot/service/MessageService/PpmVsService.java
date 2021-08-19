@@ -100,21 +100,21 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             canvas.drawPath(SkiaUtil.creat6(250, 0, 1, 1, 1, 1, 1, 1), bg1);
 
             Path pt1 = SkiaUtil.creat6(250, 3,
-                    (float)Math.pow((userinfo1.getPtt()<0.6?0.61f:userinfo1.getPtt()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo1.getSta()<0.6?0.61f:userinfo1.getSta()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo1.getStb()<0.6?0.61f:userinfo1.getStb()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo1.getSth()<0.6?0.61f:userinfo1.getSth()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo1.getEng()<0.6?0.61f:userinfo1.getEng()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo1.getFa()<0.6?0.61f:userinfo1.getFa()-0.6)*2.5f,0.8));
+                    (float)Math.pow((userinfo1.getPtt()<0.6?0.01f:userinfo1.getPtt()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo1.getSta()<0.6?0.01f:userinfo1.getSta()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo1.getStb()<0.6?0.01f:userinfo1.getStb()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo1.getSth()<0.6?0.01f:userinfo1.getSth()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo1.getEng()<0.6?0.01f:userinfo1.getEng()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo1.getFa()<0.6?0.01f:userinfo1.getFa()-0.6)*2.5f,0.8));
 
 
             Path pt2 = SkiaUtil.creat6(250, 3,
-                    (float)Math.pow((userinfo2.getPtt()<0.6?0.61f:userinfo1.getPtt()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getSta()<0.6?0.61f:userinfo1.getSta()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getStb()<0.6?0.61f:userinfo1.getStb()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getSth()<0.6?0.61f:userinfo1.getSth()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getEng()<0.6?0.61f:userinfo1.getEng()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo2.getFa()<0.6?0.61f:userinfo1.getFa()-0.6)*2.5f,0.8));
+                    (float)Math.pow((userinfo2.getPtt()<0.6?0.01f:userinfo1.getPtt()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getSta()<0.6?0.01f:userinfo1.getSta()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getStb()<0.6?0.01f:userinfo1.getStb()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getSth()<0.6?0.01f:userinfo1.getSth()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getEng()<0.6?0.01f:userinfo1.getEng()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo2.getFa()<0.6?0.01f:userinfo1.getFa()-0.6)*2.5f,0.8));
 
 
             canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));

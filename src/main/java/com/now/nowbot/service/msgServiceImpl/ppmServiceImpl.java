@@ -70,12 +70,12 @@ public class ppmServiceImpl extends MessageService{
 
 
             Path pt = SkiaUtil.creat6(250, 3,
-                    (float)Math.pow((userinfo.getPtt()<0.6?0.61f:userinfo.getPtt()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo.getSta()<0.6?0.61f:userinfo.getSta()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo.getStb()<0.6?0.61f:userinfo.getStb()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo.getSth()<0.6?0.61f:userinfo.getSth()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo.getEng()<0.6?0.61f:userinfo.getEng()-0.6)*2.5f,0.8),
-                    (float)Math.pow((userinfo.getFa()<0.6?0.61f:userinfo.getFa()-0.6)*2.5f,0.8));
+                    (float)Math.pow((userinfo.getPtt()<0.6?0.01f:userinfo.getPtt()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getSta()<0.6?0.01f:userinfo.getSta()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getStb()<0.6?0.01f:userinfo.getStb()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getSth()<0.6?0.01f:userinfo.getSth()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getEng()<0.6?0.01f:userinfo.getEng()-0.6)*2.5f,0.8),
+                    (float)Math.pow((userinfo.getFa()<0.6?0.01f:userinfo.getFa()-0.6)*2.5f,0.8));
 
 
 
