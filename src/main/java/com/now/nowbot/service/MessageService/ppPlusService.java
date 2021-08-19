@@ -39,8 +39,8 @@ public class ppPlusService extends MsgSTemp implements MessageService{
                 return;
             }
         }else {
-            name = matcher.group("name").trim();
-            if(name == null || name.equals("")){
+            name = matcher.group("name");
+            if(name == null || name.trim().equals("")){
                 user = BindingUtil.readUser(event.getSender().getId());
                 if(user == null){
                     from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
@@ -50,7 +50,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
         }
         JSONObject js = null;
         if (user == null){
-            js = osuGetService.ppPlus(""+osuGetService.getOsuId(name));
+            js = osuGetService.ppPlus(""+osuGetService.getOsuId(name.trim()));
         }else {
             js = osuGetService.ppPlus(""+user.getOsuID());
         }
