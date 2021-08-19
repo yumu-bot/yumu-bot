@@ -34,7 +34,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         Contact from = event.getSubject();
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
-        String name1;
+        String name1 = null;
         BinUser us = BindingUtil.readUser(event.getSender().getId());
         String name2 = null;
         if (us == null) {
