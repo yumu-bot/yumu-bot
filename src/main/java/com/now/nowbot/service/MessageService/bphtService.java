@@ -18,7 +18,7 @@ public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     bphtService(){
-        super(Pattern.compile("[!！](?i)bpht\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?"));
+        super(Pattern.compile("[!！](?i)bpht(\\s+?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?"));
     }
 
     @Override
@@ -26,7 +26,7 @@ public class bphtService extends MsgSTemp implements MessageService{
         var from = event.getSubject();
         BinUser nu = null;
 
-        if(matcher.find() && matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+        if(matcher.group("name") != null && !matcher.group("name").trim().equals("")){
             String name = matcher.group("name").trim();
                 nu = new BinUser();
                 nu.setOsuID(osuGetService.getOsuId(name));
