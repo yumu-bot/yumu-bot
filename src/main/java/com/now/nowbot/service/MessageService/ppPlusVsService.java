@@ -6,6 +6,7 @@ import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
