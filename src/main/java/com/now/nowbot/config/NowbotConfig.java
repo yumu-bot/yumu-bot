@@ -17,9 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -136,15 +134,6 @@ public class NowbotConfig {
     @Value("${mirai.password}")
     public void setPASSWORD(String PASSWORD){
         NowbotConfig.PASSWORD = PASSWORD;
-    }
-
-    public static List<Long> SUPER_USER;
-    @Value("#{'${mirai.superuser}'.split(',')}")
-    public void setSuperUser(long[] users){
-        SUPER_USER = new ArrayList<>();
-        for (long us : users){
-            SUPER_USER.add(us);
-        }
     }
 
     @Bean

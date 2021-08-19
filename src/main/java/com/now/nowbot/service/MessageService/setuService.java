@@ -2,9 +2,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.StarService;
-import com.now.nowbot.service.msgServiceImpl.setuServiceImpl;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -30,13 +30,16 @@ import java.util.regex.Pattern;
 
 @Service("setu")
 public class setuService extends MsgSTemp implements MessageService{
-    static final Logger log = LoggerFactory.getLogger(setuServiceImpl.class);
+    static final Logger log = LoggerFactory.getLogger(setuService.class);
     Long time;
     @Autowired
     RestTemplate template;
 
     @Autowired
     StarService starService;
+
+    @Autowired
+    Permission permission;
 
     setuService() {
         super(Pattern.compile("[!！]\\s*((色图)|(涩图)|(setu))"),"setu");
@@ -53,7 +56,7 @@ public class setuService extends MsgSTemp implements MessageService{
             from = event.getSender();
         }
         long qq = event.getSender().getId();
-        boolean issuper = NowbotConfig.SUPER_USER.contains(event.getSender().getId());
+        boolean issuper = permission.superUser.contains(event.getSender().getId());
 
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
@@ -75,7 +78,7 @@ public class setuService extends MsgSTemp implements MessageService{
         }
 
         StarService.score score = starService.getScore(binUser);
-        if(starService.delStart(score,5)||issuper){
+        if(issuper||starService.delStart(score,5)){
             from.sendMessage("稍等片刻");
         }else {
             from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");

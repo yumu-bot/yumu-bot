@@ -11,9 +11,17 @@ mirai:
   qq: 111111
   password: password
   start: true
-  superuser:
-    - 222222
-    - 333333
+  permission:
+    group-blacklist:
+      - 11111
+    group-whitelist:
+      - 22222
+    friend-blacklist:
+      - 11111
+    friend-whitelist:
+      - 22222
+    super-user:
+      - 33333
 ppy:
   url: https://osu.ppy.sh/api/v2/ #建议不要修改
   callbackpath: /oauth  #回调监听链接path
