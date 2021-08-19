@@ -17,7 +17,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 @Configuration
 @ConfigurationProperties(prefix = "nowbot.config")
@@ -168,5 +171,9 @@ public class NowbotConfig {
         bot.getEventChannel().registerListenerHost(new MessageListener());
 
         return bot;
+    }
+    @Bean(name = "MessageServices")
+    public Map<Pattern, String> services(){
+        return new HashMap<>();
     }
 }

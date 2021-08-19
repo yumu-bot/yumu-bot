@@ -45,7 +45,6 @@ public class ppPlusVsServiceImpl extends MessageService{
             }
         }
 
-        String name = null;
         String name1;
         BinUser us = BindingUtil.readUser(event.getSender().getId());
         String name2 = null;
@@ -59,16 +58,18 @@ public class ppPlusVsServiceImpl extends MessageService{
             return;
         }
         name1 = us.getOsuName();
+        String fkid;
         if (at == null) {
             Pattern p = Pattern.compile(getKey().toLowerCase() + "\\s+(?<nm>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
             Matcher m = p.matcher(event.getMessage().contentToString());
             if (m.find()) {
-                name = m.group("nm").trim();
+                name2 = m.group("nm").trim();
             }
-            if (name == null || name.equals("")) {
-                from.sendMessage("你个瓜娃子到底要vs那个嘞,扣你积分！");
+            if (name2 == null || name2.equals("")) {
+                from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
                 return;
             }
+            fkid = name2;
         }else {
             BinUser r = BindingUtil.readUser(at.getTarget());
             if (r == null){
@@ -76,14 +77,14 @@ public class ppPlusVsServiceImpl extends MessageService{
                 starService.addStart(score,1);
                 return;
             }
-            name = r.getOsuID()+"";
+            fkid = r.getOsuID()+"";
             name2 = r.getOsuName();
         }
 
         JSONObject user1 = null;
         JSONObject user2 = null;
         user1 = osuGetService.ppPlus(us.getOsuID()+"");
-        user2 = osuGetService.ppPlus(name);
+        user2 = osuGetService.ppPlus(fkid);
         if (user1 == null || user2 == null){
             from.sendMessage("api请求失败");
             starService.addStart(score,1);
@@ -124,12 +125,15 @@ public class ppPlusVsServiceImpl extends MessageService{
                 var canvas = surface.getCanvas();
                 canvas.clear(Color.makeRGB(65, 40, 49));
 
-                var line1 = TextLine.make(name1,lagerFont);
-                var line2 = TextLine.make(name2,lagerFont);
-                var vs = TextLine.make("VS",lagerFont);
-                canvas.drawTextLine(line1,40,line1.getHeight()+20,wp1);
-                canvas.drawTextLine(line2,560-line2.getWidth(),line2.getHeight()+20,wp2);
-                canvas.drawTextLine(vs,(600-vs.getWidth())/2,vs.getHeight()+20,wp);
+                {
+                    var line1 = TextLine.make(name1, lagerFont);
+                    var line2 = TextLine.make(name2, lagerFont);
+                    var vs = TextLine.make("VS", lagerFont);
+                    var textk = (surface.getWidth() - vs.getWidth()) / 2;
+                    canvas.drawTextLine(line1, (textk-line1.getWidth())/2, line1.getHeight() + 20, wp1);
+                    canvas.drawTextLine(line2, (surface.getWidth() + vs.getWidth())/2+(textk-line1.getWidth())/2, line2.getHeight() + 20, wp2);
+                    canvas.drawTextLine(vs, (600 - vs.getWidth()) / 2, vs.getHeight() + 20, wp);
+                }
 
                 canvas.save();
                 canvas.translate(300,325);

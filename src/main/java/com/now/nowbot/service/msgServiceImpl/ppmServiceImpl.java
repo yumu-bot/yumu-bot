@@ -8,6 +8,7 @@ import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.PokeMessage;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ public class ppmServiceImpl extends MessageService{
 
         BinUser user = BindingUtil.readUser(event.getSender().getId());
         if (user == null){
+            from.sendMessage(PokeMessage.ChuoYiChuo);
             from.sendMessage("您未绑定，请绑定后使用");
         }
         PPmObject userinfo;
@@ -76,13 +78,6 @@ public class ppmServiceImpl extends MessageService{
                     (float)Math.pow((userinfo.getFa()<0.6?0.61f:userinfo.getFa()-0.6)*2.5f,0.8));
 
 
-//            Path pt = SkiaUtil.creat6(250, 3,
-//                    (float)Math.pow((userinfo.getPtt()),2),
-//                    (float)Math.pow((userinfo.getSta()),2),
-//                    (float)Math.pow((userinfo.getStb()),2),
-//                    (float)Math.pow((userinfo.getSth()),2),
-//                    (float)Math.pow((userinfo.getEng()),2),
-//                    (float)Math.pow((userinfo.getFa()),2));
 
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));

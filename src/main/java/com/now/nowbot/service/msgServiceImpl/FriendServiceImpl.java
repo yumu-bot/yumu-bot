@@ -43,7 +43,7 @@ public class FriendServiceImpl extends MessageService{
     @Autowired
     OsuGetService osuGetService;
 
-    static Typeface face;
+    public static Typeface face;
     static Font naf;
     static Font bigf;
     public FriendServiceImpl(){

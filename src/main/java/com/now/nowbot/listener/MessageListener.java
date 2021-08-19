@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.service.MessageService.MsgSTemp;
 import com.now.nowbot.service.msgServiceImpl.MessageService;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -19,21 +20,16 @@ public class MessageListener extends SimpleListenerHost {
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         log.error(context.toString(),exception);
     }
-//    @Async
-//    @EventHandler
-//    public void msg(MessageEvent event){
-//        Contact from;
-//        if(event instanceof GroupMessageEvent) {
-//            from = ((GroupMessageEvent) event).getGroup();
-//        }else {
-//            from = event.getSender();
-//        }
-//        for( var g : event.getMessage()){
-//            if (g instanceof PlainText){
-//                g.contentToString().startsWith("");
-//            }
-//        }
-//    }
+    @Async
+    @EventHandler
+    public void msg(MessageEvent event) throws Throwable{
+        MsgSTemp.handel(event);
+    }
+    @Async
+    @EventHandler
+    public void msg(MessagePreSendEvent event){
+        System.out.println(event.getMessage().contentToString());
+    }
     @Async
     @EventHandler
     public void msg(GroupMessageEvent event){
