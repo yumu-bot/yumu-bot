@@ -20,6 +20,7 @@ public class MessageListener extends SimpleListenerHost {
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         log.error(context.toString(),exception);
     }
+
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{

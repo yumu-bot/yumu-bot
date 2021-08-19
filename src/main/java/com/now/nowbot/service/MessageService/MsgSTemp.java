@@ -1,39 +1,28 @@
 package com.now.nowbot.service.MessageService;
 
 import net.mamoe.mirai.event.events.MessageEvent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 public abstract class MsgSTemp {
-    private static ApplicationContext applicationContext;
+    private static final Map<Pattern, MessageService> services = new HashMap<>();
 
-    @Autowired
-    void setApplicationContext(ApplicationContext a){
-        applicationContext = a;
-    }
-    MsgSTemp(String name,Pattern pattern){
+    MsgSTemp(Pattern pattern){
         /***
          * name  (?<name>[0-9a-zA-Z\[\]\-_ ]*)?
          */
-        if (applicationContext != null) {
-            Map<Pattern, String> services = applicationContext.getBean("MessageServices", Map.class);
-            services.put(pattern,name);
-        }
-
+        services.put(pattern,(MessageService)this);
     }
     public static void handel(MessageEvent event) throws Throwable{
-        if (applicationContext != null) {
-            Map<Pattern, String> services = applicationContext.getBean("MessageServices", Map.class);
+
             for (var k : services.keySet()){
                 var matcher = k.matcher(event.getMessage().contentToString());
                 if(matcher.find()){
-                    applicationContext.getBean(services.get(k), MessageService.class)
+                    services.get(k)
                             .HandleMessage(event, matcher);
                 }
             }
-        }
     }
 }
