@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("ppvs")
 public class ppPlusVsService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
@@ -26,7 +26,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
     StarService starService;
 
     ppPlusVsService() {
-        super(Pattern.compile("[!！](?i)pp([pP])?vs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("[!！](?i)p([pP]*)?vs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
     }
 
     @Override

@@ -6,6 +6,7 @@ import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -152,6 +153,8 @@ public class NowbotConfig {
     }
     @Value("${mirai.start}")
     boolean isStart;
+    @Autowired
+    MessageListener messageListener;
     @Bean
     public Bot bot(){
         BotConfiguration botConfiguration = new BotConfiguration();
@@ -168,7 +171,7 @@ public class NowbotConfig {
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         if (isStart) bot.login();
-        bot.getEventChannel().registerListenerHost(new MessageListener());
+        bot.getEventChannel().registerListenerHost(messageListener);
 
         return bot;
     }

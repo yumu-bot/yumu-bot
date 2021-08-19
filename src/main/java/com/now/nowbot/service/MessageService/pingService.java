@@ -10,13 +10,14 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("ping")
 public class pingService  extends MsgSTemp implements MessageService{
     pingService(){
-        super(Pattern.compile("[!！](?i)ping"));
+        super(Pattern.compile("[!！](?i)ping"),"ping");
     }
 
     @Override
+//    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         byte[] data = null;

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("jifen")
 public class startService extends MsgSTemp implements MessageService{
     @Autowired
     StarService starService;
@@ -22,7 +22,7 @@ public class startService extends MsgSTemp implements MessageService{
     OsuGetService osuGetService;
 
     startService(){
-        super(Pattern.compile("[!！]\\s*((查看积分)|(刷新积分)|(积分)|(获取积分))"));
+        super(Pattern.compile("[!！]\\s*((查看积分)|(刷新积分)|(积分)|(获取积分))"),"jifen");
     }
 
     @Override

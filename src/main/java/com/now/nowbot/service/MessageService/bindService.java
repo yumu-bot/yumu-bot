@@ -17,14 +17,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("bind")
 public class bindService extends MsgSTemp implements MessageService{
     public final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
 
     bindService(){
-        super(Pattern.compile("[!！](?i)bind"));
+        super(Pattern.compile("[!！](?i)bind"), "bind");
         new Thread(this::delpassed).start();
     }
     void delpassed(){

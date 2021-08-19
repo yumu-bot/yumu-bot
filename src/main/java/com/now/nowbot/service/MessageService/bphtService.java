@@ -13,12 +13,12 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("bpht")
 public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     bphtService(){
-        super(Pattern.compile("[!！](?i)bpht(\\s+?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?"));
+        super(Pattern.compile("[!！](?i)bpht(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
     }
 
     @Override

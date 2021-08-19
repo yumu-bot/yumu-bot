@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -11,21 +12,37 @@ import net.mamoe.mirai.event.events.MessagePreSendEvent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 
-public class MessageListener extends SimpleListenerHost {
+@Component
+public class MessageListener extends SimpleListenerHost implements ApplicationContextAware {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
+
+    ApplicationContext applicationContext;
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         log.error(context.toString(),exception);
     }
 
+
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{
-        MsgSTemp.handel(event);
+
+        for (var k : MsgSTemp.services.keySet()){
+            var matcher = k.matcher(event.getMessage().contentToString());
+            if(matcher.find()){
+                var servicename = MsgSTemp.services.get(k);
+                var service = (MessageService)applicationContext.getBean(servicename);
+                service.HandleMessage(event, matcher);
+            }
+        }
     }
     @Async
     @EventHandler
@@ -50,5 +67,10 @@ public class MessageListener extends SimpleListenerHost {
     public void joinGroup(BotInvitedJoinGroupRequestEvent e){
         e.getBot().getFriend(365246692L).sendMessage("被邀请了").recallIn(100*1000);
         e.isIntercepted();
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

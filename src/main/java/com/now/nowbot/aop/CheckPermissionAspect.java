@@ -1,5 +1,7 @@
 package com.now.nowbot.aop;
 
+import net.mamoe.mirai.event.events.GroupMessageEvent;
+import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -17,15 +19,28 @@ public class CheckPermissionAspect {
     @Pointcut("@within(com.now.nowbot.aop.CheckPermission)")
     public void annotatedClasses() {
     }
-    @Before("annotatedClasses() || annotatedMethods()")
-    public Object checkPermission(@NotNull JoinPoint point){
-        var args = point.getArgs();
 
-//        MessageEvent e = (MessageEvent) args[1];
-        System.out.println(args.length);
-        for (int i = 0; i < args.length; i++) {
-            System.out.println(point.getTarget().toString()+(int)args[i]);
+    @Before("annotatedClasses() || annotatedMethods() && @annotation(CheckPermission)")
+    public Object checkPermission(@NotNull JoinPoint point, CheckPermission CheckPermission){
+        var args = point.getArgs();
+        var event = (MessageEvent)args[0];
+
+        if (CheckPermission.isBotSuper()){
+            event.getSubject().sendMessage("权限禁止");
+            throw new RuntimeException("权限禁止");
         }
+
+        if(CheckPermission.openBG()){
+            if (event instanceof GroupMessageEvent){
+                if (((GroupMessageEvent) event).getGroup().getId() == 928936255L){
+                    event.getSubject().sendMessage("权限禁止");
+                    throw new RuntimeException("权限禁止");
+                }
+            }
+        }
+
+
         return args;
     }
+
 }

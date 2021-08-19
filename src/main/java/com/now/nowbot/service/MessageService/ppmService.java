@@ -24,10 +24,11 @@ public class ppmService extends MsgSTemp implements MessageService {
     OsuGetService osuGetService;
 
     ppmService() {
-        super(Pattern.compile("[!！](?i)ppm\\s+((?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("[!！](?i)ppm(?!v)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
     }
 
     @Override
+//    @CheckPermission()
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);

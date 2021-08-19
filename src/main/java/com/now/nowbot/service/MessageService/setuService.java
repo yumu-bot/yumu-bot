@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+@Service("setu")
 public class setuService extends MsgSTemp implements MessageService{
     static final Logger log = LoggerFactory.getLogger(setuServiceImpl.class);
     Long time;
@@ -38,7 +38,7 @@ public class setuService extends MsgSTemp implements MessageService{
     StarService starService;
 
     setuService() {
-        super(Pattern.compile("[!！]\\s*((色图)|(涩图)|(setu))"));
+        super(Pattern.compile("[!！]\\s*((色图)|(涩图)|(setu))"),"setu");
         time = 0L;
     }
 

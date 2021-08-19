@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
@@ -26,11 +25,10 @@ public class PpmVsService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     PpmVsService(){
-        super(Pattern.compile("[!！](?i)ppmvs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"));
+        super(Pattern.compile("[!！](?i)ppmvs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppmvs");
     }
 
     @Override
-    @CheckPermission
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
