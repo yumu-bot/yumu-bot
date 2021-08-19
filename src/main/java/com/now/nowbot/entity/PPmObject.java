@@ -107,7 +107,11 @@ public class PPmObject {
         lengv90 /= 10;
         name = prd.getString("username");
         pp = prd.getJSONObject("statistics").getFloatValue("pp");
-        bonus = pp - rawpp;
+        if (pp > rawpp) {
+            bonus = pp - rawpp;
+        }else {
+            bonus = 0;
+        }
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");

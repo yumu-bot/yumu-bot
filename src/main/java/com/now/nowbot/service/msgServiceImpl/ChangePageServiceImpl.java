@@ -2,11 +2,10 @@ package com.now.nowbot.service.msgServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
 import net.mamoe.mirai.event.events.FriendMessageEvent;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Service
+
 public class ChangePageServiceImpl extends MessageService{
 
     public ChangePageServiceImpl() {

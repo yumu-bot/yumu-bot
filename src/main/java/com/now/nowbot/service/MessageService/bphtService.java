@@ -1,53 +1,36 @@
-package com.now.nowbot.service.msgServiceImpl;
+package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONArray;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class BphtServiceImpl extends MessageService{
+public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
-
-    public BphtServiceImpl() {
-        super("bpht");
+    bphtService(){
+        super(Pattern.compile("[!！](?i)bpht\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?"));
     }
 
     @Override
-    public void handleMsg(MessageEvent event) {
-        Contact from;
-        if(event instanceof GroupMessageEvent) {
-            from = ((GroupMessageEvent) event).getGroup();
-        }else {
-            from = event.getSender();
-        }
-
-
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
         BinUser nu = null;
-        Pattern p = Pattern.compile(getKey()+"\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-        Matcher m = p.matcher(event.getMessage().contentToString());
-        if(m.find() && m.group("name") != null && !m.group("name").trim().equals("")){
-                String name = m.group("name").trim();
-                try {
-                    nu = new BinUser();
-                    nu.setOsuID(osuGetService.getOsuId(name));
-                    nu.setOsuName(name);
-                } catch (Exception e) {
-                    from.sendMessage(e.getMessage());
-                    return;
-                }
+
+        if(matcher.find() && matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+            String name = matcher.group("name").trim();
+                nu = new BinUser();
+                nu.setOsuID(osuGetService.getOsuId(name));
+                nu.setOsuName(name);
         }else {
             nu = BindingUtil.readUser(event.getSender().getId());
             if(nu == null){
@@ -60,12 +43,9 @@ public class BphtServiceImpl extends MessageService{
         }
         JSONArray Bps;
         if(nu != null && nu.getAccessToken()!= null){
-            try {
+
                 Bps = osuGetService.getOsuBestMap(nu, 0,100);
-            } catch (HttpClientErrorException e) {
-                from.sendMessage("您的令牌已过期,请私聊bot bind重新绑定！");
-                return;
-            }
+
         }else {
             Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
         }

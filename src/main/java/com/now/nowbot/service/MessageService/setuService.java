@@ -1,8 +1,9 @@
-package com.now.nowbot.service.msgServiceImpl;
+package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.StarService;
+import com.now.nowbot.service.msgServiceImpl.setuServiceImpl;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -14,6 +15,7 @@ import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -22,27 +24,27 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class setuServiceImpl extends MessageService{
+@Service
+public class setuService extends MsgSTemp implements MessageService{
     static final Logger log = LoggerFactory.getLogger(setuServiceImpl.class);
     Long time;
-    CopyOnWriteArraySet<Long> openGreat;
     @Autowired
     RestTemplate template;
 
     @Autowired
     StarService starService;
 
-    public setuServiceImpl() {
-        super("涩图");
+    setuService() {
+        super(Pattern.compile("[!！]\\s*((色图)|(涩图)|(setu))"));
         time = 0L;
-        openGreat = new CopyOnWriteArraySet();
     }
 
     @Override
-    public void handleMsg(MessageEvent event, String [] page) {
-        Contact from;
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        Contact from = event.getSubject();
         if(event instanceof GroupMessageEvent) {
             from = ((GroupMessageEvent) event).getGroup();
         }else {
@@ -50,49 +52,7 @@ public class setuServiceImpl extends MessageService{
         }
         long qq = event.getSender().getId();
         boolean issuper = NowbotConfig.SUPER_USER.contains(event.getSender().getId());
-        if(issuper && page.length>=2){
-            switch (page[1]){
-                case "off": {
-                    if(page.length>=3) {
-                        openGreat.add(Long.parseLong(page[2]));
-                        from.sendMessage("已禁用"+page[2]);
-                    }
-                    else {
-                        openGreat.add(from.getId());
-                        from.sendMessage("已禁用本群");
-                    }
-                    return;
-                }
-                case "on": {
-                    if(page.length>=3) {
-                        openGreat.remove(Long.parseLong(page[2]));
-                        from.sendMessage("已开启"+page[2]);
-                    }
-                    else {
-                        openGreat.remove(from.getId());
-                        from.sendMessage("已开启本群");
-                    }
-                    return;
-                }
-                case "list":{
-                    StringBuffer s = new StringBuffer();
-                    s.append("群组黑名单有：\n");
-                    openGreat.forEach(e->{
-                        s.append(e).append('\n');
-                    });
-                    from.sendMessage(s.toString());
-                } return;
-            }
-        }
-        if (openGreat.contains(from.getId())){
-            try {
-                var img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH+"xxoo.jpg"));
-                from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(img),from));
-            } catch (IOException e) {
-                log.error("图片读取异常",e);
-            }
-            return;
-        }
+
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
                 byte[] img = new byte[0];

@@ -1,8 +1,8 @@
 package com.now.nowbot.controller;
 
 import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.service.MessageService.bindService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.msgServiceImpl.BindingServiceImpl;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.Bot;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(produces = "application/json;charset=UTF-8")
 public class msgController {
     @Autowired
-    BindingServiceImpl bin;
+    bindService bin;
     @Autowired
     Bot bot;
     @Autowired

@@ -1,12 +1,13 @@
 package com.now.nowbot.listener;
 
 import com.now.nowbot.service.MessageService.MsgSTemp;
-import com.now.nowbot.service.msgServiceImpl.MessageService;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
-import net.mamoe.mirai.event.events.*;
-import net.mamoe.mirai.message.data.MessageChain;
+import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent;
+import net.mamoe.mirai.event.events.ImageUploadEvent;
+import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.event.events.MessagePreSendEvent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,54 +31,6 @@ public class MessageListener extends SimpleListenerHost {
     @EventHandler
     public void msg(MessagePreSendEvent event){
         System.out.println(event.getMessage().contentToString());
-    }
-    @Async
-    @EventHandler
-    public void msg(GroupMessageEvent event){
-        MessageChain data = event.getMessage();
-        if ( data.size() >= 2 ){
-            String[] page = data.get(1).contentToString().trim().split("\\s+");
-            if(MessageService.servicesName.containsKey(page[0].toLowerCase())) {
-                log.info(event.getGroup().getName()+":"+page[0]);
-                MessageService.servicesName.get(page[0].toLowerCase()).handleMsg(event, page);
-            }
-        }
-    }
-    @Async
-    @EventHandler
-    public void msg(FriendMessageEvent event){
-        MessageChain data = event.getMessage();
-        if ( data.size() >= 2 ){
-            String[] page = data.get(1).contentToString().trim().split("\\s+");
-            if(MessageService.servicesName.containsKey(page[0].toLowerCase())) {
-                log.info(page[0].toLowerCase());
-                MessageService.servicesName.get(page[0].toLowerCase()).handleMsg(event, page);
-            }
-        }
-    }
-    @Async
-    @EventHandler
-    public void msg(StrangerMessageEvent event){
-        MessageChain data = event.getMessage();
-        if ( data.size() >= 2 ){
-            String[] page = data.get(1).contentToString().trim().split("\\s+");
-            if(MessageService.servicesName.containsKey(page[0].toLowerCase())) {
-                log.info(page[0].toLowerCase());
-                MessageService.servicesName.get(page[0].toLowerCase()).handleMsg(event, page);
-            }
-        }
-    }
-    @Async
-    @EventHandler
-    public void msg(GroupTempMessageEvent event){
-        MessageChain data = event.getMessage();
-        if ( data.size() >= 2 ){
-            String[] page = data.get(1).contentToString().trim().split("\\s+");
-            if(MessageService.servicesName.containsKey(page[0].toLowerCase())) {
-                log.info(page[0].toLowerCase());
-                MessageService.servicesName.get(page[0].toLowerCase()).handleMsg(event, page);
-            }
-        }
     }
     /***
      * ImageUploadEvent 图片上传事件

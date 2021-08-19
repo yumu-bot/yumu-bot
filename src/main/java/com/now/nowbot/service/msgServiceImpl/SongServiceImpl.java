@@ -9,7 +9,6 @@ import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -17,7 +16,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component
+
 public class SongServiceImpl extends MessageService{
     @Autowired
     OsuGetService osuGetService;

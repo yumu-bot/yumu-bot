@@ -13,12 +13,11 @@ import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+
 public class ppPlusVsServiceImpl extends MessageService{
     @Autowired
     OsuGetService osuGetService;

@@ -1,27 +1,26 @@
-package com.now.nowbot.service.msgServiceImpl;
+package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.service.msgServiceImpl.FriendServiceImpl;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
+import org.springframework.stereotype.Service;
 
-public class PingServiceImpl extends MessageService{
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public PingServiceImpl() {
-        super("ping");
+@Service
+public class pingService  extends MsgSTemp implements MessageService{
+    pingService(){
+        super(Pattern.compile("[!！](?i)ping"));
     }
 
     @Override
-    public void handleMsg(MessageEvent event) {
-        Contact from;
-        if(event instanceof GroupMessageEvent) {
-            from = ((GroupMessageEvent) event).getGroup();
-        }else {
-            from = event.getSender();
-        }
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        Contact from = event.getSubject();
         byte[] data = null;
-        try (Surface surface = Surface.makeRasterN32Premul(500,300)){
+        try (Surface surface = Surface.makeRasterN32Premul(500,180)){
             Canvas canvas = surface.getCanvas();
             Typeface face = FriendServiceImpl.face;
 
@@ -33,5 +32,6 @@ public class PingServiceImpl extends MessageService{
             data = surface.makeImageSnapshot().encodeToData().getBytes();
         }catch (Exception e){}
         if (data != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data), from)).recallIn(2000);
+
     }
 }

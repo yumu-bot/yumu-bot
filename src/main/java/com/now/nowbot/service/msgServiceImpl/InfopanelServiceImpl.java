@@ -2,8 +2,7 @@ package com.now.nowbot.service.msgServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.SkiaUtil;
-import net.mamoe.mirai.contact.*;
-import net.mamoe.mirai.event.events.FriendMessageEvent;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -11,17 +10,18 @@ import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.SingleMessage;
 import net.mamoe.mirai.utils.ExternalResource;
-import org.jetbrains.skija.*;
+import org.jetbrains.skija.Canvas;
+import org.jetbrains.skija.Paint;
+import org.jetbrains.skija.Rect;
+import org.jetbrains.skija.Surface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+
 public class InfopanelServiceImpl extends MessageService{
     private static final Logger log = LoggerFactory.getLogger(InfopanelServiceImpl.class);
 
