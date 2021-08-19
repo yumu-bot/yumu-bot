@@ -12,14 +12,12 @@ import net.mamoe.mirai.message.data.PokeMessage;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 
-@Service
 public class ppmServiceImpl extends MessageService{
     public ppmServiceImpl() {
-        super("ppm");
+        super("lllllllllllll");
     }
     @Autowired
     OsuGetService osuGetService;
