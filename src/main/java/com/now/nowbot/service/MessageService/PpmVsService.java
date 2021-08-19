@@ -18,7 +18,7 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("ppm")
+@Service("ppmvs")
 public class PpmVsService extends MsgSTemp implements MessageService{
 
     @Autowired
@@ -41,10 +41,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
 
         PPmObject userinfo1;
         PPmObject userinfo2;
-        At at = null;
-        for (var v : event.getMessage()){
-            if(v instanceof At) at = (At) v;
-        }
+        At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
             BinUser user2 = BindingUtil.readUser(at.getTarget());
             if(user2 == null) {
@@ -91,7 +88,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 var vs = TextLine.make("VS", lagerFont);
                 var textk = (surface.getWidth() - vs.getWidth()) / 2;
                 canvas.drawTextLine(line1, (textk-line1.getWidth())/2, line1.getHeight() + 20, wp1);
-                canvas.drawTextLine(line2, surface.getWidth() - (textk-line1.getWidth())/2 - 20, line2.getHeight() + 20, wp2);
+                canvas.drawTextLine(line2, ((surface.getWidth()*3/2)-line2.getWidth())/2, line2.getHeight() + 20, wp2);
                 canvas.drawTextLine(vs, (600 - vs.getWidth()) / 2, vs.getHeight() + 20, wp);
             }
             canvas.save();
@@ -119,8 +116,8 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     (float)Math.pow((userinfo2.getFa()<0.6?0.01f:userinfo2.getFa()-0.6)*2.5f,0.8));
 
 
-            canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
-            canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
+            canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,50,196,233));
+            canvas.drawPath(pt1, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 50,196,233));
 
             canvas.drawPath(pt2, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,0,110));
             canvas.drawPath(pt2, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 0, 110));

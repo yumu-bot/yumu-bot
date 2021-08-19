@@ -127,15 +127,5 @@ public class ppmServiceImpl extends MessageService{
 
         }
 
-//        StringBuffer sb = new StringBuffer();
-//        DecimalFormat dx = new DecimalFormat("0.00");
-//        sb.append("计算结果：").append('\n')
-//                .append("fACC ").append(dx.format(userinfo.getFa()*100)).append('\n')
-//                .append("PTT ").append(dx.format(userinfo.getPtt()*100)).append('\n')
-//                .append("STA ").append(dx.format(userinfo.getSta()*100)).append('\n')
-//                .append("STB ").append(dx.format(userinfo.getStb()*100)).append('\n')
-//                .append("ENG ").append(dx.format(userinfo.getEng()*100)).append('\n')
-//                .append("STH ").append(dx.format(userinfo.getSth()*100));
-//        from.sendMessage(sb.toString());
     }
 }
