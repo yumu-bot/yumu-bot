@@ -7,7 +7,6 @@ import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.PokeMessage;
 import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
@@ -24,7 +23,7 @@ public class ppmService extends MsgSTemp implements MessageService {
     OsuGetService osuGetService;
 
     ppmService() {
-        super(Pattern.compile("[!！](?i)ppm(?!v)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
+        super(Pattern.compile("[!！]\\s?(?i)ppm(?!v)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
     }
 
     @Override
@@ -52,7 +51,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             }else {
                 var user = BindingUtil.readUser(event.getSender().getId());
                 if (user == null) {
-                    from.sendMessage(PokeMessage.ChuoYiChuo);
+//                    from.sendMessage(PokeMessage.ChuoYiChuo);
                     from.sendMessage("您未绑定，请绑定后使用");
                     return;
                 }

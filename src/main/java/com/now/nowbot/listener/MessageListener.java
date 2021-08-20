@@ -31,6 +31,10 @@ public class MessageListener extends SimpleListenerHost{
     }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
+        context.fold(Object.class,(e, v)->{
+            System.out.println(e.getClass());
+            return e;
+        });
         log.error(context.toString(),exception);
     }
 

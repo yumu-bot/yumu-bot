@@ -1,14 +1,13 @@
-package com.now.nowbot.service.msgServiceImpl;
+package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -16,51 +15,22 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-public class SongServiceImpl extends MessageService{
+@Service("song")
+public class songService extends MsgSTemp implements MessageService{
+    @Autowired
+        StarService starService;
     @Autowired
     OsuGetService osuGetService;
-    @Autowired
-    StarService starService;
-
-    public SongServiceImpl(){
-        super("song");
+    songService() {
+        super(Pattern.compile("[!！]\\s?(?i)song\\s*((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+)?"), "song");
     }
 
     @Override
-    public void handleMsg(MessageEvent event) {
-        Contact from;
-        if(event instanceof GroupMessageEvent) {
-            from = ((GroupMessageEvent) event).getGroup();
-        }else {
-            from = event.getSender();
-        }
-
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
         if(user == null) {
             from.sendMessage("您未绑定，禁止使用！！！");
-            return;
-        }
-
-
-
-        Pattern p = Pattern.compile("((sid:(?<sid>\\d+))|(bid:(?<bid>\\d+)))|(?<id>\\d+)");
-        Matcher m = p.matcher(event.getMessage().contentToString());
-        int id = 0;
-        boolean isBid = true;
-        if(m.find()){
-            if (m.group("id") != null) {
-                id = Integer.parseInt(m.group("id"));
-            }else
-            if (m.group("bid") != null) {
-                id = Integer.parseInt(m.group("bid"));
-            }else
-            if (m.group("sid") != null) {
-                id = Integer.parseInt(m.group("sid"));
-                isBid = false;
-            }
-        }else {
-            from.sendMessage("参数为<bid>或者指定sid/bid查询bid:<bid>/sid:<sid>");
             return;
         }
         StarService.score score = starService.getScore(user);
@@ -68,6 +38,20 @@ public class SongServiceImpl extends MessageService{
             from.sendMessage("您的积分够!请多刷pp!");
             return;
         }
+        int id = 0;
+        boolean isBid = true;
+        if (matcher.group("id") != null) {
+            id = Integer.parseInt(matcher.group("id"));
+        }else
+        if (matcher.group("bid") != null) {
+            id = Integer.parseInt(matcher.group("bid"));
+        }else
+        if (matcher.group("sid") != null) {
+            id = Integer.parseInt(matcher.group("sid"));
+            isBid = false;
+        }
+        if(id == 0) from.sendMessage("参数为<bid>或者指定sid/bid查询bid:<bid>/sid:<sid>");
+
         URL url;
         try {
             if(isBid){
@@ -86,6 +70,5 @@ public class SongServiceImpl extends MessageService{
             from.sendMessage("下载失败，请稍后再试");
             starService.addStart(score,0.5f);
         }
-
     }
 }

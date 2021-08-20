@@ -18,7 +18,7 @@ public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     bphtService(){
-        super(Pattern.compile("[!！](?i)bpht(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
+        super(Pattern.compile("[!！]\\s?(?i)bpht(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
     }
 
     @Override

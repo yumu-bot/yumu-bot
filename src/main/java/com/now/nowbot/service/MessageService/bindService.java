@@ -24,7 +24,7 @@ public class bindService extends MsgSTemp implements MessageService{
     OsuGetService osuGetService;
 
     bindService(){
-        super(Pattern.compile("[!！](?i)bind"), "bind");
+        super(Pattern.compile("[!！]\\s?(?i)bind"), "bind");
         new Thread(this::delpassed).start();
     }
     void delpassed(){
