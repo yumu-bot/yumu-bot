@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
 import com.now.nowbot.service.OsuGetService;
@@ -33,19 +34,20 @@ public class ppmService extends MsgSTemp implements MessageService {
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
         PPmObject userinfo;
+        JSONObject userdate;
         if (at != null) {
             var user = BindingUtil.readUser(at.getTarget());
             if (user == null) {
                 from.sendMessage(new QuoteReply(event.getMessage()).plus("该用户未绑定!"));
                 return;
             }
-            var userdate = osuGetService.getPlayerOsuInfo(user);
+            userdate = osuGetService.getPlayerOsuInfo(user);
             var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
             userinfo = PPmObject.presOsu(userdate, bpdate);
         } else {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 int id = osuGetService.getOsuId(matcher.group("name").trim());
-                var userdate = osuGetService.getPlayerOsuInfo(id);
+                userdate = osuGetService.getPlayerOsuInfo(id);
                 var bpdate = osuGetService.getOsuBestMap(id, 0, 100);
                 userinfo = PPmObject.presOsu(userdate, bpdate);
             }else {
@@ -55,12 +57,16 @@ public class ppmService extends MsgSTemp implements MessageService {
                     from.sendMessage("您未绑定，请绑定后使用");
                     return;
                 }
-                var userdate = osuGetService.getPlayerOsuInfo(user);
+                userdate = osuGetService.getPlayerOsuInfo(user);
                 var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
                 userinfo = PPmObject.presOsu(userdate, bpdate);
             }
         }
 
+        if(userinfo.getPtime()<60 || userinfo.getPcont()<30){
+            from.sendMessage("游戏时常过短,可能为新号，无法计算");
+            return;
+        }
         try(Surface surface = Surface.makeRasterN32Premul(600,830);
             Font smileFont = new Font(FontCfg.face,20);
             Font lagerFont = new Font(FontCfg.face,50);
@@ -85,12 +91,12 @@ public class ppmService extends MsgSTemp implements MessageService {
 
 
             Path pt = SkiaUtil.creat6(250, 3,
-                    (float) Math.pow((userinfo.getPtt() < 0.6 ? 0.01f : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getSta() < 0.6 ? 0.01f : userinfo.getSta() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getStb() < 0.6 ? 0.01f : userinfo.getStb() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getSth() < 0.6 ? 0.01f : userinfo.getSth() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getEng() < 0.6 ? 0.01f : userinfo.getEng() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getFa() < 0.6 ? 0.01f : userinfo.getFa() - 0.6) * 2.5f, 0.8));
+                    (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
+                    (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
+                    (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
+                    (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
+                    (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
+                    (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8));
 
 
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255, 240, 167, 50));

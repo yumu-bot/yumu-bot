@@ -6,7 +6,7 @@ dir:
   font: ${dir.rundir}font/
   imghc: ${dir.rundir}imgbuffer/
   osuid: ${dir.rundir}Id/
-# mirai设置，分别为qq，密码，是否开启自动登录(用于预留debug，正常使用务必开启) 超级管理员（qq号）
+# mirai设置，分别为qq，密码，是否登录(用于预留debug，正常使用务必开启) 权限列表
 mirai:
   qq: 111111
   password: password

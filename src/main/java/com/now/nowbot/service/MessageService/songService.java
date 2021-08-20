@@ -22,11 +22,16 @@ public class songService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     songService() {
-        super(Pattern.compile("[!！]\\s?(?i)song\\s*((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+)?"), "song");
+        super(Pattern.compile("[!！]\\s*(?i)song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"), "song");
     }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+
+        if(event != null){
+            System.out.println(event.getMessage().contentToString());
+            return;
+        }
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
         if(user == null) {

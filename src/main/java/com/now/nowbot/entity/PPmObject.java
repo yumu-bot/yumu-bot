@@ -130,13 +130,15 @@ public class PPmObject {
         ptime = prd.getJSONObject("statistics").getLongValue("play_time");
 
         //1.1 准度fACC formulaic accuracy 0-1 fa
-        fa = ((this.acc/100)<0.6D?0:Math.pow((this.acc/100-0.6)*2.5D,1.776D));
-        fa = setm(fa, 0, 1);
+        {
+            fa = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
+            fa = check(fa, 0, 1);
+        }
         //1.2 1.2 潜力PTT potential 0-1 ptt
 
         {
             double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
-            double rBPD = this.rawpp / this.ppv0;
+            double rBPD = this.ppv0 == 0?0:(this.rawpp / this.ppv0);
             double BPD;
             if (rBPD <= 14) {
                 BPD = 1;
@@ -148,13 +150,13 @@ public class PPmObject {
                 BPD = 0;
             }
             ptt = Math.pow((BPD*0.2 + bpmxd*0.4 + 0.4),0.8D);
-            ptt = setm(ptt, 0, 1);
+            ptt = check(ptt, 0, 1);
             if (prbp.size() < 100) ptt = 1;
         }
         //1.3 耐力STA stamina 0-1.2 sta
 
         {
-            double rSP = 1.0*this.ptime/this.pcont;
+            double rSP = this.pcont == 0?0:(1.0*this.ptime/this.pcont);
             double SPT;
             if(rSP<30){
                 SPT = 0;
@@ -181,7 +183,7 @@ public class PPmObject {
                 VLB = 1;
             }
             sta = Math.pow((SPT*0.4 + fLEN*0.6),0.8D) + VLB * 0.2;
-            sta = setm(sta, 0, 1.2);
+            sta = check(sta, 0, 1.2);
         }
         //1.4 稳定STB stability (-0.16)-1.2 stb
 
@@ -190,7 +192,7 @@ public class PPmObject {
             double FCN = (100-this.notfc)/100D;
             double PFN = (this.xs+ this.xx)/100D;
             stb = GRD*0.8+(FCN+PFN)*0.2;
-            stb = setm(stb, 0, 1.2);
+            stb = check(stb, 0, 1.2);
         }
         //1.5 肝力ENG energy eng
 
@@ -198,7 +200,7 @@ public class PPmObject {
             eng = this.bonus /416.6667;
             if (eng>1)eng =1;
             eng = Math.pow(eng, 0.4D);
-            eng = setm(eng, 0, 1);
+            eng = check(eng, 0, 1);
         }
         //1.6 实力STH strength sth
 
@@ -207,11 +209,11 @@ public class PPmObject {
             if(HPS>4.5) HPS =  4.5;
             else if(HPS<2.5) HPS =  2.5;
             sth = Math.pow((HPS-2.5)/2,0.2);
-            sth = setm(sth, 0, 1);
+            sth = check(sth, 0, 1);
         }
         return this;
     }
-    double setm(double value, double min, double max){
+    double check(double value, double min, double max){
         if (value>max) return max;else return Math.max(value, min);
     }
     public static PPmObject presOsu(JSONObject prd, JSONArray prbp){
