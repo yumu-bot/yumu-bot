@@ -256,7 +256,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             canvas.restore();
 
             canvas.save();
-            canvas.translate(130,80);
+            canvas.translate(1490,80);
             Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.headURL);
             ss = Surface.makeRasterN32Premul(300,300);
             ss.getCanvas()
