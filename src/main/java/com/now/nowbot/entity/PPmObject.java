@@ -39,6 +39,9 @@ public class PPmObject {
     double sth;
     double stb;
     double sta;
+    double ttl;
+    double san;
+    public String headURL;
     private PPmObject(){}
     private PPmObject creatOsu(JSONObject prd, JSONArray prbp){
         double[] ys = new double[prbp.size()];
@@ -121,6 +124,7 @@ public class PPmObject {
         }else {
             bonus = 0;
         }
+        headURL = prd.getString("avatar_url");
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");
@@ -211,6 +215,8 @@ public class PPmObject {
             sth = Math.pow((HPS-2.5)/2,0.2);
             sth = check(sth, 0, 1);
         }
+        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
+        san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
         return this;
     }
     double check(double value, double min, double max){
@@ -354,5 +360,13 @@ public class PPmObject {
 
     public double getPtt() {
         return ptt;
+    }
+
+    public double getTtl() {
+        return ttl;
+    }
+
+    public double getSan() {
+        return san;
     }
 }

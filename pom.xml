@@ -51,7 +51,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.skija</groupId>
-            <artifactId>skija-linux</artifactId>
+            <artifactId>skija-windows</artifactId>
             <version>0.92.20</version>
         </dependency>
         <dependency>

@@ -4,8 +4,10 @@ import com.now.nowbot.config.NowbotConfig;
 import org.jetbrains.skija.Typeface;
 
 public class FontCfg {
-    public static Typeface face;
+    public static Typeface JP;
+    public static Typeface TORUS_REGULAR;
     public static void init(){
-        face = Typeface.makeFromFile(NowbotConfig.FONT_PATH +"font.otf");
+        JP = Typeface.makeFromFile(NowbotConfig.FONT_PATH +"font.otf");
+        TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH +"Torus-Regular.ttf");
     }
 }

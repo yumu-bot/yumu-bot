@@ -23,7 +23,7 @@ public class pingService  extends MsgSTemp implements MessageService{
         byte[] data = null;
         try (Surface surface = Surface.makeRasterN32Premul(500,180)){
             Canvas canvas = surface.getCanvas();
-            Typeface face = FontCfg.face;
+            Typeface face = FontCfg.JP;
 
             canvas.clear(Color.makeRGB(0,169,248));
             Font x = new Font(face, 100);

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
@@ -14,6 +15,7 @@ import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,11 +68,11 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
             userinfo1 = PPmObject.presOsu(userdate, bpdate);
         }
-
+/*
         try(Surface surface = Surface.makeRasterN32Premul(600,1025);
-            Font smileFont = new Font(FontCfg.face,20);
-            Font lagerFont = new Font(FontCfg.face,35);
-            Font middleFont = new Font(FontCfg.face, 30);
+            Font smileFont = new Font(FontCfg.JP,20);
+            Font lagerFont = new Font(FontCfg.JP,35);
+            Font middleFont = new Font(FontCfg.JP, 30);
             Paint bg1 = new Paint().setARGB(40,0,0,0);
             Paint bg2 = new Paint().setARGB(220,0,0,0);
             Paint wp = new Paint().setARGB(255,200,200,200);
@@ -193,7 +195,195 @@ public class PpmVsService extends MsgSTemp implements MessageService{
 
             var datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
+        }
+        */
+        byte[] datebyte = drow(userinfo1,userinfo2);
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
+    }
+    byte[] drow(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
+        byte[] date;
+        try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
+             Typeface fontface = FontCfg.TORUS_REGULAR;
+             Font fontA = new Font(fontface, 80);
+             Font fontB = new Font(fontface, 64);
+
+             Paint white = new Paint().setARGB(255,255,255,255);
+        ){
+            var canvas = surface.getCanvas();
+            canvas.save();
+            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+            canvas.drawImage(bg1,0,0);
+            canvas.drawImage(bg2,0,0);
+
+            double[] hex1 = new double[]{
+                    userinfo1.getFa(),
+                    userinfo1.getPtt(),
+                    userinfo1.getSta(),
+                    userinfo1.getStb(),
+                    userinfo1.getEng(),
+                    userinfo1.getSth(),
+            };
+            double[] hex2 = new double[]{
+                    userinfo2.getFa(),
+                    userinfo2.getPtt(),
+                    userinfo2.getSta(),
+                    userinfo2.getStb(),
+                    userinfo2.getEng(),
+                    userinfo2.getSth(),
+            };
+            canvas.translate(960,440);
+            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
+            org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5,(float) hex2[0],(float) hex2[1],(float) hex2[2],(float) hex2[3],(float) hex2[4],(float) hex2[5]);
+            canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt2,new Paint().setARGB(255,223,0,36).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt2,new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
+            TextLine ppm$ = TextLine.make("PP-",fontA);
+            canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
+            canvas.restore();
+
+            canvas.save();
+            canvas.translate(130,80);
+            Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.headURL);
+            var ss = Surface.makeRasterN32Premul(300,300);
+            ss.getCanvas()
+                    .setMatrix(Matrix33.makeScale(300f/head1.getWidth(),300f/head1.getHeight()))
+                    .drawImage(head1,0,0);
+            head1 = ss.makeImageSnapshot();
+            canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
+            canvas.drawImage(head1,0,0);
+            canvas.restore();
+
+            canvas.save();
+            canvas.translate(130,80);
+            Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.headURL);
+            ss = Surface.makeRasterN32Premul(300,300);
+            ss.getCanvas()
+                    .setMatrix(Matrix33.makeScale(300f/head2.getWidth(),300f/head2.getHeight()))
+                    .drawImage(head2,0,0);
+            head2 = ss.makeImageSnapshot();
+            canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
+            canvas.drawImage(head2,0,0);
+            canvas.restore();
+
+            drowLname(canvas,fontA,white,userinfo1.getName());
+            drowRname(canvas,fontA,white,userinfo2.getName());
+
+            drowLppm(canvas,fontB,fontA,white,hex1, userinfo1.getTtl());
+            drowRppm(canvas,fontB,fontA,white,hex2, userinfo2.getTtl());
+
+            TextLine thx = TextLine.make("本功能的算法及UI设计均来源与Muziyami设计",new Font(fontface,30));
+            canvas.drawTextLine(thx, 0.5f*(surface.getWidth()-thx.getWidth()),(surface.getHeight()-30),white);
+            date = surface.makeImageSnapshot().encodeToData().getBytes();
 
         }
+        return date;
+    }
+    public static void drowLname(Canvas canvas, Font font, Paint white, String name){
+        canvas.save();
+        canvas.translate(280,440);
+        TextLine text = TextLine.make(name, font);
+        if (text.getWidth() > 500) text = TextLine.make(name.substring(0,8)+"...",font);
+        canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
+        canvas.restore();
+    }
+    public static void drowRname(Canvas canvas, Font font, Paint white, String name){
+        canvas.save();
+        canvas.translate(1640,440);
+        TextLine text = TextLine.make(name, font);
+        if (text.getWidth() > 500) text = TextLine.make(name.substring(0,8)+"...",font);
+        canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
+        canvas.restore();
+    }
+    public static void drowLppm(Canvas canvas, Font font, Font B, Paint white, double[] val, double all){
+        if (val.length != 6) return;
+        double[] date = new double[val.length];
+        for (int i = 0; i < date.length; i++) {
+            date[i] = val[i]*100;
+        }
+        DecimalFormat dx = new DecimalFormat("0.00");
+        canvas.save();
+        canvas.translate(100,520);
+        TextLine k1 = TextLine.make("准度",font);
+        TextLine v1 = TextLine.make(dx.format(date[0]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("潜力",font);
+        v1 = TextLine.make(dx.format(date[1]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("耐力",font);
+        v1 = TextLine.make(dx.format(date[2]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("稳定",font);
+        v1 = TextLine.make(dx.format(date[3]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("肝力",font);
+        v1 = TextLine.make(dx.format(date[4]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("实力",font);
+        v1 = TextLine.make(dx.format(date[5]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.restore();
+        canvas.save();
+        canvas.translate(920,880);
+        v1 = TextLine.make(dx.format(all),B);
+        canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.restore();
+    }
+    public static void drowRppm(Canvas canvas, Font font, Font B, Paint white, double[] val, double all){
+        if (val.length != 6) return;
+        double[] date = new double[val.length];
+        for (int i = 0; i < date.length; i++) {
+            date[i] = val[i]*100;
+        }
+        DecimalFormat dx = new DecimalFormat("0.00");
+        canvas.save();
+        canvas.translate(1460,520);
+        TextLine k1 = TextLine.make("准度",font);
+        TextLine v1 = TextLine.make(dx.format(date[0]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("潜力",font);
+        v1 = TextLine.make(dx.format(date[1]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("耐力",font);
+        v1 = TextLine.make(dx.format(date[2]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("稳定",font);
+        v1 = TextLine.make(dx.format(date[3]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("肝力",font);
+        v1 = TextLine.make(dx.format(date[4]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.translate(0,90);
+        k1 = TextLine.make("实力",font);
+        v1 = TextLine.make(dx.format(date[5]),font);
+        canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+        canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+        canvas.restore();
+        canvas.save();
+        canvas.translate(1000,880);
+        v1 = TextLine.make(dx.format(all),B);
+        canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
+        canvas.restore();
     }
 }

@@ -51,7 +51,7 @@ public class SkiaUtil {
         return null;
     }
 
-    public static Image getScaleImage(Image image, int width, int height){
+        public static Image getScaleImage(Image image, int width, int height){
         Image img = null;
         try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas().setMatrix(Matrix33.makeScale(1f * width / image.getWidth(), 1f * height / image.getHeight())).drawImage(image, 0, 0);

@@ -95,9 +95,9 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
         byte[] datebyte = null;
         try(Surface surface = Surface.makeRasterN32Premul(600,1025);
-            Font smileFont = new Font(FontCfg.face,20);
-            Font lagerFont = new Font(FontCfg.face,35);
-            Font middleFont = new Font(FontCfg.face, 30);
+            Font smileFont = new Font(FontCfg.JP,20);
+            Font lagerFont = new Font(FontCfg.JP,35);
+            Font middleFont = new Font(FontCfg.JP, 30);
             Paint bg1 = new Paint().setARGB(40,0,0,0);
             Paint bg2 = new Paint().setARGB(220,0,0,0);
             Paint wp = new Paint().setARGB(255,200,200,200);
