@@ -95,12 +95,12 @@ public class PpmVsService extends MsgSTemp implements MessageService{
  *                     (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8));
  */
             double[] hex1 = new double[]{
-                    Math.pow((userinfo1.getFa() < 0.6 ? 0 : userinfo1.getFa() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getPtt() < 0.6 ? 0 : userinfo1.getPtt() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getSta() < 0.6 ? 0 : userinfo1.getSta() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getStb() < 0.6 ? 0 : userinfo1.getStb() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getEng() < 0.6 ? 0 : userinfo1.getEng() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getSth() < 0.6 ? 0 : userinfo1.getSth() - 0.6) * 2.5f, 0.8),
+                    Math.pow((userinfo1.getFa() < 0.6 ? 0 : userinfo1.getFa() - 0.6) * 2.5f, 0.8),
             };
             double[] hex2 = new double[]{
                     Math.pow((userinfo2.getPtt() < 0.6 ? 0 : userinfo2.getPtt() - 0.6) * 2.5f, 0.8),
