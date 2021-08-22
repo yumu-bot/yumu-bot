@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 @Service("cpanel")
 public class catpanelService extends MsgSTemp implements MessageService{
     catpanelService(){
-        super(Pattern.compile("[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?\\s*(?<yl>ylbx)?"),"cpanel");
+        super(Pattern.compile("[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"),"cpanel");
     }
 
     @Override
@@ -67,6 +67,7 @@ public class catpanelService extends MsgSTemp implements MessageService{
                 org.jetbrains.skija.Image img1 = SkiaUtil.getScaleImage(netImg, 857*imgWidth/imgHeight, 857);
                 siImg = SkiaUtil.getCutImage(img1, (img1.getWidth()-1200)/2, 0, 1200, 857);
             }
+            byte[] pngBytes;
             try (Surface surface = Surface.makeRasterN32Premul(1200, 857);){
                 Canvas canvas = surface.getCanvas();
                 canvas.drawImage(siImg,0,0);
@@ -81,10 +82,10 @@ public class catpanelService extends MsgSTemp implements MessageService{
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                byte[] pngBytes = surface.makeImageSnapshot().encodeToData().getBytes();
+                pngBytes = surface.makeImageSnapshot().encodeToData().getBytes();
 
-                from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(pngBytes), from));
             }
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(pngBytes), from));
         }
     }
 }

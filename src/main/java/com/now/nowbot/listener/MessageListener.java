@@ -38,6 +38,7 @@ public class MessageListener extends SimpleListenerHost{
 //        });
 //        log.info("ali",exception);
 //        System.out.println("--------------------------------");
+        log.info("拦截新错误",exception);
     }
 
 
