@@ -103,12 +103,12 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     Math.pow((userinfo1.getSth() < 0.6 ? 0 : userinfo1.getSth() - 0.6) * 2.5f, 0.8),
             };
             double[] hex2 = new double[]{
-                    Math.pow((userinfo2.getFa() < 0.6 ? 0 : userinfo2.getFa() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getPtt() < 0.6 ? 0 : userinfo2.getPtt() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getSta() < 0.6 ? 0 : userinfo2.getSta() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getStb() < 0.6 ? 0 : userinfo2.getStb() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getEng() < 0.6 ? 0 : userinfo2.getEng() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getSth() < 0.6 ? 0 : userinfo2.getSth() - 0.6) * 2.5f, 0.8),
+                    Math.pow((userinfo2.getFa() < 0.6 ? 0 : userinfo2.getFa() - 0.6) * 2.5f, 0.8),
             };
             canvas.translate(960,440);
             org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
@@ -148,8 +148,8 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     userinfo2.getSth(),
             }, userinfo2.getTtl()*100);
 
-            TextLine thx = TextLine.make("本功能的算法及UI设计均来源与Muziyami设计",new Font(fontface,30));
-            canvas.drawTextLine(thx, 0.5f*(surface.getWidth()-thx.getWidth()),(surface.getHeight()-30),white);
+//            TextLine thx = TextLine.make("本功能的算法及UI设计均来源与Muziyami设计",new Font(fontface,30));
+//            canvas.drawTextLine(thx, 0.5f*(surface.getWidth()-thx.getWidth()),(surface.getHeight()-30),white);
             date = surface.makeImageSnapshot().encodeToData().getBytes();
 
         }
