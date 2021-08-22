@@ -131,8 +131,22 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             drowLname(canvas,fontA,white,userinfo1.getName());
             drowRname(canvas,fontA,white,userinfo2.getName());
 
-            drowLppm(canvas,fontB,fontA,white,hex1, userinfo1.getTtl());
-            drowRppm(canvas,fontB,fontA,white,hex2, userinfo2.getTtl());
+            drowLppm(canvas,fontB,fontA,white,new double[]{
+                    userinfo1.getFa(),
+                    userinfo1.getPtt(),
+                    userinfo1.getSta(),
+                    userinfo1.getStb(),
+                    userinfo1.getEng(),
+                    userinfo1.getSth(),
+            }, userinfo1.getTtl()*100);
+            drowRppm(canvas,fontB,fontA,white,new double[]{
+                    userinfo2.getFa(),
+                    userinfo2.getPtt(),
+                    userinfo2.getSta(),
+                    userinfo2.getStb(),
+                    userinfo2.getEng(),
+                    userinfo2.getSth(),
+            }, userinfo2.getTtl()*100);
 
             TextLine thx = TextLine.make("本功能的算法及UI设计均来源与Muziyami设计",new Font(fontface,30));
             canvas.drawTextLine(thx, 0.5f*(surface.getWidth()-thx.getWidth()),(surface.getHeight()-30),white);

@@ -29,7 +29,7 @@ public class StarService {
     OsuGetService osuGetService;
 
 
-    public void writeFile(score score){
+    private void writeFile(Score score){
         Path pt = Path.of(path+score.getQq_id());
         try {
             if(!Files.isRegularFile(pt)){
@@ -41,12 +41,12 @@ public class StarService {
         }
     }
 
-    public score readFile(long qq_id){
+    private Score readFile(long qq_id){
         Path pt = Path.of(path+qq_id);
-        score score = null;
+        Score score = null;
         if(Files.isRegularFile(pt)){
             try {
-                score = JSON.parseObject(Files.readString(pt), StarService.score.class);
+                score = JSON.parseObject(Files.readString(pt), Score.class);
             } catch (IOException e) {
                 log.error("积分读取异常",e);
             }
@@ -54,11 +54,15 @@ public class StarService {
         return score;
     }
 
-    public score addStart(BinUser user, float star){
-        score sc = null;
+    public Score getScore(long id){
+        return readFile(id);
+    }
+
+    public Score addStart(BinUser user, float star){
+        Score sc = null;
         sc = readFile(user.getQq());
         if(sc == null){
-            sc = new score()
+            sc = new Score()
                     .setQq_id(user.getQq())
                     .setBest_id(0)
                     .setStar(0);
@@ -69,7 +73,7 @@ public class StarService {
         return sc;
     }
 
-    public score addStart(score sc, float star){
+    public Score addStart(Score sc, float star){
         if(sc == null){
             return null;
         }
@@ -79,7 +83,7 @@ public class StarService {
     }
 
     public boolean delStart(BinUser user, float star){
-        score sc = readFile(user.getQq());
+        Score sc = readFile(user.getQq());
         if (sc == null) return false;
         if(sc.getStar() >= star){
             sc.delStar(star);
@@ -89,7 +93,7 @@ public class StarService {
         return false;
     }
 
-    public boolean delStart(score sc, float star){
+    public boolean delStart(Score sc, float star){
         if (sc == null) return false;
         if(sc.getStar() >= star){
             sc.delStar(star);
@@ -99,10 +103,10 @@ public class StarService {
         return false;
     }
 
-    public score getScore(BinUser user){
-        score sc = readFile(user.getQq());
+    public Score getScore(BinUser user){
+        Score sc = readFile(user.getQq());
         if (sc == null) {
-            sc = new score().setQq_id(user.getQq())
+            sc = new Score().setQq_id(user.getQq())
                     .setBest_id(0)
                     .setStar(0)
                     .setRefouse_time(0);
@@ -111,18 +115,18 @@ public class StarService {
         return sc;
     }
 
-    public boolean isRefouse(score s){
+    public boolean isRefouse(Score s){
         return System.currentTimeMillis() >= s.getRefouse_time()+(1000*60*60*24);
     }
 
-    public score refouseStar(score s,float star){
+    public Score refouseStar(Score s, float star){
         s.setRefouse_time(System.currentTimeMillis());
         s.addStar(star);
         writeFile(s);
         return s;
     }
 
-    public static class score{
+    public static class Score {
         long qq_id;
         long best_id;
         float star;
@@ -132,7 +136,7 @@ public class StarService {
             return qq_id;
         }
 
-        public score setQq_id(long qq_id) {
+        public Score setQq_id(long qq_id) {
             this.qq_id = qq_id;
             return this;
         }
@@ -141,7 +145,7 @@ public class StarService {
             return best_id;
         }
 
-        public score setBest_id(long best_id) {
+        public Score setBest_id(long best_id) {
             this.best_id = best_id;
             return this;
         }
@@ -150,17 +154,17 @@ public class StarService {
             return star;
         }
 
-        public score setStar(float star) {
+        public Score setStar(float star) {
             this.star = star;
             return this;
         }
 
-        public score addStar(float add){
+        public Score addStar(float add){
             this.star += add;
             return this;
         }
 
-        public score delStar(float del){
+        public Score delStar(float del){
             if(del <= this.star) this.star -= del;
             return this;
         }
@@ -169,7 +173,7 @@ public class StarService {
             return refouse_time;
         }
 
-        public score setRefouse_time(long refouse_time) {
+        public Score setRefouse_time(long refouse_time) {
             this.refouse_time = refouse_time;
             return this;
         }

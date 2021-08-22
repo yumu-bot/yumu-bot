@@ -91,56 +91,54 @@ public class ppmService extends MsgSTemp implements MessageService {
 
 
             Path pt = SkiaUtil.creat6(250, 3,
+                    (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8),
                     (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                     (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
                     (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
                     (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
-                    (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8));
+                    (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8)
+            );
 
 
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255, 240, 167, 50));
             canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
 
             canvas.drawRRect(RRect.makeXYWH(-150, -226.5f, 60, 25, 5), bg2);
-            canvas.drawString("ptt", -144, -208f, smileFont, wp);
+            canvas.drawString("acc", -144, -208f, smileFont, wp);//1
 
             canvas.drawRRect(RRect.makeXYWH(100, -226.5f, 60, 25, 5), bg2);
-            canvas.drawString("sta", 108, -208.5f, smileFont, wp);
+            canvas.drawString("ptt", 108, -208.5f, smileFont, wp);//2
 
             canvas.drawRRect(RRect.makeXYWH(230, -10, 50, 25, 5), bg2);
-            canvas.drawString("stb", 240, 8, smileFont, wp);
+            canvas.drawString("sta", 240, 8, smileFont, wp);//6
 
             canvas.drawRRect(RRect.makeXYWH(105, 206.5f, 50, 25, 5), bg2);
-            canvas.drawString("sth", 114, 224.5f, smileFont, wp);
+            canvas.drawString("stb", 114, 224.5f, smileFont, wp);//3
 
             canvas.drawRRect(RRect.makeXYWH(-145, 206.5f, 50, 25, 5), bg2);
-            canvas.drawString("eng", -139, 223.5f, smileFont, wp);
+            canvas.drawString("eng", -139, 223.5f, smileFont, wp);//5
 
             canvas.drawRRect(RRect.makeXYWH(-270, -10, 50, 25, 5), bg2);
-            canvas.drawString("acc", -260, 8f, smileFont, wp);
+            canvas.drawString("sth", -260, 8f, smileFont, wp);//4
 
             canvas.restore();
             canvas.translate(0, 575);
 
             DecimalFormat dx = new DecimalFormat("0.00");
             canvas.drawRRect(RRect.makeXYWH(50, 0, 225, 50, 10), edP);
-            canvas.drawString("PTT:" + dx.format(userinfo.getPtt() * 100), 60, 35, middleFont, wp);
+            canvas.drawString("ACC:" + dx.format(userinfo.getAcc() * 100), 60, 35, middleFont, wp);
             canvas.drawRRect(RRect.makeXYWH(325, 0, 225, 50, 10), edP);
-            canvas.drawString("STA:" + dx.format(userinfo.getSta() * 100), 335, 35, middleFont, wp);
+            canvas.drawString("PTT:" + dx.format(userinfo.getPtt() * 100), 335, 35, middleFont, wp);
 
             canvas.drawRRect(RRect.makeXYWH(50, 75, 225, 50, 10), edP);
-            canvas.drawString("STB:" + dx.format(userinfo.getStb() * 100), 60, 110, middleFont, wp);
+            canvas.drawString("STH:" + dx.format(userinfo.getSth() * 100), 60, 110, middleFont, wp);
             canvas.drawRRect(RRect.makeXYWH(325, 75, 225, 50, 10), edP);
-            canvas.drawString("ACC:" + dx.format(userinfo.getFa() * 100), 335, 110, middleFont, wp);
+            canvas.drawString("STA:" + dx.format(userinfo.getSta() * 100), 335, 110, middleFont, wp);
 
             canvas.drawRRect(RRect.makeXYWH(50, 150, 225, 50, 10), edP);
-            canvas.drawString("STH:" + dx.format(userinfo.getSth() * 100), 60, 185, middleFont, wp);
+            canvas.drawString("ENG:" + dx.format(userinfo.getEng() * 100), 60, 185, middleFont, wp);
             canvas.drawRRect(RRect.makeXYWH(325, 150, 225, 50, 10), edP);
-            canvas.drawString("ENG:" + dx.format(userinfo.getEng() * 100), 335, 185, middleFont, wp);
-
-//            var fromx = TextLine.make("Thanks for Muziyami",smileFont);
-//            canvas.drawTextLine(fromx,(600-line.getWidth())/2,surface.getHeight()-2*line.getHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.drawString("STB:" + dx.format(userinfo.getStb() * 100), 335, 185, middleFont, wp);
 
             var datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte), from));

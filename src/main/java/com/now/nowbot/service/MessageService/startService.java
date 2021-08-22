@@ -34,7 +34,7 @@ public class startService extends MsgSTemp implements MessageService{
             return;
         }
         StringBuffer sb = new StringBuffer();
-        StarService.score sc = starService.getScore(user);
+        StarService.Score sc = starService.getScore(user);
 
         if (starService.isRefouse(sc)){
             JSONObject date = osuGetService.getPlayerOsuInfo(user);

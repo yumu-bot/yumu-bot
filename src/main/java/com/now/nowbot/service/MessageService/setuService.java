@@ -77,7 +77,7 @@ public class setuService extends MsgSTemp implements MessageService{
             return;
         }
 
-        StarService.score score = starService.getScore(binUser);
+        StarService.Score score = starService.getScore(binUser);
         if(issuper||starService.delStart(score,5)){
             from.sendMessage("稍等片刻");
         }else {

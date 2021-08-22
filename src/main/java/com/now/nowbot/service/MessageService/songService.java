@@ -34,7 +34,7 @@ public class songService extends MsgSTemp implements MessageService{
             from.sendMessage("您未绑定，禁止使用！！！");
             return;
         }
-        StarService.score score = starService.getScore(user);
+        StarService.Score score = starService.getScore(user);
         if(!starService.delStart(score,0.5f)){
             from.sendMessage("您的积分够!请多刷pp!");
             return;

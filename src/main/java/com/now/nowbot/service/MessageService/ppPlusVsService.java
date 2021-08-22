@@ -41,7 +41,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
             return;
         }
-        StarService.score score = starService.getScore(us);
+        StarService.Score score = starService.getScore(us);
         if(!starService.delStart(score,1)){
             from.sendMessage("您的积分不够1积分！");
             return;
