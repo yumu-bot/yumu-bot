@@ -160,7 +160,8 @@ public class NowbotConfig {
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         if (isStart) bot.login();
-        bot.getEventChannel().registerListenerHost(messageListener);
+//        bot.getEventChannel().registerListenerHost(messageListener);
+        bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
 
         return bot;
     }

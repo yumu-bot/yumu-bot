@@ -34,15 +34,22 @@ public class msgController {
     @Async
     public void saveBind(String code, String[] data){
         if(data.length == 2) {
-            BinUser bd = new BinUser(Long.valueOf(data[0]), code);
-            osuGetService.getToken(bd);
-            osuGetService.getPlayerOsuInfo(bd);
-            BindingUtil.writeUser(bd);
-            BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
+
             var msg = bin.msgs.get(Long.valueOf(data[1]));
+
             if (msg != null) {
-                msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                msg.recall();
+                try {
+                    msg.recall();
+                    BinUser bd = new BinUser(Long.valueOf(data[0]), code);
+                    osuGetService.getToken(bd);
+                    osuGetService.getPlayerOsuInfo(bd);
+                    BindingUtil.writeUser(bd);
+                    BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
+                    msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+                    bin.msgs.remove(Long.valueOf(data[1]));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
         }

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -31,18 +30,20 @@ public class MessageListener extends SimpleListenerHost{
     }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
+        System.out.println("--------------------------------");
+        SimpleListenerHost a = null;
         context.fold(Object.class,(e, v)->{
-            System.out.println(e.getClass());
+            System.out.println(v.getClass().getName());
             return e;
         });
-        log.error(context.toString(),exception);
+        log.info("ali",exception);
+        System.out.println("--------------------------------");
     }
 
 
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{
-
         for (var k : MsgSTemp.services.keySet()){
             var matcher = k.matcher(event.getMessage().contentToString());
             if(matcher.find()){
@@ -51,6 +52,17 @@ public class MessageListener extends SimpleListenerHost{
                 service.HandleMessage(event, matcher);
             }
         }
+    }
+    @Async
+    @EventHandler
+    public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception{
+        StringBuffer sb = new StringBuffer("接收到来自\n");
+        sb.append(event.getGroupName())
+        .append('(')
+        .append(event.getGroupId())
+        .append(')');
+        event.getBot().getFriend(365246692).sendMessage(sb.toString());
+        event.accept();
     }
     @Async
     @EventHandler
@@ -69,12 +81,6 @@ public class MessageListener extends SimpleListenerHost{
         if(event instanceof ImageUploadEvent.Succeed){
             log.info("图片上传成功");
         }
-    }
-    @Async
-    @EventListener(BotInvitedJoinGroupRequestEvent.class)
-    public void joinGroup(BotInvitedJoinGroupRequestEvent e){
-        e.getBot().getFriend(365246692L).sendMessage("被邀请了").recallIn(100*1000);
-        e.isIntercepted();
     }
 
 }
