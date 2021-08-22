@@ -126,7 +126,7 @@ public class ppmService extends MsgSTemp implements MessageService {
 
             DecimalFormat dx = new DecimalFormat("0.00");
             canvas.drawRRect(RRect.makeXYWH(50, 0, 225, 50, 10), edP);
-            canvas.drawString("ACC:" + dx.format(userinfo.getAcc() * 100), 60, 35, middleFont, wp);
+            canvas.drawString("ACC:" + dx.format(userinfo.getFa() * 100), 60, 35, middleFont, wp);
             canvas.drawRRect(RRect.makeXYWH(325, 0, 225, 50, 10), edP);
             canvas.drawString("PTT:" + dx.format(userinfo.getPtt() * 100), 335, 35, middleFont, wp);
 
