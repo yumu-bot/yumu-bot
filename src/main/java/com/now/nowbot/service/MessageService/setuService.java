@@ -42,7 +42,7 @@ public class setuService extends MsgSTemp implements MessageService{
     Permission permission;
 
     setuService() {
-        super(Pattern.compile("[!！]\\s*((色图)|(涩图)|(setu))"),"setu");
+        super(Pattern.compile("[!！]((色图)|(涩图)|(setu))"),"setu");
         time = 0L;
     }
 

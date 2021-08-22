@@ -30,14 +30,14 @@ public class MessageListener extends SimpleListenerHost{
     }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
-        System.out.println("--------------------------------");
-        SimpleListenerHost a = null;
-        context.fold(Object.class,(e, v)->{
-            System.out.println(v.getClass().getName());
-            return e;
-        });
-        log.info("ali",exception);
-        System.out.println("--------------------------------");
+//        System.out.println("--------------------------------");
+//        SimpleListenerHost a = null;
+//        context.fold(Object.class,(e, v)->{
+//            System.out.println(v.getClass().getName());
+//            return e;
+//        });
+//        log.info("ali",exception);
+//        System.out.println("--------------------------------");
     }
 
 
@@ -45,7 +45,7 @@ public class MessageListener extends SimpleListenerHost{
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{
         for (var k : MsgSTemp.services.keySet()){
-            var matcher = k.matcher(event.getMessage().contentToString());
+            var matcher = k.matcher(event.getMessage().serializeToMiraiCode());
             if(matcher.find()){
                 var servicename = MsgSTemp.services.get(k);
                 var service = (MessageService)applicationContext.getBean(servicename);
