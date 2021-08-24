@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../../椤圭洰绱犳潗/nowbot/.idea/modules/nowbot.main.iml" filepath="$PROJECT_DIR$/../../椤圭洰绱犳潗/nowbot/.idea/modules/nowbot.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../椤圭洰绱犳潗/nowbot/.idea/modules/nowbot.test.iml" filepath="$PROJECT_DIR$/../../椤圭洰绱犳潗/nowbot/.idea/modules/nowbot.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nowbot.iml" filepath="$PROJECT_DIR$/.idea/nowbot.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.kennycason:kumo-core:1.28">
+    <CLASSES>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/com/kennycason/kumo-core/1.28/kumo-core-1.28.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/com/kennycason/kumo-core/1.28/kumo-core-1.28-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/com/kennycason/kumo-core/1.28/kumo-core-1.28-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

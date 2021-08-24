@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="Maven: org.springframework:spring-beans:5.3.9">
     <CLASSES>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9-javadoc.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9-sources.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/springframework/spring-beans/5.3.9/spring-beans-5.3.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

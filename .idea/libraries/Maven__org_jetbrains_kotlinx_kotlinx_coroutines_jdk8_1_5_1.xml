@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1">
     <CLASSES>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1-javadoc.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$APPLICATION_HOME_DIR$/maven/mvnhourse/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1-sources.jar!/" />
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.5.1/kotlinx-coroutines-jdk8-1.5.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

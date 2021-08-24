@@ -23,6 +23,7 @@ public class songService extends MsgSTemp implements MessageService{
     OsuGetService osuGetService;
     songService() {
         super(Pattern.compile("[!！]\\s*(?i)song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"), "song");
+        setInfo("!song <bid> 或者 !song sid:<sid> 获得谱面预览音频");
     }
 
     @Override

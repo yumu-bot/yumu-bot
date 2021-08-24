@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.languagetool:languagetool-core:2.5">
+    <CLASSES>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/languagetool/languagetool-core/2.5/languagetool-core-2.5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/languagetool/languagetool-core/2.5/languagetool-core-2.5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$APPLICATION_HOME_DIR$/maven/conf/org/languagetool/languagetool-core/2.5/languagetool-core-2.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

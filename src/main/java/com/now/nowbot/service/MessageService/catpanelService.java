@@ -32,6 +32,18 @@ public class catpanelService extends MsgSTemp implements MessageService {
         } else {
             img = (Image) event.getMessage().stream().filter(i -> i instanceof Image).findFirst().orElse(null);
         }
+        System.out.println(rep);
+        System.out.println(rep.getSource());
+        System.out.println(rep.getSource().getInternalIds()[0]);
+        System.out.println(rep.getSource().getIds()[0]);
+        System.out.println(rep.getSource().getTargetId());
+        System.out.println(rep.getSource().getOriginalMessage());
+        System.out.println(rep.getSource().getOriginalMessage().getClass());
+        System.out.println(rep.getSource().getOriginalMessage().contentToString());
+        for (var r : rep.getSource().getOriginalMessage()) {
+            System.out.println(r.getClass().getName());
+            System.out.println((r instanceof Image)+r.toString());
+        }
         if (img == null) {
             from.sendMessage("没有图片！");
             return;

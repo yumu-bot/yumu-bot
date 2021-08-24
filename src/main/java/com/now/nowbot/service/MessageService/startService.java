@@ -23,6 +23,7 @@ public class startService extends MsgSTemp implements MessageService{
 
     startService(){
         super(Pattern.compile("[!！]\\s*((积分)|(..积分))+"),"jifen");
+        setInfo("!积分 刷新您的积分");
     }
 
     @Override

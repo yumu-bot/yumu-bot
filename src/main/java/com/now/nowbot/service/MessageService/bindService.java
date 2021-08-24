@@ -25,6 +25,7 @@ public class bindService extends MsgSTemp implements MessageService{
 
     bindService(){
         super(Pattern.compile("[!！]\\s?(?i)bind"), "bind");
+        setInfo("!bind 发送本命令将回复一个授权链接，授权完成即可绑定");
         new Thread(this::delpassed).start();
     }
     void delpassed(){
