@@ -146,6 +146,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     Math.pow((userinfo2.getSth() < 0.6 ? 0 : userinfo2.getSth() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getFa() < 0.6 ? 0 : userinfo2.getFa() - 0.6) * 2.5f, 0.8),
             };
+            canvas.save();
             canvas.translate(960,440);
             org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
             org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5,(float) hex2[0],(float) hex2[1],(float) hex2[2],(float) hex2[3],(float) hex2[4],(float) hex2[5]);
