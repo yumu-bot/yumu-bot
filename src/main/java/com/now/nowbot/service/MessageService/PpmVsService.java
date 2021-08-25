@@ -26,7 +26,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     PpmVsService(){
-        super(Pattern.compile("[!！]\\s?(?i)ppmvs(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppmvs");
+        super(Pattern.compile("[!！]\\s?(?i)ppmvs(?<s>(?i)s)?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppmvs");
     }
 
     @Override
@@ -39,6 +39,35 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             return;
         }
 
+        if (matcher.group("s") != null || Math.random()<=0.01){
+            Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
+            PPmObject userinfo1;
+            getuser:{
+                var userdate = osuGetService.getPlayerOsuInfo(user);
+                var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
+                userinfo1 = PPmObject.presOsu(userdate, bpdate);
+            }
+            try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
+                 Typeface fontface = FontCfg.TORUS_REGULAR;
+                 Font fontA = new Font(fontface, 80);
+                 Paint white = new Paint().setARGB(255,255,255,255);
+            ){
+                var canvas = surface.getCanvas();
+                Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
+                canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
+                Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+                Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+                canvas.drawImage(bg1,0,0);
+                canvas.drawImage(bg2,0,0);
+                canvas.drawImage(spr,0,0);
+
+                drowLname(canvas,fontA,white,userinfo1.getName());
+
+                var date = surface.makeImageSnapshot().encodeToData().getBytes();
+                from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date),from));
+            }
+            return;
+        }
 
         PPmObject userinfo1;
         PPmObject userinfo2;
@@ -81,7 +110,8 @@ public class PpmVsService extends MsgSTemp implements MessageService{
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
-            canvas.save();
+            Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
+            canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
             Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
             Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
             canvas.drawImage(bg1,0,0);
@@ -147,6 +177,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     userinfo2.getEng(),
                     userinfo2.getSth(),
             }, userinfo2.getTtl()*100);
+
 
             date = surface.makeImageSnapshot().encodeToData().getBytes();
 
