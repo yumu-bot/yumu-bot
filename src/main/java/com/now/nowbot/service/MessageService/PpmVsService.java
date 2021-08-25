@@ -63,6 +63,8 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 canvas.drawImage(bg3,surface.getWidth()-img.getWidth(),surface.getHeight()-img.getHeight(),new Paint().setAlpha(51));
                 canvas.drawImage(spr,0,0);
 
+                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.headURL);
+                drowLhead(canvas, head1);
                 drowLname(canvas,fontA,white,userinfo1.getName());
 
                 var date = surface.makeImageSnapshot().encodeToData().getBytes();
