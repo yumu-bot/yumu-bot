@@ -71,8 +71,6 @@ public class ppmService extends MsgSTemp implements MessageService {
         }
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
-            PPmObject userinfo1;
-
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
                  Typeface fontface = FontCfg.TORUS_REGULAR;
                  Font fontA = new Font(fontface, 80);

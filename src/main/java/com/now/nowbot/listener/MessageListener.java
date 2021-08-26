@@ -46,7 +46,7 @@ public class MessageListener extends SimpleListenerHost{
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{
         for (var k : MsgSTemp.services.keySet()){
-            var matcher = k.matcher(event.getMessage().serializeToMiraiCode());
+            var matcher = k.matcher(event.getMessage().contentToString());
             if(matcher.find()){
                 var servicename = MsgSTemp.services.get(k);
                 var service = (MessageService)applicationContext.getBean(servicename);
