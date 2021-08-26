@@ -57,10 +57,12 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
                 Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
                 Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
-                Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+                Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
+                Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
                 canvas.drawImage(bg1,0,0);
                 canvas.drawImage(bg2,0,0);
-                canvas.drawImage(bg3,surface.getWidth()-img.getWidth(),surface.getHeight()-img.getHeight(),new Paint().setAlpha(51));
+                canvas.drawImage(bg3,513,74);
+                canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
                 canvas.drawImage(spr,0,0);
 
                 Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.headURL);
@@ -113,14 +115,15 @@ public class PpmVsService extends MsgSTemp implements MessageService{
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
-            Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
-            canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
+
             Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
             Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
-            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
+            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
             canvas.drawImage(bg1,0,0);
             canvas.drawImage(bg2,0,0);
-            canvas.drawImage(bg3,surface.getWidth()-img.getWidth(),surface.getHeight()-img.getHeight(),new Paint().setAlpha(51));
+            canvas.drawImage(bg3,513,74);
+            canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
 /***
  * (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
  *                     (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
