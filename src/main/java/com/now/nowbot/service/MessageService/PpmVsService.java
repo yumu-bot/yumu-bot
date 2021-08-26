@@ -400,7 +400,7 @@ F 108.11.11
                 t = TextLine.make("F",font);
                 c=paints[6];
             }
-            canvas.drawTextLine(t,0,0,c);
+            canvas.drawTextLine(t,0,t.getCapHeight(),c);
             canvas.translate(0,90);
         }
         canvas.restore();
