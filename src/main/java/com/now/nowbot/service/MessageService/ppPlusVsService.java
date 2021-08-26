@@ -142,7 +142,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
-            DecimalFormat dx = new DecimalFormat("0.00");
+            DecimalFormat dx = new DecimalFormat("0");
             canvas.save();
             // user1.getFloatValue("JumpAimTotal"),
             //                user1.getFloatValue("FlowAimTotal"),
@@ -183,7 +183,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.restore();
             canvas.save();
             canvas.translate(920,880);
-            v1 = TextLine.make(user1.getString("PerformanceTotal"),fontA);
+            v1 = TextLine.make(dx.format(user1.getString("PerformanceTotal")),fontA);
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
@@ -219,9 +219,9 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
             canvas.save();
-            canvas.translate(920,880);
+            canvas.translate(1000,880);
             v1 = TextLine.make(user2.getString("PerformanceTotal"),fontA);
-            canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
             canvas.restore();
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
