@@ -127,16 +127,16 @@ public class ppmService extends MsgSTemp implements MessageService {
             {
                 canvas.save();
                 canvas.translate(920, 970);
-                var tx = TextLine.make("总计", fontA);
+                var tx = TextLine.make("总计", fontB);
                 canvas.drawTextLine(tx, -tx.getWidth(), tx.getCapHeight(), white);
                 canvas.restore();
                 canvas.save();
                 canvas.translate(1000, 880);
                 DecimalFormat dx = new DecimalFormat("0.00");
-                tx = TextLine.make(dx.format(userinfo.getSan()), fontB);
+                tx = TextLine.make(dx.format(userinfo.getSan()), fontA);
                 canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
                 canvas.translate(0,90);
-                tx = TextLine.make("San值", fontA);
+                tx = TextLine.make("San", fontB);
                 canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
                 canvas.restore();
             }
