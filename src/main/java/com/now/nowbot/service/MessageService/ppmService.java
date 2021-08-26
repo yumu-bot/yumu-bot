@@ -85,14 +85,6 @@ public class ppmService extends MsgSTemp implements MessageService {
             canvas.drawImage(bg1,0,0);
             canvas.drawImage(bg2,0,0);
             canvas.drawImage(bg3,surface.getWidth()-img.getWidth(),surface.getHeight()-img.getHeight(),new Paint().setAlpha(51));
-/***
- * (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8));
- */
             double[] hex1 = new double[]{
                     Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
@@ -124,10 +116,12 @@ public class ppmService extends MsgSTemp implements MessageService {
                     userinfo.getSth(),
             }, userinfo.getTtl()*100);
 
+            PpmVsService.drowLpj(canvas,userinfo,fontB);
+
             {
                 canvas.save();
                 canvas.translate(920, 970);
-                var tx = TextLine.make("总计", fontB);
+                var tx = TextLine.make("综合", fontB);
                 canvas.drawTextLine(tx, -tx.getWidth(), tx.getCapHeight(), white);
                 canvas.restore();
                 canvas.save();

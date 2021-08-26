@@ -355,14 +355,54 @@ F 108.11.11
 1440
 
         * */
-//        canvas.translate(480,520);
-//        for (int i = 0; i < date.length; i++) {
-//            if (date[i]>)
-//            canvas.translate(0,90);
-//        }
-
-
-
+        canvas.translate(480,520);
+        Paint[] paints = new Paint[]{
+                new Paint().setARGB(255,254,246,104),
+                new Paint().setARGB(255,245,157,32),
+                new Paint().setARGB(255,143,225,123),
+                new Paint().setARGB(255,6,105,178),
+                new Paint().setARGB(255,140,14,170),
+                new Paint().setARGB(255,198,28,51),
+                new Paint().setARGB(255,108,11,11),
+        };
+        TextLine t;
+        Paint c;
+        for (int i = 0; i < date.length; i++) {
+            if (date[i]>0.95){
+                t = TextLine.make("SS",font);
+                c=paints[0];
+            }
+            else if(date[i]>0.90){
+                t = TextLine.make("S",font);
+                c=paints[1];
+            }
+            else if(date[i]>0.85){
+                t = TextLine.make("A+",font);
+                c=paints[2];
+            }
+            else if(date[i]>0.80){
+                t = TextLine.make("A",font);
+                c=paints[2];
+            }
+            else if(date[i]>0.70){
+                t = TextLine.make("B",font);
+                c=paints[3];
+            }
+            else if(date[i]>0.60){
+                t = TextLine.make("C",font);
+                c=paints[4];
+            }
+            else if(date[i]>0){
+                t = TextLine.make("D",font);
+                c=paints[5];
+            }
+            else {
+                t = TextLine.make("F",font);
+                c=paints[6];
+            }
+            canvas.drawTextLine(t,0,0,c);
+            canvas.translate(0,90);
+        }
         canvas.restore();
     }
 }
