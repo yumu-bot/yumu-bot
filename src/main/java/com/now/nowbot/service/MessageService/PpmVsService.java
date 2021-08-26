@@ -110,7 +110,6 @@ public class PpmVsService extends MsgSTemp implements MessageService{
              Typeface fontface = FontCfg.TORUS_REGULAR;
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
-
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
@@ -321,6 +320,48 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         canvas.translate(1000,880);
         v1 = TextLine.make(dx.format(all),B);
         canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
+        canvas.restore();
+    }
+    public static void drowLpj(Canvas canvas, PPmObject user, Font font){
+        canvas.save();
+        TextLine[] tx = new TextLine[6];
+        double[] date = new double[]{
+                user.getFa(),
+                user.getPtt(),
+                user.getSta(),
+                user.getStb(),
+                user.getEng(),
+                user.getSth(),
+        };
+        /*
+  ="-", x=0
+  ="D", x>=5
+  ="C", 4<=x<5
+  ="B", 3<=x<4
+  ="A", 2.5<=x<3
+  ="A+", 2<=x<2.5
+  ="S", 1<=x<2
+  ="SS", 0<x<1
+
+  SS 254,246,104
+S 245,157,32
+A+
+A 143,225,123
+B 6,105,178
+C 140,14,170
+D 198,28,51
+
+1440
+
+        * */
+//        canvas.translate(480,520);
+//        for (int i = 0; i < date.length; i++) {
+//            if (date[i]>)
+//            canvas.translate(0,90);
+//        }
+
+
+
         canvas.restore();
     }
 }

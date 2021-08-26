@@ -77,6 +77,7 @@ public class ppmService extends MsgSTemp implements MessageService {
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
+            canvas.save();
             Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
             canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
             Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
