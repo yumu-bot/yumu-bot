@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.service.OsuGetService;
@@ -15,6 +16,8 @@ import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +29,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
     StarService starService;
 
     ppPlusVsService() {
-        super(Pattern.compile("[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)|(.*\\[mirai:at))"),"ppvs");
+        super(Pattern.compile("[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
     }
 
     @Override
@@ -36,7 +39,6 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
         String name1 = null;
         BinUser us = BindingUtil.readUser(event.getSender().getId());
-        String name2 = null;
         if (us == null) {
             from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
             return;
@@ -45,7 +47,9 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         if(!starService.delStart(score,1)){
             from.sendMessage("您的积分不够1积分！");
             return;
-        }String fkid;
+        }
+        int fkid;
+        String name2 = null;
         if (at == null) {
             if (matcher.find()) {
                 name2 = matcher.group("name").trim();
@@ -54,7 +58,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
                 from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
                 return;
             }
-            fkid = name2;
+            fkid  = osuGetService.getOsuId(name2);
         }else {
             BinUser r = BindingUtil.readUser(at.getTarget());
             if (r == null){
@@ -62,13 +66,13 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
                 starService.addStart(score,1);
                 return;
             }
-            fkid = r.getOsuID()+"";
+            fkid = r.getOsuID();
             name2 = r.getOsuName();
         }
         JSONObject user1 = null;
         JSONObject user2 = null;
         user1 = osuGetService.ppPlus(us.getOsuID()+"");
-        user2 = osuGetService.ppPlus(fkid);
+        user2 = osuGetService.ppPlus(fkid+"");
         if (user1 == null || user2 == null){
             from.sendMessage("api请求失败");
             starService.addStart(score,1);
@@ -94,6 +98,135 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         });
 
         byte[] datebyte = null;
+        try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
+             Typeface fontface = FontCfg.TORUS_REGULAR;
+             Font fontA = new Font(fontface, 80);
+             Font fontB = new Font(fontface, 64);
+             Paint white = new Paint().setARGB(255,255,255,255);
+        ){
+            var canvas = surface.getCanvas();
+
+            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPPlusBG.png")));
+            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPPlusOverlay.png")));
+            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+            canvas.drawImage(bg1,0,0);
+            canvas.drawImage(bg2,0,0);
+            //在底下
+            canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
+
+            canvas.save();
+            canvas.translate(960,440);
+            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5, date[0], date[1], date[2], date[3], date[4], date[5]);
+            org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5, datev[0], datev[1], datev[2], datev[3], datev[4], datev[5]);
+            canvas.drawPath(pt2,new Paint().setARGB(255,223,0,36).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt2,new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            TextLine ppm$ = TextLine.make("PP-",fontA);
+            canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
+            canvas.restore();
+            canvas.drawImage(bg3,513,74);
+
+            canvas.save();
+            canvas.translate(280,440);
+                TextLine text = TextLine.make(user1.getString("UserName"), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(user1.getString("UserName").substring(0,8)+"...",fontA);
+            canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
+            canvas.restore();
+
+            canvas.save();
+            canvas.translate(1640,440);
+            text = TextLine.make(user2.getString("UserName"), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(user2.getString("UserName").substring(0,8)+"...",fontA);
+            canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
+            canvas.restore();
+
+            DecimalFormat dx = new DecimalFormat("0.00");
+            canvas.save();
+            // user1.getFloatValue("JumpAimTotal"),
+            //                user1.getFloatValue("FlowAimTotal"),
+            //                user1.getFloatValue("AccuracyTotal"),
+            //                user1.getFloatValue("StaminaTotal"),
+            //                user1.getFloatValue("SpeedTotal"),
+            //                user1.getFloatValue("PrecisionTotal"),
+            canvas.translate(100,520);
+            TextLine k1 = TextLine.make("Jump",fontB);
+            TextLine v1 = TextLine.make(dx.format(user1.getFloatValue("JumpAimTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Flow",fontB);
+            v1 = TextLine.make(dx.format(user1.getFloatValue("FlowAimTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Acc",fontB);
+            v1 = TextLine.make(dx.format(user1.getFloatValue("AccuracyTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Sta",fontB);
+            v1 = TextLine.make(dx.format(user1.getFloatValue("StaminaTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Spd",fontB);
+            v1 = TextLine.make(dx.format(user1.getFloatValue("SpeedTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Pre",fontB);
+            v1 = TextLine.make(dx.format(user1.getFloatValue("PrecisionTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.restore();
+            canvas.save();
+            canvas.translate(920,880);
+            v1 = TextLine.make(user1.getString("PerformanceTotal"),fontA);
+            canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.restore();
+
+            canvas.translate(1460,520);
+            k1 = TextLine.make("Jump",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("JumpAimTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Flow",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("FlowAimTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Acc",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("AccuracyTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Sta",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("StaminaTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Spd",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("SpeedTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.translate(0,90);
+            k1 = TextLine.make("Pre",fontB);
+            v1 = TextLine.make(dx.format(user2.getFloatValue("PrecisionTotal")),fontB);
+            canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
+            canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.restore();
+            canvas.save();
+            canvas.translate(920,880);
+            v1 = TextLine.make(user2.getString("PerformanceTotal"),fontA);
+            canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
+            canvas.restore();
+
+            datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
+        }
+            /*
         try(Surface surface = Surface.makeRasterN32Premul(600,1025);
             Font smileFont = new Font(FontCfg.JP,20);
             Font lagerFont = new Font(FontCfg.JP,35);
@@ -201,6 +334,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.restore();
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
+             */
         if (datebyte != null ){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
         }
