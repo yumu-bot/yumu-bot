@@ -69,6 +69,35 @@ public class ppmService extends MsgSTemp implements MessageService {
             from.sendMessage("游戏时常过短,可能为新号，无法计算");
             return;
         }
+        if (Math.random()<=0.01){
+            Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
+            PPmObject userinfo1;
+
+            try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
+                 Typeface fontface = FontCfg.TORUS_REGULAR;
+                 Font fontA = new Font(fontface, 80);
+                 Paint white = new Paint().setARGB(255,255,255,255);
+            ){
+                var canvas = surface.getCanvas();
+                Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
+                canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
+                Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+                Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+                Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+                canvas.drawImage(bg1,0,0);
+                canvas.drawImage(bg2,0,0);
+                canvas.drawImage(bg3,surface.getWidth()-img.getWidth(),surface.getHeight()-img.getHeight(),new Paint().setAlpha(51));
+                canvas.drawImage(spr,0,0);
+
+                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.headURL);
+                PpmVsService.drowLhead(canvas, head1);
+                PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
+
+                var date = surface.makeImageSnapshot().encodeToData().getBytes();
+                from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date),from));
+            }
+            return;
+        }
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface fontface = FontCfg.TORUS_REGULAR;
              Font fontA = new Font(fontface, 80);
