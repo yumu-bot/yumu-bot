@@ -110,7 +110,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
             canvas.drawImage(bg1,0,0);
             canvas.drawImage(bg2,0,0);
-            canvas.drawImage(bg3,513,74);
+            //在底下
             canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
             double[] hex1 = new double[]{
                     Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
@@ -128,6 +128,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
 
+            canvas.drawImage(bg3,513,74);
 
             Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.headURL);
             PpmVsService.drowLhead(canvas, head1);
