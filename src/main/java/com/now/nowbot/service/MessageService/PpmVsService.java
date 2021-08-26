@@ -335,6 +335,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         };
         /*
   ="-", x=0
+  ="F",
   ="D", x>=5
   ="C", 4<=x<5
   ="B", 3<=x<4
@@ -350,7 +351,7 @@ A 143,225,123
 B 6,105,178
 C 140,14,170
 D 198,28,51
-
+F 108.11.11
 1440
 
         * */

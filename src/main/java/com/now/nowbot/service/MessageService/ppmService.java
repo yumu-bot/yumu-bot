@@ -73,7 +73,6 @@ public class ppmService extends MsgSTemp implements MessageService {
              Typeface fontface = FontCfg.TORUS_REGULAR;
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
-
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
@@ -125,6 +124,22 @@ public class ppmService extends MsgSTemp implements MessageService {
                     userinfo.getSth(),
             }, userinfo.getTtl()*100);
 
+            {
+                canvas.save();
+                canvas.translate(920, 920);
+                var tx = TextLine.make("总计", fontA);
+                canvas.drawTextLine(tx, -tx.getWidth(), tx.getCapHeight(), white);
+                canvas.restore();
+                canvas.save();
+                canvas.translate(1000, 880);
+                DecimalFormat dx = new DecimalFormat("0.00");
+                tx = TextLine.make(dx.format(userinfo.getSan()), fontB);
+                canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
+                canvas.translate(0,40);
+                tx = TextLine.make("San值", fontA);
+                canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
+                canvas.restore();
+            }
 
             var date = surface.makeImageSnapshot().encodeToData().getBytes();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date), from));
