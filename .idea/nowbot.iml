@@ -118,7 +118,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Maven: net.mamoe:mirai-core-utils-jvm:2.6.7" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.1.0" level="project" />
     <orderEntry type="library" name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-io:0.1.16" level="project" />
-    <orderEntry type="library" name="Maven: org.jetbrains.skija:skija-linux:0.92.20" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains.skija:skija-windows:0.92.20" level="project" />
     <orderEntry type="library" name="Maven: org.jetbrains.skija:skija-shared:0.92.20" level="project" />
     <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.11.2" level="project" />
     <orderEntry type="library" name="Maven: com.kennycason:kumo-core:1.28" level="project" />
