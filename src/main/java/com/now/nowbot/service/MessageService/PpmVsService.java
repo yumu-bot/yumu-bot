@@ -357,6 +357,7 @@ C 140,14,170
 D 198,28,51
 F 108.11.11
 1440
+
         * */
         canvas.translate(480,520);
         Paint[] paints = new Paint[]{
