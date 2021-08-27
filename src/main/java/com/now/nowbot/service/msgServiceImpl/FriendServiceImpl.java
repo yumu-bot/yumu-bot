@@ -62,7 +62,12 @@ public class FriendServiceImpl extends MessageService{
             naf = new Font(face, 25);
             bigf = new Font(face, 50);
         }
-        BinUser user = BindingUtil.readUser(event.getSender().getId());
+        BinUser user = null;
+        try {
+            user = BindingUtil.readUser(event.getSender().getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if (user == null) {
             from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请发送bind绑定"));
             return;
