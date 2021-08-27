@@ -52,13 +52,7 @@ public class catpanelService extends MsgSTemp implements MessageService {
         int tmd = 0;
         while (matcher.find()) {
             if (matcher.group("bk") != null) {
-                try {
-                    tmd = Integer.parseInt(matcher.group("bk"));
-                    if (tmd < 0 || tmd > 100) throw new Exception("数值不合法");
-                } catch (Exception e) {
-                    from.sendMessage(e.getMessage());
-                    return;
-                }
+                if (tmd < 0 || tmd > 100) throw new Exception("数值不合法");
             }
             if (matcher.group("yl") != null) stl = true;
 
@@ -93,7 +87,7 @@ public class catpanelService extends MsgSTemp implements MessageService {
                     canvas.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "lbx.png"), 0, 0);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new Exception("服务器文件读取异常，请联系管理员处理");
             }
             pngBytes = surface.makeImageSnapshot().encodeToData().getBytes();
 

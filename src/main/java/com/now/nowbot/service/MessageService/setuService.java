@@ -72,10 +72,6 @@ public class setuService extends MsgSTemp implements MessageService{
                 time = System.currentTimeMillis();
         }
         BinUser binUser = BindingUtil.readUser(qq);
-        if(binUser == null){
-            from.sendMessage("您未绑定，禁止使用！！！");
-            return;
-        }
 
         StarService.Score score = starService.getScore(binUser);
         if(issuper||starService.delStart(score,5)){

@@ -39,10 +39,6 @@ public class ppmService extends MsgSTemp implements MessageService {
         JSONObject userdate;
         if (at != null) {
             var user = BindingUtil.readUser(at.getTarget());
-            if (user == null) {
-                from.sendMessage(new QuoteReply(event.getMessage()).plus("该用户未绑定!"));
-                return;
-            }
             userdate = osuGetService.getPlayerOsuInfo(user);
             var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
             userinfo = PPmObject.presOsu(userdate, bpdate);
@@ -54,11 +50,6 @@ public class ppmService extends MsgSTemp implements MessageService {
                 userinfo = PPmObject.presOsu(userdate, bpdate);
             }else {
                 var user = BindingUtil.readUser(event.getSender().getId());
-                if (user == null) {
-//                    from.sendMessage(PokeMessage.ChuoYiChuo);
-                    from.sendMessage("您未绑定，请绑定后使用");
-                    return;
-                }
                 userdate = osuGetService.getPlayerOsuInfo(user);
                 var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
                 userinfo = PPmObject.presOsu(userdate, bpdate);
@@ -66,8 +57,7 @@ public class ppmService extends MsgSTemp implements MessageService {
         }
 
         if(userinfo.getPtime()<60 || userinfo.getPcont()<30){
-            from.sendMessage("游戏时常过短,可能为新号，无法计算");
-            return;
+            throw new Exception("游戏时常过短,可能为新号，无法计算");
         }
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");

@@ -31,10 +31,6 @@ public class songService extends MsgSTemp implements MessageService{
         
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
-        if(user == null) {
-            from.sendMessage("您未绑定，禁止使用！！！");
-            return;
-        }
         StarService.Score score = starService.getScore(user);
         if(!starService.delStart(score,0.5f)){
             from.sendMessage("您的积分够!请多刷pp!");
@@ -69,8 +65,8 @@ public class songService extends MsgSTemp implements MessageService{
             from.sendMessage(ExternalResource.uploadAsVoice(ExternalResource.create(voicedate),from));
             cin.close();
         } catch (Exception e) {
-            from.sendMessage("下载失败，请稍后再试");
             starService.addStart(score,0.5f);
+            throw e;
         }
     }
 }

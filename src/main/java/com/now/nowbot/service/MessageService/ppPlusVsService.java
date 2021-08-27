@@ -39,10 +39,6 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
         String name1 = null;
         BinUser us = BindingUtil.readUser(event.getSender().getId());
-        if (us == null) {
-            from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
-            return;
-        }
         StarService.Score score = starService.getScore(us);
         if(!starService.delStart(score,1)){
             from.sendMessage("您的积分不够1积分！");
@@ -60,11 +56,12 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             }
             fkid  = osuGetService.getOsuId(name2);
         }else {
-            BinUser r = BindingUtil.readUser(at.getTarget());
-            if (r == null){
-                from.sendMessage(at.plus("该用户未绑定"));
+            BinUser r = null;
+            try {
+                r = BindingUtil.readUser(at.getTarget());
+            } catch (Exception e) {
                 starService.addStart(score,1);
-                return;
+                throw e;
             }
             fkid = r.getOsuID();
             name2 = r.getOsuName();
@@ -74,9 +71,8 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         user1 = osuGetService.ppPlus(us.getOsuID()+"");
         user2 = osuGetService.ppPlus(fkid+"");
         if (user1 == null || user2 == null){
-            from.sendMessage("api请求失败");
             starService.addStart(score,1);
-            return;
+            throw new Exception("那个破网站连不上");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{

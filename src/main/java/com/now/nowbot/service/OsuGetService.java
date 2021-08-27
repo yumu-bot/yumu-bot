@@ -75,7 +75,11 @@ public class OsuGetService {
         binUser.setAccessToken(s.getString("access_token"));
         binUser.setRefreshToken(s.getString("refresh_token"));
         binUser.nextTime(s.getLong("expires_in"));
-        BindingUtil.writeUser(binUser);
+        try {
+            BindingUtil.writeUser(binUser);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return s;
     }
 
@@ -126,7 +130,11 @@ public class OsuGetService {
         binUser.setAccessToken(s.getString("access_token"));
         binUser.setRefreshToken(s.getString("refresh_token"));
         binUser.nextTime(s.getLong("expires_in"));
-        BindingUtil.writeUser(binUser);
+        try {
+            BindingUtil.writeUser(binUser);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return s;
     }
 

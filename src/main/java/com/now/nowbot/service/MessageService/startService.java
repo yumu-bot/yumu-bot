@@ -30,10 +30,6 @@ public class startService extends MsgSTemp implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
-        if(user == null){
-            from.sendMessage(new At(event.getSender().getId()).plus("您尚未绑定，请发送bind绑定"));
-            return;
-        }
         StringBuffer sb = new StringBuffer();
         StarService.Score sc = starService.getScore(user);
 

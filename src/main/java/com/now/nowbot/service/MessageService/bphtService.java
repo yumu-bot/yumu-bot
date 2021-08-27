@@ -34,10 +34,6 @@ public class bphtService extends MsgSTemp implements MessageService{
                 nu.setOsuName(name);
         }else {
             nu = BindingUtil.readUser(event.getSender().getId());
-            if(nu == null){
-                from.sendMessage("您未绑定，请发送bind绑定");
-                return;
-            }
             if(nu.getOsuID() == 0){
                 osuGetService.getPlayerOsuInfo(nu);
             }

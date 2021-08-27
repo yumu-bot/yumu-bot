@@ -31,7 +31,7 @@ public class pingService  extends MsgSTemp implements MessageService{
             canvas.drawTextLine(t,(500-t.getWidth())/2, t.getHeight(),new Paint().setARGB(255,192,219,288));
 
             data = surface.makeImageSnapshot().encodeToData().getBytes();
-        }catch (Exception e){}
+        }
         if (data != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data), from)).recallIn(2000);
 
     }

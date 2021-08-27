@@ -33,11 +33,6 @@ public class PpmVsService extends MsgSTemp implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
-        if (user == null){
-//            from.sendMessage(PokeMessage.ChuoYiChuo);
-            from.sendMessage("您未绑定，请绑定后使用");
-            return;
-        }
 
         if (matcher.group("s") != null || Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
@@ -80,10 +75,6 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
             BinUser user2 = BindingUtil.readUser(at.getTarget());
-            if(user2 == null) {
-                from.sendMessage(new QuoteReply(event.getMessage()).plus("该用户没有绑定，无法查询！"));
-                return;
-            }
             var userdate = osuGetService.getPlayerOsuInfo(user2);
             var bpdate = osuGetService.getOsuBestMap(user2, 0, 100);
             userinfo2 = PPmObject.presOsu(userdate,bpdate);

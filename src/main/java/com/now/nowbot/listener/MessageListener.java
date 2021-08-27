@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.entity.ServiceThrowError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import kotlin.coroutines.CoroutineContext;
@@ -30,21 +31,17 @@ public class MessageListener extends SimpleListenerHost{
     }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
-//        System.out.println("--------------------------------");
-//        SimpleListenerHost a = null;
-//        context.fold(Object.class,(e, v)->{
-//            System.out.println(v.getClass().getName());
-//            return e;
-//        });
-//        log.info("ali",exception);
-//        System.out.println("--------------------------------");
-        log.info("拦截新错误",exception);
+        if(SimpleListenerHost.getEvent(exception) instanceof MessageEvent){
+            MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
+            event.getSubject().sendMessage(exception.getMessage());
+        }
     }
 
 
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable{
+        if (event != null)throw new RuntimeException("123");
         for (var k : MsgSTemp.services.keySet()){
             var matcher = k.matcher(event.getMessage().contentToString());
             if(matcher.find()){

@@ -34,18 +34,10 @@ public class ppPlusService extends MsgSTemp implements MessageService{
         At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
             user = BindingUtil.readUser(at.getTarget());
-            if (user == null) {
-                from.sendMessage(new QuoteReply(event.getMessage()).plus("被查询人未绑定，请绑定后使用"));
-                return;
-            }
         }else {
             name = matcher.group("name");
             if(name == null || name.trim().equals("")){
                 user = BindingUtil.readUser(event.getSender().getId());
-                if(user == null){
-                    from.sendMessage(new At(event.getSender().getId()).plus("您未绑定，请绑定后使用"));
-                    return;
-                }
             }
         }
         JSONObject js = null;
@@ -55,7 +47,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
             js = osuGetService.ppPlus(""+user.getOsuID());
         }
         if (js == null){
-            from.sendMessage("api请求失败");
+            throw new Exception("连不上啊连不上！");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{
