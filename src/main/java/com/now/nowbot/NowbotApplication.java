@@ -1,6 +1,7 @@
 package com.now.nowbot;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.entity.FontCfg;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,6 +16,7 @@ public class NowbotApplication {
         SpringApplication.run(NowbotApplication.class, args);
         System.out.println("Max:"+Runtime.getRuntime().maxMemory()/1024/1024+'M');
         System.out.println("Total:"+Runtime.getRuntime().totalMemory()/1024/1024+'M');
+        FontCfg.init();
     }
 //    @Scheduled(cron = "0/5 * * * * *") 定时任务
 //    public void A(){
