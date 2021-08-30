@@ -62,7 +62,7 @@ public class ppmService extends MsgSTemp implements MessageService {
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-                 Typeface fontface = FontCfg.TORUS_REGULAR;
+                 Typeface fontface = FontCfg.getTorusRegular();
                  Font fontA = new Font(fontface, 80);
                  Paint white = new Paint().setARGB(255,255,255,255);
             ){
@@ -87,7 +87,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             return;
         }
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = FontCfg.TORUS_REGULAR;
+             Typeface fontface = FontCfg.getTorusRegular();
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
              Paint white = new Paint().setARGB(255,255,255,255);

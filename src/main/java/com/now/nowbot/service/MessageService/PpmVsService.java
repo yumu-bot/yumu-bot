@@ -43,7 +43,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 userinfo1 = PPmObject.presOsu(userdate, bpdate);
             }
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-                 Typeface fontface = FontCfg.TORUS_REGULAR;
+                 Typeface fontface = FontCfg.getTorusRegular();
                  Font fontA = new Font(fontface, 80);
                  Paint white = new Paint().setARGB(255,255,255,255);
             ){
@@ -100,7 +100,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
     static byte[] drow(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
         byte[] date;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = FontCfg.TORUS_REGULAR;
+             Typeface fontface = FontCfg.getTorusRegular();
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
              Paint white = new Paint().setARGB(255,255,255,255);
