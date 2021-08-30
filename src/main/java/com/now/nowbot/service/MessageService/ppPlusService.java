@@ -23,7 +23,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     ppPlusService() {
-        super(Pattern.compile("[!！]\\s*(?i)ppp(?!v)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppp");
+        super(Pattern.compile("[!！]\\s*(?i)ppp(?![v])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppp");
     }
 
     @Override

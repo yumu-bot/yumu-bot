@@ -9,7 +9,10 @@ public abstract class MsgSTemp {
     String info = null;
     MsgSTemp(Pattern pattern, String name){
         /***
-         * name  (?<name>[0-9a-zA-Z\[\]\-_ ]*)?
+         * 开头匹配 ^
+         * 结尾匹配 $
+         * [!！]//s*(?i)page         //(?i) 不区分大小写  (?![字符]) 不匹配某字符
+         * osuname匹配  (?<name>[0-9a-zA-Z\[\]\-_ ]*)?
          */
         services.put(pattern,name);
     }

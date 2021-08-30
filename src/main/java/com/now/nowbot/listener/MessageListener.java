@@ -33,7 +33,8 @@ public class MessageListener extends SimpleListenerHost{
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         if(SimpleListenerHost.getEvent(exception) instanceof MessageEvent){
             MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
-            event.getSubject().sendMessage(exception.toString());
+            var e = SimpleListenerHost.getRootCause(exception);
+            event.getSubject().sendMessage(e.getMessage());
         }
     }
 
