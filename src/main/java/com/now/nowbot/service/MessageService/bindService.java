@@ -43,16 +43,21 @@ public class bindService extends MsgSTemp implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         long d = System.currentTimeMillis();
         if((event.getSubject() instanceof Group)) {
-            BinUser user = BindingUtil.readUser(event.getSender().getId());
-            if(user == null){
-                String state = event.getSender().getId() + "+" + d;
-                var e = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
-                e.recallIn(110*1000);
-                msgs.put(d ,e);
-            }else {
-                event.getSubject().sendMessage(MessageUtils.newChain(new At(event.getSender().getId()),new PlainText("您已经绑定，若要修改请私聊bot bind")));
+            BinUser user = null;
+            try {
+                user = BindingUtil.readUser(event.getSender().getId());
+            } catch (RuntimeException e) {
+                if(user == null){
+                    String state = event.getSender().getId() + "+" + d;
+                    var ra = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
+                    ra.recallIn(110*1000);
+                    msgs.put(d ,ra);
+                }else {
+                    event.getSubject().sendMessage(MessageUtils.newChain(new At(event.getSender().getId()),new PlainText("您已经绑定，若要修改请私聊bot bind")));
+                }
+                return;
             }
-            return;
+
         }
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
