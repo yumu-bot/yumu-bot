@@ -57,6 +57,8 @@ public class bindService extends MsgSTemp implements MessageService{
                     throw e;
                 }
             }
+            event.getSubject().sendMessage(new At(event.getSender().getId()).plus("您已绑定，若要修改绑定请私法bot绑定命令"));
+            return;
         }
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
