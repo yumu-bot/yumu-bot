@@ -33,7 +33,7 @@ public class BindingUtil {
 
         }
         System.gc();
-        if (date == null) throw new IOException("当前用户未绑定");
+        if (date == null) throw new RuntimeException("当前用户未绑定");
         return date;
     }
 
