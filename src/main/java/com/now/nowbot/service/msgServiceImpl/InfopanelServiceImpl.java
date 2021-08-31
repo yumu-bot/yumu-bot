@@ -59,7 +59,7 @@ public class InfopanelServiceImpl extends MessageService{
             if(m.group("bk") != null){
                 try {
                     tmd = Integer.parseInt(m.group("bk"));
-                    if (tmd<0 || tmd>100) throw new Exception("数值不合法");
+                    if (tmd<0 || tmd>100) throw new RuntimeException("数值不合法");
                 } catch (Exception e) {
                     from.sendMessage(e.getMessage());
                     return;

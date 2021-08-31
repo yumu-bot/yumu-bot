@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.ServiceThrowError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
@@ -19,6 +20,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 @Component
 public class MessageListener extends SimpleListenerHost{
 
@@ -29,12 +33,26 @@ public class MessageListener extends SimpleListenerHost{
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
+    DateFormat format = DateFormat.getDateInstance();
+    Permission permission;
+    @Autowired
+    public void setPermission(Permission p){
+        permission = p;
+    }
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         if(SimpleListenerHost.getEvent(exception) instanceof MessageEvent){
             MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
             var e = SimpleListenerHost.getRootCause(exception);
-            event.getSubject().sendMessage(e.getMessage());
+            if(e instanceof RuntimeException) {
+                event.getSubject().sendMessage(e.getMessage());
+            }else {
+                if (permission != null && permission.superUser != null){
+                    permission.superUser.forEach(id->{
+                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus(event.getSenderName()+"\n"+format.format(System.currentTimeMillis())));
+                    });
+                }
+            }
         }
     }
 

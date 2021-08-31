@@ -58,7 +58,7 @@ public class bindService extends MsgSTemp implements MessageService {
         }
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
-        e.recallIn(120 * 1000);
+        e.recallIn(110 * 1000);
         msgs.put(d, e);
         return;
     }

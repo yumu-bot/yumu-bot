@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
+import com.now.nowbot.entity.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
@@ -29,21 +30,43 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
     StarService starService;
 
     ppPlusVsService() {
-        super(Pattern.compile("[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
+//        super(Pattern.compile("[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
+        super(Pattern.compile("^owo$"),"ppvs");
     }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        if (event != null){
+            from.sendMessage("owo");
+            return;
+        }
+        BinUser user = BindingUtil.readUser(event.getSender().getId());
 
-        String name1 = null;
-        BinUser us = BindingUtil.readUser(event.getSender().getId());
-        StarService.Score score = starService.getScore(us);
+        StarService.Score score = starService.getScore(user);
         if(!starService.delStart(score,1)){
             from.sendMessage("您的积分不够1积分！");
             return;
         }
+        String user1,user2,id1,id2;
+        user1 = user.getOsuName();
+        id1 = String.valueOf(user.getOsuID());
+        At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        if(at != null){
+            BinUser userx = BindingUtil.readUser(at.getTarget());
+            user2 = userx.getOsuName();
+            id2 = String.valueOf(userx.getOsuID());
+        }else {
+            String name = matcher.group("name");
+            if(name == null || name.trim().equals("")){
+                from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
+                return;
+            }
+            user2 = name;
+            id2 = String.valueOf(osuGetService.getOsuId(name));
+        }
+
+
         int fkid;
         String name2 = null;
         if (at == null) {
@@ -66,31 +89,31 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             fkid = r.getOsuID();
             name2 = r.getOsuName();
         }
-        JSONObject user1 = null;
-        JSONObject user2 = null;
-        user1 = osuGetService.ppPlus(us.getOsuID()+"");
-        user2 = osuGetService.ppPlus(fkid+"");
-        if (user1 == null || user2 == null){
+        JSONObject date1 = null;
+        JSONObject date2 = null;
+        date1 = osuGetService.ppPlus(id1);
+        date2 = osuGetService.ppPlus(id2);
+        if (date1 == null || date2 == null){
             starService.addStart(score,1);
-            throw new Exception("那个破网站连不上");
+            throw new RuntimeException("那个破网站连不上");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{
-                user1.getFloatValue("JumpAimTotal"),
-                user1.getFloatValue("FlowAimTotal"),
-                user1.getFloatValue("AccuracyTotal"),
-                user1.getFloatValue("StaminaTotal"),
-                user1.getFloatValue("SpeedTotal"),
-                user1.getFloatValue("PrecisionTotal"),
+                date1.getFloatValue("JumpAimTotal"),
+                date1.getFloatValue("FlowAimTotal"),
+                date1.getFloatValue("AccuracyTotal"),
+                date1.getFloatValue("StaminaTotal"),
+                date1.getFloatValue("SpeedTotal"),
+                date1.getFloatValue("PrecisionTotal"),
         });
 
         float[] datev = osuGetService.ppPlus(new float[]{
-                user2.getFloatValue("JumpAimTotal"),
-                user2.getFloatValue("FlowAimTotal"),
-                user2.getFloatValue("AccuracyTotal"),
-                user2.getFloatValue("StaminaTotal"),
-                user2.getFloatValue("SpeedTotal"),
-                user2.getFloatValue("PrecisionTotal"),
+                date2.getFloatValue("JumpAimTotal"),
+                date2.getFloatValue("FlowAimTotal"),
+                date2.getFloatValue("AccuracyTotal"),
+                date2.getFloatValue("StaminaTotal"),
+                date2.getFloatValue("SpeedTotal"),
+                date2.getFloatValue("PrecisionTotal"),
         });
 
         byte[] datebyte = null;
@@ -126,15 +149,15 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
             canvas.save();
             canvas.translate(280,440);
-                TextLine text = TextLine.make(user1.getString("UserName"), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(user1.getString("UserName").substring(0,8)+"...",fontA);
+                TextLine text = TextLine.make(date1.getString("UserName"), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date1.getString("UserName").substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
             canvas.save();
             canvas.translate(1640,440);
-            text = TextLine.make(user2.getString("UserName"), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(user2.getString("UserName").substring(0,8)+"...",fontA);
+            text = TextLine.make(date2.getString("UserName"), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date2.getString("UserName").substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
@@ -148,75 +171,75 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             //                user1.getFloatValue("PrecisionTotal"),
             canvas.translate(100,520);
             TextLine k1 = TextLine.make("Jump",fontB);
-            TextLine v1 = TextLine.make(dx.format(user1.getFloatValue("JumpAimTotal")),fontB);
+            TextLine v1 = TextLine.make(dx.format(date1.getFloatValue("JumpAimTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Flow",fontB);
-            v1 = TextLine.make(dx.format(user1.getFloatValue("FlowAimTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("FlowAimTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Acc",fontB);
-            v1 = TextLine.make(dx.format(user1.getFloatValue("AccuracyTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("AccuracyTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Sta",fontB);
-            v1 = TextLine.make(dx.format(user1.getFloatValue("StaminaTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("StaminaTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Spd",fontB);
-            v1 = TextLine.make(dx.format(user1.getFloatValue("SpeedTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("SpeedTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Pre",fontB);
-            v1 = TextLine.make(dx.format(user1.getFloatValue("PrecisionTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("PrecisionTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
             canvas.save();
             canvas.translate(920,880);
-            v1 = TextLine.make(dx.format(user1.getString("PerformanceTotal")),fontA);
+            v1 = TextLine.make(dx.format(date1.getString("PerformanceTotal")),fontA);
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
             canvas.translate(1460,520);
             k1 = TextLine.make("Jump",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("JumpAimTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("JumpAimTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Flow",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("FlowAimTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("FlowAimTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Acc",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("AccuracyTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("AccuracyTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Sta",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("StaminaTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("StaminaTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Spd",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("SpeedTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("SpeedTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Pre",fontB);
-            v1 = TextLine.make(dx.format(user2.getFloatValue("PrecisionTotal")),fontB);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("PrecisionTotal")),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
             canvas.save();
             canvas.translate(1000,880);
-            v1 = TextLine.make(user2.getString("PerformanceTotal"),fontA);
+            v1 = TextLine.make(date2.getString("PerformanceTotal"),fontA);
             canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
             canvas.restore();
 

@@ -47,7 +47,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
             js = osuGetService.ppPlus(""+user.getOsuID());
         }
         if (js == null){
-            throw new Exception("连不上啊连不上！");
+            throw new RuntimeException("连不上啊连不上！");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{
