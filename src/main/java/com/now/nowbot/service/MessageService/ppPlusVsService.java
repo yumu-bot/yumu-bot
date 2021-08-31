@@ -5,6 +5,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
+import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
