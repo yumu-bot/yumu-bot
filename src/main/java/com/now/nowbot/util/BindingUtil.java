@@ -27,7 +27,6 @@ public class BindingUtil {
         Path pt = Path.of(NowbotConfig.BIN_PATH + qq + ".json");
         BinUser date = null;
         if (Files.isRegularFile(pt)) {
-
             String s = Files.readString(pt);
             date = JSONObject.parseObject(s, BinUser.class);
 

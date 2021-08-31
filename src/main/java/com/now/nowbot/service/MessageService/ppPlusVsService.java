@@ -37,10 +37,6 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
-        if (event != null){
-            from.sendMessage("owo");
-            return;
-        }
         BinUser user = BindingUtil.readUser(event.getSender().getId());
 
         StarService.Score score = starService.getScore(user);
@@ -48,47 +44,33 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             from.sendMessage("您的积分不够1积分！");
             return;
         }
-        String user1,user2,id1,id2;
+        String user1,user2,id1,id2,head1,head2;
         user1 = user.getOsuName();
         id1 = String.valueOf(user.getOsuID());
+        head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
         At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
             BinUser userx = BindingUtil.readUser(at.getTarget());
             user2 = userx.getOsuName();
             id2 = String.valueOf(userx.getOsuID());
+            head2 = osuGetService.getPlayerOsuInfo(userx).getString("avatar_url");
         }else {
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
                 from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
                 return;
             }
-            user2 = name;
-            id2 = String.valueOf(osuGetService.getOsuId(name));
-        }
-
-
-        int fkid;
-        String name2 = null;
-        if (at == null) {
-            if (matcher.find()) {
-                name2 = matcher.group("name").trim();
-            }
-            if (name2 == null || name2.equals("")) {
-                from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
-                return;
-            }
-            fkid  = osuGetService.getOsuId(name2);
-        }else {
-            BinUser r = null;
             try {
-                r = BindingUtil.readUser(at.getTarget());
+                user2 = name;
+                var user2d = osuGetService.getPlayerOsuInfo(name);
+                id2 = user2d.getString("id");
+                head2 = user2d.getString("avatar_url");
             } catch (Exception e) {
                 starService.addStart(score,1);
                 throw e;
             }
-            fkid = r.getOsuID();
-            name2 = r.getOsuName();
         }
+
         JSONObject date1 = null;
         JSONObject date2 = null;
         date1 = osuGetService.ppPlus(id1);
@@ -98,7 +80,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             throw new RuntimeException("那个破网站连不上");
         }
 
-        float[] date = osuGetService.ppPlus(new float[]{
+        float[] hex1 = osuGetService.ppPlus(new float[]{
                 date1.getFloatValue("JumpAimTotal"),
                 date1.getFloatValue("FlowAimTotal"),
                 date1.getFloatValue("AccuracyTotal"),
@@ -107,7 +89,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
                 date1.getFloatValue("PrecisionTotal"),
         });
 
-        float[] datev = osuGetService.ppPlus(new float[]{
+        float[] hex2 = osuGetService.ppPlus(new float[]{
                 date2.getFloatValue("JumpAimTotal"),
                 date2.getFloatValue("FlowAimTotal"),
                 date2.getFloatValue("AccuracyTotal"),
@@ -136,13 +118,13 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
             canvas.save();
             canvas.translate(960,440);
-            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5, date[0], date[1], date[2], date[3], date[4], date[5]);
-            org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5, datev[0], datev[1], datev[2], datev[3], datev[4], datev[5]);
+            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5, hex1[0], hex1[1], hex1[2], hex1[3], hex1[4], hex1[5]);
+            org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5, hex2[0], hex2[1], hex2[2], hex2[3], hex2[4], hex2[5]);
             canvas.drawPath(pt2,new Paint().setARGB(255,223,0,36).setStroke(true).setStrokeWidth(5));
             canvas.drawPath(pt2,new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
             canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
             canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
-            TextLine ppm$ = TextLine.make("PP-",fontA);
+            TextLine ppm$ = TextLine.make("PP+",fontA);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
             canvas.drawImage(bg3,513,74);
@@ -163,12 +145,6 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
             DecimalFormat dx = new DecimalFormat("0");
             canvas.save();
-            // user1.getFloatValue("JumpAimTotal"),
-            //                user1.getFloatValue("FlowAimTotal"),
-            //                user1.getFloatValue("AccuracyTotal"),
-            //                user1.getFloatValue("StaminaTotal"),
-            //                user1.getFloatValue("SpeedTotal"),
-            //                user1.getFloatValue("PrecisionTotal"),
             canvas.translate(100,520);
             TextLine k1 = TextLine.make("Jump",fontB);
             TextLine v1 = TextLine.make(dx.format(date1.getFloatValue("JumpAimTotal")),fontB);
@@ -245,6 +221,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
+
             /*
         try(Surface surface = Surface.makeRasterN32Premul(600,1025);
             Font smileFont = new Font(FontCfg.JP,20);
