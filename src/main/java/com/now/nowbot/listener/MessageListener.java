@@ -33,7 +33,7 @@ public class MessageListener extends SimpleListenerHost{
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-    DateFormat format = DateFormat.getDateInstance();
+    DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Permission permission;
     @Autowired
     public void setPermission(Permission p){
@@ -49,7 +49,7 @@ public class MessageListener extends SimpleListenerHost{
             }else {
                 if (permission != null && permission.superUser != null){
                     permission.superUser.forEach(id->{
-                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus(event.getSenderName()+"\n"+format.format(System.currentTimeMillis())));
+                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n"+event.getSenderName()+"   "+format.format(System.currentTimeMillis())));
                     });
                 }
             }
