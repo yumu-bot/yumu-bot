@@ -1,7 +1,7 @@
 package com.now.nowbot.listener;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.ServiceThrowError;
+import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import kotlin.coroutines.CoroutineContext;
@@ -44,7 +44,7 @@ public class MessageListener extends SimpleListenerHost{
         if(SimpleListenerHost.getEvent(exception) instanceof MessageEvent){
             MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
             var e = SimpleListenerHost.getRootCause(exception);
-            if(e instanceof RuntimeException) {
+            if(e instanceof TipsError) {
                 event.getSubject().sendMessage(e.getMessage());
             }else {
                 if (permission != null && permission.superUser != null){

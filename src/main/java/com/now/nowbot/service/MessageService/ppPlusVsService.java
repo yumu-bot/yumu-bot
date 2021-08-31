@@ -77,7 +77,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         date2 = osuGetService.ppPlus(id2);
         if (date1 == null || date2 == null){
             starService.addStart(score,1);
-            throw new RuntimeException("那个破网站连不上");
+            throw new TipsError("那个破网站连不上");
         }
 
         float[] hex1 = osuGetService.ppPlus(new float[]{

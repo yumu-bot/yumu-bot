@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
+import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -47,7 +48,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
             js = osuGetService.ppPlus(""+user.getOsuID());
         }
         if (js == null){
-            throw new RuntimeException("连不上啊连不上！");
+            throw new TipsError("连不上啊连不上！");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{

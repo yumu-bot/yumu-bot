@@ -1,6 +1,7 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.error.TipsError;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
@@ -31,27 +32,27 @@ public class CheckPermissionAspect {
 
         if (CheckPermission.isBotSuper()){
             if(!permission.superUser.contains(event.getSender().getId()))
-                throw new RuntimeException(event.getSender().getId()+":权限禁止");
+                throw new TipsError("此功能已关闭");
         }
 
         if (CheckPermission.openWF()){
             if (!permission.friendWhitelist.contains(event.getSender().getId()))
-                throw new RuntimeException(event.getSender().getId()+":权限禁止");
+                throw new TipsError("此功能已关闭");
         }
         if (CheckPermission.openWG()){
             if (event instanceof GroupMessageEvent){
                 if (!permission.groupWhitelist.contains(((GroupMessageEvent) event).getGroup().getId()))
-                    throw new RuntimeException(((GroupMessageEvent) event).getGroup().getId()+":权限禁止");
+                    throw new TipsError("此功能已关闭");
             }
         }
         if (CheckPermission.openBF()){
             if (permission.groupBlacklist.contains(event.getSender().getId()))
-                throw new RuntimeException(event.getSender().getId()+":权限禁止");
+                throw new TipsError("此功能已关闭");
         }
         if(CheckPermission.openBG()){
             if (event instanceof GroupMessageEvent){
                 if (permission.groupBlacklist.contains(((GroupMessageEvent) event).getGroup().getId())){
-                    throw new RuntimeException(((GroupMessageEvent) event).getGroup().getId()+"权限禁止");
+                    throw new TipsError("此功能已关闭");
                 }
             }
         }
