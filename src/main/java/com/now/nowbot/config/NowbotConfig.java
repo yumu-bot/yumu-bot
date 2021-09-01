@@ -173,22 +173,4 @@ public class NowbotConfig {
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
     }
-    @Autowired
-    Bot bot;
-    @Scheduled(cron = "0 0 0 * * * ?")
-    public void sleep(){
-        bot.getGroups().forEach(group -> {
-            var gs = group.getMembers();
-            try {
-                var n = gs.getOrFail(1529813731L);
-                group.sendMessage(new At(n.getId()).plus("快去睡啦"));
-            } catch (Exception e) {
-            }
-        });
-    }
-    @Scheduled(cron = "0 0/30 8-18 * * * ?")
-    public void alive(){
-        bot.getGroup(746671531L).sendMessage("定时任务测试\n0 0/30 8-18 * * * ?");
-    }
-
 }
