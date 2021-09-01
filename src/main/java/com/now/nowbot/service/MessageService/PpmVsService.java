@@ -353,8 +353,8 @@ F 108.11.11
         canvas.translate(480,520);
         Paint[] paints = new Paint[]{
                 new Paint().setARGB(255,254,246,104),
-                new Paint().setARGB(255,245,157,32),
-                new Paint().setARGB(255,143,225,123),
+                new Paint().setARGB(255,255,178,44),
+                new Paint().setARGB(255,70,240,20),
                 new Paint().setARGB(255,6,105,178),
                 new Paint().setARGB(255,140,14,170),
                 new Paint().setARGB(255,198,28,51),

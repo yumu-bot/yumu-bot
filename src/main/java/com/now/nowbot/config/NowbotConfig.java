@@ -3,6 +3,9 @@ package com.now.nowbot.config;
 import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
+import net.mamoe.mirai.contact.NormalMember;
+import net.mamoe.mirai.internal.BotFactoryImpl;
+import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -146,7 +150,9 @@ public class NowbotConfig {
     MessageListener messageListener;
     @Bean
     public Bot bot(){
+        //创建bot配置类
         BotConfiguration botConfiguration = new BotConfiguration();
+        //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
         botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
@@ -158,15 +164,31 @@ public class NowbotConfig {
         botConfiguration.fileBasedDeviceInfo();
         botConfiguration.enableContactCache();
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
+        //配置完成，注册bot
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
+        //登录
         if (isStart) bot.login();
 //        bot.getEventChannel().registerListenerHost(messageListener);
+        //注册监听 messageListener需要继承SimpleListenerHost类
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
-
         return bot;
     }
-    @Bean(name = "MessageServices")
-    public Map<Pattern, String> services(){
-        return new HashMap<>();
+    @Autowired
+    Bot bot;
+    @Scheduled(cron = "0 0 0 * * * ?")
+    public void sleep(){
+        bot.getGroups().forEach(group -> {
+            var gs = group.getMembers();
+            try {
+                var n = gs.getOrFail(1529813731L);
+                group.sendMessage(new At(n.getId()).plus("快去睡啦"));
+            } catch (Exception e) {
+            }
+        });
     }
+    @Scheduled(cron = "0 0/30 8-18 * * * ?")
+    public void alive(){
+        bot.getGroup(746671531L).sendMessage("定时任务测试\n0 0/30 8-18 * * * ?");
+    }
+
 }
