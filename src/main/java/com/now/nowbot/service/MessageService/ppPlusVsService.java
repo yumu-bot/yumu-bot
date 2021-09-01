@@ -177,12 +177,14 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
+
             canvas.save();
             canvas.translate(920,880);
-            v1 = TextLine.make(dx.format(date1.getString("PerformanceTotal")),fontA);
+            v1 = TextLine.make(dx.format(date1.getFloatValue("PerformanceTotal")),fontA);
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
+            canvas.save();
             canvas.translate(1460,520);
             k1 = TextLine.make("Jump",fontB);
             v1 = TextLine.make(dx.format(date2.getFloatValue("JumpAimTotal")),fontB);
@@ -214,11 +216,15 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
+
             canvas.save();
             canvas.translate(1000,880);
-            v1 = TextLine.make(date2.getString("PerformanceTotal"),fontA);
+            v1 = TextLine.make(dx.format(date2.getFloatValue("PerformanceTotal")),fontA);
             canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
             canvas.restore();
+
+            drowLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
+            drowRhead(canvas, SkiaUtil.lodeNetWorkImage(head2));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
@@ -335,5 +341,31 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         if (datebyte != null ){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
         }
+    }
+    static void drowLhead(Canvas canvas, Image head){
+        canvas.save();
+        canvas.translate(130,80);
+        try(var ss = Surface.makeRasterN32Premul(300,300);) {
+            ss.getCanvas()
+                    .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
+                    .drawImage(head, 0, 0);
+            head = ss.makeImageSnapshot();
+        }
+        canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
+        canvas.drawImage(head,0,0);
+        canvas.restore();
+    }
+    static void drowRhead(Canvas canvas, Image head){
+        canvas.save();
+        canvas.translate(1490,80);
+        try(var ss = Surface.makeRasterN32Premul(300,300);) {
+            ss.getCanvas()
+                    .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
+                    .drawImage(head, 0, 0);
+            head = ss.makeImageSnapshot();
+        }
+        canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
+        canvas.drawImage(head,0,0);
+        canvas.restore();
     }
 }

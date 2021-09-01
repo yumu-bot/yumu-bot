@@ -48,13 +48,25 @@ public class MessageListener extends SimpleListenerHost{
                 event.getSubject().sendMessage(e.getMessage());
             }else {
                 if (permission != null && permission.superUser != null){
+                    var errdate = getExceptionAllinformation((Exception) e);
                     permission.superUser.forEach(id->{
-                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n"+event.getSenderName()+"   "+format.format(System.currentTimeMillis())));
+                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n"+errdate+"   "+format.format(System.currentTimeMillis())));
                     });
                 }
+                log.info("---->",e);
             }
         }
     }
+
+    public static String getExceptionAllinformation(Exception ex){
+        String sOut = "";
+        StackTraceElement[] trace = ex.getStackTrace();
+        for (StackTraceElement s : trace) {
+            sOut += "\tat " + s + "\r\n";
+        }
+        return sOut;
+    }
+
 
 
     @Async

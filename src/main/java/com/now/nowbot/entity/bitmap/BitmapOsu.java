@@ -23,6 +23,7 @@ public class BitmapOsu {
     double hpDrainRate;
     /***
      * 滑条速度
+     * 滑条点
      */
     double sliderMultiplier;
     double sliderTickRate;
