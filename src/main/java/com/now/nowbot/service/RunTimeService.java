@@ -29,8 +29,4 @@ public class RunTimeService {
     public void alive(){
         bot.getGroup(746671531L).sendMessage("定时任务测试\n0 0/30 8-18 * * * ?");
     }
-    @Scheduled(cron = "0/10 * 8-18 * * *")
-    public void test(){
-        log.info("time:{}",System.currentTimeMillis());
-    }
 }
