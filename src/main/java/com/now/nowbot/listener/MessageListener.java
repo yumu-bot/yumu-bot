@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 
+import java.net.ConnectException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -46,6 +48,8 @@ public class MessageListener extends SimpleListenerHost{
             var e = SimpleListenerHost.getRootCause(exception);
             if(e instanceof TipsError) {
                 event.getSubject().sendMessage(e.getMessage());
+            }else if(e instanceof ConnectException || e instanceof RestClientException){
+                event.getSubject().sendMessage("API请求异常，可能是网络不佳或者您的令牌已过期，私发!bind可更新令牌");
             }else {
                 if (permission != null && permission.superUser != null){
                     var errdate = getExceptionAllinformation((Exception) e);
