@@ -18,7 +18,7 @@ public class AsyncSetting implements AsyncConfigurer {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor threadPool = new ThreadPoolTaskExecutor();
         threadPool.setCorePoolSize(1);
-        threadPool.setMaxPoolSize(1);
+        threadPool.setMaxPoolSize(10);
         threadPool.setWaitForTasksToCompleteOnShutdown(true);
         threadPool.setAwaitTerminationSeconds(60 * 15);
         threadPool.setThreadNamePrefix("NoBot-");

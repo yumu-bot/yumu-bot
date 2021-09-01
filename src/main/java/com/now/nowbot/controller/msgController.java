@@ -19,8 +19,6 @@ public class msgController {
     @Autowired
     bindService bin;
     @Autowired
-    Bot bot;
-    @Autowired
     OsuGetService osuGetService;
     @Autowired
     ThreadPoolTaskExecutor threadPool;
