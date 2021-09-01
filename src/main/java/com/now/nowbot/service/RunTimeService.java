@@ -10,12 +10,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+
 @Service
 public class RunTimeService {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
     @Autowired
     Bot bot;
-    @Async
     @Scheduled(cron = "0 0 0 * * *")
     public void sleep(){
         bot.getGroups().forEach(group -> {
@@ -27,9 +29,12 @@ public class RunTimeService {
             }
         });
     }
-    @Async
-    @Scheduled(cron = "0 0/30 8-18 * * *")
+    @Scheduled(cron = "0/30 * 8-18 * * *")
     public void alive(){
-        bot.getGroup(746671531L).sendMessage("定时任务测试\n0 0/30 8-18 * * * ?");
+        var m = ManagementFactory.getMemoryMXBean();
+        log.info("堆内存上限{}M，当前内存占用{}M, 已使用{}M",
+                m.getHeapMemoryUsage().getMax()/1024/1024,
+                m.getHeapMemoryUsage().getCommitted()/1024/1024,
+                m.getHeapMemoryUsage().getUsed()/1024/1024);
     }
 }
