@@ -9,6 +9,7 @@ import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SendmsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -42,6 +43,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
 
         StarService.Score score = starService.getScore(user);
         if(!starService.delStart(score,1)){
+//            SendmsgUtil.send(from,"您的积分不够1积分！");
             from.sendMessage("您的积分不够1积分！");
             return;
         }
@@ -56,6 +58,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         }else {
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
+//                SendmsgUtil.send(from,"里个瓜娃子到底要vs那个哦,扣你积分！");
                 from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
                 return;
             }

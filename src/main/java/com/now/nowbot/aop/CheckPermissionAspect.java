@@ -2,9 +2,11 @@ package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.error.TipsError;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -18,14 +20,18 @@ public class CheckPermissionAspect {
     @Autowired
     Permission permission;
     @Pointcut("@annotation(com.now.nowbot.aop.CheckPermission)")
-    public void annotatedMethods() {
+    public void annotatedMethodsPerm() {
     }
 
     @Pointcut("@within(com.now.nowbot.aop.CheckPermission)")
-    public void annotatedClasses() {
+    public void annotatedClassesPerm() {
     }
 
-    @Before("(annotatedClasses() || annotatedMethods()) && @annotation(CheckPermission)")
+    @Pointcut("target(com.now.nowbot.service.MessageService.MessageService)))")
+    public void annotatedMethodsRep(){
+    }
+
+    @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
     public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission){
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
@@ -59,4 +65,14 @@ public class CheckPermissionAspect {
         return args;
     }
 
+    Contact r = null;
+    @Before("annotatedMethodsRep()")
+    public void checkRepeat(@NotNull JoinPoint point){
+        var event = (MessageEvent)point.getArgs()[0];
+        //todo
+    }
+
+    @After("annotatedMethodsRep()")
+    public void endRepeat(JoinPoint point){
+    }
 }

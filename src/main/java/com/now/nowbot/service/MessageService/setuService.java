@@ -6,6 +6,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SendmsgUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -50,11 +51,6 @@ public class setuService extends MsgSTemp implements MessageService{
     @CheckPermission(openBG = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
-        if(event instanceof GroupMessageEvent) {
-            from = ((GroupMessageEvent) event).getGroup();
-        }else {
-            from = event.getSender();
-        }
         long qq = event.getSender().getId();
         boolean issuper = permission.superUser.contains(event.getSender().getId());
 
@@ -75,6 +71,7 @@ public class setuService extends MsgSTemp implements MessageService{
 
         StarService.Score score = starService.getScore(binUser);
         if(issuper||starService.delStart(score,5)){
+//            SendmsgUtil.send(from,"稍等片刻");
             from.sendMessage("稍等片刻");
         }else {
             from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");
