@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-public class CheckPermissionAspect {
+public class CheckAspect {
     @Autowired
     Permission permission;
     @Pointcut("@annotation(com.now.nowbot.aop.CheckPermission)")
@@ -32,12 +32,12 @@ public class CheckPermissionAspect {
     }
 
     @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission){
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsError{
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
         if (CheckPermission.isBotSuper()){
-            if(!permission.superUser.contains(event.getSender().getId()))
+            if(!Permission.superUser.contains(event.getSender().getId()))
                 throw new TipsError("此功能已关闭");
         }
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.FontCfg;
 import com.now.nowbot.entity.PPmObject;
+import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -57,7 +58,7 @@ public class ppmService extends MsgSTemp implements MessageService {
         }
 
         if(userinfo.getPtime()<60 || userinfo.getPcont()<30){
-            throw new Exception("游戏时常过短,可能为新号，无法计算");
+            throw new TipsError("游戏时常过短,可能为新号，无法计算");
         }
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");

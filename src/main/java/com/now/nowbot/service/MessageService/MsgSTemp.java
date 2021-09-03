@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 public abstract class MsgSTemp {
     public static final Map<Pattern, String> services = new HashMap<>();
+    String name;
     String info = null;
     MsgSTemp(Pattern pattern, String name){
         /***
@@ -14,6 +15,7 @@ public abstract class MsgSTemp {
          * [!！]//s*(?i)page         //(?i) 不区分大小写  (?![字符]) 不匹配某字符
          * osuname匹配  (?<name>[0-9a-zA-Z\[\]\-_ ]*)?
          */
+        this.name = name;
         services.put(pattern,name);
     }
     public void setInfo(String s){
@@ -21,5 +23,8 @@ public abstract class MsgSTemp {
     }
     public String getInfo(){
         return info;
+    }
+    public String getName(){
+        return name;
     }
 }

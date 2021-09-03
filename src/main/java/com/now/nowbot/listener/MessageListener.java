@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.error.TipsError;
 import com.now.nowbot.service.MessageService.MessageService;
@@ -31,17 +32,10 @@ public class MessageListener extends SimpleListenerHost{
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
-    ApplicationContext applicationContext;
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
+    private ApplicationContext applicationContext = NowbotConfig.applicationContext;
+
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    Permission permission;
-    @Autowired
-    public void setPermission(Permission p){
-        permission = p;
-    }
+
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception){
         if(SimpleListenerHost.getEvent(exception) instanceof MessageEvent){
@@ -52,9 +46,9 @@ public class MessageListener extends SimpleListenerHost{
             }else if(e instanceof ConnectException || e instanceof RestClientException){
                 event.getSubject().sendMessage("API请求异常，可能是网络不佳或者您的令牌已过期，私发!bind可更新令牌");
             }else {
-                if (permission != null && permission.superUser != null){
+                if (Permission.superUser != null){
                     var errdate = getExceptionAllinformation((Exception) e);
-                    permission.superUser.forEach(id->{
+                    Permission.superUser.forEach(id->{
                         event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n"+errdate+"   "+format.format(System.currentTimeMillis())));
                     });
                 }
@@ -64,12 +58,13 @@ public class MessageListener extends SimpleListenerHost{
     }
 
     public static String getExceptionAllinformation(Exception ex){
-        String sOut = "";
+        StringBuilder sOut = new StringBuilder();
         StackTraceElement[] trace = ex.getStackTrace();
+        sOut.append(ex.getMessage());
         for (StackTraceElement s : trace) {
-            sOut += "\tat " + s + "\r\n";
+            sOut.append("\tat ").append(s).append("\r\n");
         }
-        return sOut;
+        return sOut.toString();
     }
 
 

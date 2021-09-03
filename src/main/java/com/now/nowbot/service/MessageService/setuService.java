@@ -39,9 +39,6 @@ public class setuService extends MsgSTemp implements MessageService{
     @Autowired
     StarService starService;
 
-    @Autowired
-    Permission permission;
-
     setuService() {
         super(Pattern.compile("[!！]((色图)|(涩图)|(setu))"),"setu");
         time = 0L;
@@ -52,7 +49,7 @@ public class setuService extends MsgSTemp implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-        boolean issuper = permission.superUser.contains(event.getSender().getId());
+        boolean issuper = Permission.superUser.contains(event.getSender().getId());
 
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
