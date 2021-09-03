@@ -4,12 +4,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
-import com.now.nowbot.entity.PPmObject;
-import com.now.nowbot.error.TipsError;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
-import com.now.nowbot.util.SendmsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -78,7 +76,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
         date2 = osuGetService.ppPlus(id2);
         if (date1 == null || date2 == null){
             starService.addStart(score,1);
-            throw new TipsError("那个破网站连不上");
+            throw new TipsException("那个破网站连不上");
         }
 
         float[] hex1 = osuGetService.ppPlus(new float[]{

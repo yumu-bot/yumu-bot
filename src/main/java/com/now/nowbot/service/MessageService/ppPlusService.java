@@ -4,15 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
-import com.now.nowbot.error.TipsError;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +43,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
         JSONObject date1 = null;
         date1 = osuGetService.ppPlus(id1);
         if (date1 == null){
-            throw new TipsError("那个破网站连不上");
+            throw new TipsException("那个破网站连不上");
         }
 
         float[] hex1 = osuGetService.ppPlus(new float[]{
@@ -160,7 +158,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
             js = osuGetService.ppPlus(""+user.getOsuID());
         }
         if (js == null){
-            throw new TipsError("连不上啊连不上！");
+            throw new TipsException("连不上啊连不上！");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{

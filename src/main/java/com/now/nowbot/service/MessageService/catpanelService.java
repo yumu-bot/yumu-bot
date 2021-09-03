@@ -1,7 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.error.TipsError;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
@@ -53,7 +53,7 @@ public class catpanelService extends MsgSTemp implements MessageService {
         int tmd = 0;
         while (matcher.find()) {
             if (matcher.group("bk") != null) {
-                if (tmd < 0 || tmd > 100) throw new TipsError("数值不合法");
+                if (tmd < 0 || tmd > 100) throw new TipsException("数值不合法");
             }
             if (matcher.group("yl") != null) stl = true;
 
@@ -88,7 +88,7 @@ public class catpanelService extends MsgSTemp implements MessageService {
                     canvas.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "lbx.png"), 0, 0);
                 }
             } catch (IOException e) {
-                throw new TipsError("服务器文件读取异常，请联系管理员处理");
+                throw new TipsException("服务器文件读取异常，请联系管理员处理");
             }
             pngBytes = surface.makeImageSnapshot().encodeToData().getBytes();
 

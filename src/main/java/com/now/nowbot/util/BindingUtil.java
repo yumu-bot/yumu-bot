@@ -3,7 +3,7 @@ package com.now.nowbot.util;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
-import com.now.nowbot.error.TipsError;
+import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ public class BindingUtil {
 
         }
         System.gc();
-        if (date == null) throw new TipsError("当前用户未绑定");
+        if (date == null) throw new TipsException("当前用户未绑定");
         return date;
     }
 

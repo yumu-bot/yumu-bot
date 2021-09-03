@@ -1,7 +1,7 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.error.TipsError;
+import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -32,33 +32,33 @@ public class CheckAspect {
     }
 
     @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsError{
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
         if (CheckPermission.isBotSuper()){
             if(!Permission.superUser.contains(event.getSender().getId()))
-                throw new TipsError("此功能已关闭");
+                throw new TipsException("此功能已关闭");
         }
 
         if (CheckPermission.openWF()){
             if (!permission.friendWhitelist.contains(event.getSender().getId()))
-                throw new TipsError("此功能已关闭");
+                throw new TipsException("此功能已关闭");
         }
         if (CheckPermission.openWG()){
             if (event instanceof GroupMessageEvent){
                 if (!permission.groupWhitelist.contains(((GroupMessageEvent) event).getGroup().getId()))
-                    throw new TipsError("此功能已关闭");
+                    throw new TipsException("此功能已关闭");
             }
         }
         if (CheckPermission.openBF()){
             if (permission.groupBlacklist.contains(event.getSender().getId()))
-                throw new TipsError("此功能已关闭");
+                throw new TipsException("此功能已关闭");
         }
         if(CheckPermission.openBG()){
             if (event instanceof GroupMessageEvent){
                 if (permission.groupBlacklist.contains(((GroupMessageEvent) event).getGroup().getId())){
-                    throw new TipsError("此功能已关闭");
+                    throw new TipsException("此功能已关闭");
                 }
             }
         }
