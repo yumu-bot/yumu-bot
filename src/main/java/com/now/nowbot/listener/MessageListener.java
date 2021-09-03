@@ -9,10 +9,7 @@ import com.now.nowbot.throwable.TipsException;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
-import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent;
-import net.mamoe.mirai.event.events.ImageUploadEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.event.events.MessagePreSendEvent;
+import net.mamoe.mirai.event.events.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +47,7 @@ public class MessageListener extends SimpleListenerHost {
             } else if (e instanceof ConnectException || e instanceof RestClientException) {
                 event.getSubject().sendMessage("API请求异常，可能是网络不佳或者您的令牌已过期，私发!bind可更新令牌");
             } else if (e instanceof RunError) {
-                log.error("出现未知异常", e);
+                log.error("严重异常:",e);
             } else {
                 if (Permission.superUser != null) {
                     var errdate = getExceptionAllinformation((Exception) e);
@@ -102,12 +99,18 @@ public class MessageListener extends SimpleListenerHost {
 
     @Async
     @EventHandler
-    public void msg(MessagePreSendEvent event) throws RunError {
-        if (event.getTarget().getId() != 746671531L)
-        event.cancel();
-//        System.out.println(event.getMessage().contentToString());
+    public void msg(MessagePreSendEvent event) throws Exception {
+//        if (event.getTarget().getId() != 746671531L) {
+//            event.cancel();
+//            throw new RunError("dawenti");
+//        }
+        //TODO
     }
-
+    @Async
+    @EventHandler
+    public void msg(MessagePostSendEvent event){
+        System.out.println(event.getMessage().contentToString());
+    }
     /***
      * ImageUploadEvent 图片上传事件
      */

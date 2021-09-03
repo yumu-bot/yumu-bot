@@ -19,8 +19,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class NowbotApplication {
     public static void main(String[] args) {
         SpringApplication.run(NowbotApplication.class, args);
-        System.out.println("Max:"+Runtime.getRuntime().maxMemory()/1024/1024+'M');
-        System.out.println("Total:"+Runtime.getRuntime().totalMemory()/1024/1024+'M');
         FontCfg.init();
     }
 }

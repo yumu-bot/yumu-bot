@@ -29,7 +29,7 @@ public class RunTimeService {
             }
         });
     }
-    @Scheduled(cron = "0/30 * 8-18 * * *")
+    @Scheduled(cron = "0 0/30 8-18 * * *")
     public void alive(){
         var m = ManagementFactory.getMemoryMXBean();
         log.info("堆内存上限{}M，当前内存占用{}M, 已使用{}M",

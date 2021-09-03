@@ -1,6 +1,6 @@
 src/test
 target
 data
+.idea
 src/main/resources/application.yaml
 .gitignore
-/.idea/
