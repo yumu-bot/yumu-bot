@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 @Service("help")
 public class helpService extends MsgSTemp implements MessageService {
     public helpService(){
-        super(Pattern.compile("[!！](?i)help"),"help");
+        super(Pattern.compile("^[!！](?i)help"),"help");
     }
 
     @Autowired

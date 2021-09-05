@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @Service("cpanel")
 public class catpanelService extends MsgSTemp implements MessageService {
     catpanelService() {
-        super(Pattern.compile("[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"), "cpanel");
+        super(Pattern.compile("^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"), "cpanel");
     }
 
     @Override

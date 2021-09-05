@@ -17,6 +17,10 @@ import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,7 +44,7 @@ public class setuService extends MsgSTemp implements MessageService{
     StarService starService;
 
     setuService() {
-        super(Pattern.compile("[!！]((色图)|(涩图)|(setu))"),"setu");
+        super(Pattern.compile("^[!！]((色图)|(涩图)|(setu))"),"setu");
         time = 0L;
     }
 
@@ -77,24 +81,38 @@ public class setuService extends MsgSTemp implements MessageService{
 
 
 
-        MessageChain chain = null;
+        Image img = null;
         try {
-            URL url = new URL("https://iw233.cn/API/GHS.PHP");
-            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.connect();
-            InputStream cin = httpConn.getInputStream();
-            Image img = ExternalResource.uploadAsImage(cin,from);
-            chain = new MessageChainBuilder()
-                    .append(img)
-                    .build();
-            cin.close();
+            byte[] date;
+            if(System.currentTimeMillis()%4 == 2){
+                date = 三次元色图();
+            }else {
+                date = 二次元色图();
+            }
+            img = from.uploadImage(ExternalResource.create(date));
         } catch (IOException e) {
             e.printStackTrace();
             from.sendMessage("api异常，请稍后再试，积分已退回");
             starService.addStart(score,5);
         }
-        if (chain != null) {
-            from.sendMessage(chain).recallIn(110*1000);
+        if (img != null) {
+            from.sendMessage(img).recallIn(110*1000);
         }
+    }
+    byte[] 三次元色图() throws Exception{
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+        HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<byte[]> date = null;
+        date = template.exchange("https://api.vvhan.com/api/girl", HttpMethod.GET, httpEntity, byte[].class);
+        return date.getBody();
+    }
+    byte[] 二次元色图() throws Exception{
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+        HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<byte[]> date = null;
+        date = template.exchange("https://iw233.cn/API/GHS.PHP", HttpMethod.GET, httpEntity, byte[].class);
+        return date.getBody();
     }
 }

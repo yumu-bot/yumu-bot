@@ -1,5 +1,6 @@
 package com.now.nowbot.config;
 
+import com.now.nowbot.entity.RequestError;
 import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
@@ -16,7 +17,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.client.DefaultResponseErrorHandler;
+import org.springframework.web.client.ExtractingResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -144,7 +149,15 @@ public class NowbotConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        var template = new RestTemplate();
+
+        template.setErrorHandler(new DefaultResponseErrorHandler(){
+            @Override
+            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestError {
+                throw new RequestError(response, statusCode);
+            }
+        });
+        return template;
     }
     @Value("${mirai.start}")
     boolean isStart;

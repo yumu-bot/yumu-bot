@@ -1,6 +1,7 @@
 package com.now.nowbot.listener;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.entity.RequestError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import com.now.nowbot.throwable.RunError;
@@ -20,6 +21,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.net.ConnectException;
 import java.text.DateFormat;
@@ -31,6 +33,7 @@ public class MessageListener extends SimpleListenerHost {
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
     private ApplicationContext applicationContext;
+
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
@@ -45,17 +48,26 @@ public class MessageListener extends SimpleListenerHost {
             var e = SimpleListenerHost.getRootCause(exception);
             if (e instanceof TipsException) {
                 event.getSubject().sendMessage(e.getMessage());
-            } else if (e instanceof ConnectException || e instanceof RestClientException) {
-                event.getSubject().sendMessage("API请求异常，可能是网络不佳或者您的令牌已过期，私发!bind可更新令牌");
-            } else if (e instanceof RunError) {
-                log.error("严重异常:",e);
-            } else {
-                if (Permission.superUser != null) {
-                    var errdate = getExceptionAllinformation((Exception) e);
-                    Permission.superUser.forEach(id -> {
-                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n" + errdate + "   " + format.format(System.currentTimeMillis())));
-                    });
+            } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
+                event.getSubject().sendMessage("网络连接超时，请稍后再试");
+            } else if (e instanceof RestClientException && e.getCause() instanceof RequestError) {
+                RequestError reser = (RequestError) e.getCause();
+                //error : The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.
+                //404 ?
+                if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
+                    event.getSubject().sendMessage("请求目标不存在");
+                }else if(reser.status.getReasonPhrase().equals("Bad Request")){
+                    event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复");
                 }
+            } else if (e instanceof RunError) {
+                log.error("严重异常:", e);
+            } else {
+//                if (Permission.superUser != null) {
+//                    var errdate = getExceptionAllinformation((Exception) e);
+//                    Permission.superUser.forEach(id -> {
+//                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n" + errdate + "   " + format.format(System.currentTimeMillis())));
+//                    });
+//                }
                 log.info("---->", e);
             }
         }
@@ -103,11 +115,13 @@ public class MessageListener extends SimpleListenerHost {
     public void msg(MessagePreSendEvent event) throws Exception {
         SendmsgUtil.check(event);
     }
+
     @Async
     @EventHandler
-    public void msg(MessagePostSendEvent event){
+    public void msg(MessagePostSendEvent event) {
         System.out.println(event.getMessage().contentToString());
     }
+
     /***
      * ImageUploadEvent 图片上传事件
      */

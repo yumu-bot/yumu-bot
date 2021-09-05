@@ -30,7 +30,7 @@ public class ppPlusVsService extends MsgSTemp implements MessageService{
     StarService starService;
 
     ppPlusVsService() {
-        super(Pattern.compile("[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
+        super(Pattern.compile("^[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
 //        super(Pattern.compile("^owo$"),"ppvs");
     }
 

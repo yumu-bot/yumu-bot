@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 @Service("ping")
 public class pingService  extends MsgSTemp implements MessageService{
     pingService(){
-        super(Pattern.compile("[!！]\\s?(?i)ping"),"ping");
+        super(Pattern.compile("^[!！]\\s?(?i)ping"),"ping");
     }
 
     @Override
