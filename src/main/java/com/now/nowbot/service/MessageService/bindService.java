@@ -45,8 +45,7 @@ public class bindService extends MsgSTemp implements MessageService {
             BinUser user = null;
             try {
                 user = BindingUtil.readUser(event.getSender().getId());
-            } catch (RuntimeException e) {
-
+            } catch (Exception e) {
                 String state = event.getSender().getId() + "+" + d;
                 var ra = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
                 ra.recallIn(110 * 1000);
