@@ -56,7 +56,7 @@ public class ppPlusService extends MsgSTemp implements MessageService{
         });
 
         byte[] datebyte = null;
-        try (Surface surface = Surface.makeRasterN32Premul(1400,1080);
+        try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface fontface = FontCfg.getTorusRegular();
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);

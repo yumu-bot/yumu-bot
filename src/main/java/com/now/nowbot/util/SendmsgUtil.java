@@ -1,68 +1,74 @@
 package com.now.nowbot.util;
 
-import com.now.nowbot.entity.ServiceThrowError;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.message.MessageReceipt;
+import net.mamoe.mirai.event.events.MessagePreSendEvent;
 import net.mamoe.mirai.message.data.Message;
+import net.mamoe.mirai.message.data.PlainText;
 
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SendmsgUtil {
     static int max = 5;
-    static Map<Contact, List<String>> MessageList = new ConcurrentHashMap<>();
-    static Map<Contact, Long> SleepTime = new ConcurrentHashMap<>();
-    public static MessageReceipt send(Contact sender, Message e) throws Exception {
-        if(MessageList.containsKey(sender)){
-            var list = MessageList.get(sender);
-            list.add(0,e.contentToString());
-            if (list.size()>max) list.remove(max);
-            String limt = list.get(0);
+    static int stime = 15;
+    static Map<Long, LinkedList<Message>> MessageList = new ConcurrentHashMap<>();
+    static Map<Long, Long> SleepTime = new ConcurrentHashMap<>();
+
+    public static synchronized void check(MessagePreSendEvent event) {
+        //得到发送者
+        var target = event.getTarget().getId();
+        //拿到发送的消息
+        var e = event.getMessage();
+        //判断是否为禁言对象
+        if (SleepTime.containsKey(target)) {
+            if (System.currentTimeMillis() < SleepTime.get(target)) {
+                //是禁言对象且在禁言期内
+                event.cancel();
+                return;
+            } else {
+                //不在禁言期则移除
+                SleepTime.remove(target);
+            }
+        }
+        //判断是否已经发送过消息
+        if (MessageList.containsKey(target)) {
+            //拿到消息列表
+            var list = MessageList.get(target);
+            //判断重复
             for (int i = 0; i < list.size(); i++) {
-                if(!limt.equals(list.get(i)))break;
-                if(i == max-1) {
-                    sender.sendMessage("触发复读预警,防止扰乱本群,即将禁用15分钟");
-                    SleepTime.put(sender, System.currentTimeMillis());
-                    throw new Exception(sender.getId()+"触发复读预警");
+                if (!e.equals(list.get(i))) break;
+                if (i == max - 1) {
+                    //加入禁言套餐(
+                    SleepTime.put(target, System.currentTimeMillis() + 60 * stime * 1000);
+                    event.setMessage(new PlainText("触发复读预警,bot即将禁用" + stime + "分钟"));
+                    //消息队列清空
+                    list.clear();
                 }
             }
-        }else {
-            MessageList.put(sender, List.of(e.contentToString()));
+            //插入消息
+            list.addFirst(e);
+            if (list.size() > max) list.removeLast();
+        } else {
+            var list = new LinkedList<Message>();
+            list.addFirst(e);
+            MessageList.put(target, list);
         }
-        if (SleepTime.containsKey(sender)){
-            if (System.currentTimeMillis()<SleepTime.get(sender)+60*15*1000){
-                throw new Exception(sender.getId()+"触发复读预警");
-            }else {
-                SleepTime.remove(sender);
-            }
-        }
-        return sender.sendMessage(e);
     }
-    public static MessageReceipt send(Contact sender, String e) throws Exception {
-        if(MessageList.containsKey(sender)){
-            var list = MessageList.get(sender);
-            list.add(0,e);
-            if (list.size()>max) list.remove(max);
-            String limt = list.get(0);
-            for (int i = 0; i < list.size(); i++) {
-                if(!limt.equals(list.get(i)))break;
-                if(i == max-1) {
-                    sender.sendMessage("触发复读预警,防止扰乱本群,即将禁用15分钟");
-                    SleepTime.put(sender, System.currentTimeMillis());
-                    throw new Exception(sender.getId()+"触发复读预警");
-                }
-            }
-        }else {
-            MessageList.put(sender, List.of(e));
-        }
-        if (SleepTime.containsKey(sender)){
-            if (System.currentTimeMillis()<SleepTime.get(sender)+60*15*1000){
-                throw new Exception(sender.getId()+"触发复读预警");
-            }else {
-                SleepTime.remove(sender);
-            }
-        }
-        return sender.sendMessage(e);
+
+    public static void setMax(int max) {
+        SendmsgUtil.max = max;
+    }
+
+    public static void setStime(int stime) {
+        SendmsgUtil.stime = stime;
+    }
+
+    /***
+     * 支持单独添加禁言
+     * @param id
+     * @param time
+     */
+    public static void addSleep(long id, int time) {
+        SleepTime.put(id, System.currentTimeMillis() + 1000 * time);
     }
 }

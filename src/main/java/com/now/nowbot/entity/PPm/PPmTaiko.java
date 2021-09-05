@@ -1,9 +1,9 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.entity.PPm;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-public class PPmObject {
+public class PPmTaiko implements PPmObject{
     float ppv0=0;
     float ppv45=0;
     float ppv90=0;
@@ -42,8 +42,7 @@ public class PPmObject {
     double ttl;
     double san;
     public String headURL;
-    private PPmObject(){}
-    private PPmObject creatOsu(JSONObject prd, JSONArray prbp){
+    public PPmTaiko(JSONObject prd, JSONArray prbp) {
         double[] ys = new double[prbp.size()];
         for (int j = 0; j < prbp.size(); j++) {
             var jsb = prbp.getJSONObject(j);
@@ -135,7 +134,7 @@ public class PPmObject {
 
         //1.1 准度fACC formulaic accuracy 0-1 fa
         {
-            fa = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
+            fa = ((this.acc / 100) < 0.6 ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5, 1.432));
             fa = check(fa, 0, 1);
         }
         //1.2 1.2 潜力PTT potential 0-1 ptt
@@ -192,18 +191,18 @@ public class PPmObject {
         //1.4 稳定STB stability (-0.16)-1.2 stb
 
         {
-            double GRD = (this.xx + this.xs*0.9 + this.xa* 0.8 + this.xb*0.4 + this.xc*0.2 - this.xd*0.2)/100;
-            double FCN = (100-this.notfc)/100D;
-            double PFN = (this.xs+ this.xx)/100D;
-            stb = GRD*0.8+(FCN+PFN)*0.2;
+            double GRD = (this.xx + this.xs*0.95 + this.xa* 0.9 + this.xb*0.6 + this.xc*0.3 - this.xd*0.2)/prbp.size();
+            double FCN = (this.xx+this.xs)/100D;
+            double PFN = Math.pow((1-1.0*this.notfc/prbp.size()), 0.2);
+            stb = GRD*0.9+FCN*0.2+PFN*0.1;
             stb = check(stb, 0, 1.2);
         }
         //1.5 肝力ENG energy eng
-
         {
-            eng = this.bonus /416.6667;
-            if (eng>1)eng =1;
-            eng = Math.pow(eng, 0.4D);
+            double LNTTH = Math.log(this.thit);
+            if (LNTTH<12) eng = 0;
+            else if (LNTTH>17) eng = 1;
+            else eng = Math.pow((LNTTH-12) * 0.2,0.4);
             eng = check(eng, 0, 1);
         }
         //1.6 实力STH strength sth
@@ -212,161 +211,200 @@ public class PPmObject {
             double HPS = 1D*this.thit/this.ptime;
             if(HPS>4.5) HPS =  4.5;
             else if(HPS<2.5) HPS =  2.5;
-            sth = Math.pow((HPS-2.5)/2,0.2);
+            sth = Math.pow((HPS-2.5)/5,0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
+        ttl = fa*0.2 + eng*0.1 + ptt*0.15 + sth*0.3 + stb*0.05 + sta*0.2;
         san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
-        return this;
-    }
-    double check(double value, double min, double max){
-        if (value>max) return max;else return Math.max(value, min);
-    }
-    public static PPmObject presOsu(JSONObject prd, JSONArray prbp){
-        return new PPmObject().creatOsu(prd, prbp);
     }
 
+    @Override
+    public double check(double value, double min, double max){
+        if (value>max) return max;else return Math.max(value, min);
+    }
+
+    @Override
     public float getPpv0() {
         return ppv0;
     }
 
+    @Override
     public float getPpv45() {
         return ppv45;
     }
 
+    @Override
     public float getPpv90() {
         return ppv90;
     }
 
+    @Override
     public float getAccv0() {
         return accv0;
     }
 
+    @Override
     public float getAccv45() {
         return accv45;
     }
 
+    @Override
     public float getAccv90() {
         return accv90;
     }
 
+    @Override
     public long getLengv0() {
         return lengv0;
     }
 
+    @Override
     public long getLengv45() {
         return lengv45;
     }
 
+    @Override
     public long getLengv90() {
         return lengv90;
     }
 
+    @Override
     public double getBpp() {
         return bpp;
     }
 
+    @Override
     public double getRawpp() {
         return rawpp;
     }
 
+    @Override
     public double getBonus() {
         return bonus;
     }
 
+    @Override
     public int getXd() {
         return xd;
     }
 
+    @Override
     public int getXc() {
         return xc;
     }
 
+    @Override
     public int getXb() {
         return xb;
     }
 
+    @Override
     public int getXa() {
         return xa;
     }
 
+    @Override
     public int getXs() {
         return xs;
     }
 
+    @Override
     public int getXx() {
         return xx;
     }
 
+    @Override
     public int getNotfc() {
         return notfc;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public float getPp() {
         return pp;
     }
 
+    @Override
     public float getAcc() {
         return acc;
     }
 
+    @Override
     public int getLevel() {
         return level;
     }
 
+    @Override
     public int getRank() {
         return rank;
     }
 
+    @Override
     public int getCombo() {
         return combo;
     }
 
+    @Override
     public long getThit() {
         return thit;
     }
 
+    @Override
     public long getPcont() {
         return pcont;
     }
 
+    @Override
     public long getPtime() {
         return ptime;
     }
 
+    @Override
     public double getFa() {
         return fa;
     }
 
+    @Override
     public double getEng() {
         return eng;
     }
 
+    @Override
     public double getSth() {
         return sth;
     }
 
+    @Override
     public double getStb() {
         return stb;
     }
 
+    @Override
     public double getSta() {
         return sta;
     }
 
+    @Override
     public double getPtt() {
         return ptt;
     }
 
+    @Override
     public double getTtl() {
         return ttl;
     }
 
+    @Override
     public double getSan() {
         return san;
+    }
+
+    @Override
+    public String getHeadURL() {
+        return headURL;
     }
 }

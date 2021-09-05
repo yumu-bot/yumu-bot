@@ -1,15 +1,16 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import com.now.nowbot.throwable.RunError;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
+import net.mamoe.mirai.message.data.PlainText;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,11 +101,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessagePreSendEvent event) throws Exception {
-//        if (event.getTarget().getId() != 746671531L) {
-//            event.cancel();
-//            throw new RunError("dawenti");
-//        }
-        //TODO
+        SendmsgUtil.check(event);
     }
     @Async
     @EventHandler

@@ -49,14 +49,18 @@ public class startService extends MsgSTemp implements MessageService{
                 sb.append("您此次成绩为")
                         .append(re.getFloatValue("pp"))
                         .append("pp").append('\n');
-                if (re.getJSONArray("mods").contains("HD")) {
-                    pp /= 25;
-                    sb.append("由于使用了hd,您获得了").append(pp).append("积分").append('\n');
-                } else {
-                    pp /= 20;
-                    sb.append("您获得了").append(pp).append("积分").append('\n');
-                }
 
+                    if (re.getJSONArray("mods").contains("HD")) {
+                        pp /= 25;
+                        sb.append("由于使用了hd,您获得了").append(pp).append("积分").append('\n');
+                    } else {
+                        pp /= 20;
+                        sb.append("您获得了").append(pp).append("积分").append('\n');
+                    }
+                if (System.currentTimeMillis() % 312 == 15) {
+                    sb.append("恭喜！非常幸运的触发了积分暴击，您本次获得积分为10倍！");
+                    pp *= 10;
+                }
                 starService.addStart(sc, pp);
             }
         }

@@ -3,13 +3,12 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.entity.FontCfg;
-import com.now.nowbot.entity.PPmObject;
+import com.now.nowbot.entity.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                 canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
                 canvas.drawImage(spr,0,0);
 
-                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.headURL);
+                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.getHeadURL());
                 drowLhead(canvas, head1);
                 drowLname(canvas,fontA,white,userinfo1.getName());
 
@@ -153,10 +152,10 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             canvas.drawImage(bg3,513,74);
 
 
-            Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.headURL);
+            Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.getHeadURL());
             drowLhead(canvas, head1);
 
-            Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.headURL);
+            Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.getHeadURL());
             drowRhead(canvas, head2);
 
             drowLname(canvas,fontA,white,userinfo1.getName());

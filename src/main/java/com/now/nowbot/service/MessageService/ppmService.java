@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.FontCfg;
-import com.now.nowbot.entity.PPmObject;
+import com.now.nowbot.entity.PPm.PPmObject;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -26,7 +26,7 @@ public class ppmService extends MsgSTemp implements MessageService {
     OsuGetService osuGetService;
 
     ppmService() {
-        super(Pattern.compile("[!！]\\s?(?i)ppm(?!v)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
+        super(Pattern.compile("[!！]\\s?(?i)ppm(?!v)(:(?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                 canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
                 canvas.drawImage(spr,0,0);
 
-                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.headURL);
+                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
                 PpmVsService.drowLhead(canvas, head1);
                 PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
 
@@ -120,7 +120,7 @@ public class ppmService extends MsgSTemp implements MessageService {
 
             canvas.drawImage(bg3,513,74);
 
-            Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.headURL);
+            Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
             PpmVsService.drowLhead(canvas, head1);
 
             PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
