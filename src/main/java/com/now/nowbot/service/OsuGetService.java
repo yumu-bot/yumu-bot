@@ -172,6 +172,9 @@ public class OsuGetService {
     public JSONObject getPlayerOsuInfo(BinUser user) {
         return getPlayerInfo(user, "osu");
     }
+    public JSONObject getPlayerTaikoInfo(BinUser user) {
+        return getPlayerInfo(user, "taiko");
+    }
 
     public JSONObject getPlayerInfo(BinUser user, String mode) {
         String url = this.url + "me" + '/' + mode;
@@ -195,6 +198,11 @@ public class OsuGetService {
     public JSONObject getPlayerOsuInfo(int id) {
         return getPlayerInfo(id, "osu");
     }
+    public JSONObject getPlayerTaikoInfo(int id) {
+        return getPlayerInfo(id, "taiko");
+    }
+
+
 
     public JSONObject getPlayerInfo(int id, String mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + '/' + mode)

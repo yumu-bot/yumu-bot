@@ -37,24 +37,46 @@ public class ppmService extends MsgSTemp implements MessageService {
 
         PPmObject userinfo;
         JSONObject userdate;
-        if (at != null) {
-            var user = BindingUtil.readUser(at.getTarget());
-            userdate = osuGetService.getPlayerOsuInfo(user);
-            var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
-            userinfo = PPmObject.presOsu(userdate, bpdate);
-        } else {
-            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                int id = osuGetService.getOsuId(matcher.group("name").trim());
-                userdate = osuGetService.getPlayerOsuInfo(id);
-                var bpdate = osuGetService.getOsuBestMap(id, 0, 100);
-                userinfo = PPmObject.presOsu(userdate, bpdate);
-            }else {
-                var user = BindingUtil.readUser(event.getSender().getId());
+        if(matcher.group("mode") == null || matcher.group("mode").equals("osu")){
+            if (at != null) {
+                var user = BindingUtil.readUser(at.getTarget());
                 userdate = osuGetService.getPlayerOsuInfo(user);
                 var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
                 userinfo = PPmObject.presOsu(userdate, bpdate);
+            } else {
+                if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+                    int id = osuGetService.getOsuId(matcher.group("name").trim());
+                    userdate = osuGetService.getPlayerOsuInfo(id);
+                    var bpdate = osuGetService.getOsuBestMap(id, 0, 100);
+                    userinfo = PPmObject.presOsu(userdate, bpdate);
+                }else {
+                    var user = BindingUtil.readUser(event.getSender().getId());
+                    userdate = osuGetService.getPlayerOsuInfo(user);
+                    var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
+                    userinfo = PPmObject.presOsu(userdate, bpdate);
+                }
+            }
+        }else {
+            if (at != null) {
+                var user = BindingUtil.readUser(at.getTarget());
+                userdate = osuGetService.getPlayerTaikoInfo(user);
+                var bpdate = osuGetService.getTaikoBestMap(user, 0, 100);
+                userinfo = PPmObject.presTaiko(userdate, bpdate);
+            } else {
+                if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+                    int id = osuGetService.getOsuId(matcher.group("name").trim());
+                    userdate = osuGetService.getPlayerTaikoInfo(id);
+                    var bpdate = osuGetService.getTaikoBestMap(id, 0, 100);
+                    userinfo = PPmObject.presTaiko(userdate, bpdate);
+                }else {
+                    var user = BindingUtil.readUser(event.getSender().getId());
+                    userdate = osuGetService.getPlayerTaikoInfo(user);
+                    var bpdate = osuGetService.getTaikoBestMap(user, 0, 100);
+                    userinfo = PPmObject.presTaiko(userdate, bpdate);
+                }
             }
         }
+
 
         if(userinfo.getPtime()<60 || userinfo.getPcont()<30){
             throw new TipsException("游戏时常过短,可能为新号，无法计算");
