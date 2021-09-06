@@ -107,9 +107,9 @@ public class ppmService extends MsgSTemp implements MessageService {
                 }
             }
         }
-        if (userinfo == null) throw new TipsException("@%#%#$%@$%\n波特被玩坏了...");
-        if(userinfo.getPtime()<60 || userinfo.getPcont()<30){
-            throw new TipsException("游戏时常过短,可能为新号，无法计算");
+        if (userinfo == null) throw new TipsException("等哪天mania社区变好了，或许就有PPMmania了吧...");
+        if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
+            throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
