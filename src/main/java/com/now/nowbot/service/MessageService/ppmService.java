@@ -83,6 +83,28 @@ public class ppmService extends MsgSTemp implements MessageService {
                         userinfo = PPmObject.presTaiko(userdate, bpdate);
                     }
                 }
+            } break;
+            case"catch":
+            case"c":
+            case"2":{
+                if (at != null) {
+                    var user = BindingUtil.readUser(at.getTarget());
+                    userdate = osuGetService.getPlayerCatchInfo(user);
+                    var bpdate = osuGetService.getCatchBestMap(user, 0, 100);
+                    userinfo = PPmObject.presCatch(userdate, bpdate);
+                } else {
+                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+                        int id = osuGetService.getOsuId(matcher.group("name").trim());
+                        userdate = osuGetService.getPlayerCatchInfo(id);
+                        var bpdate = osuGetService.getCatchBestMap(id, 0, 100);
+                        userinfo = PPmObject.presCatch(userdate, bpdate);
+                    }else {
+                        var user = BindingUtil.readUser(event.getSender().getId());
+                        userdate = osuGetService.getPlayerCatchInfo(user);
+                        var bpdate = osuGetService.getCatchBestMap(user, 0, 100);
+                        userinfo = PPmObject.presCatch(userdate, bpdate);
+                    }
+                }
             }
         }
         if (userinfo == null) throw new TipsException("@%#%#$%@$%\n波特被玩坏了...");
