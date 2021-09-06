@@ -175,6 +175,9 @@ public class OsuGetService {
     public JSONObject getPlayerTaikoInfo(BinUser user) {
         return getPlayerInfo(user, "taiko");
     }
+    public JSONObject getPlayerCatchInfo(BinUser user) {
+        return getPlayerInfo(user, "fruits");
+    }
 
     public JSONObject getPlayerInfo(BinUser user, String mode) {
         String url = this.url + "me" + '/' + mode;
@@ -201,7 +204,9 @@ public class OsuGetService {
     public JSONObject getPlayerTaikoInfo(int id) {
         return getPlayerInfo(id, "taiko");
     }
-
+    public JSONObject getPlayerCatchInfo(int id) {
+        return getPlayerInfo(id, "fruits");
+    }
 
 
     public JSONObject getPlayerInfo(int id, String mode) {
@@ -281,6 +286,13 @@ public class OsuGetService {
     public JSONArray getTaikoBestMap(int id, int s, int e) {
         return getBestMap(id, "taiko", s, e);
     }
+
+    public JSONArray getCatchBestMap(BinUser user, int s, int e) {
+        return getBestMap(user, "fruits", s, e);
+    }
+
+    public JSONArray getCatchBestMap(int id, int s, int e) {
+        return getBestMap(id, "fruits", s, e);
     /***
      * 获得某个模式的bp表
      * @param user user
