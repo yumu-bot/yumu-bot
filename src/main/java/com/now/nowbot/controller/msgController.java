@@ -34,7 +34,7 @@ public class msgController {
     }
 
     public String saveBind(String code, String[] data) {
-        if (bin == null)
+        if (bin != null)
             if (data.length == 2) {
 
                 var msg = bin.msgs.get(Long.valueOf(data[1]));
