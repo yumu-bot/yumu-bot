@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 @Service("bind")
 public class bindService extends MsgSTemp implements MessageService {
-    public final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
+    public static final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
 
