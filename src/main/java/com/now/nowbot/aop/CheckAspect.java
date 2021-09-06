@@ -68,7 +68,9 @@ public class CheckAspect {
     Contact r = null;
     @Before("annotatedMethodsRep()")
     public void checkRepeat(@NotNull JoinPoint point){
-        var event = (MessageEvent)point.getArgs()[0];
+        if (point.getArgs().length>0) {
+            var event = (MessageEvent) point.getArgs()[0];
+        }
         //todo
     }
 

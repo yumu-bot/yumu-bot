@@ -22,7 +22,7 @@ public class startService extends MsgSTemp implements MessageService{
     OsuGetService osuGetService;
 
     startService(){
-        super(Pattern.compile("[!！]\\s*((积分)|(..积分))+"),"start");
+        super(Pattern.compile("^[!！]\\s*((积分)|(..积分))+"),"start");
         setInfo("!积分 刷新您的积分");
     }
 

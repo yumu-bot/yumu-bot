@@ -33,7 +33,7 @@ public class songService extends MsgSTemp implements MessageService{
         BinUser user = BindingUtil.readUser(event.getSender().getId());
         StarService.Score score = starService.getScore(user);
         if(!starService.delStart(score,0.5f)){
-            from.sendMessage("您的积分够!请多刷pp!");
+            from.sendMessage("您的积分不够!请多刷pp!");
             return;
         }
         int id = 0;
