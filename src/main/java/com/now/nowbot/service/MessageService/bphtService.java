@@ -121,7 +121,7 @@ public class bphtService extends MsgSTemp implements MessageService{
         }
 
         dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.getJSONObject(0).getFloatValue("pp")-Bps.getJSONObject(99).getFloatValue("pp"))).append("\n");
-        dtbf.append("您的平均BP为").append(decimalFormat.format(pp/100));
+        dtbf.append("您的平均BP为").append(decimalFormat.format(pp/100)).append('\n').append(matcher.group("mode"));
 
         from.sendMessage(dtbf.toString());
     }
