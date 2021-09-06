@@ -68,7 +68,7 @@ public interface PPmObject {
 
     long getPtime();
 
-    double getFa();
+    double getFacc();
 
     double getEng();
 

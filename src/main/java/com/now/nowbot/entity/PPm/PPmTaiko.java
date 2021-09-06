@@ -33,7 +33,7 @@ public class PPmTaiko implements PPmObject {
     long pcont;
     long ptime;
 
-    double fa;
+    double facc;
     double eng;
     double ptt;
     double sth;
@@ -141,13 +141,13 @@ public class PPmTaiko implements PPmObject {
 
         //1.1 准度fACC formulaic accuracy 0-1 fa
         {
-            fa = ((this.acc / 100) < 0.6 ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5, 1.432));
-            fa = check(fa, 0, 1);
+            facc = ((this.acc / 100) < 0.6 ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5, 1.432));
+            facc = check(facc, 0, 1);
         }
         //1.2 1.2 潜力PTT potential 0-1 ptt
 
-        {
             double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
+        {
             double rBPD = this.ppv0 == 0 ? 0 : (this.rawpp / this.ppv0);
             double BPD;
             if (rBPD <= 14) {
@@ -206,23 +206,25 @@ public class PPmTaiko implements PPmObject {
         }
         //1.5 肝力ENG energy eng
         {
-            double LNTTH = Math.log(this.thit);
-            if (LNTTH < 12) eng = 0;
-            else if (LNTTH > 17) eng = 1;
-            else eng = Math.pow((LNTTH - 12) * 0.2, 0.4);
+            double LNTTH = Math.log(this.thit+1);
+            if (LNTTH < 8) eng = 0;
+            else if (LNTTH > 16) eng = 1;
+            else eng = Math.pow((LNTTH - 8) * 0.125, 0.4);
             eng = check(eng, 0, 1);
         }
         //1.6 实力STH strength sth
 
         {
             double HPS = 1D * this.thit / this.ptime;
-            if (HPS > 4.5) HPS = 4.5;
+            if (HPS > 7.5) HPS = 7.5;
             else if (HPS < 2.5) HPS = 2.5;
             sth = Math.pow((HPS - 2.5) / 5, 0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa * 0.2 + eng * 0.1 + ptt * 0.15 + sth * 0.3 + stb * 0.05 + sta * 0.2;
-        san = ppv0 < 20 ? 0 : (ppv0 / (ppv45 + ppv90 * 0.2 + 1) * (ptt + 0.25) * (sth + 0.25));
+        ttl = facc * 0.2 + eng * 0.1 + ptt * 0.15 + sth * 0.3 + stb * 0.05 + sta * 0.2;
+        double PPdPC = (ppv0+ppv45+ppv90)*20/Math.pow(pcont+100,0.8);
+        double LPPD = Math.log(ppv0+1)/4.605;
+        san = PPdPC*LPPD*Math.pow(bpmxd,0.6)*(sth-eng*0.4+0.4)*(facc +0.25);
     }
 
     @Override
@@ -372,8 +374,8 @@ public class PPmTaiko implements PPmObject {
     }
 
     @Override
-    public double getFa() {
-        return fa;
+    public double getFacc() {
+        return facc;
     }
 
     @Override

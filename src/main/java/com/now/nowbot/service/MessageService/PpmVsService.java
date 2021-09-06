@@ -33,7 +33,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
 
-        if (matcher.group("s") != null || Math.random()<=0.01){
+        if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             PPmObject userinfo1;
             getuser:{
@@ -128,7 +128,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     Math.pow((userinfo1.getStb() < 0.6 ? 0 : userinfo1.getStb() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getEng() < 0.6 ? 0 : userinfo1.getEng() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getSth() < 0.6 ? 0 : userinfo1.getSth() - 0.6) * 2.5f, 0.8),
-                    Math.pow((userinfo1.getFa() < 0.6 ? 0 : userinfo1.getFa() - 0.6) * 2.5f, 0.8),
+                    Math.pow((userinfo1.getFacc() < 0.6 ? 0 : userinfo1.getFacc() - 0.6) * 2.5f, 0.8),
             };
             double[] hex2 = new double[]{
                     Math.pow((userinfo2.getPtt() < 0.6 ? 0 : userinfo2.getPtt() - 0.6) * 2.5f, 0.8),
@@ -136,7 +136,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     Math.pow((userinfo2.getStb() < 0.6 ? 0 : userinfo2.getStb() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getEng() < 0.6 ? 0 : userinfo2.getEng() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo2.getSth() < 0.6 ? 0 : userinfo2.getSth() - 0.6) * 2.5f, 0.8),
-                    Math.pow((userinfo2.getFa() < 0.6 ? 0 : userinfo2.getFa() - 0.6) * 2.5f, 0.8),
+                    Math.pow((userinfo2.getFacc() < 0.6 ? 0 : userinfo2.getFacc() - 0.6) * 2.5f, 0.8),
             };
             canvas.save();
             canvas.translate(960,440);
@@ -162,7 +162,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
             drowRname(canvas,fontA,white,userinfo2.getName());
 
             drowLppm(canvas,fontB,fontA,white,new double[]{
-                    userinfo1.getFa(),
+                    userinfo1.getFacc(),
                     userinfo1.getPtt(),
                     userinfo1.getSta(),
                     userinfo1.getStb(),
@@ -170,7 +170,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
                     userinfo1.getSth(),
             }, userinfo1.getTtl()*100);
             drowRppm(canvas,fontB,fontA,white,new double[]{
-                    userinfo2.getFa(),
+                    userinfo2.getFacc(),
                     userinfo2.getPtt(),
                     userinfo2.getSta(),
                     userinfo2.getStb(),
@@ -320,7 +320,7 @@ public class PpmVsService extends MsgSTemp implements MessageService{
         canvas.save();
         TextLine[] tx = new TextLine[6];
         double[] date = new double[]{
-                user.getFa(),
+                user.getFacc(),
                 user.getPtt(),
                 user.getSta(),
                 user.getStb(),

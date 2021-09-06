@@ -130,7 +130,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                     Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
-                    Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8),
+                    Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
             };
             canvas.translate(960,440);
             org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
@@ -148,7 +148,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
 
             PpmVsService.drowLppm(canvas,fontB,fontA,white,new double[]{
-                    userinfo.getFa(),
+                    userinfo.getFacc(),
                     userinfo.getPtt(),
                     userinfo.getSta(),
                     userinfo.getStb(),

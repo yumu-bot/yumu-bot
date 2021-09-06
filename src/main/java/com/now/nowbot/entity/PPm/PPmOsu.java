@@ -364,7 +364,7 @@ public class PPmOsu implements PPmObject {
     }
 
     @Override
-    public double getFa() {
+    public double getFacc() {
         return fa;
     }
 
