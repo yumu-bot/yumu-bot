@@ -106,7 +106,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                     }
                 }
             } break;
-            case"mania:
+            case"mania":
             case"m":
             case"3":{
                 throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
