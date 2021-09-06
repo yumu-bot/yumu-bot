@@ -293,6 +293,7 @@ public class OsuGetService {
 
     public JSONArray getCatchBestMap(int id, int s, int e) {
         return getBestMap(id, "fruits", s, e);
+    }
     /***
      * 获得某个模式的bp表
      * @param user user
