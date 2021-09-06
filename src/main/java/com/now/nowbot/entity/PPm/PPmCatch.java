@@ -225,7 +225,7 @@ public class PPmCatch implements PPmObject {
             sth = check(sth, 0, 1);
         }
         ttl = fa*0.2 + ptt*0.1 + eng*0.1 + sth*0.2 + stb*0.2 + sta*0.2;
-        san = 0
+        san = 0;
         // ppmcatch san没写好uwu
     }
 
