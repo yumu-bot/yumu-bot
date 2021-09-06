@@ -18,7 +18,7 @@ public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     bphtService(){
-        super(Pattern.compile("^[!！]\\s?(?i)bpht(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
+        super(Pattern.compile("^[!！]\\s?(?i)bpht([:：](?<mode>[osutaikchmn0-4]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
         setInfo("!bpht [name]获取bp榜单的前5及后5的成绩，以及平均bp，未绑定请带上name参数");
     }
 
@@ -39,19 +39,60 @@ public class bphtService extends MsgSTemp implements MessageService{
             }
         }
         JSONArray Bps;
-        if(nu != null && nu.getAccessToken()!= null){
 
-                Bps = osuGetService.getOsuBestMap(nu, 0,100);
+        var mode = matcher.group("mode")==null?matcher.group("mode").toLowerCase():"null";
+        switch (mode){
+            case"null":
+            case"osu":
+            case"o":
+            case"0":
+            default:{
+                if(nu.getAccessToken() != null){
 
-        }else {
-            Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getOsuBestMap(nu, 0,100);
+
+                }else {
+                    Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
+                }
+                mode = "std";
+            }break;
+            case"taiko":
+            case"t":
+            case"1":{
+                if(nu.getAccessToken() != null){
+                    Bps = osuGetService.getTaikoBestMap(nu, 0,100);
+                }else {
+                    Bps = osuGetService.getTaikoBestMap(nu.getOsuID(),0,100);
+                }
+                mode = "taiko";
+            }break;
+            case"catch":
+            case"c":
+            case"2":{
+                if(nu.getAccessToken() != null){
+                    Bps = osuGetService.getBestMap(nu,"catch", 0,100);
+                }else {
+                    Bps = osuGetService.getBestMap(nu.getOsuID(),"catch",0,100);
+                }
+                mode = "ctb";
+            }break;
+            case"mania":
+            case"m":
+            case"3":{
+                if(nu.getAccessToken() != null){
+                    Bps = osuGetService.getBestMap(nu,"mania", 0,100);
+                }else {
+                    Bps = osuGetService.getBestMap(nu.getOsuID(),"mania",0,100);
+                }
+                mode = "mania";
+            }break;
         }
         if(Bps.size() != 100){
             from.sendMessage(new At(from.getId()).plus("您的BP尚未填满，请打完后尝试"));
             return;
         }
 
-        var dtbf = new StringBuffer(nu.getOsuName()).append("[std]\n");
+        var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');
         double pp = 0;
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         for (int i = 0; i < Bps.size(); i++) {
