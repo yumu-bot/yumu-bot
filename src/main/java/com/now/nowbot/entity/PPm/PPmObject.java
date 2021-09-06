@@ -10,6 +10,9 @@ public interface PPmObject {
     static PPmTaiko presTaiko(JSONObject prd, JSONArray prbp){
         return new PPmTaiko(prd, prbp);
     }
+    static PPmCatch presCatch(JSONObject prd, JSONArray prbp){
+    return new PPmCatch(prd, prbp);
+    }
     double check(double value, double min, double max);
 
     float getPpv0();
