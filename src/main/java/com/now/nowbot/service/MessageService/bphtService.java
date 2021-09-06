@@ -88,7 +88,7 @@ public class bphtService extends MsgSTemp implements MessageService{
             }break;
         }
         if(Bps.size() != 100){
-            from.sendMessage(new At(event.getSender.getId()).plus("您的BP尚未填满，请打完后尝试"));
+            from.sendMessage(new At(event.getSender().getId()).plus("您的BP尚未填满，请打完后尝试"));
             return;
         }
 
