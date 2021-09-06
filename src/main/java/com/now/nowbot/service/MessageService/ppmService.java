@@ -38,7 +38,6 @@ public class ppmService extends MsgSTemp implements MessageService {
         PPmObject userinfo = null;
         JSONObject userdate;
         var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
-        from.sendMessage(mode);
         switch (mode){
             case"null":
             case"osu":
