@@ -110,9 +110,12 @@ public class ppmService extends MsgSTemp implements MessageService {
             case"m":
             case"3":{
                 throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
+            } break;
+            default:{
+                throw new TipsException("「邪恶的 osu! 玩家，我以 Bot 一族」…呃，这里不会读…「Bot 大魔王之名，否定你添加新模式的资格！」「除非你干掉 peppy，通过」…呃…「接受」…呃… 有几个词，波特不认识…");
             }
         }
-        if (userinfo == null) throw new TipsException("「邪恶的 osu! 玩家，我以 Bot 一族」…呃，这里不会读…「Bot 大魔王之名，否定你添加新模式的资格！」「除非你干掉 peppy，通过」…呃…「接受」…呃… 有几个词，波特不认识…");
+        if (userinfo == null) throw new TipsException("波特被玩坏了uwu");
         if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
