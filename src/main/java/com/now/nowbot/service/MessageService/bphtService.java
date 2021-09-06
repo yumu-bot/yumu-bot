@@ -70,9 +70,9 @@ public class bphtService extends MsgSTemp implements MessageService{
             case"c":
             case"2":{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMap(nu,"catch", 0,100);
+                    Bps = osuGetService.getBestMap(nu,"fruits", 0,100);
                 }else {
-                    Bps = osuGetService.getBestMap(nu.getOsuID(),"catch",0,100);
+                    Bps = osuGetService.getBestMap(nu.getOsuID(),"fruits",0,100);
                 }
                 mode = "ctb";
             }break;
