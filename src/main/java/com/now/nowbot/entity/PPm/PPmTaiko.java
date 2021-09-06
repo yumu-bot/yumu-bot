@@ -3,31 +3,31 @@ package com.now.nowbot.entity.PPm;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-public class PPmTaiko implements PPmObject{
-    float ppv0=0;
-    float ppv45=0;
-    float ppv90=0;
-    float accv0=0;
-    float accv45=0;
-    float accv90=0;
-    long lengv0=0;
-    long lengv45=0;
-    long lengv90=0;
-    double bpp=0;
+public class PPmTaiko implements PPmObject {
+    float ppv0 = 0;
+    float ppv45 = 0;
+    float ppv90 = 0;
+    float accv0 = 0;
+    float accv45 = 0;
+    float accv90 = 0;
+    long lengv0 = 0;
+    long lengv45 = 0;
+    long lengv90 = 0;
+    double bpp = 0;
     double rawpp = 0;
     double bonus = 0;
-    int xd=0;
-    int xc=0;
-    int xb=0;
-    int xa=0;
-    int xs=0;
-    int xx=0;
-    int notfc=0;
+    int xd = 0;
+    int xc = 0;
+    int xb = 0;
+    int xa = 0;
+    int xs = 0;
+    int xx = 0;
+    int notfc = 0;
     String name;
-    float pp ;
+    float pp;
     float acc;
     int level;
-    int rank ;
+    int rank;
     int combo;
     long thit;
     long pcont;
@@ -42,11 +42,12 @@ public class PPmTaiko implements PPmObject{
     double ttl;
     double san;
     public String headURL;
+
     public PPmTaiko(JSONObject prd, JSONArray prbp) {
         double[] ys = new double[prbp.size()];
         for (int j = 0; j < prbp.size(); j++) {
             var jsb = prbp.getJSONObject(j);
-            bpp += jsb.getDoubleValue("pp")*Math.pow(0.95d,j);
+            bpp += jsb.getDoubleValue("pp") * Math.pow(0.95d, j);
             ys[j] = Math.log10(jsb.getDoubleValue("pp") * Math.pow(0.95, j)) / Math.log10(100);
 
             if (jsb.getString("rank").startsWith("D")) xd++;
@@ -55,16 +56,16 @@ public class PPmTaiko implements PPmObject{
             if (jsb.getString("rank").startsWith("A")) xa++;
             if (jsb.getString("rank").startsWith("S")) xs++;
             if (jsb.getString("rank").startsWith("X")) xx++;
-            if(!jsb.getBoolean("perfect")) notfc++;
-            if(j < 10){
+            if (!jsb.getBoolean("perfect")) notfc++;
+            if (j < 10) {
                 ppv0 += jsb.getFloatValue("pp");
                 accv0 += jsb.getFloatValue("accuracy");
                 lengv0 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-            }else if(j>=45 && j<55){
+            } else if (j >= 45 && j < 55) {
                 ppv45 += jsb.getFloatValue("pp");
                 accv45 += jsb.getFloatValue("accuracy");
                 lengv45 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-            }else if(j>=90){
+            } else if (j >= 90) {
                 ppv90 += jsb.getFloatValue("pp");
                 accv90 += jsb.getFloatValue("accuracy");
                 lengv90 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
@@ -75,7 +76,7 @@ public class PPmTaiko implements PPmObject{
         double avgX = 0.0D;
         double avgY = 0.0D;
         double sumX = 0.0D;
-        for(int n = 1; n <= ys.length; n++){
+        for (int n = 1; n <= ys.length; n++) {
             double weight = Math.log1p(n + 1.0D);
             sumX += weight;
             avgX += n * weight;
@@ -83,20 +84,20 @@ public class PPmTaiko implements PPmObject{
         }
         avgX /= sumX;
         avgY /= sumX;
-        for(int n = 1; n <= ys.length; n++){
+        for (int n = 1; n <= ys.length; n++) {
             sumOxy += (n - avgX) * (ys[n - 1] - avgY) * Math.log1p(n + 1.0D);
             sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
         }
         double Oxy = sumOxy / sumX;
         double Ox2 = sumOx2 / sumX;
-        for(double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++){
+        for (double n = 100; n <= prd.getJSONObject("statistics").getIntValue("play_count"); n++) {
             double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-            if(val <= 0.0D){
+            if (val <= 0.0D) {
                 break;
             }
             bonus += val;
         }
-        rawpp = bpp+ bonus;
+        rawpp = bpp + bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;
@@ -107,20 +108,26 @@ public class PPmTaiko implements PPmObject{
         lengv0 /= 10;
         lengv45 /= 10;
         lengv90 /= 10;
-        if (prbp.size()<90) {
-            ppv90 = 0; accv90 = 0; lengv90 = 0;
+        if (prbp.size() < 90) {
+            ppv90 = 0;
+            accv90 = 0;
+            lengv90 = 0;
         }
-        if (prbp.size()<45) {
-            ppv45 = 0; accv45 = 0; lengv45 = 0;
+        if (prbp.size() < 45) {
+            ppv45 = 0;
+            accv45 = 0;
+            lengv45 = 0;
         }
-        if (prbp.size()<10) {
-            ppv0 = 0; accv0 = 0; lengv0 = 0;
+        if (prbp.size() < 10) {
+            ppv0 = 0;
+            accv0 = 0;
+            lengv0 = 0;
         }
         name = prd.getString("username");
         pp = prd.getJSONObject("statistics").getFloatValue("pp");
         if (pp > rawpp) {
             bonus = pp - rawpp;
-        }else {
+        } else {
             bonus = 0;
         }
         headURL = prd.getString("avatar_url");
@@ -141,7 +148,7 @@ public class PPmTaiko implements PPmObject{
 
         {
             double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
-            double rBPD = this.ppv0 == 0?0:(this.rawpp / this.ppv0);
+            double rBPD = this.ppv0 == 0 ? 0 : (this.rawpp / this.ppv0);
             double BPD;
             if (rBPD <= 14) {
                 BPD = 1;
@@ -152,75 +159,76 @@ public class PPmTaiko implements PPmObject{
             } else {
                 BPD = 0;
             }
-            ptt = Math.pow((BPD*0.2 + bpmxd*0.4 + 0.4),0.8D);
+            ptt = Math.pow((BPD * 0.2 + bpmxd * 0.4 + 0.4), 0.8D);
             ptt = check(ptt, 0, 1);
             if (prbp.size() < 100) ptt = 1;
         }
         //1.3 耐力STA stamina 0-1.2 sta
 
         {
-            double rSP = this.pcont == 0?0:(1.0*this.ptime/this.pcont);
+            double rSP = this.pcont == 0 ? 0 : (1.0 * this.ptime / this.pcont);
             double SPT;
-            if(rSP<30){
+            if (rSP < 30) {
                 SPT = 0;
-            }else if(rSP<=180){
-                SPT = 1 - Math.pow((180-rSP)/150, 2.357);
-            }else{
+            } else if (rSP <= 180) {
+                SPT = 1 - Math.pow((180 - rSP) / 150, 2.357);
+            } else {
                 SPT = 1;
             }
-            double rLN = this.lengv0*0.7 + this.lengv45*0.2 + this.lengv90*0.1;
+            double rLN = this.lengv0 * 0.7 + this.lengv45 * 0.2 + this.lengv90 * 0.1;
             double fLEN;
-            if(rLN<30){
+            if (rLN < 30) {
                 fLEN = 0;
-            }else if(rLN<=180){
-                fLEN = 1 - Math.pow((180-rLN)/150, 2.357);
-            }else{
+            } else if (rLN <= 180) {
+                fLEN = 1 - Math.pow((180 - rLN) / 150, 2.357);
+            } else {
                 fLEN = 1;
             }
             double VLB;
-            if(rLN<180){
+            if (rLN < 180) {
                 VLB = 0;
-            }else if(rLN<=240){
-                VLB = Math.pow((rLN-180)/60,0.4);
-            }else{
+            } else if (rLN <= 240) {
+                VLB = Math.pow((rLN - 180) / 60, 0.4);
+            } else {
                 VLB = 1;
             }
-            sta = Math.pow((SPT*0.4 + fLEN*0.6),0.8D) + VLB * 0.2;
+            sta = Math.pow((SPT * 0.4 + fLEN * 0.6), 0.8D) + VLB * 0.2;
             sta = check(sta, 0, 1.2);
         }
         //1.4 稳定STB stability (-0.16)-1.2 stb
 
         {
-            double GRD = (this.xx + this.xs*0.95 + this.xa* 0.9 + this.xb*0.6 + this.xc*0.3 - this.xd*0.2)/prbp.size();
-            double FCN = (this.xx+this.xs)/100D;
-            double PFN = Math.pow((1-1.0*this.notfc/prbp.size()), 0.2);
-            stb = GRD*0.9+FCN*0.2+PFN*0.1;
+            double GRD = (this.xx + this.xs * 0.95 + this.xa * 0.9 + this.xb * 0.6 + this.xc * 0.3 - this.xd * 0.2) / prbp.size();
+            double FCN = (this.xx + this.xs) / 100D;
+            double PFN = Math.pow((1 - 1.0 * this.notfc / prbp.size()), 0.2);
+            stb = GRD * 0.9 + FCN * 0.2 + PFN * 0.1;
             stb = check(stb, 0, 1.2);
         }
         //1.5 肝力ENG energy eng
         {
             double LNTTH = Math.log(this.thit);
-            if (LNTTH<12) eng = 0;
-            else if (LNTTH>17) eng = 1;
-            else eng = Math.pow((LNTTH-12) * 0.2,0.4);
+            if (LNTTH < 12) eng = 0;
+            else if (LNTTH > 17) eng = 1;
+            else eng = Math.pow((LNTTH - 12) * 0.2, 0.4);
             eng = check(eng, 0, 1);
         }
         //1.6 实力STH strength sth
 
         {
-            double HPS = 1D*this.thit/this.ptime;
-            if(HPS>4.5) HPS =  4.5;
-            else if(HPS<2.5) HPS =  2.5;
-            sth = Math.pow((HPS-2.5)/5,0.2);
+            double HPS = 1D * this.thit / this.ptime;
+            if (HPS > 4.5) HPS = 4.5;
+            else if (HPS < 2.5) HPS = 2.5;
+            sth = Math.pow((HPS - 2.5) / 5, 0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa*0.2 + eng*0.1 + ptt*0.15 + sth*0.3 + stb*0.05 + sta*0.2;
-        san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
+        ttl = fa * 0.2 + eng * 0.1 + ptt * 0.15 + sth * 0.3 + stb * 0.05 + sta * 0.2;
+        san = ppv0 < 20 ? 0 : (ppv0 / (ppv45 + ppv90 * 0.2 + 1) * (ptt + 0.25) * (sth + 0.25));
     }
 
     @Override
-    public double check(double value, double min, double max){
-        if (value>max) return max;else return Math.max(value, min);
+    public double check(double value, double min, double max) {
+        if (value > max) return max;
+        else return Math.max(value, min);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.now.nowbot.controller;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.MessageService.bindService;
 import com.now.nowbot.service.OsuGetService;
@@ -16,12 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
 public class msgController {
-    @Autowired
     bindService bin;
+    @Autowired
+    public void setBin(bindService service){
+        bin = service;
+    }
     @Autowired
     OsuGetService osuGetService;
     @Autowired
     ThreadPoolTaskExecutor threadPool;
+
     @RequestMapping("${ppy.callbackpath}")
     @ResponseBody
     public Object request(@RequestParam(name = "code") String code, @RequestParam(name = "state")String state){
@@ -31,6 +36,7 @@ public class msgController {
     }
     @Async
     public void saveBind(String code, String[] data){
+        if (bin == null)
         if(data.length == 2) {
 
             var msg = bin.msgs.get(Long.valueOf(data[1]));
