@@ -41,6 +41,7 @@ public class bphtService extends MsgSTemp implements MessageService{
         JSONArray Bps;
 
         var mode = matcher.group("mode")==null?matcher.group("mode").toLowerCase():"null";
+        from.sendMessage(mode);
         switch (mode){
             case"null":
             case"osu":
