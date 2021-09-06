@@ -15,6 +15,9 @@ public class PageService extends MsgSTemp implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        String p1 = matcher.group("p1");
+        String p2 = matcher.group("p2");
+        String p3 = matcher.group("p3");
 
     }
 }

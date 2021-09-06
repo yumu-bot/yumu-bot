@@ -146,7 +146,7 @@ public class PPmTaiko implements PPmObject {
         }
         //1.2 1.2 潜力PTT potential 0-1 ptt
 
-            double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
+        double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
         {
             double rBPD = this.ppv0 == 0 ? 0 : (this.rawpp / this.ppv0);
             double BPD;
@@ -206,7 +206,7 @@ public class PPmTaiko implements PPmObject {
         }
         //1.5 肝力ENG energy eng
         {
-            double LNTTH = Math.log(this.thit+1);
+            double LNTTH = Math.log(this.thit + 1);
             if (LNTTH < 8) eng = 0;
             else if (LNTTH > 16) eng = 1;
             else eng = Math.pow((LNTTH - 8) * 0.125, 0.4);
@@ -222,9 +222,9 @@ public class PPmTaiko implements PPmObject {
             sth = check(sth, 0, 1);
         }
         ttl = facc * 0.2 + eng * 0.1 + ptt * 0.15 + sth * 0.3 + stb * 0.05 + sta * 0.2;
-        double PPdPC = (ppv0+ppv45+ppv90)*20/Math.pow(pcont+100,0.8);
-        double LPPD = Math.log(ppv0+1)/4.605;
-        san = PPdPC*LPPD*Math.pow(bpmxd,0.6)*(sth-eng*0.4+0.4)*(facc +0.25);
+        double PPdPC = Math.pow((ppv0 + ppv45 + ppv90) * 20 / (pcont + 100), 0.8);
+        double LPPD = Math.log(ppv0 + 1) / 4.605;
+        san = PPdPC * LPPD * Math.pow(bpmxd, 0.6) * (sth - eng * 0.4 + 0.4) * (facc + 0.25);
     }
 
     @Override
