@@ -40,8 +40,7 @@ public class bphtService extends MsgSTemp implements MessageService{
         }
         JSONArray Bps;
 
-        var mode = matcher.group("mode")==null?matcher.group("mode").toLowerCase():"null";
-        from.sendMessage(mode);
+        var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
         switch (mode){
             case"null":
             case"osu":
@@ -122,7 +121,7 @@ public class bphtService extends MsgSTemp implements MessageService{
         }
 
         dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.getJSONObject(0).getFloatValue("pp")-Bps.getJSONObject(99).getFloatValue("pp"))).append("\n");
-        dtbf.append("您的平均BP为").append(decimalFormat.format(pp/100)).append('\n').append(matcher.group("mode"));
+        dtbf.append("您的平均BP为").append(decimalFormat.format(pp/100));
 
         from.sendMessage(dtbf.toString());
     }
