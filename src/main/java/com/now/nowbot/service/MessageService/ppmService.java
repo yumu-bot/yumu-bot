@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.entity.FontCfg;
+import com.now.nowbot.entity.SkiaConfig;
 import com.now.nowbot.entity.PPm.PPmObject;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
@@ -122,7 +122,7 @@ public class ppmService extends MsgSTemp implements MessageService {
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-                 Typeface fontface = FontCfg.getTorusRegular();
+                 Typeface fontface = SkiaConfig.getTorusRegular();
                  Font fontA = new Font(fontface, 80);
                  Paint white = new Paint().setARGB(255,255,255,255);
             ){
@@ -147,7 +147,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             return;
         }
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = FontCfg.getTorusRegular();
+             Typeface fontface = SkiaConfig.getTorusRegular();
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
              Paint white = new Paint().setARGB(255,255,255,255);
@@ -160,6 +160,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
             canvas.drawImage(bg1,0,0);
             canvas.drawImage(bg2,0,0);
+
             //在底下
             canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
             double[] hex1 = new double[]{
