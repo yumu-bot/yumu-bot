@@ -2,9 +2,6 @@ package com.now.nowbot;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.entity.FontCfg;
-import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.message.data.At;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

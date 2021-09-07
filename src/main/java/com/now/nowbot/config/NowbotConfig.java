@@ -1,12 +1,9 @@
 package com.now.nowbot.config;
 
-import com.now.nowbot.entity.RequestError;
+import com.now.nowbot.throwable.RequestError;
 import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
-import net.mamoe.mirai.contact.NormalMember;
-import net.mamoe.mirai.internal.BotFactoryImpl;
-import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,18 +16,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.ExtractingResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 @Configuration
 @ConfigurationProperties(prefix = "nowbot.config")

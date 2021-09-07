@@ -18,7 +18,7 @@ public class bphtService extends MsgSTemp implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     bphtService(){
-        super(Pattern.compile("^[!！]\\s?(?i)bpht([:：](?<mode>[osutaikchmn0-4]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
+        super(Pattern.compile("^[!！]\\s?(?i)bpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
         setInfo("!bpht [name]获取bp榜单的前5及后5的成绩，以及平均bp，未绑定请带上name参数");
     }
 

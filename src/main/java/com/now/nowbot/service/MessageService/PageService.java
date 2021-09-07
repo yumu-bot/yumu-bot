@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.throwable.TipsRuntimeException;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,6 @@ public class PageService extends MsgSTemp implements MessageService{
         String p1 = matcher.group("p1");
         String p2 = matcher.group("p2");
         String p3 = matcher.group("p3");
-
+        throw new TipsRuntimeException("what's up");
     }
 }

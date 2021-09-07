@@ -1,7 +1,6 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.throwable;
 
 import com.alibaba.fastjson.JSONObject;
-import netscape.javascript.JSObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 

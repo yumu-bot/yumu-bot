@@ -1,17 +1,16 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.RequestError;
+import com.now.nowbot.throwable.RequestError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
 import com.now.nowbot.throwable.RunError;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
-import net.mamoe.mirai.message.data.PlainText;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +44,9 @@ public class MessageListener extends SimpleListenerHost {
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception) {
         if (SimpleListenerHost.getEvent(exception) instanceof MessageEvent) {
             MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
+            if (event == null) return;
             var e = SimpleListenerHost.getRootCause(exception);
-            if (e instanceof TipsException) {
+            if (e instanceof TipsException || e instanceof TipsRuntimeException) {
                 event.getSubject().sendMessage(e.getMessage());
             } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 event.getSubject().sendMessage("网络连接超时，请稍后再试");
@@ -62,27 +62,10 @@ public class MessageListener extends SimpleListenerHost {
             } else if (e instanceof RunError) {
                 log.error("严重异常:", e);
             } else {
-//                if (Permission.superUser != null) {
-//                    var errdate = getExceptionAllinformation((Exception) e);
-//                    Permission.superUser.forEach(id -> {
-//                        event.getBot().getFriend(id).sendMessage(event.getMessage().plus("\n" + errdate + "   " + format.format(System.currentTimeMillis())));
-//                    });
-//                }
-                log.info("---->", e);
+                log.info("捕捉其他异常", e);
             }
         }
     }
-
-    public static String getExceptionAllinformation(Exception ex) {
-        StringBuilder sOut = new StringBuilder();
-        StackTraceElement[] trace = ex.getStackTrace();
-        sOut.append(ex.getMessage());
-        for (StackTraceElement s : trace) {
-            sOut.append("\tat ").append(s).append("\r\n");
-        }
-        return sOut.toString();
-    }
-
 
     @Async
     @EventHandler
