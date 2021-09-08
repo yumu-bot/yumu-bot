@@ -6,13 +6,9 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.BinUser;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
-import com.now.nowbot.util.SendmsgUtil;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
@@ -84,10 +77,17 @@ public class setuService extends MsgSTemp implements MessageService{
         Image img = null;
         try {
             byte[] date;
-            if(System.currentTimeMillis()%4 == 2){
-                date = 三次元色图();
-            }else {
-                date = 二次元色图();
+            int random = Math.toIntExact((System.currentTimeMillis() % 4));
+            switch (random){
+                case 3:{
+                    date = api2();
+                }break;
+//                case 1:{
+//                    date = api3();
+//                }break;
+                default:{
+                    date = api1();
+                }
             }
             img = from.uploadImage(ExternalResource.create(date));
         } catch (IOException e) {
@@ -99,7 +99,16 @@ public class setuService extends MsgSTemp implements MessageService{
             from.sendMessage(img).recallIn(110*1000);
         }
     }
-    byte[] 三次元色图() throws Exception{
+    byte[] api3()throws Exception{
+        //todo 检查下载失败原因
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+        HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<byte[]> date = null;
+        date = template.exchange("http://www.dmoe.cc/random.php", HttpMethod.GET, httpEntity, byte[].class);
+        return date.getBody();
+    }
+    byte[] api2() throws Exception{
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
@@ -107,7 +116,7 @@ public class setuService extends MsgSTemp implements MessageService{
         date = template.exchange("https://api.vvhan.com/api/girl", HttpMethod.GET, httpEntity, byte[].class);
         return date.getBody();
     }
-    byte[] 二次元色图() throws Exception{
+    byte[] api1() throws Exception{
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
