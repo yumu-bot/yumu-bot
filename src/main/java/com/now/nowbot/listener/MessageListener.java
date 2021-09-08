@@ -95,6 +95,12 @@ public class MessageListener extends SimpleListenerHost {
 
     @Async
     @EventHandler
+    public void msg(NewFriendRequestEvent event) throws Exception {
+        event.accept();
+    }
+
+    @Async
+    @EventHandler
     public void msg(MessagePreSendEvent event) throws Exception {
         SendmsgUtil.check(event);
     }
