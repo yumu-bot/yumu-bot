@@ -8,6 +8,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.Scanner;
+
 @SpringBootApplication
 @EnableConfigurationProperties(NowbotConfig.class)
 @EnableAspectJAutoProxy(exposeProxy = true, proxyTargetClass = true)
