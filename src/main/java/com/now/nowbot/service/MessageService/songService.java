@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
@@ -13,18 +13,13 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("song")
-public class songService extends MsgSTemp implements MessageService{
+public class songService implements MessageService{
     @Autowired
         StarService starService;
     @Autowired
     OsuGetService osuGetService;
-    songService() {
-        super(Pattern.compile("^[!！]\\s*(?i)song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"), "song");
-        setInfo("!song <bid> 或者 !song sid:<sid> 获得谱面预览音频");
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

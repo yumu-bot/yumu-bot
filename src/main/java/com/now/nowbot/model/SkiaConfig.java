@@ -1,8 +1,9 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.model;
 
 import com.now.nowbot.config.NowbotConfig;
 import org.jetbrains.skija.Typeface;
 
+//FIXME 大概不应该放在这里
 public class SkiaConfig {
     public static Typeface JP;
     public static Typeface TORUS_REGULAR;

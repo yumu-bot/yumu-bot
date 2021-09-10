@@ -2,7 +2,7 @@ package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.util.BindingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

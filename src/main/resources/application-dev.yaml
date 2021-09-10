@@ -1,34 +1,32 @@
 dir:
-  rundir: 项目运行路径 #运行释放文件，缓存均在此目录
+  rundir: G:\Desktop\Program\Java\nowbot\data\
   bin: ${dir.rundir}Bind/
   mirai: ${dir.rundir}
   bgdir: ${dir.rundir}bg/
   font: ${dir.rundir}font/
   imghc: ${dir.rundir}imgbuffer/
   osuid: ${dir.rundir}Id/
-# mirai设置，分别为qq，密码，是否登录(用于预留debug，正常使用务必开启) 权限列表
 mirai:
-  qq: 111111
-  password: password
+  qq: 3380746395
+  password: woshijiqiren!
   start: true
   permission:
     group-blacklist:
-      - 11111
+      - 928936255
     group-whitelist:
-      - 22222
+      - 110316460
     friend-blacklist:
-      - 11111
     friend-whitelist:
-      - 22222
     super-user:
-      - 33333
+      - 365246692
+      - 2480557535
 ppy:
-  url: https://osu.ppy.sh/api/v2/ #建议不要修改
-  callbackpath: /oauth  #回调监听链接path
-  callBackUrl: url #回调完整链接,确保链接可以指向本机ip
-  #  oauth信息
-  id: 0000
-  token: v2token
-  v1token: v1token  #注意，v1已被弃用，可以留空，留空不得调用弃用方法
-server:
-  port: 8000  #监听端口，确保防火墙放行
+  url: https://osu.ppy.sh/api/v2/
+  callbackpath: /oauth
+  callBackUrl: http://bind.osuoauth.365246692.xyz:20006/oauth
+  #  muzi
+  id: 6267
+  token: A62B4EiTDYEXoPIfqyEVTzPda4ujDQ2FkuXMRGKQ
+  v1token: a0d37ce698d6752b5fc65abe99c139cbf433aefc
+#  id: 8721
+#  token: aeToW0bVoPptuq9mJhYH6bvPI6PQ1otS0oyBFVqB

@@ -7,11 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("kumo")
-public class kumoService extends MsgSTemp implements MessageService{
-    kumoService(){
-        super(Pattern.compile(".*"),"kumo");
-    }
-
+public class kumoService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 

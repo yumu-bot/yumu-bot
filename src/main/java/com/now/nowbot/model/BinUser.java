@@ -1,4 +1,4 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.model;
 
 import com.now.nowbot.service.OsuGetService;
 

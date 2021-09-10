@@ -2,7 +2,7 @@ package com.now.nowbot.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

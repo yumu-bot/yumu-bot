@@ -1,4 +1,4 @@
-package com.now.nowbot.entity.bitmap;
+package com.now.nowbot.model.bitmap;
 
 public class HitObject {
     public static class HitObjectPosition{

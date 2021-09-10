@@ -8,12 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("page")
-public class PageService extends MsgSTemp implements MessageService{
-
-    PageService() {
-        super(Pattern.compile("^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"), "page");
-    }
-
+public class PageService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String p1 = matcher.group("p1");

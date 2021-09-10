@@ -1,7 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
@@ -12,19 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("start")
-public class startService extends MsgSTemp implements MessageService{
+public class startService implements MessageService{
     @Autowired
     StarService starService;
     @Autowired
     OsuGetService osuGetService;
-
-    startService(){
-        super(Pattern.compile("^[!！]\\s*((积分)|(..积分))+"),"start");
-        setInfo("!积分 刷新您的积分");
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

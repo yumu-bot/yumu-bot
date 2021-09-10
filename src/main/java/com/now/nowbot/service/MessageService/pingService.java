@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.entity.SkiaConfig;
+import com.now.nowbot.model.SkiaConfig;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
@@ -8,14 +8,9 @@ import org.jetbrains.skija.*;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("ping")
-public class pingService  extends MsgSTemp implements MessageService{
-    pingService(){
-        super(Pattern.compile("^[!！]\\s?(?i)ping"),"ping");
-    }
-
+public class pingService implements MessageService{
     @Override
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

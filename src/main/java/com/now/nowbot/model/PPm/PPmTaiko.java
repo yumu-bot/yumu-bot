@@ -1,4 +1,4 @@
-package com.now.nowbot.entity.PPm;
+package com.now.nowbot.model.PPm;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;

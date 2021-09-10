@@ -18,11 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("cpanel")
-public class catpanelService extends MsgSTemp implements MessageService {
-    catpanelService() {
-        super(Pattern.compile("^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"), "cpanel");
-    }
-
+public class catpanelService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();

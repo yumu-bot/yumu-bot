@@ -1,4 +1,4 @@
-package com.now.nowbot.entity.bitmap;
+package com.now.nowbot.model.bitmap;
 
 import java.util.List;
 

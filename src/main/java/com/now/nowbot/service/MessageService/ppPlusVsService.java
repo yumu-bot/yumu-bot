@@ -2,8 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.entity.BinUser;
-import com.now.nowbot.entity.SkiaConfig;
+import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.SkiaConfig;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
@@ -20,19 +20,13 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("ppvs")
-public class ppPlusVsService extends MsgSTemp implements MessageService{
+public class ppPlusVsService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     @Autowired
     StarService starService;
-
-    ppPlusVsService() {
-        super(Pattern.compile("^[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppvs");
-//        super(Pattern.compile("^owo$"),"ppvs");
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

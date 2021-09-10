@@ -1,9 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.entity.BinUser;
-import com.now.nowbot.entity.SkiaConfig;
-import com.now.nowbot.entity.PPm.PPmObject;
+import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.SkiaConfig;
+import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -17,16 +17,12 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("ppmvs")
-public class PpmVsService extends MsgSTemp implements MessageService{
+public class PpmVsService implements MessageService{
 
     @Autowired
     OsuGetService osuGetService;
-    PpmVsService(){
-        super(Pattern.compile("^[!！]\\s?(?i)ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppmvs");
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
