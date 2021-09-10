@@ -40,21 +40,27 @@ public class bindService extends MsgSTemp implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        //将当前毫秒时间戳作为 key
         long d = System.currentTimeMillis();
+        //群聊验证是否绑定
         if ((event.getSubject() instanceof Group)) {
             BinUser user = null;
             try {
                 user = BindingUtil.readUser(event.getSender().getId());
-            } catch (Exception e) {
+            } catch (Exception e) {//未绑定时会出现file not find
                 String state = event.getSender().getId() + "+" + d;
+                //将消息回执作为 value
                 var ra = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
+                //默认110秒后撤回
                 ra.recallIn(110 * 1000);
+                //此处在 controller.msgController 处理
                 msgs.put(d, ra);
                 return;
             }
             event.getSubject().sendMessage(new At(event.getSender().getId()).plus("您已绑定，若要修改绑定请私发bot绑定命令"));
             return;
         }
+        //私聊不验证是否绑定
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
         e.recallIn(110 * 1000);

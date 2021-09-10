@@ -38,16 +38,20 @@ public class MessageListener extends SimpleListenerHost {
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
     private ApplicationContext applicationContext;
-
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-
+    //todo 封装dao层
     @Autowired
     MessageMapper messageMapper;
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    /***
+     * 异常集中处理
+     * @param context
+     * @param exception
+     */
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception) {
         if (SimpleListenerHost.getEvent(exception) instanceof MessageEvent) {
@@ -73,6 +77,11 @@ public class MessageListener extends SimpleListenerHost {
         }
     }
 
+    /***
+     * 监听消息分发
+     * @param event
+     * @throws Throwable
+     */
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
@@ -94,6 +103,11 @@ public class MessageListener extends SimpleListenerHost {
         }
     }
 
+    /***
+     * 处理群邀请
+     * @param event
+     * @throws Exception
+     */
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
@@ -102,26 +116,41 @@ public class MessageListener extends SimpleListenerHost {
                 .append('(')
                 .append(event.getGroupId())
                 .append(')');
+        //原定是发送给管理群 临时用我自己账号测试
         event.getBot().getFriend(365246692).sendMessage(sb.toString());
         event.accept();
     }
 
+    /***
+     * 处理添加好友请求(默认同意
+     * @param event
+     * @throws Exception
+     */
     @Async
     @EventHandler
     public void msg(NewFriendRequestEvent event) throws Exception {
         event.accept();
     }
 
+    /***
+     * 发送消息前的调用,检测是否复读
+     * @param event
+     * @throws Exception
+     */
     @Async
     @EventHandler
     public void msg(MessagePreSendEvent event) throws Exception {
         SendmsgUtil.check(event);
     }
 
+    /***
+     * 输出发送的消息
+     * @param event
+     */
     @Async
     @EventHandler
     public void msg(MessagePostSendEvent event) {
-        System.out.println(event.getMessage().contentToString());
+        log.info(event.getMessage().contentToString());
     }
 
     /***

@@ -27,20 +27,22 @@ public class bphtService extends MsgSTemp implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         BinUser nu = null;
-
         if(matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+            //查询其他人 bpht [name]
             String name = matcher.group("name").trim();
                 nu = new BinUser();
+                //构建只有 name + id 的对象
                 nu.setOsuID(osuGetService.getOsuId(name));
                 nu.setOsuName(name);
         }else {
+            //处理没有参数的情况 查询自身
             nu = BindingUtil.readUser(event.getSender().getId());
-            if(nu.getOsuID() == 0){
-                osuGetService.getPlayerOsuInfo(nu);
-            }
         }
+        //bp列表
         JSONArray Bps;
+        //acc计算器  区分不同模式的计算器
         AccCoun accCoun;
+        //分别处理mode
         var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
         switch (mode){
             case"null":
@@ -48,6 +50,7 @@ public class bphtService extends MsgSTemp implements MessageService{
             case"o":
             case"0":
             default:{
+                //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
                 if(nu.getAccessToken() != null){
                     Bps = osuGetService.getOsuBestMap(nu, 0,100);
 
@@ -55,6 +58,7 @@ public class bphtService extends MsgSTemp implements MessageService{
                     Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
                 }
                 mode = "std";
+                //使用std计算器
                 accCoun = AccCoun.OSU;
             }break;
             case"taiko":
@@ -91,17 +95,18 @@ public class bphtService extends MsgSTemp implements MessageService{
                 accCoun = AccCoun.MANIA;
             }break;
         }
+        //...
         if(Bps.size() != 100){
             from.sendMessage(new At(event.getSender().getId()).plus("您的BP尚未填满，请打完后尝试"));
             return;
         }
-
+        //生成结果
         var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');
         double pp = 0;
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         for (int i = 0; i < Bps.size(); i++) {
             var jsb = Bps.getJSONObject(i);
-
+            //显示前五跟后五的数据
             if(i<5 || i>94){
                 dtbf.append("#")
                         .append(i+1)
