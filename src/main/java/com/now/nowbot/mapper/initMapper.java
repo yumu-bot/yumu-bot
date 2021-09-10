@@ -12,21 +12,14 @@ import java.util.Map;
 @Component
 public interface initMapper {
 
-    @Insert("select cn_notebook_id,cn_note_title from cn_note where cn_user_id = #{userId}")
+    @Insert("select * from b")
     @Results({
             @Result(property = "id", column = "cn_notebook_id"),
             @Result(property = "title", column = "cn_note_title"),
     })
     public void insert();
-    @Select("select * from databases")
-    @Results({
-            @Result(property = "id", column = "cn_user_id"),
-            @Result(property = "name", column = "cn_user_name"),
-            @Result(property = "password", column = "cn_user_password"),
-            @Result(property = "token", column = "cn_user_token"),
-            @Result(property = "nick", column = "cn_user_nick"),
-    })
-    public Map get();
+    @Insert("insert into b (id, name) VALUES (#{id}, #{name});")
+    public int insertb(JSONObject date);
     @Select("pragma table_info(${name})")
     public List<JSONObject> getlin(String name);
     @Update("CREATE TABLE a(" +
@@ -34,7 +27,7 @@ public interface initMapper {
             "name text"+
             ")")
     public int createa();
-    @Update("create table b(id int primary key, name text);create index name on b")
+    @Update("create table b(id int primary key, name text);create index name on b (name)")
     public int createb();
     @Select("SELECT name FROM sqlite_master")
     public List<JSONObject> getTables();

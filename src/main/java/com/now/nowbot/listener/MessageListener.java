@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.throwable.RequestError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
@@ -11,6 +12,9 @@ import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
+import net.mamoe.mirai.message.data.MessageChain;
+import net.mamoe.mirai.message.data.MessageSource;
+import net.mamoe.mirai.message.data.QuoteReply;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +56,6 @@ public class MessageListener extends SimpleListenerHost {
                 event.getSubject().sendMessage("网络连接超时，请稍后再试");
             } else if (e instanceof RestClientException && e.getCause() instanceof RequestError) {
                 RequestError reser = (RequestError) e.getCause();
-                //error : The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.
-                //404 ?
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在");
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
@@ -70,15 +72,21 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        for (var k : MsgSTemp.services.keySet()) {
-            var matcher = k.matcher(event.getMessage().contentToString());
-            if (matcher.find() && applicationContext != null) {
-                var servicename = MsgSTemp.services.get(k);
-                var service = (MessageService) applicationContext.getBean(servicename);
-                service.HandleMessage(event, matcher);
-            }
-
-        }
+        var jsd = MessageChain.serializeToJsonString(event.getMessage());
+        QuoteReply r = event.getMessage().get(QuoteReply.Key);
+        event.getMessage().get(MessageSource.Key).getTime();
+        var id = event.getMessage().get(MessageSource.Key).getIds()[0];
+        var intid = event.getMessage().get(MessageSource.Key).getInternalIds()[0];
+        System.out.println(intid);
+//        for (var k : MsgSTemp.services.keySet()) {
+//            var matcher = k.matcher(event.getMessage().contentToString());
+//            if (matcher.find() && applicationContext != null) {
+//                var servicename = MsgSTemp.services.get(k);
+//                var service = (MessageService) applicationContext.getBean(servicename);
+//                service.HandleMessage(event, matcher);
+//            }
+//
+//        }
     }
 
     @Async

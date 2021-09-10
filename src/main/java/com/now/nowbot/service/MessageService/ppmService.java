@@ -61,6 +61,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                         userinfo = PPmObject.presOsu(userdate, bpdate);
                     }
                 }
+                mode = "osu";
             } break;
             case"taiko":
             case"t":
@@ -83,6 +84,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                         userinfo = PPmObject.presTaiko(userdate, bpdate);
                     }
                 }
+                mode = "taiko";
             } break;
             case"catch":
             case"c":
@@ -105,6 +107,7 @@ public class ppmService extends MsgSTemp implements MessageService {
                         userinfo = PPmObject.presCatch(userdate, bpdate);
                     }
                 }
+                mode = "fruits";
             } break;
             case"mania":
             case"m":
@@ -128,11 +131,11 @@ public class ppmService extends MsgSTemp implements MessageService {
             ){
                 var canvas = surface.getCanvas();
                 Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
-                Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+                Image bg_hex = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
                 Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
                 Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
                 canvas.drawImage(bg1,0,0);
-                canvas.drawImage(bg2,0,0);
+                canvas.drawImage(bg_hex,0,0);
                 canvas.drawImage(bg3,513,74);
                 canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
                 canvas.drawImage(spr,0,0);
@@ -154,15 +157,17 @@ public class ppmService extends MsgSTemp implements MessageService {
         ){
             var canvas = surface.getCanvas();
             canvas.save();
-            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
-            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
-            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
-            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
-            canvas.drawImage(bg1,0,0);
-            canvas.drawImage(bg2,0,0);
+            Image background = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+            Image bg_hex = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+            Image voer_img = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
+            Image loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+            Image mode_loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mode-"+mode+"-med.png")));
+            canvas.drawImage(background,0,0);
+            canvas.drawImage(mode_loge,1800,10);
+            canvas.drawImage(bg_hex,0,0);
 
             //在底下
-            canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
+            canvas.drawImage(loge,surface.getWidth()-loge.getWidth(),surface.getHeight()-loge.getHeight(),new Paint().setAlpha(51));
             double[] hex1 = new double[]{
                     Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
@@ -179,7 +184,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
 
-            canvas.drawImage(bg3,513,74);
+            canvas.drawImage(voer_img,513,74);
 
             Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
             PpmVsService.drowLhead(canvas, head1);

@@ -8,7 +8,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +22,13 @@ public class Permission {
     public Set<Long> groupWhitelist;
     public Set<Long> friendWhitelist;
     public static Set<Long> superUser;
+    private Map<TYPE, Set<Long>> AllPerm = new ConcurrentHashMap<>();
+    public static enum TYPE{
+        GROUP_OFF,
+        FRIEND_OFF,
+        GROUP_ON,
+        FRIEND_ON
+    }
     public static final Map<String , Permission> PERMISSION_ALL = new ConcurrentHashMap<>();
 
     public Permission(){
