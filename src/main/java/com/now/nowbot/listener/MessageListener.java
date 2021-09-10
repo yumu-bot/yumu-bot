@@ -72,21 +72,21 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        var jsd = MessageChain.serializeToJsonString(event.getMessage());
-        QuoteReply r = event.getMessage().get(QuoteReply.Key);
-        event.getMessage().get(MessageSource.Key).getTime();
-        var id = event.getMessage().get(MessageSource.Key).getIds()[0];
-        var intid = event.getMessage().get(MessageSource.Key).getInternalIds()[0];
-        System.out.println(intid);
-//        for (var k : MsgSTemp.services.keySet()) {
-//            var matcher = k.matcher(event.getMessage().contentToString());
-//            if (matcher.find() && applicationContext != null) {
-//                var servicename = MsgSTemp.services.get(k);
-//                var service = (MessageService) applicationContext.getBean(servicename);
-//                service.HandleMessage(event, matcher);
-//            }
-//
-//        }
+//        var jsd = MessageChain.serializeToJsonString(event.getMessage());
+//        QuoteReply r = event.getMessage().get(QuoteReply.Key);
+//        event.getMessage().get(MessageSource.Key).getTime();
+//        var id = event.getMessage().get(MessageSource.Key).getIds()[0];
+//        var intid = event.getMessage().get(MessageSource.Key).getInternalIds()[0];
+//        System.out.println(intid);
+        for (var k : MsgSTemp.services.keySet()) {
+            var matcher = k.matcher(event.getMessage().contentToString());
+            if (matcher.find() && applicationContext != null) {
+                var servicename = MsgSTemp.services.get(k);
+                var service = (MessageService) applicationContext.getBean(servicename);
+                service.HandleMessage(event, matcher);
+            }
+
+        }
     }
 
     @Async
