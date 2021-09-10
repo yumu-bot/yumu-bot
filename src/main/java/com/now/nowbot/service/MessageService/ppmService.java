@@ -134,6 +134,8 @@ public class ppmService extends MsgSTemp implements MessageService {
                 Image bg_hex = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
                 Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
                 Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+                Image mode_loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mode-"+mode+"-med.png")));
+                canvas.drawImage(mode_loge,1800,10, new Paint().setAlpha(214));
                 canvas.drawImage(bg1,0,0);
                 canvas.drawImage(bg_hex,0,0);
                 canvas.drawImage(bg3,513,74);
@@ -163,7 +165,7 @@ public class ppmService extends MsgSTemp implements MessageService {
             Image loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
             Image mode_loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mode-"+mode+"-med.png")));
             canvas.drawImage(background,0,0);
-            canvas.drawImage(mode_loge,1800,10);
+            canvas.drawImage(mode_loge,1800,10, new Paint().setAlpha(214));
             canvas.drawImage(bg_hex,0,0);
 
             //在底下

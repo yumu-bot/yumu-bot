@@ -30,5 +30,5 @@ public interface initMapper {
     @Update("create table b(id int primary key, name text);create index name on b (name)")
     public int createb();
     @Select("SELECT name FROM sqlite_master")
-    public List<JSONObject> getTables();
+    public List<String> queryAllTableName();
 }

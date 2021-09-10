@@ -1,6 +1,8 @@
 package com.now.nowbot.listener;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.entity.MsgLite;
+import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.throwable.RequestError;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.service.MessageService.MsgSTemp;
@@ -42,6 +44,8 @@ public class MessageListener extends SimpleListenerHost {
         this.applicationContext = applicationContext;
     }
 
+    @Autowired
+    MessageMapper messageMapper;
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
@@ -78,6 +82,7 @@ public class MessageListener extends SimpleListenerHost {
 //        var id = event.getMessage().get(MessageSource.Key).getIds()[0];
 //        var intid = event.getMessage().get(MessageSource.Key).getInternalIds()[0];
 //        System.out.println(intid);
+//        messageMapper.addMsg(new MsgLite(event.getMessage()));
         for (var k : MsgSTemp.services.keySet()) {
             var matcher = k.matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
