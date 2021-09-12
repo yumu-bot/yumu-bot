@@ -13,11 +13,18 @@ import org.springframework.stereotype.Service;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 
+/***
+ * 统一设置定时任务
+ */
 @Service
 public class RunTimeService {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
     @Autowired
     Bot bot;
+    //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
+
+    /*
+    提醒ec睡觉
     @Scheduled(cron = "0 0 0 * * *")
     public void sleep(){
         bot.getGroups().forEach(group -> {
@@ -29,6 +36,11 @@ public class RunTimeService {
             }
         });
     }
+    */
+
+    /***
+     * 白天输出内存占用信息
+     */
     @Scheduled(cron = "0 0/30 8-18 * * *")
     public void alive(){
         var m = ManagementFactory.getMemoryMXBean();

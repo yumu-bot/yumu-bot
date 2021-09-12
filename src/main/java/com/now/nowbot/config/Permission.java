@@ -23,6 +23,7 @@ public class Permission {
     public Set<Long> friendWhitelist;
     public static Set<Long> superUser;
     private Map<TYPE, Set<Long>> AllPerm = new ConcurrentHashMap<>();
+    //类型enum
     public static enum TYPE{
         GROUP_OFF,
         FRIEND_OFF,

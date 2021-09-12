@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
 
+/***
+ * 线程池配置
+ */
 @Service
 public class AsyncSetting implements AsyncConfigurer {
     private static final Logger log = LoggerFactory.getLogger(AsyncSetting.class);

@@ -31,6 +31,13 @@ public class CheckAspect {
     public void annotatedMethodsRep(){
     }
 
+    /***
+     * 注解权限切点
+     * @param point
+     * @param CheckPermission
+     * @return
+     * @throws TipsException
+     */
     @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
     public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException {
         var args = point.getArgs();
