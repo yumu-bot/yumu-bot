@@ -1,6 +1,7 @@
 package com.now.nowbot.listener;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.throwable.RequestError;
@@ -89,6 +90,10 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
+        //判断是否拉黑用户
+        if (Permission.FRILED_BLACK.contains(event.getSender().getId())) {
+            return;
+        }
         for(var ins : Instruction.values()){
             Matcher matcher = Pattern.compile(ins.getRegex()).matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
@@ -106,14 +111,25 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
-        StringBuffer sb = new StringBuffer("接收到来自\n");
-        sb.append(event.getGroupName())
-                .append('(')
-                .append(event.getGroupId())
-                .append(')');
-        //原定是发送给管理群 临时用我自己账号测试
-        event.getBot().getFriend(365246692).sendMessage(sb.toString());
-        event.accept();
+        StringBuffer sb = new StringBuffer();
+        if(Permission.GROUP_BLACK.contains(event.getGroupId())){
+            sb.append("收到来自黑名单群组 \n")
+                    .append(event.getGroupName())
+                    .append('(')
+                    .append(event.getGroupId())
+                    .append(')')
+                    .append("已拒绝");
+        } else {
+            sb.append("接收到来自 \n")
+                    .append(event.getGroupName())
+                    .append('(')
+                    .append(event.getGroupId())
+                    .append(')')
+                    .append("加群邀请，已同意");
+            event.accept();
+        }
+        //发送给管理群
+        event.getBot().getGroup(746671531L).sendMessage(sb.toString());
     }
 
     /***

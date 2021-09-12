@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +23,8 @@ public class Permission {
     public Set<Long> groupWhitelist;
     public Set<Long> friendWhitelist;
     public static Set<Long> superUser;
+    public final static Set<Long> GROUP_BLACK = new HashSet<>();
+    public final static Set<Long> FRILED_BLACK = new HashSet<>();
     private Map<TYPE, Set<Long>> AllPerm = new ConcurrentHashMap<>();
     //类型enum
     public static enum TYPE{

@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.SkiaConfig;
+import com.now.nowbot.util.SkiaUtil;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -53,7 +53,7 @@ public class ppPlusService implements MessageService{
 
         byte[] datebyte = null;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = SkiaConfig.getTorusRegular();
+             Typeface fontface = SkiaUtil.getTorusRegular();
              Font fontA = new Font(fontface, 80);
              Font fontB = new Font(fontface, 64);
              Paint white = new Paint().setARGB(255,255,255,255);
@@ -168,9 +168,9 @@ public class ppPlusService implements MessageService{
 
         byte[] datebyte = null;
         try(Surface surface = Surface.makeRasterN32Premul(600,800);
-            Font smileFont = new Font(SkiaConfig.getJP(),20);
-            Font lagerFont = new Font(SkiaConfig.getJP(),50);
-            Font middleFont = new Font(SkiaConfig.getJP(), 30);
+            Font smileFont = new Font(SkiaUtil.getTorusRegular(),20);
+            Font lagerFont = new Font(SkiaUtil.getTorusRegular(),50);
+            Font middleFont = new Font(SkiaUtil.getTorusRegular(), 30);
             Paint bg1 = new Paint().setARGB(40,0,0,0);
             Paint bg2 = new Paint().setARGB(220,0,0,0);
             Paint wp = new Paint().setARGB(255,200,200,200);

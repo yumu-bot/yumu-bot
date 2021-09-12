@@ -14,6 +14,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class SkiaUtil {
+    //字体文件
+    public static Typeface TORUS_REGULAR;
+    public static Typeface getTorusRegular(){
+        if(TORUS_REGULAR == null || TORUS_REGULAR.isClosed()){
+            TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-Regular.ttf");
+        }
+        return TORUS_REGULAR;
+    }
     /***
      * 网络加载图片
      * @param path
