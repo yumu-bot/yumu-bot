@@ -3,7 +3,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-src/main/resources/application.yaml
+src/main/resources/*.yaml
 src/test/java/com/now/nowbot/NowbotApplicationTests.java
 
 ### STS ###
