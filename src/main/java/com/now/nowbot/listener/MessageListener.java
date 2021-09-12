@@ -5,10 +5,10 @@ import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.throwable.RequestError;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.service.MessageService.MsgSTemp;
 import com.now.nowbot.throwable.RunError;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -18,6 +18,7 @@ import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
 import net.mamoe.mirai.message.data.QuoteReply;
 import org.jetbrains.annotations.NotNull;
+import org.languagetool.rules.patterns.Match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -31,6 +32,8 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import java.net.ConnectException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class MessageListener extends SimpleListenerHost {
@@ -48,6 +51,7 @@ public class MessageListener extends SimpleListenerHost {
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /***
+     * FIXME 方法内部处理不了的异常才抛出由上层进行处理,否则直接catch,出现未知异常一定要error级别, 待修改
      * 异常集中处理
      * @param context
      * @param exception
@@ -85,21 +89,12 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-//        var jsd = MessageChain.serializeToJsonString(event.getMessage());
-//        QuoteReply r = event.getMessage().get(QuoteReply.Key);
-//        event.getMessage().get(MessageSource.Key).getTime();
-//        var id = event.getMessage().get(MessageSource.Key).getIds()[0];
-//        var intid = event.getMessage().get(MessageSource.Key).getInternalIds()[0];
-//        System.out.println(intid);
-//        messageMapper.addMsg(new MsgLite(event.getMessage()));
-        for (var k : MsgSTemp.services.keySet()) {
-            var matcher = k.matcher(event.getMessage().contentToString());
+        for(var ins : Instruction.values()){
+            Matcher matcher = Pattern.compile(ins.getRegex()).matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
-                var servicename = MsgSTemp.services.get(k);
-                var service = (MessageService) applicationContext.getBean(servicename);
+                var service = (MessageService) applicationContext.getBean(ins.getName());
                 service.HandleMessage(event, matcher);
             }
-
         }
     }
 

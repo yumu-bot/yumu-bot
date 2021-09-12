@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -12,16 +12,11 @@ import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("bpht")
-public class bphtService extends MsgSTemp implements MessageService{
+public class bphtService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
-    bphtService(){
-        super(Pattern.compile("^[!！]\\s?(?i)bpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"bpht");
-        setInfo("!bpht [name]获取bp榜单的前5及后5的成绩，以及平均bp，未绑定请带上name参数");
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

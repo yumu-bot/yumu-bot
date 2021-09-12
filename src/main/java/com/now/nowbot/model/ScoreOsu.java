@@ -1,4 +1,4 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.model;
 
 public class ScoreOsu {
     public enum Mods{

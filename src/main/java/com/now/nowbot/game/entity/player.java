@@ -10,6 +10,4 @@ public class player {
     float power;
     float Agility;
     float fast;
-
-
 }

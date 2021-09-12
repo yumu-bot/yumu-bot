@@ -1,6 +1,6 @@
 package com.now.nowbot.controller;
 
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.bindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;

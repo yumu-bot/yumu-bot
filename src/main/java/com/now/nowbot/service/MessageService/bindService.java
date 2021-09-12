@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Group;
@@ -13,17 +13,14 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("bind")
-public class bindService extends MsgSTemp implements MessageService {
+public class bindService implements MessageService {
     public static final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
 
     bindService() {
-        super(Pattern.compile("^[!！]\\s?(?i)bind"), "bind");
-        setInfo("!bind 发送本命令将回复一个授权链接，授权完成即可绑定");
         new Thread(this::delpassed).start();
     }
 

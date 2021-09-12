@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.BinUser;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
@@ -24,10 +24,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("setu")
-public class setuService extends MsgSTemp implements MessageService{
+public class setuService implements MessageService{
     static final Logger log = LoggerFactory.getLogger(setuService.class);
     Long time;
     @Autowired
@@ -35,11 +34,6 @@ public class setuService extends MsgSTemp implements MessageService{
 
     @Autowired
     StarService starService;
-
-    setuService() {
-        super(Pattern.compile("^[!！]((色图)|(涩图)|(setu))"),"setu");
-        time = 0L;
-    }
 
     @Override
     @CheckPermission(openBG = true)

@@ -2,8 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.entity.SkiaConfig;
-import com.now.nowbot.entity.PPm.PPmObject;
+import com.now.nowbot.model.SkiaConfig;
+import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -18,16 +18,11 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("ppm")
-public class ppmService extends MsgSTemp implements MessageService {
+public class ppmService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
-
-    ppmService() {
-        super(Pattern.compile("^[!！]\\s?(?i)ppm(?!v)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"ppm");
-    }
 
     @Override
 //    @CheckPermission()
