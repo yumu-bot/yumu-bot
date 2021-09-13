@@ -127,10 +127,12 @@ public class Ymp {
             }break;
             case "mania":{
                 sb.append(n_300).append('+').append(n_geki).append('(');
-                if (n_300>n_geki){
+                if (n_300 >= n_geki && n_geki != 0){
                     sb.append(String.format("%.1f",(1F*n_300/n_geki))).append(':').append(1);
-                }else {
-                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_300/n_geki)));
+                }else if(n_300 < n_geki && n_300 != 0) {
+                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_geki/n_300)));
+                }else{
+                    sb.append('-');
                 }
                 sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             }break;
