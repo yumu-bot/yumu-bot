@@ -123,7 +123,7 @@ public class Ymp {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             }break;
             case "taiko":{
-                sb.append(n_300).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
+                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
             }break;
             case "mania":{
                 sb.append(n_300).append('+').append(n_geki).append('(');
