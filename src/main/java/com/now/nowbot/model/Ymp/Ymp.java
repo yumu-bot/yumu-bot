@@ -64,6 +64,7 @@ public class Ymp {
         combo = date.getIntValue("max_combo");
         bid = date.getJSONObject("beatmap").getIntValue("id");
         passed = date.getBoolean("passed");
+        key = date.getJSONObject("beatmap").getIntValue("cs");
 
         var ndate = date.getJSONObject("statistics");
         n_300 = ndate.getIntValue("count_300");
@@ -72,7 +73,6 @@ public class Ymp {
         n_0 = ndate.getIntValue("count_miss");
         n_geki = ndate.getIntValue("count_geki");
         n_katu = ndate.getIntValue("count_katu");
-        key = ndate.getIntValue("cs");
         
         if (!passed) rank = "F";
     }
