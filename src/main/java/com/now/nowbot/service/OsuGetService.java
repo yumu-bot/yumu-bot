@@ -178,6 +178,9 @@ public class OsuGetService {
     public JSONObject getPlayerCatchInfo(BinUser user) {
         return getPlayerInfo(user, "fruits");
     }
+    public JSONObject getPlayerManiaInfo(BinUser user) {
+        return getPlayerInfo(user, "mania");
+    }
 
     public JSONObject getPlayerInfo(BinUser user, String mode) {
         String url = this.url + "me" + '/' + mode;
@@ -206,6 +209,9 @@ public class OsuGetService {
     }
     public JSONObject getPlayerCatchInfo(int id) {
         return getPlayerInfo(id, "fruits");
+    }
+    public JSONObject getPlayerManiaInfo(int id) {
+        return getPlayerInfo(id, "mania");
     }
 
 
@@ -263,6 +269,30 @@ public class OsuGetService {
         return getBestMap(id, "osu", s, e);
     }
 
+    public JSONArray getTaikoBestMap(BinUser user, int s, int e) {
+        return getBestMap(user, "taiko", s, e);
+    }
+
+    public JSONArray getTaikoBestMap(int id, int s, int e) {
+        return getBestMap(id, "taiko", s, e);
+    }
+
+    public JSONArray getCatchBestMap(BinUser user, int s, int e) {
+        return getBestMap(user, "fruits", s, e);
+    }
+
+    public JSONArray getCatchBestMap(int id, int s, int e) {
+        return getBestMap(id, "fruits", s, e);
+    }
+
+    public JSONArray getManiaBestMap(BinUser user, int s, int e) {
+        return getBestMap(user, "mania", s, e);
+    }
+
+    public JSONArray getManiaBestMap(int id, int s, int e) {
+        return getBestMap(id, "mania", s, e);
+    }
+
     @Deprecated
     public JSONArray getOsuBestMap(String name, int limit) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/api/get_user_best")
@@ -279,21 +309,7 @@ public class OsuGetService {
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
-    public JSONArray getTaikoBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "taiko", s, e);
-    }
 
-    public JSONArray getTaikoBestMap(int id, int s, int e) {
-        return getBestMap(id, "taiko", s, e);
-    }
-
-    public JSONArray getCatchBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "fruits", s, e);
-    }
-
-    public JSONArray getCatchBestMap(int id, int s, int e) {
-        return getBestMap(id, "fruits", s, e);
-    }
     /***
      * 获得某个模式的bp表
      * @param user user
@@ -336,8 +352,27 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    /***
+     * 获得score(最近游玩列表
+     * @param user
+     * @param s
+     * @param e
+     * @return
+     */
     public JSONArray getOsuRecent(BinUser user, int s, int e) {
         return getRecent(user, "osu", s, e);
+    }
+
+    public JSONArray getOsuRecent(int id, int s, int e) {
+        return getRecent(id, "osu", s, e);
+    }
+
+    public JSONArray getOsuAllRecent(BinUser user, int s, int e){
+        return getAllRecent(user, "osu", s, e);
+    }
+
+    public JSONArray getOsuAllRecent(int id, int s, int e){
+        return getAllRecent(id, "osu", s, e);
     }
 
     public JSONArray getRecent(BinUser user, String mode, int s, int e) {
@@ -357,8 +392,30 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONArray getOsuRecent(int id, int s, int e) {
-        return getRecent(id, "osu", s, e);
+    /***
+     * 包含fail的
+     * @param user
+     * @param mode
+     * @param s
+     * @param e
+     * @return
+     */
+    public JSONArray getAllRecent(BinUser user, String mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + user.getOsuID() + "/scores/recent")
+                .queryParam("mode", mode)
+                .queryParam("include_fails", 1)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
     }
 
     public JSONArray getRecent(int id, String mode, int s, int e) {
@@ -381,6 +438,24 @@ public class OsuGetService {
             restClientException.printStackTrace();
             return null;
         }
+        return c.getBody();
+    }
+
+    public JSONArray getAllRecent(int id, String mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + "/scores/recent")
+                .queryParam("mode", mode)
+                .queryParam("include_fails", 1)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
 
