@@ -30,6 +30,8 @@ public class Ymp {
     int n_0;
     boolean passed = true;
     String url;
+    int key;
+
     public String getUrl(){return url;}
     public Ymp(JSONObject date){
         var user = date.getJSONObject("user");
@@ -45,6 +47,7 @@ public class Ymp {
         artist = date.getJSONObject("beatmapset").getString("artist_unicode");
         map_hard = date.getJSONObject("beatmap").getString("version");
         url = date.getJSONObject("beatmapset").getJSONObject("covers").getString("card");
+        key = date.getString("cs");
 
         difficulty = date.getJSONObject("beatmap").getFloatValue("difficulty_rating");
         int starmun = (int) Math.floor(difficulty);
@@ -85,14 +88,24 @@ public class Ymp {
     public String getOut(){
         StringBuilder sb = new StringBuilder();
         /*
-         "username"("country_code"): "mode"
+         "username"("country_code"): "mode" ("key"K)-if needed
          "artist_unicode" - "title_unicode" ["version"]
          ★★★★★ "difficulty_rating"*
          ["rank"] +"mods" "score" ("accuracy"%)
          "pp"(###)PP  "max_combo"/###x
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
-        sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+        switch (mode){
+            default:
+            case "osu":
+            case "taiko":
+            case "catch":{
+                sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+            }break;
+            case "mania":{
+                sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
+            }break;
+
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
         sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
         sb.append('[').append(rank).append(']').append(' ');
