@@ -20,7 +20,7 @@ public enum Instruction {
     SONG("song", "获取谱面预览音频", "^[!！]\\s*csong\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"),
     START("start", "刷新积分", "^[!！]\\s*((积分)|(..积分))+"),
     KUMO("kumo", null, ".*"),
-    YMP("ymp",null,"^[!！](?i)ymp(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    YMP("ymp",null,"^[!！](?i)ymp([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
     private final String regex;
 

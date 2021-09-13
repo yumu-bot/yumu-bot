@@ -30,6 +30,7 @@ public class Ymp {
     int n_0;
     boolean passed = true;
     String url;
+    public String getUrl(){return url;}
     public Ymp(JSONObject date){
         var user = date.getJSONObject("user");
         name = user.getString("username");
@@ -91,25 +92,40 @@ public class Ymp {
          "pp"(###)PP  "max_combo"/###x
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
+        sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+        sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
+        sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
+        sb.append('[').append(rank).append(']').append(' ');
+        for (String mod : mods) {
+            sb.append(mod).append(' ');
+        }
+        sb.append(score).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+        sb.append(format(pp)).append('(').append("###").append(')').append("PP ").append(combo).append('/').append("###").append('X').append('\n');
+
         switch (mode){
             default:
             case "osu":{
-                sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
-                sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
-                sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
-                sb.append('[').append(rank).append(']').append(' ');
-                for (String mod : mods) {
-                    sb.append(mod).append(' ');
-                }
-                sb.append(score).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
-                sb.append(format(pp)).append('(').append("###").append(')').append("PP ").append(combo).append('/').append("###").append('X').append('\n');
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-                sb.append("bid:").append(bid);
             }break;
             case "taiko":{
+                sb.append(n_300).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
 
             }break;
+            case "mania":{
+                sb.append(n_300).append('+').append(n_geki).append('(');
+                if (n_300>n_geki){
+                    sb.append(String.format("%.1f",(1F*n_300/n_geki))).append(':').append(1);
+                }else {
+                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_300/n_geki)));
+                }
+                sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
+            }break;
+            case "catch":
+            case "fruits":{
+                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
+            }break;
         }
+        sb.append("bid:").append(bid);
         return sb.toString();
     }
     static String format(double d){

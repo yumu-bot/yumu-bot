@@ -99,7 +99,7 @@ public class setuService implements MessageService{
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> date = null;
-        date = template.exchange("http://www.dmoe.cc/random.php", HttpMethod.GET, httpEntity, byte[].class);
+        date = template.exchange("https://www.dmoe.cc/random.php", HttpMethod.GET, httpEntity, byte[].class);
         return date.getBody();
     }
     byte[] api2() throws Exception{

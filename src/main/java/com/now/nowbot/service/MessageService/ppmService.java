@@ -28,6 +28,7 @@ public class ppmService implements MessageService {
 //    @CheckPermission()
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
+        //获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
         PPmObject userinfo = null;
