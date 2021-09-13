@@ -105,7 +105,8 @@ public class Ymp {
             case "mania":{
                 sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
             }break;
-
+        }
+        
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
         sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
         sb.append('[').append(rank).append(']').append(' ');
@@ -122,7 +123,6 @@ public class Ymp {
             }break;
             case "taiko":{
                 sb.append(n_300).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-
             }break;
             case "mania":{
                 sb.append(n_300).append('+').append(n_geki).append('(');
