@@ -47,7 +47,6 @@ public class Ymp {
         artist = date.getJSONObject("beatmapset").getString("artist_unicode");
         map_hard = date.getJSONObject("beatmap").getString("version");
         url = date.getJSONObject("beatmapset").getJSONObject("covers").getString("card");
-        key = date.getString("cs");
 
         difficulty = date.getJSONObject("beatmap").getFloatValue("difficulty_rating");
         int starmun = (int) Math.floor(difficulty);
@@ -73,6 +72,8 @@ public class Ymp {
         n_0 = ndate.getIntValue("count_miss");
         n_geki = ndate.getIntValue("count_geki");
         n_katu = ndate.getIntValue("count_katu");
+        key = ndate.getIntValue("cs");
+        
         if (!passed) rank = "F";
     }
     public static Ymp getInstance(JSONObject date){
