@@ -4,7 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 src/main/resources/*.yaml
-src/test/java/com/now/nowbot/NowbotApplicationTests.java
+src/test/java/com/now/nowbot/*.java
 
 ### STS ###
 .apt_generated
