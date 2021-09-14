@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 @Service("ppmvs")
 public class PpmVsService implements MessageService{
     //设置抗锯齿
-    static final Paint F =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
+    static final Paint PAINT_ANTIALIAS =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
     @Autowired
     OsuGetService osuGetService;
 
@@ -197,7 +197,7 @@ public class PpmVsService implements MessageService{
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
-                    .drawImage(head, 0, 0, F);
+                    .drawImage(head, 0, 0, PAINT_ANTIALIAS);
 
             head = ss.makeImageSnapshot();
         }
@@ -211,7 +211,7 @@ public class PpmVsService implements MessageService{
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
-                    .drawImage(head, 0, 0, F);
+                    .drawImage(head, 0, 0, PAINT_ANTIALIAS);
             head = ss.makeImageSnapshot();
         }
         canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));

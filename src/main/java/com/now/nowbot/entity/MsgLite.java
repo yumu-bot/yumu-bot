@@ -3,20 +3,24 @@ package com.now.nowbot.entity;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
-public class MsgLite {
+@Table(name = "qq_message")//主要是可能会有其他消息的记录,先设定表名为qq_message
+@IdClass(MsgKey.class)
+public class MsgLite{
+    //id internal time共为主键
     @Id
-    @GeneratedValue
-    private Long id;
-    @Column(name = "raw_id")
-    private Integer rawId;
+    @Column(name = "id")
+    private Integer id;
+    @Id
+    @Column(name = "internal")
     private Integer internal;
-    //秒时间戳
+    @Id
+    @Column(name = "time")
+    // 秒时间戳
     private Integer time;
     @Column(name = "from_id")
     private Long fromId;
@@ -26,7 +30,7 @@ public class MsgLite {
 
     public MsgLite(MessageChain msg){
         var source = msg.get(MessageSource.Key);;
-        rawId = source.getIds()[0];
+        id = source.getIds()[0];
         internal = source.getInternalIds()[0];
         time = source.getTime();
         fromId = source.getFromId();
@@ -42,20 +46,12 @@ public class MsgLite {
         return MessageChain.deserializeFromJsonString(msg);
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
-    }
-
-    public Integer getRawId() {
-        return rawId;
-    }
-
-    public void setRawId(Integer rawId) {
-        this.rawId = rawId;
     }
 
     public Integer getInternal() {
@@ -74,20 +70,20 @@ public class MsgLite {
         this.time = time;
     }
 
-    public Long getFrom_id() {
+    public Long getFromId() {
         return fromId;
     }
 
-    public void setFrom_id(Long from_id) {
-        this.fromId = from_id;
+    public void setFromId(Long fromId) {
+        this.fromId = fromId;
     }
 
-    public Long getTarget_id() {
+    public Long getTargetId() {
         return targetId;
     }
 
-    public void setTarget_id(Long target_id) {
-        this.targetId = target_id;
+    public void setTargetId(Long targetId) {
+        this.targetId = targetId;
     }
 
     public String getMsg() {
@@ -98,3 +94,4 @@ public class MsgLite {
         this.msg = msg;
     }
 }
+
