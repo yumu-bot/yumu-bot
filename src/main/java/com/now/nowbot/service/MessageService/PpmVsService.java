@@ -2,9 +2,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.util.SkiaUtil;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -20,16 +20,19 @@ import java.util.regex.Matcher;
 
 @Service("ppmvs")
 public class PpmVsService implements MessageService{
-
+    //设置抗锯齿
+    static final Paint F =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
     @Autowired
     OsuGetService osuGetService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
         var from = event.getSubject();
+        //获取绑定信息
         BinUser user = BindingUtil.readUser(event.getSender().getId());
 
         if (Math.random()<=0.01){
+            //彩蛋
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             PPmObject userinfo1;
             getuser:{
@@ -37,10 +40,12 @@ public class PpmVsService implements MessageService{
                 var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
                 userinfo1 = PPmObject.presOsu(userdate, bpdate);
             }
-            try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-                 Typeface fontface = SkiaUtil.getTorusRegular();
-                 Font fontA = new Font(fontface, 80);
-                 Paint white = new Paint().setARGB(255,255,255,255);
+//            绘制
+            try (
+                    Surface surface = Surface.makeRasterN32Premul(1920,1080);
+                    Typeface fontface = SkiaUtil.getTorusRegular();
+                    Font fontA = new Font(fontface, 80);
+                    Paint white = new Paint().setARGB(255, 255, 255, 255);
             ){
                 var canvas = surface.getCanvas();
                 Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
@@ -64,20 +69,27 @@ public class PpmVsService implements MessageService{
             }
             return;
         }
-
+//        非彩蛋 计算
         PPmObject userinfo1;
         PPmObject userinfo2;
         At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
-            BinUser user2 = BindingUtil.readUser(at.getTarget());
+//            对比被@的对象
+            BinUser user2 = null;
+            try {
+                user2 = BindingUtil.readUser(at.getTarget());
+            } catch (Exception e) {
+                //拦截错误 此处一般为被@的人没有绑定信息
+                throw new TipsException("对比的玩家没有绑定");
+            }
             var userdate = osuGetService.getPlayerOsuInfo(user2);
             var bpdate = osuGetService.getOsuBestMap(user2, 0, 100);
             userinfo2 = PPmObject.presOsu(userdate,bpdate);
         }else {
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
-                from.sendMessage("里个瓜娃子到底要vs那个哦");
-                return;
+//                无明确对比对象
+                throw new TipsException("里个瓜娃子到底要vs那个哦,扣你积分！");
             }
             var id = osuGetService.getOsuId(name.trim());
             var userdate = osuGetService.getPlayerOsuInfo(id);
@@ -89,7 +101,9 @@ public class PpmVsService implements MessageService{
             var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
             userinfo1 = PPmObject.presOsu(userdate, bpdate);
         }
+//        获得完全部数据,开始绘制
         byte[] datebyte = drow(userinfo1,userinfo2);
+//        发送
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
     }
     static byte[] drow(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
@@ -102,22 +116,19 @@ public class PpmVsService implements MessageService{
         ){
             var canvas = surface.getCanvas();
 
+            //bg1 最底背景
             Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+            //bg2 六边形背景
             Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+            //bg3 边角属性描述叠加层
             Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
+            //右下角吉祥物图像
             Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
             canvas.drawImage(bg1,0,0);
             canvas.drawImage(bg2,0,0);
-            //在底下
+            //
             canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
-/***
- * (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
- *                     (float) Math.pow((userinfo.getFa() < 0.6 ? 0 : userinfo.getFa() - 0.6) * 2.5f, 0.8));
- */
+
             double[] hex1 = new double[]{
                     Math.pow((userinfo1.getPtt() < 0.6 ? 0 : userinfo1.getPtt() - 0.6) * 2.5f, 0.8),
                     Math.pow((userinfo1.getSta() < 0.6 ? 0 : userinfo1.getSta() - 0.6) * 2.5f, 0.8),
@@ -186,7 +197,8 @@ public class PpmVsService implements MessageService{
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
-                    .drawImage(head, 0, 0);
+                    .drawImage(head, 0, 0, F);
+
             head = ss.makeImageSnapshot();
         }
         canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
@@ -199,7 +211,7 @@ public class PpmVsService implements MessageService{
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
-                    .drawImage(head, 0, 0);
+                    .drawImage(head, 0, 0, F);
             head = ss.makeImageSnapshot();
         }
         canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));

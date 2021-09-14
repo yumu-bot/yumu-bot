@@ -44,15 +44,19 @@ public class ppPlusVsService implements MessageService{
         head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
         At at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if(at != null){
-            BinUser userx = BindingUtil.readUser(at.getTarget());
+            BinUser userx = null;
+            try {
+                userx = BindingUtil.readUser(at.getTarget());
+            } catch (Exception e) {
+                //拦截错误 此处一般为被@的人没有绑定信息
+                throw new TipsException("对比的玩家没有绑定");
+            }
             id2 = String.valueOf(userx.getOsuID());
             head2 = osuGetService.getPlayerOsuInfo(userx).getString("avatar_url");
         }else {
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
-//                SendmsgUtil.send(from,"里个瓜娃子到底要vs那个哦,扣你积分！");
-                from.sendMessage("里个瓜娃子到底要vs那个哦,扣你积分！");
-                return;
+                throw new TipsException("里个瓜娃子到底要vs那个哦,扣你积分！");
             }
             try {
                 var user2d = osuGetService.getPlayerOsuInfo(name);
