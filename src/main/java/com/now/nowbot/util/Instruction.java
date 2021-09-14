@@ -3,7 +3,6 @@ package com.now.nowbot.util;
 
 /**
  * 所有的指令都写在这里方便进行管理
- * TODO 完善描述，help指令将返回这里的描述
  */
 public enum Instruction {
     BIND("bind", "用于绑定", "^[!！]\\s?(?i)bind"),

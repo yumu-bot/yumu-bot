@@ -1,6 +1,5 @@
 package com.now.nowbot.listener;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
@@ -15,11 +14,7 @@ import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.MessageSource;
-import net.mamoe.mirai.message.data.QuoteReply;
 import org.jetbrains.annotations.NotNull;
-import org.languagetool.rules.patterns.Match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -46,13 +41,11 @@ public class MessageListener extends SimpleListenerHost {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-    //todo 封装dao层
     @Autowired
     MessageMapper messageMapper;
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /***
-     * FIXME 方法内部处理不了的异常才抛出由上层进行处理,否则直接catch,出现未知异常一定要error级别, 待修改
      * 异常集中处理
      * @param context
      * @param exception
@@ -94,6 +87,7 @@ public class MessageListener extends SimpleListenerHost {
         if (Permission.FRILED_BLACK.contains(event.getSender().getId())) {
             return;
         }
+        messageMapper.save(new MsgLite(event.getMessage()));
         for(var ins : Instruction.values()){
             Matcher matcher = Pattern.compile(ins.getRegex()).matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
