@@ -24,6 +24,7 @@ public class YmpService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
+        from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         String name = matcher.group("name");
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
