@@ -3,6 +3,7 @@ package com.now.nowbot.model.Ymp;
 import com.alibaba.fastjson.JSONObject;
 
 import java.text.NumberFormat;
+import java.util.regex.Pattern;
 
 public class Ymp {
     String name;
@@ -96,18 +97,13 @@ public class Ymp {
          "pp"(###)PP  "max_combo"/###x
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
-        switch (mode){
-            default:
-            case "osu":
-            case "taiko":
-            case "catch":{
-                sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
-            }break;
-            case "mania":{
-                sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
-            }break;
+        if ("mania".equals(mode)){
+            var matcher = Pattern.compile("^\\[\\d{1,2}K\\]").matcher(map_hard);
+            if (matcher.find()) map_hard = matcher.replaceAll("");
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
+        }else {
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
-        
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
         sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
         sb.append('[').append(rank).append(']').append(' ');
