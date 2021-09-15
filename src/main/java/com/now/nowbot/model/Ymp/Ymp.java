@@ -98,7 +98,7 @@ public class Ymp {
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
         if ("mania".equals(mode)){
-            var matcher = Pattern.compile("^\\[\\d{1,2}K\\]").matcher(map_hard);
+            var matcher = Pattern.compile("^\\[\\d{1,2}K\\]\\s").matcher(map_hard);
             if (matcher.find()) map_hard = matcher.replaceAll("");
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
         }else {
