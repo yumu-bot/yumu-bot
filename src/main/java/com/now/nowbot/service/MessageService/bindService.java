@@ -38,7 +38,7 @@ public class bindService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        if (event != null ) throw new TipsException("现在停止绑定,查询功能请使用相应的指令+osu名");
+        //if (event != null ) throw new TipsException("现在停止绑定,查询功能请使用相应的指令+osu名");
         //将当前毫秒时间戳作为 key
         long d = System.currentTimeMillis();
         //群聊验证是否绑定
