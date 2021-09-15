@@ -1,12 +1,10 @@
 package com.now.nowbot.listener;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
-import com.now.nowbot.throwable.RequestError;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.throwable.RunError;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
@@ -15,11 +13,7 @@ import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.MessageSource;
-import net.mamoe.mirai.message.data.QuoteReply;
 import org.jetbrains.annotations.NotNull;
-import org.languagetool.rules.patterns.Match;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -67,15 +61,15 @@ public class MessageListener extends SimpleListenerHost {
                 event.getSubject().sendMessage(e.getMessage());
             } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 event.getSubject().sendMessage("网络连接超时，请稍后再试");
-            } else if (e instanceof RestClientException && e.getCause() instanceof RequestError) {
-                RequestError reser = (RequestError) e.getCause();
+            } else if (e instanceof RestClientException && e.getCause() instanceof RequestException) {
+                RequestException reser = (RequestException) e.getCause();
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在");
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
                     event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复");
                 }
-            } else if (e instanceof RunError) {
-                log.error("严重异常:", e);
+            } else if (e instanceof LogException) {
+                log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else {
                 log.info("捕捉其他异常", e);
             }

@@ -1,10 +1,13 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.Image;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -39,10 +42,16 @@ public class CheckAspect {
      * @throws TipsException
      */
     @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException {
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException, LogException {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
+        if(event instanceof GroupMessageEvent){
+            Image img = (Image) event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null);
+            if (img != null){
+                throw new LogException("暂停向群内发图片",null);
+            }
+        }
         if (CheckPermission.isBotSuper()){
             if(!Permission.superUser.contains(event.getSender().getId()))
                 throw new TipsException("此功能已关闭");

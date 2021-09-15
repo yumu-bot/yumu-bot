@@ -1,6 +1,6 @@
 package com.now.nowbot.config;
 
-import com.now.nowbot.throwable.RequestError;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
@@ -145,8 +145,8 @@ public class NowbotConfig {
 
         template.setErrorHandler(new DefaultResponseErrorHandler(){
             @Override
-            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestError {
-                throw new RequestError(response, statusCode);
+            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
+                throw new RequestException(response, statusCode);
             }
         });
         return template;
