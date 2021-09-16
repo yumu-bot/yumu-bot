@@ -34,7 +34,7 @@ public class WikiService implements MessageService{
                     for (int j = 0; j < array1.size(); j++) {
                         sb.append("   ")
                                 .append(array1.getString(j))
-                                .append('\n');
+                                .append(' ');
                     }
                 });
             }

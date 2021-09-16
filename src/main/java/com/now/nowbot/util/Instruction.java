@@ -6,14 +6,14 @@ package com.now.nowbot.util;
  * TODO 完善描述，help指令将返回这里的描述
  */
 public enum Instruction {
-    BIND("bind", "用于绑定", "^[!！]\\s?(?i)bind"),
-    BPHT("bpht", "查询bp", "^[!！]\\s?(?i)bpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
+    BIND("bind", "用于绑定", "^[!！]\\s?(?i)ymbind"),
+    BPHT("bpht", "查询bp", "^[!！]\\s?(?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     CATPANEL("cpanel", null, "^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"),
     HELP("help", null, "^[!！](?i)help"),
     PAGE("page", null, "^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"),
     PING("ping", "网络测试", "^[!！]\\s?(?i)ping"),
-    PPM("ppm", "某种实力计算方法", "^[!！]\\s?(?i)ppm(?!v)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    PPMVS("ppmvs", "PPM对比", "^[!！]\\s?(?i)ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
+    PPM("ppm", "某种实力计算方法", "^[!！]\\s?(?i)ymppm(?!v)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
+    PPMVS("ppmvs", "PPM对比", "^[!！]\\s?(?i)ymppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     PPPLUS("ppp", "另一种pp计算方法", "^[!！]\\s*(?i)ppp(?![v])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     PPPLUSVS("ppvs", "ppp对比", "^[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     SETU("setu", "获取色图", "^[!！]((色图)|(涩图)|(setu))"),
@@ -21,7 +21,7 @@ public enum Instruction {
     START("start", "刷新积分", "^[!！]\\s*((积分)|(..积分))+"),
     KUMO("kumo", null, ".*"),
     YMP("ymp",null,"^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    WIKI("wiki",null,"^[!！](?i)wiki(\\s*(?<key>[^\\s]*))?");
+    WIKI("wiki",null,"^[!！](?i)(ymw)|(ymwiki)(\\s*(?<key>[^\\s]*))?");
 
     private final String regex;
 
