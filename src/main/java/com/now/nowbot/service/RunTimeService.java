@@ -1,6 +1,7 @@
 package com.now.nowbot.service;
 
 
+import com.now.nowbot.service.MessageService.bindService;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
@@ -37,6 +38,15 @@ public class RunTimeService {
         });
     }
     */
+
+    /***
+     * 每分钟清理未绑定的
+     */
+    @Scheduled(cron = "0 0/1 * * *")
+    public void clearBindMsg(){
+        bindService.BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
+        log.info("清理绑定器执行 当前剩余:{}", bindService.BIND_MSG_MAP.size());
+    }
 
     /***
      * 白天输出内存占用信息

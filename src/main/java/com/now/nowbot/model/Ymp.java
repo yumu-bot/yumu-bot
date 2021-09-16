@@ -1,4 +1,4 @@
-package com.now.nowbot.model.Ymp;
+package com.now.nowbot.model;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -98,8 +98,7 @@ public class Ymp {
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
         if ("mania".equals(mode)){
-            var matcher = Pattern.compile("^\\[\\d{1,2}K\\]\\s").matcher(map_hard);
-            if (matcher.find()) map_hard = matcher.replaceAll("");
+            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
         }else {
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
@@ -110,7 +109,7 @@ public class Ymp {
         for (String mod : mods) {
             sb.append(mod).append(' ');
         }
-        sb.append(score).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
         sb.append(format(pp)).append('(').append("###").append(')').append("PP ").append(combo).append('/').append("###").append('X').append('\n');
 
         switch (mode){

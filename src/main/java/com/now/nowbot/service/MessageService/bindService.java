@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -17,28 +16,12 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class bindService implements MessageService {
-    public static final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
+    public static final Map<Long, MessageReceipt> BIND_MSG_MAP = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
 
-    bindService() {
-        new Thread(this::delpassed).start();
-    }
-
-    void delpassed() {
-        try {
-            while (true) {
-                wait(60 * 1000);
-                msgs.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
-            }
-        } catch (Exception e) {
-            //TODO 处理异常
-        }
-    }
-
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        //if (event != null ) throw new TipsException("现在停止绑定,查询功能请使用相应的指令+osu名");
         //将当前毫秒时间戳作为 key
         long d = System.currentTimeMillis();
         //群聊验证是否绑定
@@ -53,7 +36,7 @@ public class bindService implements MessageService {
                 //默认110秒后撤回
                 ra.recallIn(110 * 1000);
                 //此处在 controller.msgController 处理
-                msgs.put(d, ra);
+                BIND_MSG_MAP.put(d, ra);
                 return;
             }
             event.getSubject().sendMessage(new At(event.getSender().getId()).plus("您已绑定，若要修改绑定请私发bot绑定命令"));
@@ -63,7 +46,7 @@ public class bindService implements MessageService {
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
         e.recallIn(110 * 1000);
-        msgs.put(d, e);
+        BIND_MSG_MAP.put(d, e);
         return;
     }
 }
