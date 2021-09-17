@@ -89,7 +89,7 @@ public class MessageListener extends SimpleListenerHost {
             return;
         }
         for(var ins : Instruction.values()){
-            Matcher matcher = Pattern.compile(ins.getRegex()).matcher(event.getMessage().contentToString());
+            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
                 var service = (MessageService) applicationContext.getBean(ins.getName());
                 service.HandleMessage(event, matcher);
