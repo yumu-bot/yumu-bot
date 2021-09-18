@@ -45,13 +45,13 @@ public class CheckAspect {
     public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException, LogException {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
-
-        if(event instanceof GroupMessageEvent){
-            Image img = (Image) event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null);
-            if (img != null){
-                throw new LogException("暂停向群内发图片",null);
-            }
-        }
+//临时关闭群图片
+//        if(event instanceof GroupMessageEvent){
+//            Image img = (Image) event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null);
+//            if (img != null){
+//                throw new LogException("暂停向群内发图片",null);
+//            }
+//        }
         if (CheckPermission.isBotSuper()){
             if(!Permission.superUser.contains(event.getSender().getId()))
                 throw new TipsException("此功能已关闭");
