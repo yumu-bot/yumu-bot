@@ -23,7 +23,8 @@ public enum Instruction {
     START("start", "刷新积分", "^[!！]\\s*((积分)|(..积分))+"),
     KUMO("kumo", null, ".*"),
     YMP("ymp",null,"^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![pP])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    WIKI("wiki",null,"^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?");
+    WIKI("wiki",null,"^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),
+    Test("test",null,".*");
 
     private final Pattern regex;
 

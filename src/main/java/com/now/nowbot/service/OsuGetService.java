@@ -31,7 +31,7 @@ public class OsuGetService {
     @Value("${ppy.token}")
     private String oauthToken;
     @Value("${ppy.url}")
-    private String url;
+    private String URL;
     @Value("${ppy.v1token:null}")
     private String tokenv1;
 
@@ -154,7 +154,7 @@ public class OsuGetService {
     }
 
     public JSONArray getFrendList(BinUser user) {
-        String url = this.url + "friends";
+        String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -183,7 +183,7 @@ public class OsuGetService {
     }
 
     public JSONObject getPlayerInfo(BinUser user, String mode) {
-        String url = this.url + "me" + '/' + mode;
+        String url = this.URL + "me" + '/' + mode;
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -216,7 +216,7 @@ public class OsuGetService {
 
 
     public JSONObject getPlayerInfo(int id, String mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + '/' + mode)
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -240,7 +240,7 @@ public class OsuGetService {
     }
 
     public JSONObject getPlayerInfo(String name, String mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + name + '/' + mode)
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
                 .queryParam("key", "name")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -293,6 +293,12 @@ public class OsuGetService {
         return getBestMap(id, "mania", s, e);
     }
 
+    /***
+     * 使用的v1接口,即将禁用
+     * @param name
+     * @param limit
+     * @return
+     */
     @Deprecated
     public JSONArray getOsuBestMap(String name, int limit) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/api/get_user_best")
@@ -319,7 +325,7 @@ public class OsuGetService {
      * @return
      */
     public JSONArray getBestMap(BinUser user, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + user.getOsuID() + "/scores/best")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
@@ -336,7 +342,7 @@ public class OsuGetService {
     }
 
     public JSONArray getBestMap(int id, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + "/scores/best")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
@@ -376,7 +382,7 @@ public class OsuGetService {
     }
 
     public JSONArray getRecent(BinUser user, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + user.getOsuID() + "/scores/recent")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
@@ -401,7 +407,7 @@ public class OsuGetService {
      * @return
      */
     public JSONArray getAllRecent(BinUser user, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + user.getOsuID() + "/scores/recent")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("include_fails", 1)
                 .queryParam("limit", e)
@@ -419,7 +425,7 @@ public class OsuGetService {
     }
 
     public JSONArray getRecent(int id, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + "/scores/recent")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
@@ -442,7 +448,7 @@ public class OsuGetService {
     }
 
     public JSONArray getAllRecent(int id, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "users/" + id + "/scores/recent")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("include_fails", 1)
                 .queryParam("limit", e)
@@ -460,7 +466,7 @@ public class OsuGetService {
     }
 
     public JSONObject getScore(int bid, int id, String mode, String[] mods) {
-        var uribulid = UriComponentsBuilder.fromHttpUrl(this.url + "beatmaps/" + bid + "/scores/users/" + id)
+        var uribulid = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + id)
                 .queryParam("mode", mode);
         if (mods != null)
             for (int i = 0; i < mods.length; i++) {
@@ -486,7 +492,7 @@ public class OsuGetService {
     }
 
     public JSONObject getScore(int bid, int id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "beatmaps/" + bid + "/scores/users/" + id)
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + id)
                 .queryParam("mode", "osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -507,7 +513,7 @@ public class OsuGetService {
     }
 
     public JSONObject getScore(int bid, BinUser user) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
                 .queryParam("mode", "osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -542,7 +548,7 @@ public class OsuGetService {
     }
 
     public JSONObject getMapInfo(int bid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "beatmaps/" + bid)
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
@@ -562,7 +568,7 @@ public class OsuGetService {
     }
 
     public JSONObject getMapInfo(int bid, BinUser uset) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "beatmaps/" + bid)
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
@@ -582,7 +588,7 @@ public class OsuGetService {
     }
 
     public Object getReplay() {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.url + "scores/osu/82445750/download")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/osu/82445750/download")
 //                .queryParam("mode","osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -626,5 +632,25 @@ public class OsuGetService {
             if (date[i] > 1) date[i] = 1;
         }
         return date;
+    }
+
+    public JSONArray getPlayersInfo(int... id){
+        if (id.length<=0 || id.length>50 ){
+            return null;
+        }
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/")
+                .queryParam("ids[]", id)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        System.out.println(uri.toString());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " +getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
+
     }
 }
