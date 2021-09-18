@@ -96,12 +96,12 @@ public class TestService implements MessageService {
                                 int id = osuGetService.getOsuId(matcher.group("name").trim());
                                 userdate = osuGetService.getPlayerManiaInfo(id);
                                 var bpdate = osuGetService.getManiaBestMap(id, 0, 100);
-                                userinfo = PPmObject.presOsu(userdate, bpdate);
+                                userinfo = PPmObject.presMania(userdate, bpdate);
                             } else {
                                 var user = BindingUtil.readUser(event.getSender().getId());
                                 userdate = osuGetService.getPlayerManiaInfo(user);
                                 var bpdate = osuGetService.getManiaBestMap(user, 0, 100);
-                                userinfo = PPmObject.presCatch(userdate, bpdate);
+                                userinfo = PPmObject.presMania(userdate, bpdate);
                             }
                         }
                         mode = "mania";
