@@ -27,6 +27,9 @@ public class Permission {
         GROUP_B,
         FRIEND_W,
         FRIEND_B,
+
+    }
+    public enum SET_PERM{
         //群管
         ADMIN,
         //超级管理员

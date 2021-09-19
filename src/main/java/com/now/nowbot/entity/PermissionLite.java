@@ -13,5 +13,4 @@ public class PermissionLite {
 
     String service;
     Permission.TYPE type;
-
 }
