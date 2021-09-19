@@ -24,7 +24,7 @@ public class WikiService implements MessageService{
         String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
         JSONObject date = JSONObject.parseObject(datestr);
         StringBuffer sb = new StringBuffer();
-        if ("".equals(key)||"index".equals(key)) {
+        if ("null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
             var dates = date.getJSONArray("index");
             for (int i = 0; i < dates.size(); i++) {
                 var jdate = dates.getJSONObject(i);
