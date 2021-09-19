@@ -3,8 +3,12 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import kotlin.coroutines.Continuation;
+import net.mamoe.mirai.contact.AudioSupported;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.Audio;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,7 +61,14 @@ public class songService implements MessageService{
             httpConn.connect();
             InputStream cin = httpConn.getInputStream();
             byte[] voicedate = cin.readAllBytes();
-            from.sendMessage(ExternalResource.uploadAsVoice(ExternalResource.create(voicedate),from));
+            if (from instanceof AudioSupported){
+                try {
+                    Audio audio = (Audio) ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate), (Continuation)from);
+                    from.sendMessage(audio);
+                } catch (Exception e) {
+                    throw new TipsException("语音上传失败,请稍后再试");
+                }
+            }
             cin.close();
         } catch (Exception e) {
             starService.addStart(score,0.5f);

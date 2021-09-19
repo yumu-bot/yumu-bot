@@ -17,7 +17,7 @@ public class helpService implements MessageService {
         StringBuffer sb = new StringBuffer();
         for(var ins: Instruction.values()) {
             if(ins.getDesc()!=null)
-                sb.append("!").append(ins.getName()).append(" ").append(ins.getDesc()).append("\n");
+                sb.append(ins.getDesc()).append("\n");
         }
         from.sendMessage(sb.toString());
     }

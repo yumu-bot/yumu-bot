@@ -13,6 +13,9 @@ public interface PPmObject {
     static PPmCatch presCatch(JSONObject prd, JSONArray prbp){
     return new PPmCatch(prd, prbp);
     }
+    static PPmMania presMania(JSONObject prd, JSONArray prbp){
+    return new PPmMania(prd, prbp);
+    }
     double check(double value, double min, double max);
 
     float getPpv0();

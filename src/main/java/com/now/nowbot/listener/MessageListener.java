@@ -1,11 +1,10 @@
 package com.now.nowbot.listener;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
-import com.now.nowbot.throwable.RequestError;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.throwable.RunError;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
@@ -60,15 +59,15 @@ public class MessageListener extends SimpleListenerHost {
                 event.getSubject().sendMessage(e.getMessage());
             } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 event.getSubject().sendMessage("网络连接超时，请稍后再试");
-            } else if (e instanceof RestClientException && e.getCause() instanceof RequestError) {
-                RequestError reser = (RequestError) e.getCause();
+            } else if (e instanceof RestClientException && e.getCause() instanceof RequestException) {
+                RequestException reser = (RequestException) e.getCause();
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在");
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
                     event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复");
                 }
-            } else if (e instanceof RunError) {
-                log.error("严重异常:", e);
+            } else if (e instanceof LogException) {
+                log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else {
                 log.info("捕捉其他异常", e);
             }
@@ -89,7 +88,7 @@ public class MessageListener extends SimpleListenerHost {
         }
         messageMapper.save(new MsgLite(event.getMessage()));
         for(var ins : Instruction.values()){
-            Matcher matcher = Pattern.compile(ins.getRegex()).matcher(event.getMessage().contentToString());
+            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
                 var service = (MessageService) applicationContext.getBean(ins.getName());
                 service.HandleMessage(event, matcher);

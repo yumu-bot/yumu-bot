@@ -6,12 +6,12 @@ import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
 
-public class RequestError extends IOException {
+public class RequestException extends IOException {
     public ClientHttpResponse response;
     public HttpStatus status;
     public JSONObject message;
 
-    public RequestError(ClientHttpResponse response, HttpStatus status){
+    public RequestException(ClientHttpResponse response, HttpStatus status){
         try {
             message = JSONObject.parseObject(response.getBody().readAllBytes(), JSONObject.class);
         } catch (IOException e) {

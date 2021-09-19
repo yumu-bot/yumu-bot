@@ -16,24 +16,9 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class bindService implements MessageService {
-    public static final Map<Long, MessageReceipt> msgs = new ConcurrentHashMap<>();
+    public static final Map<Long, MessageReceipt> BIND_MSG_MAP = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
-
-    bindService() {
-        new Thread(this::delpassed).start();
-    }
-
-    void delpassed() {
-        try {
-            while (true) {
-                wait(60 * 1000);
-                msgs.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
-            }
-        } catch (Exception e) {
-            //TODO 处理异常
-        }
-    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -51,7 +36,7 @@ public class bindService implements MessageService {
                 //默认110秒后撤回
                 ra.recallIn(110 * 1000);
                 //此处在 controller.msgController 处理
-                msgs.put(d, ra);
+                BIND_MSG_MAP.put(d, ra);
                 return;
             }
             event.getSubject().sendMessage(new At(event.getSender().getId()).plus("您已绑定，若要修改绑定请私发bot绑定命令"));
@@ -61,7 +46,7 @@ public class bindService implements MessageService {
         String state = event.getSender().getId() + "+" + d;
         var e = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
         e.recallIn(110 * 1000);
-        msgs.put(d, e);
+        BIND_MSG_MAP.put(d, e);
         return;
     }
 }

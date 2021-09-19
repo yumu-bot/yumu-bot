@@ -1,8 +1,9 @@
-package com.now.nowbot.model.Ymp;
+package com.now.nowbot.model;
 
 import com.alibaba.fastjson.JSONObject;
 
 import java.text.NumberFormat;
+import java.util.regex.Pattern;
 
 public class Ymp {
     String name;
@@ -30,6 +31,8 @@ public class Ymp {
     int n_0;
     boolean passed = true;
     String url;
+    int key;
+
     public String getUrl(){return url;}
     public Ymp(JSONObject date){
         var user = date.getJSONObject("user");
@@ -62,6 +65,7 @@ public class Ymp {
         combo = date.getIntValue("max_combo");
         bid = date.getJSONObject("beatmap").getIntValue("id");
         passed = date.getBoolean("passed");
+        key = date.getJSONObject("beatmap").getIntValue("cs");
 
         var ndate = date.getJSONObject("statistics");
         n_300 = ndate.getIntValue("count_300");
@@ -70,6 +74,7 @@ public class Ymp {
         n_0 = ndate.getIntValue("count_miss");
         n_geki = ndate.getIntValue("count_geki");
         n_katu = ndate.getIntValue("count_katu");
+        
         if (!passed) rank = "F";
     }
     public static Ymp getInstance(JSONObject date){
@@ -85,21 +90,26 @@ public class Ymp {
     public String getOut(){
         StringBuilder sb = new StringBuilder();
         /*
-         "username"("country_code"): "mode"
+         "username"("country_code"): "mode" ("key"K)-if needed
          "artist_unicode" - "title_unicode" ["version"]
          ★★★★★ "difficulty_rating"*
          ["rank"] +"mods" "score" ("accuracy"%)
          "pp"(###)PP  "max_combo"/###x
          "count_300" /  "count_100" / "count_50" / "count_miss"
          */
-        sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+        if ("mania".equals(mode)){
+            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
+        }else {
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+        }
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
         sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
         sb.append('[').append(rank).append(']').append(' ');
         for (String mod : mods) {
             sb.append(mod).append(' ');
         }
-        sb.append(score).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
         sb.append(format(pp)).append('(').append("###").append(')').append("PP ").append(combo).append('/').append("###").append('X').append('\n');
 
         switch (mode){
@@ -108,15 +118,16 @@ public class Ymp {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             }break;
             case "taiko":{
-                sb.append(n_300).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-
+                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
             }break;
             case "mania":{
                 sb.append(n_300).append('+').append(n_geki).append('(');
-                if (n_300>n_geki){
+                if (n_300 >= n_geki && n_geki != 0){
                     sb.append(String.format("%.1f",(1F*n_300/n_geki))).append(':').append(1);
-                }else {
-                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_300/n_geki)));
+                }else if(n_300 < n_geki && n_300 != 0) {
+                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_geki/n_300)));
+                }else{
+                    sb.append('-');
                 }
                 sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             }break;
