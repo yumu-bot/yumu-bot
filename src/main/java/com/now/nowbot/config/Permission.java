@@ -2,6 +2,7 @@ package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.service.MessageService.MessageService;
+import io.ktor.util.collections.ConcurrentSet;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -15,34 +16,23 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
-@Component
-@ConfigurationProperties(prefix = "mirai.permission")
 public class Permission {
-    public Set<Long> groupBlacklist;
-    public Set<Long> friendBlacklist;
-    public Set<Long> groupWhitelist;
-    public Set<Long> friendWhitelist;
-    public static Set<Long> superUser;
-    public final static Set<Long> GROUP_BLACK = new HashSet<>();
-    public final static Set<Long> FRILED_BLACK = new HashSet<>();
-    private Map<TYPE, Set<Long>> AllPerm = new ConcurrentHashMap<>();
+    //权限类型
+    TYPE type;
+    //列表
+    public Set<Long> List;
     //类型enum
-    public static enum TYPE{
-        GROUP_OFF,
-        FRIEND_OFF,
-        GROUP_ON,
-        FRIEND_ON
+    public enum TYPE{
+        GROUP_W,
+        GROUP_B,
+        FRIEND_W,
+        FRIEND_B,
+        //群管
+        ADMIN,
+        //超级管理员
+        SUPER
     }
-    public static final Map<String , Permission> PERMISSION_ALL = new ConcurrentHashMap<>();
-
-    public Permission(){
-        if (!PERMISSION_ALL.containsKey("public"))
-            PERMISSION_ALL.put("public", this);
-    }
-
-    public Permission(String name){
-        PERMISSION_ALL.put(name, this);
-    }
+    public static final Set<Long> PERMISSION_ALL = new ConcurrentSet<>();
 
     public static void init(){
         ApplicationContext applicationContext = NowbotConfig.applicationContext;
@@ -62,61 +52,15 @@ public class Permission {
                 $beansCheck = method.getAnnotation(CheckPermission.class);
             }
             if ($beansCheck != null){
-                var p = new Permission(name);
-                var $public = PERMISSION_ALL.get("public");
-                if($beansCheck.openWF()){
-                    p.setFriendWhitelist(new LinkedHashSet<>($public.friendWhitelist));
-                }
-                if($beansCheck.openBF()){
-                    p.setFriendBlacklist(new LinkedHashSet<>($public.friendBlacklist));
-                }
-                if($beansCheck.openWG()){
-                    p.setGroupWhitelist(new LinkedHashSet<>($public.groupWhitelist));
-                }
-                if($beansCheck.openBG()){
-                    p.setGroupBlacklist(new LinkedHashSet<>($public.groupBlacklist));
-                }
             }
         });
     }
 
-    public Set<Long> getGroupBlacklist() {
-        return groupBlacklist;
+    public Set<Long> getG_Blacklist() {
+        return List;
     }
 
-    public void setGroupBlacklist(Set<Long> groupBlacklist) {
-        this.groupBlacklist = groupBlacklist;
-    }
-
-    public Set<Long> getFriendBlacklist() {
-        return friendBlacklist;
-    }
-
-    public void setFriendBlacklist(Set<Long> friendBlacklist) {
-        this.friendBlacklist = friendBlacklist;
-    }
-
-    public Set<Long> getGroupWhitelist() {
-        return groupWhitelist;
-    }
-
-    public void setGroupWhitelist(Set<Long> groupWhitelist) {
-        this.groupWhitelist = groupWhitelist;
-    }
-
-    public Set<Long> getFriendWhitelist() {
-        return friendWhitelist;
-    }
-
-    public void setFriendWhitelist(Set<Long> friendWhitelist) {
-        this.friendWhitelist = friendWhitelist;
-    }
-
-    public Set<Long> getSuperUser() {
-        return superUser;
-    }
-
-    public void setSuperUser(Set<Long> superUser) {
-        this.superUser = superUser;
+    public void setG_Blacklist(Set<Long> g_Blacklist) {
+        this.List = g_Blacklist;
     }
 }

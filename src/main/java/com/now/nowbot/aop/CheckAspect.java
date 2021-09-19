@@ -17,8 +17,6 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 public class CheckAspect {
-    @Autowired
-    Permission permission;
     @Pointcut("@annotation(com.now.nowbot.aop.CheckPermission)")
     public void annotatedMethodsPerm() {
     }
@@ -43,32 +41,32 @@ public class CheckAspect {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
-        if (CheckPermission.isBotSuper()){
-            if(!Permission.superUser.contains(event.getSender().getId()))
-                throw new TipsException("此功能已关闭");
-        }
-
-        if (CheckPermission.openWF()){
-            if (!permission.friendWhitelist.contains(event.getSender().getId()))
-                throw new TipsException("此功能已关闭");
-        }
-        if (CheckPermission.openWG()){
-            if (event instanceof GroupMessageEvent){
-                if (!permission.groupWhitelist.contains(((GroupMessageEvent) event).getGroup().getId()))
-                    throw new TipsException("此功能已关闭");
-            }
-        }
-        if (CheckPermission.openBF()){
-            if (permission.groupBlacklist.contains(event.getSender().getId()))
-                throw new TipsException("此功能已关闭");
-        }
-        if(CheckPermission.openBG()){
-            if (event instanceof GroupMessageEvent){
-                if (permission.groupBlacklist.contains(((GroupMessageEvent) event).getGroup().getId())){
-                    throw new TipsException("此功能已关闭");
-                }
-            }
-        }
+//        if (CheckPermission.isBotSuper()){
+//            if(!Permission.superUser.contains(event.getSender().getId()))
+//                throw new TipsException("此功能已关闭");
+//        }
+//
+//        if (CheckPermission.openWF()){
+//            if (!permission.F_Whitelist.contains(event.getSender().getId()))
+//                throw new TipsException("此功能已关闭");
+//        }
+//        if (CheckPermission.openWG()){
+//            if (event instanceof GroupMessageEvent){
+//                if (!permission.G_Whitelist.contains(((GroupMessageEvent) event).getGroup().getId()))
+//                    throw new TipsException("此功能已关闭");
+//            }
+//        }
+//        if (CheckPermission.openBF()){
+//            if (permission.List.contains(event.getSender().getId()))
+//                throw new TipsException("此功能已关闭");
+//        }
+//        if(CheckPermission.openBG()){
+//            if (event instanceof GroupMessageEvent){
+//                if (permission.List.contains(((GroupMessageEvent) event).getGroup().getId())){
+//                    throw new TipsException("此功能已关闭");
+//                }
+//            }
+//        }
         return args;
     }
 
