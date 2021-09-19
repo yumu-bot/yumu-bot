@@ -14,6 +14,16 @@ import java.util.regex.Matcher;
 
 @Service("wiki")
 public class WikiService implements MessageService{
+    static JSONObject WIKI;
+    WikiService(){
+        String datestr = null;
+        try {
+            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        WIKI = JSONObject.parseObject(datestr);
+    }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String key = matcher.group("key");
@@ -21,11 +31,13 @@ public class WikiService implements MessageService{
         msg.recallIn(60*1000);
     }
     String getWiki(String key) throws IOException, TipsException {
-        String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
-        JSONObject date = JSONObject.parseObject(datestr);
         StringBuffer sb = new StringBuffer();
-        if ("null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
-            var dates = date.getJSONArray("index");
+        if (null == key || "null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
+            if (WIKI == null){
+                String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
+                WIKI = JSONObject.parseObject(datestr);
+            }
+            var dates = WIKI.getJSONArray("index");
             for (int i = 0; i < dates.size(); i++) {
                 var jdate = dates.getJSONObject(i);
                 jdate.forEach((name, array)->{
@@ -39,7 +51,8 @@ public class WikiService implements MessageService{
                 });
             }
         }else {
-            String r = date.getString(key);
+            key = key.toUpperCase();
+            String r = WIKI.getString(key);
             if (r == null) throw new TipsException("没有找到"+key);
             sb.append(key).append(':').append('\n');
             sb.append(r);
