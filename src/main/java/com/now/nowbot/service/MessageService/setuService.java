@@ -40,7 +40,6 @@ public class setuService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-        boolean issuper = Permission.superUser.contains(event.getSender().getId());
 
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
@@ -58,7 +57,7 @@ public class setuService implements MessageService{
         BinUser binUser = BindingUtil.readUser(qq);
 
         StarService.Score score = starService.getScore(binUser);
-        if(issuper||starService.delStart(score,5)){
+        if(starService.delStart(score,5)){
 //            SendmsgUtil.send(from,"稍等片刻");
             from.sendMessage("稍等片刻");
         }else {
