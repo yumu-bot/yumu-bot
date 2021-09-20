@@ -178,7 +178,7 @@ public class NowbotConfig {
 //        bot.getEventChannel().registerListenerHost(messageListener);
         //注册监听 messageListener需要继承SimpleListenerHost类
 //        bot.getEventChannel().registerListenerHost(messageListener);
-        bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
+//        bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
     }
     public static ApplicationContext applicationContext;
