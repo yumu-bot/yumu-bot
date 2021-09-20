@@ -22,7 +22,7 @@ public enum Instruction {
     SONG("song", "!song <bid>或!song sid=<sid> 获取谱面预览音频", "^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"),
     START("start", "!积分 刷新并查看积分", "^[!！]\\s*((积分)|(..积分))+"),
     KUMO("kumo", null, ".*"),
-    YMP("ymp",null,"^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![pP])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
+    YMP("ymp",null,"^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     WIKI("wiki",null,"^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),
     Test("test",null,".*");
 
