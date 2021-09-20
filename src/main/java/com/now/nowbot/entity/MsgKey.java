@@ -8,11 +8,8 @@ import java.util.Objects;
 @Embeddable
 public class MsgKey implements Serializable {
     private static final long serialVersionUID = -928365924538318201L;
-    @Column(name = "id")
     Integer id;
-    @Column(name = "internal")
     Integer internal;
-    @Column(name = "time")
     Integer time;
 
     public int getId() {
@@ -27,8 +24,8 @@ public class MsgKey implements Serializable {
         return internal;
     }
 
-    public void setInternal(Integer targetId) {
-        this.internal = targetId;
+    public void setInternal(Integer internal) {
+        this.internal = internal;
     }
 
     public int getTime() {

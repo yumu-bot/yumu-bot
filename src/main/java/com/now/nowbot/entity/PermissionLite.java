@@ -10,7 +10,6 @@ public class PermissionLite {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
-
     String service;
     Permission.TYPE type;
 }

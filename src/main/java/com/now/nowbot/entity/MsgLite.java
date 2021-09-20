@@ -13,19 +13,17 @@ import java.util.Objects;
 public class MsgLite{
     //id internal time共为主键
     @Id
-    @Column(name = "id")
     private Integer id;
     @Id
-    @Column(name = "internal")
     private Integer internal;
     @Id
-    @Column(name = "time")
     // 秒时间戳
     private Integer time;
     @Column(name = "from_id")
     private Long fromId;
     @Column(name = "target_id")
     private Long targetId;
+    @Column(name = "qq_message")
     private String msg;
 
     public MsgLite(MessageChain msg){
