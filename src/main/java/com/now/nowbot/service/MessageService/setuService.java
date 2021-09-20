@@ -40,7 +40,8 @@ public class setuService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-        boolean issuper = Permission.superUser.contains(event.getSender().getId());
+//        boolean issuper = Permission.superUser.contains(event.getSender().getId());
+        boolean issuper = false;
 
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){

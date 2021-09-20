@@ -5,7 +5,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table("qq_id")
+@Table(catalog = "qq_id")
 public class QQID {
     @Id
     Long Permission_id;
