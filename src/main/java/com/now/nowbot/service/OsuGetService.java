@@ -241,7 +241,7 @@ public class OsuGetService {
 
     public JSONObject getPlayerInfo(String name, String mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
-                .queryParam("key", "name")
+                .queryParam("key", "username")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
@@ -533,11 +533,18 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public String getOsuFile(String mapId) throws IOException {
-        return getOsuFile(mapId, "osu");
+    public String getBitmapFile(int mapId) throws IOException {
+        return getBitmapFile(mapId, "osu");
     }
 
-    public String getOsuFile(String mapId, String mode) throws IOException {
+    /***
+     * 下载bitmap(.osu)文件
+     * @param mapId
+     * @param mode
+     * @return
+     * @throws IOException
+     */
+    public String getBitmapFile(int mapId, String mode) throws IOException {
         //osu taiko mania catch
         URL url = new URL("https://osu.ppy.sh/" + mode + '/' + mapId);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
