@@ -2,7 +2,7 @@ package com.now.nowbot.model.bitmap;
 
 import java.util.List;
 
-public class BitmapOsu {
+public class BeatmapOsu {
     /***
      *
      */
@@ -23,7 +23,6 @@ public class BitmapOsu {
     double hpDrainRate;
     /***
      * 滑条速度
-     * 滑条点
      */
     double sliderMultiplier;
     double sliderTickRate;

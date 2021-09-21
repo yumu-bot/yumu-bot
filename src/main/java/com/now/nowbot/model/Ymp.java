@@ -102,7 +102,8 @@ public class Ymp {
         //  "username"("country_code"): "mode" ("key"K)-if needed
         if ("mania".equals(mode)){
             map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ')
+                    .append('(').append(key).append("K").append(')').append('\n');
         }else {
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
@@ -111,7 +112,8 @@ public class Ymp {
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
 
         //  ★★★★★ "difficulty_rating"* mm:ss
-        sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ').append(map_length/60).append(':').append(map_length%60).append('\n');
+        sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ')
+                .append(map_length/60).append(':').append(String.format("%02d",map_length%60)).append('\n');
 
         //  ["rank"] +"mods" "score" ("accuracy"%)
         sb.append('[').append(rank).append(']').append(' ');

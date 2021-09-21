@@ -34,6 +34,7 @@ public class ppmService implements MessageService {
         PPmObject userinfo = null;
         JSONObject userdate;
         var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
+        //分别区分每种模式
         switch (mode){
             case"null":
             case"osu":
@@ -118,6 +119,7 @@ public class ppmService implements MessageService {
         if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
+        //彩蛋 1%触发
         if (Math.random()<=0.01){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
@@ -147,10 +149,13 @@ public class ppmService implements MessageService {
             }
             return;
         }
+        //绘制
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = SkiaUtil.getTorusRegular();
-             Font fontA = new Font(fontface, 80);
-             Font fontB = new Font(fontface, 64);
+             Typeface Torus = SkiaUtil.getTorusRegular();
+             Typeface Puhuiti = SkiaUtil.getPUHUITI();
+             Font torus_2 = new Font(Torus, 80);
+             Font torus_1 = new Font(Torus, 64);
+             Font puhuiti = new Font(Puhuiti, 64);
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
@@ -178,7 +183,7 @@ public class ppmService implements MessageService {
             org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
             canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
             canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
-            TextLine ppm$ = TextLine.make("PP-",fontA);
+            TextLine ppm$ = TextLine.make("PP-",torus_2);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
 
@@ -187,9 +192,9 @@ public class ppmService implements MessageService {
             Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
             PpmVsService.drowLhead(canvas, head1);
 
-            PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
+            PpmVsService.drowLname(canvas,torus_2,white,userinfo.getName());
 
-            PpmVsService.drowLppm(canvas,fontB,fontA,white,new double[]{
+            PpmVsService.drowLppm(canvas,torus_1,puhuiti,torus_2,white,new double[]{
                     userinfo.getFacc(),
                     userinfo.getPtt(),
                     userinfo.getSta(),
@@ -198,21 +203,21 @@ public class ppmService implements MessageService {
                     userinfo.getSth(),
             }, userinfo.getTtl()*100);
 
-            PpmVsService.drowLpj(canvas,userinfo,fontB);
+            PpmVsService.drowLpj(canvas,userinfo,torus_1);
 
             {
                 canvas.save();
                 canvas.translate(920, 970);
-                var tx = TextLine.make("综合", fontB);
+                var tx = TextLine.make("综合", torus_1);
                 canvas.drawTextLine(tx, -tx.getWidth(), tx.getCapHeight(), white);
                 canvas.restore();
                 canvas.save();
                 canvas.translate(1000, 880);
                 DecimalFormat dx = new DecimalFormat("0.00");
-                tx = TextLine.make(dx.format(userinfo.getSan()), fontA);
+                tx = TextLine.make(dx.format(userinfo.getSan()), torus_2);
                 canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
                 canvas.translate(0,90);
-                tx = TextLine.make("San", fontB);
+                tx = TextLine.make("San", torus_1);
                 canvas.drawTextLine(tx, 0, tx.getCapHeight(), white);
                 canvas.restore();
             }

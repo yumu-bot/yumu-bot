@@ -4,6 +4,8 @@ import com.now.nowbot.config.NowbotConfig;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.paragraph.*;
 import org.jetbrains.skija.svg.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -14,13 +16,31 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class SkiaUtil {
+    static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     //字体文件
     public static Typeface TORUS_REGULAR;
     public static Typeface getTorusRegular(){
         if(TORUS_REGULAR == null || TORUS_REGULAR.isClosed()){
-            TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-Regular.ttf");
+            try {
+                TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-Regular.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:Puhuiti.ttf",e);
+                PUHUITI = Typeface.makeDefault();
+            }
         }
         return TORUS_REGULAR;
+    }
+    public static Typeface PUHUITI;
+    public static Typeface getPUHUITI(){
+        if(PUHUITI == null || PUHUITI.isClosed()){
+            try {
+                PUHUITI = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Puhuiti.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:Puhuiti.ttf",e);
+                PUHUITI = Typeface.makeDefault();
+            }
+        }
+        return PUHUITI;
     }
     /***
      * 网络加载图片

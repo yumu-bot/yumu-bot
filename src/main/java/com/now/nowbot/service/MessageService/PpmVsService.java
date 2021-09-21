@@ -14,6 +14,7 @@ import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
@@ -37,31 +38,8 @@ public class PpmVsService implements MessageService{
                 var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
                 userinfo1 = PPmObject.presOsu(userdate, bpdate);
             }
-            try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-                 Typeface fontface = SkiaUtil.getTorusRegular();
-                 Font fontA = new Font(fontface, 80);
-                 Paint white = new Paint().setARGB(255,255,255,255);
-            ){
-                var canvas = surface.getCanvas();
-                Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
-                canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
-                Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
-                Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
-                Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
-                Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
-                canvas.drawImage(bg1,0,0);
-                canvas.drawImage(bg2,0,0);
-                canvas.drawImage(bg3,513,74);
-                canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
-                canvas.drawImage(spr,0,0);
-
-                Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.getHeadURL());
-                drowLhead(canvas, head1);
-                drowLname(canvas,fontA,white,userinfo1.getName());
-
-                var date = surface.makeImageSnapshot().encodeToData().getBytes();
-                from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date),from));
-            }
+            var date = surprised(spr, userinfo1.getHeadURL(), userinfo1.getName());
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date),from));
             return;
         }
 
@@ -95,9 +73,11 @@ public class PpmVsService implements MessageService{
     static byte[] drow(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
         byte[] date;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
-             Typeface fontface = SkiaUtil.getTorusRegular();
-             Font fontA = new Font(fontface, 80);
-             Font fontB = new Font(fontface, 64);
+             Typeface Torus = SkiaUtil.getTorusRegular();
+             Typeface Puhuiti = SkiaUtil.getPUHUITI();
+             Font torus_2 = new Font(Torus, 80);
+             Font torus_1 = new Font(Torus, 64);
+             Font puhui_1 = new Font(Puhuiti,64);
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
             var canvas = surface.getCanvas();
@@ -142,7 +122,7 @@ public class PpmVsService implements MessageService{
             canvas.drawPath(pt2,new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
             canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
             canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
-            TextLine ppm$ = TextLine.make("PP-",fontA);
+            TextLine ppm$ = TextLine.make("PP-",torus_2);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
             canvas.drawImage(bg3,513,74);
@@ -154,10 +134,10 @@ public class PpmVsService implements MessageService{
             Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.getHeadURL());
             drowRhead(canvas, head2);
 
-            drowLname(canvas,fontA,white,userinfo1.getName());
-            drowRname(canvas,fontA,white,userinfo2.getName());
+            drowLname(canvas,torus_2,white,userinfo1.getName());
+            drowRname(canvas,torus_2,white,userinfo2.getName());
 
-            drowLppm(canvas,fontB,fontA,white,new double[]{
+            drowLppm(canvas,torus_1, puhui_1,torus_2,white,new double[]{
                     userinfo1.getFacc(),
                     userinfo1.getPtt(),
                     userinfo1.getSta(),
@@ -165,7 +145,7 @@ public class PpmVsService implements MessageService{
                     userinfo1.getEng(),
                     userinfo1.getSth(),
             }, userinfo1.getTtl()*100);
-            drowRppm(canvas,fontB,fontA,white,new double[]{
+            drowRppm(canvas,torus_1,puhui_1,torus_2,white,new double[]{
                     userinfo2.getFacc(),
                     userinfo2.getPtt(),
                     userinfo2.getSta(),
@@ -180,6 +160,12 @@ public class PpmVsService implements MessageService{
         }
         return date;
     }
+
+    /***
+     * 左头像
+     * @param canvas
+     * @param head
+     */
     static void drowLhead(Canvas canvas, Image head){
         canvas.save();
         canvas.translate(130,80);
@@ -206,6 +192,14 @@ public class PpmVsService implements MessageService{
         canvas.drawImage(head,0,0);
         canvas.restore();
     }
+
+    /***
+     * 左侧名字
+     * @param canvas
+     * @param font
+     * @param white
+     * @param name
+     */
     public static void drowLname(Canvas canvas, Font font, Paint white, String name){
         canvas.save();
         canvas.translate(280,440);
@@ -214,6 +208,14 @@ public class PpmVsService implements MessageService{
         canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
         canvas.restore();
     }
+
+    /***
+     * 右侧名字
+     * @param canvas
+     * @param font
+     * @param white
+     * @param name
+     */
     public static void drowRname(Canvas canvas, Font font, Paint white, String name){
         canvas.save();
         canvas.translate(1640,440);
@@ -222,7 +224,18 @@ public class PpmVsService implements MessageService{
         canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
         canvas.restore();
     }
-    public static void drowLppm(Canvas canvas, Font font, Font B, Paint white, double[] val, double all){
+
+    /***
+     * 绘制左侧数据
+     * @param canvas
+     * @param Torus
+     * @param Puhuiti
+     * @param Torus_Big
+     * @param white
+     * @param val
+     * @param all
+     */
+    public static void drowLppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
         if (val.length != 6) return;
         double[] date = new double[val.length];
         for (int i = 0; i < date.length; i++) {
@@ -231,43 +244,54 @@ public class PpmVsService implements MessageService{
         DecimalFormat dx = new DecimalFormat("0.00");
         canvas.save();
         canvas.translate(100,520);
-        TextLine k1 = TextLine.make("准度",font);
-        TextLine v1 = TextLine.make(dx.format(date[0]),font);
+        TextLine k1 = TextLine.make("准度",Puhuiti);
+        TextLine v1 = TextLine.make(dx.format(date[0]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("潜力",font);
-        v1 = TextLine.make(dx.format(date[1]),font);
+        k1 = TextLine.make("潜力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[1]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("耐力",font);
-        v1 = TextLine.make(dx.format(date[2]),font);
+        k1 = TextLine.make("耐力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[2]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("稳定",font);
-        v1 = TextLine.make(dx.format(date[3]),font);
+        k1 = TextLine.make("稳定",Puhuiti);
+        v1 = TextLine.make(dx.format(date[3]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("肝力",font);
-        v1 = TextLine.make(dx.format(date[4]),font);
+        k1 = TextLine.make("肝力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[4]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("实力",font);
-        v1 = TextLine.make(dx.format(date[5]),font);
+        k1 = TextLine.make("实力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[5]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.restore();
         canvas.save();
         canvas.translate(920,880);
-        v1 = TextLine.make(dx.format(all),B);
+        v1 = TextLine.make(dx.format(all),Torus_Big);
         canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
         canvas.restore();
     }
-    public static void drowRppm(Canvas canvas, Font font, Font B, Paint white, double[] val, double all){
+
+    /***
+     * 绘制右侧数据
+     * @param canvas
+     * @param Torus
+     * @param Puhuiti
+     * @param Torus_Big
+     * @param white
+     * @param val
+     * @param all
+     */
+    public static void drowRppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
         if (val.length != 6) return;
         double[] date = new double[val.length];
         for (int i = 0; i < date.length; i++) {
@@ -276,43 +300,50 @@ public class PpmVsService implements MessageService{
         DecimalFormat dx = new DecimalFormat("0.00");
         canvas.save();
         canvas.translate(1460,520);
-        TextLine k1 = TextLine.make("准度",font);
-        TextLine v1 = TextLine.make(dx.format(date[0]),font);
+        TextLine k1 = TextLine.make("准度",Puhuiti);
+        TextLine v1 = TextLine.make(dx.format(date[0]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("潜力",font);
-        v1 = TextLine.make(dx.format(date[1]),font);
+        k1 = TextLine.make("潜力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[1]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("耐力",font);
-        v1 = TextLine.make(dx.format(date[2]),font);
+        k1 = TextLine.make("耐力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[2]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("稳定",font);
-        v1 = TextLine.make(dx.format(date[3]),font);
+        k1 = TextLine.make("稳定",Puhuiti);
+        v1 = TextLine.make(dx.format(date[3]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("肝力",font);
-        v1 = TextLine.make(dx.format(date[4]),font);
+        k1 = TextLine.make("肝力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[4]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.translate(0,90);
-        k1 = TextLine.make("实力",font);
-        v1 = TextLine.make(dx.format(date[5]),font);
+        k1 = TextLine.make("实力",Puhuiti);
+        v1 = TextLine.make(dx.format(date[5]),Torus);
         canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
         canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
         canvas.restore();
         canvas.save();
         canvas.translate(1000,880);
-        v1 = TextLine.make(dx.format(all),B);
+        v1 = TextLine.make(dx.format(all),Torus_Big);
         canvas.drawTextLine(v1,0,v1.getCapHeight(),white);
         canvas.restore();
     }
-    public static void drowLpj(Canvas canvas, PPmObject user, Font font){
+
+    /***
+     * 绘制六边形
+     * @param canvas
+     * @param user
+     * @param Torus
+     */
+    public static void drowLpj(Canvas canvas, PPmObject user, Font Torus){
         canvas.save();
         TextLine[] tx = new TextLine[6];
         double[] date = new double[]{
@@ -359,35 +390,35 @@ F 108.11.11
         Paint c;
         for (int i = 0; i < date.length; i++) {
             if (date[i]>0.95){
-                t = TextLine.make("SS",font);
+                t = TextLine.make("SS",Torus);
                 c=paints[0];
             }
             else if(date[i]>0.90){
-                t = TextLine.make("S",font);
+                t = TextLine.make("S",Torus);
                 c=paints[1];
             }
             else if(date[i]>0.85){
-                t = TextLine.make("A+",font);
+                t = TextLine.make("A+",Torus);
                 c=paints[2];
             }
             else if(date[i]>0.80){
-                t = TextLine.make("A",font);
+                t = TextLine.make("A",Torus);
                 c=paints[2];
             }
             else if(date[i]>0.70){
-                t = TextLine.make("B",font);
+                t = TextLine.make("B",Torus);
                 c=paints[3];
             }
             else if(date[i]>0.60){
-                t = TextLine.make("C",font);
+                t = TextLine.make("C",Torus);
                 c=paints[4];
             }
             else if(date[i]>0){
-                t = TextLine.make("D",font);
+                t = TextLine.make("D",Torus);
                 c=paints[5];
             }
             else {
-                t = TextLine.make("F",font);
+                t = TextLine.make("F",Torus);
                 c=paints[6];
             }
             canvas.drawTextLine(t,0,t.getCapHeight(),c);
@@ -395,4 +426,32 @@ F 108.11.11
         }
         canvas.restore();
     }
+    public byte[] surprised(Image spr, String head_url, String name) throws IOException {
+        try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
+             Typeface Tours = SkiaUtil.getTorusRegular();
+             Typeface Puhuiti = SkiaUtil.getPUHUITI();
+             Font fontTours = new Font(Tours, 80);
+             Paint white = new Paint().setARGB(255,255,255,255);
+        ){
+            var canvas = surface.getCanvas();
+            Image img = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"mascot.png");
+            canvas.drawImage(img,surface.getWidth()-img.getWidth(), surface.getHeight()-img.getHeight());
+            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusBG.png")));
+            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
+            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
+            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
+            canvas.drawImage(bg1,0,0);
+            canvas.drawImage(bg2,0,0);
+            canvas.drawImage(bg3,513,74);
+            canvas.drawImage(bg4,surface.getWidth()-bg4.getWidth(),surface.getHeight()-bg4.getHeight(),new Paint().setAlpha(51));
+            canvas.drawImage(spr,0,0);
+
+            Image head1 = SkiaUtil.lodeNetWorkImage(head_url);
+            drowLhead(canvas, head1);
+            drowLname(canvas,fontTours,white,name);
+
+            return surface.makeImageSnapshot().encodeToData().getBytes();
+        }
+    }
+
 }
