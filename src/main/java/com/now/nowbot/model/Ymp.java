@@ -52,11 +52,11 @@ public class Ymp {
         }
         map_name = date.getJSONObject("beatmapset").getString("title_unicode");
         artist = date.getJSONObject("beatmapset").getString("artist_unicode");
-        map_length = date.getJSONObject("beatmapset").getIntValue("total_length");
         map_hard = date.getJSONObject("beatmap").getString("version");
         url = date.getJSONObject("beatmapset").getJSONObject("covers").getString("card");
 
         difficulty = date.getJSONObject("beatmap").getFloatValue("difficulty_rating");
+        map_length = date.getJSONObject("beatmap").getIntValue("total_length");
         int starmun = (int) Math.floor(difficulty);
         star = "";
         for (int i = 0; i < starmun; i++) {
@@ -105,7 +105,7 @@ public class Ymp {
         //  "artist_unicode" - "title_unicode" ["version"]
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
 
-        //  ★★★★★ "difficulty_rating"*
+        //  ★★★★★ "difficulty_rating"* mm:ss
         sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ').append(map_length/60).append(':').append(map_length%60).append('\n');
 
         //  ["rank"] +"mods" "score" ("accuracy"%)
@@ -116,7 +116,7 @@ public class Ymp {
         sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
 
         //  "pp"(###)PP  "max_combo"/###x
-        sb.append(format(pp)).append("PP  ").append(combo).append("cb").append('\n');
+        sb.append(format(pp)).append("(0)PP  ").append(combo).append("/0x").append('\n');
 
         //   "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode){
@@ -145,7 +145,7 @@ public class Ymp {
         }
 
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
-        sb.append(DATE_FORMATTER.format(DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time))).append(' ');
+
         sb.append("bid:").append(bid);
         return sb.toString();
     }
