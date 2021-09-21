@@ -45,10 +45,10 @@ public class WikiService implements MessageService{
                     sb.append(name).append(':').append('\n');
                     JSONArray array1 = (JSONArray) array;
                     for (int j = 0; j < array1.size(); j++) {
-                        sb.append("   ")
-                                .append(array1.getString(j))
-                                .append(' ');
+                        sb.append(" ")
+                                .append(array1.getString(j));
                     }
+                    sb.append('\n');
                 });
             }
         }else {
