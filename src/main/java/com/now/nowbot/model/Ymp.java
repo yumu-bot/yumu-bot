@@ -69,9 +69,14 @@ public class Ymp {
         rank = date.getString("rank");
         score = date.getIntValue("score");
         acc = (float) (Math.round(date.getFloatValue("accuracy")*10000)/100D);
-        if (date.containsKey("pp")) {
+
+        try {
             pp = date.getFloat("pp");
+        } catch (Exception e) {
+            pp = 0;
+            e.printStackTrace();
         }
+
         combo = date.getIntValue("max_combo");
         bid = date.getJSONObject("beatmap").getIntValue("id");
         passed = date.getBoolean("passed");
