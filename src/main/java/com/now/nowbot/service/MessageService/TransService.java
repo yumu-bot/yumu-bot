@@ -17,9 +17,11 @@ public class TransService implements MessageService{
         int d_index = d1.indexOf(matcher.group("a"));
         if (d_index <= 0) throw new TipsException("输入错误");
         int x = Integer.parseInt(matcher.group("b"));
-        StringBuffer sb = new StringBuffer(d1.get(d_index));
+        StringBuffer sb = new StringBuffer();
         if(d_index == 2||d_index==4||d_index==7||d_index==9||d_index==11){
             sb.append("降").append(d1.get(d_index+1));
+        }else {
+            sb.append(d1.get(d_index));
         }
         sb.append("大调").append('\n');
         for (int i = 0; i < c1.length; i++) {
