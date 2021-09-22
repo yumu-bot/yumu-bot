@@ -10,14 +10,12 @@ public class PermissionLite {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    //QQ/Group号
-    private Long number;
+    //service名为 PERMISSION_ALL 则是全局名单,所有的服务都要经过此权限表
     private String service;
     @Enumerated(EnumType.STRING)
     private Permission.TYPE type;
 
-    public PermissionLite(Long number, String service, Permission.TYPE type) {
-        this.number = number;
+    public PermissionLite(String service, Permission.TYPE type) {
         this.service = service;
         this.type = type;
     }
@@ -32,14 +30,6 @@ public class PermissionLite {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getNumber() {
-        return number;
-    }
-
-    public void setNumber(Long number) {
-        this.number = number;
     }
 
     public String getService() {

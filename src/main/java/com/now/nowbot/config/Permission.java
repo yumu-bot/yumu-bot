@@ -27,14 +27,9 @@ public class Permission {
         GROUP_B,
         FRIEND_W,
         FRIEND_B,
-
     }
-    public enum SET_PERM{
-        //群管
-        ADMIN,
-        //超级管理员
-        SUPER
-    }
+    //直接简化 true->仅超级管理员能操作      false->群管也能操作
+    boolean Supper;
     public static final Set<Long> PERMISSION_ALL = new ConcurrentSet<>();
 
     public static void init(){

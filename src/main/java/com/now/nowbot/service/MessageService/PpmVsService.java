@@ -453,7 +453,6 @@ F 108.11.11
     public byte[] surprised(Image spr, String head_url, String name) throws IOException {
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface Tours = SkiaUtil.getTorusRegular();
-             Typeface Puhuiti = SkiaUtil.getPUHUITI();
              Font fontTours = new Font(Tours, 80);
              Paint white = new Paint().setARGB(255,255,255,255);
         ){

@@ -28,7 +28,4 @@ public class UserLite {
     //主模式
     @Column(name = "play_mode")
     private String playMode;
-    //积分
-    private Double point;
-
 }

@@ -8,6 +8,8 @@ import javax.persistence.Table;
 @Table(catalog = "qq_id")
 public class QQID {
     @Id
-    Long Permission_id;
-    Long QQ_id;
+    Long id;
+
+    Long PermissionId;
+    Long QQ;
 }
