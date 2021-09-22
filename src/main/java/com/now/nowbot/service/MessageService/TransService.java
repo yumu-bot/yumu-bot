@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +15,10 @@ public class TransService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int d_index = d1.indexOf(matcher.group("a"));
+        if (d_index <= 0) throw new TipsException("输入错误");
         int x = Integer.parseInt(matcher.group("b"));
         StringBuffer sb = new StringBuffer(d1.get(d_index));
-        if(x == 2||x==4||x==7||x==9||x==11){
+        if(d_index == 2||d_index==4||d_index==7||d_index==9||d_index==11){
             sb.append("降").append(d1.get(d_index+1));
         }
         sb.append("大调").append('\n');
