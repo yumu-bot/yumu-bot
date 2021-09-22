@@ -207,9 +207,9 @@ public class PPmTaiko implements PPmObject {
         //1.5 肝力ENG energy eng
         {
             double LNTTH = Math.log(this.thit + 1);
-            if (LNTTH < 8) eng = 0;
-            else if (LNTTH > 16) eng = 1;
-            else eng = Math.pow((LNTTH - 8) * 0.125, 0.4);
+            if (LNTTH < 9) eng = 0;
+            else if (LNTTH > 17) eng = 1;
+            else eng = Math.pow((LNTTH - 9) * 0.125, 0.4);
             eng = check(eng, 0, 1);
         }
         //1.6 实力STH strength sth
