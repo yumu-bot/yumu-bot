@@ -108,8 +108,8 @@ public class bphtService implements MessageService{
                         .append(' ')
                         .append(decimalFormat.format(jsb.getFloatValue("pp")))
                         .append(' ')
-//                        .append(decimalFormat.format(jsb.getDoubleValue("accuracy")))
-                        .append(decimalFormat.format(accCoun.getAcc(jsb)))
+                        .append(decimalFormat.format(100*jsb.getDoubleValue("accuracy")))
+//                        .append(decimalFormat.format(accCoun.getAcc(jsb)))
                         .append('%')
                         .append(' ')
                         .append(jsb.getString("rank"));
