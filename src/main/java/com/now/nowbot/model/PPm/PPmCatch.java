@@ -215,18 +215,22 @@ public class PPmCatch implements PPmObject {
             eng = check(eng, 0, 1);
         }
 
-        //3.6 实力STH strength sth
+        //3.6 实力STHv2 strengthv2 sthv2
 
         {
-            double HPS = 1D*this.thit/this.ptime;
-            if(HPS>9) HPS =  9;
-            else if(HPS<5) HPS =  5;
-            sth = Math.pow((HPS-5)/4,0.2);
+            double PPTTH = 0.6D * Math.log(ppv0 * lengv0 + 1) + 0.3D * Math.log(ppv45 * lengv45 + 1) + 0.1D * Math.log(ppv90 * lengv90 + 1);
+            if(PPTTH > 12) PPTTH = 12;
+            else if(PPTTH < 8) PPTTH = 8;
+            sth = Math.pow((PPTTH - 8)/4,0.2);
             sth = check(sth, 0, 1);
         }
         ttl = facc*0.2 + ptt*0.1 + eng*0.1 + sth*0.2 + stb*0.2 + sta*0.2;
-        san = 0;
+
         // ppmcatch san没写好uwu
+        double PPdPC = Math.pow((ppv0 + ppv45 + ppv90) * 20 / (pcont + 100), 0.8);
+        double LPPD = Math.log(ppv0 + 1) / 4.605;
+        san = PPdPC * LPPD * Math.pow(bpmxd, 0.6) * (sth - eng * 0.4 + 0.4) * (facc + 0.25);
+
     }
 
     @Override
