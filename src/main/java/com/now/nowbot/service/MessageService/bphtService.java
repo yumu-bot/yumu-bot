@@ -163,7 +163,7 @@ class ManiaAcc implements AccCoun{
     @Override
     public double getAcc(JSONObject score) {
         var n = score.getJSONObject("statistics");
-        return 100d*(n.getIntValue("count_50")*50+n.getIntValue("count_katu")*100+n.getIntValue("count_100")*200+(n.getIntValue("count_300")+n.getIntValue("count_geki"))*300)/(300*(n.getIntValue("count_miss")+n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300")+n.getIntValue("count_katu")+n.getIntValue("count_geki")));
+        return 100d*(n.getIntValue("count_50")*50+n.getIntValue("count_100")*100+n.getIntValue("count_katu")*200+(n.getIntValue("count_300")+n.getIntValue("count_geki"))*300)/(300*(n.getIntValue("count_miss")+n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300")+n.getIntValue("count_katu")+n.getIntValue("count_geki")));
     }
 }
 
