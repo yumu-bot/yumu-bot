@@ -378,12 +378,19 @@ F 108.11.11
         * */
         canvas.translate(480,520);
         Paint[] paints = new Paint[]{
+                //ss
                 new Paint().setARGB(255,254,246,104),
+                //s
                 new Paint().setARGB(255,255,178,44),
+                //A+ A
                 new Paint().setARGB(255,70,240,20),
-                new Paint().setARGB(255,6,105,178),
-                new Paint().setARGB(255,140,14,170),
-                new Paint().setARGB(255,198,28,51),
+                //B
+                new Paint().setARGB(255,30,144,255),
+                //C
+                new Paint().setARGB(255,186,85,211),
+                //D
+                new Paint().setARGB(255,220,20,60),
+                //F
                 new Paint().setARGB(255,108,11,11),
         };
         TextLine t;
