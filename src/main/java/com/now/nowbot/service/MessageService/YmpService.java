@@ -5,10 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +19,14 @@ import java.util.regex.Matcher;
 
 @Service("ymp")
 public class YmpService implements MessageService{
+    private static final Logger log = LoggerFactory.getLogger(YmpService.class);
 
     @Autowired
     OsuGetService osuGetService;
+
+    @Autowired
+    StarService starService;
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
@@ -27,74 +35,57 @@ public class YmpService implements MessageService{
         String name = matcher.group("name");
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        BinUser user = null;
+        int id = 0;
+        if (at != null){
+            user = BindingUtil.readUser(at.getTarget());
+        }else {
+            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+                id = osuGetService.getOsuId(matcher.group("name").trim());
+            }else {
+                user = BindingUtil.readUser(event.getSender().getId());
+            }
+        }
         var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
         switch (mode){
             case"null":
             case"osu":
             case"o":
             case"0":{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
+                if (user != null){
                     dates = getDates(user,"osu",isAll);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        dates = getDates(id,"osu",isAll);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        dates = getDates(user,"osu",isAll);
-                    }
+                }else {
+                    dates = getDates(id,"osu",isAll);
                 }
                 mode = "osu";
             } break;
             case"taiko":
             case"t":
             case"1":{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
+                if (user != null){
                     dates = getDates(user,"taiko",isAll);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        dates = getDates(id,"taiko",isAll);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        dates = getDates(user,"taiko",isAll);
-                    }
+                }else {
+                    dates = getDates(id,"taiko",isAll);
                 }
                 mode = "taiko";
             } break;
             case"catch":
             case"c":
             case"2":{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
+                if (user != null){
                     dates = getDates(user,"fruits",isAll);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        dates = getDates(id,"fruits",isAll);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        dates = getDates(user,"fruits",isAll);
-                    }
+                }else {
+                    dates = getDates(id,"fruits",isAll);
                 }
                 mode = "fruits";
             } break;
             case"mania":
             case"m":
             case"3":{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
+                if (user != null){
                     dates = getDates(user,"mania",isAll);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        dates = getDates(id,"mania",isAll);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        dates = getDates(user,"mania",isAll);
-                    }
+                }else {
+                    dates = getDates(id,"mania",isAll);
                 }
                 mode = "fruits";
             }break;
@@ -108,6 +99,9 @@ public class YmpService implements MessageService{
         JSONObject date = dates.getJSONObject(0);
         var d = Ymp.getInstance(date);
         from.sendMessage(d.getOut());
+        if (user != null){
+            log.info(starService.ScoreToStar(user, date));
+        }
     }
     private JSONArray getDates(BinUser user, String mode, boolean isAll){
         if (isAll)

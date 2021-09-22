@@ -5,6 +5,7 @@ import com.now.nowbot.listener.MessageListener;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.utils.BotConfiguration;
+import net.mamoe.mirai.utils.DeviceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -164,6 +165,7 @@ public class NowbotConfig {
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
         botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
+
         File logdir = new File(BOT_PATH+"log");
         if (!logdir.isDirectory()) logdir.mkdirs();
         botConfiguration.redirectBotLogToDirectory(logdir);

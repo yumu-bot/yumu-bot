@@ -28,12 +28,32 @@ public class ppPlusService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
         Contact from = event.getSubject();
-        BinUser user = BindingUtil.readUser(event.getSender().getId());
+
+        BinUser user = null;
+        int id;
+        At at;
+        at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        if (at != null){
+            user = BindingUtil.readUser(at.getTarget());
+            id = user.getOsuID();
+        }else {
+            String name = matcher.group("name");
+            if(name == null || name.trim().equals("")){
+                user = BindingUtil.readUser(event.getSender().getId());
+                id = user.getOsuID();
+            }else {
+                id = osuGetService.getOsuId(name);
+            }
+        }
 
 
         String id1,head1;
-        id1 = String.valueOf(user.getOsuID());
-        head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
+        id1 = String.valueOf(id);
+        if (user != null) {
+            head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
+        }else {
+            head1 = osuGetService.getPlayerOsuInfo(id).getString("avatar_url");
+        }
 
 
         JSONObject date1 = null;

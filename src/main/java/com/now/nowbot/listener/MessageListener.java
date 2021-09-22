@@ -50,6 +50,7 @@ public class MessageListener extends SimpleListenerHost {
      * @param context
      * @param exception
      */
+    static int RECAL_TIME = 1000*100;
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception) {
         if (SimpleListenerHost.getEvent(exception) instanceof MessageEvent) {
@@ -57,20 +58,22 @@ public class MessageListener extends SimpleListenerHost {
             if (event == null) return;
             var e = SimpleListenerHost.getRootCause(exception);
             if (e instanceof TipsException || e instanceof TipsRuntimeException) {
-                event.getSubject().sendMessage(e.getMessage());
+                event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
             } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
-                event.getSubject().sendMessage("网络连接超时，请稍后再试");
+                log.info("超时:",e);
+                event.getSubject().sendMessage("网络连接超时，请稍后再试").recallIn(RECAL_TIME);
             } else if (e instanceof RestClientException && e.getCause() instanceof RequestException) {
                 RequestException reser = (RequestException) e.getCause();
+                log.info("网络:",e);
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
-                    event.getSubject().sendMessage("请求目标不存在");
+                    event.getSubject().sendMessage("请求目标不存在").recallIn(RECAL_TIME);
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
-                    event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复");
+                    event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
                 }
             } else if (e instanceof LogException) {
                 log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else {
-                log.info("捕捉其他异常", e);
+                log.error("捕捉其他异常", e);
             }
         }
     }

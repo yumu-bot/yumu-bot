@@ -1,6 +1,7 @@
 package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,6 +125,39 @@ public class StarService {
         s.addStar(star);
         writeFile(s);
         return s;
+    }
+
+    /***
+     * 成绩刷新积分
+     * @param user
+     * @param date
+     * @return
+     */
+    public String ScoreToStar(BinUser user, JSONObject date){
+        Score sc = getScore(user);
+        long bid = date.getLongValue("best_id");
+        StringBuffer sb = new StringBuffer();
+        if (bid != sc.getBest_id() && date.getJSONObject("beatmap").getString("status").equals("ranked") && date.getBoolean("passed")) {
+            sc.setBest_id(bid);
+            float pp = date.getFloatValue("pp");
+            sb.append("您此次成绩为")
+                    .append(date.getFloatValue("pp"))
+                    .append("pp").append('\n');
+
+            if (date.getJSONArray("mods").contains("HD")) {
+                pp /= 25;
+                sb.append("由于使用了hd,您获得了").append(pp).append("积分").append('\n');
+            } else {
+                pp /= 20;
+                sb.append("您获得了").append(pp).append("积分").append('\n');
+            }
+            if (System.currentTimeMillis() % 312 == 15) {
+                sb.append("恭喜！非常幸运的触发了积分暴击，您本次获得积分为10倍！");
+                pp *= 10;
+            }
+            addStart(sc, pp);
+        }
+        return sb.toString();
     }
 
     public static class Score {

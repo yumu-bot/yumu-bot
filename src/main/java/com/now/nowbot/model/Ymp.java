@@ -1,14 +1,19 @@
 package com.now.nowbot.model;
 
+import ch.qos.logback.core.util.TimeUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import java.text.NumberFormat;
-import java.util.regex.Pattern;
+import java.time.format.DateTimeFormatter;
 
 public class Ymp {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter SIZE_FORMATTER = DateTimeFormatter.ofPattern("m:ss");
+
     String name;
     String mode;
     String country;
+    int map_length;
     String map_name;
     String map_hard;
     String artist;
@@ -32,6 +37,7 @@ public class Ymp {
     boolean passed = true;
     String url;
     int key;
+    String play_time;
 
     public String getUrl(){return url;}
     public Ymp(JSONObject date){
@@ -50,6 +56,7 @@ public class Ymp {
         url = date.getJSONObject("beatmapset").getJSONObject("covers").getString("card");
 
         difficulty = date.getJSONObject("beatmap").getFloatValue("difficulty_rating");
+        map_length = date.getJSONObject("beatmap").getIntValue("total_length");
         int starmun = (int) Math.floor(difficulty);
         star = "";
         for (int i = 0; i < starmun; i++) {
@@ -62,6 +69,14 @@ public class Ymp {
         rank = date.getString("rank");
         score = date.getIntValue("score");
         acc = (float) (Math.round(date.getFloatValue("accuracy")*10000)/100D);
+
+        try {
+            pp = date.getFloat("pp");
+        } catch (Exception e) {
+            pp = 0;
+            e.printStackTrace();
+        }
+
         combo = date.getIntValue("max_combo");
         bid = date.getJSONObject("beatmap").getIntValue("id");
         passed = date.getBoolean("passed");
@@ -74,44 +89,43 @@ public class Ymp {
         n_0 = ndate.getIntValue("count_miss");
         n_geki = ndate.getIntValue("count_geki");
         n_katu = ndate.getIntValue("count_katu");
+        play_time = date.getString("created_at");
         
         if (!passed) rank = "F";
     }
     public static Ymp getInstance(JSONObject date){
-        Ymp rdate;
-        switch (date.getString("mode")){
-            default:
-            case "osu":{
-                rdate = new Ymp(date);
-            }
-        }
-        return rdate;
+        return new Ymp(date);
     }
     public String getOut(){
         StringBuilder sb = new StringBuilder();
-        /*
-         "username"("country_code"): "mode" ("key"K)-if needed
-         "artist_unicode" - "title_unicode" ["version"]
-         ★★★★★ "difficulty_rating"*
-         ["rank"] +"mods" "score" ("accuracy"%)
-         "pp"(###)PP  "max_combo"/###x
-         "count_300" /  "count_100" / "count_50" / "count_miss"
-         */
+
+        //  "username"("country_code"): "mode" ("key"K)-if needed
         if ("mania".equals(mode)){
             map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ').append('(').append(key).append("K").append(')').append('\n');
+            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ')
+                    .append('(').append(key).append("K").append(')').append('\n');
         }else {
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
+
+        //  "artist_unicode" - "title_unicode" ["version"]
         sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
-        sb.append(star).append(' ').append(format(difficulty)).append('*').append('\n');
+
+        //  ★★★★★ "difficulty_rating"* mm:ss
+        sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ')
+                .append(map_length/60).append(':').append(String.format("%02d",map_length%60)).append('\n');
+
+        //  ["rank"] +"mods" "score" ("accuracy"%)
         sb.append('[').append(rank).append(']').append(' ');
         for (String mod : mods) {
             sb.append(mod).append(' ');
         }
         sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
-        sb.append(format(pp)).append('(').append("###").append(')').append("PP ").append(combo).append('/').append("###").append('X').append('\n');
 
+        //  "pp"(###)PP  "max_combo"/###x
+        sb.append(format(pp)).append("(0)PP  ").append(combo).append("/0x").append('\n');
+
+        //   "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode){
             default:
             case "osu":{
@@ -136,6 +150,9 @@ public class Ymp {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
             }break;
         }
+
+        //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
+
         sb.append("bid:").append(bid);
         return sb.toString();
     }

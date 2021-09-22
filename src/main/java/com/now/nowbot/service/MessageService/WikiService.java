@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class WikiService implements MessageService{
         var msg = event.getSubject().sendMessage(getWiki(key));
         msg.recallIn(60*1000);
     }
-    String getWiki(String key) throws IOException, TipsException {
+    String getWiki(String key) throws IOException, LogException {
         StringBuffer sb = new StringBuffer();
         if (null == key || "null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
             if (WIKI == null){
@@ -44,16 +45,16 @@ public class WikiService implements MessageService{
                     sb.append(name).append(':').append('\n');
                     JSONArray array1 = (JSONArray) array;
                     for (int j = 0; j < array1.size(); j++) {
-                        sb.append("   ")
-                                .append(array1.getString(j))
-                                .append(' ');
+                        sb.append(" ")
+                                .append(array1.getString(j));
                     }
+                    sb.append('\n');
                 });
             }
         }else {
             key = key.toUpperCase();
             String r = WIKI.getString(key);
-            if (r == null) throw new TipsException("没有找到"+key);
+            if (r == null) throw new LogException("没有找到"+key,null);
             sb.append(key).append(':').append('\n');
             sb.append(r);
         }

@@ -28,7 +28,7 @@ import java.util.regex.Matcher;
 @Service("setu")
 public class setuService implements MessageService{
     static final Logger log = LoggerFactory.getLogger(setuService.class);
-    Long time;
+    Long time = 0L;
     @Autowired
     RestTemplate template;
 
@@ -72,14 +72,14 @@ public class setuService implements MessageService{
         Image img = null;
         try {
             byte[] date;
-            int random = Math.toIntExact((System.currentTimeMillis() % 4));
+            int random = Math.toIntExact((System.currentTimeMillis() % 5));
             switch (random){
                 case 3:{
                     date = api2();
                 }break;
-//                case 1:{
-//                    date = api3();
-//                }break;
+                case 1:{
+                    date = api3();
+                }break;
                 default:{
                     date = api1();
                 }
@@ -94,7 +94,7 @@ public class setuService implements MessageService{
             from.sendMessage(img).recallIn(110*1000);
         }
     }
-    byte[] api3()throws Exception{
+    public byte[] api3()throws Exception{
         //todo 检查下载失败原因
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
@@ -103,7 +103,7 @@ public class setuService implements MessageService{
         date = template.exchange("https://www.dmoe.cc/random.php", HttpMethod.GET, httpEntity, byte[].class);
         return date.getBody();
     }
-    byte[] api2() throws Exception{
+    public byte[] api2() throws Exception{
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
@@ -111,7 +111,7 @@ public class setuService implements MessageService{
         date = template.exchange("https://api.vvhan.com/api/girl", HttpMethod.GET, httpEntity, byte[].class);
         return date.getBody();
     }
-    byte[] api1() throws Exception{
+    public byte[] api1() throws Exception{
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
