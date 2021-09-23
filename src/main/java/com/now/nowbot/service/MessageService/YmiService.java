@@ -32,7 +32,7 @@ public class YmiService implements MessageService{
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
-        JSONArray dates;
+        JSONObject dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
         int id = 0;
@@ -102,10 +102,10 @@ public class YmiService implements MessageService{
             log.info(starService.ScoreToStar(user, date));
         }
     }
-    private JSONArray getDates(BinUser user, String mode){
+    private JSONObject getDates(BinUser user, String mode){
         return osuGetService.getPlayerInfo(user, mode);
     }
-    private JSONArray getDates(int id, String mode){
+    private JSONObject getDates(int id, String mode){
         return osuGetService.getPlayerInfo(id, mode);
     }
 }
