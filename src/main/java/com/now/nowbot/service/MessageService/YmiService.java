@@ -32,7 +32,7 @@ public class YmiService implements MessageService{
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
-        JSONObject dates;
+        JSONObject date;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
         int id = 0;
@@ -52,9 +52,9 @@ public class YmiService implements MessageService{
             case"o":
             case"0":{
                 if (user != null){
-                    dates = getDates(user,"osu");
+                    date = getdate(user,"osu");
                 }else {
-                    dates = getDates(id,"osu");
+                    date = getdate(id,"osu");
                 }
                 mode = "osu";
             } break;
@@ -62,9 +62,9 @@ public class YmiService implements MessageService{
             case"t":
             case"1":{
                 if (user != null){
-                    dates = getDates(user,"taiko");
+                    date = getdate(user,"taiko");
                 }else {
-                    dates = getDates(id,"taiko");
+                    date = getdate(id,"taiko");
                 }
                 mode = "taiko";
             } break;
@@ -72,9 +72,9 @@ public class YmiService implements MessageService{
             case"c":
             case"2":{
                 if (user != null){
-                    dates = getDates(user,"fruits");
+                    date = getdate(user,"fruits");
                 }else {
-                    dates = getDates(id,"fruits");
+                    date = getdate(id,"fruits");
                 }
                 mode = "fruits";
             } break;
@@ -82,9 +82,9 @@ public class YmiService implements MessageService{
             case"m":
             case"3":{
                 if (user != null){
-                    dates = getDates(user,"mania");
+                    date = getdate(user,"mania");
                 }else {
-                    dates = getDates(id,"mania");
+                    date = getdate(id,"mania");
                 }
                 mode = "fruits";
             }break;
@@ -92,19 +92,19 @@ public class YmiService implements MessageService{
                 throw new TipsException("如果您...传了这些完全没法用的参数...这么说...您也有泽任吧...！");
             }
         }
-        if(dates.size()==0){
+        if(date.size()==0){
             throw new TipsException("没有查询到您的信息呢");
         }
-        var d = Ymi.getInstance(dates);
+        var d = Ymi.getInstance(date);
         from.sendMessage(d.getOut());
         if (user != null){
-            log.info(starService.ScoreToStar(user, dates));
+            log.info(starService.ScoreToStar(user, date));
         }
     }
-    private JSONObject getDates(BinUser user, String mode){
+    private JSONObject getdate(BinUser user, String mode){
         return osuGetService.getPlayerInfo(user, mode);
     }
-    private JSONObject getDates(int id, String mode){
+    private JSONObject getdate(int id, String mode){
         return osuGetService.getPlayerInfo(id, mode);
     }
 }
