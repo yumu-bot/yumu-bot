@@ -108,11 +108,11 @@ public class YmiService implements MessageService{
         }
     }
     private JSONArray getDates(BinUser user, String mode){
-        return osuGetService.getPlayerOsuInfo(user, mode);
+        return osuGetService.getPlayerInfo(user, mode);
 
     }
     private JSONArray getDates(int id, String mode){
-        return osuGetService.getPlayerOsuInfo(id, mode);
+        return osuGetService.getPlayerInfo(id, mode);
 
     }
 }
