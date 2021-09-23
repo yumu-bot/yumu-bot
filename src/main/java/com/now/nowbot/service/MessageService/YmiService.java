@@ -57,9 +57,9 @@ public class YmiService implements MessageService{
             case"o":
             case"0":{
                 if (user != null){
-                    dates = getDates(user,"osu",isAll);
+                    dates = getDates(user,"osu");
                 }else {
-                    dates = getDates(id,"osu",isAll);
+                    dates = getDates(id,"osu");
                 }
                 mode = "osu";
             } break;
@@ -67,9 +67,9 @@ public class YmiService implements MessageService{
             case"t":
             case"1":{
                 if (user != null){
-                    dates = getDates(user,"taiko",isAll);
+                    dates = getDates(user,"taiko");
                 }else {
-                    dates = getDates(id,"taiko",isAll);
+                    dates = getDates(id,"taiko");
                 }
                 mode = "taiko";
             } break;
@@ -77,9 +77,9 @@ public class YmiService implements MessageService{
             case"c":
             case"2":{
                 if (user != null){
-                    dates = getDates(user,"fruits",isAll);
+                    dates = getDates(user,"fruits");
                 }else {
-                    dates = getDates(id,"fruits",isAll);
+                    dates = getDates(id,"fruits");
                 }
                 mode = "fruits";
             } break;
@@ -87,9 +87,9 @@ public class YmiService implements MessageService{
             case"m":
             case"3":{
                 if (user != null){
-                    dates = getDates(user,"mania",isAll);
+                    dates = getDates(user,"mania");
                 }else {
-                    dates = getDates(id,"mania",isAll);
+                    dates = getDates(id,"mania");
                 }
                 mode = "fruits";
             }break;
