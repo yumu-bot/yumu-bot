@@ -98,7 +98,7 @@ public class YmiService implements MessageService{
         var d = Ymi.getInstance(dates);
         from.sendMessage(d.getOut());
         if (user != null){
-            log.info(starService.ScoreToStar(user, date));
+            log.info(starService.ScoreToStar(user, dates));
         }
     }
     private JSONObject getDates(BinUser user, String mode){
