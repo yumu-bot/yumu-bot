@@ -59,7 +59,6 @@ public class Ymi {
         kudosu_total = date.getJSONObject("kudosu").getIntValue("total");
         support_level = date.getIntValue("support_level");
         uid = date.getIntValue("id");
-    if (support_level=null) support_level=0;
 
     }
     public static Ymi getInstance(JSONObject date){
@@ -89,11 +88,11 @@ public class Ymi {
         }
         
         // PT:24d2h7m ACC:98.16%
-        sb.append("PT:").append(map_length/86400).append("d").append((map_length%86400)/3600).append("h").append((map_length%3600)/60).append("m").append(' ').append("ACC:").append(hit_accuracy).append('%').append('\n');
+        sb.append("PT:").append(play_time/86400).append("d").append((play_time%86400)/3600).append("h").append((play_time%3600)/60).append("m").append(' ').append("ACC:").append(hit_accuracy).append('%').append('\n');
         
         // ♡:320 kds:245 SVIP2
         sb.append("♡:").append(follower_count).append(' ').append("kds:").append(kudosu_total).append(' ');
-        if (support_level!=0){
+        if (support_level<1){
         sb.append("SVIP").append(support_level).append('\n');
         }else{
             sb.append('\n');
