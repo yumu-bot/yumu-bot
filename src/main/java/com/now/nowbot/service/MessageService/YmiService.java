@@ -30,8 +30,7 @@ public class YmiService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
-        //from.sendMessage(isAll?"正在查询您的信息":"正在查询您的信息");
+        //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -53,9 +52,9 @@ public class YmiService implements MessageService{
             case"o":
             case"0":{
                 if (user != null){
-                    dates = getDates(user,"osu",isAll);
+                    dates = getDates(user,"osu");
                 }else {
-                    dates = getDates(id,"osu",isAll);
+                    dates = getDates(id,"osu");
                 }
                 mode = "osu";
             } break;
@@ -63,9 +62,9 @@ public class YmiService implements MessageService{
             case"t":
             case"1":{
                 if (user != null){
-                    dates = getDates(user,"taiko",isAll);
+                    dates = getDates(user,"taiko");
                 }else {
-                    dates = getDates(id,"taiko",isAll);
+                    dates = getDates(id,"taiko");
                 }
                 mode = "taiko";
             } break;
@@ -73,9 +72,9 @@ public class YmiService implements MessageService{
             case"c":
             case"2":{
                 if (user != null){
-                    dates = getDates(user,"fruits",isAll);
+                    dates = getDates(user,"fruits");
                 }else {
-                    dates = getDates(id,"fruits",isAll);
+                    dates = getDates(id,"fruits");
                 }
                 mode = "fruits";
             } break;
@@ -83,9 +82,9 @@ public class YmiService implements MessageService{
             case"m":
             case"3":{
                 if (user != null){
-                    dates = getDates(user,"mania",isAll);
+                    dates = getDates(user,"mania");
                 }else {
-                    dates = getDates(id,"mania",isAll);
+                    dates = getDates(id,"mania");
                 }
                 mode = "fruits";
             }break;
@@ -103,16 +102,10 @@ public class YmiService implements MessageService{
             log.info(starService.ScoreToStar(user, date));
         }
     }
-    private JSONArray getDates(BinUser user, String mode, boolean isAll){
-        if (isAll)
-            return osuGetService.getPlayerInfo(user, mode, 0, 1);
-        else
-            return osuGetService.getPlayerInfo(user, mode, 0, 1);
+    private JSONArray getDates(BinUser user, String mode){
+        return osuGetService.getPlayerInfo(user, mode);
     }
-    private JSONArray getDates(int id, String mode, boolean isAll){
-        if (isAll)
-            return osuGetService.getPlayerInfo(id, mode, 0, 1);
-        else
-            return osuGetService.getPlayerInfo(id, mode, 0, 1);
+    private JSONArray getDates(int id, String mode){
+        return osuGetService.getPlayerInfo(id, mode);
     }
 }
