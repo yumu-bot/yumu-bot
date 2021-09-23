@@ -102,7 +102,6 @@ public class Ymi {
         // uid:7003013
         sb.append("uid:").append(uid);
         // occupation:xxx discord:xxx interests:xxx
-        }
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time)
 	return sb.toString();
     }
