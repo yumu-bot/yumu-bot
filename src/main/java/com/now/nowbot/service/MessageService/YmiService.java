@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.Ymi;
+import com.now.nowbot.model.Ymp;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
@@ -17,14 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-/**
- * 这是个复制品，直接复制的ymp代码
- * 如果有bug请慢慢修吧，我真的不会写
- */
-
-@Service("ymi")
-public class YmiService implements MessageService{
-    private static final Logger log = LoggerFactory.getLogger(YmiService.class);
+@Service("ymp")
+public class YmpService implements MessageService{
+    private static final Logger log = LoggerFactory.getLogger(YmpService.class);
 
     @Autowired
     OsuGetService osuGetService;
@@ -35,7 +30,8 @@ public class YmiService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        //from.sendMessage(isAll?"正在查询您的信息...");
+        boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
+        //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         String name = matcher.group("name");
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -57,9 +53,9 @@ public class YmiService implements MessageService{
             case"o":
             case"0":{
                 if (user != null){
-                    dates = getDates(user,"osu");
+                    dates = getDates(user,"osu",isAll);
                 }else {
-                    dates = getDates(id,"osu");
+                    dates = getDates(id,"osu",isAll);
                 }
                 mode = "osu";
             } break;
@@ -67,9 +63,9 @@ public class YmiService implements MessageService{
             case"t":
             case"1":{
                 if (user != null){
-                    dates = getDates(user,"taiko");
+                    dates = getDates(user,"taiko",isAll);
                 }else {
-                    dates = getDates(id,"taiko");
+                    dates = getDates(id,"taiko",isAll);
                 }
                 mode = "taiko";
             } break;
@@ -77,9 +73,9 @@ public class YmiService implements MessageService{
             case"c":
             case"2":{
                 if (user != null){
-                    dates = getDates(user,"fruits");
+                    dates = getDates(user,"fruits",isAll);
                 }else {
-                    dates = getDates(id,"fruits");
+                    dates = getDates(id,"fruits",isAll);
                 }
                 mode = "fruits";
             } break;
@@ -87,32 +83,36 @@ public class YmiService implements MessageService{
             case"m":
             case"3":{
                 if (user != null){
-                    dates = getDates(user,"mania");
+                    dates = getDates(user,"mania",isAll);
                 }else {
-                    dates = getDates(id,"mania");
+                    dates = getDates(id,"mania",isAll);
                 }
                 mode = "fruits";
             }break;
             default:{
-                throw new TipsException("如果您...传了这些完全没法用的参数...这么说...您也有泽任吧...！");
+                throw new TipsException("未知参数");
             }
         }
         if(dates.size()==0){
-            throw new TipsException("未查询到您的信息！");
+            throw new TipsException("24h内无记录");
         }
         JSONObject date = dates.getJSONObject(0);
-        var d = Ymi.getInstance(date);
+        var d = Ymp.getInstance(date);
         from.sendMessage(d.getOut());
         if (user != null){
             log.info(starService.ScoreToStar(user, date));
         }
     }
-    private JSONArray getDates(BinUser user, String mode){
-        return osuGetService.getPlayerInfo(user, mode);
-
+    private JSONArray getDates(BinUser user, String mode, boolean isAll){
+        if (isAll)
+            return osuGetService.getAllRecent(user, mode, 0, 1);
+        else
+            return osuGetService.getRecent(user, mode, 0, 1);
     }
-    private JSONArray getDates(int id, String mode){
-        return osuGetService.getPlayerInfo(id, mode);
-
+    private JSONArray getDates(int id, String mode, boolean isAll){
+        if (isAll)
+            return osuGetService.getAllRecent(id, mode, 0, 1);
+        else
+            return osuGetService.getRecent(id, mode, 0, 1);
     }
 }
