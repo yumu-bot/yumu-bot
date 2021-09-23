@@ -95,6 +95,7 @@ public class YmiService implements MessageService{
         if(dates.size()==0){
             throw new TipsException("没有查询到您的信息呢");
         }
+        JSONObject date = dates.getJSONObject();
         var d = Ymi.getInstance(date);
         from.sendMessage(d.getOut());
         if (user != null){
