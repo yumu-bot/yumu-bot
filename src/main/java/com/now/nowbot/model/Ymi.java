@@ -71,7 +71,7 @@ public class Ymi {
         sb.append(name).append('(').append(mode).append(')').append(':').append(pp).append(' ').append("PP").append('\n');
 
         // #114514 CN#1919 (LV.100(32%))
-        sb.append('#').append('global_rank').append(' ').append(country).append('#').append('country_rank').append(' ').append("(LV.").append('level_current').append('(').append('level_progress').append("%))").append('\n');
+        sb.append('#').append(global_rank).append(' ').append(country).append('#').append(country_rank).append(' ').append("(LV.").append(level_current).append('(').append(level_progress).append("%))").append('\n');
 
         // PC:2.01w TTH:743.52w 
         if (play_count>10000){
