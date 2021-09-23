@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.Ymp;
+import com.now.nowbot.model.Ymi;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("ymp")
-public class YmpService implements MessageService{
-    private static final Logger log = LoggerFactory.getLogger(YmpService.class);
+@Service("ymi")
+public class YmiService implements MessageService{
+    private static final Logger log = LoggerFactory.getLogger(YmiService.class);
 
     @Autowired
     OsuGetService osuGetService;
@@ -31,7 +31,7 @@ public class YmpService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
-        //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
+        //from.sendMessage(isAll?"正在查询您的信息":"正在查询您的信息");
         String name = matcher.group("name");
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -90,14 +90,14 @@ public class YmpService implements MessageService{
                 mode = "fruits";
             }break;
             default:{
-                throw new TipsException("未知参数");
+                throw new TipsException("如果您...传了这些完全没法用的参数...这么说...您也有泽任吧...！");
             }
         }
         if(dates.size()==0){
-            throw new TipsException("24h内无记录");
+            throw new TipsException("没有查询到您的信息呢");
         }
         JSONObject date = dates.getJSONObject(0);
-        var d = Ymp.getInstance(date);
+        var d = Ymi.getInstance(date);
         from.sendMessage(d.getOut());
         if (user != null){
             log.info(starService.ScoreToStar(user, date));
@@ -105,14 +105,14 @@ public class YmpService implements MessageService{
     }
     private JSONArray getDates(BinUser user, String mode, boolean isAll){
         if (isAll)
-            return osuGetService.getAllRecent(user, mode, 0, 1);
+            return osuGetService.getPlayerInfo(user, mode, 0, 1);
         else
-            return osuGetService.getRecent(user, mode, 0, 1);
+            return osuGetService.getPlayerInfo(user, mode, 0, 1);
     }
     private JSONArray getDates(int id, String mode, boolean isAll){
         if (isAll)
-            return osuGetService.getAllRecent(id, mode, 0, 1);
+            return osuGetService.getPlayerInfo(id, mode, 0, 1);
         else
-            return osuGetService.getRecent(id, mode, 0, 1);
+            return osuGetService.getPlayerInfo(id, mode, 0, 1);
     }
 }
