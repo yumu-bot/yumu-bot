@@ -29,8 +29,7 @@ public class Ymi {
     int grade_count_sh;
     int grade_count_a;
     int uid;
-    
-	public String getUrl(){return url;}
+
     public Ymi(JSONObject date){
         var user = date.getJSONObject("user");
         name = user.getString("username");
