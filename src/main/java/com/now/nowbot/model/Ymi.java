@@ -91,71 +91,14 @@ public class Ymi {
         sb.append("PT:").append(map_length/86400).append("d").append((map_length%86400)/3600).append("h").append((map_length%3600)/60).append("m").append(' ').append("ACC:").append(hit_accuracy).append('%').append('\n');
         
         // ♡:320 kds:245 SVIP2
+        sb.append("♡:").append(follower_count).append(' ').append("kds:").append(kudosu_total).append(' ').append(SVIP).append(support_level).append('\n');
+
         // SS:26(107) S:157(844) A:1083
+        sb.append("SS:").append(grade_count_ss).append('(').append(grade_count_ssh).append(')').append(' ').append("S:").append(grade_count_s).append('(').append(grade_count_sh).append(' ').append("A:").append(grade_count_a).append('\n').append('\n');
         // 
         // uid:7003013
+        sb.append("uid:").append(uid);
         // occupation:xxx discord:xxx interests:xxx
-
-        //  "username"("country_code"): "mode" ("key"K)-if needed
-        if ("mania".equals(mode)){
-            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ')
-                    .append('(').append(key).append("K").append(')').append('\n');
-        }else {
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
-
-        //  "artist_unicode" - "title_unicode" ["version"]
-        sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
-
-        //  ★★★★★ "difficulty_rating"* mm:ss
-        sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ')
-                .append(map_length/60).append(':').append(String.format("%02d",map_length%60)).append('\n');
-
-        //  ["rank"] +"mods" "score" ("accuracy"%)
-        sb.append('[').append(rank).append(']').append(' ');
-        for (String mod : mods) {
-            sb.append(mod).append(' ');
-        }
-        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
-
-        //  "pp"(###)PP  "max_combo"/###x
-        sb.append(format(pp)).append("(0)PP  ").append(combo).append("/0x").append('\n');
-
-        //   "count_300" /  "count_100" / "count_50" / "count_miss"
-        switch (mode){
-            default:
-            case "osu":{
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
-            case "taiko":{
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
-            case "mania":{
-                sb.append(n_300).append('+').append(n_geki).append('(');
-                if (n_300 >= n_geki && n_geki != 0){
-                    sb.append(String.format("%.1f",(1F*n_300/n_geki))).append(':').append(1);
-                }else if(n_300 < n_geki && n_300 != 0) {
-                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_geki/n_300)));
-                }else{
-                    sb.append('-');
-                }
-                sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
-            case "catch":
-            case "fruits":{
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
-            }break;
-        }
-
-        //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
-
-        sb.append("bid:").append(bid);
-        return sb.toString();
+        //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time)
     }
-    static String format(double d){
-        double x = Math.round(d*100)/100D;
-        NumberFormat nf = NumberFormat.getInstance();
-        return nf.format(x);
-    }
-}
