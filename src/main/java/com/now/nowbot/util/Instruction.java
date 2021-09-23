@@ -11,7 +11,7 @@ public enum Instruction {
     BIND("bind", "!ymbind 直接绑定", "^[!！]\\s?(?i)ymbind$"),
     BPHT("bpht", "!ymbpht 查询bp", "^[!！]\\s?(?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     CATPANEL("cpanel", null, "^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"),
-    HELP("help", !ymh/!ymhelp, "^[!！](?i)ym((help)|h)"),
+    HELP("help", "!ymh/!ymhelp", "^[!！](?i)ym((help)|h)"),
     PAGE("page", null, "^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"),
     PING("ping",  null, "^[!！]\\s?(?i)ymping"),
     PPM("ppm", "!ymppm[:mode][osu name] 某种娱乐性实力计算方法,mode及name可选\n   比如：!ymppm:t muziyami", "^[!！]\\s?(?i)ymppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
