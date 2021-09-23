@@ -71,7 +71,7 @@ public class Ymi {
         sb.append('#').append(global_rank).append(' ').append(country).append('#').append(country_rank).append(' ').append("(LV.").append(level_current).append('(').append(level_progress).append("%))").append('\n');
 
         // PC:2.01w TTH:743.52w 
-        if (play_count>10000){
+        if(play_count>10000){
             sb.append("PC:").append(String.format("%02d",play_count/10000)).append("w").append(' ');
         }else{
             sb.append("PC:").append(play_count).append(' ');
@@ -90,7 +90,7 @@ public class Ymi {
         
         // ♡:320 kds:245 SVIP2
         sb.append("♡:").append(follower_count).append(' ').append("kds:").append(kudosu_total).append(' ');
-        if (support_level<1){
+        if(support_level<1){
         sb.append("SVIP").append(support_level).append('\n');
         }else{
             sb.append('\n');
@@ -104,4 +104,10 @@ public class Ymi {
         // occupation:xxx discord:xxx interests:xxx
         }
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time)
+	return sb.toString();
     }
+    static String format(double d){
+        double x = Math.round(d*100)/100D;
+        NumberFormat nf = NumberFormat.getInstance();
+        return nf.format(x);
+        }
