@@ -22,8 +22,15 @@ public class startService implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        //获得可能的 at
+        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         Contact from = event.getSubject();
-        BinUser user = BindingUtil.readUser(event.getSender().getId());
+        BinUser user;
+        if (at != null){
+            user = BindingUtil.readUser(at.getTarget());
+        }else {
+            user = BindingUtil.readUser(event.getSender().getId());
+        }
         StringBuffer sb = new StringBuffer();
         StarService.Score sc = starService.getScore(user);
 
