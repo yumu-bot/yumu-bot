@@ -152,17 +152,17 @@ public class YmiService implements MessageService{
         // uid:7003013
         sb.append("UID:").append(date.getIntValue("id")).append('\n');
 
-        String occupation = ((String) date.getOrDefault("occupation","")).trim();
-        String discord = ((String) date.getOrDefault("discord","")).trim();
-        String interests = ((String) date.getOrDefault("interests","")).trim();
-        if (!occupation.equals("") || !discord.equals("") || !interests.equals("")){
+        String occupation = (String) date.getOrDefault("occupation","");
+        String discord = (String) date.getOrDefault("discord","");
+        String interests = (String) date.getOrDefault("interests","");
+        if ((occupation != null && !occupation.trim().equals("")) || (discord != null && !discord.trim().equals("")) || (interests != null && !interests.trim().equals(""))){
             sb.append('\n');
-            if (!occupation.equals("")) {
-                sb.append("occupation:").append(occupation).append(' ');
-            }if (!discord.equals("")) {
-                sb.append("discord").append(discord).append(' ');
-            }if (!interests.equals("")) {
-                sb.append("interests").append(interests).append(' ');
+            if (occupation != null && !occupation.trim().equals("")) {
+                sb.append("occupation:").append(occupation.trim()).append(' ');
+            }if (discord != null && !discord.trim().equals("")) {
+                sb.append("discord").append(discord.trim()).append(' ');
+            }if (interests != null && !interests.trim().equals("")) {
+                sb.append("interests").append(interests.trim()).append(' ');
             }
         }
         from.sendMessage(sb.toString());
