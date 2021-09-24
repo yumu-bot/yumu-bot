@@ -150,7 +150,21 @@ public class YmiService implements MessageService{
                 .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("sh")).append(')')
                 .append(" A:").append(statistics.getJSONObject("grade_counts").getIntValue("a")).append('\n');
         // uid:7003013
-        sb.append("UID:").append(date.getIntValue("id"));
+        sb.append("UID:").append(date.getIntValue("id")).append('\n');
+
+        String occupation = (String) date.getOrDefault("occupation",null);
+        String discord = (String) date.getOrDefault("discord",null);
+        String interests = (String) date.getOrDefault("interests",null);
+        if (occupation != null || discord != null || interests != null){
+            sb.append('\n');
+            if (occupation != null) {
+                sb.append(occupation).append(' ');
+            }if (discord != null) {
+                sb.append(discord).append(' ');
+            }if (interests != null) {
+                sb.append(interests).append(' ');
+            }
+        }
         from.sendMessage(sb.toString());
     }
 }
