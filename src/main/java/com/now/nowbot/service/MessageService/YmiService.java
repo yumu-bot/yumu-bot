@@ -152,17 +152,17 @@ public class YmiService implements MessageService{
         // uid:7003013
         sb.append("UID:").append(date.getIntValue("id")).append('\n');
 
-        String occupation = (String) date.getOrDefault("occupation",null);
-        String discord = (String) date.getOrDefault("discord",null);
-        String interests = (String) date.getOrDefault("interests",null);
-        if (occupation != null || discord != null || interests != null){
+        String occupation = ((String) date.getOrDefault("occupation","")).trim();
+        String discord = ((String) date.getOrDefault("discord","")).trim();
+        String interests = ((String) date.getOrDefault("interests","")).trim();
+        if (!occupation.equals("") || !discord.equals("") || !interests.equals("")){
             sb.append('\n');
-            if (occupation != null) {
-                sb.append(occupation).append(' ');
-            }if (discord != null) {
-                sb.append(discord).append(' ');
-            }if (interests != null) {
-                sb.append(interests).append(' ');
+            if (!occupation.equals("")) {
+                sb.append("occupation:").append(occupation).append(' ');
+            }if (!discord.equals("")) {
+                sb.append("discord").append(discord).append(' ');
+            }if (!interests.equals("")) {
+                sb.append("interests").append(interests).append(' ');
             }
         }
         from.sendMessage(sb.toString());
