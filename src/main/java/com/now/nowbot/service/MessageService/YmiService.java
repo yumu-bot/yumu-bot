@@ -128,9 +128,28 @@ public class YmiService implements MessageService{
         }
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
-        sb.append("PT:36D ACC:98.42%").append('\n');
+        sb.append("PT:");
+        int PT = statistics.getIntValue("play_time");
+        if(PT>86400){
+            sb.append(PT/86400).append('d');
+        }
+        if(PT>3600){
+            sb.append((PT%86400)/3600).append('h');
+        }
+        if(PT>60){
+            sb.append((PT%3600)/60).append('m');
+        }
+        sb.append(" ACC:").append(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
-        sb.append("♡:203 kds:0").append('\n');
+//        sb.append("♡:203 kds:0").append('\n');
+        // SS:26(107) S:157(844) A:1083
+        sb.append("ss:").append(statistics.getJSONObject("grade_counts").getIntValue("ss"))
+                .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("ssh")).append(')')
+                .append(" S:").append(statistics.getJSONObject("grade_counts").getIntValue("s"))
+                .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("sh")).append(')')
+                .append(" A:").append(statistics.getJSONObject("grade_counts").getIntValue("a")).append('\n');
+        // uid:7003013
+        sb.append("UID:").append(date.getIntValue("id"));
         from.sendMessage(sb.toString());
     }
 }
