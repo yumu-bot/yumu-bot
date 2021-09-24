@@ -20,10 +20,10 @@ public enum Instruction {
     PPPLUSVS("ppvs", "!(ym)?ppvs <osu name|@某人> pp+的对比.需要自己绑定,如果是对比@对象也需要被对比人绑定", "^[!！]\\s?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     SETU("setu", "!setu 获取一张随机美图", "^[!！]((色图)|(涩图)|(setu))"),
     SONG("song", "!song <bid>或!song sid=<sid> 试听谱面", "^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"),
-    START("start", "!积分 刷新并查看积分", "^[!！]\\s*((积分)|(..积分))+"),
+    START("start", "!积分 刷新并查看积分", "^[!！]\\s*((积分)|(..积分))+.*"),
     KUMO("kumo", null, ".*"),
     YMP("ymp","!ymr/!ymp 简略地查询自己的成绩","^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    YMI("ymi","!ymi 简略地查询自己的信息","^[!！](?i)yminfo$"),
+    YMI("ymi","!ymi 简略地查询自己的信息","^[!！](?i)yminfo([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     WIKI("wiki","!ymwiki 告诉你我知道的一切","^[!！](?i)ym((wiki)|w)((?<key>[^\\s]*))?"),
     TEST("test",null,".*"),
     TRANS("trans",null,"^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)");

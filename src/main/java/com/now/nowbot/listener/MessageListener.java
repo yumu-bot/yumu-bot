@@ -73,6 +73,8 @@ public class MessageListener extends SimpleListenerHost {
                 }
             } else if (e instanceof LogException) {
                 log.info(e.getMessage(), ((LogException) e).getThrowable());
+            } else if (e instanceof IllegalArgumentException) {
+                log.error("正则异常",e);
             } else {
                 log.error("捕捉其他异常", e);
             }
