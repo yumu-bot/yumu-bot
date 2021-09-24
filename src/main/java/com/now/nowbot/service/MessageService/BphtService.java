@@ -14,7 +14,7 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("bpht")
-public class bphtService implements MessageService{
+public class BphtService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
 

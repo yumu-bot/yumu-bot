@@ -26,7 +26,8 @@ public enum Instruction {
     YMI("ymi","!ymi 简略地查询自己的信息","^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     WIKI("wiki","!ymwiki 告诉你我知道的一切","^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),
     TEST("test",null,".*"),
-    TRANS("trans",null,"^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)");
+    TRANS("trans",null,"^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),
+    SCORE("score",null,"^[!！]score\\s?(?<bid>\\d+)");
 
     private final Pattern regex;
 

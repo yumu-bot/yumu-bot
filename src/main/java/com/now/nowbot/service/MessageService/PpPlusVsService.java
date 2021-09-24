@@ -22,7 +22,7 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("ppvs")
-public class ppPlusVsService implements MessageService{
+public class PpPlusVsService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     @Autowired

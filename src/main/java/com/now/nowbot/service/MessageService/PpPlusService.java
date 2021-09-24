@@ -7,7 +7,6 @@ import com.now.nowbot.util.SkiaUtil;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
-import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -21,7 +20,7 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("ppp")
-public class ppPlusService implements MessageService{
+public class PpPlusService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
 
@@ -146,7 +145,7 @@ public class ppPlusService implements MessageService{
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
-            ppPlusVsService.drowLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
+            PpPlusVsService.drowLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }

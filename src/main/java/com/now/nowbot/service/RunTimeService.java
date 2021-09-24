@@ -1,18 +1,15 @@
 package com.now.nowbot.service;
 
 
-import com.now.nowbot.service.MessageService.bindService;
+import com.now.nowbot.service.MessageService.BindService;
 import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 
 /***
  * 统一设置定时任务
@@ -44,8 +41,8 @@ public class RunTimeService {
      */
     @Scheduled(cron = "0 0/5 * * * *")
     public void clearBindMsg(){
-        bindService.BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
-        log.info("清理绑定器执行 当前剩余:{}", bindService.BIND_MSG_MAP.size());
+        BindService.BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
+        log.info("清理绑定器执行 当前剩余:{}", BindService.BIND_MSG_MAP.size());
     }
 
     /***

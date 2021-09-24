@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 
 @Service("ping")
-public class pingService implements MessageService{
+public class PingService implements MessageService{
     @Override
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

@@ -1,7 +1,7 @@
 package com.now.nowbot.controller;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.service.MessageService.bindService;
+import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.message.MessageReceipt;
@@ -56,7 +56,7 @@ public class msgController {
                 sb.append("非法的访问:参数异常")
                         .append(e.getMessage());
             }
-            MessageReceipt msg = bindService.BIND_MSG_MAP.get(key);
+            MessageReceipt msg = BindService.BIND_MSG_MAP.get(key);
 
             if (msg != null) {
                 try {
@@ -72,7 +72,7 @@ public class msgController {
                     BindingUtil.writeUser(bd);
                     BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
                     msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                    bindService.BIND_MSG_MAP.remove(Long.valueOf(data[1]));
+                    BindService.BIND_MSG_MAP.remove(Long.valueOf(data[1]));
                     sb.append("成功绑定:")
                             .append(bd.getQq())
                             .append('>')

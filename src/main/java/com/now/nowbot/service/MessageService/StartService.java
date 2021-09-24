@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 
 @Service("start")
-public class startService implements MessageService{
+public class StartService implements MessageService{
     @Autowired
     StarService starService;
     @Autowired
