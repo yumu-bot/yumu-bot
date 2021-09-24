@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 
 @Service("ymi")
@@ -111,7 +112,25 @@ public class YmiService implements MessageService{
                 .append(date.getJSONObject("country").getString("code")).append('#').append(statistics.getIntValue("country_rank")).append(' ')
                 .append("(LV.").append(statistics.getJSONObject("level").getIntValue("current")).append('(').append(statistics.getJSONObject("level").getIntValue("progress")).append("%))").append('\n');
         // PC:2.01w TTH:743.52w
-
+        sb.append("PC:");
+        int PC = statistics.getIntValue("play_count");
+        if (PC>10_000) {
+            sb.append((PC / 100) / 100D).append('w');
+        }else {
+            sb.append(PC);
+        }
+        sb.append(" TTH:");
+        int TTH = statistics.getIntValue("total_hits");
+        if (TTH>10_000) {
+            sb.append((TTH / 100) / 100D).append('w');
+        }else {
+            sb.append(TTH);
+        }
+        sb.append('\n');
+        // PT:24d2h7m ACC:98.16%
+        sb.append("PT:36D ACC:98.42%").append('\n');
+        // ♡:320 kds:245 SVIP2
+        sb.append("♡:203 kds:0").append('\n');
         from.sendMessage(sb.toString());
     }
 }

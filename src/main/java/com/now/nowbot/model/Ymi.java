@@ -75,7 +75,7 @@ public class Ymi {
             sb.append("PC:").append(play_count).append(' ');
         }
 
-        if (total_hits>100000000){
+        if (total_hits>1_0000_0000){
             sb.append("TTH:").append(String.format("%02d",total_hits/100000000)).append("e").append('\n');
         }else if(total_hits>10000){
             sb.append("TTH:").append(String.format("%02d",total_hits/10000)).append("w").append('\n');
