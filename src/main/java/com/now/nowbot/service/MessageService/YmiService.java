@@ -39,72 +39,79 @@ public class YmiService implements MessageService{
         if (at != null){
             user = BindingUtil.readUser(at.getTarget());
         }else {
-            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+            if (name != null && !name.trim().equals("")){
                 id = osuGetService.getOsuId(matcher.group("name").trim());
             }else {
                 user = BindingUtil.readUser(event.getSender().getId());
             }
         }
-        var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
-        switch (mode){
-            case"null":
-            case"osu":
-            case"o":
-            case"0":{
-                if (user != null){
-                    date = getdate(user,"osu");
-                }else {
-                    date = getdate(id,"osu");
+        var mode = matcher.group("mode");
+        if (mode == null){
+            mode = "osu";
+        }
+        {
+            mode = mode.toLowerCase();
+            switch (mode) {
+                default:
+                case "osu":
+                case "o":
+                case "0": {
+                    if (user != null) {
+                        date = osuGetService.getPlayerOsuInfo(user);
+                    } else {
+                        date = osuGetService.getPlayerOsuInfo(id);
+                    }
+                    mode = "osu";
                 }
-                mode = "osu";
-            } break;
-            case"taiko":
-            case"t":
-            case"1":{
-                if (user != null){
-                    date = getdate(user,"taiko");
-                }else {
-                    date = getdate(id,"taiko");
+                break;
+                case "taiko":
+                case "t":
+                case "1": {
+                    if (user != null) {
+                        date = osuGetService.getPlayerTaikoInfo(user);
+                    } else {
+                        date = osuGetService.getPlayerTaikoInfo(id);
+                    }
+                    mode = "taiko";
                 }
-                mode = "taiko";
-            } break;
-            case"catch":
-            case"c":
-            case"2":{
-                if (user != null){
-                    date = getdate(user,"fruits");
-                }else {
-                    date = getdate(id,"fruits");
+                break;
+                case "catch":
+                case "c":
+                case "2": {
+                    if (user != null) {
+                        date = osuGetService.getPlayerCatchInfo(user);
+                    } else {
+                        date = osuGetService.getPlayerCatchInfo(id);
+                    }
+                    mode = "catch";
                 }
-                mode = "fruits";
-            } break;
-            case"mania":
-            case"m":
-            case"3":{
-                if (user != null){
-                    date = getdate(user,"mania");
-                }else {
-                    date = getdate(id,"mania");
+                break;
+                case "mania":
+                case "m":
+                case "3": {
+                    if (user != null) {
+                        date = osuGetService.getPlayerManiaInfo(user);
+                    } else {
+                        date = osuGetService.getPlayerManiaInfo(id);
+                    }
+                    mode = "mania";
                 }
-                mode = "fruits";
-            }break;
-            default:{
-                throw new TipsException("如果您...传了这些完全没法用的参数...这么说...您也有泽任吧...！");
+                break;
             }
         }
         if(date.size()==0){
             throw new TipsException("没有查询到您的信息呢");
         }
-        var d = Ymi.getInstance(date);
-        from.sendMessage(d.getOut());
-        if (user != null){
-            log.info(starService.ScoreToStar(user, date));
-        }
-    }
-    private JSONObject getdate(BinUser user, String mode){
-        return osuGetService.getPlayerInfo(user, mode);
-    }
-    private JSONObject getdate(int id, String mode){
-        return osuGetService.getPlayerInfo(id, mode);
+        StringBuffer sb = new StringBuffer();
+        var statistics = date.getJSONObject("statistics");
+        // Muziyami(osu):10086PP
+        sb.append(date.getString("username")).append('(').append(mode).append(')').append(':').append(statistics.getFloatValue("pp")).append("PP").append('\n');
+        // #114514 CN#1919 (LV.100(32%))
+        sb.append('#').append(statistics.getIntValue("global_rank")).append(' ')
+                .append(date.getJSONObject("country").getString("code")).append('#').append(statistics.getIntValue("country_rank")).append(' ')
+                .append("(LV.").append(statistics.getJSONObject("level").getIntValue("current")).append('(').append(statistics.getJSONObject("level").getIntValue("progress")).append("%))").append('\n');
+        // PC:2.01w TTH:743.52w
+
+        from.sendMessage(sb.toString());
     }
 }
