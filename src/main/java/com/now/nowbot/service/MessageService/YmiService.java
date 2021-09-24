@@ -141,9 +141,10 @@ public class YmiService implements MessageService{
         }
         sb.append(" ACC:").append(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
-//        sb.append("♡:203 kds:0").append('\n');
+        sb.append("♡: ").append(date.getIntValue("follower_count"))
+                .append(" kds:").append(date.getJSONObject("kudosu").getIntValue("total") + date.getJSONObject("kudosu").getIntValue("available")).append('\n');
         // SS:26(107) S:157(844) A:1083
-        sb.append("ss:").append(statistics.getJSONObject("grade_counts").getIntValue("ss"))
+        sb.append("SS:").append(statistics.getJSONObject("grade_counts").getIntValue("ss"))
                 .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("ssh")).append(')')
                 .append(" S:").append(statistics.getJSONObject("grade_counts").getIntValue("s"))
                 .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("sh")).append(')')
