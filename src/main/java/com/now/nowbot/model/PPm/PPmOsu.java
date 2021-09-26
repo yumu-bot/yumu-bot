@@ -205,13 +205,18 @@ public class PPmOsu implements PPmObject {
             eng = Math.pow(eng, 0.4D);
             eng = check(eng, 0, 1);
         }
-        //1.6 实力STH strength sth
+        //3.6 实力STHv2.1 strengthv2.1 sthv2.1
 
         {
+            double PPTTH = 0.6D * Math.log(ppv0 * lengv0 + 1) + 0.3D * Math.log(ppv45 * lengv45 + 1) + 0.1D * Math.log(ppv90 * lengv90 + 1);
+            if(PPTTH > 11.5) PPTTH = 11.5;
+            else if(PPTTH < 8.5) PPTTH = 8.5;
+
             double HPS = 1D*this.thit/this.ptime;
-            if(HPS>4.5) HPS =  4.5;
-            else if(HPS<2.5) HPS =  2.5;
-            sth = Math.pow((HPS-2.5)/2,0.2);
+            if(HPS>4.5) HPS = 4.5;
+            else if(HPS<2.5) HPS = 2.5;
+
+            sth = 0.6D * Math.pow((PPTTH - 8.5)/3,0.2) + 0.4D * Math.pow((HPS-2.5)/2,0.2);
             sth = check(sth, 0, 1);
         }
         ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
