@@ -66,12 +66,12 @@ public class SkiaUtil {
                 HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
                 httpConn.connect();
                 InputStream cin = httpConn.getInputStream();
-                byte[] data = cin.readAllBytes();
+                byte[] date = cin.readAllBytes();
                 cin.close();
                 Files.createFile(pt);
-                Files.write(pt,data);
+                Files.write(pt,date);
                 System.gc();
-                return Image.makeFromEncoded(data);
+                return Image.makeFromEncoded(date);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,10 +113,10 @@ public class SkiaUtil {
     public static Image fileToImage(String path) throws IOException {
         File f = new File(path);
         long ln = f.length();
-        byte[] data = new byte[Math.toIntExact(ln)];
+        byte[] date = new byte[Math.toIntExact(ln)];
         FileInputStream in = new FileInputStream(f);
-        in.read(data);
-        return Image.makeFromEncoded(data);
+        in.read(date);
+        return Image.makeFromEncoded(date);
     }
     public static Image getRRectImage( Image image, float w, float h, float r){
         Image img;

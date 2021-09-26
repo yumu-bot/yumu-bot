@@ -33,25 +33,25 @@ public class msgController {
     //@RequestParam(name = "code") String code, @RequestParam(name = "state") String state
     public Object request(HttpServletRequest request) {
         log.info("{}:来源{} 访问绑定端口\n{}", format.format(LocalDateTime.now()), request.getRemoteAddr(), request.getRemoteUser());
-        String[] data = new String[0];
+        String[] date = new String[0];
         String code = null;
         try {
-            data = request.getParameter("state").split(" ");
+            date = request.getParameter("state").split(" ");
             code = request.getParameter("code");
         } catch (Exception e) {
             log.error("访问缺少必要参数", e);
             return "非法的访问,";
         }
-        return saveBind(code, data);
+        return saveBind(code, date);
     }
 
-    public String saveBind(String code, String[] data) {
+    public String saveBind(String code, String[] date) {
         StringBuffer sb = new StringBuffer();
-        if (data.length == 2) {
+        if (date.length == 2) {
 
             long key = 0;
             try {
-                key = Long.parseLong(data[1]);
+                key = Long.parseLong(date[1]);
             } catch (NumberFormatException e) {
                 sb.append("非法的访问:参数异常")
                         .append(e.getMessage());
@@ -66,13 +66,13 @@ public class msgController {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
                         sb.append("怎么才来,超时了哦");
                     }
-                    BinUser bd = new BinUser(Long.parseLong(data[0]), code);
+                    BinUser bd = new BinUser(Long.parseLong(date[0]), code);
                     osuGetService.getToken(bd);
                     osuGetService.getPlayerOsuInfo(bd);
                     BindingUtil.writeUser(bd);
                     BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
                     msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                    BindService.BIND_MSG_MAP.remove(Long.valueOf(data[1]));
+                    BindService.BIND_MSG_MAP.remove(Long.valueOf(date[1]));
                     sb.append("成功绑定:")
                             .append(bd.getQq())
                             .append('>')
@@ -83,7 +83,7 @@ public class msgController {
                             .append(e.getLocalizedMessage());
                 }
             } else {
-                long secend = Long.parseLong(data[1]) / 1000;
+                long secend = Long.parseLong(date[1]) / 1000;
                 log.info("超时已被清理的绑定器\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
                 sb.append("绑定链接已失效,请重新绑定,请勿重复绑定!请勿重复绑定!请勿重复绑定!");
             }

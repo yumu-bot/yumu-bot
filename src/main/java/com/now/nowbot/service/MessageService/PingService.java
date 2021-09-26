@@ -16,7 +16,7 @@ public class PingService implements MessageService{
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
-        byte[] data = null;
+        byte[] date = null;
         try (Surface surface = Surface.makeRasterN32Premul(500,180)){
             Canvas canvas = surface.getCanvas();
             Typeface face = SkiaUtil.getTorusRegular();
@@ -26,9 +26,9 @@ public class PingService implements MessageService{
             TextLine t = TextLine.make("PONG!",x);
             canvas.drawTextLine(t,(500-t.getWidth())/2, t.getHeight(),new Paint().setARGB(255,192,219,288));
 
-            data = surface.makeImageSnapshot().encodeToData().getBytes();
+            date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (data != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data), from)).recallIn(2000);
+        if (date != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date), from)).recallIn(2000);
 
     }
 }

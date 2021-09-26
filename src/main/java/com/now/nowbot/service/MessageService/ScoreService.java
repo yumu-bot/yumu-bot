@@ -21,7 +21,5 @@ public class ScoreService implements MessageService{
         var user = BindingUtil.readUser(event.getSender().getId());
         int bid = Integer.parseInt(matcher.group("bid"));
         JSONObject score = osuGetService.getScore(bid, user);
-        var d = Ymp.getInstance(score);
-        from.sendMessage(d.getOut());
     }
 }
