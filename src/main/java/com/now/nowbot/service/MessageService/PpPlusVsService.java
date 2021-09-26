@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 
 @Service("ppvs")
 public class PpPlusVsService implements MessageService{
+    static final Paint PAINT_ANTIALIAS =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
     @Autowired
     OsuGetService osuGetService;
     @Autowired
@@ -234,7 +235,7 @@ public class PpPlusVsService implements MessageService{
             head = ss.makeImageSnapshot();
         }
         canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
-        canvas.drawImage(head,0,0);
+        canvas.drawImage(head,0,0, PAINT_ANTIALIAS);
         canvas.restore();
     }
     static void drowRhead(Canvas canvas, Image head){
@@ -247,7 +248,7 @@ public class PpPlusVsService implements MessageService{
             head = ss.makeImageSnapshot();
         }
         canvas.clipRRect(RRect.makeXYWH(0,0,300,300,40));
-        canvas.drawImage(head,0,0);
+        canvas.drawImage(head,0,0, PAINT_ANTIALIAS);
         canvas.restore();
     }
 }
