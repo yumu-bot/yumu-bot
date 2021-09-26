@@ -10,10 +10,13 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
@@ -21,6 +24,8 @@ import java.util.regex.Matcher;
 @Service("ymi")
 public class YmiService implements MessageService{
     private static final Logger log = LoggerFactory.getLogger(YmiService.class);
+    @Autowired
+    RestTemplate template;
 
     @Autowired
     OsuGetService osuGetService;
@@ -165,6 +170,7 @@ public class YmiService implements MessageService{
                 sb.append("interests").append(interests.trim()).append(' ');
             }
         }
+//        Image img = from.uploadImage(ExternalResource.create());
         from.sendMessage(sb.toString());
     }
 }
