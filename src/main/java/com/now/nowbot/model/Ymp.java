@@ -59,10 +59,10 @@ public class Ymp {
         map_length = date.getJSONObject("beatmap").getIntValue("total_length");
         int starmun = (int) Math.floor(difficulty);
         star = "";
-        for (int i = 0; i < starmun; i++) {
+        for (int i = 0; i < starmun && i < 10; i++) {
             star += '★';
         }
-        if (0.5<(difficulty-starmun)){
+        if (0.5<(difficulty-starmun) && starmun < 10){
             star += '☆';
         }
 

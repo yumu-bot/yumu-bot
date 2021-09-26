@@ -26,8 +26,8 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("setu")
-public class setuService implements MessageService{
-    static final Logger log = LoggerFactory.getLogger(setuService.class);
+public class SetuService implements MessageService{
+    static final Logger log = LoggerFactory.getLogger(SetuService.class);
     Long time = 0L;
     @Autowired
     RestTemplate template;

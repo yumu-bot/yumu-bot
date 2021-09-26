@@ -5,9 +5,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
-import kotlin.coroutines.Continuation;
 import net.mamoe.mirai.contact.AudioSupported;
-import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Audio;
 import net.mamoe.mirai.utils.ExternalResource;
@@ -22,8 +20,8 @@ import java.net.URL;
 import java.util.regex.Matcher;
 
 @Service("song")
-public class songService implements MessageService{
-    private static final Logger log = LoggerFactory.getLogger(songService.class);
+public class SongService implements MessageService{
+    private static final Logger log = LoggerFactory.getLogger(SongService.class);
     @Autowired
         StarService starService;
     @Autowired

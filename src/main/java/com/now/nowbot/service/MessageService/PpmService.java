@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("ppm")
-public class ppmService implements MessageService {
+public class PpmService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
 

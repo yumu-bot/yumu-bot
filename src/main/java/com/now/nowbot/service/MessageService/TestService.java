@@ -128,6 +128,7 @@ public class TestService implements MessageService {
                         .append(userinfo.getXa()).append(' ')
                         .append(userinfo.getXb()).append(' ')
                         .append(userinfo.getXc()).append(' ')
+                        .append(userinfo.getXd()).append(' ')
                         .append(userinfo.getPpv0()).append(' ')
                         .append(userinfo.getAccv0()).append(' ')
                         .append(userinfo.getLengv0()).append(' ')
@@ -153,6 +154,7 @@ public class TestService implements MessageService {
 //                sb.append("a数:").append(' ').append(userinfo.getXa()).append('\n');
 //                sb.append("b数:").append(' ').append(userinfo.getXb()).append('\n');
 //                sb.append("c数:").append(' ').append(userinfo.getXc()).append('\n');
+//                sb.append("d数:").append(' ').append(userinfo.getXd()).append('\n');
 //                sb.append("前10:\n");
 //                sb.append("pp").append(' ').append(userinfo.getPpv0()).append('\n');
 //                sb.append("acc").append(' ').append(userinfo.getAccv0()).append('\n');

@@ -10,16 +10,24 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
 
 @Service("ymp")
 public class YmpService implements MessageService{
     private static final Logger log = LoggerFactory.getLogger(YmpService.class);
+
+    @Autowired
+    RestTemplate template;
 
     @Autowired
     OsuGetService osuGetService;
@@ -98,7 +106,10 @@ public class YmpService implements MessageService{
         }
         JSONObject date = dates.getJSONObject(0);
         var d = Ymp.getInstance(date);
-        from.sendMessage(d.getOut());
+        HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
+        var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
+        Image img = from.uploadImage(ExternalResource.create(bytes));
+        from.sendMessage(img.plus(d.getOut()));
         if (user != null){
             log.info(starService.ScoreToStar(user, date));
         }

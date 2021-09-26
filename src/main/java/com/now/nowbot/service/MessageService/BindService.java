@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
 @Service("bind")
-public class bindService implements MessageService {
+public class BindService implements MessageService {
     public static final Map<Long, MessageReceipt> BIND_MSG_MAP = new ConcurrentHashMap<>();
     @Autowired
     OsuGetService osuGetService;
