@@ -36,11 +36,10 @@ public class SetuService implements MessageService{
     StarService starService;
 
     @Override
-    @CheckPermission(openBG = true)
+    @CheckPermission(friend = false)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-        boolean issuper = Permission.superUser.contains(event.getSender().getId());
         if (matcher.group("code") != null){
             from.sendMessage("指令已经更新到!ymse/!ymsetu,此指令将于'2021-10-07T000:00:00+00:00'undefined删除");
         }
@@ -60,7 +59,7 @@ public class SetuService implements MessageService{
         BinUser binUser = BindingUtil.readUser(qq);
 
         StarService.Score score = starService.getScore(binUser);
-        if(issuper||starService.delStart(score,5)){
+        if(starService.delStart(score,5)){
 //            SendmsgUtil.send(from,"稍等片刻");
             from.sendMessage("稍等片刻");
         }else {
