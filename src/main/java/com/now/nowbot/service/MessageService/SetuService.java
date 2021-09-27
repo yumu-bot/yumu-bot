@@ -40,9 +40,10 @@ public class SetuService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-//        boolean issuper = Permission.superUser.contains(event.getSender().getId());
-        boolean issuper = false;
-
+        boolean issuper = Permission.superUser.contains(event.getSender().getId());
+        if (matcher.group("code") != null){
+            from.sendMessage("指令已经更新到!ymse/!ymsetu,此指令将于'2021-10-07T000:00:00+00:00'undefined删除");
+        }
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
                 byte[] img = new byte[0];
