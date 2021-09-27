@@ -11,7 +11,7 @@ public enum Instruction {
     BIND("bind", "!ymbind 直接绑定", "^[!！]\\s?(?i)ymbind$"),
     BPHT("bpht", "!ymbpht 查询bp", "^[!！]\\s?(?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     CATPANEL("cpanel", null, "^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"),
-    HELP("help", "!ymh/!ymhelp", "^[!！](?i)ym((help)|h)"),
+    HELP("help", "!ymh/!ymhelp", "^[!！](?i)(ym)?((help)|h)"),
     PAGE("page", null, "^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"),
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
