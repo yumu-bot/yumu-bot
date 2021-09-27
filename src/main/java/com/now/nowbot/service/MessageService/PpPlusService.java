@@ -90,9 +90,10 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(960,440);
-            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5, hex1[0], hex1[1], hex1[2], hex1[3], hex1[4], hex1[5]);
-            canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
-            canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            var paths = SkiaUtil.creat6(390, 20, hex1);
+            canvas.drawPath(paths[0],new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(paths[0],new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(paths[1],new Paint().setARGB(255,42,98,183).setStroke(false).setStrokeWidth(5));
             TextLine ppm$ = TextLine.make("PP+",fontA);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();
@@ -203,15 +204,17 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(300,325);
-            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f), bg1);
-            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), bg1);
-            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f), bg1);
-            canvas.drawPath(SkiaUtil.creat6(250, 0, 1, 1, 1, 1, 1, 1), bg1);
 
-            Path pt = SkiaUtil.creat6(250, 3, date[0], date[1], date[2], date[3], date[4], date[5]);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f)[0], bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)[0], bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f, 0.75f)[0], bg1);
+            canvas.drawPath(SkiaUtil.creat6(250, 0, 1, 1, 1, 1, 1, 1)[0], bg1);
 
-            canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
-            canvas.drawPath(pt, new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
+            Path[] pt = SkiaUtil.creat6(250, 3, date);
+
+            canvas.drawPath(pt[0], new Paint().setStrokeWidth(3).setStroke(true).setARGB(255,240,167,50));
+            canvas.drawPath(pt[0], new Paint().setStrokeWidth(3).setStroke(false).setARGB(80, 240, 167, 50));
+            canvas.drawPath(pt[1], new Paint().setStrokeWidth(3).setStroke(false).setARGB(255,240,167,50));
 
             canvas.drawRRect(RRect.makeXYWH(-150,-226.5f,60,25,5),bg2);
             canvas.drawString("jump",-144,-208f,smileFont,wp);

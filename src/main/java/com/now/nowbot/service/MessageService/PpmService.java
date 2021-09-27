@@ -180,9 +180,10 @@ public class PpmService implements MessageService {
                     Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
             };
             canvas.translate(960,440);
-            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
-            canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
-            canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            org.jetbrains.skija.Path pt1[] = SkiaUtil.creat6(390, 5,(float) hex1[0],(float)hex1[1],(float)hex1[2],(float)hex1[3],(float)hex1[4],(float)hex1[5]);
+            canvas.drawPath(pt1[0],new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt1[0],new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt1[1],new Paint().setARGB(255,42,98,183).setStroke(false).setStrokeWidth(5));
             TextLine ppm$ = TextLine.make("PP-",torus_2);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();

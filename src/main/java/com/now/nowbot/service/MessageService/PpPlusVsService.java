@@ -112,12 +112,14 @@ public class PpPlusVsService implements MessageService{
 
             canvas.save();
             canvas.translate(960,440);
-            org.jetbrains.skija.Path pt1 = SkiaUtil.creat6(390, 5, hex1[0], hex1[1], hex1[2], hex1[3], hex1[4], hex1[5]);
-            org.jetbrains.skija.Path pt2 = SkiaUtil.creat6(390, 5, hex2[0], hex2[1], hex2[2], hex2[3], hex2[4], hex2[5]);
-            canvas.drawPath(pt2,new Paint().setARGB(255,223,0,36).setStroke(true).setStrokeWidth(5));
-            canvas.drawPath(pt2,new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
-            canvas.drawPath(pt1,new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
-            canvas.drawPath(pt1,new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            org.jetbrains.skija.Path[] pt1 = SkiaUtil.creat6(390, 5, hex1[0], hex1[1], hex1[2], hex1[3], hex1[4], hex1[5]);
+            org.jetbrains.skija.Path[] pt2 = SkiaUtil.creat6(390, 5, hex2[0], hex2[1], hex2[2], hex2[3], hex2[4], hex2[5]);
+            canvas.drawPath(pt2[0],new Paint().setARGB(255,223,0,36).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt2[0],new Paint().setARGB(102,223,0,36).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt2[1],new Paint().setARGB(255,223,0,36).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt1[0],new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
+            canvas.drawPath(pt1[0],new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
+            canvas.drawPath(pt1[1],new Paint().setARGB(255,42,98,183).setStroke(false).setStrokeWidth(5));
             TextLine ppm$ = TextLine.make("PP+",fontA);
             canvas.drawTextLine(ppm$, -0.5f*ppm$.getWidth(), 0.5f*ppm$.getCapHeight(),white);
             canvas.restore();

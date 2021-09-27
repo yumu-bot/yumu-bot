@@ -246,49 +246,45 @@ public class SkiaUtil {
         int s2 = A + x2-'A';
         return "https://osu.ppy.sh/assets/images/flags/"+Integer.toHexString(s1)+"-"+Integer.toHexString(s2)+".svg";
     }
-    public static Path creat6(float size, float lineWidth, float p1, float p2, float p3, float p4, float p5, float p6){
-        var p = new Path();
-        if(p1>1) p1 = 1;
-        if(p2>1) p2 = 1;
-        if(p3>1) p3 = 1;
-        if(p4>1) p4 = 1;
-        if(p5>1) p5 = 1;
-        if(p6>1) p6 = 1;
-        if(p6<0) p6 = 0;
-        if(p5<0) p5 = 0;
-        if(p4<0) p4 = 0;
-        if(p3<0) p3 = 0;
-        if(p2<0) p2 = 0;
-        if(p1<0) p1 = 0;
+    public static Path[] creat6(float size, float circle_width, float... point){
+        if (point.length != 6)return null;
+        var path = new org.jetbrains.skija.Path();
+        for (int i = 0; i < 6; i++) {
+            if (point[i]<0) point[i] = 0;
+            if (point[i]>1) point[i] = 1;
+        }
         float[]ponX = new float[6];
         float[]ponY = new float[6];
-        ponX[0] = -size*p1*0.5f;
-        ponY[0] = -size*p1*0.866f;
-        ponX[1] = size*p2*0.5f;
-        ponY[1] = -size*p2*0.866f;
-        ponX[2] = size*p3;
+        ponX[0] = -size*point[0]*0.5f;
+        ponY[0] = -size*point[0]*0.866f;
+        ponX[1] = size*point[1]*0.5f;
+        ponY[1] = -size*point[1]*0.866f;
+        ponX[2] = size*point[2];
         ponY[2] = 0 ;
-        ponX[3] = size*p4*0.5f;
-        ponY[3] = size*p4*0.866f;
-        ponX[4] = -size*p5*0.5f;
-        ponY[4] = size*p5*0.866f;
-        ponX[5] = -size*p6;
+        ponX[3] = size*point[3]*0.5f;
+        ponY[3] = size*point[3]*0.866f;
+        ponX[4] = -size*point[4]*0.5f;
+        ponY[4] = size*point[4]*0.866f;
+        ponX[5] = -size*point[5];
         ponY[5] = 0 ;
-        p.moveTo(ponX[0],ponY[0]);
-        p.lineTo(ponX[1],ponY[1]);
-        p.lineTo(ponX[2],ponY[2]);
-        p.lineTo(ponX[3],ponY[3]);
-        p.lineTo(ponX[4],ponY[4]);
-        p.lineTo(ponX[5],ponY[5]);
-        p.closePath();
-        p.addCircle(ponX[0],ponY[0],lineWidth);
-        p.addCircle(ponX[1],ponY[1],lineWidth);
-        p.addCircle(ponX[2],ponY[2],lineWidth);
-        p.addCircle(ponX[3],ponY[3],lineWidth);
-        p.addCircle(ponX[4],ponY[4],lineWidth);
-        p.addCircle(ponX[5],ponY[5],lineWidth);
-
-        return p;
+        path.moveTo(ponX[0],ponY[0]);
+        path.lineTo(ponX[1],ponY[1]);
+        path.lineTo(ponX[2],ponY[2]);
+        path.lineTo(ponX[3],ponY[3]);
+        path.lineTo(ponX[4],ponY[4]);
+        path.lineTo(ponX[5],ponY[5]);
+        path.closePath();
+        if (circle_width == 0){
+            return new Path[]{path};
+        }
+        Path path1 = new Path();
+        path1.addCircle(ponX[0],ponY[0],circle_width);
+        path1.addCircle(ponX[1],ponY[1],circle_width);
+        path1.addCircle(ponX[2],ponY[2],circle_width);
+        path1.addCircle(ponX[3],ponY[3],circle_width);
+        path1.addCircle(ponX[4],ponY[4],circle_width);
+        path1.addCircle(ponX[5],ponY[5],circle_width);
+        return new Path[]{path,path1};
     }
     public static int getStartColot(float star) {
         var starts = new float[]{1.5f,2f,2.5f,3.375f,4.625f,5.875f,7,8};
@@ -324,4 +320,20 @@ public class SkiaUtil {
 
         return (0xFF) << 24|(caa[0]<<16)|(caa[1]<<8)|(caa[2]);
     }
+    public static Color[] getMainColor(Image image) {
+        Bitmap bitmap = Bitmap.makeFromImage(image);
+        int x_length = bitmap.getWidth();
+        int y_length = bitmap.getHeight();
+        if (x_length * y_length >= Integer.MAX_VALUE) return null;
+        int r,g,b;
+        for (int x_index = 0; x_index < x_length; x_index++) {
+            for (int y_index = 0; y_index < y_index; y_index++) {
+                r = Color.getR(bitmap.getColor(x_index,y_index));
+                g = Color.getG(bitmap.getColor(x_index,y_index));
+                b = Color.getB(bitmap.getColor(x_index,y_index));
+            }
+        }
+        return new Color[3];
+    }
+
 }
