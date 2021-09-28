@@ -6,8 +6,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "pp_plus")
+//@Entity
+//@Table(name = "pp_plus")
 public class PPPLite {
     @Id
     @GeneratedValue

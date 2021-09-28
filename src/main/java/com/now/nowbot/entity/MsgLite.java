@@ -7,8 +7,8 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
-@Entity
-@Table(name = "qq_message")//主要是可能会有其他消息的记录,先设定表名为qq_message
+//@Entity
+//@Table(name = "qq_message")//主要是可能会有其他消息的记录,先设定表名为qq_message
 public class MsgLite{
     @Id
     @GeneratedValue

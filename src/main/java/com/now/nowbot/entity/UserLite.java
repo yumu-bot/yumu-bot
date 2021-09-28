@@ -3,8 +3,8 @@ package com.now.nowbot.entity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "user")
+//@Entity
+//@Table(name = "user")
 public class UserLite {
     @Id
     @GeneratedValue
