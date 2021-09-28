@@ -141,8 +141,8 @@ public class TestService implements MessageService {
                         .append(userinfo.getLengv90()).append(' ');
 
                 grp.sendMessage(sb.toString());
+                return;
             }
-            return;
         }
         var pt = Pattern.compile("^[!！]roll(\\s+(?<num>[0-9]{1,5}))?");
         var matcher = pt.matcher(msg.contentToString());
