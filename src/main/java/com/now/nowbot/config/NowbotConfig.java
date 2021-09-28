@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
@@ -142,7 +143,7 @@ public class NowbotConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        var template = new RestTemplate();
+        var template = new RestTemplate(new OkHttp3ClientHttpRequestFactory());
 
         template.setErrorHandler(new DefaultResponseErrorHandler(){
             @Override
