@@ -41,8 +41,8 @@ public class MessageListener extends SimpleListenerHost {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-    @Autowired
-    MessageMapper messageMapper;
+//    @Autowired
+//    MessageMapper messageMapper;
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /***
@@ -88,7 +88,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        messageMapper.save(new MsgLite(event.getMessage()));
+//        messageMapper.save(new MsgLite(event.getMessage()));
         for(var ins : Instruction.values()){
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
