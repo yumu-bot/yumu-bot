@@ -4,8 +4,8 @@ import com.now.nowbot.config.Permission;
 
 import javax.persistence.*;
 
-@Entity
-@Table(name = "permission")
+//@Entity
+//@Table(name = "permission")
 public class PermissionLite {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
