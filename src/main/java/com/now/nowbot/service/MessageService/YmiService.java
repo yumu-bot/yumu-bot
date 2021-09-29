@@ -163,11 +163,11 @@ public class YmiService implements MessageService{
         if ((occupation != null && !occupation.trim().equals("")) || (discord != null && !discord.trim().equals("")) || (interests != null && !interests.trim().equals(""))){
             sb.append('\n');
             if (occupation != null && !occupation.trim().equals("")) {
-                sb.append("occupation:").append(occupation.trim()).append(' ');
+                sb.append("occupation:").append(occupation.trim()).append('\n');
             }if (discord != null && !discord.trim().equals("")) {
-                sb.append("discord").append(discord.trim()).append(' ');
+                sb.append("discord").append(discord.trim()).append('\n');
             }if (interests != null && !interests.trim().equals("")) {
-                sb.append("interests").append(interests.trim()).append(' ');
+                sb.append("interests").append(interests.trim()).append('\n');
             }
         }
 //        Image img = from.uploadImage(ExternalResource.create());
