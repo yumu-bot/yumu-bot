@@ -148,9 +148,9 @@ public class TestService implements MessageService {
         var matcher = pt.matcher(msg.contentToString());
         if (matcher.find()){
             if (matcher.group("num") != null){
-                event.getSubject().sendMessage(String.valueOf(1 + (System.currentTimeMillis() % Integer.parseInt(matcher.group("num")))));
+                event.getSubject().sendMessage(String.valueOf(1 + (int)(Math.random() * Integer.parseInt(matcher.group("num")))));
             }else {
-                event.getSubject().sendMessage(String.valueOf(1 + (System.currentTimeMillis() % 100)));
+                event.getSubject().sendMessage(String.valueOf(1 +(int)(Math.random() * 100)));
             }
         }
     }
