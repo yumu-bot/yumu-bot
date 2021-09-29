@@ -54,7 +54,7 @@ public class RunTimeService {
         var nm = m.getNonHeapMemoryUsage();
         var t = ManagementFactory.getThreadMXBean();
         var z = ManagementFactory.getMemoryPoolMXBeans();
-        log.info("非堆 已申请 {}M 已使用 {}M ",
+        log.info("方法区 已申请 {}M 已使用 {}M ",
                 nm.getCommitted()/1024/1024,
                 nm.getUsed()/1024/1024
         );
