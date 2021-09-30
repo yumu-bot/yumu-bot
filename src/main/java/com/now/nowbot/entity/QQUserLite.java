@@ -3,9 +3,9 @@ package com.now.nowbot.entity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-//@Entity
-//@Table(name = "user")
-public class UserLite {
+@Entity
+@Table(name = "user")
+public class QQUserLite {
     @Id
     @GeneratedValue
     private Long id;

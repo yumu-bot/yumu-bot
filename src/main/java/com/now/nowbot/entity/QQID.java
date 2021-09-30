@@ -2,8 +2,8 @@ package com.now.nowbot.entity;
 
 import javax.persistence.*;
 
-//@Entity
-//@Table(catalog = "qq_id")
+@Entity
+@Table(catalog = "qq_id")
 public class QQID {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
