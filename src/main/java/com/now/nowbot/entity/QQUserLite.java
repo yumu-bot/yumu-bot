@@ -28,4 +28,76 @@ public class QQUserLite {
     //主模式
     @Column(name = "play_mode")
     private String playMode;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getOsuId() {
+        return osuId;
+    }
+
+    public void setOsuId(Long osuId) {
+        this.osuId = osuId;
+    }
+
+    public String getOsuName() {
+        return osuName;
+    }
+
+    public void setOsuName(String osuName) {
+        this.osuName = osuName;
+    }
+
+    public Long getQq() {
+        return qq;
+    }
+
+    public void setQq(Long qq) {
+        this.qq = qq;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public Long getTime() {
+        return time;
+    }
+
+    public void setTime(Long time) {
+        this.time = time;
+    }
+
+    public LocalDateTime getJoinDate() {
+        return joinDate;
+    }
+
+    public void setJoinDate(LocalDateTime joinDate) {
+        this.joinDate = joinDate;
+    }
+
+    public String getPlayMode() {
+        return playMode;
+    }
+
+    public void setPlayMode(String playMode) {
+        this.playMode = playMode;
+    }
 }

@@ -221,6 +221,14 @@ public class PPmOsu implements PPmObject {
         }
         ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
         san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
+        //san = rsan
+        if (san < 1){
+            san = 120 - 20*san;
+        }else if (san < 5){
+            san = 110 - 10*san;
+        }else {
+            san = 300/san;
+        }
     }
 
     @Override

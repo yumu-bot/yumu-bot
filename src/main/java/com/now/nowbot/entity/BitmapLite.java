@@ -11,4 +11,20 @@ public class BitmapLite {
 
     @Column(name = "map_id")
     Integer MapSetId;
+
+    public Integer getBitmapID() {
+        return bitmapID;
+    }
+
+    public void setBitmapID(Integer bitmapID) {
+        this.bitmapID = bitmapID;
+    }
+
+    public Integer getMapSetId() {
+        return MapSetId;
+    }
+
+    public void setMapSetId(Integer mapSetId) {
+        MapSetId = mapSetId;
+    }
 }

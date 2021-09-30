@@ -6,8 +6,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "osu")
+//@Entity
+//@Table(name = "osu")
 public class OsuUserLite {
     @Id
     @Column(name = "id")
