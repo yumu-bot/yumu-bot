@@ -17,17 +17,97 @@ public class PPPLite {
     //记录时间
     private LocalDateTime date;
 
-    double Total;
+    private double Total;
 
-    double Junp;
+    private double Junp;
 
-    double Flow;
+    private double Flow;
 
-    double Acc;
+    private double Acc;
 
-    double Sta;
+    private double Sta;
 
-    double Spd;
+    private double Spd;
 
-    double Pre;
+    private double Pre;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
+
+    public double getTotal() {
+        return Total;
+    }
+
+    public void setTotal(double total) {
+        Total = total;
+    }
+
+    public double getJunp() {
+        return Junp;
+    }
+
+    public void setJunp(double junp) {
+        Junp = junp;
+    }
+
+    public double getFlow() {
+        return Flow;
+    }
+
+    public void setFlow(double flow) {
+        Flow = flow;
+    }
+
+    public double getAcc() {
+        return Acc;
+    }
+
+    public void setAcc(double acc) {
+        Acc = acc;
+    }
+
+    public double getSta() {
+        return Sta;
+    }
+
+    public void setSta(double sta) {
+        Sta = sta;
+    }
+
+    public double getSpd() {
+        return Spd;
+    }
+
+    public void setSpd(double spd) {
+        Spd = spd;
+    }
+
+    public double getPre() {
+        return Pre;
+    }
+
+    public void setPre(double pre) {
+        Pre = pre;
+    }
 }
