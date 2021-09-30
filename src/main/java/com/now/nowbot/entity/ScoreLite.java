@@ -10,6 +10,13 @@ import javax.persistence.Table;
 @Table
 public class ScoreLite {
     @Id
-    Long QQid;
+    private Long QQid;
 
+    public Long getQQid() {
+        return QQid;
+    }
+
+    public void setQQid(Long QQid) {
+        this.QQid = QQid;
+    }
 }
