@@ -30,6 +30,6 @@ public class OsuUserLite {
     int mapping_follower_count;
     // 以','分隔的列表
     String previous_usernames;
-    String comments_count; //似乎没啥用?
+    String comments_count; //评论数
 
 }
