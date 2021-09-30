@@ -12,5 +12,6 @@ public class StartLite {
     int qq;
 
     double start;
+    //上次刷新时间
     LocalDateTime lastTime;
 }
