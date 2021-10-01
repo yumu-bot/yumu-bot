@@ -21,7 +21,7 @@ public class BindService implements MessageService {
     OsuGetService osuGetService;
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, Matcher matcher){
         //将当前毫秒时间戳作为 key
         long d = System.currentTimeMillis();
         //群聊验证是否绑定

@@ -1,7 +1,13 @@
 package com.now.nowbot.model.bitmap;
 
+import com.now.nowbot.util.lzma.LZMAInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -29,7 +35,7 @@ public class Replay {
     //时间戳
     long date;
     int dataLength;
-    byte[] data;
+    List<hit> hitList;
     long scoreId;
     double tp;
 
@@ -53,8 +59,9 @@ public class Replay {
         date = readLong(bf);
         System.out.println(date);
         dataLength = bf.getInt();
-        data = new byte[dataLength];
+        var data = new byte[dataLength];
         bf.get(data, 0, dataLength);
+        hitList = hitList(data);
         scoreId = readLong(bf);
         if (bf.limit() >= 8 + bf.position()){
             tp = bf.getDouble();
@@ -104,6 +111,56 @@ public class Replay {
             map.put(time, hp);
         }
         return map;
+    }
+    private static List<hit> hitList(byte[] data){
+        var hit_list = new LinkedList<hit>();
+        try {
+            String s = new String(new LZMAInputStream(new ByteArrayInputStream(data)).readAllBytes());
+            var p = Pattern.compile("(?<time>\\d+)\\|(?<x>(\\d+)(\\.\\d+)?)\\|(?<y>(\\d+)(\\.\\d+)?)\\|(?<key>(\\d+)),");
+            var m = p.matcher(s);
+            while (m.find()){
+                long time = Long.parseLong(m.group("time"));
+                float x = Float.parseFloat(m.group("x"));
+                float y = Float.parseFloat(m.group("y"));
+                int key = Integer.parseInt(m.group("key"));
+                hit_list.addLast(new hit(time, x, y, key));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return hit_list;
+    }
+    static class hit{
+        long befTime;
+//        鼠标的X坐标（从0到512）
+        float x;
+//        鼠标的Y坐标（从0到384）
+        float y;
+        //鼠标、键盘按键的组合（M1 = 1, M2 = 2, K1 = 4, K2 = 8, 烟雾 = 16）（K1 总是与 M1 一起使用，K2 总是与 M2 一起使用。所以 1+4=5 2+8=10。）
+        int ket;
+
+        public hit(long befTime, float x, float y, int ket) {
+            this.befTime = befTime;
+            this.x = x;
+            this.y = y;
+            this.ket = ket;
+        }
+
+        public long getBefTime() {
+            return befTime;
+        }
+
+        public float getX() {
+            return x;
+        }
+
+        public float getY() {
+            return y;
+        }
+
+        public int getKet() {
+            return ket;
+        }
     }
     public static Replay readByteToRep(ByteBuffer buffer){
         return new Replay(buffer);
