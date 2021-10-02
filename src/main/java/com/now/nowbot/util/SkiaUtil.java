@@ -79,7 +79,14 @@ public class SkiaUtil {
         return null;
     }
 
-        public static Image getScaleImage(Image image, int width, int height){
+    /***
+     * 缩放图形 直接绘制建议使用 drowScaleImage
+     * @param image
+     * @param width
+     * @param height
+     * @return
+     */
+    public static Image getScaleImage(Image image, int width, int height){
         Image img = null;
         try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas().setMatrix(Matrix33.makeScale(1f * width / image.getWidth(), 1f * height / image.getHeight())).drawImage(image, 0, 0);
@@ -87,6 +94,17 @@ public class SkiaUtil {
         }
         return img;
     }
+
+    /***
+     * 绘制缩放图形
+     * @param canvas
+     * @param image
+     * @param x 被绘制的坐标
+     * @param y
+     * @param w 缩放后的高宽
+     * @param h
+     * @return
+     */
     public static Canvas drowScaleImage(Canvas canvas, Image image, float x, float y, float w, float h){
         canvas.save();
         canvas.translate(x,y);
@@ -94,6 +112,16 @@ public class SkiaUtil {
         canvas.restore();
         return canvas;
     }
+
+    /***
+     * 剪切矩形 如果直接绘制建议使用 drowCutImage
+     * @param image
+     * @param left
+     * @param top
+     * @param width
+     * @param height
+     * @return
+     */
     public static Image getCutImage(Image image, int left, int top, int width, int height){
         Image img;
         try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
@@ -102,6 +130,19 @@ public class SkiaUtil {
         }
         return img;
     }
+
+    /***
+     * 绘制裁切图形
+     * @param canvas
+     * @param image
+     * @param x 被绘制的位置(底图)
+     * @param y
+     * @param l 要绘制的图片(上层图)
+     * @param t
+     * @param width 宽
+     * @param height 高
+     * @return
+     */
     public static Canvas drowCutImage(Canvas canvas, Image image, float x,  float y, int l, int t, int width, int height){
         canvas.save();
         canvas.translate(x,y);
@@ -110,6 +151,13 @@ public class SkiaUtil {
         canvas.restore();
         return canvas;
     }
+
+    /***
+     * 读取本地图片文件
+     * @param path
+     * @return
+     * @throws IOException
+     */
     public static Image fileToImage(String path) throws IOException {
         File f = new File(path);
         long ln = f.length();
@@ -118,6 +166,15 @@ public class SkiaUtil {
         in.read(date);
         return Image.makeFromEncoded(date);
     }
+
+    /***
+     * 剪切圆角矩形 如果直接绘制建议使用 drowRRectImage
+     * @param image
+     * @param w
+     * @param h
+     * @param r
+     * @return
+     */
     public static Image getRRectImage( Image image, float w, float h, float r){
         Image img;
         try(Surface surface = Surface.makeRasterN32Premul(((int) w), ((int) h))) {
@@ -128,10 +185,31 @@ public class SkiaUtil {
         }
         return img;
     }
+
+    /***
+     * 绘制为圆角矩形(默认画笔)
+     * @param canvas
+     * @param image
+     * @param x
+     * @param y
+     * @param r
+     * @return
+     */
     public static Canvas drowRRectImage(Canvas canvas, Image image, float x, float y , float r){
         drowRRectImage(canvas,image,x,y,r,null);
         return canvas;
     }
+
+    /***
+     * 绘制为圆角矩形
+     * @param canvas
+     * @param image
+     * @param x
+     * @param y
+     * @param r
+     * @param p 指定效果(画笔
+     * @return
+     */
     public static Canvas drowRRectImage(Canvas canvas, Image image, float x, float y , float r, Paint p){
         canvas.save();
         canvas.translate(x,y);
@@ -140,6 +218,20 @@ public class SkiaUtil {
         canvas.restore();
         return canvas;
     }
+
+    /***
+     * 直接绘制为剪切的圆角矩形
+     * @param canvas
+     * @param image
+     * @param dx
+     * @param dy
+     * @param fx
+     * @param fy
+     * @param w
+     * @param h
+     * @param r 圆角半径
+     * @return
+     */
     public static Canvas drowCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r){
         drowCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r,null);
         return canvas;
@@ -152,6 +244,19 @@ public class SkiaUtil {
         canvas.restore();
         return canvas;
     }
+
+    /***
+     * 裁剪绘制图形
+     * @param canvas
+     * @param img
+     * @param dx 针对底图位置偏移x,y(被绘制的对象上)
+     * @param dy
+     * @param fx 上层图偏移x,y(要绘制的)
+     * @param fy
+     * @param width
+     * @param height
+     * @return
+     */
     public static Canvas cutImage(Canvas canvas, Image img, float dx, float dy, float fx, float fy, float width, float height){
         canvas.save();
         canvas.translate(dx,dy);
@@ -162,6 +267,19 @@ public class SkiaUtil {
         canvas.drawRect(Rect.makeLTRB(10,10,10,10),new Paint().setARGB(255,255,255,255));
         return canvas;
     }
+
+    /***
+     * 绘制svg
+     * @param canvas
+     * @param svg
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param svgPreserveAspectRatioAlign SVGPreserveAspectRatioAlign.X(MIN/MID/MAX)_YMIN(MIN/MID/MAX) x(左/中/右),y(上/中/下)对齐
+     * @param svgPreserveAspectRatioScale SVGPreserveAspectRatioScale.MEET/SLICE 保持横纵比的缩放(会有空白)/拉伸填充(会裁切)
+     * @return
+     */
     public static Canvas drowSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height, SVGPreserveAspectRatioAlign svgPreserveAspectRatioAlign, SVGPreserveAspectRatioScale svgPreserveAspectRatioScale){
         canvas.save();
         canvas.translate(x,y);
@@ -178,9 +296,27 @@ public class SkiaUtil {
         canvas.restore();
         return canvas;
     }
+
+    /***
+     * svg(默认右上角),保持横纵比缩放保留空白 绘制
+     * @param canvas
+     * @param svg
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @return
+     */
     public static Canvas drowSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height){
         return drowSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMIN_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
+
+    /***
+     * 下载svg 大概不用再这里
+     * @param path 下载url
+     * @return svg对象
+     * @throws IOException
+     */
     public static SVGDOM lodeNetWorkSVGDOM(String path) throws IOException {
         URL url = new URL(path);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -190,6 +326,16 @@ public class SkiaUtil {
         cin.close();
         return new SVGDOM(Data.makeFromBytes(svgbytes));
     }
+
+    /***
+     * 绘制模糊效果
+     * @param canvas
+     * @param x
+     * @param y
+     * @param w
+     * @param h
+     * @param radius 模糊程度 推荐10-20之间
+     */
     public static void drawBlur(Canvas canvas, int x, int y, int w, int h,  int radius) {
         try (Bitmap bitmap = new Bitmap()) {
             bitmap.allocPixels(ImageInfo.makeS32(x+w,y+h, ColorAlphaType.OPAQUE));
@@ -208,6 +354,17 @@ public class SkiaUtil {
             }
         }
     }
+
+    /***
+     * 绘制圆角模糊效果
+     * @param canvas
+     * @param x
+     * @param y
+     * @param w
+     * @param h
+     * @param radius 模糊程度 推荐10-20之间
+     * @param r 圆角半径
+     */
     public static void drawRBlur(Canvas canvas, int x, int y, int w, int h,  int radius,int r) {
         try (Bitmap bitmap = new Bitmap()) {
             bitmap.allocPixels(ImageInfo.makeS32(x+w,y+h, ColorAlphaType.OPAQUE));
@@ -226,7 +383,17 @@ public class SkiaUtil {
             }
         }
     }
+
+    /***
+     * 绘制字体阴影,也可以实现其他效果
+     * @param canvas
+     * @param x 位置
+     * @param y
+     * @param s 文字
+     * @param ts 效果
+     */
     public static void drowTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts){
+        TextStyle f = new TextStyle();
         try (ParagraphStyle ps   = new ParagraphStyle();
              ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));)
         {
@@ -238,6 +405,12 @@ public class SkiaUtil {
             }
         }
     }
+
+    /***
+     * 获取ppy 国旗svg的接口,
+     * @param ct 国家缩写
+     * @return 国旗url
+     */
     public static String getFlagUrl(String ct){
         int A =  0x1f1e6;
         char x1 = ct.charAt(0);
@@ -246,6 +419,14 @@ public class SkiaUtil {
         int s2 = A + x2-'A';
         return "https://osu.ppy.sh/assets/images/flags/"+Integer.toHexString(s1)+"-"+Integer.toHexString(s2)+".svg";
     }
+
+    /***
+     * 生成六边形路径
+     * @param size 基准大小
+     * @param circle_width 转折点大小
+     * @param point 六点数据 长度必须为6 范围[0,1]
+     * @return path[0]六边形路径   path[1]转折点路径
+     */
     public static Path[] creat6(float size, float circle_width, float... point){
         if (point.length != 6)return null;
         var path = new org.jetbrains.skija.Path();
@@ -286,6 +467,12 @@ public class SkiaUtil {
         path1.addCircle(ponX[5],ponY[5],circle_width);
         return new Path[]{path,path1};
     }
+
+    /***
+     * ppy星数->色彩 算法
+     * @param star 星数
+     * @return 颜色rgb的int按位表示值,
+     */
     public static int getStartColot(float star) {
         var starts = new float[]{1.5f,2f,2.5f,3.375f,4.625f,5.875f,7,8};
         var colorgroup = new int[][]{
@@ -320,6 +507,12 @@ public class SkiaUtil {
 
         return (0xFF) << 24|(caa[0]<<16)|(caa[1]<<8)|(caa[2]);
     }
+
+    /***
+     * 图片颜色主色提取 未完成
+     * @param image 输入图片
+     * @return 色组
+     */
     public static Color[] getMainColor(Image image) {
         Bitmap bitmap = Bitmap.makeFromImage(image);
         int x_length = bitmap.getWidth();
