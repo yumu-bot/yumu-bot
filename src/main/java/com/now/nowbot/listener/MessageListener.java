@@ -26,6 +26,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
@@ -59,12 +60,12 @@ public class MessageListener extends SimpleListenerHost {
             var e = SimpleListenerHost.getRootCause(exception);
             if (e instanceof TipsException || e instanceof TipsRuntimeException) {
                 event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
-            } else if (e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
-                log.info("超时:",e);
+            } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
+                log.info("连接超时:",e);
                 event.getSubject().sendMessage("网络连接超时，请稍后再试").recallIn(RECAL_TIME);
             } else if (e instanceof RestClientException && e.getCause() instanceof RequestException) {
                 RequestException reser = (RequestException) e.getCause();
-                log.info("网络:",e);
+                log.info("请求错误:",e);
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在").recallIn(RECAL_TIME);
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
