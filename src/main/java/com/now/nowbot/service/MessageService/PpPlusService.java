@@ -90,7 +90,7 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(960,440);
-            var paths = SkiaUtil.creat6(390, 20, hex1);
+            var paths = SkiaUtil.creat6(390, 10, hex1);
             canvas.drawPath(paths[0],new Paint().setARGB(255,42,98,183).setStroke(true).setStrokeWidth(5));
             canvas.drawPath(paths[0],new Paint().setARGB(102,42,98,183).setStroke(false).setStrokeWidth(5));
             canvas.drawPath(paths[1],new Paint().setARGB(255,42,98,183).setStroke(false).setStrokeWidth(5));

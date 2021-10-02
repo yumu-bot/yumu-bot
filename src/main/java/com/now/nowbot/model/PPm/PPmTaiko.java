@@ -224,7 +224,7 @@ public class PPmTaiko implements PPmObject {
         ttl = facc * 0.2 + eng * 0.1 + ptt * 0.15 + sth * 0.3 + stb * 0.05 + sta * 0.2;
         double PPdPC = Math.pow((ppv0 + ppv45 + ppv90) * 20 / (pcont + 100), 0.8);
         double LPPD = Math.log(ppv0 + 1) / 4.605;
-        san = PPdPC * LPPD * Math.pow(bpmxd, 0.6) * (sth - eng * 0.4 + 0.4) * (facc + 0.25);
+        san = ppv0<20?1:(PPdPC * LPPD * Math.pow(bpmxd, 0.6) * (sth - eng * 0.4 + 0.4) * (facc + 0.25));
         //san = rsan
         if (san < 1){
             san = 120 - 20*san;
