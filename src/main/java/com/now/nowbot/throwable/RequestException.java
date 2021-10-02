@@ -5,17 +5,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class RequestException extends IOException {
     public ClientHttpResponse response;
     public HttpStatus status;
-    public JSONObject message;
+    public String message;
 
     public RequestException(ClientHttpResponse response, HttpStatus status){
         try {
-            message = JSONObject.parseObject(response.getBody().readAllBytes(), JSONObject.class);
+
+            message = new String(response.getBody().readAllBytes());
         } catch (IOException e) {
-            message = new JSONObject();
+            message = "none body";
         }
         this.response = response;
         this.status = status;
