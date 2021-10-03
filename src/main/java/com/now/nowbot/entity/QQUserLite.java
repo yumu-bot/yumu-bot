@@ -26,8 +26,8 @@ public class QQUserLite {
     @Column(name = "join_date")
     private LocalDateTime joinDate;
     //主模式
-    @Column(name = "play_mode")
-    private String playMode;
+    @Column(name = "main_mode")
+    private String mainMode;
 
     public Long getId() {
         return id;
