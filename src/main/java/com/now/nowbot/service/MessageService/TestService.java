@@ -164,13 +164,13 @@ public class TestService implements MessageService {
                                 .append(game.get("mode").asText()).append(' ')
                                 .append(game.get("scoring_type").asText()).append(' ')
                                 .append(game.get("team_type").asText()).append(' ')
-                                .append(game.get("beatmap").get("difficulty_rating").asText().substring(0,4))
+                                .append((game.get("beatmap").get("difficulty_rating").asText()+"    ").substring(0,4))
                                 .append(game.get("beatmap").get("total_length").asText())
                                 .append(game.get("mods").toString()).append('\n');
                         flag++;
                         for (var score: game.get("scores")){
                             sb.append(score.get("user_id").asText()).append(' ')
-                                    .append(score.get("accuracy").asText().substring(0,6)).append(' ')
+                                    .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
                                     .append(score.get("mods").toString()).append(' ')
                                     .append(score.get("score").asText()).append(' ')
                                     .append(score.get("max_combo").asText()).append(' ')
