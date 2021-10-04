@@ -19,7 +19,7 @@ public enum Instruction {
     PPMVS("ppmvs", "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定", "^[!！]\\s?(?i)ymppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     PPPLUS("ppp", "!ppp [osu name] std的pp+计算", "^[!！]\\s*(?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     PPPLUSVS("ppvs", "!ppvs <osu name|@某人> pp+的对比，需要自己绑定，如果是ppvs也需要对方绑定", "^[!！]\\s?(ym)?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    SETU("setu", "!ymsetu 获取一张随机图", "^[!！](?i)(?<code>(色图)|(涩图)|(setu))|(ymse)|(ymsetu)"),
+    SETU("setu", "!ymsetu 获取一张随机图", "^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)"),
     SONG("song", "!song <bid>或!song sid=<sid> 试听谱面", "^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"),
     START("start", "!积分 刷新并查看积分", "^[!！]\\s*((积分)|(..积分))+.*"),
     KUMO("kumo", null, ".*"),

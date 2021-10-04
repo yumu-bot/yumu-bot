@@ -41,6 +41,15 @@ public class CheckAspect {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
 
+        if(CheckPermission.isWhite()){
+            if (CheckPermission.friend()){
+
+            }
+            if (CheckPermission.group()){
+
+            }
+        }
+
 //        if (CheckPermission.isBotSuper()){
 //            if(!Permission.superUser.contains(event.getSender().getId()))
 //                throw new TipsException("此功能已关闭");

@@ -7,24 +7,43 @@ import javax.persistence.*;
 public class BitmapLite {
     @Id
     @Column(name = "id")
-    Integer bitmapID;
+    private Integer bitmapID;
 
     @Column(name = "map_id")
-    Integer MapSetId;
+    private Integer MapSetId;
 
-    public Integer getBitmapID() {
-        return bitmapID;
-    }
+    //是否为转谱
+    private Boolean convert;
+    //难度名
+    private String version;
 
-    public void setBitmapID(Integer bitmapID) {
-        this.bitmapID = bitmapID;
-    }
+    int playcount;
+    int passcount;
 
-    public Integer getMapSetId() {
-        return MapSetId;
-    }
+    //四维
+    //accuracy值
+    private Float od;
+    private Float cs;
+    private Float ar;
+    //drain值
+    private Float hp;
 
-    public void setMapSetId(Integer mapSetId) {
-        MapSetId = mapSetId;
-    }
+    private Float difficulty_rating;
+    private Float bpm;
+    private Integer max_combo;
+
+    //物件数
+    private Integer count_circles;
+    private Integer count_sliders;
+    private Integer count_spinners;
+
+    //秒
+    private Integer total_length;
+    private Integer hit_length;
+
+
+    //mode_init 0->osu ...
+    private Integer mode;
+
+
 }

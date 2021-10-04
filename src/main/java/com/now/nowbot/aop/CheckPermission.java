@@ -17,15 +17,20 @@ import java.util.regex.Matcher;
 public @interface CheckPermission {
     boolean isWhite() default false;
 
-    boolean froup() default true;
+    boolean group() default true;
 
     boolean friend() default true;
 
     /***
-     * 仅允许超级管理员使用
-     * @return
+     * 修改权限
+     * @return true群主/管理员可修改 false 禁止修改
      */
-    boolean isSuper() default true;
+    boolean Perm() default true;
+    /***
+     * 仅允许超级管理员使用
+     * @return true
+     */
+    boolean isSuper() default false;
 
     String ServiceName() default "public";
 }

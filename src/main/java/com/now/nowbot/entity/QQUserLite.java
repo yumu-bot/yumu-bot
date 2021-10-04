@@ -94,10 +94,10 @@ public class QQUserLite {
     }
 
     public String getPlayMode() {
-        return playMode;
+        return mainMode;
     }
 
     public void setPlayMode(String playMode) {
-        this.playMode = playMode;
+        this.mainMode = playMode;
     }
 }

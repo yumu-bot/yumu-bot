@@ -22,6 +22,10 @@ public class StartService implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        if (event != null){
+            event.getSubject().sendMessage("积分系统已下线,将会以其他形式重新上线");
+            return;
+        }
         //获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         Contact from = event.getSubject();

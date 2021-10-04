@@ -110,9 +110,9 @@ public class YmpService implements MessageService{
         var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
         Image img = from.uploadImage(ExternalResource.create(bytes));
         from.sendMessage(img.plus(d.getOut()));
-        if (user != null){
-            log.info(starService.ScoreToStar(user, date));
-        }
+//        if (user != null){
+//            log.info(starService.ScoreToStar(user, date));
+//        }
     }
     private JSONArray getDates(BinUser user, String mode, boolean isAll){
         if (isAll)

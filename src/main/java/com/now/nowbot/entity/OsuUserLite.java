@@ -45,7 +45,7 @@ public class OsuUserLite {
     private Integer favourite_beatmapset_count;
     private String playmode;
     //上次登录时间
-    LocalDateTine last_visit;
+    LocalDateTime last_visit;
     boolean is_deleted;
     private Integer graveyard_beatmapset_count;
     boolean is_online;
