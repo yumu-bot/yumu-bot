@@ -31,7 +31,7 @@ public class TestService implements MessageService {
             var pt = Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
             var mo = Pattern.compile("!testmo(\\s+(?<id>\\d+))");
             var matcher = pt.matcher(msg.contentToString());
-            var mathcer_mo = pt.matcher(msg.contentToString());
+            var mathcer_mo = mo.matcher(msg.contentToString());
             if (matcher.find()) {
                 PPmObject userinfo;
                 JSONObject userdate;
