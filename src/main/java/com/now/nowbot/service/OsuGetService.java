@@ -2,7 +2,9 @@ package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -491,8 +493,8 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONObject getScore(int bid, int id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + id)
+    public JSONObject getScore(int bid, int uid) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid)
                 .queryParam("mode", "osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -574,6 +576,12 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    /***
+     * 获取map信息
+     * @param bid bid
+     * @param uset
+     * @return
+     */
     public JSONObject getMapInfo(int bid, BinUser uset) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
@@ -594,8 +602,8 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public Object getReplay() {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/osu/82445750/download")
+    public Object getReplay(String mode, long id) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/"+mode+"/"+id+"/download")
 //                .queryParam("mode","osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -616,6 +624,11 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    /***
+     * PP+获取
+     * @param name
+     * @return
+     */
     public JSONObject ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
                 .build().encode().toUri();
@@ -630,6 +643,11 @@ public class OsuGetService {
         return c.getBody().getJSONObject("user_data");
     }
 
+    /***
+     * pp+比例
+     * @param ppP
+     * @return
+     */
     public float[] ppPlus(float[] ppP) {
         if (ppP.length != 6) return null;
         float[] date = new float[6];
@@ -641,6 +659,11 @@ public class OsuGetService {
         return date;
     }
 
+    /***
+     * 批量获取玩家信息 0-100
+     * @param id
+     * @return
+     */
     public JSONArray getPlayersInfo(int... id){
         if (id.length<=0 || id.length>50 ){
             return null;
@@ -659,5 +682,24 @@ public class OsuGetService {
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
 
+    }
+
+    public JsonNode getMatchInfo(int mid){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" +mid)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+        headers.set("Authorization", "Bearer " + getToken());
+        HttpEntity httpEntity = new HttpEntity(headers);
+        JsonNode data = null;
+        try {
+            data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
+        } catch (Exception exc) {
+            var e = (RequestException)exc.getCause();
+            System.out.println(e.message);
+        }
+        return data;
     }
 }
