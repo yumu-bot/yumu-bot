@@ -149,7 +149,7 @@ public class TestService implements MessageService {
                 grp.sendMessage(sb.toString());
                 return;
             }else if(mathcer_mo.find()){
-                var s = osuGetService.getMatchInfo(Integer.parseInt(matcher.group("id")));
+                var s = osuGetService.getMatchInfo(Integer.parseInt(mathcer_mo.group("id")));
                 var events = s.get("events");
                 List<StringBuffer> sblist = new LinkedList<>();
                 StringBuffer sb = new StringBuffer();
