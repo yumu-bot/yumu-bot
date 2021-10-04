@@ -185,6 +185,7 @@ public class TestService implements MessageService {
                         if (flag >= 25){
                             sblist.add(sb);
                             sb = new StringBuffer();
+                            flag = 0;
                         }
                     }
                 }
