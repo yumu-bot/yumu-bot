@@ -159,27 +159,35 @@ public class TestService implements MessageService {
                 for (var node : events){
                     if (node.get("detail").get("type").asText("no").equals("other")){
                         var game = node.get("game");
-                        sb.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
-                                .append(LocalDateTime.from(f1.parse(game.get("end_time").asText())).format(f2)).append(' ')
-                                .append(game.get("mode").asText()).append(' ')
-                                .append(game.get("scoring_type").asText()).append(' ')
-                                .append(game.get("team_type").asText()).append(' ')
-                                .append((game.get("beatmap").get("difficulty_rating").asText()+"    ")).append(' ')
-                                .append(game.get("beatmap").get("total_length").asText()).append(' ')
-                                .append(game.get("mods").toString()).append('\n');
+                        try {
+                            sb.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
+                                    .append(LocalDateTime.from(f1.parse(game.get("end_time").asText(""))).format(f2)).append(' ')
+                                    .append(game.get("mode").asText()).append(' ')
+                                    .append(game.get("scoring_type").asText()).append(' ')
+                                    .append(game.get("team_type").asText()).append(' ')
+                                    .append((game.get("beatmap").get("difficulty_rating").asDouble())).append(' ')
+                                    .append(game.get("beatmap").get("total_length").asText()).append(' ')
+                                    .append(game.get("mods").toString()).append('\n');
+                        } catch (Exception e) {
+                            sb.append("  error---->").append(e.getMessage()).append('\n');
+                        }
                         flag++;
                         for (var score: game.get("scores")){
-                            sb.append(score.get("user_id").asText()).append(' ')
-                                    .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
-                                    .append(score.get("mods").toString()).append(' ')
-                                    .append(score.get("score").asText()).append(' ')
-                                    .append(score.get("max_combo").asText()).append(' ')
-                                    .append(score.get("passed").asText()).append(' ')
-                                    .append(score.get("perfect").asText()).append(' ')
-                                    .append(score.get("match").get("slot").asText()).append(' ')
-                                    .append(score.get("match").get("team").asText()).append(' ')
-                                    .append(score.get("match").get("pass").asText()).append(' ');
-                            sb.append("\n");
+                            try {
+                                sb.append(score.get("user_id").asText()).append(' ')
+                                        .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
+                                        .append(score.get("mods").toString()).append(' ')
+                                        .append(score.get("score").asText()).append(' ')
+                                        .append(score.get("max_combo").asText()).append(' ')
+                                        .append(score.get("passed").asText()).append(' ')
+                                        .append(score.get("perfect").asInt() != 0).append(' ')
+                                        .append(score.get("match").get("slot").asText()).append(' ')
+                                        .append(score.get("match").get("team").asText()).append(' ')
+                                        .append(score.get("match").get("pass").asText()).append(' ');
+                                sb.append("\n");
+                            } catch (Exception e) {
+                                sb.append("  error---->").append(e.getMessage()).append('\n');
+                            }
                             flag++;
                         }
                         if (flag >= 25){
