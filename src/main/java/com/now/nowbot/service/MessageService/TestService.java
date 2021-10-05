@@ -200,7 +200,7 @@ public class TestService implements MessageService {
                 }
                 flag = 1;
                 for (var kk : sblist){
-                    grp.sendMessage((flag++) +'\n'+kk.toString());
+                    grp.sendMessage(kk.toString()+(flag++)+'\n');
                     Thread.sleep(1000);
                 }
             }
