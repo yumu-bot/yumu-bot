@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "osu")
+@Table(name = "osu_user")
 public class OsuUserLite {
     @Id
     @Column(name = "id")

@@ -2,21 +2,38 @@ package com.now.nowbot.entity;
 
 import org.springframework.context.annotation.Primary;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Table
+@Table(name = "osu_score" ,indexes = {
+        @Index(name = "uid", columnList = "")
+})
 public class ScoreLite {
     @Id
-    private Long QQid;
+    @Column(name = "id")
+    long score_id;
+    int osu_id;
+    @Column(name = "beatmap_id")
+    int beatmap_id;
 
-    public Long getQQid() {
-        return QQid;
-    }
+    float accuracy;
+    //','分割的字符串
+    String mods;
+    int score;
+    int max_combo;
+    boolean passed;
+    boolean perfect;
 
-    public void setQQid(Long QQid) {
-        this.QQid = QQid;
-    }
+    int count_50;
+    int count_100;
+    int count_300;
+    int count_geki;
+    int count_katu;
+    int count_miss;
+
+    String rank;
+    //created_at
+    LocalDateTime date;
+
 }

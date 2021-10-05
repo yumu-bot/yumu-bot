@@ -1,14 +1,16 @@
 package com.now.nowbot.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "osu_mapset")
 public class MapSetLite {
     @Id
-    private Integer id;
+    @Column(name = "map_id")
+    private Integer mapset_id;
 
     private String artist;
     private String artist_unicode;
@@ -41,12 +43,12 @@ public class MapSetLite {
     private Boolean is_scoreable;
 
 
-    public Integer getId() {
-        return id;
+    public Integer getMapset_id() {
+        return mapset_id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setMapset_id(Integer id) {
+        this.mapset_id = id;
     }
 
     public String getArtist() {

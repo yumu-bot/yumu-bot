@@ -5,7 +5,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "osu_bp_list")
 public class OsuBpListLite {
     @Id
     Integer id;

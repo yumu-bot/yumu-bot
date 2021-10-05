@@ -7,7 +7,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "pp_plus")
+@Table(name = "osu_pp_plus")
 public class PPPLite {
     @Id
     @GeneratedValue

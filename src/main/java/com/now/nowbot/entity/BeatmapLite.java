@@ -3,14 +3,16 @@ package com.now.nowbot.entity;
 import javax.persistence.*;
 
 @Entity
-@Table(indexes = {@Index(name = "sid", columnList = "map_id")})
+@Table(name = "osu_beatmap",indexes = {
+        @Index(name = "sid", columnList = "map_id")
+})
 public class BeatmapLite {
     @Id
-    @Column(name = "id")
-    private Integer bitmapID;
+    @Column(name = "beatmap_id")
+    private Integer beatmap_id;
 
     @Column(name = "map_id")
-    private Integer MapSetId;
+    private Integer mapset_id;
 
     //是否为转谱
     private Boolean convert;
@@ -45,20 +47,20 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     private Integer mode;
 
-    public Integer getBitmapID() {
-        return bitmapID;
+    public Integer getBeatmap_id() {
+        return beatmap_id;
     }
 
-    public void setBitmapID(Integer bitmapID) {
-        this.bitmapID = bitmapID;
+    public void setBeatmap_id(Integer bitmapID) {
+        this.beatmap_id = bitmapID;
     }
 
-    public Integer getMapSetId() {
-        return MapSetId;
+    public Integer getMapset_id() {
+        return mapset_id;
     }
 
-    public void setMapSetId(Integer mapSetId) {
-        MapSetId = mapSetId;
+    public void setMapset_id(Integer mapset_id) {
+        this.mapset_id = mapset_id;
     }
 
     public Boolean getConvert() {
