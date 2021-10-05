@@ -153,6 +153,7 @@ public class TestService implements MessageService {
                 var events = s.get("events");
                 List<StringBuffer> sblist = new LinkedList<>();
                 StringBuffer sb = new StringBuffer();
+                sblist.add(sb);
                 var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
                 var f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
                 int flag = 0;
@@ -191,15 +192,15 @@ public class TestService implements MessageService {
                             flag++;
                         }
                         if (flag >= 25){
-                            sblist.add(sb);
                             sb = new StringBuffer();
+                            sblist.add(sb);
                             flag = 0;
                         }
                     }
                 }
                 flag = 1;
                 for (var kk : sblist){
-                    grp.sendMessage((flag++) +kk.toString());
+                    grp.sendMessage((flag++) +'\n'+kk.toString());
                     Thread.sleep(1000);
                 }
             }
