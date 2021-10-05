@@ -164,8 +164,8 @@ public class TestService implements MessageService {
                                 .append(game.get("mode").asText()).append(' ')
                                 .append(game.get("scoring_type").asText()).append(' ')
                                 .append(game.get("team_type").asText()).append(' ')
-                                .append((game.get("beatmap").get("difficulty_rating").asText()+"    ").substring(0,4))
-                                .append(game.get("beatmap").get("total_length").asText())
+                                .append((game.get("beatmap").get("difficulty_rating").asText()+"    ")).append(' ')
+                                .append(game.get("beatmap").get("total_length").asText()).append(' ')
                                 .append(game.get("mods").toString()).append('\n');
                         flag++;
                         for (var score: game.get("scores")){
