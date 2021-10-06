@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_score" ,indexes = {
-        @Index(name = "uid", columnList = "")
+        @Index(name = "uid", columnList = "osu_id")
 })
 public class ScoreLite {
     @Id
