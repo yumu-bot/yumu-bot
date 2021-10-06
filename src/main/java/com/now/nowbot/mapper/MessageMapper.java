@@ -16,7 +16,9 @@ public interface MessageMapper extends JpaRepository<MsgLite, Long> , JpaSpecifi
     @Query(value = "select target_id as groupid , count(target_id)  as msgs from qq_message where time > :start and time< :end group by (target_id) order by count(target_id) desc", nativeQuery = true)
     public List<Map<String, Long>> contGroup(@Param("start") int start, @Param("end") int end);
 
-    public MsgLite getAllByIdaAndAndRawIdAndAndInternal(Long id, Integer rawId, Integer internal);
+    public List<MsgLite> getAllByTargetIdAndTimeBetween(Long targetId, Long start_time, Long end_time);
+
+    public MsgLite getAllByIdAndRawIdAndAndInternal(Long id, Integer rawId, Integer internal);
 //
 //    @Query("select from_id as senderid , count(from_id) as msgs from qq_message where target_id=#{groupID} group by (from_id) order by count(from_id) desc")
 //    public List<JSONObject> contGroupSender(long groupID);

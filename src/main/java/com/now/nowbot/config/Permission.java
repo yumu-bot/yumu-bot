@@ -50,6 +50,7 @@ public class Permission {
                 $beansCheck = method.getAnnotation(CheckPermission.class);
             }
             if ($beansCheck != null){
+
             }
         });
     }
