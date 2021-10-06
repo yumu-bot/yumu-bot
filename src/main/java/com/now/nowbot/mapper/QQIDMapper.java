@@ -9,6 +9,5 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface QQIDMapper extends JpaRepository<QQID, Long>, JpaSpecificationExecutor<QQID> {
-    @Query(value = "select qq from qq_id where permission_id = :id", nativeQuery = true)
-    public List<Long> getAllByPAndPermissionId(@Param("id") Long id);
+    public List<Long> getByPermissionId(Long permissionId);
 }

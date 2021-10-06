@@ -8,8 +8,9 @@ import javax.persistence.Table;
 @Table(name = "osu_bp_list")
 public class OsuBpListLite {
     @Id
-    Integer id;
-    Integer OsuId;
+    private Integer id;
+
+    private Integer OsuId;
 
     public Integer getId() {
         return id;

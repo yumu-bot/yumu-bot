@@ -18,10 +18,10 @@ public class PermissionDao {
     QQIDMapper qqMapper;
 
     public List<Long> getQQList(String service, Permission.TYPE type){
-        var perm = permission.getAllByServiceAndType(service, type);
+        var perm = permission.getByServiceAndType(service, type);
         if(perm == null){
             perm = permission.save(new PermissionLite(service, type));
         }
-        return qqMapper.getAllByPAndPermissionId(perm.getId());
+        return qqMapper.getByPermissionId(perm.getId());
     }
 }

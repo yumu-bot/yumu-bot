@@ -11,8 +11,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PermissionMapper extends JpaRepository<PermissionLite, Long> , JpaSpecificationExecutor<PermissionLite> {
-    @Query("select id from permission where service = :service and type = :type")
+    @Query("select p.id from PermissionLite p where p.service = :service and p.type = :type")
     public Integer getId(@Param("service") String service, @Param("type") Permission.TYPE type);
 
-    public PermissionLite getAllByServiceAndType(String service, Permission.TYPE type);
+    public PermissionLite getByServiceAndType(String service, Permission.TYPE type);
 }

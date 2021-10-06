@@ -6,13 +6,13 @@ import javax.persistence.*;
 @Table(name = "qq_id")
 public class QQID {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     //true group   |    false friend
     @Column(name = "type")
     private Boolean isGroup;
-    private Long PermissionId;
+    private Long permissionId;
     private Long QQ;
 
     public Long getId() {
@@ -32,11 +32,11 @@ public class QQID {
     }
 
     public Long getPermissionId() {
-        return PermissionId;
+        return permissionId;
     }
 
     public void setPermissionId(Long permissionId) {
-        PermissionId = permissionId;
+        permissionId = permissionId;
     }
 
     public Long getQQ() {

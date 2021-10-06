@@ -1,35 +1,32 @@
 package com.now.nowbot.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_pp_plus")
 public class PPPLite {
     @Id
-    @GeneratedValue
-    Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    Long userId;
+    private Long userId;
     //记录时间
     private LocalDateTime date;
 
-    private double Total;
+    private Double Total;
 
-    private double Junp;
+    private Double Junp;
 
-    private double Flow;
+    private Double Flow;
 
-    private double Acc;
+    private Double Acc;
 
-    private double Sta;
+    private Double Sta;
 
-    private double Spd;
+    private Double Spd;
 
-    private double Pre;
+    private Double Pre;
 
     public Long getId() {
         return id;
@@ -59,7 +56,7 @@ public class PPPLite {
         return Total;
     }
 
-    public void setTotal(double total) {
+    public void setTotal(Double total) {
         Total = total;
     }
 
@@ -67,7 +64,7 @@ public class PPPLite {
         return Junp;
     }
 
-    public void setJunp(double junp) {
+    public void setJunp(Double junp) {
         Junp = junp;
     }
 
@@ -75,7 +72,7 @@ public class PPPLite {
         return Flow;
     }
 
-    public void setFlow(double flow) {
+    public void setFlow(Double flow) {
         Flow = flow;
     }
 
@@ -83,7 +80,7 @@ public class PPPLite {
         return Acc;
     }
 
-    public void setAcc(double acc) {
+    public void setAcc(Double acc) {
         Acc = acc;
     }
 
@@ -91,7 +88,7 @@ public class PPPLite {
         return Sta;
     }
 
-    public void setSta(double sta) {
+    public void setSta(Double sta) {
         Sta = sta;
     }
 
@@ -99,7 +96,7 @@ public class PPPLite {
         return Spd;
     }
 
-    public void setSpd(double spd) {
+    public void setSpd(Double spd) {
         Spd = spd;
     }
 
@@ -107,7 +104,7 @@ public class PPPLite {
         return Pre;
     }
 
-    public void setPre(double pre) {
+    public void setPre(Double pre) {
         Pre = pre;
     }
 }

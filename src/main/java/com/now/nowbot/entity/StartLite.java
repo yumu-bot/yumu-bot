@@ -9,17 +9,17 @@ import java.time.LocalDateTime;
 @Table(name = "qq_start")
 public class StartLite {
     @Id
-    int qq;
+    private Integer qq;
 
-    double start;
+    private Double start;
     //上次刷新时间
-    LocalDateTime lastTime;
+    private LocalDateTime lastTime;
 
     public int getQq() {
         return qq;
     }
 
-    public void setQq(int qq) {
+    public void setQq(Integer qq) {
         this.qq = qq;
     }
 
@@ -27,7 +27,7 @@ public class StartLite {
         return start;
     }
 
-    public void setStart(double start) {
+    public void setStart(Double start) {
         this.start = start;
     }
 

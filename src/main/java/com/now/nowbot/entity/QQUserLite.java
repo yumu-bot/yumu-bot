@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "qq_user")
 public class QQUserLite {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "osu_id")
