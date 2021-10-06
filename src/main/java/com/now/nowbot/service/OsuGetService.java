@@ -702,4 +702,24 @@ public class OsuGetService {
         }
         return data;
     }
+    public JsonNode getMatchInfo(int mid, long before){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" +mid)
+                .queryParam("before",before)
+                .queryParam("limit",100)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+        headers.set("Authorization", "Bearer " + getToken());
+        HttpEntity httpEntity = new HttpEntity(headers);
+        JsonNode data = null;
+        try {
+            data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
+        } catch (Exception exc) {
+            var e = (RequestException)exc.getCause();
+            System.out.println(e.message);
+        }
+        return data;
+    }
 }

@@ -37,6 +37,8 @@ public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
+    @Autowired
+    MessageMapper messageMapper;
     private ApplicationContext applicationContext;
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -89,7 +91,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-//        messageMapper.save(new MsgLite(event.getMessage()));
+        messageMapper.save(new MsgLite(event.getMessage()));
         for(var ins : Instruction.values()){
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {

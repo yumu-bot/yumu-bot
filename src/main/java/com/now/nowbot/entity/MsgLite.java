@@ -38,6 +38,16 @@ public class MsgLite{
 
     }
 
+    public MsgLite(Long id, Integer rawId, Integer internal, Long time, Long fromId, Long targetId, String content) {
+        this.id = id;
+        this.rawId = rawId;
+        this.internal = internal;
+        this.time = time;
+        this.fromId = fromId;
+        this.targetId = targetId;
+        this.content = content;
+    }
+
     public Long getId() {
         return id;
     }
