@@ -230,7 +230,7 @@ public class TestService implements MessageService {
         if(!events.get(0).get("detail").get("type").asText().equals("match-created")){
             mo(id, events.get(0).get("id").asLong(), s);
         }
-        List<StringBuffer> sblist = new LinkedList<>();
+        List<StringBuffer> sblist = s;
         StringBuffer sb = new StringBuffer();
         sblist.add(sb);
         var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
