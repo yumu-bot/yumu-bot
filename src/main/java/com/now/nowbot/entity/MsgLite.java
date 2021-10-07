@@ -11,7 +11,7 @@ import java.util.Objects;
 @Table(name = "qq_message")//主要是可能会有其他消息的记录,先设定表名为qq_message
 public class MsgLite{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @Column(name = "row_id")
     private Integer rawId;
