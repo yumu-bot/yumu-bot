@@ -12,28 +12,28 @@ import java.time.LocalDateTime;
 public class ScoreLite {
     @Id
     @Column(name = "id")
-    long score_id;
-    int osu_id;
+    private Long scoreId;
+    private Integer osuId;
     @Column(name = "beatmap_id")
-    int beatmap_id;
+    private Integer beatmapId;
 
-    float accuracy;
+    private Float accuracy;
     //','分割的字符串
-    String mods;
-    int score;
-    int max_combo;
+    private String mods;
+    private Integer score;
+    private Integer maxCombo;
     boolean passed;
     boolean perfect;
 
-    int count_50;
-    int count_100;
-    int count_300;
-    int count_geki;
-    int count_katu;
-    int count_miss;
+    private Integer count50;
+    private Integer count100;
+    private Integer count300;
+    private Integer countgeki;
+    private Integer countkatu;
+    private Integer countmiss;
 
-    String rank;
+    private String rank;
     //created_at
-    LocalDateTime date;
+    private LocalDateTime date;
 
 }
