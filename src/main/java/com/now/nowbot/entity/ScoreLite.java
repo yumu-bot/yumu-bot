@@ -13,6 +13,7 @@ public class ScoreLite {
     @Id
     @Column(name = "id")
     private Long scoreId;
+    @Column(name = "osu_id")
     private Integer osuId;
     @Column(name = "beatmap_id")
     private Integer beatmapId;
