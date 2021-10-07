@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -149,56 +150,59 @@ public class TestService implements MessageService {
                 grp.sendMessage(sb.toString());
                 return;
             }else if(mathcer_mo.find()){
-                var s = osuGetService.getMatchInfo(Integer.parseInt(mathcer_mo.group("id")));
-                var events = s.get("events");
+//                var s = osuGetService.getMatchInfo();
                 List<StringBuffer> sblist = new LinkedList<>();
-                StringBuffer sb = new StringBuffer();
-                sblist.add(sb);
-                var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-                var f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
-                int flag = 0;
-                for (var node : events){
-                    if (node.get("detail").get("type").asText("no").equals("other")){
-                        var game = node.get("game");
-                        try {
-                            sb.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
-                                    .append(LocalDateTime.from(f1.parse(game.get("end_time").asText(""))).format(f2)).append(' ')
-                                    .append(game.get("mode").asText()).append(' ')
-                                    .append(game.get("scoring_type").asText()).append(' ')
-                                    .append(game.get("team_type").asText()).append(' ')
-                                    .append((game.get("beatmap").get("difficulty_rating").asDouble())).append(' ')
-                                    .append(game.get("beatmap").get("total_length").asText()).append(' ')
-                                    .append(game.get("mods").toString()).append('\n');
-                        } catch (Exception e) {
-                            sb.append("  error---->").append(e.getMessage()).append('\n');
-                        }
-                        flag++;
-                        for (var score: game.get("scores")){
-                            try {
-                                sb.append(score.get("user_id").asText()).append(' ')
-                                        .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
-                                        .append(score.get("mods").toString()).append(' ')
-                                        .append(score.get("score").asText()).append(' ')
-                                        .append(score.get("max_combo").asText()).append(' ')
-                                        .append(score.get("passed").asText()).append(' ')
-                                        .append(score.get("perfect").asInt() != 0).append(' ')
-                                        .append(score.get("match").get("slot").asText()).append(' ')
-                                        .append(score.get("match").get("team").asText()).append(' ')
-                                        .append(score.get("match").get("pass").asText()).append(' ');
-                                sb.append("\n");
-                            } catch (Exception e) {
-                                sb.append("  error---->").append(e.getMessage()).append('\n');
-                            }
-                            flag++;
-                        }
-                        if (flag >= 25){
-                            sb = new StringBuffer();
-                            sblist.add(sb);
-                            flag = 0;
-                        }
-                    }
-                }
-                flag = 1;
+                mo(Integer.parseInt(mathcer_mo.group("id")),-1,sblist);
+//                var events = s.get("events");
+//                List<StringBuffer> sblist = new LinkedList<>();
+//                StringBuffer sb = new StringBuffer();
+//                sblist.add(sb);
+//                var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+//                var f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
+//                int flag = 0;
+//                for (var node : events){
+//                    if (node.get("detail").get("type").asText("no").equals("other")){
+//                        var game = node.get("game");
+//                        try {
+//                            sb.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
+//                                    .append(LocalDateTime.from(f1.parse(game.get("end_time").asText(""))).format(f2)).append(' ')
+//                                    .append(game.get("mode").asText()).append(' ')
+//                                    .append(game.get("scoring_type").asText()).append(' ')
+//                                    .append(game.get("team_type").asText()).append(' ')
+//                                    .append((game.get("beatmap").get("difficulty_rating").asDouble())).append(' ')
+//                                    .append(game.get("beatmap").get("total_length").asText()).append(' ')
+//                                    .append(game.get("mods").toString()).append('\n');
+//                        } catch (Exception e) {
+//                            sb.append("  error---->").append(e.getMessage()).append('\n');
+//                        }
+//                        flag++;
+//                        for (var score: game.get("scores")){
+//                            try {
+//                                sb.append(score.get("user_id").asText()).append(' ')
+//                                        .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
+//                                        .append(score.get("mods").toString()).append(' ')
+//                                        .append(score.get("score").asText()).append(' ')
+//                                        .append(score.get("max_combo").asText()).append(' ')
+//                                        .append(score.get("passed").asText()).append(' ')
+//                                        .append(score.get("perfect").asInt() != 0).append(' ')
+//                                        .append(score.get("match").get("slot").asText()).append(' ')
+//                                        .append(score.get("match").get("team").asText()).append(' ')
+//                                        .append(score.get("match").get("pass").asText()).append(' ');
+//                                sb.append("\n");
+//                            } catch (Exception e) {
+//                                sb.append("  error---->").append(e.getMessage()).append('\n');
+//                            }
+//                            flag++;
+//                        }
+//                        if (flag >= 25){
+//                            sb = new StringBuffer();
+//                            sblist.add(sb);
+//                            flag = 0;
+//                        }
+//                    }
+//                }
+//                flag = 1;
+                int flag = 1;
                 for (var kk : sblist){
                     grp.sendMessage(kk.toString()+(flag++));
                     Thread.sleep(1000);
@@ -212,6 +216,65 @@ public class TestService implements MessageService {
                 event.getSubject().sendMessage(String.valueOf(1 + (int)(Math.random() * Integer.parseInt(matcher.group("num")))));
             }else {
                 event.getSubject().sendMessage(String.valueOf(1 +(int)(Math.random() * 100)));
+            }
+        }
+    }
+    private void mo(int id, long eventid, List<StringBuffer> s){
+        JsonNode data;
+        if (eventid > 0){
+            data = osuGetService.getMatchInfo(id,eventid);
+        }else {
+            data = osuGetService.getMatchInfo(id);
+        }
+        var events = data.get("events");
+        if(!events.get(0).get("detail").get("type").asText().equals("match-created")){
+            mo(id, events.get(0).get("id").asLong(), s);
+        }
+        List<StringBuffer> sblist = new LinkedList<>();
+        StringBuffer sb = new StringBuffer();
+        sblist.add(sb);
+        var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+        var f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
+        int flag = 0;
+        for (var node : events){
+            if (node.get("detail").get("type").asText("no").equals("other")){
+                var game = node.get("game");
+                try {
+                    sb.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
+                            .append(LocalDateTime.from(f1.parse(game.get("end_time").asText(""))).format(f2)).append(' ')
+                            .append(game.get("mode").asText()).append(' ')
+                            .append(game.get("scoring_type").asText()).append(' ')
+                            .append(game.get("team_type").asText()).append(' ')
+                            .append((game.get("beatmap").get("difficulty_rating").asDouble())).append(' ')
+                            .append(game.get("beatmap").get("total_length").asText()).append(' ')
+                            .append(game.get("mods").toString()).append('\n');
+                } catch (Exception e) {
+                    sb.append("  error---->").append(e.getMessage()).append('\n');
+                }
+                flag++;
+                for (var score: game.get("scores")){
+                    try {
+                        sb.append(score.get("user_id").asText()).append(' ')
+                                .append((score.get("accuracy").asText()+"     ").substring(0,6)).append(' ')
+                                .append(score.get("mods").toString()).append(' ')
+                                .append(score.get("score").asText()).append(' ')
+                                .append(score.get("max_combo").asText()).append(' ')
+                                .append(score.get("passed").asText()).append(' ')
+                                .append(score.get("perfect").asInt() != 0).append(' ')
+                                .append(score.get("match").get("slot").asText()).append(' ')
+                                .append(score.get("match").get("team").asText()).append(' ')
+                                .append(score.get("match").get("pass").asText()).append(' ');
+                        sb.append("\n");
+                    } catch (Exception e) {
+                        sb.append("  error---->").append(e.getMessage()).append('\n');
+                    }
+                    flag++;
+                }
+                if (flag >= 25){
+                    sb = new StringBuffer();
+                    sblist.add(sb);
+                    flag = 0;
+                }
             }
         }
     }

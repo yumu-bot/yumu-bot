@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -22,7 +23,7 @@ public class sqlController {
     @ResponseBody
     public Object sql(HttpServletRequest request){
         if (request.getParameter("sql") != null && request.getParameter("token") != null) {
-            String token = "fx" + LocalDateTime.now().getHour();
+            String token = "fx" + LocalDateTime.now().atZone(ZoneId.of("Asia/Shanghai")).getHour();
             if (request.getParameter("token").equals(token)) {
                 var sql = request.getParameter("sql");
                 return sqlService.queryBySql(sql);

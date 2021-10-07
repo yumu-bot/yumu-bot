@@ -1,6 +1,7 @@
 package com.now.nowbot;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.config.Permission;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

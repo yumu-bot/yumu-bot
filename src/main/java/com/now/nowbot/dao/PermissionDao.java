@@ -1,6 +1,7 @@
 package com.now.nowbot.dao;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.config.PermissionType;
 import com.now.nowbot.entity.PermissionLite;
 import com.now.nowbot.mapper.PermissionMapper;
 import com.now.nowbot.mapper.QQIDMapper;
@@ -17,7 +18,7 @@ public class PermissionDao {
     @Autowired
     QQIDMapper qqMapper;
 
-    public List<Long> getQQList(String service, Permission.TYPE type){
+    public List<Long> getQQList(String service, PermissionType type){
         var perm = permission.getByServiceAndType(service, type);
         if(perm == null){
             perm = permission.save(new PermissionLite(service, type));
