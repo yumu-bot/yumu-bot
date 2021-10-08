@@ -1,5 +1,6 @@
 package com.now.nowbot.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
@@ -8,15 +9,15 @@ import net.mamoe.mirai.message.MessageReceipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -42,13 +43,13 @@ public class msgController {
             log.error("访问缺少必要参数", e);
             return "非法的访问,";
         }
-        return saveBind(code, date);
+        var returndata = saveBind(code, date);
+        return returndata;
     }
 
     public String saveBind(String code, String[] date) {
         StringBuffer sb = new StringBuffer();
         if (date.length == 2) {
-
             long key = 0;
             try {
                 key = Long.parseLong(date[1]);
@@ -80,17 +81,26 @@ public class msgController {
                 } catch (Exception e) {
                     log.error("绑定时异常", e);
                     sb.append("出现异常,请截图给开发者让他抓紧修bug\n")
-                            .append(e.getLocalizedMessage());
+                    .append(e.getLocalizedMessage());
                 }
             } else {
                 long secend = Long.parseLong(date[1]) / 1000;
                 log.info("超时已被清理的绑定器\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
-                sb.append("绑定链接已失效,请重新绑定,请勿重复绑定!请勿重复绑定!请勿重复绑定!");
+                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定!请勿重复绑定!请勿重复绑定!");
             }
 
         } else {
-            sb.append("非法的访问:别试了,没用的");
+            sb.append("非法的访问:连接异常,确认是否为绑定链接");
         }
         return sb.toString();
+    }
+    @PostMapping("/api")
+    public Object opa(@RequestHeader("state") @Nullable String stat,
+                      @RequestBody @Nullable JsonNode body){
+        var date = stat.split(" ");
+        var code = body.get("code").asText();
+        var ret = saveBind(code, date);
+        log.info("绑定api端口被访问:{}",ret);
+        return ret;
     }
 }
