@@ -65,7 +65,8 @@ public class msgController {
                         msg.recall();
                     } catch (Exception e) {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
-                        sb.append("怎么才来,超时了哦");
+                        sb.append("绑定连接已超时\n请重新绑定");
+                        return  sb.toString();
                     }
                     BinUser bd = new BinUser(Long.parseLong(date[0]), code);
                     osuGetService.getToken(bd);
@@ -74,7 +75,7 @@ public class msgController {
                     BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
                     msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                     BindService.BIND_MSG_MAP.remove(Long.valueOf(date[1]));
-                    sb.append("成功绑定:")
+                    sb.append("成功绑定:\n")
                             .append(bd.getQq())
                             .append('>')
                             .append(bd.getOsuName());
@@ -85,12 +86,12 @@ public class msgController {
                 }
             } else {
                 long secend = Long.parseLong(date[1]) / 1000;
-                log.info("超时已被清理的绑定器\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
-                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定!请勿重复绑定!请勿重复绑定!");
+                log.info("异常绑定:绑定为超时且已被清理的绑定器\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
+                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定!\n请勿重复绑定!\n请勿重复绑定!");
             }
 
         } else {
-            sb.append("非法的访问:连接异常,确认是否为绑定链接");
+            sb.append("非法的访问\n连接异常,确认是否为绑定链接");
         }
         return sb.toString();
     }
