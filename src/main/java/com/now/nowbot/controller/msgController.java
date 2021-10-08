@@ -95,12 +95,12 @@ public class msgController {
         return sb.toString();
     }
     @PostMapping("/api")
-    public Object opa(@RequestHeader("state") @Nullable String stat,
+    public String opa(@RequestHeader("state") @Nullable String stat,
                       @RequestBody @Nullable JsonNode body){
         var date = stat.split(" ");
         var code = body.get("code").asText();
         var ret = saveBind(code, date);
-        log.info("绑定api端口被访问:{}",ret);
+        log.info("绑定api端口被访问,参数: state->{} code->{}:{}",stat,code,ret);
         return ret;
     }
 }
