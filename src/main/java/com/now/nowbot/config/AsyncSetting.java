@@ -43,10 +43,10 @@ public class AsyncSetting implements AsyncConfigurer {
 
         @Override
         public void handleUncaughtException(Throwable throwable, Method method, Object... obj) {
-            log.info("Exception message - " + throwable.getMessage());
             log.info("Method name - " + method.getName());
+            log.error("Exception message",throwable);
             for (Object param : obj) {
-                log.info("Parameter value - " + param);
+                log.info("Parameter value - " + param.toString());
             }
         }
 

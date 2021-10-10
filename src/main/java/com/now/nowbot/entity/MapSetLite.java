@@ -1,14 +1,15 @@
 package com.now.nowbot.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
-@Table(name = "osu_mapset")
+@Table(name = "osu_mapset", indexes = {
+        @Index(name = "raw",columnList = "map_id")
+})
 public class MapSetLite {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "map_id")
     private Integer mapset_id;
 

@@ -1,14 +1,16 @@
 package com.now.nowbot.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "qq_start")
 public class StartLite {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "qq_id")
     private Integer qq;
 
     private Double start;

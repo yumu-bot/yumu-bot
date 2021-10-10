@@ -26,7 +26,7 @@ public enum Instruction {
     YMP("ymp","!ymr/!ymp 简略地查询自己的游戏成绩","^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     YMI("ymi","!ymi 简略地查询自己的游戏信息","^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
     WIKI("wiki","!ymwiki 百科，告诉你小沐知道的一切。","^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),
-    TEST("test",null,".*"),
+    TEST("test",null,"^[!！]test.*"),
     TRANS("trans",null,"^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),
     SCORE("score",null,"^[!！]score\\s?(?<bid>\\d+)");
 

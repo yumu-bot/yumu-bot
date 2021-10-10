@@ -1,24 +1,24 @@
 package com.now.nowbot.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "osu_bp_list")
+@Table(name = "osu_bp_list", indexes = {
+        @Index(name = "find", columnList = "osu_id")
+})
 public class OsuBpListLite {
     @Id
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    @Column(name = "osu_id")
     private Integer OsuId;
 
-    public Integer getId() {
-        return id;
-    }
+    // ','分割的
+    private String bpList;
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    private LocalDateTime time;
 
     public Integer getOsuId() {
         return OsuId;
@@ -26,5 +26,29 @@ public class OsuBpListLite {
 
     public void setOsuId(Integer osuId) {
         OsuId = osuId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getBpList() {
+        return bpList;
+    }
+
+    public void setBpList(String bpList) {
+        this.bpList = bpList;
+    }
+
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 }

@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import com.now.nowbot.model.enums.OsuMode;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -27,7 +29,7 @@ public class QQUserLite {
     private LocalDateTime joinDate;
     //主模式
     @Column(name = "main_mode")
-    private String mainMode;
+    private OsuMode mainMode;
 
     public Long getId() {
         return id;
@@ -93,11 +95,11 @@ public class QQUserLite {
         this.joinDate = joinDate;
     }
 
-    public String getPlayMode() {
+    public OsuMode getMainMode() {
         return mainMode;
     }
 
-    public void setPlayMode(String playMode) {
-        this.mainMode = playMode;
+    public void setMainMode(OsuMode mainMode) {
+        this.mainMode = mainMode;
     }
 }

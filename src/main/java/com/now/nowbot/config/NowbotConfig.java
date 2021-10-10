@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Configuration
 @ConfigurationProperties(prefix = "nowbot.config")
@@ -155,6 +156,7 @@ public class NowbotConfig {
     }
     @Value("${mirai.start}")
     boolean isStart;
+
     @Autowired
     MessageListener messageListener;
     @Bean
@@ -178,7 +180,6 @@ public class NowbotConfig {
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         //登录
         if (isStart) bot.login();
-//        bot.getEventChannel().registerListenerHost(messageListener);
         //注册监听 messageListener需要继承SimpleListenerHost类
 //        bot.getEventChannel().registerListenerHost(messageListener);
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);

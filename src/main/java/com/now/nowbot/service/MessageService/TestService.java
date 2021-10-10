@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -25,12 +26,13 @@ public class TestService implements MessageService {
     OsuGetService osuGetService;
 
     @Override
+    @CheckPermission(isSuper = true)
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
         var msg = event.getMessage();
         if (event instanceof GroupMessageEvent && ((GroupMessageEvent) event).getGroup().getId() == 746671531L) {
             var grp = ((GroupMessageEvent) event).getGroup();
             var pt = Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
-            var mo = Pattern.compile("!testmo(\\s+(?<id>\\d+))");
+            var mo = Pattern.compile("!testra(\\s+(?<id>\\d+))");
             var matcher = pt.matcher(msg.contentToString());
             var mathcer_mo = mo.matcher(msg.contentToString());
             if (matcher.find()) {

@@ -4,10 +4,14 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_beatmap",indexes = {
-        @Index(name = "sid", columnList = "map_id")
+        @Index(name = "sid", columnList = "map_id,beatmap_id"),
+        @Index(name = "find", columnList = "beatmap_id"),
+        @Index(name = "map_find", columnList = "map_id")
 })
 public class BeatmapLite {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "beatmap_id")
     private Integer beatmap_id;
 
