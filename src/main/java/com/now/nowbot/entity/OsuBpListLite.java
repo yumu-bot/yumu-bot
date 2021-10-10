@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_bp_list", indexes = {
-        @Index(name = "find", columnList = "osu_id")
+        @Index(name = "bp_find", columnList = "osu_id")
 })
 public class OsuBpListLite {
     @Id

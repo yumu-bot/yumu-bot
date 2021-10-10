@@ -7,6 +7,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
-@Component
+@Component()
 public class Permission {
     private static Logger log = LoggerFactory.getLogger(Permission.class);
     private static Set<Long> supetList;
@@ -28,6 +29,8 @@ public class Permission {
     public void PermissionDao(PermissionDao permissionDao) {
         Permission.permissionDao = permissionDao;
     }
+    @Autowired
+    private ApplicationContext applicationContext;
     //全局名单
     private static PermissionData ALL_W;
     private static PermissionData ALL_B;
@@ -46,8 +49,7 @@ public class Permission {
         var AllGb = permissionDao.getQQList("PERMISSION_ALL", PermissionType.GROUP_B);
         ALL_B = new PermissionData(Set.copyOf(AllFb), Set.copyOf(AllGb));
         //初始化各功能名单
-        ApplicationContext applicationContext = NowbotConfig.applicationContext;
-        assert applicationContext != null;
+
         var beans = applicationContext.getBeansOfType(MessageService.class);
         beans.forEach((name, bean) -> {
 //            //拿到方法

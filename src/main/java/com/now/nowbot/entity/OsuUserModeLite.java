@@ -6,8 +6,8 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_user_mode", indexes = {
-        @Index(name = "oid",columnList = "osu_id"),
-        @Index(name = "find",columnList = "osu_id,mode")
+        @Index(name = "osu_id",columnList = "osu_id"),
+        @Index(name = "usermod_find",columnList = "osu_id,mode")
 })
 public class OsuUserModeLite {
     @Id

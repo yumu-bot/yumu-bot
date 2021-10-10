@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "qq_message", indexes = {
-        @Index(name = "find", columnList = "row_id,internal,from_id")
+        @Index(name = "msg_find", columnList = "row_id,internal,from_id")
 })//主要是可能会有其他消息的记录,先设定表名为qq_message
 public class MsgLite{
     @Id

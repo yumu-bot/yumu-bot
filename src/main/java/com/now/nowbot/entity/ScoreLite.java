@@ -1,5 +1,6 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.context.annotation.Primary;
 
 import javax.persistence.*;
@@ -35,6 +36,7 @@ public class ScoreLite {
     private Integer countkatu;
     private Integer countmiss;
 
+    @Column(name = "'rank'",length = 3000)
     private String rank;
     //created_at
     private LocalDateTime date;
