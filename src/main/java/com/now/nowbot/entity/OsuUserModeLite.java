@@ -3,6 +3,7 @@ package com.now.nowbot.entity;
 import com.now.nowbot.model.enums.OsuMode;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_user_mode", indexes = {
@@ -15,10 +16,12 @@ public class OsuUserModeLite {
     private Long id;
     @Column(name = "osu_id")
     private Integer osuID;
-
     private OsuMode mode;
 
+    private LocalDateTime time;
+
     // ',' 分割
+    @Column(length = 3000)
     private String rank_history;
     //等级
     private Integer level_current;
@@ -210,5 +213,13 @@ public class OsuUserModeLite {
 
     public void setGrade_counts_a(Integer grade_counts_a) {
         this.grade_counts_a = grade_counts_a;
+    }
+
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 }

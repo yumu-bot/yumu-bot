@@ -19,7 +19,7 @@ public class BeatmapLite {
     private Integer mapset_id;
 
     //是否为转谱
-    @Column(name = "'convert'")
+    @Column(name = "is_convert")
     private Boolean convert;
     //难度名
     private String version;

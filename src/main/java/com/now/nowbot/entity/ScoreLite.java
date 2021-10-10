@@ -36,8 +36,8 @@ public class ScoreLite {
     private Integer countkatu;
     private Integer countmiss;
 
-    @Column(name = "'rank'",length = 3000)
-    private String rank;
+    @Column(name = "rank_list")
+    private Integer rank;
     //created_at
     private LocalDateTime date;
 
@@ -169,11 +169,11 @@ public class ScoreLite {
         this.countmiss = countmiss;
     }
 
-    public String getRank() {
+    public Integer getRank() {
         return rank;
     }
 
-    public void setRank(String rank) {
+    public void setRank(Integer rank) {
         this.rank = rank;
     }
 
