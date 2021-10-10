@@ -15,22 +15,28 @@ import java.util.regex.Matcher;
 @Retention(RetentionPolicy.RUNTIME)
 
 public @interface CheckPermission {
+    /***
+     * 黑/白 名单类型 true白  false黑
+     * @return
+     */
     boolean isWhite() default false;
 
+    /***
+     * 群组记录
+     * @return
+     */
     boolean group() default true;
 
+    /***
+     * 个人记录
+     * @return
+     */
     boolean friend() default true;
 
     /***
-     * 修改权限
-     * @return true群主/管理员可修改 false 禁止修改
-     */
-    boolean Perm() default true;
-    /***
-     * 仅允许超级管理员使用
-     * @return true
+     * true群主/管理员可修改 false 禁止修改
+     * @return false
      */
     boolean isSuper() default false;
 
-    String ServiceName() default "public";
 }

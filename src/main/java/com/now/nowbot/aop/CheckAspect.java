@@ -1,6 +1,7 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -11,12 +12,16 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Aspect
 @Component
 public class CheckAspect {
+    @Autowired
+    Permission permission;
     @Pointcut("@annotation(com.now.nowbot.aop.CheckPermission)")
     public void annotatedMethodsPerm() {
     }
@@ -37,19 +42,20 @@ public class CheckAspect {
      * @throws TipsException
      */
     @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws TipsException {
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws LogException {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
+        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
 
-        if(CheckPermission.isWhite()){
-            if (CheckPermission.friend()){
-
+        if (!(event instanceof GroupMessageEvent)){
+            if (!permission.containsFriend(servicename, event.getSender().getId())) {
+                throw new LogException("已关闭 个人", new RuntimeException(event.getSender().getId()+" -> "+servicename));
             }
-            if (CheckPermission.group()){
-
+        }else {
+            if (!permission.containsGroup(servicename, ((GroupMessageEvent) event).getGroup().getId())) {
+                throw new LogException("已关闭 群组", new RuntimeException(((GroupMessageEvent) event).getGroup().getId()+" -> "+servicename));
             }
         }
-
 //        if (CheckPermission.isBotSuper()){
 //            if(!Permission.superUser.contains(event.getSender().getId()))
 //                throw new TipsException("此功能已关闭");

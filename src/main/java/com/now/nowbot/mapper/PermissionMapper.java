@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface PermissionMapper extends JpaRepository<PermissionLite, Long> , JpaSpecificationExecutor<PermissionLite> {
     @Query("select p.id from PermissionLite p where p.service = :service and p.type = :type")
-    public Integer getId(@Param("service") String service, @Param("type") PermissionType type);
+    public Long getId(@Param("service") String service, @Param("type") PermissionType type);
 
     public PermissionLite getByServiceAndType(String service, PermissionType type);
 }

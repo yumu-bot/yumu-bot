@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface QQIDMapper extends JpaRepository<QQID, Long>, JpaSpecificationExecutor<QQID> {
     public List<Long> getByPermissionId(Long permissionId);
+    public QQID deleteQQIDByPermissionIdAndIsGroupAndQQ(Long permissionId, Boolean isGroup, Long QQ);
 }
