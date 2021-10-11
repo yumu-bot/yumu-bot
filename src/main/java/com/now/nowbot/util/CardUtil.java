@@ -42,8 +42,6 @@ public class CardUtil {
         canvas.translate(130, 20);
         Typeface typeface = Typeface.makeFromFile("D:\\Documents\\Tencent Files\\2480557535\\FileRecv\\Torus-Regular.ttf");
         Font font = new Font(typeface,48)
-                .setEmboldened(true)
-                .setScaleX(1.02f)
                 .setHinting(FontHinting.NONE)
                 .setBaselineSnapped(true);
 
@@ -56,8 +54,6 @@ public class CardUtil {
         canvas.translate(20, 20);
         Typeface typeface = Typeface.makeFromFile("F:\\项目素材\\nowbot\\data\\font\\Puhuiti.ttf");
         Font font = new Font(typeface,36).setEmboldened(true)
-                .setScaleX(1.011f)
-                .setHinting(FontHinting.NONE)
                 .setBaselineSnapped(true);
         var line = TextLine.make(str ,font);
         canvas.drawTextLine(line,0,28,new Paint().setARGB(255,255,255,255).setStrokeWidth(10));

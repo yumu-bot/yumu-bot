@@ -24,6 +24,7 @@ public class MsgLite{
     private Long fromId;
     @Column(name = "target_id")
     private Long targetId;
+    @Column(length = 5000)
     private String content;
 
     public MsgLite(MessageChain msg){
@@ -33,7 +34,7 @@ public class MsgLite{
         time = (long) source.getTime();
         fromId = source.getFromId();
         targetId = source.getTargetId();
-        content = msg.contentToString();
+        content = MessageChain.serializeToJsonString(msg);
     }
 
     public MsgLite() {

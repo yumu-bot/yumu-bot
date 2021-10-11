@@ -92,13 +92,13 @@ public class MessageListener extends SimpleListenerHost {
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
         messageMapper.save(new MsgLite(event.getMessage()));
-//        for(var ins : Instruction.values()){
-//            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
-//            if (matcher.find() && applicationContext != null) {
-//                var service = (MessageService) applicationContext.getBean(ins.getName());
-//                service.HandleMessage(event, matcher);
-//            }
-//        }
+        for(var ins : Instruction.values()){
+            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
+            if (matcher.find() && applicationContext != null) {
+                var service = (MessageService) applicationContext.getBean(ins.getName());
+                service.HandleMessage(event, matcher);
+            }
+        }
     }
 
     /***
