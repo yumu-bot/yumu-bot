@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.StarService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.AudioSupported;
@@ -22,8 +22,7 @@ import java.util.regex.Matcher;
 @Service("song")
 public class SongService implements MessageService{
     private static final Logger log = LoggerFactory.getLogger(SongService.class);
-    @Autowired
-        StarService starService;
+
     @Autowired
     OsuGetService osuGetService;
 
@@ -69,7 +68,7 @@ public class SongService implements MessageService{
             }
             cin.close();
         } catch (Exception e) {
-            throw e;
+            throw new LogException("song",e);
         }
     }
 }

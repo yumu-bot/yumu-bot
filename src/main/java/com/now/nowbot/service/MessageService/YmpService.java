@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.OsuMode;
@@ -32,9 +31,6 @@ public class YmpService implements MessageService{
 
     @Autowired
     OsuGetService osuGetService;
-
-    @Autowired
-    StarService starService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

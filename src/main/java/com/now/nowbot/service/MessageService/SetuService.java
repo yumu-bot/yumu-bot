@@ -2,9 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.service.StarService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -32,8 +30,6 @@ public class SetuService implements MessageService{
     @Autowired
     RestTemplate template;
 
-    @Autowired
-    StarService starService;
 
     @Override
     @CheckPermission(friend = false)
@@ -58,13 +54,12 @@ public class SetuService implements MessageService{
         }
         BinUser binUser = BindingUtil.readUser(qq);
 
-        StarService.Score score = starService.getScore(binUser);
-        if(starService.delStart(score,5)){
+        if(true){
 //            SendmsgUtil.send(from,"稍等片刻");
             from.sendMessage("稍等片刻");
         }else {
-            from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");
-            return;
+//            from.sendMessage("您当前所剩积分："+score.getStar()+'\n'+"不足5积分,无法看图！");
+//            return;
         }
 
 
@@ -88,7 +83,6 @@ public class SetuService implements MessageService{
         } catch (IOException e) {
             e.printStackTrace();
             from.sendMessage("api异常，请稍后再试，积分已退回");
-            starService.addStart(score,5);
         }
         if (img != null) {
             from.sendMessage(img).recallIn(110*1000);

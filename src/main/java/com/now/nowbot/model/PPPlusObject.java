@@ -2,9 +2,11 @@ package com.now.nowbot.model;
 
 import java.time.LocalDateTime;
 
+
 public class PPPlusObject {
     private Long uid;
     private String name;
+
     private LocalDateTime time;
     private Double Total;
     private Double Junp;
@@ -29,83 +31,98 @@ public class PPPlusObject {
         Pre = pre;
     }
 
+
     public Long getUid() {
         return uid;
     }
 
-    public void setUid(Long uid) {
+    public PPPlusObject setUid(Long uid) {
         this.uid = uid;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+
+    public PPPlusObject setName(String name) {
         this.name = name;
+        return this;
     }
 
     public LocalDateTime getTime() {
         return time;
     }
 
-    public void setTime(LocalDateTime time) {
+    public PPPlusObject setTime(LocalDateTime time) {
         this.time = time;
+        return this;
     }
 
     public Double getTotal() {
         return Total;
     }
 
-    public void setTotal(Double total) {
+    public PPPlusObject setTotal(Double total) {
         Total = total;
+        return this;
     }
 
     public Double getJunp() {
         return Junp;
     }
 
-    public void setJunp(Double junp) {
+
+    public PPPlusObject setJunp(Double junp) {
         Junp = junp;
+        return this;
     }
 
     public Double getFlow() {
         return Flow;
     }
 
-    public void setFlow(Double flow) {
+
+    public PPPlusObject setFlow(Double flow) {
         Flow = flow;
+        return this;
     }
 
     public Double getAcc() {
         return Acc;
     }
 
-    public void setAcc(Double acc) {
+    public PPPlusObject setAcc(Double acc) {
         Acc = acc;
+        return this;
     }
 
     public Double getSta() {
         return Sta;
     }
 
-    public void setSta(Double sta) {
+    public PPPlusObject setSta(Double sta) {
         Sta = sta;
+        return this;
     }
 
     public Double getSpd() {
         return Spd;
     }
 
-    public void setSpd(Double spd) {
+
+    public PPPlusObject setSpd(Double spd) {
         Spd = spd;
+        return this;
     }
 
     public Double getPre() {
         return Pre;
     }
 
-    public void setPre(Double pre) {
+    public PPPlusObject setPre(Double pre) {
         Pre = pre;
+        return this;
     }
 }

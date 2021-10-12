@@ -28,6 +28,9 @@ public class PPPLite {
 
     private Double Pre;
 
+    public PPPLite() {
+    }
+
     public PPPLite(Long userId, LocalDateTime date, Double total, Double junp, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.userId = userId;
         this.date = date;

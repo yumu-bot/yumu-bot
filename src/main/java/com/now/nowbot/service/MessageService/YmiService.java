@@ -1,25 +1,19 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.Ymi;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.OsuMode;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.Image;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 
 @Service("ymi")
@@ -30,9 +24,6 @@ public class YmiService implements MessageService{
 
     @Autowired
     OsuGetService osuGetService;
-
-    @Autowired
-    StarService starService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -94,7 +85,7 @@ public class YmiService implements MessageService{
         if(date.size()==0){
             throw new TipsException("没有查询到您的信息呢");
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         var statistics = date.getJSONObject("statistics");
         // Muziyami(osu):10086PP
         sb.append(date.getString("username")).append('(').append(mode).append(')').append(':').append(statistics.getFloatValue("pp")).append("PP").append('\n');
@@ -106,14 +97,14 @@ public class YmiService implements MessageService{
         sb.append("PC:");
         int PC = statistics.getIntValue("play_count");
         if (PC>10_000) {
-            sb.append((PC / 100) / 100D).append('w');
+            sb.append((PC / 100f) / 100D).append('w');
         }else {
             sb.append(PC);
         }
         sb.append(" TTH:");
         int TTH = statistics.getIntValue("total_hits");
         if (TTH>10_000) {
-            sb.append((TTH / 100) / 100D).append('w');
+            sb.append((TTH / 100f) / 100D).append('w');
         }else {
             sb.append(TTH);
         }

@@ -2,8 +2,12 @@ package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -643,18 +648,18 @@ public class OsuGetService {
      * @param name
      * @return
      */
-    public JSONObject ppPlus(String name) {
+    public JsonNode ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
+        ResponseEntity<JsonNode> c = null;
 
-        c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
+        c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
 
-        return c.getBody().getJSONObject("user_data");
+        return c.getBody().get("user_data");
     }
 
     /***

@@ -1,17 +1,20 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.util.SkiaUtil;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +24,11 @@ import java.util.regex.Matcher;
 
 @Service("ppp")
 public class PpPlusService implements MessageService{
+    Logger log = LoggerFactory.getLogger(PpPlusService.class);
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    PPPlusDao ppPlusDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
@@ -55,20 +61,16 @@ public class PpPlusService implements MessageService{
         }
 
 
-        JSONObject date1 = null;
-        date1 = osuGetService.ppPlus(id1);
-        if (date1 == null){
+        PPPlusObject date1 = null;
+        try {
+            date1 = ppPlusDao.getobject(id1);
+        } catch (Exception e) {
+//            throw e;
+            log.info("ppp",e);
             throw new TipsException("那个破网站连不上");
         }
 
-        float[] hex1 = osuGetService.ppPlus(new float[]{
-                date1.getFloatValue("JumpAimTotal"),
-                date1.getFloatValue("FlowAimTotal"),
-                date1.getFloatValue("AccuracyTotal"),
-                date1.getFloatValue("StaminaTotal"),
-                date1.getFloatValue("SpeedTotal"),
-                date1.getFloatValue("PrecisionTotal"),
-        });
+        float[] hex1 = ppPlusDao.ppsize(date1);
 
         byte[] datebyte = null;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
@@ -101,8 +103,8 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(280,440);
-            TextLine text = TextLine.make(date1.getString("UserName"), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(date1.getString("UserName").substring(0,8)+"...",fontA);
+            TextLine text = TextLine.make(date1.getName(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date1.getName().substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
@@ -110,39 +112,39 @@ public class PpPlusService implements MessageService{
             canvas.save();
             canvas.translate(100,520);
             TextLine k1 = TextLine.make("Jump",fontB);
-            TextLine v1 = TextLine.make(dx.format(date1.getFloatValue("JumpAimTotal")),fontB);
+            TextLine v1 = TextLine.make(dx.format(date1.getJunp()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Flow",fontB);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("FlowAimTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getFlow()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Acc",fontB);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("AccuracyTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getAcc()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Sta",fontB);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("StaminaTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getSta()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Spd",fontB);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("SpeedTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getSpd()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Pre",fontB);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("PrecisionTotal")),fontB);
+            v1 = TextLine.make(dx.format(date1.getPre()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
             canvas.save();
             canvas.translate(920,880);
-            v1 = TextLine.make(dx.format(date1.getFloatValue("PerformanceTotal")),fontA);
+            v1 = TextLine.make(dx.format(date1.getTotal()),fontA);
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
@@ -167,23 +169,25 @@ public class PpPlusService implements MessageService{
                 user = BindingUtil.readUser(event.getSender().getId());
             }
         }
-        JSONObject js = null;
-        if (user == null){
-            js = osuGetService.ppPlus(""+osuGetService.getOsuId(name.trim()));
-        }else {
-            js = osuGetService.ppPlus(""+user.getOsuID());
-        }
-        if (js == null){
+        PPPlusObject js;
+        try {
+            if (user == null){
+                js = ppPlusDao.getobject(""+osuGetService.getOsuId(name.trim()));
+            }else {
+                js = ppPlusDao.getobject(""+user.getOsuID());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new TipsException("连不上啊连不上！");
         }
 
         float[] date = osuGetService.ppPlus(new float[]{
-                js.getFloatValue("JumpAimTotal"),
-                js.getFloatValue("FlowAimTotal"),
-                js.getFloatValue("AccuracyTotal"),
-                js.getFloatValue("StaminaTotal"),
-                js.getFloatValue("SpeedTotal"),
-                js.getFloatValue("PrecisionTotal"),
+                js.getJunp().floatValue(),
+                js.getFlow().floatValue(),
+                js.getAcc().floatValue(),
+                js.getSta().floatValue(),
+                js.getSpd().floatValue(),
+                js.getPre().floatValue(),
         });
 
         byte[] datebyte = null;
@@ -199,7 +203,7 @@ public class PpPlusService implements MessageService{
             var canvas = surface.getCanvas();
             canvas.clear(Color.makeRGB(65, 40, 49));
 
-            var line = TextLine.make(js.getString("UserName"),lagerFont);
+            var line = TextLine.make(js.getName(),lagerFont);
             canvas.drawTextLine(line,(600-line.getWidth())/2,line.getHeight(),new Paint().setARGB(255,255,255,255));
 
             canvas.save();
@@ -238,19 +242,19 @@ public class PpPlusService implements MessageService{
             canvas.translate(0,575);
 
             canvas.drawRRect(RRect.makeXYWH(50,0,225,50,10),edP);
-            canvas.drawString("jump:"+(int)js.getFloatValue("JumpAimTotal"),60,35,middleFont,wp);
+            canvas.drawString("jump:"+(int)js.getJunp().intValue(),60,35,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,0,225,50,10),edP);
-            canvas.drawString("flow:"+(int)js.getFloatValue("FlowAimTotal"),335,35,middleFont,wp);
+            canvas.drawString("flow:"+(int)js.getFlow().intValue(),335,35,middleFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(50,75,225,50,10),edP);
-            canvas.drawString("acc:"+(int)js.getFloatValue("AccuracyTotal"),60,110,middleFont,wp);
+            canvas.drawString("acc:"+(int)js.getAcc().intValue(),60,110,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,75,225,50,10),edP);
-            canvas.drawString("sta:"+(int)js.getFloatValue("StaminaTotal"),335,110,middleFont,wp);
+            canvas.drawString("sta:"+(int)js.getSta().intValue(),335,110,middleFont,wp);
 
             canvas.drawRRect(RRect.makeXYWH(50,150,225,50,10),edP);
-            canvas.drawString("spd:"+(int)js.getFloatValue("SpeedTotal"),60,185,middleFont,wp);
+            canvas.drawString("spd:"+(int)js.getSpd().intValue(),60,185,middleFont,wp);
             canvas.drawRRect(RRect.makeXYWH(325,150,225,50,10),edP);
-            canvas.drawString("pre:"+(int)js.getFloatValue("PrecisionTotal"),335,185,middleFont,wp);
+            canvas.drawString("pre:"+(int)js.getPre().intValue(),335,185,middleFont,wp);
 
             canvas.restore();
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
