@@ -1,36 +1,25 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.model;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "osu_pp_plus")
-public class PPPLite {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private Long userId;
-    //记录时间
-    private LocalDateTime date;
-
+public class PPPlusObject {
+    private Long uid;
+    private String name;
+    private LocalDateTime time;
     private Double Total;
-
     private Double Junp;
-
     private Double Flow;
-
     private Double Acc;
-
     private Double Sta;
-
     private Double Spd;
-
     private Double Pre;
 
-    public PPPLite(Long userId, LocalDateTime date, Double total, Double junp, Double flow, Double acc, Double sta, Double spd, Double pre) {
-        this.userId = userId;
-        this.date = date;
+    public PPPlusObject() {
+    }
+
+    public PPPlusObject(Long uid, LocalDateTime time, Double total, Double junp, Double flow, Double acc, Double sta, Double spd, Double pre) {
+        this.uid = uid;
+        this.time = time;
         Total = total;
         Junp = junp;
         Flow = flow;
@@ -40,31 +29,31 @@ public class PPPLite {
         Pre = pre;
     }
 
-    public Long getId() {
-        return id;
+    public Long getUid() {
+        return uid;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setUid(Long uid) {
+        this.uid = uid;
     }
 
-    public Long getUserId() {
-        return userId;
+    public String getName() {
+        return name;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public LocalDateTime getDate() {
-        return date;
+    public LocalDateTime getTime() {
+        return time;
     }
 
-    public void setDate(LocalDateTime date) {
-        this.date = date;
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 
-    public double getTotal() {
+    public Double getTotal() {
         return Total;
     }
 
@@ -72,7 +61,7 @@ public class PPPLite {
         Total = total;
     }
 
-    public double getJunp() {
+    public Double getJunp() {
         return Junp;
     }
 
@@ -80,7 +69,7 @@ public class PPPLite {
         Junp = junp;
     }
 
-    public double getFlow() {
+    public Double getFlow() {
         return Flow;
     }
 
@@ -88,7 +77,7 @@ public class PPPLite {
         Flow = flow;
     }
 
-    public double getAcc() {
+    public Double getAcc() {
         return Acc;
     }
 
@@ -96,7 +85,7 @@ public class PPPLite {
         Acc = acc;
     }
 
-    public double getSta() {
+    public Double getSta() {
         return Sta;
     }
 
@@ -104,7 +93,7 @@ public class PPPLite {
         Sta = sta;
     }
 
-    public double getSpd() {
+    public Double getSpd() {
         return Spd;
     }
 
@@ -112,7 +101,7 @@ public class PPPLite {
         Spd = spd;
     }
 
-    public double getPre() {
+    public Double getPre() {
         return Pre;
     }
 
