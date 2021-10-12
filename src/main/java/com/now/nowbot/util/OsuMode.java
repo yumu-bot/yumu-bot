@@ -8,7 +8,7 @@ public enum OsuMode {
     CATCH("catch", "c", "2"),
     MANIA("mania", "m", "3");
 
-    private Set<String> matcher;
+    private final Set<String> matcher;
 
     OsuMode(String... desc){
         this.matcher = new HashSet<>(Arrays.asList(desc));
@@ -20,7 +20,6 @@ public enum OsuMode {
             if(m.matcher.contains(desc)){
                 return m;
             }
-
         }
         return OSU;
     }
