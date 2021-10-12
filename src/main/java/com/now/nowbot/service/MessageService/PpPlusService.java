@@ -2,7 +2,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.util.SkiaUtil;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
@@ -23,6 +25,8 @@ import java.util.regex.Matcher;
 public class PpPlusService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    PPPlusDao ppPlusDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
@@ -55,20 +59,15 @@ public class PpPlusService implements MessageService{
         }
 
 
-        JSONObject date1 = null;
-        date1 = osuGetService.ppPlus(id1);
-        if (date1 == null){
+        PPPlusObject date1 = null;
+        try {
+            date1 = ppPlusDao.getobject(id1);
+        } catch (Exception e) {
+            throw e;
             throw new TipsException("那个破网站连不上");
         }
 
-        float[] hex1 = osuGetService.ppPlus(new float[]{
-                date1.getFloatValue("JumpAimTotal"),
-                date1.getFloatValue("FlowAimTotal"),
-                date1.getFloatValue("AccuracyTotal"),
-                date1.getFloatValue("StaminaTotal"),
-                date1.getFloatValue("SpeedTotal"),
-                date1.getFloatValue("PrecisionTotal"),
-        });
+        float[] hex1 = ppPlusDao.ppsize(date1);
 
         byte[] datebyte = null;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
@@ -101,8 +100,8 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(280,440);
-            TextLine text = TextLine.make(date1.getString("UserName"), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(date1.getString("UserName").substring(0,8)+"...",fontA);
+            TextLine text = TextLine.make(date1.getName(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date1.getName().substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
