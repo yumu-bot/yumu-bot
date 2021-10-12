@@ -38,5 +38,6 @@ public class ScoreService implements MessageService {
         }
         int bid = Integer.parseInt(matcher.group("bid"));
         JSONObject score = osuGetService.getScore(bid, user);
+        //todo
     }
 }

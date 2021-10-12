@@ -8,6 +8,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.OsuMode;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.Image;
@@ -51,56 +52,41 @@ public class YmiService implements MessageService{
                 user = BindingUtil.readUser(event.getSender().getId());
             }
         }
-        var mode = matcher.group("mode");
-        if (mode == null){
-            mode = "osu";
-        }
+        var mode = OsuMode.getMode(matcher.group("mode"));
         {
-            mode = mode.toLowerCase();
             switch (mode) {
-                default:
-                case "osu":
-                case "o":
-                case "0": {
+                default: //todo 获取账号默认模式
+                    mode = OsuMode.OSU;
+                case OSU: {
                     if (user != null) {
                         date = osuGetService.getPlayerOsuInfo(user);
                     } else {
                         date = osuGetService.getPlayerOsuInfo(id);
                     }
-                    mode = "osu";
                 }
                 break;
-                case "taiko":
-                case "t":
-                case "1": {
+                case TAIKO: {
                     if (user != null) {
                         date = osuGetService.getPlayerTaikoInfo(user);
                     } else {
                         date = osuGetService.getPlayerTaikoInfo(id);
                     }
-                    mode = "taiko";
                 }
                 break;
-                case "catch":
-                case "c":
-                case "2": {
+                case CATCH: {
                     if (user != null) {
                         date = osuGetService.getPlayerCatchInfo(user);
                     } else {
                         date = osuGetService.getPlayerCatchInfo(id);
                     }
-                    mode = "catch";
                 }
                 break;
-                case "mania":
-                case "m":
-                case "3": {
+                case MANIA: {
                     if (user != null) {
                         date = osuGetService.getPlayerManiaInfo(user);
                     } else {
                         date = osuGetService.getPlayerManiaInfo(id);
                     }
-                    mode = "mania";
                 }
                 break;
             }

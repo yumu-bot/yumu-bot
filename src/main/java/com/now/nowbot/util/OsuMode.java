@@ -3,24 +3,45 @@ import java.util.*;
 
 public enum OsuMode {
 
-    OSU(null, "osu", "o", "0"),
-    TAIKO("taiko", "t", "1"),
-    CATCH("catch", "c", "2"),
-    MANIA("mania", "m", "3");
+    OSU("osu"),
+    TAIKO("taiko"),
+    CATCH("catch"),
+    MANIA("mania"),
+    DEFAULT("");
 
-    private final Set<String> matcher;
+    String value;
 
-    OsuMode(String... desc){
-        this.matcher = new HashSet<>(Arrays.asList(desc));
+    OsuMode(String mode) {
+        value = mode;
     }
 
     public static OsuMode getMode(String desc){
-        desc=desc.toLowerCase();
-        for(var m : OsuMode.values()){
-            if(m.matcher.contains(desc)){
-                return m;
-            }
+        if (desc == null) return DEFAULT;
+        switch (desc.toLowerCase()){
+            case "osu":;
+            case "o":;
+            case "0":return OSU;
+
+            case "taiko":;
+            case "t":;
+            case "1":return TAIKO;
+
+            case "catch":;
+            case "c":;
+            case "fruits":;
+            case "f":;
+            case "2":return CATCH;
+
+            case "mania":;
+            case "m":;
+            case "3":return MANIA;
+
+            default:return DEFAULT;
         }
-        return OSU;
+    }
+
+    @Override
+    public String toString() {
+        return value;
     }
 }

@@ -34,12 +34,6 @@ public class PpPlusVsService implements MessageService{
         Contact from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
 
-        StarService.Score score = starService.getScore(user);
-        if(!starService.delStart(score,1)){
-//            SendmsgUtil.send(from,"您的积分不够1积分！");
-            from.sendMessage("您的积分不够1积分！");
-            return;
-        }
         String id1,id2,head1,head2;
         id1 = String.valueOf(user.getOsuID());
         head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
@@ -64,7 +58,6 @@ public class PpPlusVsService implements MessageService{
                 id2 = user2d.getString("id");
                 head2 = user2d.getString("avatar_url");
             } catch (Exception e) {
-                starService.addStart(score,1);
                 throw e;
             }
         }
@@ -74,7 +67,6 @@ public class PpPlusVsService implements MessageService{
         date1 = osuGetService.ppPlus(id1);
         date2 = osuGetService.ppPlus(id2);
         if (date1 == null || date2 == null){
-            starService.addStart(score,1);
             throw new TipsException("那个破网站连不上");
         }
 

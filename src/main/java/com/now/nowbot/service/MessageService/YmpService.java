@@ -8,6 +8,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.OsuMode;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.Image;
@@ -54,48 +55,35 @@ public class YmpService implements MessageService{
                 user = BindingUtil.readUser(event.getSender().getId());
             }
         }
-        var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
+        var mode = OsuMode.getMode(matcher.group("mode"));
         switch (mode){
-            case"null":
-            case"osu":
-            case"o":
-            case"0":{
+            case OSU:{
                 if (user != null){
                     dates = getDates(user,"osu",isAll);
                 }else {
                     dates = getDates(id,"osu",isAll);
                 }
-                mode = "osu";
             } break;
-            case"taiko":
-            case"t":
-            case"1":{
+            case TAIKO:{
                 if (user != null){
                     dates = getDates(user,"taiko",isAll);
                 }else {
                     dates = getDates(id,"taiko",isAll);
                 }
-                mode = "taiko";
             } break;
-            case"catch":
-            case"c":
-            case"2":{
+            case CATCH:{
                 if (user != null){
                     dates = getDates(user,"fruits",isAll);
                 }else {
                     dates = getDates(id,"fruits",isAll);
                 }
-                mode = "fruits";
             } break;
-            case"mania":
-            case"m":
-            case"3":{
+            case MANIA:{
                 if (user != null){
                     dates = getDates(user,"mania",isAll);
                 }else {
                     dates = getDates(id,"mania",isAll);
                 }
-                mode = "fruits";
             }break;
             default:{
                 throw new TipsException("未知参数");

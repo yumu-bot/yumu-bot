@@ -18,6 +18,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("cpanel")
+/*
+ 我这是写了个啥,要不要删掉
+ */
 public class catpanelService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

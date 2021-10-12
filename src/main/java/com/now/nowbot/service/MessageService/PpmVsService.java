@@ -65,7 +65,7 @@ public class PpmVsService implements MessageService{
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
 //                无明确对比对象
-                throw new TipsException("里个瓜娃子到底要vs那个哦,扣你积分！");
+                throw new TipsException("里个瓜娃子到底要vs那个哦");
             }
             var id = osuGetService.getOsuId(name.trim());
             var userdate = osuGetService.getPlayerOsuInfo(id);

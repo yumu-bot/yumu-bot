@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.OsuMode;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +39,11 @@ public class BphtService implements MessageService{
         //acc计算器  区分不同模式的计算器
         AccCoun accCoun;
         //分别处理mode
-        var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
+        var mode = OsuMode.getMode(matcher.group("mode"));
         switch (mode){
-            case"null":
-            case"osu":
-            case"o":
-            case"0":
-            default:{
+            default://todo 获取账号默认模式
+                mode = OsuMode.OSU;
+            case OSU: {
                 //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
                 if(nu.getAccessToken() != null){
                     Bps = osuGetService.getOsuBestMap(nu, 0,100);
@@ -52,41 +51,31 @@ public class BphtService implements MessageService{
                 }else {
                     Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
                 }
-                mode = "std";
                 //使用std计算器
                 accCoun = AccCoun.OSU;
             }break;
-            case"taiko":
-            case"t":
-            case"1":{
+            case TAIKO:{
                 if(nu.getAccessToken() != null){
                     Bps = osuGetService.getTaikoBestMap(nu, 0,100);
                 }else {
                     Bps = osuGetService.getTaikoBestMap(nu.getOsuID(),0,100);
                 }
-                mode = "taiko";
                 accCoun = AccCoun.TAIKO;
             }break;
-            case"catch":
-            case"c":
-            case"2":{
+            case CATCH:{
                 if(nu.getAccessToken() != null){
                     Bps = osuGetService.getCatchBestMap(nu, 0,100);
                 }else {
                     Bps = osuGetService.getCatchBestMap(nu.getOsuID(),0,100);
                 }
-                mode = "ctb";
                 accCoun = AccCoun.CATCH;
             }break;
-            case"mania":
-            case"m":
-            case"3":{
+            case MANIA:{
                 if(nu.getAccessToken() != null){
                     Bps = osuGetService.getBestMap(nu,"mania", 0,100);
                 }else {
                     Bps = osuGetService.getBestMap(nu.getOsuID(),"mania",0,100);
                 }
-                mode = "mania";
                 accCoun = AccCoun.MANIA;
             }break;
         }

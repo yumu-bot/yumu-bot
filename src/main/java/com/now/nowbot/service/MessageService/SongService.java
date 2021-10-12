@@ -32,11 +32,6 @@ public class SongService implements MessageService{
         
         var from = event.getSubject();
         BinUser user = BindingUtil.readUser(event.getSender().getId());
-        StarService.Score score = starService.getScore(user);
-        if(!starService.delStart(score,0.5f)){
-            from.sendMessage("您的积分不够!请多刷pp!");
-            return;
-        }
         int id = 0;
         boolean isBid = true;
         if (matcher.group("id") != null) {
@@ -74,7 +69,6 @@ public class SongService implements MessageService{
             }
             cin.close();
         } catch (Exception e) {
-            starService.addStart(score,0.5f);
             throw e;
         }
     }

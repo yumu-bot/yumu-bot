@@ -467,6 +467,14 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    /***
+     * 获取Score成绩的基类
+     * @param bid bid
+     * @param id 用户id
+     * @param mode 游戏模式
+     * @param mods mod,仅支持类似:[HD,DT]
+     * @return
+     */
     public JSONObject getScore(int bid, int id, String mode, String[] mods) {
         var uribulid = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + id)
                 .queryParam("mode", mode);
@@ -602,7 +610,13 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public Object getReplay(String mode, long id) {
+    /***
+     * 下载replay文件 字节文件
+     * @param mode
+     * @param id
+     * @return
+     */
+    public byte[] getReplay(String mode, long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/"+mode+"/"+id+"/download")
 //                .queryParam("mode","osu")
                 .build().encode().toUri();
@@ -613,7 +627,7 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity c = null;
+        ResponseEntity<byte[]> c = null;
         try {
             System.out.println(uri);
             c = template.exchange(uri, HttpMethod.GET, httpEntity, byte[].class);
@@ -684,6 +698,11 @@ public class OsuGetService {
 
     }
 
+    /***
+     * 比赛信息
+     * @param mid
+     * @return
+     */
     public JsonNode getMatchInfo(int mid){
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" +mid)
                 .build().encode().toUri();
