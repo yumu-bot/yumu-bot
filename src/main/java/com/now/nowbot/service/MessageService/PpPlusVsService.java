@@ -50,7 +50,7 @@ public class PpPlusVsService implements MessageService {
         } else {
             String name = matcher.group("name");
             if (name == null || name.trim().equals("")) {
-                throw new TipsException("里个瓜娃子到底要vs那个哦,扣你积分！");
+                throw new TipsException("里个瓜娃子到底要vs那个哦");
             }
             var user2d = osuGetService.getPlayerOsuInfo(name);
             id2 = user2d.getString("id");

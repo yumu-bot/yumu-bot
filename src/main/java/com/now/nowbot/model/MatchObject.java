@@ -3,7 +3,7 @@ package com.now.nowbot.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class Match {
+public class MatchObject {
     int match_id;
     LocalDateTime strat_time;
     LocalDateTime end_time;

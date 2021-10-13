@@ -2,11 +2,11 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.util.SkiaUtil;
 import com.now.nowbot.model.PPm.PPmObject;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.OsuMode;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -33,13 +33,10 @@ public class PpmService implements MessageService {
 
         PPmObject userinfo = null;
         JSONObject userdate;
-        var mode = matcher.group("mode")==null?"null":matcher.group("mode").toLowerCase();
+        var mode = OsuMode.getMode(matcher.group("mode"));
         //分别区分每种模式
         switch (mode){
-            case"null":
-            case"osu":
-            case"o":
-            case"0":{
+            case OSU:{
                 if (at != null) {
                     var user = BindingUtil.readUser(at.getTarget());
                     userdate = osuGetService.getPlayerOsuInfo(user);
@@ -58,11 +55,8 @@ public class PpmService implements MessageService {
                         userinfo = PPmObject.presOsu(userdate, bpdate);
                     }
                 }
-                mode = "osu";
             } break;
-            case"taiko":
-            case"t":
-            case"1":{
+            case TAIKO:{
                 if (at != null) {
                     var user = BindingUtil.readUser(at.getTarget());
                     userdate = osuGetService.getPlayerTaikoInfo(user);
@@ -81,11 +75,8 @@ public class PpmService implements MessageService {
                         userinfo = PPmObject.presTaiko(userdate, bpdate);
                     }
                 }
-                mode = "taiko";
             } break;
-            case"catch":
-            case"c":
-            case"2":{
+            case CATCH:{
                 if (at != null) {
                     var user = BindingUtil.readUser(at.getTarget());
                     userdate = osuGetService.getPlayerCatchInfo(user);
@@ -104,11 +95,8 @@ public class PpmService implements MessageService {
                         userinfo = PPmObject.presCatch(userdate, bpdate);
                     }
                 }
-                mode = "fruits";
             } break;
-            case"mania":
-            case"m":
-            case"3":{
+            case MANIA:{
                 throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
             }
             default:{
