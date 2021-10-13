@@ -7,25 +7,25 @@ import java.util.regex.Pattern;
  * 所有的指令都写在这里方便进行管理
  */
 public enum Instruction {
-    BIND("bind", "!ymbind 直接绑定", "^[!！]\\s?(?i)ymbind$"),
-    BPHT("bpht", "!ymbpht 查询bp", "^[!！]\\s?(?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    CATPANEL("cpanel", null, "^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"),
-    HELP("help", "!ymh/!ymhelp", "^[!！](?i)(ym)?((help)|h)"),
-    PAGE("page", null, "^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"),
-    PING("ping",  null, "^[!！]\\s?(?i)ymping"),
-    PPM("ppm", "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami", "^[!！]\\s?(?i)ymppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    PPMVS("ppmvs", "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定", "^[!！]\\s?(?i)ymppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    PPPLUS("ppp", "!ppp [osu name] std的pp+计算", "^[!！]\\s*(?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    PPPLUSVS("ppvs", "!ppvs <osu name|@某人> pp+的对比，需要自己绑定，如果是ppvs也需要对方绑定", "^[!！]\\s?(ym)?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    SETU("setu", "!ymsetu 获取一张随机图", "^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)"),
-    SONG("song", "!song <bid>或!song sid=<sid> 试听谱面", "^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"),
-    START("start", "!积分 刷新并查看积分", "^[!！]\\s*((积分)|(..积分))+.*"),
-    KUMO("kumo", null, ".*"),
-    YMP("ymp","!ymr/!ymp 简略地查询自己的游戏成绩","^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    YMI("ymi","!ymi 简略地查询自己的游戏信息","^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),
-    WIKI("wiki","!ymwiki 百科，告诉你小沐知道的一切。","^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),
-    TRANS("trans",null,"^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),
-    SCORE("score",null,"^[!！]score\\s?(?<bid>\\d+)"),
+    BIND("bind", "^[!！]\\s?(?i)ymbind$", "!ymbind 直接绑定"),
+    BPHT("bpht", "^[!！]\\s?(?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?", "!ymbpht 查询bp"),
+    CATPANEL("cpanel", "^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?", null),
+    HELP("help", "^[!！](?i)(ym)?((help)|h)", "!ymh/!ymhelp"),
+    PAGE("page", "^[!！]page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?", null),
+    PING("ping",  null, "^[!！](?i)ymping"),
+    PPM("ppm", "^[!！]\\s?(?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?", "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
+    PPMVS("ppmvs","^[!！]\\s?(?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?", "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
+    PPPLUS("ppp", "^[!！]\\s*(?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?", "!ppp [osu name] std的pp+计算"),
+    PPPLUSVS("ppvs", "^[!！]\\s?(ym)?(?i)p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?", "!ppvs <osu name|@某人> pp+的对比，需要自己绑定，如果是ppvs也需要对方绑定"),
+    SETU("setu", "^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)", "!ymsetu 获取一张随机图"),
+    SONG("song", "^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))", "!song <bid>或!song sid=<sid> 试听谱面"),
+    START("start", "^[!！]\\s*((积分)|(..积分))+.*", "!积分 刷新并查看积分"),
+    KUMO("kumo", ".*", null),
+    YMP("ymp", "^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?","!ymr/!ymp 简略地查询自己的游戏成绩"),
+    YMI("ymi", "^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?","!ymi 简略地查询自己的游戏信息"),
+    WIKI("wiki", "^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?","!ymwiki 百科，告诉你小沐知道的一切。"),
+    TRANS("trans", "^[!！]ymtrans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)",null),
+    SCORE("score", "^[!！]score\\s?(?<bid>\\d+)",null),
 
     //TODO 待实现的指令
     /*********************   下面可能会合并为一个功能   **************************/
@@ -40,7 +40,7 @@ public enum Instruction {
 
     private final String desc;
 
-    Instruction(String name, String desc, String regex){
+    Instruction(String name, String regex, String desc){
         this.regex = Pattern.compile(regex);
         this.name = name;
         this.desc = desc;
