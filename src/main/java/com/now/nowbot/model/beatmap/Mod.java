@@ -1,4 +1,4 @@
-package com.now.nowbot.model.bitmap;
+package com.now.nowbot.model.beatmap;
 
 public enum Mod {
     None(0),

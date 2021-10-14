@@ -1,4 +1,4 @@
-package com.now.nowbot.model.bitmap;
+package com.now.nowbot.model.beatmap;
 
 import com.now.nowbot.util.lzma.LZMAInputStream;
 

@@ -14,7 +14,7 @@ public class HelpService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for(var ins: Instruction.values()) {
             if(ins.getDesc()!=null)
                 sb.append(ins.getDesc()).append("\n");

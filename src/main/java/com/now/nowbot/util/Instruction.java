@@ -25,14 +25,14 @@ public enum Instruction {
     WIKI("wiki",    Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),"!ymwiki 百科，告诉你小沐知道的一切。"),
     TRANS("trans",  Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),null),
     SCORE("score",  Pattern.compile("^[!！]score\\s?(?<bid>\\d+)"),null),
-    XXXXXXXXXXXXXXX("<服务名>", Pattern.compile("^[!！]ymra\\s?(?<matchid>\\d+)(\\s+(?<numberofround>\\d+))?(\\s*:\\s*(?<includingfail>\\d+))?(\\s*(?<numberofwarmup>\\d+))?"),null),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
-    TEST("test",    Pattern.compile("^[!！]test.*"),null);
+    TEST("test",    Pattern.compile("^[!！]test.*"),null),
 
 
     //TODO 待实现的指令
+    RATING("rating", Pattern.compile("^[!！]ymra\\s?(?<matchid>\\d+)(\\s+(?<numberofround>\\d+))?(\\s*:\\s*(?<includingfail>\\d+))?(\\s*(?<numberofwarmup>\\d+))?"),null);
     /*********************   下面可能会合并为一个功能   **************************/
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),

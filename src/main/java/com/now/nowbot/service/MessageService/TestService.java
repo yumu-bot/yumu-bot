@@ -36,6 +36,7 @@ public class TestService implements MessageService {
         var mo = Pattern.compile("!testra(\\s+(?<id>\\d+))");
         var matcher = pt.matcher(msg.contentToString());
         var mathcer_mo = mo.matcher(msg.contentToString());
+
         if (matcher.find()) {
             PPmObject userinfo;
             JSONObject userdate;
@@ -162,7 +163,7 @@ public class TestService implements MessageService {
         }
     }
 
-    private void mo(int id, long eventid, List<StringBuffer> s) {
+    private void mo(int id, long eventid, List<StringBuffer> sbList) {
         JsonNode data;
         if (eventid > 0) {
             data = osuGetService.getMatchInfo(id, eventid);
@@ -172,11 +173,10 @@ public class TestService implements MessageService {
         var events = data.get("events");
         //因为ppy对大于100条event采用的是分页查询,先递归至房间创建的页,然后顺页执行 ((超级吃内存警告
         if (!events.get(0).get("detail").get("type").asText().equals("match-created")) {
-            mo(id, events.get(0).get("id").asLong(), s);
+            mo(id, events.get(0).get("id").asLong(), sbList);
         }
-        List<StringBuffer> sblist = s;
         StringBuffer sb = new StringBuffer();
-        sblist.add(sb);
+        sbList.add(sb);
         var f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
         var f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
         int flag = 0;
@@ -199,7 +199,7 @@ public class TestService implements MessageService {
                 for (var score : game.get("scores")) {
                     try {
                         sb.append(score.get("user_id").asText()).append(' ')
-                                .append((score.get("accuracy").asText() + "     ").substring(0, 6)).append(' ')
+                                .append((score.get("accuracy").asText() + "     "), 0, 6).append(' ')
                                 .append(score.get("mods").toString()).append(' ')
                                 .append(score.get("score").asText()).append(' ')
                                 .append(score.get("max_combo").asText()).append(' ')
@@ -216,7 +216,7 @@ public class TestService implements MessageService {
                 }
                 if (flag >= 25) {
                     sb = new StringBuffer();
-                    sblist.add(sb);
+                    sbList.add(sb);
                     flag = 0;
                 }
             }
