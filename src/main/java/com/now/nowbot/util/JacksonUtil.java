@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class JacksonUtil {
 
-    private static final Log logger = LogFactory.getLog(JacksonUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(JacksonUtil.class);
 
     public static String parseString(String body, String field) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module())
@@ -28,7 +28,7 @@ public class JacksonUtil {
                 return leaf.asText();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -47,7 +47,7 @@ public class JacksonUtil {
                 });
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -61,7 +61,7 @@ public class JacksonUtil {
             JsonNode leaf = node.get(field);
 
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -78,7 +78,7 @@ public class JacksonUtil {
                 return leaf.asInt();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -96,7 +96,7 @@ public class JacksonUtil {
                 });
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -113,7 +113,7 @@ public class JacksonUtil {
                 return leaf.asBoolean();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -130,7 +130,7 @@ public class JacksonUtil {
                 return value.shortValue();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -147,7 +147,7 @@ public class JacksonUtil {
                 return value.byteValue();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -161,7 +161,7 @@ public class JacksonUtil {
             node = node.get(field);
             return mapper.treeToValue(node, clazz);
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -176,7 +176,7 @@ public class JacksonUtil {
 
             return mapper.readTree(json);
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         return null;
@@ -189,7 +189,7 @@ public class JacksonUtil {
             return mapper.readValue(data, new TypeReference<Map<String, String>>() {
             });
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -199,7 +199,7 @@ public class JacksonUtil {
         try {
             return mapper.readValue(data, clazz);
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }
@@ -237,7 +237,7 @@ public class JacksonUtil {
                 return leaf.toString();
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }

@@ -7,13 +7,17 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class SkiaUtil {
     static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
@@ -102,6 +106,14 @@ public class SkiaUtil {
         Image img = null;
         try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas().setMatrix(Matrix33.makeScale(1f * width / image.getWidth(), 1f * height / image.getHeight())).drawImage(image, 0, 0);
+            img = sms.makeImageSnapshot();
+        }
+        return img;
+    }
+    public static Image getScaleImage(Image image, float scale){
+        Image img = null;
+        try(Surface sms = Surface.makeRasterN32Premul(Math.round(image.getWidth()*scale), Math.round(image.getHeight()*scale))) {
+            sms.getCanvas().setMatrix(Matrix33.makeScale(scale)).drawImage(image, 0, 0);
             img = sms.makeImageSnapshot();
         }
         return img;
@@ -543,20 +555,40 @@ public class SkiaUtil {
      * @param image 输入图片
      * @return 色组
      */
-    public static Color[] getMainColor(Image image) {
+    private static final float MAIN_COLOR_IMAGE_MAX_SIZE = 500;
+    public static Color[] getMainColor(Image image,int len) {
+        //缩放图片
+        if (Math.max(image.getWidth(),image.getHeight())>MAIN_COLOR_IMAGE_MAX_SIZE){
+            image = getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE/Math.max(image.getWidth(),image.getHeight()));
+        }
         Bitmap bitmap = Bitmap.makeFromImage(image);
         int x_length = bitmap.getWidth();
         int y_length = bitmap.getHeight();
-        if (x_length * y_length >= Integer.MAX_VALUE) return null;
-        int r,g,b;
+        //提取色彩int值
+        int[] colors_int = new int[x_length*y_length];
         for (int x_index = 0; x_index < x_length; x_index++) {
-            for (int y_index = 0; y_index < y_index; y_index++) {
-                r = Color.getR(bitmap.getColor(x_index,y_index));
-                g = Color.getG(bitmap.getColor(x_index,y_index));
-                b = Color.getB(bitmap.getColor(x_index,y_index));
+            for (int y_index = 0; y_index < y_length; y_index++) {
+                colors_int[x_index*y_length + y_index] = bitmap.getColor(x_index,y_index);
             }
         }
-        return new Color[3];
+        //色彩排序
+        Arrays.sort(colors_int);
+        //计算颜色柱数量
+        int color_size = 0;
+        int colorCount = 1;
+        int currentColor = colors_int[0];
+        for (int i = 1; i < colors_int.length; i++) {
+            // If we encounter a new color, increase the population
+            if (colors_int[i] != currentColor) {
+                currentColor = colors_int[i];
+                colorCount++;
+            }
+        }
+        if (colors_int.length < 2) color_size = 2;
+        var mColors = new int[color_size];
+        var mColorCounts = new int[color_size];
+
+        return new Color[len];
     }
 
 }
