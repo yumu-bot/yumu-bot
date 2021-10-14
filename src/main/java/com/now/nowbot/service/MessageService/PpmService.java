@@ -36,7 +36,9 @@ public class PpmService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //分别区分每种模式
         switch (mode){
-            default:
+            default:{
+                mode = OsuMode.OSU;
+            }
             case OSU:{
                 if (at != null) {
                     var user = BindingUtil.readUser(at.getTarget());
@@ -121,7 +123,7 @@ public class PpmService implements MessageService {
                 Image bg_hex = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPHexPanel.png")));
                 Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"PPminusOverlay.png")));
                 Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mascot.png")));
-                Image mode_loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mode-"+mode.toString()+"-med.png")));
+                Image mode_loge = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH+"mode-"+mode+"-med.png")));
                 canvas.drawImage(mode_loge,1800,10, new Paint().setAlpha(214));
                 canvas.drawImage(bg1,0,0);
                 canvas.drawImage(bg_hex,0,0);
