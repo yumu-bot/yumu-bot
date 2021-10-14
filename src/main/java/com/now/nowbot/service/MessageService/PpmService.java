@@ -36,6 +36,7 @@ public class PpmService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //分别区分每种模式
         switch (mode){
+            default:
             case OSU:{
                 if (at != null) {
                     var user = BindingUtil.readUser(at.getTarget());
@@ -99,9 +100,9 @@ public class PpmService implements MessageService {
             case MANIA:{
                 throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
             }
-            default:{
-                throw new TipsException("「邪恶的 osu! 玩家，我以 Bot 一族」…呃，这里不会读…「Bot 大魔王之名，否定你添加新模式的资格！」「除非你干掉 peppy，通过」…呃…「接受」…呃… 有几个词，波特不认识…");
-            }
+//            default:{
+//                throw new TipsException("「邪恶的 osu! 玩家，我以 Bot 一族」…呃，这里不会读…「Bot 大魔王之名，否定你添加新模式的资格！」「除非你干掉 peppy，通过」…呃…「接受」…呃… 有几个词，波特不认识…");
+//            }
         }
         if (userinfo == null) throw new TipsException("波特被玩坏了uwu");
         if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
