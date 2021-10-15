@@ -5,12 +5,24 @@ import java.util.regex.Pattern;
 
 /**
  * 所有的指令都写在这里方便进行管理
+ *
+ * 进阶正则 一下仅为java专有,其他编程语言未作尝试
+ * (?:pattern) 匹配 pattern 但不捕获该匹配的子表达式,即它是一个非捕获匹配,不存储供以后使用的匹配.
+ * 例子: "industr(?:y|ies)" 是比 "industry|industries" 更经济的表达式.
+ * (?!pattern) 执行反向预测先行搜索的子表达式,该表达式匹配不处于匹配 pattern 的字符串的起始点的搜索字符串,不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
+ * (?<!pattern)执行正向预测先行搜索的子表达式,该表达式与上条相反,同时也不占用字符
+ * 例子: "(?<!ab)cd(?!ef)" 仅匹配非ab开头的,ef结尾的cd,且ab与ef仅作搜索用并不占用宽度,即例子对gcd中的cd也会被匹配
+ * (?=pattern) 也叫零宽度正预测先行断言,它断言被匹配的字符串以表达式pattern结尾但除了结尾以外的部分,预测先行不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
+ * (?<=pattern)也叫零宽度正回顾后发断言，它断言自身出现的位置的前面能匹配表达式pattern,回顾后发断言也不占用字符.
+ * 例子: "(?<=\d)(匹配位置)</>(?=(\d{4})+$)" 仅匹配开头为数字,且长度为4n的纯数字结尾,零宽度断言并不占用字符(即不包含自身),当匹配位置为空时满足匹配且宽度为0.
+ * (#正则注释) 仅作注释,会被匹配器忽略掉的文字
+ * p.s. 以上的不占用字符,可理解为允许这样的匹配格式,但是已匹配的内容可能之后被重复匹配,且无法被Matcher.group()获取到,通常情况下适用于 替换文本/匹配固定'指令及参数'想获得参数值但是不想获得指令本身
  */
 public enum Instruction {
     BIND("bind",    Pattern.compile("^[!！](?i)ymbind$"), "!ymbind 直接绑定"),
     BPHT("bpht",    Pattern.compile("^[!！](?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymbpht 查询bp"),
     HELP("help",    Pattern.compile("^[!！](?i)(ym)?((help)|h)"), "!ymh/!ymhelp"),
-    PAGE("page",    Pattern.compile("^[!！](?i)page(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?"), null),
+    SWITCH("switch",Pattern.compile("^[!！](?i)switch(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?(\\s?(?<p4>\\w+))?"), null),
     PING("ping",    Pattern.compile("^[!！](?i)ymping"), null),
     PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
     PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
