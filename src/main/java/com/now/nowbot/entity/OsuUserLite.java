@@ -14,37 +14,38 @@ public class OsuUserLite {
     private Long id;
     @Column(name = "osu_id")
     private Integer osuID;
-    private String username;
+    @Column(name = "username")
+    private String userName;
     // "country": {"code": "CN","name": "China"},            country_code
-    private String country_code;
-    private String country_name;
+    private String countryCode;
+    private String countryName;
 
     // "cover": {custom_url}
-    private String custom_url;
-    private Integer beatmap_playcounts_count;
+    private String customUrl;
+    private Integer beatmapPlaycountsCount;
     // "kudosu": {"total": 0, "available": 0}
-    private Integer kudosu_total;
-    private Integer kudosu_available;
+    private Integer kudosuTotal;
+    private Integer kudosuAvailable;
 
-    private Integer ranked_and_approved_beatmapset_count;
-    private LocalDateTime join_date;
+    private Integer rankedAndApprovedBeatmapsetCount;
+    private LocalDateTime joinDate;
 
-    private Integer support_level;
-    private Integer mapping_follower_count;
+    private Integer supportLevel;
+    private Integer mappingFollowerCount;
     // 以','分隔的列表
-    private String previous_usernames;
-    private String comments_count; //评论数
+    @Column(length = 1000)
+    private String previousUsernames;
+    private Integer commentsCount; //评论数
 
     //
-    private Boolean is_supporter;
-    private Integer follower_count;
-    private Integer favourite_beatmapset_count;
+    private Boolean isSupporter;
+    private Integer followerCount;
+    private Integer favouriteBeatmapsetCount;
     private String playmode;
     //上次登录时间
-    LocalDateTime last_visit;
-    private Boolean is_deleted;
-    private Integer graveyard_beatmapset_count;
-    private Boolean is_online;
+    LocalDateTime lastVisit;
+    private Boolean isDeleted;
+    private Integer graveyardBeatmapsetCount;
 
     public Long getId() {
         return id;
@@ -62,132 +63,132 @@ public class OsuUserLite {
         this.osuID = osuID;
     }
 
-    public String getUsername() {
-        return username;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUserName(String username) {
+        this.userName = username;
     }
 
-    public String getCountry_code() {
-        return country_code;
+    public String getCountryCode() {
+        return countryCode;
     }
 
-    public void setCountry_code(String country_code) {
-        this.country_code = country_code;
+    public void setCountryCode(String country_code) {
+        this.countryCode = country_code;
     }
 
-    public String getCountry_name() {
-        return country_name;
+    public String getCountryName() {
+        return countryName;
     }
 
-    public void setCountry_name(String country_name) {
-        this.country_name = country_name;
+    public void setCountryName(String country_name) {
+        this.countryName = country_name;
     }
 
-    public String getCustom_url() {
-        return custom_url;
+    public String getCustomUrl() {
+        return customUrl;
     }
 
-    public void setCustom_url(String custom_url) {
-        this.custom_url = custom_url;
+    public void setCustomUrl(String custom_url) {
+        this.customUrl = custom_url;
     }
 
-    public Integer getBeatmap_playcounts_count() {
-        return beatmap_playcounts_count;
+    public Integer getBeatmapPlaycountsCount() {
+        return beatmapPlaycountsCount;
     }
 
-    public void setBeatmap_playcounts_count(Integer beatmap_playcounts_count) {
-        this.beatmap_playcounts_count = beatmap_playcounts_count;
+    public void setBeatmapPlaycountsCount(Integer beatmap_playcounts_count) {
+        this.beatmapPlaycountsCount = beatmap_playcounts_count;
     }
 
-    public Integer getKudosu_total() {
-        return kudosu_total;
+    public Integer getKudosuTotal() {
+        return kudosuTotal;
     }
 
-    public void setKudosu_total(Integer kudosu_total) {
-        this.kudosu_total = kudosu_total;
+    public void setKudosuTotal(Integer kudosu_total) {
+        this.kudosuTotal = kudosu_total;
     }
 
-    public Integer getKudosu_available() {
-        return kudosu_available;
+    public Integer getKudosuAvailable() {
+        return kudosuAvailable;
     }
 
-    public void setKudosu_available(Integer kudosu_available) {
-        this.kudosu_available = kudosu_available;
+    public void setKudosuAvailable(Integer kudosu_available) {
+        this.kudosuAvailable = kudosu_available;
     }
 
-    public Integer getRanked_and_approved_beatmapset_count() {
-        return ranked_and_approved_beatmapset_count;
+    public Integer getRankedAndApprovedBeatmapsetCount() {
+        return rankedAndApprovedBeatmapsetCount;
     }
 
-    public void setRanked_and_approved_beatmapset_count(Integer ranked_and_approved_beatmapset_count) {
-        this.ranked_and_approved_beatmapset_count = ranked_and_approved_beatmapset_count;
+    public void setRankedAndApprovedBeatmapsetCount(Integer ranked_and_approved_beatmapset_count) {
+        this.rankedAndApprovedBeatmapsetCount = ranked_and_approved_beatmapset_count;
     }
 
-    public LocalDateTime getJoin_date() {
-        return join_date;
+    public LocalDateTime getJoinDate() {
+        return joinDate;
     }
 
-    public void setJoin_date(LocalDateTime join_date) {
-        this.join_date = join_date;
+    public void setJoinDate(LocalDateTime join_date) {
+        this.joinDate = join_date;
     }
 
-    public Integer getSupport_level() {
-        return support_level;
+    public Integer getSupportLevel() {
+        return supportLevel;
     }
 
-    public void setSupport_level(Integer support_level) {
-        this.support_level = support_level;
+    public void setSupportLevel(Integer support_level) {
+        this.supportLevel = support_level;
     }
 
-    public Integer getMapping_follower_count() {
-        return mapping_follower_count;
+    public Integer getMappingFollowerCount() {
+        return mappingFollowerCount;
     }
 
-    public void setMapping_follower_count(Integer mapping_follower_count) {
-        this.mapping_follower_count = mapping_follower_count;
+    public void setMappingFollowerCount(Integer mapping_follower_count) {
+        this.mappingFollowerCount = mapping_follower_count;
     }
 
-    public String getPrevious_usernames() {
-        return previous_usernames;
+    public String getPreviousUsernames() {
+        return previousUsernames;
     }
 
-    public void setPrevious_usernames(String previous_usernames) {
-        this.previous_usernames = previous_usernames;
+    public void setPreviousUsernames(String previous_usernames) {
+        this.previousUsernames = previous_usernames;
     }
 
-    public String getComments_count() {
-        return comments_count;
+    public Integer getCommentsCount() {
+        return commentsCount;
     }
 
-    public void setComments_count(String comments_count) {
-        this.comments_count = comments_count;
+    public void setCommentsCount(Integer comments_count) {
+        this.commentsCount = comments_count;
     }
 
-    public boolean isIs_supporter() {
-        return is_supporter;
+    public boolean isIsSupporter() {
+        return isSupporter;
     }
 
-    public void setIs_supporter(boolean is_supporter) {
-        this.is_supporter = is_supporter;
+    public void setIsSupporter(boolean is_supporter) {
+        this.isSupporter = is_supporter;
     }
 
-    public Integer getFollower_count() {
-        return follower_count;
+    public Integer getFollowerCount() {
+        return followerCount;
     }
 
-    public void setFollower_count(Integer follower_count) {
-        this.follower_count = follower_count;
+    public void setFollowerCount(Integer follower_count) {
+        this.followerCount = follower_count;
     }
 
-    public Integer getFavourite_beatmapset_count() {
-        return favourite_beatmapset_count;
+    public Integer getFavouriteBeatmapsetCount() {
+        return favouriteBeatmapsetCount;
     }
 
-    public void setFavourite_beatmapset_count(Integer favourite_beatmapset_count) {
-        this.favourite_beatmapset_count = favourite_beatmapset_count;
+    public void setFavouriteBeatmapsetCount(Integer favourite_beatmapset_count) {
+        this.favouriteBeatmapsetCount = favourite_beatmapset_count;
     }
 
     public String getPlaymode() {
@@ -198,35 +199,28 @@ public class OsuUserLite {
         this.playmode = playmode;
     }
 
-    public LocalDateTime getLast_visit() {
-        return last_visit;
+    public LocalDateTime getLastVisit() {
+        return lastVisit;
     }
 
-    public void setLast_visit(LocalDateTime last_visit) {
-        this.last_visit = last_visit;
+    public void setLastVisit(LocalDateTime last_visit) {
+        this.lastVisit = last_visit;
     }
 
-    public boolean isIs_deleted() {
-        return is_deleted;
+    public boolean isIsDeleted() {
+        return isDeleted;
     }
 
-    public void setIs_deleted(boolean is_deleted) {
-        this.is_deleted = is_deleted;
+    public void setIsDeleted(boolean is_deleted) {
+        this.isDeleted = is_deleted;
     }
 
-    public Integer getGraveyard_beatmapset_count() {
-        return graveyard_beatmapset_count;
+    public Integer getGraveyardBeatmapsetCount() {
+        return graveyardBeatmapsetCount;
     }
 
-    public void setGraveyard_beatmapset_count(Integer graveyard_beatmapset_count) {
-        this.graveyard_beatmapset_count = graveyard_beatmapset_count;
+    public void setGraveyardBeatmapsetCount(Integer graveyard_beatmapset_count) {
+        this.graveyardBeatmapsetCount = graveyard_beatmapset_count;
     }
 
-    public boolean isIs_online() {
-        return is_online;
-    }
-
-    public void setIs_online(boolean is_online) {
-        this.is_online = is_online;
-    }
 }

@@ -1,11 +1,10 @@
 package com.now.nowbot.config;
 
-import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.listener.MessageListener;
+import com.now.nowbot.throwable.RequestException;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.utils.BotConfiguration;
-import net.mamoe.mirai.utils.DeviceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -25,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 @Configuration
 @ConfigurationProperties(prefix = "nowbot.config")
@@ -144,8 +142,10 @@ public class NowbotConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        var template = new RestTemplate(new OkHttp3ClientHttpRequestFactory());
-
+        var tempFactory = new OkHttp3ClientHttpRequestFactory();
+        tempFactory.setConnectTimeout(3*60*1000);
+        tempFactory.setReadTimeout(3*60*1000);
+        var template = new RestTemplate(tempFactory);
         template.setErrorHandler(new DefaultResponseErrorHandler(){
             @Override
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {

@@ -166,6 +166,29 @@ public class JacksonUtil {
         return null;
     }
 
+    public static <T> T parseObject(JsonNode node, String field, Class<T> clazz) {
+        ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module())
+                .registerModule(new JavaTimeModule());
+        try {
+            node = node.get(field);
+            return mapper.treeToValue(node, clazz);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public static <T> T parseObject(JsonNode node, Class<T> clazz) {
+        ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module())
+                .registerModule(new JavaTimeModule());
+        try {
+            return mapper.treeToValue(node, clazz);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
     public static Object toNode(String json) {
         if (json == null) {
             return null;
@@ -203,13 +226,14 @@ public class JacksonUtil {
         }
         return null;
     }
+
     public static String toJson(Object data) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module())
                 .registerModule(new JavaTimeModule());
         try {
             return mapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(),e);
         }
         return null;
     }

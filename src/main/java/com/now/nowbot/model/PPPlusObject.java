@@ -1,19 +1,33 @@
 package com.now.nowbot.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PPPlusObject {
+    @JsonProperty("UserID")
     private Long uid;
+    @JsonProperty("UserName")
     private String name;
 
-    private LocalDateTime time;
+    @JacksonInject()
+    private LocalDateTime time = LocalDateTime.now();
+    @JsonProperty("PerformanceTotal")
     private Double Total;
+    @JsonProperty("JumpAimTotal")
     private Double Junp;
+    @JsonProperty("FlowAimTotal")
     private Double Flow;
+    @JsonProperty("AccuracyTotal")
     private Double Acc;
+    @JsonProperty("StaminaTotal")
     private Double Sta;
+    @JsonProperty("SpeedTotal")
     private Double Spd;
+    @JsonProperty("PrecisionTotal")
     private Double Pre;
 
     public PPPlusObject() {

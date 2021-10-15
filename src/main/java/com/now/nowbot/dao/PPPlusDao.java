@@ -19,6 +19,7 @@ public class PPPlusDao {
     OsuGetService osuGetService;
 
     public PPPlusObject save(JsonNode data){
+//        var ppPlusObject = JacksonUtil.parseObject(data, PPPlusObject.class);
         var ppPlusObject = new PPPlusObject();
         ppPlusObject.setTime(LocalDateTime.now());
         ppPlusObject.setUid(data.get("UserID").asLong());
