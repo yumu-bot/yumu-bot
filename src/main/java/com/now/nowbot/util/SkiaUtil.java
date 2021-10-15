@@ -58,6 +58,18 @@ public class SkiaUtil {
         }
         return PUHUITI;
     }
+    public static Typeface EXTRA;
+    public static Typeface getEXTRA(){
+        if(PUHUITI == null || PUHUITI.isClosed()){
+            try {
+                PUHUITI = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:extra.ttf",e);
+                PUHUITI = Typeface.makeDefault();
+            }
+        }
+        return PUHUITI;
+    }
     /***
      * 网络加载图片
      * @param path
