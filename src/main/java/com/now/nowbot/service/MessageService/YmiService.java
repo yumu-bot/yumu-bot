@@ -115,6 +115,7 @@ public class YmiService implements MessageService{
             sb.append(wx.format((TTH / 100f) / 100D)).append('w');
         }else {
             sb.append(TTH);
+        }
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
         sb.append("PT:");
@@ -128,7 +129,7 @@ public class YmiService implements MessageService{
         if(PT>60){
             sb.append((PT%3600)/60).append('m');
         }
-        sb.append(" ACC:").append(wx.format(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
+        sb.append(" ACC:").append(wx.format(statistics.getFloatValue("hit_accuracy"))).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
         sb.append("♡: ").append(date.getIntValue("follower_count"))
                 .append(" kds:").append(date.getJSONObject("kudosu").getIntValue("total")).append('\n');
