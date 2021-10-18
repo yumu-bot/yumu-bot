@@ -97,14 +97,14 @@ public class YmiService implements MessageService{
         sb.append("PC:");
         int PC = statistics.getIntValue("play_count");
         if (PC>10_000) {
-            sb.append((PC / 100f) / 100D).append('w');
+            sb.append((PC / 100) / 100D).append('w');
         }else {
             sb.append(PC);
         }
         sb.append(" TTH:");
         int TTH = statistics.getIntValue("total_hits");
         if (TTH>10_000) {
-            sb.append((TTH / 100f) / 100D).append('w');
+            sb.append((TTH / 100) / 100D).append('w');
         }else {
             sb.append(TTH);
         }
@@ -140,11 +140,11 @@ public class YmiService implements MessageService{
         if ((occupation != null && !occupation.trim().equals("")) || (discord != null && !discord.trim().equals("")) || (interests != null && !interests.trim().equals(""))){
             sb.append('\n');
             if (occupation != null && !occupation.trim().equals("")) {
-                sb.append("occupation:").append(occupation.trim()).append('\n');
+                sb.append("occupation: ").append(occupation.trim()).append('\n');
             }if (discord != null && !discord.trim().equals("")) {
-                sb.append("discord").append(discord.trim()).append('\n');
+                sb.append("discord: ").append(discord.trim()).append('\n');
             }if (interests != null && !interests.trim().equals("")) {
-                sb.append("interests").append(interests.trim()).append('\n');
+                sb.append("interests: ").append(interests.trim()).append('\n');
             }
         }
 //        Image img = from.uploadImage(ExternalResource.create());

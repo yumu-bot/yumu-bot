@@ -107,5 +107,5 @@ public class Ymi {
         double x = Math.round(d*100)/100D;
         NumberFormat nf = NumberFormat.getInstance();
         return nf.format(x);
-        }
+    }
 }
