@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
+import java.text.DecimalFormat;
 
 @Service("ymi")
 public class YmiService implements MessageService{
@@ -85,6 +86,9 @@ public class YmiService implements MessageService{
         if(date.size()==0){
             throw new TipsException("没有查询到您的信息呢");
         }
+
+        DecimalFormat wx = new DecimalFormat("####.##");
+
         StringBuilder sb = new StringBuilder();
         var statistics = date.getJSONObject("statistics");
         // Muziyami(osu):10086PP
@@ -96,18 +100,21 @@ public class YmiService implements MessageService{
         // PC:2.01w TTH:743.52w
         sb.append("PC:");
         int PC = statistics.getIntValue("play_count");
-        if (PC>10_000) {
-            sb.append((PC / 100f) / 100D).append('w');
+        if (PC>100_000_000) {
+            sb.append(wx.format((PC / 100f) / 1000_000D)).append('e');
+        }else if (PC>10_000) {
+            sb.append(wx.format((PC / 100f) / 100D)).append('w');
         }else {
             sb.append(PC);
         }
         sb.append(" TTH:");
         int TTH = statistics.getIntValue("total_hits");
-        if (TTH>10_000) {
-            sb.append((TTH / 100f) / 100D).append('w');
+        if (TTH>100_000_000) {
+            sb.append(wx.format((TTH / 100f) / 1000_000D)).append('e');
+        }else if (TTH>10_000) {
+            sb.append(wx.format((TTH / 100f) / 100D)).append('w');
         }else {
             sb.append(TTH);
-        }
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
         sb.append("PT:");
@@ -121,7 +128,7 @@ public class YmiService implements MessageService{
         if(PT>60){
             sb.append((PT%3600)/60).append('m');
         }
-        sb.append(" ACC:").append(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
+        sb.append(" ACC:").append(wx.format(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
         sb.append("♡: ").append(date.getIntValue("follower_count"))
                 .append(" kds:").append(date.getJSONObject("kudosu").getIntValue("total")).append('\n');
@@ -140,11 +147,11 @@ public class YmiService implements MessageService{
         if ((occupation != null && !occupation.trim().equals("")) || (discord != null && !discord.trim().equals("")) || (interests != null && !interests.trim().equals(""))){
             sb.append('\n');
             if (occupation != null && !occupation.trim().equals("")) {
-                sb.append("occupation:").append(occupation.trim()).append('\n');
+                sb.append("occupation: ").append(occupation.trim()).append('\n');
             }if (discord != null && !discord.trim().equals("")) {
-                sb.append("discord").append(discord.trim()).append('\n');
+                sb.append("discord: ").append(discord.trim()).append('\n');
             }if (interests != null && !interests.trim().equals("")) {
-                sb.append("interests").append(interests.trim()).append('\n');
+                sb.append("interests: ").append(interests.trim()).append('\n');
             }
         }
 //        Image img = from.uploadImage(ExternalResource.create());
