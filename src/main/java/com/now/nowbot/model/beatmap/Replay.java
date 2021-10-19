@@ -5,6 +5,7 @@ import com.now.nowbot.util.lzma.LZMAInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +41,9 @@ public class Replay {
     double tp;
 
     private Replay(ByteBuffer bf){
+        if (bf.order() == ByteOrder.BIG_ENDIAN){
+            bf.order(ByteOrder.LITTLE_ENDIAN);
+        }
         mode = bf.get();
         version = bf.getInt();
         MapHash = readString(bf);
@@ -164,5 +168,89 @@ public class Replay {
     }
     public static Replay readByteToRep(ByteBuffer buffer){
         return new Replay(buffer);
+    }
+
+    public byte getMode() {
+        return mode;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public String getMapHash() {
+        return MapHash;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getRepHash() {
+        return RepHash;
+    }
+
+    public short getN_300() {
+        return n_300;
+    }
+
+    public short getN_100() {
+        return n_100;
+    }
+
+    public short getN_50() {
+        return n_50;
+    }
+
+    public short getN_geki() {
+        return n_geki;
+    }
+
+    public short getN_katu() {
+        return n_katu;
+    }
+
+    public short getN_miss() {
+        return n_miss;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public short getCombo() {
+        return combo;
+    }
+
+    public boolean isPerfect() {
+        return perfect;
+    }
+
+    public int getMods() {
+        return mods;
+    }
+
+    public Map<Integer, Float> getHPList() {
+        return HPList;
+    }
+
+    public long getDate() {
+        return date;
+    }
+
+    public int getDataLength() {
+        return dataLength;
+    }
+
+    public List<hit> getHitList() {
+        return hitList;
+    }
+
+    public long getScoreId() {
+        return scoreId;
+    }
+
+    public double getTp() {
+        return tp;
     }
 }
