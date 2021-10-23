@@ -2,8 +2,6 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.PPm.PPmObject;
-import com.now.nowbot.model.Ymp;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
@@ -21,6 +19,7 @@ public class ScoreService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        if (true) return;//屏蔽
         var from = event.getSubject();
 
         BinUser user = null;
