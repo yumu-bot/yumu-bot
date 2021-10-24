@@ -122,8 +122,8 @@ public class RatingService implements MessageService {
             user.calculateMDRA(users.size(), scoreNum);
         }
 
-        //如果人数<=2或者换过人, 则MRA==MQ
-        if(users.size()<=2||users.size()* games.size()>scoreNum){
+        //如果人数<=2或者没换过人, 则MRA==MQ
+        if(users.size()<=2||users.size()* games.size()==scoreNum){
             for(var user:users.values()){
                 user.setMRA(user.getMQ());
             }

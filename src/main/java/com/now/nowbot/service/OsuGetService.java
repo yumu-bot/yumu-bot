@@ -10,6 +10,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -648,7 +649,7 @@ public class OsuGetService {
      * @param name
      * @return
      */
-    public JsonNode ppPlus(String name) {
+    public PPPlusObject ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -659,7 +660,7 @@ public class OsuGetService {
 
         c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
 
-        return c.getBody().get("user_data");
+        return JacksonUtil.parseObject(c.getBody().get("user_data"), PPPlusObject.class);
     }
 
     /***

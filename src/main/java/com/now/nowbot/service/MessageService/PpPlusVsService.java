@@ -122,7 +122,7 @@ public class PpPlusVsService implements MessageService {
             canvas.save();
             canvas.translate(100, 520);
             TextLine k1 = TextLine.make("Jump", fontB);
-            TextLine v1 = TextLine.make(dx.format(date1.getJunp()), fontB);
+            TextLine v1 = TextLine.make(dx.format(date1.getJump()), fontB);
             canvas.drawTextLine(k1, 0, v1.getCapHeight(), white);
             canvas.drawTextLine(v1, 360 - v1.getWidth(), v1.getCapHeight(), white);
             canvas.translate(0, 90);
@@ -161,7 +161,7 @@ public class PpPlusVsService implements MessageService {
             canvas.save();
             canvas.translate(1460, 520);
             k1 = TextLine.make("Jump", fontB);
-            v1 = TextLine.make(dx.format(date2.getJunp()), fontB);
+            v1 = TextLine.make(dx.format(date2.getJump()), fontB);
             canvas.drawTextLine(k1, 0, v1.getCapHeight(), white);
             canvas.drawTextLine(v1, 360 - v1.getWidth(), v1.getCapHeight(), white);
             canvas.translate(0, 90);

@@ -16,7 +16,7 @@ public class PPPLite {
 
     private Double Total;
 
-    private Double Junp;
+    private Double Jump;
 
     private Double Flow;
 
@@ -31,11 +31,11 @@ public class PPPLite {
     public PPPLite() {
     }
 
-    public PPPLite(Long userId, LocalDateTime date, Double total, Double junp, Double flow, Double acc, Double sta, Double spd, Double pre) {
+    public PPPLite(Long userId, LocalDateTime date, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.userId = userId;
         this.date = date;
         Total = total;
-        Junp = junp;
+        Jump = jump;
         Flow = flow;
         Acc = acc;
         Sta = sta;
@@ -75,12 +75,12 @@ public class PPPLite {
         Total = total;
     }
 
-    public double getJunp() {
-        return Junp;
+    public double getJump() {
+        return Jump;
     }
 
-    public void setJunp(Double junp) {
-        Junp = junp;
+    public void setJump(Double jump) {
+        Jump = jump;
     }
 
     public double getFlow() {

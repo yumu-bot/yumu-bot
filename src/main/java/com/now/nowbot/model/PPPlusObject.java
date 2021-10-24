@@ -1,25 +1,24 @@
 package com.now.nowbot.model;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-/* todo 这个转成OsuGet能直接获取的对象,就不用JSONNode了 */
 public class PPPlusObject {
     @JsonProperty("UserID")
     private Long uid;
     @JsonProperty("UserName")
     private String name;
 
-    @JacksonInject()
+    @JsonIgnore
     private LocalDateTime time = LocalDateTime.now();
     @JsonProperty("PerformanceTotal")
     private Double Total;
     @JsonProperty("JumpAimTotal")
-    private Double Junp;
+    private Double Jump;
     @JsonProperty("FlowAimTotal")
     private Double Flow;
     @JsonProperty("AccuracyTotal")
@@ -34,11 +33,11 @@ public class PPPlusObject {
     public PPPlusObject() {
     }
 
-    public PPPlusObject(Long uid, LocalDateTime time, Double total, Double junp, Double flow, Double acc, Double sta, Double spd, Double pre) {
+    public PPPlusObject(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.uid = uid;
         this.time = time;
         Total = total;
-        Junp = junp;
+        Jump = jump;
         Flow = flow;
         Acc = acc;
         Sta = sta;
@@ -84,13 +83,13 @@ public class PPPlusObject {
         return this;
     }
 
-    public Double getJunp() {
-        return Junp;
+    public Double getJump() {
+        return Jump;
     }
 
 
-    public PPPlusObject setJunp(Double junp) {
-        Junp = junp;
+    public PPPlusObject setJump(Double jump) {
+        Jump = jump;
         return this;
     }
 
