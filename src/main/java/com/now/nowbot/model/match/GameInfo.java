@@ -20,10 +20,20 @@ public class GameInfo {
     Integer modInt;
     @JsonProperty("scoring_type")
     String scoringType;
+    @JsonProperty("team_type")
+    String teamType;
     String[] mods;
     BeatmapInfo beatmap;
     @JsonProperty("scores")
     List<ScoreInfo> scoreInfos;
+
+    public String getTeamType() {
+        return teamType;
+    }
+
+    public void setTeamType(String teamType) {
+        this.teamType = teamType;
+    }
 
     public Integer getId() {
         return id;

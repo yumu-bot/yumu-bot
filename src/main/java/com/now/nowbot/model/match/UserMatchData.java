@@ -6,6 +6,7 @@ import java.util.List;
 
 public class UserMatchData {
     Integer id;
+    String team;
     String username;
     //标准化的单场个人得分，即标准分 = score/TotalScore
     List<Double> RRAs = new ArrayList<>();
@@ -35,6 +36,7 @@ public class UserMatchData {
         MQ = AMG/averageAMG;
     }
 
+
     public void calculateMRA(double minMQ){
         MRA = (MQ - minMQ)/(1 - minMQ);
     }
@@ -48,6 +50,13 @@ public class UserMatchData {
         this.username = username;
     }
 
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
 
     public Integer getId() {
         return id;

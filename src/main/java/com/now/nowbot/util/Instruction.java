@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 /**
  * 所有的指令都写在这里方便进行管理
  *
- * 进阶正则 一下仅为java专有,其他编程语言未作尝试
+ * 进阶正则 以下为java专用,其他编程语言未作尝试
  * (?:pattern) 匹配 pattern 但不捕获该匹配的子表达式,即它是一个非捕获匹配,不存储供以后使用的匹配.
  * 例子: "industr(?:y|ies)" 是比 "industry|industries" 更经济的表达式.
  * (?!pattern) 执行反向预测先行搜索的子表达式,该表达式匹配不处于匹配 pattern 的字符串的起始点的搜索字符串,不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
@@ -44,7 +44,8 @@ public enum Instruction {
 
 
     //TODO 待实现的指令
-    RATING("rating", Pattern.compile("^[!！]ymra\\s?(?<matchid>\\d+)(\\s+(?<numberofround>\\d+))?(\\s*:\\s*(?<includingfail>\\d+))?(\\s*(?<numberofwarmup>\\d+))?"),null);
+//    RATING("rating", Pattern.compile("^[!！]ymra\\s?(?<matchid>\\d+)(\\s+(?<numberofround>\\d+))?(\\s*:\\s*(?<includingfail>\\d+))?(\\s*(?<numberofwarmup>\\d+))?"),null);
+    RATING("rating", Pattern.compile("^[!！]ymra\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<includingfail>\\d))?"),null);
     /*********************   下面可能会合并为一个功能   **************************/
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),

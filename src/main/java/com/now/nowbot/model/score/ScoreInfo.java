@@ -1,10 +1,9 @@
 package com.now.nowbot.model.score;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,6 +26,16 @@ public class ScoreInfo {
     @JsonProperty("best_id")
     Integer bestId;
     Integer pp;
+    //slot, team, pass
+    JsonNode match;
+
+    public JsonNode getMatch() {
+        return match;
+    }
+
+    public void setMatch(JsonNode match) {
+        this.match = match;
+    }
 
     public Long getId() {
         return id;
