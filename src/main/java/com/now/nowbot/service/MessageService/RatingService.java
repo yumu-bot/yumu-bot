@@ -61,6 +61,7 @@ public class RatingService implements MessageService {
         //每一局单独计算
         for (var game : games) {
             var scoreInfos = game.getScoreInfos();
+
             long totalScores = 0L;
             //算总分
             for (int i=0;i<scoreInfos.size();i++) {
@@ -88,7 +89,7 @@ public class RatingService implements MessageService {
                 teamScores.putIfAbsent(user.getTeam(), new ArrayList<>());
                 teamScores.get(user.getTeam()).add(scoreInfo.getScore().longValue());
 
-                user.getRRAs().add(((double) scoreInfo.getScore()*scoreInfos.size() / totalScores));
+                user.getRRAs().add((((double) scoreInfo.getScore()*scoreInfos.size()) / totalScores));
             }
             scoreNum += scoreInfos.size();
         }
