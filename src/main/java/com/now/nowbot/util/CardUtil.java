@@ -1,20 +1,31 @@
 package com.now.nowbot.util;
 
 import org.jetbrains.skija.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CardUtil {
-    public static class cardBuilder {
+    static final Logger log = LoggerFactory.getLogger(CardUtil.class);
+    public static class PanelBuilder {
+        final Paint p_white = new Paint().setARGB(255,255,255,255).setStrokeWidth(10);
         int width;
         int hight;
         final Surface surface;
         Canvas canvas;
         boolean isClose = false;
-        cardBuilder(int w, int h){
+        PanelBuilder(int w, int h){
             width = w;
             hight = h;
             surface = Surface.makeRasterN32Premul(w, h);
             canvas = surface.getCanvas();
             canvas.clear(Color.makeARGB(100,0,0,0));
+        }
+        PanelBuilder(int w, int h, Image bg){
+            width = w;
+            hight = h;
+            surface = Surface.makeRasterN32Premul(w, h);
+            canvas = surface.getCanvas();
+            canvas.drawImage(SkiaUtil.getScaleCenterImage(bg,w,h),0,0);
         }
 
         public Image build(int r) {
@@ -25,21 +36,21 @@ public class CardUtil {
         }
         public boolean isClose(){ return isClose; }
     }
-    public static class ABuilder extends cardBuilder {
-        final Paint p_white = new Paint().setARGB(255,255,255,255).setStrokeWidth(10);
-        ABuilder() {
+    //-----------卡片---------------
+    public static class ACardBuilder extends PanelBuilder {
+        ACardBuilder() {
             super(430, 210);
         }
-        public ABuilder drowB1(String text){
+        public ACardBuilder drowB1(String text){
             return drowB(text, 177);
         }
-        public ABuilder drowB2(String text){
+        public ACardBuilder drowB2(String text){
             return drowB(text, 151);
         }
-        public ABuilder drowB3(String text){
+        public ACardBuilder drowB3(String text){
             return drowB(text, 125);
         }
-        ABuilder drowB(String text, int y){
+        ACardBuilder drowB(String text, int y){
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             Font font = new Font(typeface,24)
@@ -53,13 +64,13 @@ public class CardUtil {
             canvas.restore();
             return this;
         }
-        public ABuilder drowC1(String text){
+        public ACardBuilder drowC1(String text){
             return drowC(text, surface.getWidth() - 10, 153);
         }
-        public ABuilder drowC2(String text){
+        public ACardBuilder drowC2(String text){
             return drowC(text, surface.getWidth() - 10, 126);
         }
-        public ABuilder drowC3(String text){
+        public ACardBuilder drowC3(String text){
             return drowC(text, surface.getWidth() - 10, 99);
         }
 
@@ -68,7 +79,7 @@ public class CardUtil {
          * @param text
          * @return
          */
-        public ABuilder drowC4(String text){
+        public ACardBuilder drowC4(String text){
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             Font font = new Font(typeface,24)
@@ -82,7 +93,7 @@ public class CardUtil {
             canvas.restore();
             return this;
         }
-        public ABuilder drowC(String text, int x, int y){
+        public ACardBuilder drowC(String text, int x, int y){
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             Font font = new Font(typeface,24)
@@ -100,13 +111,13 @@ public class CardUtil {
             return build(20);
         }
     }
-    public static class A1Builder extends ABuilder{
+    public static class A1CardBuilder extends ACardBuilder {
         /***
          * 头像
          * @param head_url
          * @return
          */
-        public A1Builder drowA1(String head_url){
+        public A1CardBuilder drowA1(String head_url){
             canvas.save();
             final Image head = SkiaUtil.lodeNetWorkImage(head_url);
             try (head){
@@ -122,7 +133,7 @@ public class CardUtil {
          * 国旗,撒泼特,好友状态
          * @return
          */
-        public A1Builder drowA2(Object ...loge){
+        public A1CardBuilder drowA2(Object ...loge){
             //todo
             return this;
         }
@@ -132,7 +143,7 @@ public class CardUtil {
          * @param text
          * @return
          */
-        public A1Builder drowA3(String text){
+        public A1CardBuilder drowA3(String text){
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             final Font font = new Font(typeface,48)
@@ -147,13 +158,13 @@ public class CardUtil {
             return this;
         }
     }
-    public static class A2Builder extends ABuilder{
+    public static class A2CardBuilder extends ACardBuilder {
         /***
          * 铺面状态
          * @param flag
          * @return
          */
-        public A2Builder drowD5(Object flag){
+        public A2CardBuilder drowD5(Object flag){
             canvas.save();
             //todo 没有图标。。。
             canvas.restore();
@@ -164,7 +175,7 @@ public class CardUtil {
          * @param text
          * @return
          */
-        public A2Builder drowD4(String text){
+        public A2CardBuilder drowD4(String text){
             canvas.save();
             Typeface typeface = SkiaUtil.getPuhuitiMedium();
             final Font font = new Font(typeface,36)
@@ -178,7 +189,7 @@ public class CardUtil {
             canvas.restore();
             return this;
         }
-        public A2Builder drowD3(String text){
+        public A2CardBuilder drowD3(String text){
             canvas.save();
             Typeface typeface = SkiaUtil.getPuhuitiMedium();
             final Font font = new Font(typeface,24)
@@ -199,9 +210,15 @@ public class CardUtil {
          * @param color 颜色
          * @return
          */
-        public A2Builder drowD2(String mode, int color){
+        public A2CardBuilder drowD2(String mode, int color){
             canvas.save();
-            Typeface typeface = SkiaUtil.getEXTRA();
+            Typeface typeface = null;
+            try {
+                typeface = SkiaUtil.getEXTRA();
+            } catch (Exception e) {
+                log.error("字体加载异常",e);
+                return this;
+            }
             final Font font = new Font(typeface,24)
                     .setHinting(FontHinting.NONE)
                     .setBaselineSnapped(true);
@@ -213,7 +230,7 @@ public class CardUtil {
             canvas.restore();
             return this;
         }
-        public A2Builder drowD1(String text){
+        public A2CardBuilder drowD1(String text){
             canvas.save();
             Typeface typeface = SkiaUtil.getPuhuitiMedium();
             final Font font = new Font(typeface,24)
@@ -228,21 +245,46 @@ public class CardUtil {
             return this;
         }
     }
+    //-----------------------------
 
+    public static class PPMBuilder extends PanelBuilder{
+        PPMBuilder() {
+            super(1920,1080);
+        }
+        //r430 m510 m790 m960 m1130 m1410 r1840
+
+        /***
+         * 绘制六边形
+         * @param point 输入数值,范围[0-1];
+         * @param color 颜色预设 true:蓝色 | false:红色
+         * @return return
+         */
+        public PPMBuilder drowHexagon(float[] point,boolean color){
+            if (point.length != 6){
+                throw new RuntimeException("输入参数长度错误");
+            }
+            canvas.save();
+            canvas.translate(960, 600);
+            Path[] paths = SkiaUtil.creat6(180, 10,point);
+
+            canvas.restore();
+            return this;
+        }
+    }
     /***
      * 玩家面板
      * @return
      */
-    public static A1Builder getA1Builder(){
-        return new A1Builder();
+    public static A1CardBuilder getA1Builder(){
+        return new A1CardBuilder();
     }
 
     /***
      * 谱面/成绩面板
      * @return
      */
-    public static A2Builder getA2Builder(){
-        return new A2Builder();
+    public static A2CardBuilder getA2Builder(){
+        return new A2CardBuilder();
     }
     public static Image Card1(){
         Image img = null;

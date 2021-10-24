@@ -71,13 +71,13 @@ public class SkiaUtil {
         return PUHUITI_MEDIUM;
     }
     static Typeface EXTRA;
-    public static Typeface getEXTRA(){
+    public static Typeface getEXTRA() throws Exception{
         if(EXTRA == null || EXTRA.isClosed()){
             try {
                 EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
             } catch (Exception e) {
                 log.error("未读取到目标字体:extra.ttf",e);
-                EXTRA = Typeface.makeDefault();
+                throw e;
             }
         }
         return EXTRA;
@@ -488,8 +488,8 @@ public class SkiaUtil {
 
     /***
      * 生成六边形路径
-     * @param size 基准大小
-     * @param circle_width 转折点大小
+     * @param size 基准大小 半径
+     * @param circle_width 转折点大小 半径
      * @param point 六点数据 长度必须为6 范围[0,1]
      * @return path[0]六边形路径   path[1]转折点路径
      */
