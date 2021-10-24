@@ -43,6 +43,11 @@ public class PPmCatch implements PPmObject {
     double san;
     public String headURL;
 
+    /***
+     * 计算cathc ppm
+     * @param prd 个人信息 JSON 替换为
+     * @param prbp bp列表
+     */
     public PPmCatch(JSONObject prd, JSONArray prbp) {
         double[] ys = new double[prbp.size()];
         for (int j = 0; j < prbp.size(); j++) {

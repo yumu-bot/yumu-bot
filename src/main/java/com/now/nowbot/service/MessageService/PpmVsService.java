@@ -86,7 +86,7 @@ public class PpmVsService implements MessageService{
         byte[] date;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface Torus = SkiaUtil.getTorusRegular();
-             Typeface Puhuiti = SkiaUtil.getPUHUITI();
+             Typeface Puhuiti = SkiaUtil.getPuhuitiMedium();
              Font torus_2 = new Font(Torus, 80);
              Font torus_1 = new Font(Torus, 64);
              Font puhui_1 = new Font(Puhuiti,64);

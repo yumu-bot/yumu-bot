@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+/* todo 这个转成OsuGet能直接获取的对象,就不用JSONNode了 */
 public class PPPlusObject {
     @JsonProperty("UserID")
     private Long uid;

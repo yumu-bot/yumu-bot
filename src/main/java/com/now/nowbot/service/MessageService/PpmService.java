@@ -143,7 +143,7 @@ public class PpmService implements MessageService {
         //绘制
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface Torus = SkiaUtil.getTorusRegular();
-             Typeface Puhuiti = SkiaUtil.getPUHUITI();
+             Typeface Puhuiti = SkiaUtil.getPuhuitiMedium();
              Font torus_2 = new Font(Torus, 80);
              Font torus_1 = new Font(Torus, 64);
              Font puhuiti = new Font(Puhuiti, 64);

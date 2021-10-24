@@ -22,7 +22,7 @@ import java.util.Arrays;
 public class SkiaUtil {
     static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     //字体文件
-    public static Typeface TORUS_REGULAR;
+    static Typeface TORUS_REGULAR;
     public static Typeface getTorusRegular(){
         if(TORUS_REGULAR == null || TORUS_REGULAR.isClosed()){
             try {
@@ -34,7 +34,7 @@ public class SkiaUtil {
         }
         return TORUS_REGULAR;
     }
-    public static Typeface TORUS_SEMIBOLD;
+    static Typeface TORUS_SEMIBOLD;
     public static Typeface getTorusSemiBold(){
         if(TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()){
             try {
@@ -46,29 +46,41 @@ public class SkiaUtil {
         }
         return TORUS_SEMIBOLD;
     }
-    public static Typeface PUHUITI;
+    static Typeface PUHUITI;
     public static Typeface getPUHUITI(){
         if(PUHUITI == null || PUHUITI.isClosed()){
             try {
                 PUHUITI = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Puhuiti.ttf");
             } catch (Exception e) {
-                log.error("未读取到目标字体:Puhuiti.ttf",e);
+                log.error("Alibaba-PuHuiTi-Medium.ttf",e);
                 PUHUITI = Typeface.makeDefault();
             }
         }
         return PUHUITI;
     }
-    public static Typeface EXTRA;
-    public static Typeface getEXTRA(){
-        if(PUHUITI == null || PUHUITI.isClosed()){
+    static Typeface PUHUITI_MEDIUM;
+    public static Typeface getPuhuitiMedium(){
+        if(PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()){
             try {
-                PUHUITI = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
+                PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
             } catch (Exception e) {
-                log.error("未读取到目标字体:extra.ttf",e);
-                PUHUITI = Typeface.makeDefault();
+                log.error("Alibaba-PuHuiTi-Medium.ttf",e);
+                PUHUITI_MEDIUM = Typeface.makeDefault();
             }
         }
-        return PUHUITI;
+        return PUHUITI_MEDIUM;
+    }
+    static Typeface EXTRA;
+    public static Typeface getEXTRA(){
+        if(EXTRA == null || EXTRA.isClosed()){
+            try {
+                EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:extra.ttf",e);
+                EXTRA = Typeface.makeDefault();
+            }
+        }
+        return EXTRA;
     }
     /***
      * 网络加载图片

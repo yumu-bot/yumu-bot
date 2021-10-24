@@ -42,7 +42,11 @@ public class PPmTaiko implements PPmObject {
     double ttl;
     double san;
     public String headURL;
-
+    /***
+     * 计算taiko ppm
+     * @param prd 个人信息 JSON 替换为
+     * @param prbp bp列表
+     */
     public PPmTaiko(JSONObject prd, JSONArray prbp) {
         double[] ys = new double[prbp.size()];
         for (int j = 0; j < prbp.size(); j++) {
