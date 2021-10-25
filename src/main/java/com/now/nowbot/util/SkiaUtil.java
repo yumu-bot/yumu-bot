@@ -26,6 +26,8 @@ public class SkiaUtil {
     public static Typeface getTorusRegular(){
         if(TORUS_REGULAR == null || TORUS_REGULAR.isClosed()){
             try {
+//                InputStream in = SkiaUtil.class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
+//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
                 TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-Regular.ttf");
             } catch (Exception e) {
                 log.error("未读取到目标字体:Torus-Regular.ttf",e);
