@@ -1,13 +1,13 @@
 package com.now.nowbot.model.match;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class UserMatchData {
     Integer id;
     String team;
     String username;
+    List<Integer> scores = new ArrayList<>();
     //标准化的单场个人得分，即标准分 = score/TotalScore
     List<Double> RRAs = new ArrayList<>();
     //整场比赛的总标准分
@@ -25,29 +25,65 @@ public class UserMatchData {
     Double SRA;
     Double SDRA;
 
-    public void calculateAMG(){
+    //胜负场次
+    Integer wins = 0;
+    Integer lost = 0;
+
+    public void calculateAMG() {
         TMG = 0d;
-        for(Double RRA:RRAs)
-            TMG+=RRA;
-        AMG = TMG/RRAs.size();
-    }
-
-    public void calculateMQ(double averageAMG){
-        MQ = AMG/averageAMG;
+        for (Double RRA : RRAs)
+            TMG += RRA;
+        AMG = TMG / RRAs.size();
     }
 
 
-    public void calculateMRA(double minMQ){
-        MRA = (MQ - minMQ)/(1 - minMQ);
+    public void calculateMQ(double averageAMG) {
+        MQ = AMG / averageAMG;
     }
 
-    public void calculateMDRA(int playerNum, int scoreNum){
-        MDRA = TMG*playerNum/scoreNum;
+    public void calculateMRA(double minMQ) {
+        MRA = (MQ - minMQ) / (1 - minMQ);
+    }
+
+    public void calculateMDRA(int playerNum, int scoreNum) {
+        MDRA = (TMG / scoreNum) * playerNum;
+    }
+
+    public Double getTotalScore() {
+        double totalScore = 0L;
+        for (var s : scores) {
+            totalScore += s;
+        }
+        return totalScore/1000000;
     }
 
     public UserMatchData(Integer id, String username) {
         this.id = id;
         this.username = username;
+    }
+
+    public Integer getWins() {
+        return wins;
+    }
+
+    public void setWins(Integer wins) {
+        this.wins = wins;
+    }
+
+    public Integer getLost() {
+        return lost;
+    }
+
+    public void setLost(Integer lost) {
+        this.lost = lost;
+    }
+
+    public List<Integer> getScores() {
+        return scores;
+    }
+
+    public void setScores(List<Integer> scores) {
+        this.scores = scores;
     }
 
     public String getTeam() {
