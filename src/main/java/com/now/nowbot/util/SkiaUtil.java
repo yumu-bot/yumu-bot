@@ -577,7 +577,7 @@ public class SkiaUtil {
     }
 
     /***
-     * 图片颜色主色提取 未完成
+     * todo 图片颜色主色提取 未完成
      * @param image 输入图片
      * @return 色组
      */
