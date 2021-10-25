@@ -264,9 +264,198 @@ public class CardUtil {
                 throw new RuntimeException("输入参数长度错误");
             }
             canvas.save();
-            canvas.translate(960, 600);
             Path[] paths = SkiaUtil.creat6(180, 10,point);
+            if (paths == null || paths.length != 2) {
+                throw new RuntimeException("创建形状错误");
+            }
+            final var pt1 = paths[0];
+            final var pt2 = paths[1];
+            int c = color ? Color.makeRGB(0,0,0) : Color.makeRGB(0,0,1);
+            try(pt1;pt2){
+                canvas.translate(960, 600);
+                //填充,半透
+                canvas.drawPath(pt1, new Paint().setColor(c).setAlpha(102).setStroke(false));
+                canvas.drawPath(pt1, new Paint().setColor(c).setStrokeWidth(5).setStroke(true));
+                canvas.drawPath(pt2, new Paint().setColor(c).setStroke(false));
+            }
+            canvas.restore();
+            return this;
+        }
+        public PPMBuilder drowLeftValue1(String text){
+            return drowLeftValue(text, 370+12);
+        }
+        public PPMBuilder drowLeftName1(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowLeftValue2(String text){
+            return drowLeftValue(text, 485+12);
+        }
+        public PPMBuilder drowLeftName2(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowLeftValue3(String text){
+            return drowLeftValue(text, 600+12);
+        }
+        public PPMBuilder drowLeftName3(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowLeftValue4(String text){
+            return drowLeftValue(text, 715+12);
+        }
+        public PPMBuilder drowLeftName4(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowLeftValue5(String text){
+            return drowLeftValue(text, 830+12);
+        }
+        public PPMBuilder drowLeftName5(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowLeftValue6(String text){
+            return drowLeftValue(text, 945+12);
+        }
+        public PPMBuilder drowLeftName6(String text){
+            return drowLeftName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue1(String text){
+            return drowRightValue(text, 370+12);
+        }
+        public PPMBuilder drowRightName1(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue2(String text){
+            return drowRightValue(text, 485+12);
+        }
+        public PPMBuilder drowRightName2(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue3(String text){
+            return drowRightValue(text, 600+12);
+        }
+        public PPMBuilder drowRightName3(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue4(String text){
+            return drowRightValue(text, 715+12);
+        }
+        public PPMBuilder drowRightName4(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue5(String text){
+            return drowRightValue(text, 830+12);
+        }
+        public PPMBuilder drowRightName5(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowRightValue6(String text){
+            return drowRightValue(text, 945+12);
+        }
+        public PPMBuilder drowRightName6(String text){
+            return drowRightName(text, 370+12);
+        }
+        public PPMBuilder drowLeftTotal(String text){
+            return drowCenterText(text, 790,945+12);
+        }
+        public PPMBuilder drowRightTotal(String text){
+            return drowCenterText(text, 1130,945+12);
+        }
 
+        /***
+         * 左侧数值名称
+         * @param text
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowLeftName(String text, int top){
+            return drowLeftText(text, 80, top);
+        }
+
+        /***
+         * 右侧数值名称
+         * @param text
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowRightName(String text, int top){
+            return drowLeftText(text, 1490, top);
+        }
+
+        /***
+         * 左侧数值
+         * @param text
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowLeftValue(String text, int top){
+            return drowRightText(text, 430, top);
+        }
+
+        /***
+         * 右侧数值
+         * @param text
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowRightValue(String text, int top){
+            return drowRightText(text, 1840, top);
+        }
+        //分别对应着 左 中 右 文字对齐方式
+        /***
+         * 左对齐渲染
+         * @param text
+         * @param right
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowLeftText(String text, int right, int top){
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            final Font font = new Font(typeface, 60);
+            final var line = TextLine.make(text,font);
+            try (typeface;font){
+                canvas.translate(right, top);
+                canvas.drawTextLine(line, -line.getWidth()*0.5f, line.getCapHeight(), p_white);
+            }
+            canvas.restore();
+            return this;
+        }
+
+        /***
+         * 居中对齐渲染
+         * @param text
+         * @param right
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowCenterText(String text, int right, int top){
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            final Font font = new Font(typeface, 60);
+            final var line = TextLine.make(text,font);
+            try (typeface;font){
+                canvas.translate(right, top);
+                canvas.drawTextLine(line, -line.getWidth()*0.5f, line.getCapHeight(), p_white);
+            }
+            canvas.restore();
+            return this;
+        }
+
+        /***
+         * 右对齐渲染
+         * @param text
+         * @param right
+         * @param top
+         * @return
+         */
+        private PPMBuilder drowRightText(String text, int right, int top){
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            final Font font = new Font(typeface, 60);
+            final var line = TextLine.make(text,font);
+            try (typeface;font){
+                canvas.translate(right, top);
+                canvas.drawTextLine(line, -line.getWidth(), line.getCapHeight(), p_white);
+            }
             canvas.restore();
             return this;
         }
