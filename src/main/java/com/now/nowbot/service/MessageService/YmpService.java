@@ -53,6 +53,7 @@ public class YmpService implements MessageService{
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
         switch (mode){
+            default: mode = OsuMode.OSU;
             case OSU:{
                 if (user != null){
                     dates = getDates(user,"osu",isAll);
@@ -81,9 +82,6 @@ public class YmpService implements MessageService{
                     dates = getDates(id,"mania",isAll);
                 }
             }break;
-            default:{
-                throw new TipsException("未知参数");
-            }
         }
         if(dates.size()==0){
             throw new TipsException("24h内无记录");

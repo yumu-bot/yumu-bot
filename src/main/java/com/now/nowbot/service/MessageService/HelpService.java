@@ -2,12 +2,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.event.events.MessageEvent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("help")
 public class HelpService implements MessageService {

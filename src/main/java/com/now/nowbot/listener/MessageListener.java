@@ -1,13 +1,13 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
-import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.LogException;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.net.ConnectException;
@@ -30,7 +29,6 @@ import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 public class MessageListener extends SimpleListenerHost {
@@ -92,6 +90,7 @@ public class MessageListener extends SimpleListenerHost {
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
         messageMapper.save(new MsgLite(event.getMessage()));
+        ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {

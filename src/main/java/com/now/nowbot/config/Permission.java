@@ -7,13 +7,11 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,22 +50,7 @@ public class Permission {
 
         var beans = applicationContext.getBeansOfType(MessageService.class);
         beans.forEach((name, bean) -> {
-//            //拿到方法
-//            Method method = null;
-//            try {
-//                var $beanClassName = bean.getClass().getName();
-//                //通过 代理类 拿到 具体类
-//                Class $beanClass = Class.forName($beanClassName.substring(0, $beanClassName.indexOf('$')));
-//                //反射得到方法
-//                method = $beanClass.getMethod("HandleMessage", MessageEvent.class, Matcher.class);
-//            } catch (Exception e) {
-//                log.error("反射获取service类异常",e);
-//            }
             CheckPermission $beansCheck = null;
-//            if (method != null) {
-//                //方法不为空则获取注解信息
-//                $beansCheck = method.getAnnotation(CheckPermission.class);
-//            }
             /*
              * AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
              * AopUtils.getTargetClass(point.getTarget()).getMethod("HandleMessage", MessageEvent.class, java.util.regex.Matcher.class).getAnnotation(com.now.nowbot.aop.CheckPermission.class);
@@ -109,7 +92,7 @@ public class Permission {
         var p = PERMISSIONS.get(sName);
         p.isWhite();
         p.hasGroup(id);
-        /*   emmm很明显是
+        /*   真值表
         * w   1  0  1  0
         * h   0  0  1  1
         * y   0  1  1  0

@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.OsuMode;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,7 @@ import java.util.regex.Pattern;
 
 @Service("test")
 public class TestService implements MessageService {
+    private final Logger log = LoggerFactory.getLogger(TestService.class);
     @Autowired
     OsuGetService osuGetService;
 
@@ -160,6 +164,21 @@ public class TestService implements MessageService {
             } else {
                 event.getSubject().sendMessage(String.valueOf(1 + (int) (Math.random() * 100)));
             }
+            return;
+        }
+
+        pt = Pattern.compile("^!wvgedfvsd");
+        matcher = pt.matcher(msg.contentToString());
+        if(matcher.find()){
+            event.getSubject().sendMessage("start");
+            log.info("fdj:start");
+            var lock = ASyncMessageUtil.getLock(((GroupMessageEvent) event).getGroup().getId(), event.getSender().getId());
+            String s;
+            while ((s = ASyncMessageUtil.get(lock).contentToString()) == "exit"){
+                log.info("fdj:{}",s);
+                event.getSubject().sendMessage(s);
+            }
+            return;
         }
     }
 
