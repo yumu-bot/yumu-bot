@@ -128,7 +128,7 @@ public class RatingService implements MessageService {
             var user = sortedUsers.get(i);
             sb.append(String.format("#%d [%.2f] %s %s", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
-                    .append(String.format("DMG %.2f (%.2fM)", user.getMRA(), user.getTotalScore()))
+                    .append(String.format("DMG %.2f (%.2fM)", user.getMDRA(), user.getTotalScore()))
                     .append("\n")
                     .append(String.format("%dW-%dL (%d%%)", user.getWins(), user.getLost(),
                             Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost()))))
