@@ -13,11 +13,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -28,24 +26,6 @@ public class msgController {
     OsuGetService osuGetService;
     @Autowired
     ThreadPoolTaskExecutor threadPool;
-
-    @RequestMapping("${ppy.callbackpath}")
-    @ResponseBody
-    //@RequestParam(name = "code") String code, @RequestParam(name = "state") String state
-    public Object request(HttpServletRequest request) {
-        log.info("{}:来源{} 访问绑定端口\n{}", format.format(LocalDateTime.now()), request.getRemoteAddr(), request.getRemoteUser());
-        String[] date = new String[0];
-        String code = null;
-        try {
-            date = request.getParameter("state").split(" ");
-            code = request.getParameter("code");
-        } catch (Exception e) {
-            log.error("访问缺少必要参数", e);
-            return "非法的访问,";
-        }
-        var returndata = saveBind(code, date);
-        return returndata;
-    }
 
     public String saveBind(String code, String[] date) {
         StringBuffer sb = new StringBuffer();
