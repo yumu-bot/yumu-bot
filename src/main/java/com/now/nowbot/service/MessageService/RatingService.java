@@ -69,7 +69,7 @@ public class RatingService implements MessageService {
             for (int i = 0; i < scoreInfos.size(); i++) {
                 var scoreInfo = scoreInfos.get(i);
                 //剔除未passed成绩
-                if (includingFail && !scoreInfo.getPassed()) {
+                if (!includingFail && !scoreInfo.getPassed()) {
                     scoreInfos.remove(i);
                     i--;
                 }
@@ -117,18 +117,18 @@ public class RatingService implements MessageService {
 
         var teamPoint = matchStatistics.getTeamPoint();
 
+        //结果数据
         StringBuilder sb = new StringBuilder();
         sb.append(match.getMatchInfo().getName()).append("\n")
                 .append(teamPoint.getOrDefault("red", 0)).append(" : ")
                 .append(teamPoint.getOrDefault("blue", 0)).append("\n")
                 .append("mp").append(matchId).append(" ").append(games.get(0).getTeamType()).append("\n");
 
-        //结果数据
         for (int i = 0; i < sortedUsers.size(); i++) {
             var user = sortedUsers.get(i);
             sb.append(String.format("#%d [%.2f] %s %s", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
-                    .append(String.format("DMG %.2f (%.2fM)", user.getMRA(), user.getTotalScore()))
+                    .append(String.format("DMG %.2f (%.2fM)", user.getMDRA(), user.getTotalScore()))
                     .append("\n")
                     .append(String.format("%dW-%dL (%d%%)", user.getWins(), user.getLost(),
                             Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost()))))
