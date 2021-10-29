@@ -4,15 +4,15 @@ import org.jetbrains.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CardUtil {
-    static final Logger log = LoggerFactory.getLogger(CardUtil.class);
+public class PanelUtil {
+    static final Logger log = LoggerFactory.getLogger(PanelUtil.class);
     /* **
      * SS-D #FEF668 #F09450 #3FBCEF #00B034 #3FBCEF #8E569B #EA6B48
      * 我方#00A8EC 对方 #FF0000
      */
     public static final int COLOR_SS = Color.makeRGB(254, 246, 104);
     public static final int COLOR_S = Color.makeRGB(240, 148, 80);
-    public static final int COLOR_A_PLUS = Color.makeRGB(63, 188, 239);
+    public static final int COLOR_A_PLUS = Color.makeRGB(0, 176, 52);
     public static final int COLOR_A = Color.makeRGB(0, 176, 52);
     public static final int COLOR_B = Color.makeRGB(63, 188, 239);
     public static final int COLOR_C = Color.makeRGB(142, 86, 155);
@@ -45,7 +45,7 @@ public class CardUtil {
             canvas.drawImage(SkiaUtil.getScaleCenterImage(bg, w, h), 0, 0, new Paint().setARGB(255,100,100,100));
         }
 
-        public Image build(int r) {
+        Image build(int r) {
             try (surface) {
                 isClose = true;
                 return RRectout(surface, r);
@@ -318,9 +318,18 @@ public class CardUtil {
          * 左数值 右对齐
          */
         private static final int X_L2 = 430;
-
+        /**
+         * 第一层文字高度
+         */
         private static final int Y_T1 = 370 + 12;
+        /**
+         * 每层文字偏移
+         */
         private static final int Y_T1_OFF = 115;
+        /**
+         * 大小字体高度差
+         */
+        private static final int Y_T1_SFONT = 16;
         /**
          * 左评价 居中对齐
          */
@@ -329,6 +338,9 @@ public class CardUtil {
          * 偏左中下 总和 居中对齐
          */
         private static final int X_L4 = 790;
+        /**
+         * 数字高度
+         */
         private static final int Y_T2 = 945 + 12;
 
         /**
@@ -441,6 +453,51 @@ public class CardUtil {
         public PPPanelBuilder drowRightRankN(int n, String text, int color) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
             return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
+        }
+        /**
+         * 左侧value大小文字渲染
+         * @param n 层数
+         * @param bigText 大文字
+         * @param simText 小文字
+         * @return
+         */
+        public PPPanelBuilder drowLeftValueBS(int n, String bigText, String simText){
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            final Font fontB = new Font(typeface, 60);
+            final Font fontS = new Font(typeface, 36);
+            final var lineB = TextLine.make(bigText, fontB);
+            final var lineS = TextLine.make(simText, fontS);
+            try (typeface; fontB;lineB;lineS) {
+                canvas.translate(X_L2, Y_T1 + Y_T1_OFF * n);
+                canvas.drawTextLine(lineS, -lineS.getWidth(), lineS.getCapHeight() + Y_T1_SFONT, p_white);
+                canvas.drawTextLine(lineB, -(lineS.getWidth() + lineB.getWidth()), lineB.getCapHeight(), p_white);
+            }
+            canvas.restore();
+            return this;
+        }
+
+        /**
+         * 右侧value大小文字渲染
+         * @param n 层数
+         * @param bigText 大文字
+         * @param simText 小文字
+         * @return
+         */
+        public PPPanelBuilder drowRightValueBS(int n, String bigText, String simText){
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            final Font fontB = new Font(typeface, 60);
+            final Font fontS = new Font(typeface, 36);
+            final var lineB = TextLine.make(bigText, fontB);
+            final var lineS = TextLine.make(simText, fontS);
+            try (typeface; fontB;lineB;lineS) {
+                canvas.translate(X_R2, Y_T1 + Y_T1_OFF * n );
+                canvas.drawTextLine(lineS, -lineS.getWidth(), lineS.getCapHeight() + Y_T1_SFONT, p_white);
+                canvas.drawTextLine(lineB, -(lineS.getWidth() + lineB.getWidth()), lineB.getCapHeight(), p_white);
+            }
+            canvas.restore();
+            return this;
         }
 
         //用不到就删了吧
@@ -649,7 +706,7 @@ public class CardUtil {
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             final Font font = new Font(typeface, 60);
             final var line = TextLine.make(text, font);
-            try (typeface; font) {
+            try (typeface; font;line) {
                 canvas.translate(right, top);
                 canvas.drawTextLine(line, 0, line.getCapHeight(), p_white);
             }
@@ -680,7 +737,7 @@ public class CardUtil {
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             final Font font = new Font(typeface, 60);
             final var line = TextLine.make(text, font);
-            try (typeface; font) {
+            try (typeface; font;line) {
                 canvas.translate(X, top);
                 canvas.drawTextLine(line, -line.getWidth() * 0.5f, line.getCapHeight(), color);
             }
@@ -700,7 +757,7 @@ public class CardUtil {
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             final Font font = new Font(typeface, 60);
             final var line = TextLine.make(text, font);
-            try (typeface; font) {
+            try (typeface; font;line) {
                 canvas.translate(right, top);
                 canvas.drawTextLine(line, -line.getWidth(), line.getCapHeight(), p_white);
             }
