@@ -42,9 +42,34 @@ public class PanelUtil {
             hight = h;
             surface = Surface.makeRasterN32Premul(w, h);
             canvas = surface.getCanvas();
-            canvas.drawImage(SkiaUtil.getScaleCenterImage(bg, w, h), 0, 0, new Paint().setARGB(255,100,100,100));
+            if (bg.getWidth() != w || bg.getHeight() != h) bg = SkiaUtil.getScaleCenterImage(bg, w, h);
+            canvas.drawImage(bg, 0, 0);
         }
 
+        /**
+         * 绘制叠加层
+         * @param add
+         * @return
+         */
+        PanelBuilder drowImage(Image add){
+            canvas.drawImage(add,0,0);
+            return this;
+        }
+
+        /**
+         * 指定位置
+         * @param add
+         * @param x
+         * @param y
+         * @return
+         */
+        PanelBuilder drowImage(Image add, int x, int y){
+            canvas.save();
+            canvas.translate(x, y);
+            canvas.drawImage(add, 0, 0);
+            canvas.restore();
+            return this;
+        }
         Image build(int r) {
             try (surface) {
                 isClose = true;
@@ -304,11 +329,9 @@ public class PanelUtil {
     //-----------------------------
 
     public static class PPPanelBuilder extends PanelBuilder {
-        PPPanelBuilder() {
-            super(1920, 1080);
+        PPPanelBuilder(Image bg) {
+            super(1920, 1080, bg);
         }
-
-
         //l80 r430 m510 m790 m960 m1130 m1410 l1490 r1840
         /**
          * 左值名称 左对齐
@@ -500,155 +523,19 @@ public class PanelUtil {
             return this;
         }
 
-        //用不到就删了吧
-        public PPPanelBuilder drowLeftValue1(String text) {
-            return drowLeftValue(text, Y_T1);
-        }
-
-        public PPPanelBuilder drowLeftName1(String text) {
-            return drowLeftName(text, Y_T1);
-        }
-
-        public PPPanelBuilder drowLeftRank1(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowLeftValue2(String text) {
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF);
-        }
-
-        public PPPanelBuilder drowLeftName2(String text) {
-            return drowLeftName(text, Y_T1 + Y_T1_OFF);
-        }
-
-        public PPPanelBuilder drowLeftRank2(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowLeftValue3(String text) {
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF * 2);
-        }
-
-        public PPPanelBuilder drowLeftName3(String text) {
-            return drowLeftName(text, Y_T1 + Y_T1_OFF * 2);
-        }
-
-        public PPPanelBuilder drowLeftRank3(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF * 2, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowLeftValue4(String text) {
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF * 3);
-        }
-
-        public PPPanelBuilder drowLeftName4(String text) {
-            return drowLeftName(text, Y_T1 + Y_T1_OFF * 3);
-        }
-
-        public PPPanelBuilder drowLeftRank4(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF * 3, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowLeftValue5(String text) {
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF * 4);
-        }
-
-        public PPPanelBuilder drowLeftName5(String text) {
-            return drowLeftName(text, Y_T1 + Y_T1_OFF * 4);
-        }
-
-        public PPPanelBuilder drowLeftRank5(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF * 4, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowLeftValue6(String text) {
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF * 5);
-        }
-
-        public PPPanelBuilder drowLeftName6(String text) {
-            return drowLeftName(text, Y_T1 + Y_T1_OFF * 5);
-        }
-
-        public PPPanelBuilder drowLeftRank6(String text, int color) {
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF * 5, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue1(String text) {
-            return drowRightValue(text, Y_T1);
-        }
-
-        public PPPanelBuilder drowRightName1(String text) {
-            return drowRightName(text, Y_T1);
-        }
-
-        public PPPanelBuilder drowRightRank1(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue2(String text) {
-            return drowRightValue(text, Y_T1 + Y_T1_OFF);
-        }
-
-        public PPPanelBuilder drowRightName2(String text) {
-            return drowRightName(text, Y_T1 + Y_T1_OFF);
-        }
-
-        public PPPanelBuilder drowRightRank2(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue3(String text) {
-            return drowRightValue(text, Y_T1 + Y_T1_OFF * 2);
-        }
-
-        public PPPanelBuilder drowRightName3(String text) {
-            return drowRightName(text, Y_T1 + Y_T1_OFF * 2);
-        }
-
-        public PPPanelBuilder drowRightRank3(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * 2, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue4(String text) {
-            return drowRightValue(text, Y_T1 + Y_T1_OFF * 3);
-        }
-
-        public PPPanelBuilder drowRightName4(String text) {
-            return drowRightName(text, Y_T1 + Y_T1_OFF * 3);
-        }
-
-        public PPPanelBuilder drowRightRank4(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * 3, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue5(String text) {
-            return drowRightValue(text, Y_T1 + Y_T1_OFF * 4);
-        }
-
-        public PPPanelBuilder drowRightName5(String text) {
-            return drowRightName(text, Y_T1 + Y_T1_OFF * 4);
-        }
-
-        public PPPanelBuilder drowRightRank5(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * 4, new Paint().setColor(color));
-        }
-
-        public PPPanelBuilder drowRightValue6(String text) {
-            return drowRightValue(text, Y_T1 + Y_T1_OFF * 5);
-        }
-
-        public PPPanelBuilder drowRightName6(String text) {
-            return drowRightName(text, Y_T1 + Y_T1_OFF * 5);
-        }
-
-        public PPPanelBuilder drowRightRank6(String text, int color) {
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * 5, new Paint().setColor(color));
-        }
-
+        /**
+         * 总值 左
+         * @param text
+         * @return
+         */
         public PPPanelBuilder drowLeftTotal(String text) {
             return drowCenterText(text, X_L4, Y_T2);
         }
-
+        /**
+         * 总值 右
+         * @param text
+         * @return
+         */
         public PPPanelBuilder drowRightTotal(String text) {
             return drowCenterText(text, X_R4, Y_T2);
         }
@@ -795,8 +682,10 @@ public class PanelUtil {
             return super.build(15);
         }
     }
-
     public static class PPMPanelBuilder extends PPPanelBuilder {
+        PPMPanelBuilder(Image bg){
+            super(bg);
+        }
     }
 
     /***
@@ -819,7 +708,7 @@ public class PanelUtil {
      * PPA(P)面板
      * @return
      */
-    public static PPMPanelBuilder getPPMBulider() {
-        return new PPMPanelBuilder();
+    public static PPMPanelBuilder getPPMBulider(Image bg) {
+        return new PPMPanelBuilder(bg);
     }
 }
