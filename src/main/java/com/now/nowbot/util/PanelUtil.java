@@ -43,7 +43,7 @@ public class PanelUtil {
             surface = Surface.makeRasterN32Premul(w, h);
             canvas = surface.getCanvas();
             if (bg.getWidth() != w || bg.getHeight() != h) bg = SkiaUtil.getScaleCenterImage(bg, w, h);
-            canvas.drawImage(bg, -1, -1);
+            canvas.drawImage(bg, 0, 0);
         }
 
         /**
