@@ -19,7 +19,6 @@ import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("testppm")
@@ -120,7 +119,7 @@ public class TestPPmService implements MessageService{
             s.getCanvas().clear(Color.makeRGB(0,0,0));
             var n = s.makeImageSnapshot();
             s.getCanvas().drawImage(u_bg_t,0,0);
-            s.getCanvas().drawImage(n,0,0,new Paint().setAlphaf(0.6f));
+            s.getCanvas().drawImage(n,0,0,new Paint().setAlphaf(0.4f));
             u_bg = s.makeImageSnapshot();
         }
         var card = PanelUtil.getA1Builder(u_bg)
@@ -144,7 +143,9 @@ public class TestPPmService implements MessageService{
                 (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
-        var panel = PanelUtil.getPPMBulider(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
+        var panel = PanelUtil.getPPMBulider()
+                .drowTopBackground(u_bg)
+                .drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
                 .drowLeftCard(card)
                 .drowLeftNameN(0,"FAC")
                 .drowLeftNameN(1,"PTT")
@@ -158,8 +159,8 @@ public class TestPPmService implements MessageService{
                 .drowLeftValueN(3, String.valueOf((int)(userinfo.getStb()*100)),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
                 .drowLeftValueN(4, String.valueOf((int)(userinfo.getEng()*100)),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
                 .drowLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
-                .drowLeftTotal(new DecimalFormat("0.00").format(userinfo.getTtl()*100))
-                .drowRightTotal(new DecimalFormat("0.00").format(userinfo.getSan()))
+                .drowLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
+                .drowRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
                 .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
         try (u_head;u_bg;card;panel){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));

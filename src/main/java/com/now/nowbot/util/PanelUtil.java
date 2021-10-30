@@ -1,5 +1,6 @@
 package com.now.nowbot.util;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +24,11 @@ public class PanelUtil {
 
     public static class PanelBuilder {
         final Paint p_white = new Paint().setARGB(255, 255, 255, 255).setStrokeWidth(10);
-        int width;
-        int hight;
-        final Surface surface;
-        Canvas canvas;
-        boolean isClose = false;
+        protected int width;
+        protected int hight;
+        protected final Surface surface;
+        protected Canvas canvas;
+        protected boolean isClose = false;
 
         PanelBuilder(int w, int h) {
             width = w;
@@ -329,8 +330,8 @@ public class PanelUtil {
     //-----------------------------
 
     public static class PPPanelBuilder extends PanelBuilder {
-        PPPanelBuilder(Image bg) {
-            super(1920, 1080, bg);
+        PPPanelBuilder() {
+            super(1920, 1080);
         }
         //l80 r430 m510 m790 m960 m1130 m1410 l1490 r1840
         /**
@@ -349,10 +350,6 @@ public class PanelUtil {
          * 每层文字偏移
          */
         private static final int Y_T1_OFF = 115;
-        /**
-         * 大小字体高度差
-         */
-        private static final int Y_T1_SFONT = 16;
         /**
          * 左评价 居中对齐
          */
@@ -382,8 +379,28 @@ public class PanelUtil {
          * 右数值
          */
         private static final int X_R2 = 1840;
+        /**
+         * 大字体size
+         */
+        private static final float FONT_SIZE_BIG = 60;
+        /**
+         * 小字体尺寸
+         */
+        private static final float FONT_SIZE_SIM = 36;
+        /**
+         * 大小字体高度差
+         */
+        private static final float FONT_OFFSET = 16;
 
-        /***
+        public PPPanelBuilder drowTopBackground(Image bg){
+            var temp = SkiaUtil.getScaleCenterImage(bg, surface.getWidth(), ((int) (0.3f * surface.getHeight())));
+            try (temp) {
+                canvas.drawImage(temp, 0, 0);
+            }
+            return this;
+        }
+
+        /**
          * 绘制六边形
          * @param point 输入数值,范围[0-1];
          * @param color 颜色预设 true:蓝色 | false:红色
@@ -394,7 +411,7 @@ public class PanelUtil {
                 throw new RuntimeException("输入参数长度错误");
             }
             canvas.save();
-            Path[] paths = SkiaUtil.creat6(180, 10, point);
+            Path[] paths = SkiaUtil.creat6(230, 10, point);
             if (paths == null || paths.length != 2) {
                 throw new RuntimeException("创建形状错误");
             }
@@ -420,7 +437,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowLeftValueN(int n, String text) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowLeftValue(text, Y_T1 + Y_T1_OFF * n);
+            return drowRightText(text, null, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /***
@@ -431,7 +448,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowLeftNameN(int n, String text) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowLeftName(text, Y_T1 + Y_T1_OFF * n);
+            return drowLeftText(text, null, X_L1, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /***
@@ -442,7 +459,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowLeftRankN(int n, String text, int color) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowCenterText(text, X_L3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
+            return drowCenterText(text, null, X_L3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
         }
 
         /***
@@ -453,7 +470,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowRightValueN(int n, String text) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowRightValue(text, Y_T1 + Y_T1_OFF * n);
+            return drowRightText(text, null, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /***
@@ -464,7 +481,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowRightNameN(int n, String text) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowRightName(text, Y_T1 + Y_T1_OFF * n);
+            return drowLeftText(text, null, X_R1, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /***
@@ -475,7 +492,7 @@ public class PanelUtil {
          */
         public PPPanelBuilder drowRightRankN(int n, String text, int color) {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-            return drowCenterText(text, X_R3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
+            return drowCenterText(text, null, X_R3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
         }
         /**
          * 左侧value大小文字渲染
@@ -485,19 +502,8 @@ public class PanelUtil {
          * @return
          */
         public PPPanelBuilder drowLeftValueN(int n, String bigText, String simText){
-            canvas.save();
-            Typeface typeface = SkiaUtil.getTorusSemiBold();
-            final Font fontB = new Font(typeface, 60);
-            final Font fontS = new Font(typeface, 36);
-            final var lineB = TextLine.make(bigText, fontB);
-            final var lineS = TextLine.make(simText, fontS);
-            try (typeface; fontB;lineB;lineS) {
-                canvas.translate(X_L2, Y_T1 + Y_T1_OFF * n);
-                canvas.drawTextLine(lineS, -lineS.getWidth(), lineS.getCapHeight() + Y_T1_SFONT, p_white);
-                canvas.drawTextLine(lineB, -(lineS.getWidth() + lineB.getWidth()), lineB.getCapHeight(), p_white);
-            }
-            canvas.restore();
-            return this;
+            if (n < 0 || n > 5) throw new RuntimeException("超出范围");
+            return drowRightText(bigText, simText, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /**
@@ -508,19 +514,8 @@ public class PanelUtil {
          * @return
          */
         public PPPanelBuilder drowRightValueBS(int n, String bigText, String simText){
-            canvas.save();
-            Typeface typeface = SkiaUtil.getTorusSemiBold();
-            final Font fontB = new Font(typeface, 60);
-            final Font fontS = new Font(typeface, 36);
-            final var lineB = TextLine.make(bigText, fontB);
-            final var lineS = TextLine.make(simText, fontS);
-            try (typeface; fontB;lineB;lineS) {
-                canvas.translate(X_R2, Y_T1 + Y_T1_OFF * n );
-                canvas.drawTextLine(lineS, -lineS.getWidth(), lineS.getCapHeight() + Y_T1_SFONT, p_white);
-                canvas.drawTextLine(lineB, -(lineS.getWidth() + lineB.getWidth()), lineB.getCapHeight(), p_white);
-            }
-            canvas.restore();
-            return this;
+            if (n < 0 || n > 5) throw new RuntimeException("超出范围");
+            return drowRightText(bigText, simText, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
         }
 
         /**
@@ -529,7 +524,7 @@ public class PanelUtil {
          * @return
          */
         public PPPanelBuilder drowLeftTotal(String text) {
-            return drowCenterText(text, X_L4, Y_T2);
+            return drowCenterText(text, null, X_L4, Y_T2, p_white);
         }
         /**
          * 总值 右
@@ -537,96 +532,79 @@ public class PanelUtil {
          * @return
          */
         public PPPanelBuilder drowRightTotal(String text) {
-            return drowCenterText(text, X_R4, Y_T2);
+            return drowCenterText(text, null, X_R4, Y_T2, p_white);
         }
-
-        /***
-         * 左侧数值名称
-         * @param text
-         * @param top
+        /**
+         * 总值 左
          * @return
          */
-        private PPPanelBuilder drowLeftName(String text, int top) {
-            return drowLeftText(text, X_L1, top);
+        public PPPanelBuilder drowLeftTotal(String bigText, String simText) {
+            return drowCenterText(bigText, simText, X_L4, Y_T2, p_white);
         }
-
-        /***
-         * 右侧数值名称
-         * @param text
-         * @param top
+        /**
+         * 总值 右
          * @return
          */
-        private PPPanelBuilder drowRightName(String text, int top) {
-            return drowLeftText(text, X_R1, top);
+        public PPPanelBuilder drowRightTotal(String bigText, String simText) {
+            return drowCenterText(bigText, simText, X_R4, Y_T2, p_white);
         }
 
-        /***
-         * 左侧数值
-         * @param text
-         * @param top
-         * @return
-         */
-        private PPPanelBuilder drowLeftValue(String text, int top) {
-            return drowRightText(text, X_L2, top);
-        }
 
-        /***
-         * 右侧数值
-         * @param text
-         * @param top
-         * @return
-         */
-        private PPPanelBuilder drowRightValue(String text, int top) {
-            return drowRightText(text, X_R2, top);
-        }
-        //分别对应着 左 中 右 文字对齐方式
-
+        //文字渲染 分别对应着 左 中 右 文字对齐方式
         /***
          * 左对齐渲染
-         * @param text
-         * @param right
-         * @param top
-         * @return
          */
-        private PPPanelBuilder drowLeftText(String text, int right, int top) {
+        protected PPPanelBuilder drowLeftText(String bigText, @Nullable String simText, int left, int top, Paint color) {
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
-            final Font font = new Font(typeface, 60);
-            final var line = TextLine.make(text, font);
-            try (typeface; font;line) {
-                canvas.translate(right, top);
-                canvas.drawTextLine(line, 0, line.getCapHeight(), p_white);
+            final Font fontB = new Font(typeface, FONT_SIZE_BIG);
+            final var lineB = TextLine.make(bigText, fontB);
+            if (simText != null) {
+                final Font fontS = new Font(typeface, FONT_SIZE_SIM);
+                final var lineS = TextLine.make(simText, fontS);
+                try (typeface; fontB; fontS; lineB; lineS) {
+                    canvas.translate(left, top);
+                    canvas.drawTextLine(lineB, 0, lineB.getCapHeight(), color);
+                    canvas.translate(lineB.getWidth(), FONT_OFFSET);
+                    canvas.drawTextLine(lineS, 0, lineS.getCapHeight(), color);
+                }
+            }else {
+                try (typeface; fontB; lineB) {
+                    canvas.translate(left, top);
+                    canvas.drawTextLine(lineB, 0, lineB.getCapHeight(), color);
+                }
             }
             canvas.restore();
             return this;
         }
 
         /***
-         * 居中对齐渲染
-         * @param text
-         * @param X
-         * @param top
-         * @return
-         */
-        private PPPanelBuilder drowCenterText(String text, int X, int top) {
-            return drowCenterText(text, X, top, p_white);
-        }
-
-        /***
          * 居中对齐渲染 带颜色
-         * @param text
-         * @param X
+         * @param bigText 大数
+         * @param simText 小数
+         * @param center
          * @param top
          * @return
          */
-        private PPPanelBuilder drowCenterText(String text, int X, int top, Paint color) {
+        protected PPPanelBuilder drowCenterText(String bigText, @Nullable String simText, int center, int top, Paint color) {
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
-            final Font font = new Font(typeface, 60);
-            final var line = TextLine.make(text, font);
-            try (typeface; font;line) {
-                canvas.translate(X, top);
-                canvas.drawTextLine(line, -line.getWidth() * 0.5f, line.getCapHeight(), color);
+            final Font fontB = new Font(typeface, 60);
+            final var lineB = TextLine.make(bigText, fontB);
+            if (simText != null) {
+                final Font fontS = new Font(typeface, 36);
+                final var lineS = TextLine.make(simText, fontS);
+                try (typeface; fontB; fontS; lineB; lineS) {
+                    canvas.translate((center - 0.5f * (lineB.getWidth() + lineS.getWidth())), top);
+                    canvas.drawTextLine(lineB, 0, lineB.getCapHeight(), color);
+                    canvas.translate(lineB.getWidth(), FONT_OFFSET);
+                    canvas.drawTextLine(lineS, 0, lineS.getCapHeight(), color);
+                }
+            }else {
+                try (typeface; fontB; lineB) {
+                    canvas.translate((center - 0.5f * lineB.getWidth()), top);
+                    canvas.drawTextLine(lineB, 0, lineB.getCapHeight(), color);
+                }
             }
             canvas.restore();
             return this;
@@ -634,19 +612,31 @@ public class PanelUtil {
 
         /***
          * 右对齐渲染
-         * @param text
+         * @param bigText
+         * @param simText
          * @param right
          * @param top
          * @return
          */
-        private PPPanelBuilder drowRightText(String text, int right, int top) {
+        protected PPPanelBuilder drowRightText(String bigText, @Nullable String simText, int right, int top, Paint color) {
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
-            final Font font = new Font(typeface, 60);
-            final var line = TextLine.make(text, font);
-            try (typeface; font;line) {
-                canvas.translate(right, top);
-                canvas.drawTextLine(line, -line.getWidth(), line.getCapHeight(), p_white);
+            final Font fontB = new Font(typeface, 60);
+            final var lineB = TextLine.make(bigText, fontB);
+            if (simText != null) {
+                final Font fontS = new Font(typeface, 36);
+                final var lineS = TextLine.make(simText, fontS);
+                try (typeface; fontB; fontS; lineB; lineS) {
+                    canvas.translate(right - (lineS.getWidth() + lineB.getWidth()), top);
+                    canvas.drawTextLine(lineB, 0, lineB.getCapHeight(), color);
+                    canvas.translate(lineB.getWidth(), FONT_OFFSET);
+                    canvas.drawTextLine(lineS, 0, lineS.getCapHeight(), color);
+                }
+            }else {
+                try (typeface; fontB; lineB) {
+                    canvas.translate(right, top);
+                    canvas.drawTextLine(lineB, -lineB.getWidth(), lineB.getCapHeight(), color);
+                }
             }
             canvas.restore();
             return this;
@@ -689,9 +679,7 @@ public class PanelUtil {
         }
     }
     public static class PPMPanelBuilder extends PPPanelBuilder {
-        PPMPanelBuilder(Image bg){
-            super(bg);
-        }
+
     }
 
     /***
@@ -714,8 +702,8 @@ public class PanelUtil {
      * PPA(P)面板
      * @return
      */
-    public static PPMPanelBuilder getPPMBulider(Image bg) {
-        return new PPMPanelBuilder(bg);
+    public static PPMPanelBuilder getPPMBulider() {
+        return new PPMPanelBuilder();
     }
 
     public static String cutDecimalPoint(Double m){
