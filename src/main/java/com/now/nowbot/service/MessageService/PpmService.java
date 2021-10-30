@@ -143,7 +143,16 @@ public class PpmService implements MessageService {
         }
 
         var u_head = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
-        var u_bg = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
+        var u_bg_t = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
+        Surface s = Surface.makeRasterN32Premul(u_bg_t.getWidth(),u_bg_t.getHeight());
+        Image u_bg;
+        try (u_bg_t;s){
+            s.getCanvas().clear(Color.makeRGB(0,0,0));
+            var n = s.makeImageSnapshot();
+            s.getCanvas().drawImage(u_bg_t,0,0);
+            s.getCanvas().drawImage(n,0,0,new Paint().setAlphaf(0.6f));
+            u_bg = s.makeImageSnapshot();
+        }
         var card = PanelUtil.getA1Builder(u_bg)
                 .drowA1(userinfo.getHeadURL())
                 .drowA2()
@@ -167,12 +176,18 @@ public class PpmService implements MessageService {
         };
         var panel = PanelUtil.getPPMBulider(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
                 .drowLeftCard(card)
-                .drowLeftValueN(0, String.valueOf((int)userinfo.getFacc()),PanelUtil.cutDecimalPoint(userinfo.getFacc()))
-                .drowLeftValueN(1, String.valueOf((int)userinfo.getPtt()),PanelUtil.cutDecimalPoint(userinfo.getPtt()))
-                .drowLeftValueN(2, String.valueOf((int)userinfo.getSta()),PanelUtil.cutDecimalPoint(userinfo.getSta()))
-                .drowLeftValueN(3, String.valueOf((int)userinfo.getStb()),PanelUtil.cutDecimalPoint(userinfo.getStb()))
-                .drowLeftValueN(4, String.valueOf((int)userinfo.getEng()),PanelUtil.cutDecimalPoint(userinfo.getEng()))
-                .drowLeftValueN(5, String.valueOf((int)userinfo.getSth()),PanelUtil.cutDecimalPoint(userinfo.getSth()))
+                .drowLeftNameN(0,"FAC")
+                .drowLeftNameN(1,"PTT")
+                .drowLeftNameN(2,"STA")
+                .drowLeftNameN(3,"STB")
+                .drowLeftNameN(4,"ENG")
+                .drowLeftNameN(5,"STH")
+                .drowLeftValueN(0, String.valueOf((int)userinfo.getFacc()*100),PanelUtil.cutDecimalPoint(userinfo.getFacc()*100))
+                .drowLeftValueN(1, String.valueOf((int)userinfo.getPtt()*100),PanelUtil.cutDecimalPoint(userinfo.getPtt()*100))
+                .drowLeftValueN(2, String.valueOf((int)userinfo.getSta()*100),PanelUtil.cutDecimalPoint(userinfo.getSta()*100))
+                .drowLeftValueN(3, String.valueOf((int)userinfo.getStb()*100),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
+                .drowLeftValueN(4, String.valueOf((int)userinfo.getEng()*100),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
+                .drowLeftValueN(5, String.valueOf((int)userinfo.getSth()*100),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
                 .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
         try (u_head;u_bg;card;panel){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
