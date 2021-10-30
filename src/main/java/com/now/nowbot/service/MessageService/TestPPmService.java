@@ -19,6 +19,7 @@ import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("testppm")
@@ -157,8 +158,8 @@ public class TestPPmService implements MessageService{
                 .drowLeftValueN(3, String.valueOf((int)(userinfo.getStb()*100)),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
                 .drowLeftValueN(4, String.valueOf((int)(userinfo.getEng()*100)),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
                 .drowLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
-                .drowLeftTotal(String.valueOf(userinfo.getTtl()*100))
-                .drowRightTotal(String.valueOf(userinfo.getSan()))
+                .drowLeftTotal(new DecimalFormat("0.00").format(userinfo.getTtl()*100))
+                .drowRightTotal(new DecimalFormat("0.00").format(userinfo.getSan()))
                 .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
         try (u_head;u_bg;card;panel){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
