@@ -7,6 +7,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.OsuMode;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -111,7 +112,7 @@ public class PpmService implements MessageService {
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
         //彩蛋 1%触发
-        if (Math.random()<=0.01){
+        if (false){
             Image spr = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"PPminusSurprise.png");
             try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
                  Typeface fontface = SkiaUtil.getTorusRegular();
@@ -140,6 +141,44 @@ public class PpmService implements MessageService {
             }
             return;
         }
+
+        var u_head = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
+        var u_bg = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
+        var card = PanelUtil.getA1Builder(u_bg)
+                .drowA1(userinfo.getHeadURL())
+                .drowA2()
+                .drowA3(userinfo.getName())
+                .drowB3("")
+                .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
+                .drowB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
+                .drowC3("")
+                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% LV"+
+                        userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
+                        "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
+                .drowC1(userdate.getJSONObject("statistics").getString("pp")+"PP")
+                .build();
+        float[] hex = new float[]{
+                (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
+        };
+        var panel = PanelUtil.getPPMBulider(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
+                .drowLeftCard(card)
+                .drowLeftValueN(0, String.valueOf((int)userinfo.getFacc()),PanelUtil.cutDecimalPoint(userinfo.getFacc()))
+                .drowLeftValueN(1, String.valueOf((int)userinfo.getPtt()),PanelUtil.cutDecimalPoint(userinfo.getPtt()))
+                .drowLeftValueN(2, String.valueOf((int)userinfo.getSta()),PanelUtil.cutDecimalPoint(userinfo.getSta()))
+                .drowLeftValueN(3, String.valueOf((int)userinfo.getStb()),PanelUtil.cutDecimalPoint(userinfo.getStb()))
+                .drowLeftValueN(4, String.valueOf((int)userinfo.getEng()),PanelUtil.cutDecimalPoint(userinfo.getEng()))
+                .drowLeftValueN(5, String.valueOf((int)userinfo.getSth()),PanelUtil.cutDecimalPoint(userinfo.getSth()))
+                .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
+        try (u_head;u_bg;card;panel){
+            var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
+            if (b != null) return;
+        }
+
         //绘制
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface Torus = SkiaUtil.getTorusRegular();

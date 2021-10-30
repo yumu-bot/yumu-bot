@@ -42,6 +42,7 @@ public class PPmOsu implements PPmObject {
     double ttl;
     double san;
     public String headURL;
+    public String bgURL;
 
     /***
      * 计算osu ppm
@@ -130,6 +131,7 @@ public class PPmOsu implements PPmObject {
             bonus = 0;
         }
         headURL = prd.getString("avatar_url");
+        bgURL = prd.getString("cover_url");
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");
@@ -425,5 +427,10 @@ public class PPmOsu implements PPmObject {
     @Override
     public String getHeadURL() {
         return headURL;
+    }
+
+    @Override
+    public String getBackgroundURL() {
+        return bgURL;
     }
 }

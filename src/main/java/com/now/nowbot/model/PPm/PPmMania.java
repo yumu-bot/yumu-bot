@@ -41,7 +41,8 @@ public class PPmMania implements PPmObject {
     double sta;
     double ttl;
     double san;
-    public String headURL;
+    String headURL;
+    String bgURL;
     /***
      * 计算mania ppm
      * @param prd 个人信息 JSON 替换为
@@ -129,6 +130,7 @@ public class PPmMania implements PPmObject {
             bonus = 0;
         }
         headURL = prd.getString("avatar_url");
+        bgURL = prd.getString("cover_url");
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");
@@ -421,5 +423,8 @@ public class PPmMania implements PPmObject {
         return headURL;
     }
 
-
+    @Override
+    public String getBackgroundURL() {
+        return bgURL;
+    }
 }

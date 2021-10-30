@@ -161,7 +161,7 @@ public class PanelUtil {
             return this;
         }
 
-        public ACardBuilder drowC(String text, int x, int y) {
+        ACardBuilder drowC(String text, int x, int y) {
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             Font font = new Font(typeface, 24)
@@ -484,7 +484,7 @@ public class PanelUtil {
          * @param simText 小文字
          * @return
          */
-        public PPPanelBuilder drowLeftValueBS(int n, String bigText, String simText){
+        public PPPanelBuilder drowLeftValueN(int n, String bigText, String simText){
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
             final Font fontB = new Font(typeface, 60);
@@ -678,6 +678,12 @@ public class PanelUtil {
             return this;
         }
 
+        @Override
+        public PPPanelBuilder drowImage(Image add) {
+            super.drowImage(add);
+            return this;
+        }
+
         public Image build() {
             return super.build(15);
         }
@@ -710,5 +716,13 @@ public class PanelUtil {
      */
     public static PPMPanelBuilder getPPMBulider(Image bg) {
         return new PPMPanelBuilder(bg);
+    }
+
+    public static String cutDecimalPoint(Double m){
+        if (m == null) return "";
+        Double s = m - m.intValue();
+        if (s < 0.01) return "";
+        String r = s.toString();
+        return r.substring(1,Math.min(r.length(),4));
     }
 }

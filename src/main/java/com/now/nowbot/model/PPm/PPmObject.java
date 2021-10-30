@@ -91,4 +91,6 @@ public interface PPmObject {
     double getSan();
 
     String getHeadURL();
+
+    String getBackgroundURL();
 }

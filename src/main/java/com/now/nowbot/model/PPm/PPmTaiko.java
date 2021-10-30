@@ -42,6 +42,7 @@ public class PPmTaiko implements PPmObject {
     double ttl;
     double san;
     public String headURL;
+    String bgURL;
     /***
      * 计算taiko ppm
      * @param prd 个人信息 JSON 替换为
@@ -135,6 +136,7 @@ public class PPmTaiko implements PPmObject {
             bonus = 0;
         }
         headURL = prd.getString("avatar_url");
+        bgURL = prd.getString("cover_url");
         acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");
@@ -428,5 +430,10 @@ public class PPmTaiko implements PPmObject {
     @Override
     public String getHeadURL() {
         return headURL;
+    }
+
+    @Override
+    public String getBackgroundURL() {
+        return bgURL;
     }
 }
