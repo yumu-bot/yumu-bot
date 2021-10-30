@@ -41,6 +41,7 @@ public enum Instruction {
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST("test",    Pattern.compile("^[!！].*"),null),
+    TESTPPM("testppm",    Pattern.compile("^[!！](?i)test(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
 
 
     //TODO 待实现的指令
