@@ -129,11 +129,11 @@ public class TestPPmService implements MessageService{
                 .drowB3("")
                 .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
                 .drowB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
-                .drowC1("")
+                .drowC3("")
                 .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% LV"+
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
-                .drowC3(userdate.getJSONObject("statistics").getString("pp")+"PP")
+                .drowC1(userdate.getJSONObject("statistics").getString("pp")+"PP")
                 .build();
         float[] hex = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),

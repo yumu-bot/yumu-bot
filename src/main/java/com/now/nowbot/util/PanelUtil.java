@@ -131,7 +131,18 @@ public class PanelUtil {
         }
 
         public ACardBuilder drowC1(String text) {
-            return drowC(text, surface.getWidth() - 10, 153);
+            canvas.save();
+            Typeface typeface = SkiaUtil.getTorusSemiBold();
+            Font font = new Font(typeface, 36)
+                    .setHinting(FontHinting.NONE)
+                    .setBaselineSnapped(true);
+            var line = TextLine.make(text, font);
+            try (font; line) {
+                canvas.translate(surface.getWidth() - 10, 153);
+                canvas.drawTextLine(line, -line.getWidth(), line.getCapHeight(), p_white);
+            }
+            canvas.restore();
+            return this;
         }
 
         public ACardBuilder drowC2(String text) {
@@ -362,7 +373,6 @@ public class PanelUtil {
          * 数字高度
          */
         private static final int Y_T2 = 945 + 12;
-
         /**
          * 偏右中下 总和
          */
