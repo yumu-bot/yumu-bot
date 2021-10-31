@@ -411,10 +411,9 @@ public class PanelUtil {
         private static final float FONT_OFFSET = 16;
 
         public PPPanelBuilder drowTopBackground(Image bg){
-            var temp = SkiaUtil.getScaleCenterImage(bg, surface.getWidth(), 320);
+            var temp = SkiaUtil.getScaleCenterImage(bg, 1920, 320);
             try (temp) {
-                canvas.save();
-                canvas.translate(0,-1).drawImage(temp, 0, 1).restore();
+                canvas.drawImage(temp, 0,0);
             }
             return this;
         }

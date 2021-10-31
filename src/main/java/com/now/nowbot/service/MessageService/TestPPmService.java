@@ -19,8 +19,6 @@ import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("testppm")
@@ -135,7 +133,7 @@ public class TestPPmService implements MessageService{
                 .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% LV"+
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
-                .drowC1(userdate.getJSONObject("statistics").getString("pp")+"PP")
+                .drowC1(userdate.getJSONObject("statistics").getIntValue("pp")+"PP")
                 .build();
         float[] hex = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
@@ -166,8 +164,6 @@ public class TestPPmService implements MessageService{
                 .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
         try (u_head;u_bg;card;panel){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
-
-            Files.write(Path.of("D:/apx.png"),panel.encodeToData().getBytes());
         }
     }
 }

@@ -156,9 +156,13 @@ public class SkiaUtil {
         try (Surface surface = Surface.makeRasterN32Premul(w,h)){
             var canvas = surface.getCanvas();
             if (1f * img.getWidth() / img.getHeight() < 1f * w / h) {
-                canvas.setMatrix(Matrix33.makeScale(1f*w/img.getWidth(),1f*w/img.getWidth())).drawImage(img,0,-0.5f*(1f*w/img.getWidth()*img.getHeight() - h));
+                //当原图比目标高
+                canvas.setMatrix(Matrix33.makeScale(1f*w/img.getWidth(),1f*w/img.getWidth()));
+                canvas.drawImage(img,0,-0.5f*(1f*w/img.getWidth()*img.getHeight() - h));
             } else {
-                canvas.setMatrix(Matrix33.makeScale(1f*h/img.getHeight(),1f*h/img.getHeight())).drawImage(img,-0.5f*(1f*h/img.getWidth()*img.getHeight() - w),0);
+                //当原图比目标宽
+                canvas.setMatrix(Matrix33.makeScale(1f*h/img.getHeight(),1f*h/img.getHeight()));
+                canvas.drawImage(img,-0.5f*(1f*img.getWidth()*h/img.getHeight() - w),0);
             }
             return surface.makeImageSnapshot();
         }
