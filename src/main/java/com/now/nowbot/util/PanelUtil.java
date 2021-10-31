@@ -133,7 +133,7 @@ public class PanelUtil {
         public ACardBuilder drowC1(String text) {
             canvas.save();
             Typeface typeface = SkiaUtil.getTorusSemiBold();
-            Font font = new Font(typeface, 36)
+            Font font = new Font(typeface, 60)
                     .setHinting(FontHinting.NONE)
                     .setBaselineSnapped(true);
             var line = TextLine.make(text, font);
@@ -234,10 +234,18 @@ public class PanelUtil {
             final Font font = new Font(typeface, 48)
                     .setHinting(FontHinting.NONE)
                     .setBaselineSnapped(true);
-            final var line = TextLine.make(text, font);
-            try (font; line) {
+            var line = TextLine.make(text, font);
+            int i = 0;
+            i = line.getLeftOffsetAtCoord(285);
+            final TextLine lineX;
+            if (i == text.length()){
+                lineX = line;
+            }else {
+                 lineX = TextLine.make(text.substring(0,i-1)+"...",font);
+            }
+            try (font; lineX) {
                 canvas.translate(130, 23);
-                canvas.drawTextLine(line, 0, line.getCapHeight(), p_white);
+                canvas.drawTextLine(lineX, 0, lineX.getCapHeight(), p_white);
             }
             canvas.restore();
             return this;
@@ -403,7 +411,7 @@ public class PanelUtil {
         private static final float FONT_OFFSET = 16;
 
         public PPPanelBuilder drowTopBackground(Image bg){
-            var temp = SkiaUtil.getScaleCenterImage(bg, surface.getWidth(), ((int) (0.3f * surface.getHeight())));
+            var temp = SkiaUtil.getScaleCenterImage(bg, surface.getWidth(), 320);
             try (temp) {
                 canvas.drawImage(temp, 0, 0);
             }
@@ -431,7 +439,7 @@ public class PanelUtil {
             try (pt1; pt2) {
                 canvas.translate(960, 600);
                 //填充,半透
-                canvas.drawPath(pt1, new Paint().setColor(c).setAlpha(102).setStroke(false));
+                canvas.drawPath(pt1, new Paint().setColor(c).setAlphaf(0.2f).setStroke(false));
                 canvas.drawPath(pt1, new Paint().setColor(c).setStrokeWidth(5).setStroke(true));
                 canvas.drawPath(pt2, new Paint().setColor(c).setStroke(false));
             }

@@ -19,6 +19,8 @@ import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("testppm")
@@ -144,7 +146,7 @@ public class TestPPmService implements MessageService{
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
         var panel = PanelUtil.getPPMBulider()
-                .drowTopBackground(u_bg)
+                .drowTopBackground(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.jpg"))
                 .drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
                 .drowLeftCard(card)
                 .drowLeftNameN(0,"FAC")
@@ -164,7 +166,8 @@ public class TestPPmService implements MessageService{
                 .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
         try (u_head;u_bg;card;panel){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
-            if (b != null) return;
+
+            Files.write(Path.of("D:/apx.png"),panel.encodeToData().getBytes());
         }
     }
 }
