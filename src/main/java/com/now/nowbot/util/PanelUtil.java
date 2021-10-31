@@ -413,7 +413,8 @@ public class PanelUtil {
         public PPPanelBuilder drowTopBackground(Image bg){
             var temp = SkiaUtil.getScaleCenterImage(bg, surface.getWidth(), 320);
             try (temp) {
-                canvas.drawImage(temp, 0, 0);
+                canvas.save();
+                canvas.translate(0,-1).drawImage(temp, 0, 1).restore();
             }
             return this;
         }
