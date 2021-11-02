@@ -717,6 +717,9 @@ public class PanelUtil {
         public Image build() {
             return super.build(15);
         }
+        public Image build(String text) {
+            return super.build(15, text);
+        }
     }
     public static class PPMPanelBuilder extends PPPanelBuilder {
 

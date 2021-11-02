@@ -169,7 +169,7 @@ public class TestPPmService implements MessageService{
         switchRank(3, userinfo.getStb(), panel::drowLeftRankN);
         switchRank(4, userinfo.getEng(), panel::drowLeftRankN);
         switchRank(5, userinfo.getSth(), panel::drowLeftRankN);
-        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
+        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PPM面板,没想好写啥,到时候再改吧");
         try (u_head;u_bg;card; panelImage){
             var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }
