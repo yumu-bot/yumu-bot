@@ -18,6 +18,7 @@ import org.jetbrains.skija.Paint;
 import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import rx.functions.Action3;
 
 import java.util.regex.Matcher;
 
@@ -130,7 +131,7 @@ public class TestPPmService implements MessageService{
                 .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
                 .drowB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
                 .drowC3("")
-                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% LV"+
+                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv"+
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
                 .drowC1(userdate.getJSONObject("statistics").getIntValue("pp")+"PP")
@@ -161,9 +162,42 @@ public class TestPPmService implements MessageService{
                 .drowLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
                 .drowLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
                 .drowRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
-                .drowHexagon(hex, true).drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
-        try (u_head;u_bg;card;panel){
-            var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panel.encodeToData().getBytes()), from));
+                .drowHexagon(hex, true);
+        switchRank(0, userinfo.getFacc(), panel::drowLeftRankN);
+        switchRank(1, userinfo.getPtt(), panel::drowLeftRankN);
+        switchRank(2, userinfo.getSta(), panel::drowLeftRankN);
+        switchRank(3, userinfo.getStb(), panel::drowLeftRankN);
+        switchRank(4, userinfo.getEng(), panel::drowLeftRankN);
+        switchRank(5, userinfo.getSth(), panel::drowLeftRankN);
+        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build();
+        try (u_head;u_bg;card; panelImage){
+            var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+        }
+    }
+    private void switchRank(int i, double date, Action3<Integer, String, Integer> temp){
+        if (date>0.95){
+            temp.call(i, "SS", PanelUtil.COLOR_SS);
+        }
+        else if(date>0.90){
+            temp.call(i, "S", PanelUtil.COLOR_S);
+        }
+        else if(date>0.85){
+            temp.call(i, "A+", PanelUtil.COLOR_A_PLUS);
+        }
+        else if(date>0.80){
+            temp.call(i, "A", PanelUtil.COLOR_A);
+        }
+        else if(date>0.70){
+            temp.call(i, "B", PanelUtil.COLOR_B);
+        }
+        else if(date>0.60){
+            temp.call(i, "C", PanelUtil.COLOR_C);
+        }
+        else if(date>0){
+            temp.call(i, "D", PanelUtil.COLOR_D);
+        }
+        else {
+            temp.call(i, "F", PanelUtil.COLOR_D);
         }
     }
 }

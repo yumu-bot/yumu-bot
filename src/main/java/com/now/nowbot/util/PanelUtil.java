@@ -5,6 +5,9 @@ import org.jetbrains.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class PanelUtil {
     static final Logger log = LoggerFactory.getLogger(PanelUtil.class);
     /* **
@@ -24,6 +27,7 @@ public class PanelUtil {
 
     public static class PanelBuilder {
         final Paint p_white = new Paint().setARGB(255, 255, 255, 255).setStrokeWidth(10);
+        final float TopTipeFontSize = 24;
         protected int width;
         protected int hight;
         protected final Surface surface;
@@ -74,6 +78,24 @@ public class PanelUtil {
         Image build(int r) {
             try (surface) {
                 isClose = true;
+                return RRectout(surface, r);
+            }
+        }
+
+        Image build(int r, String text) {
+            try (surface) {
+                isClose = true;
+                String leftText = "powered by Yumubot" + text;
+                Font font = new Font(SkiaUtil.TORUS_SEMIBOLD, TopTipeFontSize);
+                TextLine leftLine = TextLine.make(leftText, font);
+                TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC_8'").format(LocalDateTime.now()), font);
+                Paint p = new Paint().setARGB(100, 0, 0, 0);
+                try (font; leftLine; rightLine;p) {
+                    canvas.drawRRect(RRect.makeXYWH(0, 0, leftLine.getWidth() + r, leftLine.getHeight(), r), p);
+                    canvas.drawTextLine(leftLine, r, leftLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
+                    canvas.drawRRect(RRect.makeXYWH(surface.getWidth() - rightLine.getWidth() - 2*r, 0, rightLine.getWidth() + r, leftLine.getHeight(), r), p);
+                    canvas.drawTextLine(rightLine, surface.getWidth() - r - rightLine.getWidth(), rightLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
+                }
                 return RRectout(surface, r);
             }
         }
