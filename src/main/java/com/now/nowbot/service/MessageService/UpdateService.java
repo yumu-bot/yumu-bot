@@ -11,6 +11,7 @@ public class UpdateService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         if (Permission.isSupper(event.getSender().getId())){
+            event.getSubject().sendMessage("即将更新重启...");
             Runtime.getRuntime().exec("/root/update.sh");
             System.exit(1);
         }

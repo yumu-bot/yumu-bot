@@ -131,7 +131,7 @@ public class TestPPmService implements MessageService{
                 .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
                 .drowB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
                 .drowC3("")
-                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv"+
+                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
                 .drowC1(userdate.getJSONObject("statistics").getIntValue("pp")+"PP")
