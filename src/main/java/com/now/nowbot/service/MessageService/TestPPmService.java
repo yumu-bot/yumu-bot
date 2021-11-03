@@ -73,9 +73,8 @@ public class TestPPmService implements MessageService{
         Image uBg;
         try (uBgT;s){
             s.getCanvas().clear(Color.makeRGB(255,255,255));
-            var n = s.makeImageSnapshot();
             s.getCanvas().drawImage(uBgT,0,0);
-            s.getCanvas().drawImage(n,0,0,new Paint().setAlphaf(0.4f));
+            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
             uBg = s.makeImageSnapshot();
         }
         var card = PanelUtil.getA1Builder(uBg)
@@ -134,9 +133,9 @@ public class TestPPmService implements MessageService{
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
-        PPmObject userinfoMe = null;
+        PPmObject userinfoMe;
         JSONObject userdateMe;
-        PPmObject userinfoOther = null;
+        PPmObject userinfoOther;
         JSONObject userdateOther;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT ) mode = OsuMode.OSU;
@@ -183,7 +182,7 @@ public class TestPPmService implements MessageService{
             s2.getCanvas().clear(Color.makeRGB(255,255,255));
             s1.getCanvas().drawImage(uBgTMe,0,0);
             s2.getCanvas().drawImage(uBgTOther,0,0);
-            s1.getCanvas().drawRect(Rect.makeWH(s1.getWidth(), s2.getHeight()),new Paint().setAlphaf(0.4f));
+            s1.getCanvas().drawRect(Rect.makeWH(s1.getWidth(), s1.getHeight()),new Paint().setAlphaf(0.4f));
             s2.getCanvas().drawRect(Rect.makeWH(s2.getWidth(), s2.getHeight()),new Paint().setAlphaf(0.4f));
             uBgMe = s1.makeImageSnapshot();
             uBgOther = s2.makeImageSnapshot();
@@ -258,7 +257,6 @@ public class TestPPmService implements MessageService{
                 .drowRightValueN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100))
                 .drowRightValueN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100))
                 .drowRightValueN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100))
-                .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()))
                 .drowLeftTotal(String.valueOf((int)(userinfoMe.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl()*100))
                 .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()*100))
                 .drowHexagon(hexOther,false)

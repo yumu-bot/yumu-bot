@@ -87,7 +87,7 @@ public class PanelUtil {
             try (surface) {
                 isClose = true;
                 String leftText = "powered by Yumubot" + text;
-                Font font = new Font(SkiaUtil.TORUS_SEMIBOLD, TopTipeFontSize);
+                Font font = new Font(SkiaUtil.TORUS_REGULAR, TopTipeFontSize);
                 TextLine leftLine = TextLine.make(leftText, font);
                 TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC-8'").format(LocalDateTime.now()), font);
                 Paint p = new Paint().setARGB(100, 0, 0, 0);
