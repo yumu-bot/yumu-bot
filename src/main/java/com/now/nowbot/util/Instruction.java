@@ -37,6 +37,7 @@ public enum Instruction {
     WIKI("wiki",    Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),"!ymwiki 百科，告诉你小沐知道的一切。"),
     TRANS("trans",  Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),null),
     SCORE("score",  Pattern.compile("^[!！]score\\s?(?<bid>\\d+)"),null),
+    UPDATE("update",Pattern.compile("^&!update$"),null),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
