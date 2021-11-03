@@ -1,11 +1,10 @@
 package com.now.nowbot.util;
-import java.util.*;
 
 public enum OsuMode {
 
     OSU("osu"),
     TAIKO("taiko"),
-    CATCH("catch"),
+    CATCH("fruits"),
     MANIA("mania"),
     DEFAULT("");
 

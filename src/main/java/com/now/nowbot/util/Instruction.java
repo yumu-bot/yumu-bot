@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * (?:pattern) 匹配 pattern 但不捕获该匹配的子表达式,即它是一个非捕获匹配,不存储供以后使用的匹配.
  * 例子: "industr(?:y|ies)" 是比 "industry|industries" 更经济的表达式.
  * (?!pattern) 执行反向预测先行搜索的子表达式,该表达式匹配不处于匹配 pattern 的字符串的起始点的搜索字符串,不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
- * (?<!pattern)执行正向预测先行搜索的子表达式,该表达式与上条相反,同时也不占用字符
+ * (?<!pattern)执行正向预测先行搜索的子表达式,该表达式与上条相反,同时也不占用字符 (其实 (?!) 跟 (?<!) 作用相同,区别是下次匹配的指针位置)
  * 例子: "(?<!ab)cd(?!ef)" 仅匹配非ab开头的,ef结尾的cd,且ab与ef仅作搜索用并不占用宽度,即例子对gcd中的cd也会被匹配
  * (?=pattern) 也叫零宽度正预测先行断言,它断言被匹配的字符串以表达式pattern结尾但除了结尾以外的部分,预测先行不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
  * (?<=pattern)也叫零宽度正回顾后发断言，它断言自身出现的位置的前面能匹配表达式pattern,回顾后发断言也不占用字符.
@@ -31,7 +31,7 @@ public enum Instruction {
     SETU("setu",    Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)"), "!ymsetu 获取一张随机图"),
     SONG("song",    Pattern.compile("^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"), "!song <bid>或!song sid=<sid> 试听谱面"),
     START("start",  Pattern.compile("^[!！]((积分)|(..积分))+.*"), "!积分 刷新并查看积分"),
-    KUMO("kumo",    Pattern.compile("^none$"), null),
+//    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
     YMP("ymp",      Pattern.compile("^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"!ymr/!ymp 简略地查询自己的游戏成绩"),
     YMI("ymi",      Pattern.compile("^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"!ymi 简略地查询自己的游戏信息"),
     WIKI("wiki",    Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),"!ymwiki 百科，告诉你小沐知道的一切。"),
@@ -42,7 +42,7 @@ public enum Instruction {
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST("test",    Pattern.compile("^[!！].*"),null),
-    TESTPPM("testppm",    Pattern.compile("^[!！](?i)test(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
+    TESTPPM("testppm",    Pattern.compile("^[!！](?i)test(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
 
 
     //TODO 待实现的指令

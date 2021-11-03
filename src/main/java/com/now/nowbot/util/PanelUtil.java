@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 public class PanelUtil {
     static final Logger log = LoggerFactory.getLogger(PanelUtil.class);
     /* **
-     * SS-D #FEF668 #F09450 #3FBCEF #00B034 #3FBCEF #8E569B #EA6B48
+     * SS-D #FEF668 #F09450 #00B034 #3FBCEF #8E569B #EC6B76 #676EB0
      * 我方#00A8EC 对方 #FF0000
      */
     public static final int COLOR_SS = Color.makeRGB(254, 246, 104);
@@ -20,7 +20,8 @@ public class PanelUtil {
     public static final int COLOR_A = Color.makeRGB(0, 176, 52);
     public static final int COLOR_B = Color.makeRGB(63, 188, 239);
     public static final int COLOR_C = Color.makeRGB(142, 86, 155);
-    public static final int COLOR_D = Color.makeRGB(234, 107, 72);
+    public static final int COLOR_D = Color.makeRGB(236,107,118);
+    public static final int COLOR_F = Color.makeRGB(103,110,176);
 
     public static final int COLOR_HEX_ME = Color.makeRGB(0, 168, 236);
     public static final int COLOR_HEX_OTHER = Color.makeRGB(255, 0, 0);
@@ -553,7 +554,7 @@ public class PanelUtil {
          * @param simText 小文字
          * @return
          */
-        public PPPanelBuilder drowRightValueBS(int n, String bigText, String simText){
+        public PPPanelBuilder drowRightValueN(int n, String bigText, String simText){
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
             return drowRightText(bigText, simText, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
         }

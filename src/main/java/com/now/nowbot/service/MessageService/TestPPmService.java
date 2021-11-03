@@ -12,10 +12,7 @@ import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
-import org.jetbrains.skija.Color;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
-import org.jetbrains.skija.Surface;
+import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
@@ -29,101 +26,59 @@ public class TestPPmService implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        if (matcher.group("vs") == null){
+            // 就不写一堆了,整个方法把
+            doVs(event, matcher);
+            return;
+        }
         var from = event.getSubject();
-        //获得可能的 at
+        // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
         PPmObject userinfo = null;
         JSONObject userdate;
         var mode = OsuMode.getMode(matcher.group("mode"));
-        //分别区分每种模式
-        switch (mode){
-            default:{
-                mode = OsuMode.OSU;
+        if (mode == OsuMode.DEFAULT ) mode = OsuMode.OSU;
+        if (mode == OsuMode.MANIA) {
+            throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
+        }
+        if (at != null) {
+            // 包含有@
+            var user = BindingUtil.readUser(at.getTarget());
+            userdate = osuGetService.getPlayerInfo(user, mode.toString());
+            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+            userinfo = PPmObject.pres(userdate, bpdate, mode);
+        } else {
+            // 不包含@ 分为查自身/查他人
+            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+                // 查他人
+                int id = osuGetService.getOsuId(matcher.group("name").trim());
+                userdate = osuGetService.getPlayerInfo(id, mode.toString());
+                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
+                userinfo = PPmObject.pres(userdate, bpdate, mode);
+            }else {
+                var user = BindingUtil.readUser(event.getSender().getId());
+                userdate = osuGetService.getPlayerInfo(user, mode.toString());
+                var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+                userinfo = PPmObject.pres(userdate, bpdate, mode);
             }
-            case OSU:{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
-                    userdate = osuGetService.getPlayerOsuInfo(user);
-                    var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
-                    userinfo = PPmObject.presOsu(userdate, bpdate);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerOsuInfo(id);
-                        var bpdate = osuGetService.getOsuBestMap(id, 0, 100);
-                        userinfo = PPmObject.presOsu(userdate, bpdate);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerOsuInfo(user);
-                        var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
-                        userinfo = PPmObject.presOsu(userdate, bpdate);
-                    }
-                }
-            } break;
-            case TAIKO:{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
-                    userdate = osuGetService.getPlayerTaikoInfo(user);
-                    var bpdate = osuGetService.getTaikoBestMap(user, 0, 100);
-                    userinfo = PPmObject.presTaiko(userdate, bpdate);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerTaikoInfo(id);
-                        var bpdate = osuGetService.getTaikoBestMap(id, 0, 100);
-                        userinfo = PPmObject.presTaiko(userdate, bpdate);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerTaikoInfo(user);
-                        var bpdate = osuGetService.getTaikoBestMap(user, 0, 100);
-                        userinfo = PPmObject.presTaiko(userdate, bpdate);
-                    }
-                }
-            } break;
-            case CATCH:{
-                if (at != null) {
-                    var user = BindingUtil.readUser(at.getTarget());
-                    userdate = osuGetService.getPlayerCatchInfo(user);
-                    var bpdate = osuGetService.getCatchBestMap(user, 0, 100);
-                    userinfo = PPmObject.presCatch(userdate, bpdate);
-                } else {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerCatchInfo(id);
-                        var bpdate = osuGetService.getCatchBestMap(id, 0, 100);
-                        userinfo = PPmObject.presCatch(userdate, bpdate);
-                    }else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerCatchInfo(user);
-                        var bpdate = osuGetService.getCatchBestMap(user, 0, 100);
-                        userinfo = PPmObject.presCatch(userdate, bpdate);
-                    }
-                }
-            } break;
-            case MANIA:{
-                throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
-            }
-//            default:{
-//                throw new TipsException("「邪恶的 osu! 玩家，我以 Bot 一族」…呃，这里不会读…「Bot 大魔王之名，否定你添加新模式的资格！」「除非你干掉 peppy，通过」…呃…「接受」…呃… 有几个词，波特不认识…");
-//            }
         }
         if (userinfo == null) throw new TipsException("波特被玩坏了uwu");
         if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
-        var u_head = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
-        var u_bg_t = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
-        Surface s = Surface.makeRasterN32Premul(u_bg_t.getWidth(),u_bg_t.getHeight());
-        Image u_bg;
-        try (u_bg_t;s){
-            s.getCanvas().clear(Color.makeRGB(0,0,0));
+        var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
+        var uBgT = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
+        Surface s = Surface.makeRasterN32Premul(uBgT.getWidth(),uBgT.getHeight());
+        Image uBg;
+        try (uBgT;s){
+            s.getCanvas().clear(Color.makeRGB(255,255,255));
             var n = s.makeImageSnapshot();
-            s.getCanvas().drawImage(u_bg_t,0,0);
+            s.getCanvas().drawImage(uBgT,0,0);
             s.getCanvas().drawImage(n,0,0,new Paint().setAlphaf(0.4f));
-            u_bg = s.makeImageSnapshot();
+            uBg = s.makeImageSnapshot();
         }
-        var card = PanelUtil.getA1Builder(u_bg)
+        var card = PanelUtil.getA1Builder(uBg)
                 .drowA1(userinfo.getHeadURL())
                 .drowA2()
                 .drowA3(userinfo.getName())
@@ -170,8 +125,162 @@ public class TestPPmService implements MessageService{
         switchRank(4, userinfo.getEng(), panel::drowLeftRankN);
         switchRank(5, userinfo.getSth(), panel::drowLeftRankN);
         var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
-        try (u_head;u_bg;card; panelImage){
-            var b = from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+        try (uHead;uBg;card; panelImage){
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+        }
+    }
+    private void doVs(MessageEvent event, Matcher matcher) throws Exception {
+        var from = event.getSubject();
+        // 获得可能的 at
+        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+
+        PPmObject userinfoMe = null;
+        JSONObject userdateMe;
+        PPmObject userinfoOther = null;
+        JSONObject userdateOther;
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        if (mode == OsuMode.DEFAULT ) mode = OsuMode.OSU;
+        if (mode == OsuMode.MANIA) {
+            throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
+        }
+        me:{
+            var user = BindingUtil.readUser(event.getSender().getId());
+            userdateMe = osuGetService.getPlayerInfo(user, mode.toString());
+            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+            userinfoMe = PPmObject.pres(userdateMe, bpdate, mode);
+            if (userinfoMe.getPtime()<60 || userinfoMe.getPcont()<30){
+                throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
+            }
+        }
+        if (at != null) {
+            // 包含有@
+            var user = BindingUtil.readUser(at.getTarget());
+            userdateOther = osuGetService.getPlayerInfo(user, mode.toString());
+            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+            userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
+        }else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+            int id = osuGetService.getOsuId(matcher.group("name").trim());
+            userdateOther = osuGetService.getPlayerInfo(id, mode.toString());
+            var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
+            userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
+        } else {
+            throw new TipsException("你想要对比谁呢");
+        }
+        if (userinfoOther.getPtime()<60 || userinfoOther.getPcont()<30){
+            throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
+        }
+
+        var uHeadMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getHeadURL());
+        var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
+        var uHeadOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getHeadURL());
+        var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
+        Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
+        Surface s2 = Surface.makeRasterN32Premul(uBgTOther.getWidth(),uBgTOther.getHeight());
+        Image uBgMe;
+        Image uBgOther;
+        try (uBgTMe;s1;uBgTOther;s2){
+            s1.getCanvas().clear(Color.makeRGB(255,255,255));
+            s2.getCanvas().clear(Color.makeRGB(255,255,255));
+            s1.getCanvas().drawImage(uBgTMe,0,0);
+            s2.getCanvas().drawImage(uBgTOther,0,0);
+            s1.getCanvas().drawRect(Rect.makeWH(s1.getWidth(), s2.getHeight()),new Paint().setAlphaf(0.4f));
+            s2.getCanvas().drawRect(Rect.makeWH(s2.getWidth(), s2.getHeight()),new Paint().setAlphaf(0.4f));
+            uBgMe = s1.makeImageSnapshot();
+            uBgOther = s2.makeImageSnapshot();
+        }
+
+        var cardMe = PanelUtil.getA1Builder(uBgMe).drowA1(userinfoMe.getHeadURL())
+                .drowA2()
+                .drowA3(userinfoMe.getName())
+                .drowB3("")
+                .drowB2("#"+userdateMe.getJSONObject("statistics").getString("global_rank"))
+                .drowB1(userdateMe.getJSONObject("country").getString("code")+"#"+userdateMe.getJSONObject("statistics").getString("country_rank"))
+                .drowC3("")
+                .drowC2(userdateMe.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
+                        userdateMe.getJSONObject("statistics").getJSONObject("level").getString("current")+
+                        "("+userdateMe.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
+                .drowC1(userdateMe.getJSONObject("statistics").getIntValue("pp")+"PP")
+                .build();
+        var cardOther = PanelUtil.getA1Builder(uBgOther).drowA1(userinfoOther.getHeadURL())
+                .drowA2()
+                .drowA3(userinfoOther.getName())
+                .drowB3("")
+                .drowB2("#"+userdateOther.getJSONObject("statistics").getString("global_rank"))
+                .drowB1(userdateOther.getJSONObject("country").getString("code")+"#"+userdateOther.getJSONObject("statistics").getString("country_rank"))
+                .drowC3("")
+                .drowC2(userdateOther.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
+                        userdateOther.getJSONObject("statistics").getJSONObject("level").getString("current")+
+                        "("+userdateOther.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
+                .drowC1(userdateOther.getJSONObject("statistics").getIntValue("pp")+"PP")
+                .build();
+        float[] hexMe = new float[]{
+                (float) Math.pow((userinfoMe.getPtt() < 0.6 ? 0 : userinfoMe.getPtt() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoMe.getSta() < 0.6 ? 0 : userinfoMe.getSta() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoMe.getStb() < 0.6 ? 0 : userinfoMe.getStb() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoMe.getEng() < 0.6 ? 0 : userinfoMe.getEng() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoMe.getSth() < 0.6 ? 0 : userinfoMe.getSth() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoMe.getFacc() < 0.6 ? 0 : userinfoMe.getFacc() - 0.6) * 2.5f, 0.8),
+        };
+        float[] hexOther = new float[]{
+                (float) Math.pow((userinfoOther.getPtt() < 0.6 ? 0 : userinfoOther.getPtt() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoOther.getSta() < 0.6 ? 0 : userinfoOther.getSta() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoOther.getStb() < 0.6 ? 0 : userinfoOther.getStb() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoOther.getEng() < 0.6 ? 0 : userinfoOther.getEng() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoOther.getSth() < 0.6 ? 0 : userinfoOther.getSth() - 0.6) * 2.5f, 0.8),
+                (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
+        };
+        var panel = PanelUtil.getPPMBulider()
+                .drowTopBackground(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.jpg"))
+                .drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
+                .drowLeftCard(cardMe)
+                .drowLeftNameN(0,"FAC")
+                .drowLeftNameN(1,"PTT")
+                .drowLeftNameN(2,"STA")
+                .drowLeftNameN(3,"STB")
+                .drowLeftNameN(4,"ENG")
+                .drowLeftNameN(5,"STH")
+                .drowLeftValueN(0, String.valueOf((int)(userinfoMe.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getFacc()*100))
+                .drowLeftValueN(1, String.valueOf((int)(userinfoMe.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getPtt()*100))
+                .drowLeftValueN(2, String.valueOf((int)(userinfoMe.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSta()*100))
+                .drowLeftValueN(3, String.valueOf((int)(userinfoMe.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getStb()*100))
+                .drowLeftValueN(4, String.valueOf((int)(userinfoMe.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getEng()*100))
+                .drowLeftValueN(5, String.valueOf((int)(userinfoMe.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSth()*100))
+                .drowRightCard(cardOther)
+                .drowRightNameN(0,"FAC")
+                .drowRightNameN(1,"PTT")
+                .drowRightNameN(2,"STA")
+                .drowRightNameN(3,"STB")
+                .drowRightNameN(4,"ENG")
+                .drowRightNameN(5,"STH")
+                .drowRightValueN(0, String.valueOf((int)(userinfoOther.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getFacc()*100))
+                .drowRightValueN(1, String.valueOf((int)(userinfoOther.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getPtt()*100))
+                .drowRightValueN(2, String.valueOf((int)(userinfoOther.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSta()*100))
+                .drowRightValueN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100))
+                .drowRightValueN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100))
+                .drowRightValueN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100))
+                .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()))
+                .drowLeftTotal(String.valueOf((int)(userinfoMe.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl()*100))
+                .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()*100))
+                .drowHexagon(hexOther,false)
+                .drowHexagon(hexMe, true);
+
+        switchRank(0, userinfoMe.getFacc(), panel::drowLeftRankN);
+        switchRank(1, userinfoMe.getPtt(), panel::drowLeftRankN);
+        switchRank(2, userinfoMe.getSta(), panel::drowLeftRankN);
+        switchRank(3, userinfoMe.getStb(), panel::drowLeftRankN);
+        switchRank(4, userinfoMe.getEng(), panel::drowLeftRankN);
+        switchRank(5, userinfoMe.getSth(), panel::drowLeftRankN);
+
+        switchRank(0, userinfoOther.getFacc(), panel::drowRightRankN);
+        switchRank(1, userinfoOther.getPtt(), panel::drowRightRankN);
+        switchRank(2, userinfoOther.getSta(), panel::drowRightRankN);
+        switchRank(3, userinfoOther.getStb(), panel::drowRightRankN);
+        switchRank(4, userinfoOther.getEng(), panel::drowRightRankN);
+        switchRank(5, userinfoOther.getSth(), panel::drowRightRankN);
+
+        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPMVS dev.0.0.1");
+        try (uBgMe;uBgOther;cardMe;cardOther;panelImage){
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }
     }
     private void switchRank(int i, double date, Action3<Integer, String, Integer> temp){
@@ -197,7 +306,7 @@ public class TestPPmService implements MessageService{
             temp.call(i, "D", PanelUtil.COLOR_D);
         }
         else {
-            temp.call(i, "F", PanelUtil.COLOR_D);
+            temp.call(i, "F", PanelUtil.COLOR_F);
         }
     }
 }

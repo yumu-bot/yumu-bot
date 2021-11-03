@@ -2,19 +2,29 @@ package com.now.nowbot.model.PPm;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.util.OsuMode;
 
 public interface PPmObject {
-    static PPmOsu presOsu(JSONObject prd, JSONArray prbp){
+    static PPmObject presOsu(JSONObject prd, JSONArray prbp){
         return new PPmOsu(prd, prbp);
     }
-    static PPmTaiko presTaiko(JSONObject prd, JSONArray prbp){
+    static PPmObject presTaiko(JSONObject prd, JSONArray prbp){
         return new PPmTaiko(prd, prbp);
     }
-    static PPmCatch presCatch(JSONObject prd, JSONArray prbp){
+    static PPmObject presCatch(JSONObject prd, JSONArray prbp){
     return new PPmCatch(prd, prbp);
     }
-    static PPmMania presMania(JSONObject prd, JSONArray prbp){
+    static PPmObject presMania(JSONObject prd, JSONArray prbp){
     return new PPmMania(prd, prbp);
+    }
+    static PPmObject pres(JSONObject prd, JSONArray prbp, OsuMode mode){
+    return switch (mode){
+        case OSU -> new PPmOsu(prd, prbp);
+        case TAIKO -> new PPmTaiko(prd, prbp);
+        case CATCH -> new PPmCatch(prd, prbp);
+        case MANIA -> new PPmMania(prd, prbp);
+        case DEFAULT -> null;
+    };
     }
     double check(double value, double min, double max);
 
