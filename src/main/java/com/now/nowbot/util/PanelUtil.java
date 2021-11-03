@@ -491,6 +491,10 @@ public class PanelUtil {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
             return drowLeftText(text, null, X_L1, Y_T1 + Y_T1_OFF * n, p_white);
         }
+        public PPPanelBuilder drowLeftNameN(int n, String bigText, String simText) {
+            if (n < 0 || n > 5) throw new RuntimeException("超出范围");
+            return drowLeftText(bigText, simText, X_L1, Y_T1 + Y_T1_OFF * n, p_white);
+        }
 
         /***
          * 绘制左边的rank/sing值  [name  value rank/sign]
@@ -524,6 +528,11 @@ public class PanelUtil {
             if (n < 0 || n > 5) throw new RuntimeException("超出范围");
             return drowLeftText(text, null, X_R1, Y_T1 + Y_T1_OFF * n, p_white);
         }
+        public PPPanelBuilder drowRightNameN(int n, String bigText, String simText) {
+            if (n < 0 || n > 5) throw new RuntimeException("超出范围");
+            return drowLeftText(bigText, simText, X_R1, Y_T1 + Y_T1_OFF * n, p_white);
+        }
+
 
         /***
          * 绘制右边的rank/sing值  [name  value rank/sign]
