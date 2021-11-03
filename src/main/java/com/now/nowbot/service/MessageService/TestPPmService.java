@@ -26,7 +26,7 @@ public class TestPPmService implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        if (matcher.group("vs") == null){
+        if (matcher.group("vs") != null){
             // 就不写一堆了,整个方法把
             doVs(event, matcher);
             return;
