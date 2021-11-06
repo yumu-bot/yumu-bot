@@ -2,7 +2,7 @@ package com.now.nowbot.model.PPm;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.util.OsuMode;
+import com.now.nowbot.model.enums.OsuMode;
 
 public interface PPmObject {
     static PPmObject presOsu(JSONObject prd, JSONArray prbp){
