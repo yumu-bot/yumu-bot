@@ -99,30 +99,25 @@ public class TestPPmService implements MessageService{
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
         var panel = PanelUtil.getPPMBulider()
-                .drowTopBackground(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.jpg"))
-                .drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
+                .drowBanner()
+                .drowOverImage()
+                .drowValueName()
                 .drowLeftCard(card)
-                .drowLeftNameN(0,"FAC")
-                .drowLeftNameN(1,"PTT")
-                .drowLeftNameN(2,"STA")
-                .drowLeftNameN(3,"STB")
-                .drowLeftNameN(4,"ENG")
-                .drowLeftNameN(5,"STH")
                 .drowLeftValueN(0, String.valueOf((int)(userinfo.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfo.getFacc()*100))
                 .drowLeftValueN(1, String.valueOf((int)(userinfo.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfo.getPtt()*100))
                 .drowLeftValueN(2, String.valueOf((int)(userinfo.getSta()*100)),PanelUtil.cutDecimalPoint(userinfo.getSta()*100))
                 .drowLeftValueN(3, String.valueOf((int)(userinfo.getStb()*100)),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
                 .drowLeftValueN(4, String.valueOf((int)(userinfo.getEng()*100)),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
                 .drowLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
+                .switchRank(0, userinfo.getFacc())
+                .switchRank(1, userinfo.getPtt())
+                .switchRank(2, userinfo.getSta())
+                .switchRank(3, userinfo.getStb())
+                .switchRank(4, userinfo.getEng())
+                .switchRank(5, userinfo.getSth())
                 .drowLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
                 .drowRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
                 .drowHexagon(hex, true);
-        switchRank(0, userinfo.getFacc(), panel::drowLeftRankN);
-        switchRank(1, userinfo.getPtt(), panel::drowLeftRankN);
-        switchRank(2, userinfo.getSta(), panel::drowLeftRankN);
-        switchRank(3, userinfo.getStb(), panel::drowLeftRankN);
-        switchRank(4, userinfo.getEng(), panel::drowLeftRankN);
-        switchRank(5, userinfo.getSth(), panel::drowLeftRankN);
         var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uHead;uBg;card; panelImage){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
@@ -169,9 +164,7 @@ public class TestPPmService implements MessageService{
             throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
         }
 
-        var uHeadMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getHeadURL());
         var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
-        var uHeadOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getHeadURL());
         var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
         Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
         Surface s2 = Surface.makeRasterN32Premul(uBgTOther.getWidth(),uBgTOther.getHeight());

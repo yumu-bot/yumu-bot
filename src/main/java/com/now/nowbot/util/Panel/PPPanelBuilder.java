@@ -4,8 +4,11 @@ import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PPPanelBuilder extends PanelBuilder{
+    protected static final Logger log = LoggerFactory.getLogger(PPPanelBuilder.class);
     PPPanelBuilder() {
         super(1920, 1080);
     }
