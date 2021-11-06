@@ -372,7 +372,7 @@ public class SkiaUtil {
     }
 
     /***
-     * svg(默认右上角),保持横纵比缩放保留空白 绘制
+     * svg(默认左右居中,上对其),保持横纵比缩放保留空白 绘制
      * @param canvas
      * @param svg
      * @param x
@@ -382,7 +382,7 @@ public class SkiaUtil {
      * @return
      */
     public static Canvas drowSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height){
-        return drowSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMIN_YMIN, SVGPreserveAspectRatioScale.SLICE);
+        return drowSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
 
     /***
