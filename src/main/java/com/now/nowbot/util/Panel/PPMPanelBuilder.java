@@ -20,7 +20,7 @@ public class PPMPanelBuilder extends PPPanelBuilder {
     /**叠加层*/
     public PPMPanelBuilder drowOverImage(){
         try {
-            drowTopBackground(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"));
+            drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"));
         } catch (IOException e) {
             log.error("PPMPanelBuilder->ppm 叠加层素材加载失败", e);
         }
