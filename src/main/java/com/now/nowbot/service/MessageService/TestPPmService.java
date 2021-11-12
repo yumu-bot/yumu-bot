@@ -73,7 +73,8 @@ public class TestPPmService implements MessageService{
         Image uBg;
         try (uBgT;s){
             s.getCanvas().clear(Color.makeRGB(255,255,255));
-            s.getCanvas().drawImage(uBgT,0,0);
+            // 模糊
+            s.getCanvas().drawImage(uBgT,0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10,FilterTileMode.REPEAT)));
             s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
             uBg = s.makeImageSnapshot();
         }

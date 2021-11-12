@@ -28,7 +28,7 @@ import java.nio.file.Path;
 @Configuration
 @ConfigurationProperties(prefix = "nowbot.config")
 public class NowbotConfig {
-    public static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
 
     public static String RUN_PATH;
     @Value("${dir.rundir}")
@@ -155,7 +155,8 @@ public class NowbotConfig {
         return template;
     }
     @Value("${mirai.start}")
-    boolean isStart;
+    boolean isLogin;
+    public static boolean QQ_LOGIN;
 
     @Autowired
     MessageListener messageListener;
@@ -179,7 +180,8 @@ public class NowbotConfig {
         //配置完成，注册bot
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         //登录
-        if (isStart) bot.login();
+        QQ_LOGIN = isLogin;
+        if (isLogin) bot.login();
         //注册监听 messageListener需要继承SimpleListenerHost类
 //        bot.getEventChannel().registerListenerHost(messageListener);
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);

@@ -23,6 +23,8 @@ public class NowbotApplication {
     public static void main(String[] args) {
         SpringApplication.run(NowbotApplication.class, args);
         log.info("启动成功");
-        bot.getGroup(746671531L).sendMessage("启动完成");
+        if (NowbotConfig.QQ_LOGIN) {
+            bot.getGroup(746671531L).sendMessage("启动完成");
+        }
     }
 }

@@ -4,9 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.BCardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
-import org.jetbrains.skija.Color;
-import org.jetbrains.skija.Data;
-import org.jetbrains.skija.Image;
+import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.SVGDOM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,5 +127,45 @@ public class PanelUtil {
         if (s < 0.01) return "";
         String r = s.toString();
         return r.substring(1,Math.min(r.length(),4));
+    }
+
+    /** 获得个人背景,如没有则默认从url获取 */
+    public static Image getBgUrl(String failPath, String url){
+        Image img;
+        if (Files.isRegularFile(Path.of(failPath))){
+            try {
+                img = SkiaUtil.fileToImage(failPath);
+                return img;
+            } catch (IOException e) {
+                log.error("文件读取异常", e);
+            }
+        }
+        img = SkiaUtil.lodeNetWorkImage(url);
+        try(Surface s = Surface.makeRasterN32Premul(img.getWidth(),img.getHeight())){
+            s.getCanvas().drawImage(img, 0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10,FilterTileMode.REPEAT)));
+            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
+            img = s.makeImageSnapshot();
+        }
+        return img;
+    }
+
+    /** 获得个人背景,如没有则默认从文件路径获取 */
+    public static Image getBgFile(String failPath, String path){
+        Image img;
+        if (Files.isRegularFile(Path.of(failPath))){
+            try {
+                img = SkiaUtil.fileToImage(failPath);
+                return img;
+            } catch (IOException e) {
+                log.error("文件读取异常", e);
+            }
+        }
+        try {
+            img = SkiaUtil.fileToImage(path);
+            return img;
+        } catch (IOException e) {
+            log.error("默认图片加载异常", e);
+            throw new RuntimeException("图片加载异常");
+        }
     }
 }

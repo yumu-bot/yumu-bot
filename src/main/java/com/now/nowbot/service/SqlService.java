@@ -2,7 +2,6 @@ package com.now.nowbot.service;
 
 import org.hibernate.SQLQuery;
 import org.hibernate.transform.Transformers;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -11,7 +10,6 @@ import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
 
-@Service("sql")
 public class SqlService {
     @PersistenceContext
     EntityManager em;
