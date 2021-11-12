@@ -37,8 +37,11 @@ public class PanelUtil {
     public static Image OBJECT_MAPSTATUS_QUALIFIED;
 
     private static Path PATH_FLAG;
-
     public static void init(){
+        /* **
+         * 爱心loved 对勾approved和qualified 蓝箭头ranked 其他均为第四个问号
+         * 图片左上角在横向 370 纵向 10 的位置
+         */
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
         try {
             OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Qualified.png");
@@ -77,6 +80,8 @@ public class PanelUtil {
      * 获得国/区旗的SVG
      * @param code 国/区旗Code
      * @return svg
+     *
+     * 旗子压缩成60*40的大小，位置横向 130 纵向 70
      */
     public static SVGDOM getFlag(String code){
         if (!Files.isDirectory(PATH_FLAG)) {
