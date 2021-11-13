@@ -26,6 +26,8 @@ public interface PPmObject {
         case DEFAULT -> null;
     };
     }
+
+    public void dovs();
     double check(double value, double min, double max);
 
     float getPpv0();

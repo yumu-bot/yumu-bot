@@ -139,7 +139,7 @@ public class PPmMania implements PPmObject {
         pcont = prd.getJSONObject("statistics").getLongValue("play_count");
         ptime = prd.getJSONObject("statistics").getLongValue("play_time");
 
-        //1.1 准度fACC formulaic accuracy 0-1 fa
+        //1.1 准度fACC formulaic accuracy 0-1 facc
         {
             fa = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
             fa = check(fa, 0, 1);
@@ -426,5 +426,17 @@ public class PPmMania implements PPmObject {
     @Override
     public String getBackgroundURL() {
         return bgURL;
+    }
+
+    @Override
+    public void dovs(){
+        float n = pp*0.125f;
+        fa *= n;
+        eng *= n;
+        sth *= n;
+        stb *= n;
+        sta *= n;
+        ptt *= n;
+        ttl *= n;
     }
 }

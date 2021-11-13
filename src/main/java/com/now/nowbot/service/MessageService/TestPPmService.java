@@ -76,7 +76,6 @@ public class TestPPmService implements MessageService {
         };
         var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
         var uBgT = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
-//        Surface s = Surface.makeRasterN32Premul(uBgT.getWidth(),uBgT.getHeight());
         var s = Surface.makeRaster(uBgT.getImageInfo());
         Image uBg;
         try (uBgT; s) {
@@ -186,8 +185,6 @@ public class TestPPmService implements MessageService {
         };
         var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
         var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
-//        Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
-//        Surface s2 = Surface.makeRasterN32Premul(uBgTOther.getWidth(),uBgTOther.getHeight());
         var s1 = Surface.makeRaster(uBgTMe.getImageInfo());
         var s2 = Surface.makeRaster(uBgTOther.getImageInfo());
         Image uBgMe;
@@ -245,6 +242,8 @@ public class TestPPmService implements MessageService {
                 (float) Math.pow((userinfoOther.getSth() < 0.6 ? 0 : userinfoOther.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
         };
+        userinfoMe.dovs();
+        userinfoOther.dovs();
         var panel = PanelUtil.getPPMBulider()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
                 .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"))
@@ -255,19 +254,19 @@ public class TestPPmService implements MessageService {
                 .drawLeftNameN(3, "STB")
                 .drawLeftNameN(4, "ENG")
                 .drawLeftNameN(5, "STH")
-                .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getFacc() * 100))
-                .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getPtt() * 100))
-                .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getSta() * 100))
-                .drawLeftValueN(3, String.valueOf((int) (userinfoMe.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getStb() * 100))
-                .drawLeftValueN(4, String.valueOf((int) (userinfoMe.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getEng() * 100))
-                .drawLeftValueN(5, String.valueOf((int) (userinfoMe.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getSth() * 100))
+                .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
+                .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
+                .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta())))
+                .drawLeftValueN(3, String.valueOf((int) (userinfoMe.getStb())))
+                .drawLeftValueN(4, String.valueOf((int) (userinfoMe.getEng())))
+                .drawLeftValueN(5, String.valueOf((int) (userinfoMe.getSth())))
                 .drawRightCard(cardOther.build())
-                .drawRightNameN(0, String.valueOf((int) (userinfoOther.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getFacc() * 100), null)
-                .drawRightNameN(1, String.valueOf((int) (userinfoOther.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getPtt() * 100), null)
-                .drawRightNameN(2, String.valueOf((int) (userinfoOther.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getSta() * 100), null)
-                .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getStb() * 100), null)
-                .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getEng() * 100), null)
-                .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getSth() * 100), null)
+                .drawRightNameN(0, String.valueOf((int) (userinfoOther.getFacc())))
+                .drawRightNameN(1, String.valueOf((int) (userinfoOther.getPtt())))
+                .drawRightNameN(2, String.valueOf((int) (userinfoOther.getSta())))
+                .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb())))
+                .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng())))
+                .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth())))
                 .drawRightValueN(0, String.valueOf((int) (userinfoOther.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getFacc() * 100))
                 .drawRightValueN(1, String.valueOf((int) (userinfoOther.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getPtt() * 100))
                 .drawRightValueN(2, String.valueOf((int) (userinfoOther.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getSta() * 100))

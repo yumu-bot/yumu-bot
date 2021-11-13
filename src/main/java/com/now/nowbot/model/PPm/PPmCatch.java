@@ -146,7 +146,7 @@ public class PPmCatch implements PPmObject {
         pcont = prd.getJSONObject("statistics").getLongValue("play_count");
         ptime = prd.getJSONObject("statistics").getLongValue("play_time");
 
-        //3.1 准度fACC formulaic accuracy 0-1 fa
+        //3.1 准度fACC formulaic accuracy 0-1 facc
         {
             facc = ((this.acc / 100) < 0.6 ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5, 5));
             facc = check(facc, 0, 1);
@@ -441,5 +441,17 @@ public class PPmCatch implements PPmObject {
     @Override
     public String getBackgroundURL() {
         return bgURL;
+    }
+
+    @Override
+    public void dovs(){
+        float n = pp*0.125f;
+        facc *= n;
+        eng *= n;
+        sth *= n;
+        stb *= n;
+        sta *= n;
+        ptt *= n;
+        ttl *= n;
     }
 }

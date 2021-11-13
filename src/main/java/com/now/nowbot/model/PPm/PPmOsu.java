@@ -33,7 +33,7 @@ public class PPmOsu implements PPmObject {
     long pcont;
     long ptime;
 
-    double fa;
+    double facc;
     double eng;
     double ptt;
     double sth;
@@ -140,10 +140,10 @@ public class PPmOsu implements PPmObject {
         pcont = prd.getJSONObject("statistics").getLongValue("play_count");
         ptime = prd.getJSONObject("statistics").getLongValue("play_time");
 
-        //1.1 准度fACC formulaic accuracy 0-1 fa
+        //1.1 准度fACC formulaic accuracy 0-1 facc
         {
-            fa = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
-            fa = check(fa, 0, 1);
+            facc = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
+            facc = check(facc, 0, 1);
         }
         //1.2 1.2 潜力PTT potential 0-1 ptt
 
@@ -227,7 +227,7 @@ public class PPmOsu implements PPmObject {
             sth = 0.6D * Math.pow((PPTTH - 8.5)/3,0.2) + 0.4D * Math.pow((HPS-2.5)/2,0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
+        ttl = facc *0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
         san = ppv0<20?1:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
         //san = rsan
         if (san < 1){
@@ -386,7 +386,7 @@ public class PPmOsu implements PPmObject {
 
     @Override
     public double getFacc() {
-        return fa;
+        return facc;
     }
 
     @Override
@@ -432,5 +432,17 @@ public class PPmOsu implements PPmObject {
     @Override
     public String getBackgroundURL() {
         return bgURL;
+    }
+
+    @Override
+    public void dovs(){
+        float n = pp*0.125f;
+        facc *= n;
+        eng *= n;
+        sth *= n;
+        stb *= n;
+        sta *= n;
+        ptt *= n;
+        ttl *= n;
     }
 }
