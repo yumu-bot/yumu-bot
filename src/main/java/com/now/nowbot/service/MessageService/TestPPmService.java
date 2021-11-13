@@ -249,7 +249,8 @@ public class TestPPmService implements MessageService {
 
         var panel = new PPMVSPanelBuilder()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
-                .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
+                .drawOverImage()
+                .drawValueName();
         switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
         switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
         switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
