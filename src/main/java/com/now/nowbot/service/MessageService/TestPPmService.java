@@ -97,7 +97,7 @@ public class TestPPmService implements MessageService {
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current") +
                         "(" + userdate.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
                 .drawC1(userdate.getJSONObject("statistics").getIntValue("pp") + "PP");
-        if (userdate.getBoolean("has_supported")) {
+        if (userdate.getBoolean("is_supporter")) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         float[] hex = new float[]{
@@ -204,7 +204,7 @@ public class TestPPmService implements MessageService {
         var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
                 .drawA3(userinfoMe.getName());
-        if (userdateOther.getBoolean("has_supported")) {
+        if (userdateOther.getBoolean("is_supporter")) {
             cardMe.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         cardMe.drawB3("")
@@ -218,7 +218,7 @@ public class TestPPmService implements MessageService {
         var cardOther = PanelUtil.getA1Builder(uBgOther).drawA1(userinfoOther.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdateOther.getJSONObject("country").getString("code")))
                 .drawA3(userinfoOther.getName());
-        if (userdateOther.getBoolean("has_supported")) {
+        if (userdateOther.getBoolean("is_supporter")) {
             cardOther.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         cardOther.drawB3("")
