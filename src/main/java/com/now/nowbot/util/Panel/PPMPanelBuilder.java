@@ -11,7 +11,7 @@ import java.io.IOException;
 public class PPMPanelBuilder extends PPPanelBuilder {
     /**banner*/
     public PPMPanelBuilder drawBanner(Image bg){
-        drawBanner(bg);
+        super.drawBanner(bg);
         return this;
     }
     /**叠加层*/
