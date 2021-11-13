@@ -242,12 +242,36 @@ public class TestPPmService implements MessageService {
                 (float) Math.pow((userinfoOther.getSth() < 0.6 ? 0 : userinfoOther.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
         };
-        userinfoMe.dovs();
-        userinfoOther.dovs();
+        if(userinfoMe.getPp() > userinfoOther.getPp()){
+            float n = userinfoOther.getPp()/userinfoMe.getPp();
+            for (int i = 0; i < hexMe.length; i++) {
+                hexOther[i] *= n;
+            }
+        } else {
+            float n = userinfoMe.getPp()/userinfoOther.getPp();
+            for (int i = 0; i < hexMe.length; i++) {
+                hexMe[i] *= n;
+            }
+        }
         var panel = PanelUtil.getPPMBulider()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
-                .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"))
-                .drawLeftCard(cardMe.build())
+                .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
+        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
+        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
+        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
+        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
+        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
+        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
+
+        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
+        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
+        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
+        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
+        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
+        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
+        userinfoMe.dovs();
+        userinfoOther.dovs();
+        panel.drawLeftCard(cardMe.build())
                 .drawLeftNameN(0, "FAC")
                 .drawLeftNameN(1, "PTT")
                 .drawLeftNameN(2, "STA")
@@ -267,31 +291,17 @@ public class TestPPmService implements MessageService {
                 .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb())))
                 .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng())))
                 .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth())))
-                .drawRightValueN(0, String.valueOf((int) (userinfoOther.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getFacc() * 100))
-                .drawRightValueN(1, String.valueOf((int) (userinfoOther.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getPtt() * 100))
-                .drawRightValueN(2, String.valueOf((int) (userinfoOther.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getSta() * 100))
-                .drawRightValueN(3, String.valueOf((int) (userinfoOther.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getStb() * 100))
-                .drawRightValueN(4, String.valueOf((int) (userinfoOther.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getEng() * 100))
-                .drawRightValueN(5, String.valueOf((int) (userinfoOther.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getSth() * 100))
-                .drawLeftTotal(String.valueOf((int) (userinfoMe.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl() * 100))
-                .drawRightTotal(String.valueOf((int) (userinfoOther.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl() * 100))
+                .drawRightValueN(0, getOff(userinfoMe.getFacc(),userinfoOther.getFacc()))
+                .drawRightValueN(1, getOff(userinfoMe.getPtt(),userinfoOther.getPtt()))
+                .drawRightValueN(2, getOff(userinfoMe.getSta(),userinfoOther.getSta()))
+                .drawRightValueN(3, getOff(userinfoMe.getStb(),userinfoOther.getStb()))
+                .drawRightValueN(4, getOff(userinfoMe.getEng(),userinfoOther.getEng()))
+                .drawRightValueN(5, getOff(userinfoMe.getSth(),userinfoOther.getSth()))
+                .drawLeftTotal(String.valueOf((int)userinfoMe.getTtl()))
+                .drawRightTotal(String.valueOf((int) userinfoOther.getTtl()))
                 .drawPanelName(panelName)
                 .drawHexagon(hexOther, false)
                 .drawHexagon(hexMe, true);
-
-        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
-        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
-        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
-        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
-        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
-        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
-
-        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
-        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
-        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
-        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
-        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
-        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
 
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPMVS dev.0.0.1");
         try (uBgMe; uBgOther; panelImage) {
@@ -299,6 +309,10 @@ public class TestPPmService implements MessageService {
             cardOther.build().close();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }
+    }
+
+    private String getOff(double v1, double v2){
+        return v1>v2 ? "+"+(int)(v1-v2) : "-"+(v2-v1);
     }
 
     private void switchRank(int i, double date, Action3<Integer, String, Integer> temp) {
