@@ -1,6 +1,7 @@
 package com.now.nowbot;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.util.PanelUtil;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ public class NowbotApplication {
     public void setbot(Bot bot){ NowbotApplication.bot = bot; }
     public static void main(String[] args) {
         SpringApplication.run(NowbotApplication.class, args);
+        PanelUtil.init();
         log.info("启动成功");
         if (NowbotConfig.QQ_LOGIN) {
             bot.getGroup(746671531L).sendMessage("启动完成");
