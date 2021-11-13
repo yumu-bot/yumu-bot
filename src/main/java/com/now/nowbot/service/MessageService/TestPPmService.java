@@ -7,12 +7,13 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
-import org.jetbrains.skija.*;
+import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
@@ -246,7 +247,7 @@ public class TestPPmService implements MessageService {
             }
         }
 
-        var panel = PanelUtil.getPPMBulider()
+        var panel = new PPMVSPanelBuilder()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
                 .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
         switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
@@ -303,7 +304,7 @@ public class TestPPmService implements MessageService {
     }
 
     private String getOff(double v1, double v2){
-        return v1>v2 ? "+"+(int)(v1-v2) : "-"+(v2-v1);
+        return v1>v2 ? "+"+(int)(v1-v2) : "-"+(int)(v2-v1);
     }
 
     private void switchRank(int i, double date, Action3<Integer, String, Integer> temp) {
