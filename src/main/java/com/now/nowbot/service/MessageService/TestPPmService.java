@@ -75,15 +75,7 @@ public class TestPPmService implements MessageService {
             default -> "?";
         };
         var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
-        var uBgT = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
-        var s = Surface.makeRaster(uBgT.getImageInfo());
-        Image uBg;
-        try (uBgT; s) {
-            // 模糊
-            s.getCanvas().drawImage(uBgT, 0, 0, new Paint().setImageFilter(ImageFilter.makeBlur(10, 10, FilterTileMode.REPEAT)));
-            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()), new Paint().setAlphaf(0.4f));
-            uBg = s.makeImageSnapshot();
-        }
+        Image uBg = PanelUtil.getBgUrl("用户自定义路径", userinfo.getBackgroundURL());
         var card = PanelUtil.getA1Builder(uBg)
                 .drawA1(userinfo.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
@@ -183,20 +175,10 @@ public class TestPPmService implements MessageService {
         if (userinfoOther.getPtime() < 60 || userinfoOther.getPcont() < 30) {
             throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
         }
-        var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
-        var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
-        var s1 = Surface.makeRaster(uBgTMe.getImageInfo());
-        var s2 = Surface.makeRaster(uBgTOther.getImageInfo());
-        Image uBgMe;
-        Image uBgOther;
-        try (uBgTMe; s1; uBgTOther; s2) {
-            s1.getCanvas().drawImage(uBgTMe, 0, 0);
-            s2.getCanvas().drawImage(uBgTOther, 0, 0);
-            s1.getCanvas().drawRect(Rect.makeWH(s1.getWidth(), s1.getHeight()), new Paint().setAlphaf(0.4f));
-            s2.getCanvas().drawRect(Rect.makeWH(s2.getWidth(), s2.getHeight()), new Paint().setAlphaf(0.4f));
-            uBgMe = s1.makeImageSnapshot();
-            uBgOther = s2.makeImageSnapshot();
-        }
+
+        Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userinfoMe.getBackgroundURL());
+        Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userinfoOther.getBackgroundURL());
+
 
         var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
