@@ -149,6 +149,13 @@ public class TestPPmService implements MessageService {
         if (mode == OsuMode.MANIA) {
             throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
         }
+        String panelName = "PPM.v:" + switch (mode) {
+            case OSU -> "O";
+            case MANIA -> "M";
+            case CATCH -> "C";
+            case TAIKO -> "T";
+            default -> "?";
+        };
         me:
         {
             var user = BindingUtil.readUser(event.getSender().getId());
@@ -176,13 +183,6 @@ public class TestPPmService implements MessageService {
         if (userinfoOther.getPtime() < 60 || userinfoOther.getPcont() < 30) {
             throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
         }
-        String panelName = "PPMVS:" + switch (mode) {
-            case OSU -> "O";
-            case MANIA -> "M";
-            case CATCH -> "C";
-            case TAIKO -> "T";
-            default -> "?";
-        };
         var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
         var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
         var s1 = Surface.makeRaster(uBgTMe.getImageInfo());
@@ -272,12 +272,6 @@ public class TestPPmService implements MessageService {
         userinfoMe.dovs();
         userinfoOther.dovs();
         panel.drawLeftCard(cardMe.build())
-                .drawLeftNameN(0, "FAC")
-                .drawLeftNameN(1, "PTT")
-                .drawLeftNameN(2, "STA")
-                .drawLeftNameN(3, "STB")
-                .drawLeftNameN(4, "ENG")
-                .drawLeftNameN(5, "STH")
                 .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
                 .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
                 .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta())))
@@ -303,7 +297,7 @@ public class TestPPmService implements MessageService {
                 .drawHexagon(hexOther, false)
                 .drawHexagon(hexMe, true);
 
-        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPMVS dev.0.0.1");
+        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).drawPanelName(panelName).build("PANEL-PPMVS dev.0.0.1");
         try (uBgMe; uBgOther; panelImage) {
             cardMe.build().close();
             cardOther.build().close();
