@@ -109,6 +109,18 @@ public class PPPanelBuilder extends PanelBuilder {
         return this;
     }
 
+    public PPPanelBuilder drowPanelName(String name){
+        canvas.save();
+        var typeface = SkiaUtil.getTorusSemiBold();
+        var font = new Font(typeface, 48);
+        var text = TextLine.make(name,font);
+        try(font;text){
+            canvas.translate(607.5f, 50+48*0.2f);
+            canvas.drawTextLine(text,0,0,new Paint().setARGB(255,161,161,161));
+        }
+        canvas.restore();
+        return this;
+    }
     /***
      * 绘制左边的value值  [name  value rank/sign]
      * @param n 行数下标,从零开始

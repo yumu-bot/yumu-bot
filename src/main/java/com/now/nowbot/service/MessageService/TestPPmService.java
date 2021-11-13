@@ -67,6 +67,13 @@ public class TestPPmService implements MessageService{
         if (userinfo.getPtime()<60 || userinfo.getPcont()<30){
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
+        String panelName = "PPM:"+switch (mode){
+            case OSU -> "O";
+            case MANIA -> "M";
+            case CATCH -> "C";
+            case TAIKO -> "T";
+            default -> "?";
+        };
         var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
         var uBgT = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
         Surface s = Surface.makeRasterN32Premul(uBgT.getWidth(),uBgT.getHeight());
@@ -118,6 +125,7 @@ public class TestPPmService implements MessageService{
                 .switchRank(5, userinfo.getSth())
                 .drowLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
                 .drowRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
+                .drowPanelName(panelName)
                 .drowHexagon(hex, true);
         var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uHead;uBg;card; panelImage){
@@ -164,7 +172,13 @@ public class TestPPmService implements MessageService{
         if (userinfoOther.getPtime()<60 || userinfoOther.getPcont()<30){
             throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
         }
-
+        String panelName = "PPMVS:"+switch (mode){
+            case OSU -> "O";
+            case MANIA -> "M";
+            case CATCH -> "C";
+            case TAIKO -> "T";
+            default -> "?";
+        };
         var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
         var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
         Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
@@ -253,6 +267,7 @@ public class TestPPmService implements MessageService{
                 .drowRightValueN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100))
                 .drowLeftTotal(String.valueOf((int)(userinfoMe.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl()*100))
                 .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()*100))
+                .drowPanelName(panelName)
                 .drowHexagon(hexOther,false)
                 .drowHexagon(hexMe, true);
 
