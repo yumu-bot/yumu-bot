@@ -109,13 +109,18 @@ public class PPPanelBuilder extends PanelBuilder {
         return this;
     }
 
+    /**
+     * 填Panel类型
+     * @param name
+     * @return
+     */
     public PPPanelBuilder drawPanelName(String name){
         canvas.save();
         var typeface = SkiaUtil.getTorusSemiBold();
         var font = new Font(typeface, 48);
         var text = TextLine.make(name,font);
         try(font;text){
-            canvas.translate(607.5f, 50+48*0.2f);
+            canvas.translate(607.5f, 50+40*0.2f);
             canvas.drawTextLine(text,-0.5f*text.getWidth(),text.getCapHeight(),p_white);
         }
         canvas.restore();
