@@ -430,7 +430,7 @@ public class PPmMania implements PPmObject {
 
     @Override
     public void dovs(){
-        float n = pp*0.125f;
+        float n = pp*0.25f;
         fa *= n;
         eng *= n;
         sth *= n;

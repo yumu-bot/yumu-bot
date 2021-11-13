@@ -436,7 +436,7 @@ public class PPmOsu implements PPmObject {
 
     @Override
     public void dovs(){
-        float n = pp*0.125f;
+        float n = pp*0.25f;
         facc *= n;
         eng *= n;
         sth *= n;
