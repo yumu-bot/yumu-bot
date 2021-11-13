@@ -80,7 +80,7 @@ public class TestPPmService implements MessageService{
         }
         var card = PanelUtil.getA1Builder(uBg)
                 .drowA1(userinfo.getHeadURL())
-                .drowA2()
+                .drowA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
                 .drowA3(userinfo.getName())
                 .drowB3("")
                 .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
@@ -183,7 +183,7 @@ public class TestPPmService implements MessageService{
         }
 
         var cardMe = PanelUtil.getA1Builder(uBgMe).drowA1(userinfoMe.getHeadURL())
-                .drowA2()
+                .drowA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
                 .drowA3(userinfoMe.getName())
                 .drowB3("")
                 .drowB2("#"+userdateMe.getJSONObject("statistics").getString("global_rank"))
@@ -195,7 +195,7 @@ public class TestPPmService implements MessageService{
                 .drowC1(userdateMe.getJSONObject("statistics").getIntValue("pp")+"PP")
                 .build();
         var cardOther = PanelUtil.getA1Builder(uBgOther).drowA1(userinfoOther.getHeadURL())
-                .drowA2()
+                .drowA2(PanelUtil.getFlag(userdateOther.getJSONObject("country").getString("code")))
                 .drowA3(userinfoOther.getName())
                 .drowB3("")
                 .drowB2("#"+userdateOther.getJSONObject("statistics").getString("global_rank"))

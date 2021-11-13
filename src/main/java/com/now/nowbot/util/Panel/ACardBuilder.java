@@ -47,7 +47,7 @@ public class ACardBuilder extends CardBuilder{
      */
     public ACardBuilder drowA2(SVGDOM svg){
         canvas.save();
-        canvas.translate(130 + logOffset, 60);
+        canvas.translate(130 + logOffset, 62);
         SkiaUtil.drowSvg(canvas,svg,0,0,60,60);
         logOffset += 60 + LOG_OFFSET;
         canvas.restore();
