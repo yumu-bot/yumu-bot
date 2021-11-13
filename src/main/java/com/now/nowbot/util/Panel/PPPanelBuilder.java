@@ -116,7 +116,7 @@ public class PPPanelBuilder extends PanelBuilder {
         var text = TextLine.make(name,font);
         try(font;text){
             canvas.translate(607.5f, 50+48*0.2f);
-            canvas.drawTextLine(text,-0.5f*text.getWidth(),text.getCapHeight(),new Paint().setARGB(255,161,161,161));
+            canvas.drawTextLine(text,-0.5f*text.getWidth(),text.getCapHeight(),p_white);
         }
         canvas.restore();
         return this;
