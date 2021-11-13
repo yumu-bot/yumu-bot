@@ -40,6 +40,8 @@ public class PanelUtil {
     public static Image OBJECT_MAPSTATUS_UNKNOW; //也是问号
     public static Image OBJECT_MAPSTATUS_LOVED;
 
+    public static Image OBJECT_CARD_SUPPORTER;
+
     //    
     public static final String MODE_OSU = "\uE800";
     public static final String MODE_CATCH = "\uE801";
@@ -61,6 +63,8 @@ public class PanelUtil {
             OBJECT_MAPSTATUS_UNRANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Unranked.png");
             OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
             OBJECT_MAPSTATUS_LOVED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Loved.png");
+
+            OBJECT_CARD_SUPPORTER = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-card-supporter.png");
         } catch (IOException e) {
             e.printStackTrace();
         }
