@@ -160,12 +160,7 @@ public class PanelUtil {
             }
         }
         img = SkiaUtil.lodeNetWorkImage(url);
-        try(Surface s = Surface.makeRasterN32Premul(img.getWidth(),img.getHeight())){
-            s.getCanvas().drawImage(img, 0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10,FilterTileMode.REPEAT)));
-            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
-            img = s.makeImageSnapshot();
-        }
-        return img;
+        return getBlur(img);
     }
 
     /** 获得个人背景,如没有则默认从文件路径获取 */
@@ -181,10 +176,19 @@ public class PanelUtil {
         }
         try {
             img = SkiaUtil.fileToImage(path);
-            return img;
+            return getBlur(img);
         } catch (IOException e) {
             log.error("默认图片加载异常", e);
             throw new RuntimeException("图片加载异常");
         }
+    }
+
+    protected static Image getBlur(Image img) {
+        try(Surface s = Surface.makeRasterN32Premul(img.getWidth(),img.getHeight())){
+            s.getCanvas().drawImage(img, 0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10, FilterTileMode.REPEAT)));
+            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
+            img = s.makeImageSnapshot();
+        }
+        return img;
     }
 }

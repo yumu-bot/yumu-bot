@@ -76,27 +76,27 @@ public class TestPPmService implements MessageService{
         };
         var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
         var uBgT = SkiaUtil.lodeNetWorkImage(userinfo.getBackgroundURL());
-        Surface s = Surface.makeRasterN32Premul(uBgT.getWidth(),uBgT.getHeight());
+//        Surface s = Surface.makeRasterN32Premul(uBgT.getWidth(),uBgT.getHeight());
+        var s = Surface.makeRaster(uBgT.getImageInfo());
         Image uBg;
         try (uBgT;s){
-            s.getCanvas().clear(Color.makeRGB(255,255,255));
             // 模糊
             s.getCanvas().drawImage(uBgT,0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10,FilterTileMode.REPEAT)));
             s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
             uBg = s.makeImageSnapshot();
         }
         var card = PanelUtil.getA1Builder(uBg)
-                .drowA1(userinfo.getHeadURL())
-                .drowA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
-                .drowA3(userinfo.getName())
-                .drowB3("")
-                .drowB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
-                .drowB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
-                .drowC3("")
-                .drowC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
+                .drawA1(userinfo.getHeadURL())
+                .drawA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
+                .drawA3(userinfo.getName())
+                .drawB3("")
+                .drawB2("#"+userdate.getJSONObject("statistics").getString("global_rank"))
+                .drawB1(userdate.getJSONObject("country").getString("code")+"#"+userdate.getJSONObject("statistics").getString("country_rank"))
+                .drawC3("")
+                .drawC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdate.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
-                .drowC1(userdate.getJSONObject("statistics").getIntValue("pp")+"PP")
+                .drawC1(userdate.getJSONObject("statistics").getIntValue("pp")+"PP")
                 .build();
         float[] hex = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
@@ -107,27 +107,27 @@ public class TestPPmService implements MessageService{
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
         var panel = PanelUtil.getPPMBulider()
-                .drowBanner()
-                .drowOverImage()
-                .drowValueName()
-                .drowLeftCard(card)
-                .drowLeftValueN(0, String.valueOf((int)(userinfo.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfo.getFacc()*100))
-                .drowLeftValueN(1, String.valueOf((int)(userinfo.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfo.getPtt()*100))
-                .drowLeftValueN(2, String.valueOf((int)(userinfo.getSta()*100)),PanelUtil.cutDecimalPoint(userinfo.getSta()*100))
-                .drowLeftValueN(3, String.valueOf((int)(userinfo.getStb()*100)),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
-                .drowLeftValueN(4, String.valueOf((int)(userinfo.getEng()*100)),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
-                .drowLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
+                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.png"))
+                .drawOverImage()
+                .drawValueName()
+                .drawLeftCard(card)
+                .drawLeftValueN(0, String.valueOf((int)(userinfo.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfo.getFacc()*100))
+                .drawLeftValueN(1, String.valueOf((int)(userinfo.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfo.getPtt()*100))
+                .drawLeftValueN(2, String.valueOf((int)(userinfo.getSta()*100)),PanelUtil.cutDecimalPoint(userinfo.getSta()*100))
+                .drawLeftValueN(3, String.valueOf((int)(userinfo.getStb()*100)),PanelUtil.cutDecimalPoint(userinfo.getStb()*100))
+                .drawLeftValueN(4, String.valueOf((int)(userinfo.getEng()*100)),PanelUtil.cutDecimalPoint(userinfo.getEng()*100))
+                .drawLeftValueN(5, String.valueOf((int)(userinfo.getSth()*100)),PanelUtil.cutDecimalPoint(userinfo.getSth()*100))
                 .switchRank(0, userinfo.getFacc())
                 .switchRank(1, userinfo.getPtt())
                 .switchRank(2, userinfo.getSta())
                 .switchRank(3, userinfo.getStb())
                 .switchRank(4, userinfo.getEng())
                 .switchRank(5, userinfo.getSth())
-                .drowLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
-                .drowRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
-                .drowPanelName(panelName)
-                .drowHexagon(hex, true);
-        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
+                .drawLeftTotal(String.valueOf((int)(userinfo.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
+                .drawRightTotal(String.valueOf((int)(userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
+                .drawPanelName(panelName)
+                .drawHexagon(hex, true);
+        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uHead;uBg;card; panelImage){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }
@@ -181,13 +181,13 @@ public class TestPPmService implements MessageService{
         };
         var uBgTMe = SkiaUtil.lodeNetWorkImage(userinfoMe.getBackgroundURL());
         var uBgTOther = SkiaUtil.lodeNetWorkImage(userinfoOther.getBackgroundURL());
-        Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
-        Surface s2 = Surface.makeRasterN32Premul(uBgTOther.getWidth(),uBgTOther.getHeight());
+//        Surface s1 = Surface.makeRasterN32Premul(uBgTMe.getWidth(),uBgTMe.getHeight());
+//        Surface s2 = Surface.makeRasterN32Premul(uBgTOther.getWidth(),uBgTOther.getHeight());
+        var s1 = Surface.makeRaster(uBgTMe.getImageInfo());
+        var s2 = Surface.makeRaster(uBgTOther.getImageInfo());
         Image uBgMe;
         Image uBgOther;
         try (uBgTMe;s1;uBgTOther;s2){
-            s1.getCanvas().clear(Color.makeRGB(255,255,255));
-            s2.getCanvas().clear(Color.makeRGB(255,255,255));
             s1.getCanvas().drawImage(uBgTMe,0,0);
             s2.getCanvas().drawImage(uBgTOther,0,0);
             s1.getCanvas().drawRect(Rect.makeWH(s1.getWidth(), s1.getHeight()),new Paint().setAlphaf(0.4f));
@@ -196,29 +196,29 @@ public class TestPPmService implements MessageService{
             uBgOther = s2.makeImageSnapshot();
         }
 
-        var cardMe = PanelUtil.getA1Builder(uBgMe).drowA1(userinfoMe.getHeadURL())
-                .drowA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
-                .drowA3(userinfoMe.getName())
-                .drowB3("")
-                .drowB2("#"+userdateMe.getJSONObject("statistics").getString("global_rank"))
-                .drowB1(userdateMe.getJSONObject("country").getString("code")+"#"+userdateMe.getJSONObject("statistics").getString("country_rank"))
-                .drowC3("")
-                .drowC2(userdateMe.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
+        var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
+                .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
+                .drawA3(userinfoMe.getName())
+                .drawB3("")
+                .drawB2("#"+userdateMe.getJSONObject("statistics").getString("global_rank"))
+                .drawB1(userdateMe.getJSONObject("country").getString("code")+"#"+userdateMe.getJSONObject("statistics").getString("country_rank"))
+                .drawC3("")
+                .drawC2(userdateMe.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
                         userdateMe.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdateMe.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
-                .drowC1(userdateMe.getJSONObject("statistics").getIntValue("pp")+"PP")
+                .drawC1(userdateMe.getJSONObject("statistics").getIntValue("pp")+"PP")
                 .build();
-        var cardOther = PanelUtil.getA1Builder(uBgOther).drowA1(userinfoOther.getHeadURL())
-                .drowA2(PanelUtil.getFlag(userdateOther.getJSONObject("country").getString("code")))
-                .drowA3(userinfoOther.getName())
-                .drowB3("")
-                .drowB2("#"+userdateOther.getJSONObject("statistics").getString("global_rank"))
-                .drowB1(userdateOther.getJSONObject("country").getString("code")+"#"+userdateOther.getJSONObject("statistics").getString("country_rank"))
-                .drowC3("")
-                .drowC2(userdateOther.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
+        var cardOther = PanelUtil.getA1Builder(uBgOther).drawA1(userinfoOther.getHeadURL())
+                .drawA2(PanelUtil.getFlag(userdateOther.getJSONObject("country").getString("code")))
+                .drawA3(userinfoOther.getName())
+                .drawB3("")
+                .drawB2("#"+userdateOther.getJSONObject("statistics").getString("global_rank"))
+                .drawB1(userdateOther.getJSONObject("country").getString("code")+"#"+userdateOther.getJSONObject("statistics").getString("country_rank"))
+                .drawC3("")
+                .drawC2(userdateOther.getJSONObject("statistics").getString("hit_accuracy").substring(0,4)+"% Lv."+
                         userdateOther.getJSONObject("statistics").getJSONObject("level").getString("current")+
                         "("+userdateOther.getJSONObject("statistics").getJSONObject("level").getString("progress")+"%)")
-                .drowC1(userdateOther.getJSONObject("statistics").getIntValue("pp")+"PP")
+                .drawC1(userdateOther.getJSONObject("statistics").getIntValue("pp")+"PP")
                 .build();
         float[] hexMe = new float[]{
                 (float) Math.pow((userinfoMe.getPtt() < 0.6 ? 0 : userinfoMe.getPtt() - 0.6) * 2.5f, 0.8),
@@ -237,55 +237,55 @@ public class TestPPmService implements MessageService{
                 (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
         };
         var panel = PanelUtil.getPPMBulider()
-                .drowBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.jpg"))
-                .drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
-                .drowLeftCard(cardMe)
-                .drowLeftNameN(0,"FAC")
-                .drowLeftNameN(1,"PTT")
-                .drowLeftNameN(2,"STA")
-                .drowLeftNameN(3,"STB")
-                .drowLeftNameN(4,"ENG")
-                .drowLeftNameN(5,"STH")
-                .drowLeftValueN(0, String.valueOf((int)(userinfoMe.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getFacc()*100))
-                .drowLeftValueN(1, String.valueOf((int)(userinfoMe.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getPtt()*100))
-                .drowLeftValueN(2, String.valueOf((int)(userinfoMe.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSta()*100))
-                .drowLeftValueN(3, String.valueOf((int)(userinfoMe.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getStb()*100))
-                .drowLeftValueN(4, String.valueOf((int)(userinfoMe.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getEng()*100))
-                .drowLeftValueN(5, String.valueOf((int)(userinfoMe.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSth()*100))
-                .drowRightCard(cardOther)
-                .drowRightNameN(0, String.valueOf((int)(userinfoOther.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getFacc()*100),null)
-                .drowRightNameN(1, String.valueOf((int)(userinfoOther.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getPtt()*100),null)
-                .drowRightNameN(2, String.valueOf((int)(userinfoOther.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSta()*100),null)
-                .drowRightNameN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100),null)
-                .drowRightNameN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100),null)
-                .drowRightNameN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100),null)
-                .drowRightValueN(0, String.valueOf((int)(userinfoOther.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getFacc()*100))
-                .drowRightValueN(1, String.valueOf((int)(userinfoOther.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getPtt()*100))
-                .drowRightValueN(2, String.valueOf((int)(userinfoOther.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSta()*100))
-                .drowRightValueN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100))
-                .drowRightValueN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100))
-                .drowRightValueN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100))
-                .drowLeftTotal(String.valueOf((int)(userinfoMe.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl()*100))
-                .drowRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()*100))
-                .drowPanelName(panelName)
-                .drowHexagon(hexOther,false)
-                .drowHexagon(hexMe, true);
+                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/Banner/b3.png"))
+                .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png"))
+                .drawLeftCard(cardMe)
+                .drawLeftNameN(0,"FAC")
+                .drawLeftNameN(1,"PTT")
+                .drawLeftNameN(2,"STA")
+                .drawLeftNameN(3,"STB")
+                .drawLeftNameN(4,"ENG")
+                .drawLeftNameN(5,"STH")
+                .drawLeftValueN(0, String.valueOf((int)(userinfoMe.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getFacc()*100))
+                .drawLeftValueN(1, String.valueOf((int)(userinfoMe.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getPtt()*100))
+                .drawLeftValueN(2, String.valueOf((int)(userinfoMe.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSta()*100))
+                .drawLeftValueN(3, String.valueOf((int)(userinfoMe.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getStb()*100))
+                .drawLeftValueN(4, String.valueOf((int)(userinfoMe.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getEng()*100))
+                .drawLeftValueN(5, String.valueOf((int)(userinfoMe.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoMe.getSth()*100))
+                .drawRightCard(cardOther)
+                .drawRightNameN(0, String.valueOf((int)(userinfoOther.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getFacc()*100),null)
+                .drawRightNameN(1, String.valueOf((int)(userinfoOther.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getPtt()*100),null)
+                .drawRightNameN(2, String.valueOf((int)(userinfoOther.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSta()*100),null)
+                .drawRightNameN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100),null)
+                .drawRightNameN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100),null)
+                .drawRightNameN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100),null)
+                .drawRightValueN(0, String.valueOf((int)(userinfoOther.getFacc()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getFacc()*100))
+                .drawRightValueN(1, String.valueOf((int)(userinfoOther.getPtt()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getPtt()*100))
+                .drawRightValueN(2, String.valueOf((int)(userinfoOther.getSta()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSta()*100))
+                .drawRightValueN(3, String.valueOf((int)(userinfoOther.getStb()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getStb()*100))
+                .drawRightValueN(4, String.valueOf((int)(userinfoOther.getEng()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getEng()*100))
+                .drawRightValueN(5, String.valueOf((int)(userinfoOther.getSth()*100)),PanelUtil.cutDecimalPoint(userinfoOther.getSth()*100))
+                .drawLeftTotal(String.valueOf((int)(userinfoMe.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoMe.getTtl()*100))
+                .drawRightTotal(String.valueOf((int)(userinfoOther.getTtl()*100)), PanelUtil.cutDecimalPoint(userinfoOther.getTtl()*100))
+                .drawPanelName(panelName)
+                .drawHexagon(hexOther,false)
+                .drawHexagon(hexMe, true);
 
-        switchRank(0, userinfoMe.getFacc(), panel::drowLeftRankN);
-        switchRank(1, userinfoMe.getPtt(), panel::drowLeftRankN);
-        switchRank(2, userinfoMe.getSta(), panel::drowLeftRankN);
-        switchRank(3, userinfoMe.getStb(), panel::drowLeftRankN);
-        switchRank(4, userinfoMe.getEng(), panel::drowLeftRankN);
-        switchRank(5, userinfoMe.getSth(), panel::drowLeftRankN);
+        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
+        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
+        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
+        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
+        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
+        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
 
-        switchRank(0, userinfoOther.getFacc(), panel::drowRightRankN);
-        switchRank(1, userinfoOther.getPtt(), panel::drowRightRankN);
-        switchRank(2, userinfoOther.getSta(), panel::drowRightRankN);
-        switchRank(3, userinfoOther.getStb(), panel::drowRightRankN);
-        switchRank(4, userinfoOther.getEng(), panel::drowRightRankN);
-        switchRank(5, userinfoOther.getSth(), panel::drowRightRankN);
+        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
+        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
+        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
+        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
+        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
+        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
 
-        var panelImage = panel.drowImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPMVS dev.0.0.1");
+        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPMVS dev.0.0.1");
         try (uBgMe;uBgOther;cardMe;cardOther;panelImage){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }

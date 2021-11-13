@@ -71,7 +71,7 @@ public class PPPanelBuilder extends PanelBuilder {
      */
     private static final float FONT_OFFSET = 16;
 
-    public PPPanelBuilder drowBanner(Image bg) {
+    public PPPanelBuilder drawBanner(Image bg) {
         var temp = SkiaUtil.getScaleCenterImage(bg, 1920, 320);
         try (temp) {
             canvas.drawImage(temp, 0, 0);
@@ -86,7 +86,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param color 颜色预设 true:蓝色 | false:红色
      * @return return
      */
-    public PPPanelBuilder drowHexagon(float[] point, boolean color) {
+    public PPPanelBuilder drawHexagon(float[] point, boolean color) {
         if (point.length != 6) {
             throw new RuntimeException("输入参数长度错误");
         }
@@ -109,7 +109,7 @@ public class PPPanelBuilder extends PanelBuilder {
         return this;
     }
 
-    public PPPanelBuilder drowPanelName(String name){
+    public PPPanelBuilder drawPanelName(String name){
         canvas.save();
         var typeface = SkiaUtil.getTorusSemiBold();
         var font = new Font(typeface, 48);
@@ -127,9 +127,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowLeftValueN(int n, String text) {
+    public PPPanelBuilder drawLeftValueN(int n, String text) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowRightText(text, null, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawRightText(text, null, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
     /***
@@ -138,15 +138,15 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowLeftNameN(int n, String text) {
+    public PPPanelBuilder drawLeftNameN(int n, String text) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowLeftText(text, null, X_L1, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawLeftText(text, null, X_L1, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
-    public PPPanelBuilder drowLeftNameN(int n, String bigText, String simText,@Nullable Paint color) {
+    public PPPanelBuilder drawLeftNameN(int n, String bigText, String simText,@Nullable Paint color) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
         if (color == null) color = p_white;
-        return drowLeftText(bigText, simText, X_L1, Y_T1 + Y_T1_OFF * n, color);
+        return drawLeftText(bigText, simText, X_L1, Y_T1 + Y_T1_OFF * n, color);
     }
 
     /***
@@ -155,9 +155,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowLeftRankN(int n, String text, int color) {
+    public PPPanelBuilder drawLeftRankN(int n, String text, int color) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowCenterText(text, null, X_L3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
+        return drawCenterText(text, null, X_L3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
     }
 
     /***
@@ -166,9 +166,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowRightValueN(int n, String text) {
+    public PPPanelBuilder drawRightValueN(int n, String text) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowRightText(text, null, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawRightText(text, null, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
     /***
@@ -177,15 +177,15 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowRightNameN(int n, String text) {
+    public PPPanelBuilder drawRightNameN(int n, String text) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowLeftText(text, null, X_R1, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawLeftText(text, null, X_R1, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
-    public PPPanelBuilder drowRightNameN(int n, String bigText, String simText,@Nullable Paint color) {
+    public PPPanelBuilder drawRightNameN(int n, String bigText, String simText,@Nullable Paint color) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
         if (color == null) color = p_white;
-        return drowLeftText(bigText, simText, X_R1, Y_T1 + Y_T1_OFF * n, color);
+        return drawLeftText(bigText, simText, X_R1, Y_T1 + Y_T1_OFF * n, color);
     }
 
 
@@ -195,9 +195,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text 文字
      * @return
      */
-    public PPPanelBuilder drowRightRankN(int n, String text, int color) {
+    public PPPanelBuilder drawRightRankN(int n, String text, int color) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowCenterText(text, null, X_R3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
+        return drawCenterText(text, null, X_R3, Y_T1 + Y_T1_OFF * n, new Paint().setColor(color));
     }
 
     /**
@@ -208,9 +208,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param simText 小文字
      * @return
      */
-    public PPPanelBuilder drowLeftValueN(int n, String bigText, String simText) {
+    public PPPanelBuilder drawLeftValueN(int n, String bigText, String simText) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowRightText(bigText, simText, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawRightText(bigText, simText, X_L2, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
     /**
@@ -221,9 +221,9 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param simText 小文字
      * @return
      */
-    public PPPanelBuilder drowRightValueN(int n, String bigText, String simText) {
+    public PPPanelBuilder drawRightValueN(int n, String bigText, String simText) {
         if (n < 0 || n > 5) throw new RuntimeException("超出范围");
-        return drowRightText(bigText, simText, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
+        return drawRightText(bigText, simText, X_R2, Y_T1 + Y_T1_OFF * n, p_white);
     }
 
     /**
@@ -232,8 +232,8 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text
      * @return
      */
-    public PPPanelBuilder drowLeftTotal(String text) {
-        return drowCenterText(text, null, X_L4, Y_T2, p_white);
+    public PPPanelBuilder drawLeftTotal(String text) {
+        return drawCenterText(text, null, X_L4, Y_T2, p_white);
     }
 
     /**
@@ -242,8 +242,8 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param text
      * @return
      */
-    public PPPanelBuilder drowRightTotal(String text) {
-        return drowCenterText(text, null, X_R4, Y_T2, p_white);
+    public PPPanelBuilder drawRightTotal(String text) {
+        return drawCenterText(text, null, X_R4, Y_T2, p_white);
     }
 
     /**
@@ -251,8 +251,8 @@ public class PPPanelBuilder extends PanelBuilder {
      *
      * @return
      */
-    public PPPanelBuilder drowLeftTotal(String bigText, String simText) {
-        return drowCenterText(bigText, simText, X_L4, Y_T2, p_white);
+    public PPPanelBuilder drawLeftTotal(String bigText, String simText) {
+        return drawCenterText(bigText, simText, X_L4, Y_T2, p_white);
     }
 
     /**
@@ -260,8 +260,8 @@ public class PPPanelBuilder extends PanelBuilder {
      *
      * @return
      */
-    public PPPanelBuilder drowRightTotal(String bigText, String simText) {
-        return drowCenterText(bigText, simText, X_R4, Y_T2, p_white);
+    public PPPanelBuilder drawRightTotal(String bigText, String simText) {
+        return drawCenterText(bigText, simText, X_R4, Y_T2, p_white);
     }
 
     /**
@@ -270,8 +270,8 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param name
      * @return
      */
-    public PPPanelBuilder drowLeftTotleName(String name) {
-        drowCenterText(name,null, X_L4,860, new Paint().setARGB(255,161,161,161));
+    public PPPanelBuilder drawLeftTotleName(String name) {
+        drawCenterText(name,null, X_L4,860, new Paint().setARGB(255,161,161,161));
         return this;
     }
 
@@ -281,8 +281,8 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param name
      * @return
      */
-    public PPPanelBuilder drowRightTotleName(String name) {
-        drowCenterText(name,null, X_R4,860, new Paint().setARGB(255,161,161,161));
+    public PPPanelBuilder drawRightTotleName(String name) {
+        drawCenterText(name,null, X_R4,860, new Paint().setARGB(255,161,161,161));
         return this;
     }
 
@@ -291,7 +291,7 @@ public class PPPanelBuilder extends PanelBuilder {
     /***
      * 左对齐渲染
      */
-    protected PPPanelBuilder drowLeftText(String bigText, @Nullable String simText, int left, int top, Paint color) {
+    protected PPPanelBuilder drawLeftText(String bigText, @Nullable String simText, int left, int top, Paint color) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         final Font fontB = new Font(typeface, FONT_SIZE_BIG);
@@ -323,7 +323,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param top
      * @return
      */
-    protected PPPanelBuilder drowCenterText(String bigText, @Nullable String simText, int center, int top, Paint color) {
+    protected PPPanelBuilder drawCenterText(String bigText, @Nullable String simText, int center, int top, Paint color) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         final Font fontB = new Font(typeface, 60);
@@ -351,7 +351,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * 设置居中字体大小的调用
      * @param size 大小
      */
-    protected PPPanelBuilder drowCenterText(String bigText, int center, int top, int size, Paint color) {
+    protected PPPanelBuilder drawCenterText(String bigText, int center, int top, int size, Paint color) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         final Font fontB = new Font(typeface, size);
@@ -373,7 +373,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param top
      * @return
      */
-    protected PPPanelBuilder drowRightText(String bigText, @Nullable String simText, int right, int top, Paint color) {
+    protected PPPanelBuilder drawRightText(String bigText, @Nullable String simText, int right, int top, Paint color) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         final Font fontB = new Font(typeface, 60);
@@ -402,7 +402,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param card
      * @return
      */
-    public PPPanelBuilder drowLeftCard(Image card) {
+    public PPPanelBuilder drawLeftCard(Image card) {
         canvas.save();
         canvas.translate(40, 40);
         canvas.drawImage(card, 0, 0);
@@ -415,7 +415,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param card
      * @return
      */
-    public PPPanelBuilder drowRightCard(Image card) {
+    public PPPanelBuilder drawRightCard(Image card) {
         canvas.save();
         canvas.translate(width - card.getWidth() - 40, 40);
         canvas.drawImage(card, 0, 0);
@@ -424,8 +424,8 @@ public class PPPanelBuilder extends PanelBuilder {
     }
 
     @Override
-    public PPPanelBuilder drowImage(Image add) {
-        super.drowImage(add);
+    public PPPanelBuilder drawImage(Image add) {
+        super.drawImage(add);
         return this;
     }
 

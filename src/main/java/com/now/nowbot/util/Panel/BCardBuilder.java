@@ -19,7 +19,7 @@ public class BCardBuilder extends CardBuilder{
      * @param flag
      * @return
      */
-    public BCardBuilder drowD5(Image flag) {
+    public BCardBuilder drawD5(Image flag) {
         if (down) {
             down = false;
             canvas.save();
@@ -35,7 +35,7 @@ public class BCardBuilder extends CardBuilder{
      * @param text
      * @return
      */
-    public BCardBuilder drowD4(String text) {
+    public BCardBuilder drawD4(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getPuhuitiMedium();
         final Font font = new Font(typeface, 36)
@@ -50,7 +50,7 @@ public class BCardBuilder extends CardBuilder{
         return this;
     }
 
-    public BCardBuilder drowD3(String text) {
+    public BCardBuilder drawD3(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getPuhuitiMedium();
         final Font font = new Font(typeface, 24)
@@ -71,7 +71,7 @@ public class BCardBuilder extends CardBuilder{
      * @param color 颜色
      * @return
      */
-    public BCardBuilder drowD2(String mode, int color) {
+    public BCardBuilder drawD2(String mode, int color) {
         canvas.save();
         Typeface typeface = null;
         try {
@@ -93,7 +93,7 @@ public class BCardBuilder extends CardBuilder{
         return this;
     }
 
-    public BCardBuilder drowD1(String text) {
+    public BCardBuilder drawD1(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getPuhuitiMedium();
         final Font font = new Font(typeface, 24)

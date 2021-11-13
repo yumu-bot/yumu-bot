@@ -122,7 +122,7 @@ public class SkiaUtil {
     }
 
     /***
-     * 缩放图形 直接绘制建议使用 drowScaleImage
+     * 缩放图形 直接绘制建议使用 drawScaleImage
      * @param image
      * @param width
      * @param height
@@ -179,7 +179,7 @@ public class SkiaUtil {
      * @param h
      * @return
      */
-    public static Canvas drowScaleImage(Canvas canvas, Image image, float x, float y, float w, float h){
+    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h){
         canvas.save();
         canvas.translate(x,y);
         canvas.setMatrix(Matrix33.makeScale(1f * w / image.getWidth(), 1f * h / image.getHeight())).drawImage(image, 0, 0);
@@ -188,7 +188,7 @@ public class SkiaUtil {
     }
 
     /***
-     * 剪切矩形 如果直接绘制建议使用 drowCutImage
+     * 剪切矩形 如果直接绘制建议使用 drawCutImage
      * @param image
      * @param left
      * @param top
@@ -217,7 +217,7 @@ public class SkiaUtil {
      * @param height 高
      * @return
      */
-    public static Canvas drowCutImage(Canvas canvas, Image image, float x,  float y, int l, int t, int width, int height){
+    public static Canvas drawCutImage(Canvas canvas, Image image, float x,  float y, int l, int t, int width, int height){
         canvas.save();
         canvas.translate(x,y);
         canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
@@ -242,7 +242,7 @@ public class SkiaUtil {
     }
 
     /***
-     * 剪切圆角矩形 如果直接绘制建议使用 drowRRectImage
+     * 剪切圆角矩形 如果直接绘制建议使用 drawRRectImage
      * @param image
      * @param w
      * @param h
@@ -269,8 +269,8 @@ public class SkiaUtil {
      * @param r
      * @return
      */
-    public static Canvas drowRRectImage(Canvas canvas, Image image, float x, float y , float r){
-        drowRRectImage(canvas,image,x,y,r,null);
+    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y , float r){
+        drawRRectImage(canvas,image,x,y,r,null);
         return canvas;
     }
 
@@ -284,7 +284,7 @@ public class SkiaUtil {
      * @param p 指定效果(画笔
      * @return
      */
-    public static Canvas drowRRectImage(Canvas canvas, Image image, float x, float y , float r, Paint p){
+    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y , float r, Paint p){
         canvas.save();
         canvas.translate(x,y);
         canvas.clipRRect(RRect.makeNinePatchXYWH(0,0,image.getWidth(),image.getHeight(),r,r,r,r), false);
@@ -306,11 +306,11 @@ public class SkiaUtil {
      * @param r 圆角半径
      * @return
      */
-    public static Canvas drowCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r){
-        drowCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r,null);
+    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r){
+        drawCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r,null);
         return canvas;
     }
-    public static Canvas drowCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r, Paint p){
+    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r, Paint p){
         canvas.save();
         canvas.translate(dx,dy);
         canvas.clipRRect(RRect.makeNinePatchXYWH(0,0,w,h,r,r,r,r), true);
@@ -354,7 +354,7 @@ public class SkiaUtil {
      * @param svgPreserveAspectRatioScale SVGPreserveAspectRatioScale.MEET/SLICE 保持横纵比的缩放(会有空白)/拉伸填充(会裁切)
      * @return
      */
-    public static Canvas drowSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height, SVGPreserveAspectRatioAlign svgPreserveAspectRatioAlign, SVGPreserveAspectRatioScale svgPreserveAspectRatioScale){
+    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height, SVGPreserveAspectRatioAlign svgPreserveAspectRatioAlign, SVGPreserveAspectRatioScale svgPreserveAspectRatioScale){
         canvas.save();
         canvas.translate(x,y);
         canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
@@ -380,8 +380,8 @@ public class SkiaUtil {
      * @param height
      * @return
      */
-    public static Canvas drowSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height){
-        return drowSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
+    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height){
+        return drawSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
 
     /***
@@ -465,7 +465,7 @@ public class SkiaUtil {
      * @param s 文字
      * @param ts 效果
      */
-    public static void drowTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts){
+    public static void drawTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts){
         TextStyle f = new TextStyle();
         try (ParagraphStyle ps   = new ParagraphStyle();
              ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));)

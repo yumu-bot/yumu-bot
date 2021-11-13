@@ -132,8 +132,8 @@ public class PpmService implements MessageService {
                 canvas.drawImage(spr,0,0);
 
                 Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
-                PpmVsService.drowLhead(canvas, head1);
-                PpmVsService.drowLname(canvas,fontA,white,userinfo.getName());
+                PpmVsService.drawLhead(canvas, head1);
+                PpmVsService.drawLname(canvas,fontA,white,userinfo.getName());
 
                 var date = surface.makeImageSnapshot().encodeToData().getBytes();
                 from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date),from));
@@ -183,11 +183,11 @@ public class PpmService implements MessageService {
             canvas.drawImage(voer_img,513,74);
 
             Image head1 = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
-            PpmVsService.drowLhead(canvas, head1);
+            PpmVsService.drawLhead(canvas, head1);
 
-            PpmVsService.drowLname(canvas,torus_2,white,userinfo.getName());
+            PpmVsService.drawLname(canvas,torus_2,white,userinfo.getName());
 
-            PpmVsService.drowLppm(canvas,torus_1,puhuiti,torus_2,white,new double[]{
+            PpmVsService.drawLppm(canvas,torus_1,puhuiti,torus_2,white,new double[]{
                     userinfo.getFacc(),
                     userinfo.getPtt(),
                     userinfo.getSta(),
@@ -196,7 +196,7 @@ public class PpmService implements MessageService {
                     userinfo.getSth(),
             }, userinfo.getTtl()*100);
 
-            PpmVsService.drowLpj(canvas,userinfo,torus_1);
+            PpmVsService.drawLpj(canvas,userinfo,torus_1);
 
             {
                 canvas.save();

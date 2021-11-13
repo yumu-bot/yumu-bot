@@ -16,7 +16,7 @@ public class ACardBuilder extends CardBuilder{
      * @param head_url
      * @return
      */
-    public ACardBuilder drowA1(String head_url) {
+    public ACardBuilder drawA1(String head_url) {
         canvas.save();
         final Image head = SkiaUtil.lodeNetWorkImage(head_url);
         try (head) {
@@ -32,7 +32,7 @@ public class ACardBuilder extends CardBuilder{
      * 撒泼特,好友状态
      * @return
      */
-    public ACardBuilder drowA2(Image... loge) {
+    public ACardBuilder drawA2(Image... loge) {
         for (var i : loge){
             canvas.save();
             canvas.translate(130 + logOffset, 70);
@@ -45,10 +45,10 @@ public class ACardBuilder extends CardBuilder{
     /**
      * 国旗单独绘制
      */
-    public ACardBuilder drowA2(SVGDOM svg){
+    public ACardBuilder drawA2(SVGDOM svg){
         canvas.save();
         canvas.translate(130 + logOffset, 62);
-        SkiaUtil.drowSvg(canvas,svg,0,0,60,60);
+        SkiaUtil.drawSvg(canvas,svg,0,0,60,60);
         logOffset += 60 + LOG_OFFSET;
         canvas.restore();
         return this;
@@ -59,7 +59,7 @@ public class ACardBuilder extends CardBuilder{
      * @param text
      * @return
      */
-    public ACardBuilder drowA3(String text) {
+    public ACardBuilder drawA3(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         final Font font = new Font(typeface, 48)

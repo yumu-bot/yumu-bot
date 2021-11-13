@@ -8,19 +8,19 @@ public class CardBuilder extends PanelBuilder{
         super(430, 210, bg);
     }
 
-    public CardBuilder drowB1(String text) {
-        return drowB(text, 177);
+    public CardBuilder drawB1(String text) {
+        return drawB(text, 177);
     }
 
-    public CardBuilder drowB2(String text) {
-        return drowB(text, 151);
+    public CardBuilder drawB2(String text) {
+        return drawB(text, 151);
     }
 
-    public CardBuilder drowB3(String text) {
-        return drowB(text, 125);
+    public CardBuilder drawB3(String text) {
+        return drawB(text, 125);
     }
 
-    CardBuilder drowB(String text, int y) {
+    CardBuilder drawB(String text, int y) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         Font font = new Font(typeface, 24)
@@ -35,7 +35,7 @@ public class CardBuilder extends PanelBuilder{
         return this;
     }
 
-    public CardBuilder drowC1(String text) {
+    public CardBuilder drawC1(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         Font font = new Font(typeface, 60)
@@ -50,12 +50,12 @@ public class CardBuilder extends PanelBuilder{
         return this;
     }
 
-    public CardBuilder drowC2(String text) {
-        return drowC(text, surface.getWidth() - 10, 126);
+    public CardBuilder drawC2(String text) {
+        return drawC(text, surface.getWidth() - 10, 126);
     }
 
-    public CardBuilder drowC3(String text) {
-        return drowC(text, surface.getWidth() - 10, 99);
+    public CardBuilder drawC3(String text) {
+        return drawC(text, surface.getWidth() - 10, 99);
     }
 
     /***
@@ -63,7 +63,7 @@ public class CardBuilder extends PanelBuilder{
      * @param text
      * @return
      */
-    public CardBuilder drowC4(String text) {
+    public CardBuilder drawC4(String text) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         Font font = new Font(typeface, 24)
@@ -78,7 +78,7 @@ public class CardBuilder extends PanelBuilder{
         return this;
     }
 
-    CardBuilder drowC(String text, int x, int y) {
+    CardBuilder drawC(String text, int x, int y) {
         canvas.save();
         Typeface typeface = SkiaUtil.getTorusSemiBold();
         Font font = new Font(typeface, 24)

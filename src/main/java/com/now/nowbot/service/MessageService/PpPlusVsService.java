@@ -197,8 +197,8 @@ public class PpPlusVsService implements MessageService {
             canvas.drawTextLine(v1, 0, v1.getCapHeight(), white);
             canvas.restore();
 
-            drowLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
-            drowRhead(canvas, SkiaUtil.lodeNetWorkImage(head2));
+            drawLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
+            drawRhead(canvas, SkiaUtil.lodeNetWorkImage(head2));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
@@ -207,7 +207,7 @@ public class PpPlusVsService implements MessageService {
         }
     }
 
-    static void drowLhead(Canvas canvas, Image head) {
+    static void drawLhead(Canvas canvas, Image head) {
         canvas.save();
         canvas.translate(130, 80);
         try (var ss = Surface.makeRasterN32Premul(300, 300);) {
@@ -221,7 +221,7 @@ public class PpPlusVsService implements MessageService {
         canvas.restore();
     }
 
-    static void drowRhead(Canvas canvas, Image head) {
+    static void drawRhead(Canvas canvas, Image head) {
         canvas.save();
         canvas.translate(1490, 80);
         try (var ss = Surface.makeRasterN32Premul(300, 300);) {

@@ -78,11 +78,11 @@ public class PpmVsService implements MessageService{
             userinfo1 = PPmObject.presOsu(userdate, bpdate);
         }
 //        获得完全部数据,开始绘制
-        byte[] datebyte = drow(userinfo1,userinfo2);
+        byte[] datebyte = draw(userinfo1,userinfo2);
 //        发送
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
     }
-    static byte[] drow(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
+    static byte[] draw(PPmObject userinfo1, PPmObject userinfo2) throws Exception{
         byte[] date;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
              Typeface Torus = SkiaUtil.getTorusRegular();
@@ -147,15 +147,15 @@ public class PpmVsService implements MessageService{
 
 
             Image head1 = SkiaUtil.lodeNetWorkImage(userinfo1.getHeadURL());
-            drowLhead(canvas, head1);
+            drawLhead(canvas, head1);
 
             Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.getHeadURL());
-            drowRhead(canvas, head2);
+            drawRhead(canvas, head2);
 
-            drowLname(canvas,torus_2,white,userinfo1.getName());
-            drowRname(canvas,torus_2,white,userinfo2.getName());
+            drawLname(canvas,torus_2,white,userinfo1.getName());
+            drawRname(canvas,torus_2,white,userinfo2.getName());
 
-            drowLppm(canvas,torus_1, puhui_1,torus_2,white,new double[]{
+            drawLppm(canvas,torus_1, puhui_1,torus_2,white,new double[]{
                     userinfo1.getFacc(),
                     userinfo1.getPtt(),
                     userinfo1.getSta(),
@@ -163,7 +163,7 @@ public class PpmVsService implements MessageService{
                     userinfo1.getEng(),
                     userinfo1.getSth(),
             }, userinfo1.getTtl()*100);
-            drowRppm(canvas,torus_1,puhui_1,torus_2,white,new double[]{
+            drawRppm(canvas,torus_1,puhui_1,torus_2,white,new double[]{
                     userinfo2.getFacc(),
                     userinfo2.getPtt(),
                     userinfo2.getSta(),
@@ -184,7 +184,7 @@ public class PpmVsService implements MessageService{
      * @param canvas
      * @param head
      */
-    static void drowLhead(Canvas canvas, Image head){
+    static void drawLhead(Canvas canvas, Image head){
         canvas.save();
         canvas.translate(130,80);
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
@@ -198,7 +198,7 @@ public class PpmVsService implements MessageService{
         canvas.drawImage(head,0,0, PAINT_ANTIALIAS);
         canvas.restore();
     }
-    static void drowRhead(Canvas canvas, Image head){
+    static void drawRhead(Canvas canvas, Image head){
         canvas.save();
         canvas.translate(1490,80);
         try(var ss = Surface.makeRasterN32Premul(300,300);) {
@@ -219,7 +219,7 @@ public class PpmVsService implements MessageService{
      * @param white
      * @param name
      */
-    public static void drowLname(Canvas canvas, Font font, Paint white, String name){
+    public static void drawLname(Canvas canvas, Font font, Paint white, String name){
         canvas.save();
         canvas.translate(280,440);
         TextLine text = TextLine.make(name, font);
@@ -235,7 +235,7 @@ public class PpmVsService implements MessageService{
      * @param white
      * @param name
      */
-    public static void drowRname(Canvas canvas, Font font, Paint white, String name){
+    public static void drawRname(Canvas canvas, Font font, Paint white, String name){
         canvas.save();
         canvas.translate(1640,440);
         TextLine text = TextLine.make(name, font);
@@ -254,7 +254,7 @@ public class PpmVsService implements MessageService{
      * @param val
      * @param all
      */
-    public static void drowLppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
+    public static void drawLppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
         if (val.length != 6) return;
         double[] date = new double[val.length];
         for (int i = 0; i < date.length; i++) {
@@ -310,7 +310,7 @@ public class PpmVsService implements MessageService{
      * @param val
      * @param all
      */
-    public static void drowRppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
+    public static void drawRppm(Canvas canvas, Font Torus, Font Puhuiti, Font Torus_Big, Paint white, double[] val, double all){
         if (val.length != 6) return;
         double[] date = new double[val.length];
         for (int i = 0; i < date.length; i++) {
@@ -362,7 +362,7 @@ public class PpmVsService implements MessageService{
      * @param user
      * @param Torus
      */
-    public static void drowLpj(Canvas canvas, PPmObject user, Font Torus){
+    public static void drawLpj(Canvas canvas, PPmObject user, Font Torus){
         canvas.save();
         TextLine[] tx = new TextLine[6];
         double[] date = new double[]{
@@ -472,8 +472,8 @@ F 108.11.11
             canvas.drawImage(spr,0,0);
 
             Image head1 = SkiaUtil.lodeNetWorkImage(head_url);
-            drowLhead(canvas, head1);
-            drowLname(canvas,fontTours,white,name);
+            drawLhead(canvas, head1);
+            drawLname(canvas,fontTours,white,name);
 
             return surface.makeImageSnapshot().encodeToData().getBytes();
         }

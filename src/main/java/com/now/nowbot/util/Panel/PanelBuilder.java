@@ -14,6 +14,7 @@ public class PanelBuilder {
     protected final Surface surface;
     protected Canvas canvas;
     protected boolean isClose = false;
+    protected Image outImage;
 
     PanelBuilder(int w, int h) {
         width = w;
@@ -37,7 +38,7 @@ public class PanelBuilder {
      * @param add
      * @return
      */
-    PanelBuilder drowImage(Image add){
+    PanelBuilder drawImage(Image add){
         canvas.drawImage(add,0,0);
         return this;
     }
@@ -49,7 +50,7 @@ public class PanelBuilder {
      * @param y
      * @return
      */
-    PanelBuilder drowImage(Image add, int x, int y){
+    PanelBuilder drawImage(Image add, int x, int y){
         canvas.save();
         canvas.translate(x, y);
         canvas.drawImage(add, 0, 0);
@@ -57,27 +58,32 @@ public class PanelBuilder {
         return this;
     }
     Image build(int r) {
+        if (isClose) return outImage;
         try (surface) {
             isClose = true;
-            return RRectout(surface, r);
+            outImage = RRectout(surface, r);
+            return outImage;
         }
     }
 
     Image build(int r, String text) {
-        try (surface) {
-            isClose = true;
-            String leftText = "powered by Yumubot" + text;
-            Font font = new Font(SkiaUtil.getTorusRegular(), TopTipeFontSize);
-            TextLine leftLine = TextLine.make(leftText, font);
-            TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC-8'").format(LocalDateTime.now()), font);
-            Paint p = new Paint().setARGB(100, 0, 0, 0);
-            try (font; leftLine; rightLine;p) {
+        if (isClose) return outImage;
+        drawPanelInfo(surface, r, text);
+        return build(r);
+    }
+
+    void drawPanelInfo(Surface surface, int r, String text){
+        Canvas canvas = surface.getCanvas();
+        String leftText = "powered by Yumubot" + text;
+        Font font = new Font(SkiaUtil.getTorusRegular(), TopTipeFontSize);
+        TextLine leftLine = TextLine.make(leftText, font);
+        TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC-8'").format(LocalDateTime.now()), font);
+        Paint p = new Paint().setARGB(100, 0, 0, 0);
+        try (font; leftLine; rightLine;p) {
 //                    canvas.drawRRect(RRect.makeXYWH(0, 0, leftLine.getWidth() + 2*r, leftLine.getHeight(), r), p);
-                canvas.drawTextLine(leftLine, r, leftLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
+            canvas.drawTextLine(leftLine, r, leftLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
 //                    canvas.drawRRect(RRect.makeXYWH(surface.getWidth() - rightLine.getWidth() - 2*r, 0, rightLine.getWidth() + r, leftLine.getHeight(), r), p);
-                canvas.drawTextLine(rightLine, surface.getWidth() - r - rightLine.getWidth(), rightLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
-            }
-            return RRectout(surface, r);
+            canvas.drawTextLine(rightLine, surface.getWidth() - r - rightLine.getWidth(), rightLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
         }
     }
 
