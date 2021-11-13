@@ -67,6 +67,7 @@ public class TestPPmService implements MessageService {
         if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
             throw new TipsException("游戏时长太短了，快去多玩几局吧！");
         }
+        //生成panel名
         String panelName = "PPM:" + switch (mode) {
             case OSU -> "O";
             case MANIA -> "M";
@@ -74,8 +75,10 @@ public class TestPPmService implements MessageService {
             case TAIKO -> "T";
             default -> "?";
         };
-        var uHead = SkiaUtil.lodeNetWorkImage(userinfo.getHeadURL());
+        //获得背景
         Image uBg = PanelUtil.getBgUrl("用户自定义路径", userinfo.getBackgroundURL());
+
+        //绘制卡片A
         var card = PanelUtil.getA1Builder(uBg)
                 .drawA1(userinfo.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
@@ -91,6 +94,7 @@ public class TestPPmService implements MessageService {
         if (userdate.getBoolean("is_supporter")) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
+        //计算六边形数据
         float[] hex = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
@@ -99,6 +103,7 @@ public class TestPPmService implements MessageService {
                 (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
+        //生成panel
         var panel = PanelUtil.getPPMBulider()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
                 .drawOverImage()
@@ -110,6 +115,7 @@ public class TestPPmService implements MessageService {
                 .drawLeftValueN(3, String.valueOf((int) (userinfo.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfo.getStb() * 100))
                 .drawLeftValueN(4, String.valueOf((int) (userinfo.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfo.getEng() * 100))
                 .drawLeftValueN(5, String.valueOf((int) (userinfo.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSth() * 100))
+                //评级
                 .switchRank(0, userinfo.getFacc())
                 .switchRank(1, userinfo.getPtt())
                 .switchRank(2, userinfo.getSta())
@@ -121,7 +127,7 @@ public class TestPPmService implements MessageService {
                 .drawPanelName(panelName)
                 .drawHexagon(hex, true);
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
-        try (uHead; uBg; panelImage) {
+        try (uBg; panelImage) {
             card.build().close();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
         }
@@ -141,6 +147,7 @@ public class TestPPmService implements MessageService {
         if (mode == OsuMode.MANIA) {
             throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
         }
+        //生成panel名
         String panelName = "PPM.v:" + switch (mode) {
             case OSU -> "O";
             case MANIA -> "M";
@@ -148,7 +155,7 @@ public class TestPPmService implements MessageService {
             case TAIKO -> "T";
             default -> "?";
         };
-        me:
+        me://自己的信息
         {
             var user = BindingUtil.readUser(event.getSender().getId());
             userdateMe = osuGetService.getPlayerInfo(user, mode.toString());
@@ -158,7 +165,7 @@ public class TestPPmService implements MessageService {
                 throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
             }
         }
-        if (at != null) {
+        if (at != null) {//被对比人的信息
             // 包含有@
             var user = BindingUtil.readUser(at.getTarget());
             userdateOther = osuGetService.getPlayerInfo(user, mode.toString());
@@ -176,10 +183,11 @@ public class TestPPmService implements MessageService {
             throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
         }
 
+        //背景绘制
         Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userinfoMe.getBackgroundURL());
         Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userinfoOther.getBackgroundURL());
 
-
+        //卡片生成
         var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
                 .drawA3(userinfoMe.getName());
@@ -208,6 +216,7 @@ public class TestPPmService implements MessageService {
                         userdateOther.getJSONObject("statistics").getJSONObject("level").getString("current") +
                         "(" + userdateOther.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
                 .drawC1(userdateOther.getJSONObject("statistics").getIntValue("pp") + "PP");
+        //六边形数据
         float[] hexMe = new float[]{
                 (float) Math.pow((userinfoMe.getPtt() < 0.6 ? 0 : userinfoMe.getPtt() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfoMe.getSta() < 0.6 ? 0 : userinfoMe.getSta() - 0.6) * 2.5f, 0.8),
@@ -224,6 +233,7 @@ public class TestPPmService implements MessageService {
                 (float) Math.pow((userinfoOther.getSth() < 0.6 ? 0 : userinfoOther.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
         };
+        //六边形缩放
         if(userinfoMe.getPp() > userinfoOther.getPp()){
             float n = userinfoOther.getPp()/userinfoMe.getPp();
             for (int i = 0; i < hexMe.length; i++) {
@@ -235,6 +245,7 @@ public class TestPPmService implements MessageService {
                 hexMe[i] *= n;
             }
         }
+
         var panel = PanelUtil.getPPMBulider()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
                 .drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
@@ -251,8 +262,10 @@ public class TestPPmService implements MessageService {
         switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
         switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
         switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
+        //进行因子修正,上方的是原数据
         userinfoMe.dovs();
         userinfoOther.dovs();
+        //下方为修正后的数据
         panel.drawLeftCard(cardMe.build())
                 .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
                 .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
@@ -278,8 +291,10 @@ public class TestPPmService implements MessageService {
                 .drawPanelName(panelName)
                 .drawHexagon(hexOther, false)
                 .drawHexagon(hexMe, true);
-
-        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).drawPanelName(panelName).build("PANEL-PPMVS dev.0.0.1");
+        //生成
+        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"))//叠加层
+                .drawPanelName(panelName)//panel名
+                .build("PANEL-PPMVS dev.0.0.1");
         try (uBgMe; uBgOther; panelImage) {
             cardMe.build().close();
             cardOther.build().close();
