@@ -2,8 +2,12 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
+import org.jetbrains.skija.svg.SVGDOM;
 
 public class ACardBuilder extends CardBuilder{
+    private static int LOG_OFFSET = 4;
+
+    int logOffset = 0;
     public ACardBuilder(Image bg){
         super(bg);
     }
@@ -25,11 +29,28 @@ public class ACardBuilder extends CardBuilder{
     }
 
     /***
-     * 国旗,撒泼特,好友状态
+     * 撒泼特,好友状态
      * @return
      */
-    public ACardBuilder drowA2(Object... loge) {
-        //todo
+    public ACardBuilder drowA2(Image... loge) {
+        for (var i : loge){
+            canvas.save();
+            canvas.translate(130 + logOffset, 70);
+            canvas.drawImage(i,0,0);
+            logOffset += i.getWidth() + LOG_OFFSET;
+            canvas.restore();
+        }
+        return this;
+    }
+    /**
+     * 国旗单独绘制
+     */
+    public ACardBuilder drowA2(SVGDOM svg){
+        canvas.save();
+        canvas.translate(130 + logOffset, 60);
+        SkiaUtil.drowSvg(canvas,svg,0,0,60,60);
+        logOffset += 60 + LOG_OFFSET;
+        canvas.restore();
         return this;
     }
 

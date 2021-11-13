@@ -34,19 +34,33 @@ public class PanelUtil {
     public static final int COLOR_HEX_ME = Color.makeRGB(0, 168, 236);
     public static final int COLOR_HEX_OTHER = Color.makeRGB(255, 0, 0);
 
+    public static Image OBJECT_MAPSTATUS_RANKED;
     public static Image OBJECT_MAPSTATUS_QUALIFIED;
+    public static Image OBJECT_MAPSTATUS_UNRANKED; //也是问号
+    public static Image OBJECT_MAPSTATUS_UNKNOW; //也是问号
+    public static Image OBJECT_MAPSTATUS_LOVED;
+
+    //    
+    public static final String MODE_OSU = "\uE800";
+    public static final String MODE_CATCH = "\uE801";
+    public static final String MODE_MANIA = "\uE802";
+    public static final String MODE_TAIKO = "\uE803";
 
     private static Path PATH_FLAG;
+    public static Path EXPORT_FOLE_V3;
     public static void init(){
         /* **
          * 爱心loved 对勾approved和qualified 蓝箭头ranked 其他均为第四个问号
          * 图片左上角在横向 370 纵向 10 的位置
          */
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
+        EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH,"ExportFileV3");
         try {
+            OBJECT_MAPSTATUS_RANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Ranked.png");
             OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Qualified.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Ranked.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Unranked.png");
+            OBJECT_MAPSTATUS_UNRANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Unranked.png");
+            OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
+            OBJECT_MAPSTATUS_LOVED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Loved.png");
         } catch (IOException e) {
             e.printStackTrace();
         }

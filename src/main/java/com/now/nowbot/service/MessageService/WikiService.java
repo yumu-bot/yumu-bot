@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.throwable.LogException;
-import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ public class WikiService implements MessageService{
     WikiService(){
         String datestr = null;
         try {
-            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
+            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH,"wiki.json"));
         } catch (IOException e) {
             e.printStackTrace();
         }

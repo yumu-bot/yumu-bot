@@ -43,7 +43,7 @@ public class SetuService implements MessageService{
             if(time+(15*1000)>System.currentTimeMillis()){
                 byte[] img = new byte[0];
                 try {
-                    img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH+"xxoo.jpg"));
+                    img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH,"xxoo.jpg"));
                 } catch (IOException e) {
                     log.error("图片读取异常",e);
                 }

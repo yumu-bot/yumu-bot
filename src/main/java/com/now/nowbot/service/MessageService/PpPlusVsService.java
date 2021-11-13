@@ -80,10 +80,10 @@ public class PpPlusVsService implements MessageService {
         ) {
             var canvas = surface.getCanvas();
 
-            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH + "PPPlusBG.png")));
-            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH + "PPHexPanel.png")));
-            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH + "PPPlusOverlay.png")));
-            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH + "mascot.png")));
+            Image bg1 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH, "PPPlusBG.png")));
+            Image bg2 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH, "PPHexPanel.png")));
+            Image bg3 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH, "PPPlusOverlay.png")));
+            Image bg4 = Image.makeFromEncoded(Files.readAllBytes(java.nio.file.Path.of(NowbotConfig.BG_PATH, "mascot.png")));
             canvas.drawImage(bg1, 0, 0);
             canvas.drawImage(bg2, 0, 0);
             //在底下
