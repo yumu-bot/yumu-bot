@@ -56,11 +56,11 @@ public class PanelUtil {
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
         EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH,"ExportFileV3");
         try {
-            OBJECT_MAPSTATUS_RANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Ranked.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Qualified.png");
-            OBJECT_MAPSTATUS_UNRANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Unranked.png");
+            OBJECT_MAPSTATUS_RANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Ranked.png");
+            OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Qualified.png");
+            OBJECT_MAPSTATUS_UNRANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Unranked.png");
             OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
-            OBJECT_MAPSTATUS_LOVED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"object-mapstatus-Loved.png");
+            OBJECT_MAPSTATUS_LOVED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Loved.png");
         } catch (IOException e) {
             e.printStackTrace();
         }

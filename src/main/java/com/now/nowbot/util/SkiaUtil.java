@@ -358,10 +358,9 @@ public class SkiaUtil {
         canvas.save();
         canvas.translate(x,y);
         canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
-        if(x == 0 && y == 0)
-                canvas.clear(Color.makeARGB(100,255,0,0));
+//        if(x == 0 && y == 0) /* 调试代码 */
+//                canvas.clear(Color.makeARGB(100,255,0,0));
         try (var root = svg.getRoot()) {
-
             root.setWidth(new SVGLength(width))
                     .setHeight(new SVGLength(height))
                     .setPreserveAspectRatio(new SVGPreserveAspectRatio(svgPreserveAspectRatioAlign, svgPreserveAspectRatioScale));
