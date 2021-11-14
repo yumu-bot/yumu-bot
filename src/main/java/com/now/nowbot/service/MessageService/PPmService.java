@@ -20,8 +20,8 @@ import rx.functions.Action3;
 
 import java.util.regex.Matcher;
 
-@Service("testppm")
-public class TestPPmService implements MessageService {
+@Service("ppm")
+public class PPmService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
 
@@ -77,7 +77,7 @@ public class TestPPmService implements MessageService {
             default -> "?";
         };
         //获得背景
-        Image uBg = PanelUtil.getBgUrl("用户自定义路径", userinfo.getBackgroundURL());
+        Image uBg = PanelUtil.getBgUrl("用户自定义路径", userinfo.getBackgroundURL(), true);
 
         //绘制卡片A
         var card = PanelUtil.getA1Builder(uBg)
@@ -185,8 +185,8 @@ public class TestPPmService implements MessageService {
         }
 
         //背景绘制
-        Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userinfoMe.getBackgroundURL());
-        Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userinfoOther.getBackgroundURL());
+        Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userinfoMe.getBackgroundURL(), true);
+        Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userinfoOther.getBackgroundURL(), true);
 
         //卡片生成
         var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())

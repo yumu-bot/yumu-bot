@@ -2,10 +2,7 @@ package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
@@ -21,7 +18,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -161,14 +157,14 @@ public class OsuGetService {
         return id;
     }
 
-    public JSONArray getFrendList(BinUser user) {
+    public JsonNode getFrendList(BinUser user) {
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(url, HttpMethod.GET, httpEntity, JSONArray.class);
+        ResponseEntity<JsonNode> c = template.exchange(url, HttpMethod.GET, httpEntity, JsonNode.class);
         return c.getBody();
     }
 

@@ -18,6 +18,10 @@ import java.nio.file.Path;
 
 public class PanelUtil {
     static final Logger log = LoggerFactory.getLogger(PanelUtil.class);
+    //设置抗锯齿
+    static final Paint PAINT_ANTIALIAS =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
+    //高斯模糊画笔
+    static final Paint PAINT_BLUR =  new Paint().setImageFilter(ImageFilter.makeBlur(10,10, FilterTileMode.REPEAT));
     /* **
      * SS-D #FEF668 #F09450 #00B034 #3FBCEF #8E569B #EC6B76 #676EB0
      * 我方#00A8EC 对方 #FF0000
@@ -152,8 +156,10 @@ public class PanelUtil {
         return r.substring(1,Math.min(r.length(),4));
     }
 
-    /** 获得个人背景,如没有则默认从url获取 */
-    public static Image getBgUrl(String failPath, String url){
+    /** 获得个人背景,如没有则默认从url获取
+     * @param isBlur 是否模糊暗化
+     * */
+    public static Image getBgUrl(String failPath, String url, boolean isBlur){
         Image img;
         if (Files.isRegularFile(Path.of(failPath))){
             try {
@@ -164,11 +170,15 @@ public class PanelUtil {
             }
         }
         img = SkiaUtil.lodeNetWorkImage(url);
+        if (isBlur)
         return getBlur(img);
+        else return img;
     }
 
-    /** 获得个人背景,如没有则默认从文件路径获取 */
-    public static Image getBgFile(String failPath, String path){
+    /** 获得个人背景,如没有则默认从文件路径获取
+     * @param isBlur 是否模糊暗化
+     * */
+    public static Image getBgFile(String failPath, String path, boolean isBlur){
         Image img;
         if (Files.isRegularFile(Path.of(failPath))){
             try {
@@ -180,7 +190,9 @@ public class PanelUtil {
         }
         try {
             img = SkiaUtil.fileToImage(path);
-            return getBlur(img);
+            if (isBlur)
+                return getBlur(img);
+            else return img;
         } catch (IOException e) {
             log.error("默认图片加载异常", e);
             throw new RuntimeException("图片加载异常");
@@ -189,7 +201,7 @@ public class PanelUtil {
 
     protected static Image getBlur(Image img) {
         try(Surface s = Surface.makeRasterN32Premul(img.getWidth(),img.getHeight())){
-            s.getCanvas().drawImage(img, 0,0,new Paint().setImageFilter(ImageFilter.makeBlur(10,10, FilterTileMode.REPEAT)));
+            s.getCanvas().drawImage(img, 0,0,PAINT_BLUR);
             s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
             img = s.makeImageSnapshot();
         }

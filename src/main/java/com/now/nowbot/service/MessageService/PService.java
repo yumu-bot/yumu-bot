@@ -13,14 +13,13 @@ import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
-@Service("ppm")
-public class PpmService implements MessageService {
+//@Service("ppm")
+public class PService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
 

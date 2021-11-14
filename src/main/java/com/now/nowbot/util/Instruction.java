@@ -24,25 +24,23 @@ public enum Instruction {
     HELP("help",    Pattern.compile("^[!！](?i)(ym)?((help)|h)"), "!ymh/!ymhelp"),
     SWITCH("switch",Pattern.compile("^[!！](?i)switch(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?(\\s?(?<p4>\\w+))?"), null),
     PING("ping",    Pattern.compile("^[!！](?i)ymping"), null),
-    PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
-    PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
+    PPM("ppm",    Pattern.compile("^[!！](?i)(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
     PPPLUS("ppp",   Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ppp [osu name] std的pp+计算"),
     PPPLUSVS("ppvs",Pattern.compile("^[!！](?i)(ym)?p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ppvs <osu name|@某人> pp+的对比，需要自己绑定，如果是ppvs也需要对方绑定"),
     SETU("setu",    Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)"), "!ymsetu 获取一张随机图"),
     SONG("song",    Pattern.compile("^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))"), "!song <bid>或!song sid=<sid> 试听谱面"),
     START("start",  Pattern.compile("^[!！]((积分)|(..积分))+.*"), "!积分 刷新并查看积分"),
-//    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
     YMP("ymp",      Pattern.compile("^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"!ymr/!ymp 简略地查询自己的游戏成绩"),
     YMI("ymi",      Pattern.compile("^[!！](?i)ymi(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),"!ymi 简略地查询自己的游戏信息"),
     WIKI("wiki",    Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?"),"!ymwiki 百科，告诉你小沐知道的一切。"),
     TRANS("trans",  Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)"),null),
     SCORE("score",  Pattern.compile("^[!！]score\\s?(?<bid>\\d+)"),null),
     UPDATE("update",Pattern.compile("^&!update$"),null),
+    FRIEND("friend",Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?"),"只能查自己,参数n,n-m,最大100,太多就1-100,101-200..."),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST("test",    Pattern.compile("^[!！].*"),null),
-    TESTPPM("testppm",    Pattern.compile("^[!！](?i)test(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！
@@ -59,15 +57,18 @@ public enum Instruction {
 
     //历史指令 存档一下
 //    CATPANEL("cpanel", Pattern.compile("^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"), null),
+//    PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
+//    PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
+//    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
 
 /* 功能大纲备份，我懒得对齐了看到的帮我对齐一下
 
 YumuBot功能大纲 20211111
 1 内部指令（不可关闭）
-1.1 服务状态-Bot服务状态，PPYAPI状态ping/ymping/"yami?"ymppy
-1.2 用户限制-封禁、解封用户，退出某群并拉入黑名单ymban/ymunban
-1.3 功能开关-查询模块是否开启，控制以下所有模块开关ymswitch/ymsw
-1.4 Bot基础指令查询ymhelp/ymh
+1.1 服务状态-Bot服务状态，PPYAPI状态ping/ymping/"yami?"ymppy                                       ping完成部分
+1.2 用户限制-封禁、解封用户，退出某群并拉入黑名单ymban/ymunban                                         待数据库
+1.3 功能开关-查询模块是否开启，控制以下所有模块开关ymswitch/ymsw                                       合并到上面,待数据库
+1.4 Bot基础指令查询ymhelp/ymh                                                                    完成
 1.5 防刷屏机制(ymantispam/ymas)：三次或以上30秒内申请同一项指令，或是四次或以上30秒内申请多项指令均触发防刷屏。
 触发时，bot发送随机一句话提示刷屏，如果再次触发则冷静5分钟。ymz指令和此通用。
 
@@ -187,5 +188,18 @@ WT/ymweather
 
     public String getDesc() {
         return desc;
+    }
+
+    public static void main(String[] args) {
+        var p = Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+        var m = p.matcher("!ymf 4-7");
+        if(m.find()){
+            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
+            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
+            s ^= e;
+            e ^= s;
+            s ^= e;
+            System.out.println(s+"|"+e);
+        }
     }
 }
