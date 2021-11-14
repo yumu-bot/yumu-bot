@@ -5,7 +5,7 @@ import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.SVGDOM;
 
 public class ACardBuilder extends CardBuilder{
-    private static int LOG_OFFSET = 4;
+    private static int LOG_OFFSET = 10;
 
     int logOffset = 0;
     public ACardBuilder(Image bg){
@@ -49,8 +49,7 @@ public class ACardBuilder extends CardBuilder{
         canvas.save();
         canvas.translate(130 + logOffset, 62);
         SkiaUtil.drawSvg(canvas,svg,0,0,60,60);
-        //国旗单独偏移10px
-        logOffset += 60 + LOG_OFFSET + 10;
+        logOffset += 60 + LOG_OFFSET;
         canvas.restore();
         return this;
     }
