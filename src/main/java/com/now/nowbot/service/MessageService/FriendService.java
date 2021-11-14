@@ -28,6 +28,7 @@ public class FriendService implements MessageService{
         var from = event.getSubject();
 
         var user = BindingUtil.readUser(event.getSender().getId());
+//        var user = BindingUtil.readUser(2480557535L); 调试代码
 
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;
@@ -84,7 +85,8 @@ public class FriendService implements MessageService{
             p.addFriendCard(cardO.build());
         }
 
-        from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG).getBytes())));
+        from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
+//        Files.write(Path.of("D:/ffxx.jpg"),p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());调试代码,勿动
         card.build().close();
         p.build().close();
     }
