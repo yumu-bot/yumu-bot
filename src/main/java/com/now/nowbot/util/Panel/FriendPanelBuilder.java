@@ -74,7 +74,7 @@ public class FriendPanelBuilder extends PanelBuilder{
 
         try (surface) {
             isClose = true;
-            drawPanelInfo(outSurface, r, "FriendPanel");
+            drawPanelInfo(outSurface, r, " FriendPanel");
             outImage = RRectout(outSurface, r);
             return outImage;
         }
