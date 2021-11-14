@@ -49,7 +49,8 @@ public class ACardBuilder extends CardBuilder{
         canvas.save();
         canvas.translate(130 + logOffset, 62);
         SkiaUtil.drawSvg(canvas,svg,0,0,60,60);
-        logOffset += 60 + LOG_OFFSET;
+        //国旗单独偏移10px
+        logOffset += 60 + LOG_OFFSET + 10;
         canvas.restore();
         return this;
     }

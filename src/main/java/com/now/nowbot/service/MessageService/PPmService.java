@@ -192,7 +192,7 @@ public class PPmService implements MessageService {
         var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
                 .drawA3(userinfoMe.getName());
-        if (userdateOther.getBoolean("is_supporter")) {
+        if (userdateMe.getBoolean("is_supporter")) {
             cardMe.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         cardMe.drawB3("")
