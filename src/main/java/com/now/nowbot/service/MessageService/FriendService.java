@@ -8,6 +8,7 @@ import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
+import org.jetbrains.skija.EncodedImageFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +29,6 @@ public class FriendService implements MessageService{
 
         var user = BindingUtil.readUser(event.getSender().getId());
 
-        var allFriend = osuGetService.getFrendList(user);
-
-        allFriend.size();
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;
         if (matcher.group("m") == null){
@@ -44,6 +42,7 @@ public class FriendService implements MessageService{
             throw new TipsException("参数范围错误!");
         }
 
+        var allFriend = osuGetService.getFrendList(user);
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
         var infoMe = osuGetService.getPlayerOsuInfo(user);
@@ -65,10 +64,10 @@ public class FriendService implements MessageService{
         p.drawBanner(PanelUtil.getBgFile(null/*"个人banner路径"*/, PanelUtil.EXPORT_FOLE_V3.resolve("Banner/b3.png").toString(),false));
         p.mainCard(card.build());
         //单线程实现好友绘制
-        for (int i = n1; i < n2; i++) {
+        for (int i = n1; i < n2 && i < allFriend.size(); i++) {
             var infoO = allFriend.get(i);
 
-            var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("custom_url").asText(),true));
+            var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
             cardO.drawA1(infoO.findValue("avatar_url").asText())
                     .drawA2(PanelUtil.getFlag(infoO.findValue("country_code").asText()))
                     .drawA3(infoO.findValue("username").asText());
@@ -76,17 +75,17 @@ public class FriendService implements MessageService{
                 cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
             }
             cardO.drawB3("")
-                    .drawB2("#" + infoO.findValue("global_rank").asText())
-                    .drawB1(infoO.findValue("country_code").asText("CN") + "#" + infoO.findValue("country_rank").asText("NaN"))
+                    .drawB2("#" + infoO.findValue("global_rank").asText("0"))
+                    .drawB1("U"+infoO.findValue("id").asText("NaN"))
                     .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
                             infoO.findValue("current").asText("NaN") +
                             "(" + infoO.findValue("progress").asText("NaN") + "%)")
                     .drawC1(infoO.findValue("pp").asInt() + "PP");
             p.addFriendCard(cardO.build());
-            if (i%10 ==0)from.sendMessage("正在绘制第"+i+"个");
         }
 
-        from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData().getBytes())));
+        from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG).getBytes())));
         card.build().close();
+        p.build().close();
     }
 }
