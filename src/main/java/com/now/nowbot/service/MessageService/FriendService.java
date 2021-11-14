@@ -65,7 +65,7 @@ public class FriendService implements MessageService{
         p.drawBanner(PanelUtil.getBgFile(null/*"个人banner路径"*/, PanelUtil.EXPORT_FOLE_V3.resolve("Banner/b3.png").toString(),false));
         p.mainCard(card.build());
         //单线程实现好友绘制
-        for (int i = n1; i < n2 && i < allFriend.size(); i++) {
+        for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             var infoO = allFriend.get(i);
 
             var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
