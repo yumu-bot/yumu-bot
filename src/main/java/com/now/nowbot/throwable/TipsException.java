@@ -5,7 +5,6 @@ public class TipsException extends Exception{
     public TipsException(String message) {
         setMessage(message);
     }
-    public TipsException(){}
     public void setMessage(String message) {
         this.message = message;
     }
