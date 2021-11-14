@@ -56,10 +56,6 @@ public class PanelUtil {
     private static Path PATH_FLAG;
     public static Path EXPORT_FOLE_V3;
     public static void init(){
-        /* **
-         * 爱心loved 对勾approved和qualified 蓝箭头ranked 其他均为第四个问号
-         * 图片左上角在横向 370 纵向 10 的位置
-         */
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
         EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH,"ExportFileV3");
         try {

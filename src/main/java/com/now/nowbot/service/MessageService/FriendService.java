@@ -83,6 +83,7 @@ public class FriendService implements MessageService{
                             "(" + infoO.findValue("progress").asText("NaN") + "%)")
                     .drawC1(infoO.findValue("pp").asInt() + "PP");
             p.addFriendCard(cardO.build());
+            if (i%10 ==0)from.sendMessage("正在绘制第"+i+"个");
         }
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData().getBytes())));
