@@ -4,6 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.BCardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.SVGDOM;
 import org.slf4j.Logger;
@@ -159,11 +160,11 @@ public class PanelUtil {
     /** 获得个人背景,如没有则默认从url获取
      * @param isBlur 是否模糊暗化
      * */
-    public static Image getBgUrl(String failPath, String url, boolean isBlur){
+    public static Image getBgUrl(@Nullable String filePath, String url, boolean isBlur){
         Image img;
-        if (Files.isRegularFile(Path.of(failPath))){
+        if (filePath != null && Files.isRegularFile(Path.of(filePath))){
             try {
-                img = SkiaUtil.fileToImage(failPath);
+                img = SkiaUtil.fileToImage(filePath);
                 return img;
             } catch (IOException e) {
                 log.error("文件读取异常", e);
@@ -178,11 +179,11 @@ public class PanelUtil {
     /** 获得个人背景,如没有则默认从文件路径获取
      * @param isBlur 是否模糊暗化
      * */
-    public static Image getBgFile(String failPath, String path, boolean isBlur){
+    public static Image getBgFile(@Nullable String filePath, String path, boolean isBlur){
         Image img;
-        if (Files.isRegularFile(Path.of(failPath))){
+        if (filePath != null && Files.isRegularFile(Path.of(filePath))){
             try {
-                img = SkiaUtil.fileToImage(failPath);
+                img = SkiaUtil.fileToImage(filePath);
                 return img;
             } catch (IOException e) {
                 log.error("文件读取异常", e);
