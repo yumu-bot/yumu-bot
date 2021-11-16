@@ -6,7 +6,6 @@ import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -167,19 +166,7 @@ public class TestService implements MessageService {
             return;
         }
 
-        pt = Pattern.compile("^!wvgedfvsd");
-        matcher = pt.matcher(msg.contentToString());
-        if(matcher.find()){
-            event.getSubject().sendMessage("start");
-            log.info("fdj:start");
-            var lock = ASyncMessageUtil.getLock(((GroupMessageEvent) event).getGroup().getId(), event.getSender().getId());
-            String s;
-            while ((s = ASyncMessageUtil.get(lock).contentToString()) == "exit"){
-                log.info("fdj:{}",s);
-                event.getSubject().sendMessage(s);
-            }
-            return;
-        }
+
     }
 
     private void mo(int id, long eventid, List<StringBuffer> sbList) {
