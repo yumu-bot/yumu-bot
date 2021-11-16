@@ -6,6 +6,7 @@ import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
+import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.EncodedImageFormat;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 
 @Service("friend")
@@ -42,7 +44,7 @@ public class FriendService implements MessageService{
             n2 = Integer.parseInt(matcher.group("m"));
             if(n1 > n2) {n1 ^= n2; n2 ^= n1; n1 ^= n2;}
         }
-        if (n1 < 0 || 100 < n2-n1 ){
+        if (n2 == 0 || 100 < n2-n1 ){
             throw new TipsException("参数范围错误!");
         }
 
@@ -86,7 +88,7 @@ public class FriendService implements MessageService{
                     cardO.drawB1("U" + infoO.findValue("id").asText("NaN")).drawC1("Bot");
                 } else {
                     cardO.drawB2("#" + infoO.findValue("global_rank").asText("0"))
-                            .drawB1("UID:" + infoO.findValue("id").asText("NaN"))
+                            .drawB1("U" + infoO.findValue("id").asText("NaN"))
                             .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
                                     infoO.findValue("current").asText("NaN") +
                                     "(" + infoO.findValue("progress").asText("NaN") + "%)")
@@ -100,7 +102,11 @@ public class FriendService implements MessageService{
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
         if (2480557535L == event.getSender().getId()){
-            event.getSender().sendMessage(sb.toString());
+            var file = ExternalResource.create(allFriend.toString().getBytes(StandardCharsets.UTF_8),"data.json");
+            if (from instanceof Group){
+                ((Group) from).getFilesRoot().upload(file);
+                file.close();
+            }
         }
 //        Files.write(Path.of("D:/ffxx.jpg"),p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());调试代码,勿动
         card.build().close();
