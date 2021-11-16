@@ -6,7 +6,6 @@ import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
-import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.EncodedImageFormat;
@@ -15,9 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("friend")
@@ -71,12 +67,10 @@ public class FriendService implements MessageService{
 
         p.drawBanner(PanelUtil.getBgFile(null/*"个人banner路径"*/, PanelUtil.EXPORT_FOLE_V3.resolve("Banner/b3.png").toString(),false));
         p.mainCard(card.build());
-        StringBuilder sb = new StringBuilder();
         //单线程实现好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
                 var infoO = allFriend.get(i);
-                sb.append(infoO.findValue("username").asText()).append(" -> ").append(infoO.findValue("pm_friends_only").asText()).append('\n');
 
                 var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
                 cardO.drawA1(infoO.findValue("avatar_url").asText())
@@ -103,14 +97,6 @@ public class FriendService implements MessageService{
         }
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
-        if (2480557535L == event.getSender().getId()){
-            Files.writeString(Path.of("/root/f.json"), allFriend.toString());
-            var file = ExternalResource.create(new File("/root/f.json"));
-            if (from instanceof Group){
-                ((Group) from).getFilesRoot().upload(file);
-                file.close();
-            }
-        }
 //        Files.write(Path.of("D:/ffxx.jpg"),p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());调试代码,勿动
         card.build().close();
         p.build().close();
