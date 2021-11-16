@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("friend")
@@ -102,7 +104,8 @@ public class FriendService implements MessageService{
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
         if (2480557535L == event.getSender().getId()){
-            var file = ExternalResource.create(allFriend.toString().getBytes(StandardCharsets.UTF_8),"data.json");
+            Files.writeString(Path.of("/root/f.json"), allFriend.toString());
+            var file = ExternalResource.create(new File("/root/f.json"));
             if (from instanceof Group){
                 ((Group) from).getFilesRoot().upload(file);
                 file.close();
