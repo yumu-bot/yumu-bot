@@ -3,7 +3,6 @@ package com.now.nowbot.controller;
 import com.now.nowbot.util.WebsocketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.websocket.*;
@@ -33,14 +32,16 @@ public class CtrlWebsocket {
             this.session = session;
             websockets.add(this);
             addCount();
-            pc();
+            new Thread(this::pc).start();
         } else {
             log.error("no link --" + key + "--" + token);
             session.close(new CloseReason(CloseReason.CloseCodes.getCloseCode(1015), "link:'" + key + "' ,'" + token + "' not allow"));
+            return;
         }
+        log.info("linked {}-{}",key,token);
     }
     @OnMessage
-    public void onMessage(String message, Session session) {
+    public void onMessage(Session session, String message) {
         try {
             session.getBasicRemote().sendText("sd-"+message);
         } catch (IOException e) {
@@ -59,11 +60,10 @@ public class CtrlWebsocket {
 
     boolean on = true;
 
-    @Async
     void pc() {
         while (on) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(5000);
                 if (on)
                     session.getBasicRemote().sendText("💕~");
                 else

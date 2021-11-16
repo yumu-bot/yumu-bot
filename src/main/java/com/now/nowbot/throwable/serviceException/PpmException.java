@@ -15,10 +15,7 @@ public class PpmException extends TipsException {
             this.message = message;
         }
     }
-    PpmException(String m){
-        super(m);
-    }
-    static PpmException getInstance(Type type){
-        return new PpmException(type.message);
+    public PpmException(Type type){
+        super(type.message);
     }
 }
