@@ -55,8 +55,8 @@ public class FriendService implements MessageService{
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         card.drawB3("")
-                .drawB2("#" + infoMe.getJSONObject("statistics").getString("global_rank"))
-                .drawB1(infoMe.getJSONObject("country").getString("code") + "#" + infoMe.getJSONObject("statistics").getString("country_rank"))
+                .drawB2(infoMe.getJSONObject("country").getString("code") + "#" + infoMe.getJSONObject("statistics").getString("country_rank"))
+                .drawB1("UID:" + infoMe.getString("id"))
                 .drawC2(infoMe.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
                         infoMe.getJSONObject("statistics").getJSONObject("level").getString("current") +
                         "(" + infoMe.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
@@ -75,13 +75,17 @@ public class FriendService implements MessageService{
             if (infoO.findValue("is_supporter").asBoolean(false)){
                 cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
             }
-            cardO.drawB3("")
-                    .drawB2("#" + infoO.findValue("global_rank").asText("0"))
-                    .drawB1("U"+infoO.findValue("id").asText("NaN"))
-                    .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
-                            infoO.findValue("current").asText("NaN") +
-                            "(" + infoO.findValue("progress").asText("NaN") + "%)")
-                    .drawC1(infoO.findValue("pp").asInt() + "PP");
+            //对bot特殊处理
+            if(infoO.findValue("is_bot").asBoolean(false)){
+                cardO.drawB1("UID:" + infoO.findValue("id").asText("NaN")).drawC1("Bot");
+            } else {
+                cardO.drawB2("#" + infoO.findValue("global_rank").asText("0"))
+                        .drawB1("UID:" + infoO.findValue("id").asText("NaN"))
+                        .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
+                                infoO.findValue("current").asText("NaN") +
+                                "(" + infoO.findValue("progress").asText("NaN") + "%)")
+                        .drawC1(infoO.findValue("pp").asInt() + "PP");
+            }
             p.addFriendCard(cardO.build());
         }
 
