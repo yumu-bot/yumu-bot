@@ -9,6 +9,8 @@ import com.now.nowbot.util.PanelUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.EncodedImageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import java.util.regex.Matcher;
 @Service("friend")
 public class FriendService implements MessageService{
 //    static final ThreadPoolExecutor threads = new ThreadPoolExecutor(0, 12, 100, TimeUnit.MILLISECONDS, new LinkedBlockingQueue(256));
+    private static final Logger log = LoggerFactory.getLogger(FriendService.class);
 
     OsuGetService osuGetService;
     @Autowired
@@ -56,7 +59,7 @@ public class FriendService implements MessageService{
         }
         card.drawB3("")
                 .drawB2(infoMe.getJSONObject("country").getString("code") + "#" + infoMe.getJSONObject("statistics").getString("country_rank"))
-                .drawB1("UID:" + infoMe.getString("id"))
+                .drawB1("U" + infoMe.getString("id"))
                 .drawC2(infoMe.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
                         infoMe.getJSONObject("statistics").getJSONObject("level").getString("current") +
                         "(" + infoMe.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
@@ -66,27 +69,31 @@ public class FriendService implements MessageService{
         p.mainCard(card.build());
         //单线程实现好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
-            var infoO = allFriend.get(i);
+            try {
+                var infoO = allFriend.get(i);
 
-            var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
-            cardO.drawA1(infoO.findValue("avatar_url").asText())
-                    .drawA2(PanelUtil.getFlag(infoO.findValue("country_code").asText()))
-                    .drawA3(infoO.findValue("username").asText());
-            if (infoO.findValue("is_supporter").asBoolean(false)){
-                cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
+                var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
+                cardO.drawA1(infoO.findValue("avatar_url").asText())
+                        .drawA2(PanelUtil.getFlag(infoO.findValue("country_code").asText()))
+                        .drawA3(infoO.findValue("username").asText());
+                if (infoO.findValue("is_supporter").asBoolean(false)){
+                    cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
+                }
+                //对bot特殊处理
+                if(infoO.findValue("is_bot").asBoolean(false)){
+                    cardO.drawB1("U" + infoO.findValue("id").asText("NaN")).drawC1("Bot");
+                } else {
+                    cardO.drawB2("#" + infoO.findValue("global_rank").asText("0"))
+                            .drawB1("UID:" + infoO.findValue("id").asText("NaN"))
+                            .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
+                                    infoO.findValue("current").asText("NaN") +
+                                    "(" + infoO.findValue("progress").asText("NaN") + "%)")
+                            .drawC1(infoO.findValue("pp").asInt() + "PP");
+                }
+                p.addFriendCard(cardO.build());
+            } catch (Exception e) {
+                log.error("卡片加载第{}个失败,数据为\n{}",i,allFriend.get(i).toString(),e);
             }
-            //对bot特殊处理
-            if(infoO.findValue("is_bot").asBoolean(false)){
-                cardO.drawB1("UID:" + infoO.findValue("id").asText("NaN")).drawC1("Bot");
-            } else {
-                cardO.drawB2("#" + infoO.findValue("global_rank").asText("0"))
-                        .drawB1("UID:" + infoO.findValue("id").asText("NaN"))
-                        .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
-                                infoO.findValue("current").asText("NaN") +
-                                "(" + infoO.findValue("progress").asText("NaN") + "%)")
-                        .drawC1(infoO.findValue("pp").asInt() + "PP");
-            }
-            p.addFriendCard(cardO.build());
         }
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
