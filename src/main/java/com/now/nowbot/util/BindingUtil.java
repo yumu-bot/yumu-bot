@@ -21,7 +21,6 @@ public class BindingUtil {
             Files.createFile(pt);
         }
         Files.writeString(pt, JSONObject.toJSONString(user));
-        System.gc();
     }
 
     public static BinUser readUser(long qq) throws Exception {
@@ -32,7 +31,6 @@ public class BindingUtil {
             date = JSONObject.parseObject(s, BinUser.class);
 
         }
-        System.gc();
         if (date == null) throw new TipsException("当前用户未绑定");
         return date;
     }
@@ -50,7 +48,11 @@ public class BindingUtil {
         } catch (IOException e) {
             log.error("osu id文件写入异常", e);
         }
-        System.gc();
+    }
+
+    public static boolean unBind(BinUser user) throws IOException {
+        Path pt = Path.of(NowbotConfig.BIN_PATH + user.getQq() + ".json");
+        return Files.deleteIfExists(pt);
     }
 
     public static int readOsuID(String name) {
@@ -77,7 +79,6 @@ public class BindingUtil {
         } catch (IOException e) {
             log.error("osu id文件读取异常", e);
         }
-        System.gc();
         return id;
     }
 }

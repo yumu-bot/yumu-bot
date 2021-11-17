@@ -24,12 +24,21 @@ public class BindService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
+
         if (Permission.isSupper(event.getSender().getId())){
             At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+            if (matcher.group("un") != null){
+                var user = BindingUtil.readUser(at.getTarget());
+                if (BindingUtil.unBind(user)){
+                    event.getSubject().sendMessage("解除成功");
+                }else {
+                    event.getSubject().sendMessage("解除失败");
+                }
+            }
             if (at != null) {
                 event.getSubject().sendMessage("请发送绑定用户名");
                 var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
-                var s = ASyncMessageUtil.getEvent(lock);
+                var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
                     event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>" + s.getMessage().contentToString());
                 }else {
