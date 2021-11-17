@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,7 @@ public class ASyncMessageUtil <T extends MessageEvent>{
             return System.currentTimeMillis()-time > OFF_TIME;
         }
     }
-    private static final Map<lock, LinkedBlockingQueue<MessageEvent>> map = new ConcurrentHashMap<>();
+    private static final Map<lock, BlockingQueue<MessageEvent>> map = new ConcurrentHashMap<>();
     private static final Logger log = LoggerFactory.getLogger(ASyncMessageUtil.class);
 
     /**
