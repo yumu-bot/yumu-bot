@@ -1,7 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -21,7 +23,21 @@ public class BindService implements MessageService {
     OsuGetService osuGetService;
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher){
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
+        if (Permission.isSupper(event.getSender().getId())){
+            At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+            if (at != null) {
+                event.getSubject().sendMessage("请发送绑定用户名");
+                var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
+                var s = ASyncMessageUtil.getEvent(lock);
+                if (s != null) {
+                    event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>" + s.getMessage().contentToString());
+                }else {
+                    event.getSubject().sendMessage("超时或错误,结束接受");
+                }
+                return;
+            }
+        }
         //将当前毫秒时间戳作为 key
         long d = System.currentTimeMillis();
         //群聊验证是否绑定

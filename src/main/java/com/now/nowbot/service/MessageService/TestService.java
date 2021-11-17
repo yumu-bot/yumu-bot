@@ -177,7 +177,7 @@ public class TestService implements MessageService {
             data = osuGetService.getMatchInfo(id);
         }
         var events = data.get("events");
-        //因为ppy对大于100条event采用的是分页查询,先递归至房间创建的页,然后顺页执行 ((超级吃内存警告
+        //因为ppy对大于100条event采用的是分页查询,先递归至房间创建的页,然后顺页执行
         if (!events.get(0).get("detail").get("type").asText().equals("match-created")) {
             mo(id, events.get(0).get("id").asLong(), sbList);
         }
