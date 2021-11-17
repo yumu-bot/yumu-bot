@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * p.s. 以上的不占用字符,可理解为允许这样的匹配格式,但是已匹配的内容可能之后被重复匹配,且无法被Matcher.group()获取到,通常情况下适用于 替换文本/匹配固定'指令及参数'想获得参数值但是不想获得指令本身
  */
 public enum Instruction {
-    BIND("bind",    Pattern.compile("^[!！](?i)(ym)?(?<un>un)bind"), "!ymbind 直接绑定"),
+    BIND("bind",    Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind"), "!ymbind 直接绑定"),
     BPHT("bpht",    Pattern.compile("^[!！](?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymbpht 查询bp"),
     HELP("help",    Pattern.compile("^[!！](?i)(ym)?((help)|h)"), "!ymh/!ymhelp"),
     SWITCH("switch",Pattern.compile("^[!！](?i)switch(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?(\\s?(?<p4>\\w+))?"), null),
