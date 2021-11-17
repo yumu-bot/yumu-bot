@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class ASyncMessageUtil {
     private static final int OFF_TIME = 90*1000;
@@ -71,7 +72,7 @@ public class ASyncMessageUtil {
             ((l) lock).time = System.currentTimeMillis();
             var l = map.get(lock);
             if(l != null) {
-                return l.take();
+                return l.poll(OFF_TIME, TimeUnit.MILLISECONDS);
             }
         }
         return null;
