@@ -63,30 +63,32 @@ public enum Instruction {
 
 /* 功能大纲备份，我懒得对齐了看到的帮我对齐一下
 
-YumuBot功能大纲 20211111
+YumuBot功能大纲 20211119
 1 内部指令（不可关闭）
 1.1 服务状态-Bot服务状态，PPYAPI状态ping/ymping/"yami?"ymppy                                       ping完成部分
 1.2 用户限制-封禁、解封用户，退出某群并拉入黑名单ymban/ymunban                                         待数据库
 1.3 功能开关-查询模块是否开启，控制以下所有模块开关ymswitch/ymsw                                       合并到上面,待数据库
-1.4 Bot基础指令查询ymhelp/ymh                                                                    完成
-1.5 防刷屏机制(ymantispam/ymas)：三次或以上30秒内申请同一项指令，或是四次或以上30秒内申请多项指令均触发防刷屏。
+1.4 Bot基础指令查询ymhelp/ymh
+1.5 防刷屏机制ymantispam/ymas开启后，三次或以上30秒内申请同一项指令，或是四次或以上30秒内申请多项指令均触发防刷屏。
 触发时，bot发送随机一句话提示刷屏，如果再次触发则冷静5分钟。ymz指令和此通用。
 
 2 成绩
-2.1 最近成绩-最近通过ympr/ymp，最近包括失败ymrecent/ymr，用户最好成绩ymbp/ymb，用户单图最好成绩ymscore/yms，用户前后最好成绩ymbps
+2.1 最近成绩-最近通过ympr/ymp，最近包括失败ymrecent/ymr，用户最好成绩ymbp/ymb，用户单图最好成绩ymscore/yms，用户前后最好成绩ymbps...待定
 2.2 个人信息-基础信息yminfo/ymi，进阶信息ymx
 2.3 PPminus/PPplus-单人PP+-查询ymppm/ppm/ymppp/ppp，对比PP+-查询ymppmvs/ympppvs（自己与他人，或指定的两个人）
 
 3 查询
 3.1 百科查询ymwiki/ymw
-3.2 头衔图查询ymchart/ymc
+3.2 头衔图查询，课题功能ymcourse/ymc
 3.3 赛图查询ymtour/ymt
 3.4 单图信息查询ymmap/ymm
 !ymmap [bid] (acc) (combo%)+[mods]
-3.5 天气查询 ymweather/ymwt
-3.7 谱面试听 ymaudition/yma
+3.7 谱面试听 ymaudition/yma [bid]
 3.8 谱面搜索 ymsearch/ymsh
-3.9 好友查询 ymfriend/ymf
+3.9 好友查询 ymfriend/ymf [num]
+3.10 用户查询 ymmutual/ymmu [bid/username] 输出用户的主页链接
+3.11 今日历史记录查询(ymrecent拓展) ymtoday/ymtd 默认查询用户24h内所有成绩并列出，最多100条。同时需要查询用户bp，并进行对比，若有新bp则加发光效果
+3.12 谱师查询 ymmapper/ymmr
 
 
 4 普通娱乐
@@ -95,8 +97,8 @@ YumuBot功能大纲 20211111
 4.3 今日运势ymdivine/ymd
 4.4 判断（选A还是选B）...
 4.5 色图ymsetu/ymse
-4.6 从网站获得的色图ymkonachan(yandere)/ymk(ymy) ...
-4.7 奇特的个人对决？ymversus/ymv...
+4.6 从网站获得的色图ymkonachan(yandere)/ymk(ymy) ...待定
+4.7 奇特的个人对决？ymversus/ymv ...待定
 
 5 自定义
 5.1 设置主模式ymsetmode/ymsm
@@ -110,27 +112,55 @@ YumuBot功能大纲 20211111
 
 
 7 辅助
-7.1 监视多人游戏房间ymmonitor/ymmo：监视，通报成绩，获取获胜条件并自动判断，发起监视的用户修改当前得分等
-7.2 木斗力ymrating/ymra，通过计算已经打完的比赛来给出评价分数。
-7.3 移调ymtrans/ymtr，输入主音，给出相应的大调、和声小调、旋律小调组合。
-7.4 禁言睡眠ymsleep/ymz，给予精致8小时睡眠并评价。至少1小时后，再次私聊bot!ymz即可解除禁言，但进入7小时冷却时间。（冷却时间三次以上申请sleep即触发刷屏机制！）
+7.1 移调ymtrans/ymtr，输入主音，给出相应的大调、和声小调、旋律小调组合。
+7.2 禁言睡眠ymsleep/ymz，给予精致8小时睡眠并评价。至少1小时后，再次私聊bot!ymz即可解除禁言，但进入7小时冷却时间。（冷却时间三次以上申请sleep即触发刷屏机制！）
+7.3 天气 ymweather/ymwt [city]
 
 8 聊天
 8.1 全局被动回复(ympassivechat)
 8.2 私聊聊天(ymchat)-正常聊天，女友聊天
 
+9 比赛专用
+9.1 进入主页ymtournament/ymt
+主页其实就是一张图片或者面板，介绍功能，通报最近的比赛或者elo变化。从otsu获取。
+
+9.2 ELO查询ymelo/yme [uid]
+查询某人的elo，走爆炸鸽的API
+
+9.3 监视比赛ymmonitor/ymmo：监视，通报成绩，获取获胜条件并自动判断，允许发起监视的用户修改当前得分或者数据等
+ymmo(:)(ratingmode) [mpid]
+
+若监听到房间已关闭，或者请求的用户输入
+!ymmo closed，则关闭监听并按ymra:m(木斗力)面板输出
+
+9.4 木斗力ymrating/ymra [bid] (warmup) (includingfail?)，通过计算已经打完的比赛来给出评价分数。
+
+9.5 斗力拓展 ymra:m 默认 ymra:p 光斗力 ymra:g 高斗力 ymra:s osuplus斗力...待定
+使用第三方算法计算。
+
+9.6 图池查询 ympool/ympo [string]，类似于ymwiki，默认展示出现有的所有图池，输入对应图池编号（如MP5S12R1）获得图池展示。
+
+9.7 图池录入 ymaddpool/ymap [poolname] [a long string]可允许玩家录入图池。然后发送到bot群审核（审核图即录入展示的界面），通过审核，bot即会记录下此图池并存档。
+
+同时需要存储非r/a/l谱面（最好是获取到osu文件）和非r/a/l谱面的banner头图。
+用户查询的时候，需要对比谱面状态非ranked/approved/loved的谱面。若官网无数据，则**保留本地文件**，并在谱面上作提示（比如变灰之类，但是旧数据不能丢），若官网有数据，则**替换本地文件**
+
+9.8 上传比赛 ymuploadmatch/ymum [bid] (warmup) (includingfail?)
+匹配方式和ymra一样把比赛上传到otsu供爆炸鸽记录。然后唤起ymra:p(光斗力)并输出结果。
+
+
 短链字母表
 A/ymaudition
 B/ymbestperformance
-C/ymchart
+C/ymcourse
 D/ymdivine
-E
+E/ymelo
 F/ymfriend
 G/ymgold
 H/ymhelp            [Long term update]
 I/yminfomation      [Temporary]
 J
-K/ymk?
+K
 L
 M/ymmap
 N
@@ -139,17 +169,21 @@ P/ympassrecent      [Temporary]
 Q
 R/ymrecent          [Temporary]
 S/ymscore
-T
+T/ymtournament
 U
-V/ymv?
+V
 W/ymwiki            [Long term update]
 X
-Y/ymy?
+Y
 Z/ymsleep/ymz
 
-BPS/ymbestperformances 
+AS/ymantispam
+AP/ymaddpool
 DW/ymdraw
 MO/ymmonitor 也可能改名叫YMOB
+MU/ymmutual
+MR/ymmapper
+PO/ympool
 RA/ymrating         [Temporary]
 SB/ymsetbanner
 SC/ymsetcard
@@ -158,10 +192,17 @@ SH/ymsearch
 SM/ymsetmode
 SP/ymsetpanel
 SW/ymswitch
+TD/ymtoday
+UM/ymuploadmatch
 WC/ymwordcloud
 WT/ymweather
 
+PPM/ymppm/ppm/ppmvs
+PPP/ymppp/ppp/pppvs
 
+
+没有缩写的功能
+ymban/ymunban
 */
 
 
