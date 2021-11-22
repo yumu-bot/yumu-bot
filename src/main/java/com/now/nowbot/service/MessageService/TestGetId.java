@@ -20,15 +20,11 @@ public class TestGetId implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         if (Permission.isSupper(event.getSender().getId())){
             var idsStr = matcher.group("ids").split(",");
-            int[] ids = new int[idsStr.length];
-            for (int i = 0; i < idsStr.length && i < 50; i++) {
-                ids[i] = Integer.parseInt(idsStr[i]);
-            }
-            var data = osuGetService.getPlayersInfo(ids);
-
             StringBuilder sb = new StringBuilder();
-            for (var ignored : data){
-                sb.append(ignored.findValue("username").asText()).append('\n');
+            for(var idStr : idsStr){
+                var id = Integer.parseInt(idStr);
+                var data = osuGetService.getPlayerOsuInfo(id);
+                sb.append(id).append("***").append(data.getString("username")).append('\n');
             }
             event.getSubject().sendMessage(sb.toString());
         }else return;
