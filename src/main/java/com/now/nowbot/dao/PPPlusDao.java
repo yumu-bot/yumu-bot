@@ -4,6 +4,8 @@ import com.now.nowbot.entity.PPPLite;
 import com.now.nowbot.mapper.PPPlusMapper;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.service.OsuGetService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 
 @Component
 public class PPPlusDao {
+    Logger log = LoggerFactory.getLogger("PP+Dao");
     @Autowired
     PPPlusMapper ppPlusMapper;
     @Autowired
@@ -31,6 +34,7 @@ public class PPPlusDao {
         return new PPPLite(obj.getUid(), LocalDateTime.now(), obj.getTotal(), obj.getJump(), obj.getFlow(), obj.getAcc(), obj.getSta(), obj.getSpd(), obj.getPre());
     }
     PPPlusObject parse(PPPLite pppLite){
+        log.info(pppLite.toString());
         return new PPPlusObject(pppLite.getId(),pppLite.getDate(), pppLite.getTotal(), pppLite.getJump(), pppLite.getFlow(), pppLite.getAcc(), pppLite.getSta(), pppLite.getSpd(), pppLite.getPre());
     }
 

@@ -122,4 +122,20 @@ public class PPPLite {
     public void setPre(Double pre) {
         Pre = pre;
     }
+
+    @Override
+    public String toString() {
+        return "PPPLite{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", date=" + date +
+                ", Total=" + Total +
+                ", Jump=" + Jump +
+                ", Flow=" + Flow +
+                ", Acc=" + Acc +
+                ", Sta=" + Sta +
+                ", Spd=" + Spd +
+                ", Pre=" + Pre +
+                '}';
+    }
 }
