@@ -684,8 +684,12 @@ public class OsuGetService {
         if (id.length<=0 || id.length>50 ){
             return null;
         }
+        StringBuilder sb = new StringBuilder();
+        for (int i : id) {
+            sb.append(i).append(',');
+        }
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/")
-                .queryParam("ids[]", id)
+                .queryParam("ids[]", sb.toString())
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 

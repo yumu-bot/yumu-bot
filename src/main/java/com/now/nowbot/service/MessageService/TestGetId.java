@@ -21,7 +21,7 @@ public class TestGetId implements MessageService{
         if (Permission.isSupper(event.getSender().getId())){
             var idsStr = matcher.group("ids").split(",");
             int[] ids = new int[idsStr.length];
-            for (int i = 0; i < idsStr.length; i++) {
+            for (int i = 0; i < idsStr.length && i < 50; i++) {
                 ids[i] = Integer.parseInt(idsStr[i]);
             }
             var data = osuGetService.getPlayersInfo(ids);
