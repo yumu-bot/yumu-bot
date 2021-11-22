@@ -41,6 +41,7 @@ public enum Instruction {
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST("test",    Pattern.compile("^[!！].*"),null),
+    TESTID("t-id",    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)"),null),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！
@@ -232,15 +233,18 @@ ymban/ymunban
     }
 
     public static void main(String[] args) {
-        var p = Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
-        var m = p.matcher("!ymf 4-7");
+        var p = Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)");
+        var m = p.matcher("!ids 2314,2543,6645,23142432");
         if(m.find()){
-            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
-            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
-            s ^= e;
-            e ^= s;
-            s ^= e;
-            System.out.println(s+"|"+e);
+//            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
+//            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
+//            s ^= e;
+//            e ^= s;
+//            s ^= e;
+            String as = m.group("ids");
+            for (var s : as.split(",")){
+                System.out.println(s);
+            }
         }
     }
 }

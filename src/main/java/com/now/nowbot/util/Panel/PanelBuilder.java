@@ -77,7 +77,7 @@ public class PanelBuilder {
         String leftText = "powered by Yumubot" + text;
         Font font = new Font(SkiaUtil.getTorusSemiBold(), TopTipeFontSize);
         TextLine leftLine = TextLine.make(leftText, font);
-        TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC-8'").format(LocalDateTime.now()), font);
+        TextLine rightLine = TextLine.make(DateTimeFormatter.ofPattern("'time: 'yyyy-MM-dd HH:mm:ss' UTC+8'").format(LocalDateTime.now()), font);
         Paint p = new Paint().setARGB(100, 0, 0, 0);
         try (font; leftLine; rightLine;p) {
 //                    canvas.drawRRect(RRect.makeXYWH(0, 0, leftLine.getWidth() + 2*r, leftLine.getHeight(), r), p);

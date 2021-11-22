@@ -34,7 +34,6 @@ public class PPPlusDao {
         return new PPPLite(obj.getUid(), LocalDateTime.now(), obj.getTotal(), obj.getJump(), obj.getFlow(), obj.getAcc(), obj.getSta(), obj.getSpd(), obj.getPre());
     }
     PPPlusObject parse(PPPLite pppLite){
-        log.info(pppLite.toString());
         return new PPPlusObject(pppLite.getId(),pppLite.getDate(), pppLite.getTotal(), pppLite.getJump(), pppLite.getFlow(), pppLite.getAcc(), pppLite.getSta(), pppLite.getSpd(), pppLite.getPre());
     }
 

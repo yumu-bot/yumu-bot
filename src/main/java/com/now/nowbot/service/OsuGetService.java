@@ -680,7 +680,7 @@ public class OsuGetService {
      * @param id
      * @return
      */
-    public JSONArray getPlayersInfo(int... id){
+    public JsonNode getPlayersInfo(int... id){
         if (id.length<=0 || id.length>50 ){
             return null;
         }
@@ -695,7 +695,7 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " +getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
         return c.getBody();
 
     }
