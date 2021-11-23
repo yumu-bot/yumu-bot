@@ -20,6 +20,6 @@ public class HelpService implements MessageService {
 //                sb.append(ins.getDesc()).append("\n");
 //        }
 //        from.sendMessage(sb.toString());
-        from.uploadImage(ExternalResource.create(Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png"))));
+        from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png"))), from));
     }
 }
