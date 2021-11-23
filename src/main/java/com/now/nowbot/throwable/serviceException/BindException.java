@@ -4,11 +4,13 @@ import com.now.nowbot.throwable.TipsException;
 
 public class BindException extends TipsException {
     public static enum Type {
-        BIND_Client_RelieveBindSuccess("您已成功解绑。TuT"),//解绑_成功
-        BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
+        /** 解绑_成功 */
+        BIND_Client_RelieveBindSuccess("您已成功解绑。TuT"),
+        /** 解绑_失败 */
+        BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),
         BIND_Client_BindingNoName("你叫啥名呀？告诉我吧"),//绑定_玩家未输入用户名
         BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑请私聊我哦"),//绑定_玩家早已绑定
-        BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
+//        BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
 
         BIND_Me_NoBind("您还没有绑定呢，请输入 !bind 点击链接登录，完成绑定吧"),//查询自己_玩家未绑定
         BIND_Me_NoAuthorization("您撤销了授权呢，请输入 !bind 点击链接登录，重新授权吧"),//查询自己_玩家撤销授权

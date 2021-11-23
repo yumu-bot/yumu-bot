@@ -5,7 +5,6 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
-import net.mamoe.mirai.message.MessageReceipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,24 +36,23 @@ public class msgController {
                 sb.append("非法的访问:参数异常")
                         .append(e.getMessage());
             }
-            MessageReceipt msg = BindService.BIND_MSG_MAP.get(key);
-
+            var msg = BindService.BIND_MSG_MAP.get(key);
             if (msg != null) {
                 try {
                     try {
-                        msg.recall();
+                        msg.receipt().recall();
                     } catch (Exception e) {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
                         sb.append("绑定连接已超时\n请重新绑定");
                         return  sb.toString();
                     }
-                    BinUser bd = new BinUser(Long.parseLong(date[0]), code);
+                    BinUser bd = new BinUser(msg.qq(), code);
                     osuGetService.getToken(bd);
                     osuGetService.getPlayerOsuInfo(bd);
                     BindingUtil.writeUser(bd);
                     BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
-                    msg.getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                    BindService.BIND_MSG_MAP.remove(Long.valueOf(date[1]));
+                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+                    BindService.BIND_MSG_MAP.remove(key);
                     sb.append("成功绑定:\n")
                             .append(bd.getQq())
                             .append('>')
@@ -65,11 +63,10 @@ public class msgController {
                     .append(e.getLocalizedMessage());
                 }
             } else {
-                long secend = Long.parseLong(date[1]) / 1000;
-                log.info("异常绑定:绑定为超时且已被清理的绑定器\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
-                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定!\n请勿重复绑定!\n请勿重复绑定!");
+                long secend = msg.key() / 1000;
+                log.info("异常绑定:绑定超时\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
+                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定");
             }
-
         } else {
             sb.append("非法的访问\n连接异常,确认是否为绑定链接");
         }

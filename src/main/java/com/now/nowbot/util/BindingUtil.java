@@ -23,7 +23,7 @@ public class BindingUtil {
         Files.writeString(pt, JSONObject.toJSONString(user));
     }
 
-    public static BinUser readUser(long qq) throws Exception {
+    public static BinUser readUser(long qq) throws TipsException, IOException {
         Path pt = Path.of(NowbotConfig.BIN_PATH + qq + ".json");
         BinUser date = null;
         if (Files.isRegularFile(pt)) {
