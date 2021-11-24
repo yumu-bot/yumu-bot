@@ -159,16 +159,20 @@ public class SkiaUtil {
                 //当原图比目标高
                 canvas.setMatrix(Matrix33.makeScale(1f*w/img.getWidth(),1f*w/img.getWidth()));
                 //与下面同理
-                canvas.drawImage(img,0,-0.5f*(1f*img.getHeight()*w/img.getWidth() - h));
+                canvas.translate(0,-0.5f*(1f*img.getHeight()*w/img.getWidth() - h)/w*img.getWidth());
+                canvas.drawImage(img,0,0);
             } else {
                 //当原图比目标宽
                 canvas.setMatrix(Matrix33.makeScale(1f*h/img.getHeight(),1f*h/img.getHeight()));
                 //居中偏移 缩放比例(h/img.getHeight()) 后的宽度(img.getWidth()*h/img.getHeight()) 与 裁剪宽度差的一半
-                canvas.drawImage(img,-0.5f*(1f*img.getWidth()*h/img.getHeight() - w),0);
+
+                canvas.translate(-0.5f*(1f*img.getWidth()*h/img.getHeight() - w)/h*img.getHeight(),0);
+                canvas.drawImage(img,0,0);
             }
             return surface.makeImageSnapshot();
         }
     }
+
     /***
      * 绘制缩放图形
      * @param canvas
