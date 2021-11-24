@@ -39,6 +39,7 @@ public class TestService implements MessageService {
     @Override
     @CheckPermission(isSuper = true)
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
+        replay(event);
         var msg = event.getMessage();
         if (!(event instanceof GroupMessageEvent) || ((GroupMessageEvent) event).getGroup().getId() != 746671531L)
             return;
