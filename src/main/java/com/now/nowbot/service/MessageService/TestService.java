@@ -3,20 +3,28 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.QuoteReply;
+import net.mamoe.mirai.utils.ExternalResource;
+import org.jetbrains.skija.EncodedImageFormat;
+import org.jetbrains.skija.Paint;
+import org.jetbrains.skija.Rect;
+import org.jetbrains.skija.Surface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
@@ -238,17 +246,44 @@ public class TestService implements MessageService {
             }
         }
     }
-    private void replay(MessageEvent event){
-        Pattern p = Pattern.compile("testrep");
+    private void replay(MessageEvent event) throws IOException {
+        Pattern p = Pattern.compile("bg\\s+(?<bk>\\d{1,3})?(\\s*(?<yl>ylbx))?");
         Matcher m = p.matcher(event.getMessage().contentToString());
         if (!m.find()) return;
 
+        boolean stl = m.group("yl") != null;
+        int an = m.group("bk") == null ? 0 : Integer.parseInt(m.group("bk"));
+        if (an>=100) an = 99;
+        Image img;
         QuoteReply reply = event.getMessage().get(QuoteReply.Key);
         if (reply == null) return;
 
         var msg = qqMessageDao.getReply(reply);
-        Image img = (Image) event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null);
+        img = (Image) msg.stream().filter(it -> it instanceof Image).findFirst().orElse(
+                event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null)
+        ) ;
 
-        if (img != null) event.getSubject().sendMessage(img);
+        if (img == null) {
+            event.getSubject().sendMessage("没有任何图片");
+            return;
+        }
+        var skijaimg = SkiaUtil.getScaleCenterImage(SkiaUtil.lodeNetWorkImage(Image.queryUrl(img)), 1200,857);
+
+        var surface = Surface.makeRaster(skijaimg.getImageInfo());
+        var t1 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "panel05.png");
+        var t2 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + (stl?"ylbx.png":"lbx.png"));
+
+        byte[] data;
+        try(skijaimg;surface;t1;t2){
+            var canvas = surface.getCanvas();
+            canvas.drawImage(skijaimg,0,0);
+            canvas.drawRect(Rect.makeWH(surface.getWidth(),surface.getHeight()),new Paint().setARGB((int)(255f*an/100),0,0,0));
+            canvas.drawImage(t1,0,0);
+            canvas.drawImage(t2,0,0);
+            data =
+            skijaimg.encodeToData(EncodedImageFormat.PNG).getBytes();
+        }
+
+        event.getSubject().sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(data),event.getSubject()));
     }
 }
