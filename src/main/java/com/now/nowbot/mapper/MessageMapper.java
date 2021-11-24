@@ -1,6 +1,5 @@
 package com.now.nowbot.mapper;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.entity.MsgLite;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,6 +16,8 @@ public interface MessageMapper extends JpaRepository<MsgLite, Long> , JpaSpecifi
     public List<Map<String, Long>> contGroup(@Param("start") int start, @Param("end") int end);
 
     public List<MsgLite> getAllByTargetIdAndTimeBetween(Long targetId, Long start_time, Long end_time);
+
+    public MsgLite getByRawIdAndInternalFAndFromId(int rawId, int internal, Long fromId);
 
     public MsgLite getAllByRawIdAndInternalAndTime(Integer rawId, Integer internal, Long time);
 //

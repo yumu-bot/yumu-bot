@@ -40,7 +40,7 @@ public enum Instruction {
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
-    TEST("test",    Pattern.compile("^[!！].*"),null),
+    TEST("test",    Pattern.compile("[!！].*"),null),
     TESTID("t-id",    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)"),null),
 
 

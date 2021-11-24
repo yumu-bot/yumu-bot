@@ -4,8 +4,6 @@ import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
 
 import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
 
 @Entity
 @Table(name = "qq_message", indexes = {
@@ -73,6 +71,10 @@ public class MsgLite{
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public MessageChain getMessage(){
+        return MessageChain.deserializeFromJsonString(content);
     }
 
     public Integer getInternal() {

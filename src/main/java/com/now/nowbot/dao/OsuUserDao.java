@@ -8,8 +8,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class OsuUserDao {
-    @Autowired
     OsuUserMapper osuUserMapper;
+    @Autowired
+    OsuUserDao(OsuUserMapper osuUserMapper){
+        this.osuUserMapper = osuUserMapper;
+    }
+
     public OsuUserLite parsLite(JsonNode node){
         var osuUser = new OsuUserLite();
         osuUser.setOsuID(node.get("id").asInt());

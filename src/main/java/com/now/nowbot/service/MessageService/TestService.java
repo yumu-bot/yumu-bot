@@ -3,12 +3,15 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.message.data.QuoteReply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +27,14 @@ import java.util.regex.Pattern;
 @Service("test")
 public class TestService implements MessageService {
     private final Logger log = LoggerFactory.getLogger(TestService.class);
-    @Autowired
+
     OsuGetService osuGetService;
+    QQMessageDao qqMessageDao;
+    @Autowired
+    public TestService(OsuGetService osuGetService, QQMessageDao qqMessageDao){
+        this.osuGetService = osuGetService;
+        this.qqMessageDao = qqMessageDao;
+    }
 
     @Override
     @CheckPermission(isSuper = true)
@@ -227,5 +236,18 @@ public class TestService implements MessageService {
                 }
             }
         }
+    }
+    private void replay(MessageEvent event){
+        Pattern p = Pattern.compile("testrep");
+        Matcher m = p.matcher(event.getMessage().contentToString());
+        if (!m.find()) return;
+
+        QuoteReply reply = event.getMessage().get(QuoteReply.Key);
+        if (reply == null) return;
+
+        var msg = qqMessageDao.getReply(reply);
+        Image img = (Image) event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null);
+
+        if (img != null) event.getSubject().sendMessage(img);
     }
 }
