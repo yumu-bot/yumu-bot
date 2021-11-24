@@ -37,6 +37,7 @@ public enum Instruction {
     SCORE("score",  Pattern.compile("^[!！]score\\s?(?<bid>\\d+)"),null),
     UPDATE("update",Pattern.compile("^&!update$"),null),
     FRIEND("friend",Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?"),"只能查自己,参数n,n-m,最大100,太多就1-100,101-200..."),
+    CATPANEL("cpanel", Pattern.compile("[!！]bg(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?"), null),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
@@ -57,7 +58,6 @@ public enum Instruction {
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),
 
     //历史指令 存档一下
-//    CATPANEL("cpanel", Pattern.compile("^[!！]\\s*(?i)cpanel(\\s+bk:(?<bk>\\d+))?(\\s+?<yl>ylbx)?"), null),
 //    PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu name] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
 //    PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu name|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
 //    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
