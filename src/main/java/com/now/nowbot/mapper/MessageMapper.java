@@ -17,7 +17,7 @@ public interface MessageMapper extends JpaRepository<MsgLite, Long> , JpaSpecifi
 
     public List<MsgLite> getAllByTargetIdAndTimeBetween(Long targetId, Long start_time, Long end_time);
 
-    public MsgLite getByRawIdAndInternalFAndFromId(int rawId, int internal, Long fromId);
+    public MsgLite getByRawIdAndInternalAndFromId(int rawId, int internal, Long fromId);
 
     public MsgLite getAllByRawIdAndInternalAndTime(Integer rawId, Integer internal, Long time);
 //
