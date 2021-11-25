@@ -6,24 +6,46 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class ASyncMessageUtil <T extends MessageEvent>{
-    private static final int OFF_TIME = 90*1000;
-    static class lock {
+public class ASyncMessageUtil{
+
+    private static final Long OFF_TIME = 90*1000L;
+    static class Lock{
+
         Long group;
         Long send;
-        Long time = System.currentTimeMillis();
+        long time = System.currentTimeMillis();
+        long off = 0;
+        MessageEvent msg;
+        // 线程同步锁
+        private final ReentrantLock reentrantLock = new ReentrantLock();
+        private final Condition getCondition = reentrantLock.newCondition();
 
         boolean isClose(){
             return System.currentTimeMillis()-time > OFF_TIME;
         }
+
+        void checkAdd(MessageEvent message){
+            if (
+                    (this.group == null && message.getSender().getId() == this.send) ||
+                    (this.send == null && message instanceof GroupMessageEvent && message.getSubject().getId() == this.group) ||
+                    (message instanceof GroupMessageEvent && message.getSubject().getId() == this.group && message.getSender().getId() == this.send)
+            ){
+                this.reentrantLock.lock();
+                try {
+                    this.msg = message;
+                    getCondition.signal();
+                } finally {
+                    reentrantLock.unlock();
+                }
+            }
+        }
+
     }
-    private static final Map<lock, BlockingQueue<MessageEvent>> map = new ConcurrentHashMap<>();
+    private static final CopyOnWriteArrayList<Lock> lockList = new CopyOnWriteArrayList<>();
     private static final Logger log = LoggerFactory.getLogger(ASyncMessageUtil.class);
 
     /**
@@ -33,11 +55,14 @@ public class ASyncMessageUtil <T extends MessageEvent>{
      * @return
      */
     public static Object getLock(long group, long send){
-        var l = new lock();
+        return getLock(group, send, OFF_TIME);
+    }
+    public static Object getLock(long group, long send, Long offTime){
+        var l = new Lock();
         l.group = group;
         l.send = send;
-        var v = new LinkedBlockingQueue<MessageEvent>();
-        map.put(l, v);
+        l.off = offTime;
+        lockList.add(l);
         return l;
     }
 
@@ -47,10 +72,13 @@ public class ASyncMessageUtil <T extends MessageEvent>{
      * @return
      */
     public static Object getSenderLock(long send){
-        var l = new lock();
+        return getSenderLock(send, OFF_TIME);
+    }
+    public static Object getSenderLock(long send, Long offTime){
+        var l = new Lock();
         l.send = send;
-        var v = new LinkedBlockingQueue<MessageEvent>();
-        map.put(l, v);
+        l.off = offTime;
+        lockList.add(l);
         return l;
     }
 
@@ -60,10 +88,13 @@ public class ASyncMessageUtil <T extends MessageEvent>{
      * @return
      */
     public static Object getGroupLock(long group){
-        var l = new lock();
+        return getGroupLock(group, OFF_TIME);
+    }
+    public static Object getGroupLock(long group, Long offTime){
+        var l = new Lock();
         l.group = group;
-        var v = new LinkedBlockingQueue<MessageEvent>();
-        map.put(l, v);
+        l.off = offTime;
+        lockList.add(l);
         return l;
     }
 
@@ -73,40 +104,31 @@ public class ASyncMessageUtil <T extends MessageEvent>{
      */
     public static void put(MessageEvent message){
         close();
-        map.forEach((lock, v)->{
-            if (!lock.isClose()){
-                //锁在生效阶段
-                try {
-                    if (lock.group == null && message.getSender().getId() == lock.send){
-                        //只监听发送人
-                        v.put(message);
-                    }else if (lock.send == null && message instanceof GroupMessageEvent && message.getSubject().getId() == lock.group){
-                        //只监听群组
-                        v.put(message);
-                    }else if( message instanceof GroupMessageEvent && message.getSubject().getId() == lock.group && message.getSender().getId() == lock.send){
-                        //指定群组与发送人的
-                        v.put(message);
-                    }
-                } catch (InterruptedException e) {
-                    //do nothing
-                }
-            }
+        lockList.forEach(lock -> {
+            lock.checkAdd(message);
         });
     }
 
     public static @Nullable MessageEvent getEvent (Object lock) throws InterruptedException{
-        if(lock instanceof ASyncMessageUtil.lock && !((ASyncMessageUtil.lock) lock).isClose()) {
-            ((ASyncMessageUtil.lock) lock).time = System.currentTimeMillis();
-            var l = map.get(lock);
-            if(l != null) {
-                return l.poll(OFF_TIME, TimeUnit.MILLISECONDS);
+        if(lock instanceof Lock t && !t.isClose()) {
+            t.time = System.currentTimeMillis();
+            t.reentrantLock.lock();
+            try {
+                while (t.msg == null) {
+                    t.getCondition.await();
+                }
+                return t.msg;
+            } finally {
+                t.reentrantLock.unlock();
+                t.msg = null;
             }
+
         }
         return null;
     }
 
     public static void close(){
-        map.keySet().removeIf(lock::isClose);
+        lockList.removeIf(Lock::isClose);
     }
 
     /**
@@ -114,6 +136,6 @@ public class ASyncMessageUtil <T extends MessageEvent>{
      * @param lock
      */
     public static void close(Object lock){
-        map.remove(lock);
+        lockList.remove(lock);
     }
 }
