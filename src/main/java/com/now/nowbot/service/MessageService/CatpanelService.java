@@ -2,9 +2,11 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.QQMessageDao;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
+import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
@@ -36,7 +38,12 @@ public class CatpanelService implements MessageService {
         Image img;
         QuoteReply reply = event.getMessage().get(QuoteReply.Key);
         if (reply != null) {
-            var msg = qqMessageDao.getReply(reply);
+            MessageChain msg = null;
+            try {
+                msg = qqMessageDao.getReply(reply);
+            } catch (Exception e) {
+                throw new TipsException("这张图不行!");
+            }
             img = (Image) msg.stream().filter(it -> it instanceof Image).findFirst().orElse(
                     event.getMessage().stream().filter(it -> it instanceof Image).findFirst().orElse(null)
             );
