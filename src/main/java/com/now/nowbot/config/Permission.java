@@ -102,13 +102,14 @@ public class Permission {
         //初始化功能关闭菜单
         var path = Path.of(NowbotConfig.RUN_PATH+"switch.json");
         if (Files.isRegularFile(path)){
-
             try {
                 JavaType type = maper.getTypeFactory().constructParametricType(CopyOnWriteArraySet.class, Instruction.class);
                 OFF_SERVICE = maper.readValue(new File(NowbotConfig.RUN_PATH+"switch.json"), CopyOnWriteArraySet.class);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }else {
+            OFF_SERVICE = new CopyOnWriteArraySet<>();
         }
 
         log.info("名单初始化完成");
