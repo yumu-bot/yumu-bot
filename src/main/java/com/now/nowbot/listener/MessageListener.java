@@ -143,7 +143,10 @@ public class MessageListener extends SimpleListenerHost {
     @EventHandler
     public void msg(MessagePostSendEvent event) {
         log.info(event.getMessage().contentToString());
+        //存储bot自己的消息
+        messageMapper.save(new MsgLite(event.getMessage()));
     }
+
 
     /***
      * ImageUploadEvent 图片上传事件
