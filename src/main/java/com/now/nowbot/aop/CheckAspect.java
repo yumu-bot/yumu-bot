@@ -3,7 +3,6 @@ package com.now.nowbot.aop;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
-import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
@@ -20,18 +19,14 @@ import org.springframework.stereotype.Service;
 @Aspect
 @Component
 public class CheckAspect {
-    @Autowired
     Permission permission;
-    @Pointcut("@annotation(com.now.nowbot.aop.CheckPermission)")
-    public void annotatedMethodsPerm() {
+    @Autowired
+    public CheckAspect(Permission permission){
+        this.permission = permission;
     }
 
-    @Pointcut("@within(com.now.nowbot.aop.CheckPermission)")
-    public void annotatedClassesPerm() {
-    }
-
-    @Pointcut("target(com.now.nowbot.service.MessageService.MessageService)))")
-    public void annotatedMethodsRep(){
+    @Pointcut("execution(public void com.now.nowbot.service.MessageService..HandleMessage(net.mamoe.mirai.event.events.MessageEvent,java.util.regex.Matcher)) && @within(org.springframework.stereotype.Service)")
+    public void servicePoint(){
     }
 
     /***
@@ -41,11 +36,18 @@ public class CheckAspect {
      * @return
      * @throws TipsException
      */
-    @Before("(annotatedClassesPerm() || annotatedMethodsPerm()) && @annotation(CheckPermission)")
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws LogException {
+    @Before("@annotation(CheckPermission)")/* */
+    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws Exception {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
         var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
+
+        if (Permission.isSupper(event.getSender().getId())){
+            //超管无视任何限制
+            return args;
+        }else if (CheckPermission.SupperOnly()){
+            throw new LogException("有人使用最高权限", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+        }
 
         if (!(event instanceof GroupMessageEvent)){
             if (!permission.containsFriend(servicename, event.getSender().getId())) {
@@ -56,6 +58,7 @@ public class CheckAspect {
                 throw new LogException("已关闭 群组", new RuntimeException(((GroupMessageEvent) event).getGroup().getId()+" -> "+servicename));
             }
         }
+
 //        if (CheckPermission.isBotSuper()){
 //            if(!Permission.superUser.contains(event.getSender().getId()))
 //                throw new TipsException("此功能已关闭");
@@ -85,16 +88,18 @@ public class CheckAspect {
         return args;
     }
 
-    Contact r = null;
-    @Before("annotatedMethodsRep()")
-    public void checkRepeat(@NotNull JoinPoint point){
-        if (point.getArgs().length>0) {
-            var event = (MessageEvent) point.getArgs()[0];
-        }
+    @Before("servicePoint())")
+    public Object[] checkRepeat(@NotNull JoinPoint point) throws Exception {
+        var event = (MessageEvent) point.getArgs()[0];
+        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
         //todo
+        if (Permission.isSupper(event.getSender().getId())) {
+            throw new TipsException("功能已关闭");
+        }
+        return point.getArgs();
     }
 
-    @After("annotatedMethodsRep()")
+    @After("servicePoint()")
     public void endRepeat(JoinPoint point){
     }
 }

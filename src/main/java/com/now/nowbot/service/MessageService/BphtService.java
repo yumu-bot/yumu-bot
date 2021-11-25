@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -20,6 +21,7 @@ public class BphtService implements MessageService{
     OsuGetService osuGetService;
 
     @Override
+    @CheckPermission()
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         BinUser nu = null;

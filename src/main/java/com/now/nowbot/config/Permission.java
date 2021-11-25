@@ -74,7 +74,7 @@ public class Permission {
                     else  group = Set.copyOf(permissionDao.getQQList(name,PermissionType.GROUP_B));
                 }
                 var obj = new PermissionData(friend, group);
-                obj.setSupper($beansCheck.isSuper());
+                obj.setSupper($beansCheck.userSet());
                 Permission.PERMISSIONS.put(name, obj);
             }
         });
