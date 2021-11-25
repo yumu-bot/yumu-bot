@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.service.MessageService.MessageService;
@@ -92,6 +93,7 @@ public class MessageListener extends SimpleListenerHost {
         messageMapper.save(new MsgLite(event.getMessage()));
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
+            if (Permission.serviceIsClouse(ins)) continue;
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
                 var service = (MessageService) applicationContext.getBean(ins.getName());

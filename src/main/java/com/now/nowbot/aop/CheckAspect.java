@@ -36,28 +36,16 @@ public class CheckAspect {
      * @return
      * @throws TipsException
      */
-    @Before("@annotation(CheckPermission)")/* */
-    public Object checkPermission(@NotNull JoinPoint point, @NotNull CheckPermission CheckPermission) throws Exception {
+    @Before("@annotation(CheckPermission)")
+    public Object checkPermission(JoinPoint point, @NotNull CheckPermission CheckPermission) throws Exception {
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
         var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
 
-        if (Permission.isSupper(event.getSender().getId())){
-            //超管无视任何限制
-            return args;
-        }else if (CheckPermission.SupperOnly()){
+        if (CheckPermission.supperOnly() && !Permission.isSupper(event.getSender().getId())){
             throw new LogException("有人使用最高权限", new RuntimeException(event.getSender().getId()+" -> "+servicename));
         }
 
-        if (!(event instanceof GroupMessageEvent)){
-            if (!permission.containsFriend(servicename, event.getSender().getId())) {
-                throw new LogException("已关闭 个人", new RuntimeException(event.getSender().getId()+" -> "+servicename));
-            }
-        }else {
-            if (!permission.containsGroup(servicename, ((GroupMessageEvent) event).getGroup().getId())) {
-                throw new LogException("已关闭 群组", new RuntimeException(((GroupMessageEvent) event).getGroup().getId()+" -> "+servicename));
-            }
-        }
 
 //        if (CheckPermission.isBotSuper()){
 //            if(!Permission.superUser.contains(event.getSender().getId()))
@@ -88,15 +76,28 @@ public class CheckAspect {
         return args;
     }
 
-    @Before("servicePoint())")
-    public Object[] checkRepeat(@NotNull JoinPoint point) throws Exception {
-        var event = (MessageEvent) point.getArgs()[0];
+    @Before("servicePoint()")
+    public Object[] checkRepeat(JoinPoint point) throws Exception {
+        var args = point.getArgs();
+        var event = (MessageEvent) args[0];
         var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
         //todo
-        if (Permission.isSupper(event.getSender().getId())) {
-            throw new TipsException("功能已关闭");
+
+        if (Permission.isSupper(event.getSender().getId())){
+            //超管无视任何限制
+            return args;
         }
-        return point.getArgs();
+        if (Permission.isSupper(event.getSender().getId())) {
+            return point.getArgs();
+        }
+        if (permission.containsFriend(servicename, event.getSender().getId())) {
+            return point.getArgs();
+        }
+        if (event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())){
+            return point.getArgs();
+        }
+
+        throw new LogException("权限禁止",new Exception(""));
     }
 
     @After("servicePoint()")

@@ -22,7 +22,7 @@ public enum Instruction {
     BIND("bind",    Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind"), "!ymbind 直接绑定"),
     BPHT("bpht",    Pattern.compile("^[!！](?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymbpht 查询bp"),
     HELP("help",    Pattern.compile("^[!！](?i)(ym)?((help)|h)"), "!ymh/!ymhelp"),
-    SWITCH("switch",Pattern.compile("^[!！](?i)switch(\\s+(?<p1>\\w+))?(\\s?(?<p2>\\w+))?(\\s?(?<p3>\\w+))?(\\s?(?<p4>\\w+))?"), null),
+    SWITCH("switch",Pattern.compile("^[!！](?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?"), null),
     PING("ping",    Pattern.compile("^[!！](?i)ymping"), null),
     PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"),null),
     PPPLUS("ppp",   Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ppp [osu name] std的pp+计算"),

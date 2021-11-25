@@ -71,4 +71,7 @@ public class SendmsgUtil {
     public static void addSleep(long id, int time) {
         SleepTime.put(id, System.currentTimeMillis() + 1000 * time);
     }
+    public static void wakeUp(long id){
+        SleepTime.remove(id);
+    }
 }
