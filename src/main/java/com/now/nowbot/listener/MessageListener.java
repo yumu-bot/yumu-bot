@@ -72,6 +72,8 @@ public class MessageListener extends SimpleListenerHost {
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
                     event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
                 }
+            } else if (e instanceof EventCancelledException) {
+                log.info("取消消息发送", e.getMessage());
             } else if (e instanceof LogException) {
                 log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else if (e instanceof IllegalArgumentException) {
