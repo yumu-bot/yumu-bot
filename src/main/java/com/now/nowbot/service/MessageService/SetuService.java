@@ -34,13 +34,11 @@ public class SetuService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
-        if (qq > -9){
-            return;
-        }
+
         synchronized (time){
             if(time+(15*1000)>System.currentTimeMillis()){
-                byte[] img = null;
                 try {
+                    byte[] img;
                     img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH,"xxoo.jpg"));
                     from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(img),from));
                 } catch (IOException e) {
