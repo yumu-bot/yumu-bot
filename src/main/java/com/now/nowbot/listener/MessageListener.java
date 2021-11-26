@@ -93,7 +93,9 @@ public class MessageListener extends SimpleListenerHost {
         messageMapper.save(new MsgLite(event.getMessage()));
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
+            //功能关闭 优先级高于aop拦截
             if (Permission.serviceIsClouse(ins)) continue;
+
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
             if (matcher.find() && applicationContext != null) {
                 var service = (MessageService) applicationContext.getBean(ins.getName());

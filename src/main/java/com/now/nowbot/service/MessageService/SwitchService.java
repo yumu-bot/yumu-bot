@@ -67,8 +67,9 @@ public class SwitchService implements MessageService{
             }
             case "list" -> {
                 StringBuilder sb = new StringBuilder();
+                var list = Permission.getClouseServices();
                 for (Instruction value : Instruction.values()) {
-                    sb.append(value).append('\n');
+                    sb.append(value).append(list.contains(value)?'×':'√').append('\n');
                 }
                 from.sendMessage(sb.toString());
             }

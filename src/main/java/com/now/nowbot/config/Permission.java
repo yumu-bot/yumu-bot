@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,6 +108,7 @@ public class Permission {
                 OFF_SERVICE = maper.readValue(new File(NowbotConfig.RUN_PATH+"switch.json"), CopyOnWriteArraySet.class);
             } catch (IOException e) {
                 e.printStackTrace();
+                OFF_SERVICE = new CopyOnWriteArraySet<>();
             }
         }else {
             OFF_SERVICE = new CopyOnWriteArraySet<>();
@@ -146,6 +148,11 @@ public class Permission {
         return supetList.contains(id);
     }
 
+    /**
+     * 基于文件保存的 单功能开关
+     * @param i
+     * @return
+     */
     public static boolean serviceIsClouse(Instruction i){
         return OFF_SERVICE.contains(i);
     }
@@ -174,14 +181,8 @@ public class Permission {
         }
     }
 
-    public static String[] getClouseServices(){
-        String [] names = new String[OFF_SERVICE.size()];
-        int i = 0;
-        for (var instruction : OFF_SERVICE){
-            names[i] = instruction.getName();
-            i++;
-        }
-        return names;
+    public static List<Instruction> getClouseServices(){
+        return OFF_SERVICE.stream().toList();
     }
 
 }
