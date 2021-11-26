@@ -428,6 +428,14 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    /**
+     * 获得上次成绩,不包含fail
+     * @param id
+     * @param mode
+     * @param s
+     * @param e
+     * @return
+     */
     public JSONArray getRecent(int id, String mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
                 .queryParam("mode", mode)
@@ -693,7 +701,6 @@ public class OsuGetService {
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
-        System.out.println(uri.toString());
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " +getToken());
