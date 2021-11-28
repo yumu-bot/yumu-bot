@@ -41,8 +41,30 @@ public class CheckAspect {
         var event = (MessageEvent)args[0];
         var servicename = Service.value();
 
+        if (Permission.isSupper(event.getSender().getId())){
+            //超管无视任何限制
+            return args;
+        }
+        //超管权限判断
         if (CheckPermission.supperOnly() && !Permission.isSupper(event.getSender().getId())){
             throw new LogException(servicename + "有人使用最高权限", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+        }
+        //服务权限判断
+        //白/黑名单
+        if (CheckPermission.isWhite()){
+            if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())){
+                throw new LogException(servicename + " 白名单过滤(个人)", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+            }
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())){
+                throw new LogException(servicename + " 白名单过滤(群组)", new RuntimeException(g.getGroup().getId()+" -> "+servicename));
+            }
+        }else {
+            if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())){
+                throw new LogException(servicename + " 黑名单过滤(个人)", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+            }
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())){
+                throw new LogException(servicename + " 黑名单过滤(群组)", new RuntimeException(g.getGroup().getId()+" -> "+servicename));
+            }
         }
         return args;
     }
@@ -60,16 +82,10 @@ public class CheckAspect {
             //超管无视任何限制
             return args;
         }
-        if (Permission.isSupper(event.getSender().getId())) {
+        // 群跟人的id进行全局黑名单校验
+        if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())){
             return args;
         }
-        if (permission.containsFriend(servicename, event.getSender().getId())) {
-            return args;
-        }
-        if (event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId()) && permission.containsFriend(servicename, event.getSender().getId())){
-            return args;
-        }
-
         throw new LogException("权限禁止",new Exception("禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId()));
     }
 

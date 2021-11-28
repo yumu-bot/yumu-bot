@@ -65,13 +65,17 @@ class PermissionData{
         StringBuilder sb = new StringBuilder(name);
         sb.append("->").append(isWhite?"白":"黑").append("名单模式\n")
                 .append("管理员").append(isSupper()?"不":"").append("可修改\n");
-        sb.append("群组: ");
-        for (Long id : getGroupList()){
-            sb.append(id).append(' ');
+        if (GroupList != null) {
+            sb.append("\n群组: ");
+            for (Long id : getGroupList()) {
+                sb.append(id).append(' ');
+            }
         }
-        sb.append("\nqq: ");
-        for (Long id : getFriendList()){
-            sb.append(id).append(' ');
+        if (FriendList != null) {
+            sb.append("\nqq: ");
+            for (Long id : getFriendList()) {
+                sb.append(id).append(' ');
+            }
         }
         return sb.toString();
     }

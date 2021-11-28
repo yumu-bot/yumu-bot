@@ -58,7 +58,7 @@ public class CatpanelService implements MessageService {
         var skijaimg = SkiaUtil.getScaleCenterImage(SkiaUtil.lodeNetWorkImage(Image.queryUrl(img)), 1200,857);
 
         var surface = Surface.makeRasterN32Premul(1200,857);
-        var t1 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "panel05.png");
+        var t1 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "panel06.png");
         var t2 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + (stl?"ylbx.png":"lbx.png"));
 
         byte[] data;

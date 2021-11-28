@@ -6,12 +6,19 @@ import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.SendmsgUtil;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
 import java.util.regex.Matcher;
 
 @Service("switch")
 public class SwitchService implements MessageService{
+    Permission permission;
+    @Autowired
+    public SwitchService(Permission permission){
+        this.permission = permission;
+    }
     @Override
     @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -21,13 +28,16 @@ public class SwitchService implements MessageService{
         String p2 = matcher.group("p2");
         String p3 = matcher.group("p3");
         String p4 = matcher.group("p4");
-
         if (event instanceof GroupMessageEvent){
             var group = ((GroupMessageEvent) event);
 //            group.getSender().mute(60*60*8); 禁言
         }
         if (p1 == null) {
-            from.sendMessage("啥啊");
+            from.sendMessage("""
+                    wake/sleep <time>
+                    list->out all name; open/close <name>
+                    banlist->out all changeable name; ban/unban <name or "ALL"> <qq/group>
+                    """);
             return;
         }
         switch (p1.toLowerCase()){
@@ -72,6 +82,14 @@ public class SwitchService implements MessageService{
                     sb.append(value).append(list.contains(value)?'×':'√').append('\n');
                 }
                 from.sendMessage(sb.toString());
+            }
+            case "banlist" -> {
+                var texts = permission.list();
+                var random = new Random();
+                for (var text : texts){
+                    Thread.sleep(random.nextInt(1300,3000));
+                    event.getSubject().sendMessage(text);
+                }
             }
         }
     }

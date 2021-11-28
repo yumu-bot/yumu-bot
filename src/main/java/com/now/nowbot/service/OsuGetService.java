@@ -700,7 +700,6 @@ public class OsuGetService {
                 .queryParam("ids[]", sb.toString())
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
-
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " +getToken());
