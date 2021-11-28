@@ -80,23 +80,30 @@ public class Permission {
 
             //如果包含权限注解 则初始化权限列表
             if ($beansCheck != null) {
-                Set<Long> friend = null;
-                Set<Long> group = null;
-                // 存放好友名单
-                if ($beansCheck.friend()){
-                    if($beansCheck.isWhite()) friend = Set.copyOf(permissionDao.getQQList(name,PermissionType.FRIEND_W));
-                    else  friend = Set.copyOf(permissionDao.getQQList(name,PermissionType.FRIEND_B));
+                if ($beansCheck.supperOnly()){
+                    var obj = new PermissionData(true);
+                    Permission.PERMISSIONS.put(name, obj);
+                } else {
+                    Set<Long> friend = null;
+                    Set<Long> group = null;
+                    // 存放好友名单
+                    if ($beansCheck.friend()) {
+                        if ($beansCheck.isWhite())
+                            friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
+                        else friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
+                    }
+                    // 存放群组名单
+                    if ($beansCheck.group()) {
+                        if ($beansCheck.isWhite())
+                            group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_W));
+                        else group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_B));
+                    }
+                    //写入存储对象
+                    var obj = new PermissionData(friend, group);
+                    obj.setSupper($beansCheck.userSet());
+                    obj.setWhite($beansCheck.isWhite());
+                    Permission.PERMISSIONS.put(name, obj);
                 }
-                // 存放群组名单
-                if ($beansCheck.group()){
-                    if($beansCheck.isWhite()) group = Set.copyOf(permissionDao.getQQList(name,PermissionType.GROUP_W));
-                    else  group = Set.copyOf(permissionDao.getQQList(name,PermissionType.GROUP_B));
-                }
-                //写入存储对象
-                var obj = new PermissionData(friend, group);
-                obj.setSupper($beansCheck.userSet());
-                obj.setWhite($beansCheck.isWhite());
-                Permission.PERMISSIONS.put(name, obj);
             }
         });
         //初始化暗杀名单(
@@ -122,7 +129,9 @@ public class Permission {
     public Set<String> list(){
         Set<String> out = new HashSet<>();
         PERMISSIONS.forEach((name, perm) -> {
-            out.add(perm.getMsg(name));
+            if (perm.isSupper()) {
+                out.add(perm.getMsg(name));
+            }
         });
         return out;
     }

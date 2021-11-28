@@ -91,6 +91,7 @@ public class SwitchService implements MessageService{
                     event.getSubject().sendMessage(text);
                 }
             }
+            case "ban", "unban" -> event.getSubject().sendMessage("过几天再说");
         }
     }
 }

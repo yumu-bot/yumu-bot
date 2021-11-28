@@ -7,10 +7,14 @@ class PermissionData{
     private boolean isWhite;
     //直接简化 true->仅超级管理员能操作      false->群管也能操作
     private boolean Supper;
+    private boolean supperOnly;
     //列表
-    private Set<Long> GroupList;
-    private Set<Long> FriendList;
+    private Set<Long> GroupList = null;
+    private Set<Long> FriendList = null;
 
+    public PermissionData(boolean supperOnly) {
+        this.supperOnly = supperOnly;
+    }
     public PermissionData(Set<Long> friend, Set<Long> group) {
         this.FriendList = friend;
         this.GroupList = group;
@@ -61,7 +65,19 @@ class PermissionData{
         }
         else return false;
     }
+
+    public boolean isSupperOnly() {
+        return supperOnly;
+    }
+
+    public void setSupperOnly(boolean supperOnly) {
+        this.supperOnly = supperOnly;
+    }
+
     String getMsg(String name){
+        if (isSupperOnly()){
+            return name+"为管理员专用";
+        }
         StringBuilder sb = new StringBuilder(name);
         sb.append("->").append(isWhite?"白":"黑").append("名单模式\n")
                 .append("管理员").append(isSupper()?"不":"").append("可修改\n");
