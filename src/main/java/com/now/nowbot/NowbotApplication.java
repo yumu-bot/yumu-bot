@@ -12,8 +12,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.Objects;
-
 @SpringBootApplication
 @EnableConfigurationProperties(NowbotConfig.class)
 @EnableAspectJAutoProxy(exposeProxy = true, proxyTargetClass = true)
@@ -28,10 +26,14 @@ public class NowbotApplication {
         PanelUtil.init();
         log.info("启动成功");
         if (NowbotConfig.QQ_LOGIN) {
-            Objects.requireNonNull(bot.getGroup(746671531L)).sendMessage("启动完成");
+            if (bot != null && bot.getGroup(746671531L) != null) {
+                bot.getGroup(746671531L).sendMessage("启动完成");
+            }
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Objects.requireNonNull(bot.getGroup(746671531L)).sendMessage("程序关闭");
+            if (bot != null && bot.getGroup(746671531L) != null) {
+                bot.getGroup(746671531L).sendMessage("程序关闭");
+            }
         }, "endThread"));
     }
 }
