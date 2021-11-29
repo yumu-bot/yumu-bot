@@ -30,5 +30,8 @@ public class NowbotApplication {
         if (NowbotConfig.QQ_LOGIN) {
             Objects.requireNonNull(bot.getGroup(746671531L)).sendMessage("启动完成");
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Objects.requireNonNull(bot.getGroup(746671531L)).sendMessage("程序关闭");
+        }, "endThread"));
     }
 }
