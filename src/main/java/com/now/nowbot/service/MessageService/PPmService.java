@@ -6,6 +6,7 @@ import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.serviceException.PpmException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -41,7 +42,7 @@ public class PPmService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
         if (mode == OsuMode.MANIA) {
-            throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
+            throw new PpmException(PpmException.Type.PPM_Default_ManiaComingSoon);
         }
         if (at != null) {
             // 包含有@
@@ -64,9 +65,9 @@ public class PPmService implements MessageService {
                 userinfo = PPmObject.pres(userdate, bpdate, mode);
             }
         }
-        if (userinfo == null) throw new TipsException("波特被玩坏了uwu");
+        if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
         if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
-            throw new TipsException("游戏时长太短了，快去多玩几局吧！");
+            throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
         }
         //生成panel名
         String panelName = "PPM:" + switch (mode) {
@@ -84,10 +85,8 @@ public class PPmService implements MessageService {
                 .drawA1(userinfo.getHeadURL())
                 .drawA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
                 .drawA3(userinfo.getName());
-        card.drawB3("")
-                .drawB2("#" + userdate.getJSONObject("statistics").getString("global_rank"))
+        card.drawB2("#" + userdate.getJSONObject("statistics").getString("global_rank"))
                 .drawB1(userdate.getJSONObject("country").getString("code") + "#" + userdate.getJSONObject("statistics").getString("country_rank"))
-                .drawC3("")
                 .drawC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
                         userdate.getJSONObject("statistics").getJSONObject("level").getString("current") +
                         "(" + userdate.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
@@ -96,7 +95,7 @@ public class PPmService implements MessageService {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         //计算六边形数据
-        float[] hex = new float[]{
+        float[] hexValue = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
@@ -126,7 +125,7 @@ public class PPmService implements MessageService {
                 .drawLeftTotal(String.valueOf((int) (userinfo.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
                 .drawRightTotal(String.valueOf((int) (userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
                 .drawPanelName(panelName)
-                .drawHexagon(hex, true);
+                .drawHexagon(hexValue, true);
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();

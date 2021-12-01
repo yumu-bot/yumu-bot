@@ -1,12 +1,15 @@
 package com.now.nowbot.service.MessageService;
 
+import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.serviceException.PppException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.Panel.PPPlusPanelBuilder;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -18,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.regex.Matcher;
@@ -51,26 +55,28 @@ public class PpPlusService implements MessageService{
             }
         }
 
-
-        String id1,head1;
-        id1 = String.valueOf(id);
+        String idString,headUrl;
+        JSONObject userData;
+        idString = String.valueOf(id);
         if (user != null) {
-            head1 = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
+            headUrl = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
+            userData = osuGetService.getPlayerOsuInfo(user);
         }else {
-            head1 = osuGetService.getPlayerOsuInfo(id).getString("avatar_url");
+            headUrl = osuGetService.getPlayerOsuInfo(id).getString("avatar_url");
+            userData = osuGetService.getPlayerOsuInfo(id);
         }
 
 
-        PPPlusObject date1 = null;
+        PPPlusObject pppData = null;
         try {
-            date1 = ppPlusDao.getobject(id1);
+            pppData = ppPlusDao.getobject(idString);
         } catch (Exception e) {
-//            throw e;
-            log.info("ppp",e);
-            throw new TipsException("那个破网站连不上");
+            log.info("ppp 错误",e);
+            throw new PppException(PppException.Type.PPP_Default_APIConnectFailed);
         }
+        ppp(from, pppData, userData);
 
-        float[] hex1 = ppPlusDao.ppsize(date1);
+        float[] hex1 = ppPlusDao.ppsize(pppData);
 
         byte[] datebyte = null;
         try (Surface surface = Surface.makeRasterN32Premul(1920,1080);
@@ -103,8 +109,8 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(280,440);
-            TextLine text = TextLine.make(date1.getName(), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(date1.getName().substring(0,8)+"...",fontA);
+            TextLine text = TextLine.make(pppData.getName(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(pppData.getName().substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 
@@ -112,48 +118,80 @@ public class PpPlusService implements MessageService{
             canvas.save();
             canvas.translate(100,520);
             TextLine k1 = TextLine.make("Jump",fontB);
-            TextLine v1 = TextLine.make(dx.format(date1.getJump()),fontB);
+            TextLine v1 = TextLine.make(dx.format(pppData.getJump()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Flow",fontB);
-            v1 = TextLine.make(dx.format(date1.getFlow()),fontB);
+            v1 = TextLine.make(dx.format(pppData.getFlow()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Acc",fontB);
-            v1 = TextLine.make(dx.format(date1.getAcc()),fontB);
+            v1 = TextLine.make(dx.format(pppData.getAcc()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Sta",fontB);
-            v1 = TextLine.make(dx.format(date1.getSta()),fontB);
+            v1 = TextLine.make(dx.format(pppData.getSta()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Spd",fontB);
-            v1 = TextLine.make(dx.format(date1.getSpd()),fontB);
+            v1 = TextLine.make(dx.format(pppData.getSpd()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.translate(0,90);
             k1 = TextLine.make("Pre",fontB);
-            v1 = TextLine.make(dx.format(date1.getPre()),fontB);
+            v1 = TextLine.make(dx.format(pppData.getPre()),fontB);
             canvas.drawTextLine(k1 ,0,v1.getCapHeight(),white);
             canvas.drawTextLine(v1 ,360-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
             canvas.save();
             canvas.translate(920,880);
-            v1 = TextLine.make(dx.format(date1.getTotal()),fontA);
+            v1 = TextLine.make(dx.format(pppData.getTotal()),fontA);
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
-            PpPlusVsService.drawLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
+            PpPlusVsService.drawLhead(canvas, SkiaUtil.lodeNetWorkImage(headUrl));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
         if (datebyte != null ){
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
         }
+    }
+    private void ppp(Contact from, PPPlusObject pppData, JSONObject userData) throws IOException {
+        var card = PanelUtil.getA1Builder(PanelUtil.getBgUrl("用户自定义路径", userData.getString("cover_url"), true));
+        card.drawA1(userData.getString("avatar_url"))
+                .drawA2(PanelUtil.getFlag(userData.getJSONObject("country").getString("code")))
+                .drawA3(userData.getString("username"))
+                .drawB2("#" + userData.getJSONObject("statistics").getString("global_rank"))
+                .drawB1(userData.getJSONObject("country").getString("code") + "#" + userData.getJSONObject("statistics").getString("country_rank"))
+                .drawC2(userData.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
+                        userData.getJSONObject("statistics").getJSONObject("level").getString("current") +
+                        "(" + userData.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
+                .drawC1(userData.getJSONObject("statistics").getIntValue("pp") + "PP");
+        if (userData.getBoolean("is_supporter")) {
+            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
+        }
+
+        var hexValue = ppPlusDao.ppsize(pppData);
+        DecimalFormat dx = new DecimalFormat("0");
+        var panel = new PPPlusPanelBuilder();
+        panel.drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
+                .drawOverImage()
+                .drawValueName()
+                .drawLeftCard(card.build());
+        panel.drawLeftValueN(0,String.valueOf(pppData.getJump().intValue()),PanelUtil.cutDecimalPoint(pppData.getJump()));
+        panel.drawLeftValueN(1,String.valueOf(pppData.getFlow().intValue()),PanelUtil.cutDecimalPoint(pppData.getFlow()));
+        panel.drawLeftValueN(2,String.valueOf(pppData.getAcc().intValue()),PanelUtil.cutDecimalPoint(pppData.getAcc()));
+        panel.drawLeftValueN(3,String.valueOf(pppData.getSta().intValue()),PanelUtil.cutDecimalPoint(pppData.getSta()));
+        panel.drawLeftValueN(4,String.valueOf(pppData.getSpd().intValue()),PanelUtil.cutDecimalPoint(pppData.getSpd()));
+        panel.drawLeftValueN(5,String.valueOf(pppData.getPre().intValue()),PanelUtil.cutDecimalPoint(pppData.getPre()));
+
+        panel.drawLeftTotal(String.valueOf(pppData.getTotal().intValue()),PanelUtil.cutDecimalPoint(pppData.getTotal()));
+        panel.drawRightTotal(String.valueOf(userData.getJSONObject("statistics").getIntValue("pp")));
     }
 }

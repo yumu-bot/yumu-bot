@@ -15,10 +15,13 @@ import java.time.LocalDateTime;
 @Component
 public class PPPlusDao {
     Logger log = LoggerFactory.getLogger("PP+Dao");
-    @Autowired
     PPPlusMapper ppPlusMapper;
-    @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    public PPPlusDao(PPPlusMapper ppPlusMapper, OsuGetService osuGetService){
+        this.ppPlusMapper = ppPlusMapper;
+        this.osuGetService = osuGetService;
+    }
 
     public PPPlusObject getobject(String uid){
         var p = ppPlusMapper.getFirstByUserIdOrderByDateDesc(Long.parseLong(uid));
