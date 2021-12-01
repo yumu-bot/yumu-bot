@@ -29,6 +29,7 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 @Component
@@ -38,10 +39,10 @@ public class MessageListener extends SimpleListenerHost {
 
     @Autowired
     MessageMapper messageMapper;
-    private ApplicationContext applicationContext;
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    private static Map<String, MessageService> messageServiceMap = null;
+
+    public void init(ApplicationContext applicationContext) throws BeansException {
+        messageServiceMap = applicationContext.getBeansOfType(MessageService.class);
     }
 //    @Autowired
 //    MessageMapper messageMapper;
@@ -99,8 +100,8 @@ public class MessageListener extends SimpleListenerHost {
             if (Permission.serviceIsClouse(ins)) continue;
 
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
-            if (matcher.find() && applicationContext != null) {
-                var service = (MessageService) applicationContext.getBean(ins.getName());
+            if (matcher.find() && messageServiceMap != null) {
+                var service = messageServiceMap.get(ins.getName());
                 service.HandleMessage(event, matcher);
             }
         }
