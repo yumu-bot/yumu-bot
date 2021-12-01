@@ -18,6 +18,7 @@ import net.mamoe.mirai.event.events.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
@@ -35,24 +36,13 @@ import java.util.regex.Matcher;
 public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
-    private MessageMapper messageMapper;
-    private Map<String, MessageService> messageServiceMap = null;
-//    private ApplicationContext applicationContext;
-//    @Autowired
-//    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-//        this.applicationContext = applicationContext;
-//    }
 
     @Autowired
-    public MessageListener (MessageMapper messageMapper){
-        this.messageMapper = messageMapper;
-//        this.applicationContext = applicationContext;
-    }
-    @Autowired
-//    @PostConstruct
-    public void init(ApplicationContext applicationContext){
+    MessageMapper messageMapper;
+    private static Map<String, MessageService> messageServiceMap = null;
+
+    public void init(ApplicationContext applicationContext) throws BeansException {
         messageServiceMap = applicationContext.getBeansOfType(MessageService.class);
-        System.out.println(messageServiceMap.size());
     }
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
