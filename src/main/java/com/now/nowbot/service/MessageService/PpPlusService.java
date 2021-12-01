@@ -6,6 +6,7 @@ import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.serviceException.PppException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.PPPlusPanelBuilder;
@@ -59,12 +60,11 @@ public class PpPlusService implements MessageService{
         JSONObject userData;
         idString = String.valueOf(id);
         if (user != null) {
-            headUrl = osuGetService.getPlayerOsuInfo(user).getString("avatar_url");
             userData = osuGetService.getPlayerOsuInfo(user);
         }else {
-            headUrl = osuGetService.getPlayerOsuInfo(id).getString("avatar_url");
             userData = osuGetService.getPlayerOsuInfo(id);
         }
+        headUrl = userData.getString("avatar_url");
 
 
         PPPlusObject pppData = null;
@@ -162,7 +162,7 @@ public class PpPlusService implements MessageService{
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
         }
     }
-    private void ppp(Contact from, PPPlusObject pppData, JSONObject userData) throws IOException {
+    private void ppp(Contact from, PPPlusObject pppData, JSONObject userData) throws IOException, LogException {
         var card = PanelUtil.getA1Builder(PanelUtil.getBgUrl("用户自定义路径", userData.getString("cover_url"), true));
         card.drawA1(userData.getString("avatar_url"))
                 .drawA2(PanelUtil.getFlag(userData.getJSONObject("country").getString("code")))
@@ -193,5 +193,12 @@ public class PpPlusService implements MessageService{
 
         panel.drawLeftTotal(String.valueOf(pppData.getTotal().intValue()),PanelUtil.cutDecimalPoint(pppData.getTotal()));
         panel.drawRightTotal(String.valueOf(userData.getJSONObject("statistics").getIntValue("pp")));
+
+        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppplusv3.2.png")).build("PANEL-PPP dev.0.0.1");
+        try (panelImage) {
+            card.build().close();
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+        }
+        throw new LogException("结束pp+",null);
     }
 }
