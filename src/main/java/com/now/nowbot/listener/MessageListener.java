@@ -18,7 +18,6 @@ import net.mamoe.mirai.event.events.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
@@ -29,22 +28,32 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 @Component
 public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
+    private MessageMapper messageMapper;
+    private Map<String, MessageService> messageServiceMap = null;
+//    private ApplicationContext applicationContext;
+//    @Autowired
+//    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+//        this.applicationContext = applicationContext;
+//    }
 
     @Autowired
-    MessageMapper messageMapper;
-    private ApplicationContext applicationContext;
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    public MessageListener (MessageMapper messageMapper){
+        this.messageMapper = messageMapper;
+//        this.applicationContext = applicationContext;
     }
-//    @Autowired
-//    MessageMapper messageMapper;
+    @Autowired
+//    @PostConstruct
+    public void init(ApplicationContext applicationContext){
+        messageServiceMap = applicationContext.getBeansOfType(MessageService.class);
+        System.out.println(messageServiceMap.size());
+    }
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /***
@@ -99,8 +108,8 @@ public class MessageListener extends SimpleListenerHost {
             if (Permission.serviceIsClouse(ins)) continue;
 
             Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
-            if (matcher.find() && applicationContext != null) {
-                var service = (MessageService) applicationContext.getBean(ins.getName());
+            if (matcher.find()) {
+                var service = messageServiceMap.get(ins.getName());
                 service.HandleMessage(event, matcher);
             }
         }

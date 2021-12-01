@@ -25,7 +25,16 @@ public class ASyncMessageUtil{
         private final Condition getCondition = reentrantLock.newCondition();
 
         boolean isClose(){
-            return System.currentTimeMillis()-time > OFF_TIME;
+            if (System.currentTimeMillis()-time > OFF_TIME){
+                this.reentrantLock.lock();
+                try {
+                    getCondition.signal();
+                } finally {
+                    reentrantLock.unlock();
+                }
+                return true;
+            }
+            return false;
         }
 
         void checkAdd(MessageEvent message){
