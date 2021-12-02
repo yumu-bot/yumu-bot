@@ -74,6 +74,12 @@ public class ASyncMessageUtil{
         lockList.add(l);
         return l;
     }
+    public static Object getLock(MessageEvent event){
+        if (event instanceof GroupMessageEvent g){
+            return getLock(g.getGroup().getId(), g.getSender().getId());
+        }
+        return getSenderLock(event.getSender().getId());
+    }
 
     /**
      * 指定发送人的锁(无论哪个群)

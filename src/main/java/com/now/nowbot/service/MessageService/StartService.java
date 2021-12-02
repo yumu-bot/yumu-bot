@@ -15,10 +15,14 @@ import java.util.regex.Matcher;
 
 @Service("start")
 public class StartService implements MessageService{
-    @Autowired
+
     StarService starService;
-    @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    public StartService(StarService service, OsuGetService osuGetService){
+        this.starService = service;
+        this.osuGetService = osuGetService;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

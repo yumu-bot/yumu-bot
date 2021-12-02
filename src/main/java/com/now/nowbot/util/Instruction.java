@@ -37,7 +37,7 @@ public enum Instruction {
     SCORE("score",  Pattern.compile("^[!！]score\\s?(?<bid>\\d+)"),null),
     UPDATE("update",Pattern.compile("^&!update$"),null),
     FRIEND("friend",Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?"),"只能查自己,参数n,n-m,最大100,太多就1-100,101-200..."),
-    CATPANEL("cpanel", Pattern.compile("[!！]bg(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?"), null),
+    CATPANEL("cpanel", Pattern.compile("[!！]testbg(\\s*(?<r>qc))(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?"), null),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
