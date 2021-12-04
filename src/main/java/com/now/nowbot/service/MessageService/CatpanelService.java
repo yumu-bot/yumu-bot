@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
  */
 
 public class CatpanelService implements MessageService {
+    private static int CATPANLE_WHITE = 1200;
+    private static int CATPANLE_HEIGHT = 857;
     QQMessageDao qqMessageDao;
     @Autowired
     public CatpanelService(QQMessageDao qqMessageDao){
@@ -59,7 +61,7 @@ public class CatpanelService implements MessageService {
         }
         var skijaimg = SkiaUtil.lodeNetWorkImage(Image.queryUrl(img));
         if (matcher.group("r") != null){
-            qc(skijaimg, event);
+            qc(skijaimg, event, CATPANLE_WHITE, CATPANLE_HEIGHT);
             return;
         }
         var cutimg = SkiaUtil.getScaleCenterImage(skijaimg, 1200,857);
@@ -80,13 +82,11 @@ public class CatpanelService implements MessageService {
         }
     }
 
-    private void qc(org.jetbrains.skija.Image img, MessageEvent event) throws InterruptedException {
+    private void qc(org.jetbrains.skija.Image img, MessageEvent event, int w, int h) throws InterruptedException {
         var from = event.getSubject();
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
         var lock = ASyncMessageUtil.getLock(event);
-        int w = 1200;
-        int h = 857;
         int offsetX;
         int offsetY;
         Float scaleX;
@@ -109,7 +109,7 @@ public class CatpanelService implements MessageService {
             sb.append("默认缩放倍率为").append(scaleX).append('x').append(scaleY).append("->").append(imgWidth*scaleX).append('x').append(imgHeight*scaleY).append('\n');
             sb.append("默认的裁切偏移(").append(offsetX).append(',').append(offsetY).append('\n').append("即将发送预览");
             from.sendMessage(sb.toString());
-            canvas.drawImage(img,offsetX,offsetY);
+            canvas.drawImage(img,0,0);
             drowSee(canvas,offsetX,offsetY);
             from.sendMessage(
                     ExternalResource.uploadAsImage(
