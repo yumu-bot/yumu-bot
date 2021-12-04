@@ -25,8 +25,13 @@ import java.util.regex.Matcher;
 public class SetuService implements MessageService{
     static final Logger log = LoggerFactory.getLogger(SetuService.class);
     Long time = 0L;
+    final Object lock = new Object();
     @Autowired
     RestTemplate template;
+    @Autowired
+    SetuService(RestTemplate template){
+        this.template = template;
+    }
 
 
     @Override
@@ -35,7 +40,7 @@ public class SetuService implements MessageService{
         Contact from = event.getSubject();
         long qq = event.getSender().getId();
 
-        synchronized (time){
+        synchronized (lock){
             if(time+(15*1000)>System.currentTimeMillis()){
                 try {
                     byte[] img;

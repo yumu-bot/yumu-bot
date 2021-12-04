@@ -186,15 +186,6 @@ public class CatpanelService implements MessageService {
         }
     }
 
-    public static void main(String[] args) {
-        var p = Pattern.compile("(?<type>(a)|(倍率)) (?<x>\\d+(\\.\\d+)?)(?![\\d\\.])(:(?<y>\\d+)(\\.\\d+)?)?");
-        var m = p.matcher("倍率 12.63:4");
-        while (m.find()){
-            System.out.println(m.group("type"));
-            System.out.println((int)Float.parseFloat(m.group("x")));
-            System.out.println(m.group("y"));
-        }
-    }
     private void drowSee(Canvas canvas, int offsetX, int offsetY){
         canvas.save();
         canvas.translate(offsetX, offsetY);

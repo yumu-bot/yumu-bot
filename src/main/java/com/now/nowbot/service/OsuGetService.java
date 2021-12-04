@@ -3,27 +3,32 @@ package com.now.nowbot.service;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BpInfo;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.UnknownHttpStatusCodeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 public class OsuGetService {
@@ -38,6 +43,8 @@ public class OsuGetService {
     private String URL;
     @Value("${ppy.v1token:null}")
     private String tokenv1;
+
+    static final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Autowired
     RestTemplate template;
@@ -298,29 +305,6 @@ public class OsuGetService {
     }
 
     /***
-     * 使用的v1接口,即将禁用
-     * @param name
-     * @param limit
-     * @return
-     */
-    @Deprecated
-    public JSONArray getOsuBestMap(String name, int limit) {
-        URI uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/api/get_user_best")
-                .queryParam("k", tokenv1)
-                .queryParam("u", name)
-                .queryParam("limit", limit)
-                .queryParam("type", "string")
-                .build().encode().toUri();
-        System.out.println(uri.toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
-    }
-
-    /***
      * 获得某个模式的bp表
      * @param user user
      * @param mode 模式
@@ -359,6 +343,32 @@ public class OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
+    }
+
+    /**
+     * 替换旧的FASTJson
+     * @param id
+     * @param mode
+     * @param s
+     * @param e
+     * @return
+     */
+    public List<BpInfo> getBestMapNew(int id, String mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
+                .queryParam("mode", mode)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
+
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
     }
 
@@ -653,6 +663,11 @@ public class OsuGetService {
      * @param name
      * @return
      */
+    @Retryable(
+            value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 5000L, random = true, multiplier = 1 )
+    )
     public PPPlusObject ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
                 .build().encode().toUri();

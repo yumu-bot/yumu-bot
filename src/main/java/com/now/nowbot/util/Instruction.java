@@ -43,6 +43,7 @@ public enum Instruction {
      */
     TEST("test",    Pattern.compile("^[!！]test.*"),null),
     TESTID("t-id",    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)"),null),
+    TESTPPM("t-ppm",    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))"),null),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！
