@@ -347,6 +347,32 @@ public class OsuGetService {
     }
 
     /**
+     * 获得某个模式的bp表
+     * 替换旧的FASTJson
+     * @param user
+     * @param mode
+     * @param s
+     * @param e
+     * @return
+     */
+    public List<BpInfo> getBestMapNew(BinUser user, String mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
+                .queryParam("mode", mode)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
+        return c.getBody();
+    }
+
+    /**
      * 替换旧的FASTJson
      * @param id
      * @param mode

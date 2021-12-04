@@ -1,9 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BpInfo;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -13,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 @Service("bpht")
@@ -37,48 +38,42 @@ public class BphtService implements MessageService{
             nu = BindingUtil.readUser(event.getSender().getId());
         }
         //bp列表
-        JSONArray Bps;
-        //acc计算器  区分不同模式的计算器
-        AccCoun accCoun;
+        List<BpInfo> Bps;
         //分别处理mode
         var mode = OsuMode.getMode(matcher.group("mode"));
+        TreeMap<String, Integer> modeSum = new TreeMap<>();
         switch (mode){
             default://todo 获取账号默认模式
                 mode = OsuMode.OSU;
             case OSU: {
                 //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getOsuBestMap(nu, 0,100);
+                    Bps = osuGetService.getBestMapNew(nu, "osu",0,100);
 
                 }else {
-                    Bps = osuGetService.getOsuBestMap(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getBestMapNew(nu.getOsuID(),"osu",0,100);
                 }
-                //使用std计算器
-                accCoun = AccCoun.OSU;
             }break;
             case TAIKO:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getTaikoBestMap(nu, 0,100);
+                    Bps = osuGetService.getBestMapNew(nu, "taiko", 0, 100);
                 }else {
-                    Bps = osuGetService.getTaikoBestMap(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getBestMapNew(nu.getOsuID(), "taiko", 0, 100);
                 }
-                accCoun = AccCoun.TAIKO;
             }break;
             case CATCH:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getCatchBestMap(nu, 0,100);
+                    Bps = osuGetService.getBestMapNew(nu, "fruits", 0,100);
                 }else {
-                    Bps = osuGetService.getCatchBestMap(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getBestMapNew(nu.getOsuID(), "fruits",0,100);
                 }
-                accCoun = AccCoun.CATCH;
             }break;
             case MANIA:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMap(nu,"mania", 0,100);
+                    Bps = osuGetService.getBestMapNew(nu,"mania", 0,100);
                 }else {
-                    Bps = osuGetService.getBestMap(nu.getOsuID(),"mania",0,100);
+                    Bps = osuGetService.getBestMapNew(nu.getOsuID(),"mania",0,100);
                 }
-                accCoun = AccCoun.MANIA;
             }break;
         }
         //...
@@ -88,73 +83,44 @@ public class BphtService implements MessageService{
         }
         //生成结果
         var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');
-        double pp = 0;
+        double allPp = 0;
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         for (int i = 0; i < Bps.size(); i++) {
-            var jsb = Bps.getJSONObject(i);
+            var jsb = Bps.get(i);
             //显示前五跟后五的数据
-            if(i<5 || i>94){
+            if(i<5 || i>Bps.size() - 5){
                 dtbf.append("#")
                         .append(i+1)
                         .append(' ')
-                        .append(decimalFormat.format(jsb.getFloatValue("pp")))
+                        .append(decimalFormat.format(jsb.getPp()))
                         .append(' ')
-                        .append(decimalFormat.format(100*jsb.getDoubleValue("accuracy")))
+                        .append(decimalFormat.format(100*jsb.getAccuracy()))
 //                        .append(decimalFormat.format(accCoun.getAcc(jsb)))
                         .append('%')
                         .append(' ')
-                        .append(jsb.getString("rank"));
-                if(jsb.getJSONArray("mods").size() > 0){
-                    for (int j = 0; j < jsb.getJSONArray("mods").size(); j++) {
-                        dtbf.append(' ').append(jsb.getJSONArray("mods").getString(j));
+                        .append(jsb.getRank());
+                if(jsb.getMods().size() > 0){
+                    for (int j = 0; j < jsb.getMods().size(); j++) {
+                        dtbf.append(' ').append(jsb.getMods().get(j));
                     }
                 }
                 dtbf.append('\n');
             }else if(i == 60) {
                 dtbf.append("-------分割线-------\n");
             }
-            pp += jsb.getFloatValue("pp");
+            allPp += jsb.getPp();
+            if (jsb.getMods().size() > 0){
+                for (int j = 0; j < jsb.getMods().size(); j++) {
+                    String mod = jsb.getMods().get(j);
+                    modeSum.put(mod,modeSum.get(mod) == null? 1 : modeSum.get(mod));
+                }
+            }
         }
 
-        dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.getJSONObject(0).getFloatValue("pp")-Bps.getJSONObject(99).getFloatValue("pp"))).append("\n");
-        dtbf.append("您的平均BP为").append(decimalFormat.format(pp/100));
+        dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp())).append("\n");
+        dtbf.append("您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
 
         from.sendMessage(dtbf.toString());
-    }
-}
-interface AccCoun {
-    static AccCoun OSU = new OsuAcc();
-    static AccCoun TAIKO = new TaikoAcc();
-    static AccCoun CATCH = new CatchAcc();
-    static AccCoun MANIA = new ManiaAcc();
-    public double getAcc(JSONObject score);
-}
-class OsuAcc implements AccCoun{
-    @Override
-    public double getAcc(JSONObject score) {
-        var n = score.getJSONObject("statistics");
-        return 100d * (50*n.getIntValue("count_50") + 100 * n.getIntValue("count_100") + 300 * n.getIntValue("count_300")) / 300 / (n.getIntValue("count_miss") + n.getIntValue("count_50")+ n.getIntValue("count_100") + n.getIntValue("count_300"));
-    }
-}
-class TaikoAcc implements AccCoun{
-    @Override
-    public double getAcc(JSONObject score) {
-        var n = score.getJSONObject("statistics");
-        return 100d * (0.5*n.getIntValue("count_100")+n.getIntValue("count_300"))/(n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300"));
-    }
-}
-class CatchAcc implements AccCoun{
-    @Override
-    public double getAcc(JSONObject score) {
-        var n = score.getJSONObject("statistics");
-        return 100d*(n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300"))/(n.getIntValue("count_miss")+n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300")+n.getIntValue("count_katu"));
-    }
-}
-class ManiaAcc implements AccCoun{
-    @Override
-    public double getAcc(JSONObject score) {
-        var n = score.getJSONObject("statistics");
-        return 100d*(n.getIntValue("count_50")*50+n.getIntValue("count_100")*100+n.getIntValue("count_katu")*200+(n.getIntValue("count_300")+n.getIntValue("count_geki"))*300)/(300*(n.getIntValue("count_miss")+n.getIntValue("count_50")+n.getIntValue("count_100")+n.getIntValue("count_300")+n.getIntValue("count_katu")+n.getIntValue("count_geki")));
     }
 }
 
