@@ -454,4 +454,24 @@ public class PPmCatch implements PPmObject {
         ptt *= n;
         ttl *= n;
     }
+
+    /**
+     * 黄彩比
+     *
+     * @return
+     */
+    @Override
+    public float getHC0() {
+        return 0;
+    }
+
+    @Override
+    public float getHC45() {
+        return 0;
+    }
+
+    @Override
+    public float getHC90() {
+        return 0;
+    }
 }

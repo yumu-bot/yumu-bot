@@ -9,12 +9,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableConfigurationProperties(NowbotConfig.class)
 @EnableAspectJAutoProxy(exposeProxy = true, proxyTargetClass = true)
 @EnableScheduling
+@EnableRetry
 public class NowbotApplication {
     private static Logger log = LoggerFactory.getLogger(NowbotApplication.class);
     static Bot bot;

@@ -63,13 +63,14 @@ public class MessageListener extends SimpleListenerHost {
             } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 log.info("连接超时:",e);
                 event.getSubject().sendMessage("网络连接超时，请稍后再试").recallIn(RECAL_TIME);
-            } else if (e instanceof RequestException) {
-                RequestException reser = (RequestException) e;
+            } else if (e instanceof RequestException reser) {
                 log.info("请求错误:",e);
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在").recallIn(RECAL_TIME);
                 }else if(reser.status.getReasonPhrase().equals("Bad Request")){
                     event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
+                }else {
+                    event.getSubject().sendMessage("未知的请求异常,错误代码" + reser.status.value() + "->" + reser.status.getReasonPhrase());
                 }
             } else if (e instanceof EventCancelledException) {
                 log.info("取消消息发送", e.getMessage());
@@ -113,7 +114,13 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
+        event.accept();
+    }
+    @Async
+    @EventHandler
+    public void msg(BotJoinGroupEvent event){
         StringBuffer sb = new StringBuffer();
+        sb.append("已加入群聊:").append(event.getGroup().getId()).append('\n').append(event.getGroup().getName());
         //发送给管理群
         event.getBot().getGroup(746671531L).sendMessage(sb.toString());
     }

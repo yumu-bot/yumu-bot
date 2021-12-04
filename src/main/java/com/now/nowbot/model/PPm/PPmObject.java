@@ -30,6 +30,16 @@ public interface PPmObject {
     public void dovs();
     double check(double value, double min, double max);
 
+    /**
+     * 黄彩比
+     * @return
+     */
+    float getHC0();
+
+    float getHC45();
+
+    float getHC90();
+
     float getPpv0();
 
     float getPpv45();
