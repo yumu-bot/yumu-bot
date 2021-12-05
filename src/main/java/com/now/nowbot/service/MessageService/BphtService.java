@@ -7,7 +7,6 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -57,43 +56,40 @@ public class BphtService implements MessageService{
             case OSU: {
                 //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMapNew(nu, "osu",0,100);
+                    Bps = osuGetService.getOsuBestMapNew(nu, 0,100);
 
                 }else {
-                    Bps = osuGetService.getBestMapNew(nu.getOsuID(),"osu",0,100);
+                    Bps = osuGetService.getOsuBestMapNew(nu.getOsuID(),0,100);
                 }
             }break;
             case TAIKO:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMapNew(nu, "taiko", 0, 100);
+                    Bps = osuGetService.getTaikoBestMapNew(nu,  0, 100);
                 }else {
-                    Bps = osuGetService.getBestMapNew(nu.getOsuID(), "taiko", 0, 100);
+                    Bps = osuGetService.getTaikoBestMapNew(nu.getOsuID(),  0, 100);
                 }
             }break;
             case CATCH:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMapNew(nu, "fruits", 0,100);
+                    Bps = osuGetService.getCatchBestMapNew(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getBestMapNew(nu.getOsuID(), "fruits",0,100);
+                    Bps = osuGetService.getCatchBestMapNew(nu.getOsuID(), 0,100);
                 }
             }break;
             case MANIA:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getBestMapNew(nu,"mania", 0,100);
+                    Bps = osuGetService.getManiaBestMapNew(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getBestMapNew(nu.getOsuID(),"mania",0,100);
+                    Bps = osuGetService.getManiaBestMapNew(nu.getOsuID(),0,100);
                 }
             }break;
         }
         //...
-        if(Bps.size() != 100){
-            from.sendMessage(new At(event.getSender().getId()).plus("您的BP尚未填满，请打完后尝试"));
-            return;
-        }
         //生成结果
         var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
+        int xSum = 0;
         int fcSum = 0;
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         for (int i = 0; i < Bps.size(); i++) {
@@ -126,16 +122,16 @@ public class BphtService implements MessageService{
                     if (modeSum.get(mod) == null)  modeSum.put(mod, new intValue()); else modeSum.get(mod).add();
                 }
             }
-            if (jsb.getRank().contains("S")||jsb.getRank().contains("X")) sSum++;
+            if (jsb.getRank().contains("S")) sSum++;
+            if (jsb.getRank().contains("X")) {sSum++; xSum++;}
             if (jsb.getPerfect()) fcSum++;
         }
         dtbf.append("累计mod有:\n");
-        modeSum.forEach((mod, sum)->{
-           dtbf.append(mod).append(' ').append(sum.value).append(';');
-        });
-        dtbf.append("您bp中S rank及以上有").append(sSum).append("个,达到满cb的fc数量为").append(fcSum).append('\n');
-        dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp())).append('\n');
-        dtbf.append("您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
+        modeSum.forEach((mod, sum)-> dtbf.append(mod).append(' ').append(sum.value).append(';'));
+        dtbf.append("\n您bp中S rank及以上有").append(sSum).append("个,达到满cb的fc有").append(fcSum).append('个');
+        if (xSum != 0) dtbf.append(",其中SS数量有").append(xSum).append('个');
+        dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp()));
+        dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
 
         from.sendMessage(dtbf.toString());
     }

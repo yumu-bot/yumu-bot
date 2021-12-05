@@ -397,7 +397,37 @@ public class OsuGetService {
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
     }
+    public List<BpInfo> getOsuBestMapNew(BinUser user, int s, int e) {
+        return getBestMapNew(user, "osu", s, e);
+    }
 
+    public List<BpInfo> getOsuBestMapNew(int id, int s, int e) {
+        return getBestMapNew(id, "osu", s, e);
+    }
+
+    public List<BpInfo> getTaikoBestMapNew(BinUser user, int s, int e) {
+        return getBestMapNew(user, "taiko", s, e);
+    }
+
+    public List<BpInfo> getTaikoBestMapNew(int id, int s, int e) {
+        return getBestMapNew(id, "taiko", s, e);
+    }
+
+    public List<BpInfo> getCatchBestMapNew(BinUser user, int s, int e) {
+        return getBestMapNew(user, "fruits", s, e);
+    }
+
+    public List<BpInfo> getCatchBestMapNew(int id, int s, int e) {
+        return getBestMapNew(id, "fruits", s, e);
+    }
+
+    public List<BpInfo> getManiaBestMapNew(BinUser user, int s, int e) {
+        return getBestMapNew(user, "mania", s, e);
+    }
+
+    public List<BpInfo> getManiaBestMapNew(int id, int s, int e) {
+        return getBestMapNew(id, "mania", s, e);
+    }
     /***
      * 获得score(最近游玩列表
      * @param user
