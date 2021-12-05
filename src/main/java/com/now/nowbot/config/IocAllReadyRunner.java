@@ -1,7 +1,9 @@
 package com.now.nowbot.config;
 
+import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +16,18 @@ import org.springframework.stereotype.Component;
 public class IocAllReadyRunner implements CommandLineRunner {
     Logger log = LoggerFactory.getLogger("IocAllReadyRunner");
     Bot bot;
+    ApplicationContext applicationContext;
+
     @Autowired
     public IocAllReadyRunner(Bot bot, MessageListener messageListener, ApplicationContext applicationContext){
         this.bot = bot;
+        this.applicationContext = applicationContext;
         messageListener.init(applicationContext);
     }
     @Override
     public void run(String... args) throws Exception {
         PanelUtil.init();
+        QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
         log.info("启动成功");
         if (NowbotConfig.QQ_LOGIN) {
             if (bot != null && bot.getGroup(746671531L) != null) {

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.BpInfo;
 import com.now.nowbot.model.enums.OsuMode;
@@ -20,7 +19,7 @@ public class BphtService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
     class intValue{
-        int value = 0;
+        int value = 1;
         public intValue add() {
             value++;
             return this;
@@ -30,7 +29,6 @@ public class BphtService implements MessageService{
         }
     }
     @Override
-    @CheckPermission()
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         BinUser nu = null;

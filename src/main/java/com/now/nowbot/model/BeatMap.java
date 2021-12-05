@@ -35,6 +35,8 @@ public class BeatMap {
     Float hp;
     @JsonProperty("bpm")
     Float bpm;
+    @JsonProperty("max_combo")
+    Integer maxCombo;
     @JsonProperty("convert")
     Boolean convert;
     @JsonProperty("is_scoreable")
@@ -49,6 +51,14 @@ public class BeatMap {
     String url;
     @JsonProperty("checksum")
     String md5;
+    @JsonProperty("count_sliders")
+    Integer sliders;
+    @JsonProperty("count_spinners")
+    Integer spinners;
+    @JsonProperty("count_circles")
+    Integer circles;
+    @JsonProperty("beatmapset")
+    BeatMapSet beatMapSet;
 
     @Override
     public String toString() {
@@ -68,6 +78,7 @@ public class BeatMap {
                 ", cs=" + cs +
                 ", hp=" + hp +
                 ", bpm=" + bpm +
+                ", maxCombo=" + maxCombo +
                 ", convert=" + convert +
                 ", scoreable=" + scoreable +
                 ", updatedTime='" + updatedTime + '\'' +
@@ -75,6 +86,226 @@ public class BeatMap {
                 ", playcount='" + playcount + '\'' +
                 ", url='" + url + '\'' +
                 ", md5='" + md5 + '\'' +
+                ", sliders=" + sliders +
+                ", spinners=" + spinners +
+                ", circles=" + circles +
+                ", \nbeatMapSet=" + beatMapSet +
                 '}';
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getBeatmapsetId() {
+        return beatmapsetId;
+    }
+
+    public void setBeatmapsetId(Integer beatmapsetId) {
+        this.beatmapsetId = beatmapsetId;
+    }
+
+    public Integer getDifficultyRating() {
+        return difficultyRating;
+    }
+
+    public void setDifficultyRating(Integer difficultyRating) {
+        this.difficultyRating = difficultyRating;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public Integer getModeInt() {
+        return modeInt;
+    }
+
+    public void setModeInt(Integer modeInt) {
+        this.modeInt = modeInt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Integer getTotalLength() {
+        return totalLength;
+    }
+
+    public void setTotalLength(Integer totalLength) {
+        this.totalLength = totalLength;
+    }
+
+    public Boolean getHitLength() {
+        return hitLength;
+    }
+
+    public void setHitLength(Boolean hitLength) {
+        this.hitLength = hitLength;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public Float getOd() {
+        return od;
+    }
+
+    public void setOd(Float od) {
+        this.od = od;
+    }
+
+    public Float getAr() {
+        return ar;
+    }
+
+    public void setAr(Float ar) {
+        this.ar = ar;
+    }
+
+    public Float getCs() {
+        return cs;
+    }
+
+    public void setCs(Float cs) {
+        this.cs = cs;
+    }
+
+    public Float getHp() {
+        return hp;
+    }
+
+    public void setHp(Float hp) {
+        this.hp = hp;
+    }
+
+    public Float getBpm() {
+        return bpm;
+    }
+
+    public void setBpm(Float bpm) {
+        this.bpm = bpm;
+    }
+
+    public Integer getMaxCombo() {
+        return maxCombo;
+    }
+
+    public void setMaxCombo(Integer maxCombo) {
+        this.maxCombo = maxCombo;
+    }
+
+    public Boolean getConvert() {
+        return convert;
+    }
+
+    public void setConvert(Boolean convert) {
+        this.convert = convert;
+    }
+
+    public Boolean getScoreable() {
+        return scoreable;
+    }
+
+    public void setScoreable(Boolean scoreable) {
+        this.scoreable = scoreable;
+    }
+
+    public String getUpdatedTime() {
+        return updatedTime;
+    }
+
+    public void setUpdatedTime(String updatedTime) {
+        this.updatedTime = updatedTime;
+    }
+
+    public String getPasscount() {
+        return passcount;
+    }
+
+    public void setPasscount(String passcount) {
+        this.passcount = passcount;
+    }
+
+    public String getPlaycount() {
+        return playcount;
+    }
+
+    public void setPlaycount(String playcount) {
+        this.playcount = playcount;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    public Integer getSliders() {
+        return sliders;
+    }
+
+    public void setSliders(Integer sliders) {
+        this.sliders = sliders;
+    }
+
+    public Integer getSpinners() {
+        return spinners;
+    }
+
+    public void setSpinners(Integer spinners) {
+        this.spinners = spinners;
+    }
+
+    public Integer getCircles() {
+        return circles;
+    }
+
+    public void setCircles(Integer circles) {
+        this.circles = circles;
+    }
+
+    public BeatMapSet getBeatMapSet() {
+        return beatMapSet;
+    }
+
+    public void setBeatMapSet(BeatMapSet beatMapSet) {
+        this.beatMapSet = beatMapSet;
     }
 }

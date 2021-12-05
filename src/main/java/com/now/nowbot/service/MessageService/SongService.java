@@ -49,7 +49,7 @@ public class SongService implements MessageService{
         try {
             if(isBid){
                 var mapinfo = osuGetService.getMapInfo(id);
-                url = new URL("http:"+mapinfo.getJSONObject("beatmapset").getString("preview_url"));
+                url = new URL("http:"+mapinfo.getBeatMapSet().getMusicUrl());
             }else {
                 url = new URL("http://b.ppy.sh/preview/"+id+".mp3");
             }

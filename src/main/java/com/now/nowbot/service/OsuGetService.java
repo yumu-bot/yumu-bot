@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.now.nowbot.model.BeatMap;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.BpInfo;
 import com.now.nowbot.model.PPPlusObject;
@@ -640,7 +641,7 @@ public class OsuGetService {
         return new String(datebyte);
     }
 
-    public JSONObject getMapInfo(int bid) {
+    public BeatMap getMapInfo(int bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -650,13 +651,7 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return null;
-        }
+        ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
         return c.getBody();
     }
 
