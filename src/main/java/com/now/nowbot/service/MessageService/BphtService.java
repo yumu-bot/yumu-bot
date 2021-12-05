@@ -1,7 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.BpInfo;
+import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;

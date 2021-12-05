@@ -1,4 +1,4 @@
-package com.now.nowbot.model;
+package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
