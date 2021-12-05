@@ -120,7 +120,7 @@ public class BphtService implements MessageService{
             if (jsb.getRank().contains("S")) sSum++;
             if (jsb.getPerfect()) fcSum++;
         }
-        dtbf.append("累计mod有:");
+        dtbf.append("累计mod有:\n");
         modeSum.forEach((mod, sum)->{
            dtbf.append(mod).append('有').append(sum).append("个\n");
         });
