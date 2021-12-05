@@ -24,10 +24,5 @@ public class NowbotApplication {
     public void setbot(Bot bot){ NowbotApplication.bot = bot; }
     public static void main(String[] args) {
         SpringApplication.run(NowbotApplication.class, args);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (bot != null && bot.getGroup(746671531L) != null) {
-                bot.getGroup(746671531L).sendMessage("程序关闭");
-            }
-        }, "endThread"));
     }
 }

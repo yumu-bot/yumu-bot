@@ -3,9 +3,11 @@ package com.now.nowbot.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
@@ -13,20 +15,22 @@ import java.util.concurrent.Executor;
 /***
  * 线程池配置
  */
-@Service
+@Component
 public class AsyncSetting implements AsyncConfigurer {
     private static final Logger log = LoggerFactory.getLogger(AsyncSetting.class);
-
-    @Override
-    public Executor getAsyncExecutor() {
-        ThreadPoolTaskExecutor threadPool = new ThreadPoolTaskExecutor();
-        threadPool.setCorePoolSize(1);
-        threadPool.setMaxPoolSize(10);
+    static private final ThreadPoolTaskExecutor threadPool;
+    static {
+        threadPool = new ThreadPoolTaskExecutor();
+        threadPool.setCorePoolSize(5);
+        threadPool.setMaxPoolSize(20);
         threadPool.setWaitForTasksToCompleteOnShutdown(true);
         threadPool.setAwaitTerminationSeconds(60 * 15);
         threadPool.setThreadNamePrefix("NoBot-");
         threadPool.initialize();
-        return threadPool;
+    }
+    @Override
+    public Executor getAsyncExecutor() {
+        return AsyncSetting.threadPool;
     }
 
     @Override
@@ -39,17 +43,20 @@ public class AsyncSetting implements AsyncConfigurer {
      * @author hry
      *
      */
-    class MyAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
+    static class MyAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 
         @Override
         public void handleUncaughtException(Throwable throwable, Method method, Object... obj) {
-            log.info("Method name - " + method.getName());
-            log.error("Exception message",throwable);
+            log.info("Method name - {}", method.getName(),throwable);
             for (Object param : obj) {
                 log.info("Parameter value - " + param.toString());
             }
         }
 
+    }
+    @Bean
+    public AsyncTaskExecutor AstncConf(){
+        return AsyncSetting.threadPool;
     }
 
 }

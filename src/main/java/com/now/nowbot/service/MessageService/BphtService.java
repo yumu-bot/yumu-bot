@@ -54,31 +54,31 @@ public class BphtService implements MessageService{
             case OSU: {
                 //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getOsuBestMapNew(nu, 0,100);
+                    Bps = osuGetService.getOsuBestPerformance(nu, 0,100);
 
                 }else {
-                    Bps = osuGetService.getOsuBestMapNew(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getOsuBestPerformance(nu.getOsuID(),0,100);
                 }
             }break;
             case TAIKO:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getTaikoBestMapNew(nu,  0, 100);
+                    Bps = osuGetService.getTaikoBestPerformance(nu,  0, 100);
                 }else {
-                    Bps = osuGetService.getTaikoBestMapNew(nu.getOsuID(),  0, 100);
+                    Bps = osuGetService.getTaikoBestPerformance(nu.getOsuID(),  0, 100);
                 }
             }break;
             case CATCH:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getCatchBestMapNew(nu, 0,100);
+                    Bps = osuGetService.getCatchBestPerformance(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getCatchBestMapNew(nu.getOsuID(), 0,100);
+                    Bps = osuGetService.getCatchBestPerformance(nu.getOsuID(), 0,100);
                 }
             }break;
             case MANIA:{
                 if(nu.getAccessToken() != null){
-                    Bps = osuGetService.getManiaBestMapNew(nu, 0,100);
+                    Bps = osuGetService.getManiaBestPerformance(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getManiaBestMapNew(nu.getOsuID(),0,100);
+                    Bps = osuGetService.getManiaBestPerformance(nu.getOsuID(),0,100);
                 }
             }break;
         }

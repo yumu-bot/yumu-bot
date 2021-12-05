@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
@@ -41,8 +40,8 @@ public class MessageListener extends SimpleListenerHost {
     MessageMapper messageMapper;
     private static Map<String, MessageService> messageServiceMap = null;
 
-    public void init(ApplicationContext applicationContext) throws BeansException {
-        messageServiceMap = applicationContext.getBeansOfType(MessageService.class);
+    public void init(Map<String, MessageService> beanMap) throws BeansException {
+        messageServiceMap = beanMap;
     }
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -67,7 +66,7 @@ public class MessageListener extends SimpleListenerHost {
                 log.info("请求错误:",e);
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在").recallIn(RECAL_TIME);
-                }else if(reser.status.getReasonPhrase().equals("Bad Request")){
+                }else if(reser.status.value() == 401 || reser.status.getReasonPhrase().equals("Bad Request")){
                     event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
                 }else {
                     event.getSubject().sendMessage("未知的请求异常,错误代码" + reser.status.value() + "->" + reser.status.getReasonPhrase());

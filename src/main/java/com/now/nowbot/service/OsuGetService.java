@@ -356,7 +356,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestMapNew(BinUser user, String mode, int s, int e) {
+    public List<BpInfo> getBestPerformance(BinUser user, String mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -381,7 +381,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestMapNew(int id, String mode, int s, int e) {
+    public List<BpInfo> getBestPerformance(int id, String mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -398,36 +398,36 @@ public class OsuGetService {
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
     }
-    public List<BpInfo> getOsuBestMapNew(BinUser user, int s, int e) {
-        return getBestMapNew(user, "osu", s, e);
+    public List<BpInfo> getOsuBestPerformance(BinUser user, int s, int e) {
+        return getBestPerformance(user, "osu", s, e);
     }
 
-    public List<BpInfo> getOsuBestMapNew(int id, int s, int e) {
-        return getBestMapNew(id, "osu", s, e);
+    public List<BpInfo> getOsuBestPerformance(int id, int s, int e) {
+        return getBestPerformance(id, "osu", s, e);
     }
 
-    public List<BpInfo> getTaikoBestMapNew(BinUser user, int s, int e) {
-        return getBestMapNew(user, "taiko", s, e);
+    public List<BpInfo> getTaikoBestPerformance(BinUser user, int s, int e) {
+        return getBestPerformance(user, "taiko", s, e);
     }
 
-    public List<BpInfo> getTaikoBestMapNew(int id, int s, int e) {
-        return getBestMapNew(id, "taiko", s, e);
+    public List<BpInfo> getTaikoBestPerformance(int id, int s, int e) {
+        return getBestPerformance(id, "taiko", s, e);
     }
 
-    public List<BpInfo> getCatchBestMapNew(BinUser user, int s, int e) {
-        return getBestMapNew(user, "fruits", s, e);
+    public List<BpInfo> getCatchBestPerformance(BinUser user, int s, int e) {
+        return getBestPerformance(user, "fruits", s, e);
     }
 
-    public List<BpInfo> getCatchBestMapNew(int id, int s, int e) {
-        return getBestMapNew(id, "fruits", s, e);
+    public List<BpInfo> getCatchBestPerformance(int id, int s, int e) {
+        return getBestPerformance(id, "fruits", s, e);
     }
 
-    public List<BpInfo> getManiaBestMapNew(BinUser user, int s, int e) {
-        return getBestMapNew(user, "mania", s, e);
+    public List<BpInfo> getManiaBestPerformance(BinUser user, int s, int e) {
+        return getBestPerformance(user, "mania", s, e);
     }
 
-    public List<BpInfo> getManiaBestMapNew(int id, int s, int e) {
-        return getBestMapNew(id, "mania", s, e);
+    public List<BpInfo> getManiaBestPerformance(int id, int s, int e) {
+        return getBestPerformance(id, "mania", s, e);
     }
     /***
      * 获得score(最近游玩列表
