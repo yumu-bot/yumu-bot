@@ -84,6 +84,8 @@ public class BphtService implements MessageService{
         //生成结果
         var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
+        int sSum = 0;
+        int fcSum = 0;
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         for (int i = 0; i < Bps.size(); i++) {
             var jsb = Bps.get(i);
@@ -115,9 +117,15 @@ public class BphtService implements MessageService{
                     modeSum.put(mod,modeSum.get(mod) == null? 1 : modeSum.get(mod));
                 }
             }
+            if (jsb.getRank().contains("S")) sSum++;
+            if (jsb.getPerfect()) fcSum++;
         }
-
-        dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp())).append("\n");
+        dtbf.append("累计mod有:");
+        modeSum.forEach((mod, sum)->{
+           dtbf.append(mod).append('有').append(sum).append("个\n");
+        });
+        dtbf.append("您bp中S rank及以上有").append(sSum).append("个,达到满cb的fc数量为").append(fcSum).append('\n');
+        dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp())).append('\n');
         dtbf.append("您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
 
         from.sendMessage(dtbf.toString());
