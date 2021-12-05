@@ -20,7 +20,16 @@ import java.util.regex.Matcher;
 public class BphtService implements MessageService{
     @Autowired
     OsuGetService osuGetService;
-
+    class intValue{
+        int value = 0;
+        public intValue add() {
+            value++;
+            return this;
+        }
+        public int value() {
+            return value;
+        }
+    }
     @Override
     @CheckPermission()
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -41,7 +50,7 @@ public class BphtService implements MessageService{
         List<BpInfo> Bps;
         //分别处理mode
         var mode = OsuMode.getMode(matcher.group("mode"));
-        TreeMap<String, Integer> modeSum = new TreeMap<>();
+        TreeMap<String, intValue> modeSum = new TreeMap<>();
         switch (mode){
             default://todo 获取账号默认模式
                 mode = OsuMode.OSU;
@@ -114,15 +123,15 @@ public class BphtService implements MessageService{
             if (jsb.getMods().size() > 0){
                 for (int j = 0; j < jsb.getMods().size(); j++) {
                     String mod = jsb.getMods().get(j);
-                    modeSum.put(mod,modeSum.get(mod) == null? 1 : modeSum.get(mod));
+                    if (modeSum.get(mod) == null)  modeSum.put(mod, new intValue()); else modeSum.get(mod).add();
                 }
             }
-            if (jsb.getRank().contains("S")) sSum++;
+            if (jsb.getRank().contains("S")||jsb.getRank().contains("X")) sSum++;
             if (jsb.getPerfect()) fcSum++;
         }
         dtbf.append("累计mod有:\n");
         modeSum.forEach((mod, sum)->{
-           dtbf.append(mod).append('有').append(sum).append("个\n");
+           dtbf.append(mod).append(' ').append(sum.value).append(';');
         });
         dtbf.append("您bp中S rank及以上有").append(sSum).append("个,达到满cb的fc数量为").append(fcSum).append('\n');
         dtbf.append("您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp())).append('\n');
