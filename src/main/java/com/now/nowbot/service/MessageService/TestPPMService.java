@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -21,6 +22,7 @@ public class TestPPMService implements MessageService {
     private OsuGetService osuGetService;
 
     @Override
+    @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         PPmObject userinfo;
         JSONObject userdate;
