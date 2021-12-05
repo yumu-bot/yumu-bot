@@ -58,5 +58,8 @@ public class AsyncSetting implements AsyncConfigurer {
     public AsyncTaskExecutor AstncConf(){
         return AsyncSetting.threadPool;
     }
-
+    @Bean
+    public ThreadPoolTaskExecutor getThreadPool(){
+        return AsyncSetting.threadPool;
+    }
 }
