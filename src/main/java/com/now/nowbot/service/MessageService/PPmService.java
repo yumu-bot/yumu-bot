@@ -151,7 +151,12 @@ public class PPmService implements MessageService {
                 sb.append("绘制").append(System.currentTimeMillis() - draw).append('\n');
                 draw = System.currentTimeMillis();
             }
-            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+            var image = ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from);
+            if (debugFlag){
+                sb.append("上传完成").append(System.currentTimeMillis() - draw).append('\n');
+                from.sendMessage(sb.toString());
+            }
+            from.sendMessage(image);
             if (debugFlag){
                 sb.append("发送结束").append(System.currentTimeMillis() - draw);
                 from.sendMessage(sb.toString());

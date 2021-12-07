@@ -19,13 +19,16 @@ public class PingService implements MessageService{
         byte[] date = null;
         try (Surface surface = Surface.makeRasterN32Premul(500,180)){
             Canvas canvas = surface.getCanvas();
-            Typeface face = SkiaUtil.getTorusRegular();
 
+            Font x = new Font(SkiaUtil.getTorusRegular(), 100);
             canvas.clear(Color.makeRGB(0,169,248));
-            Font x = new Font(face, 100);
             TextLine t = TextLine.make("PONG!",x);
             canvas.drawTextLine(t,(500-t.getWidth())/2, t.getHeight(),new Paint().setARGB(255,192,219,288));
-
+            x.close();t.close();
+            x = new Font(SkiaUtil.getTorusRegular(),20);
+            t = TextLine.make(System.currentTimeMillis()+"ms", x);
+            canvas.drawTextLine(t,0,t.getCapHeight()+4, new Paint().setARGB(255,192,219,288));
+            x.close();t.close();
             date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
         if (date != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date), from)).recallIn(2000);
