@@ -169,11 +169,10 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(ImageUploadEvent event) {
-        if (event instanceof ImageUploadEvent.Failed) {
-            log.info("图片上传失败");
-        }
-        if (event instanceof ImageUploadEvent.Succeed) {
-            log.info("图片上传成功");
+        switch (event){
+            case ImageUploadEvent.Failed ignored -> log.info("图片上传失败");
+            case ImageUploadEvent.Succeed ignored -> log.info("图片上传成功");
+            default -> {}
         }
     }
 

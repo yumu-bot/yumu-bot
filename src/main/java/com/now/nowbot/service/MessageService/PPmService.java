@@ -33,6 +33,8 @@ public class PPmService implements MessageService {
             doVs(event, matcher);
             return;
         }
+        boolean debugFlag = false;
+        StringBuilder sb = null;
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -54,16 +56,32 @@ public class PPmService implements MessageService {
             // 不包含@ 分为查自身/查他人
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
-                int id = osuGetService.getOsuId(matcher.group("name").trim());
-                userdate = osuGetService.getPlayerInfo(id, mode.toString());
-                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
-                userinfo = PPmObject.pres(userdate, bpdate, mode);
+                if (matcher.group("name").trim().equals("debug")){
+                    debugFlag = true;
+                    sb = new StringBuilder();
+                    sb.append("加载用户数据");
+                    Long lode = System.currentTimeMillis();
+                    var user = BindingUtil.readUser(event.getSender().getId());
+                    userdate = osuGetService.getPlayerInfo(user, mode.toString());
+                    var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+                    userinfo = PPmObject.pres(userdate, bpdate, mode);
+                    sb.append(System.currentTimeMillis() - lode).append('\n');
+                }else {
+                    int id = osuGetService.getOsuId(matcher.group("name").trim());
+                    userdate = osuGetService.getPlayerInfo(id, mode.toString());
+                    var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
+                    userinfo = PPmObject.pres(userdate, bpdate, mode);
+                }
             } else {
                 var user = BindingUtil.readUser(event.getSender().getId());
                 userdate = osuGetService.getPlayerInfo(user, mode.toString());
                 var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
                 userinfo = PPmObject.pres(userdate, bpdate, mode);
             }
+        }
+        Long draw = null;
+        if (debugFlag){
+            draw = System.currentTimeMillis();
         }
         if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
         if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
@@ -129,7 +147,15 @@ public class PPmService implements MessageService {
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();
+            if (debugFlag){
+                sb.append("绘制").append(System.currentTimeMillis() - draw).append('\n');
+                draw = System.currentTimeMillis();
+            }
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+            if (debugFlag){
+                sb.append("发送结束").append(System.currentTimeMillis() - draw);
+                from.sendMessage(sb.toString());
+            }
         }
     }
 
