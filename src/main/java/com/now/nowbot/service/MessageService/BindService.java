@@ -7,6 +7,7 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -30,7 +31,7 @@ public class BindService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
 
         if (Permission.isSupper(event.getSender().getId())){
-            At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+            At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null){
                 var user = BindingUtil.readUser(at.getTarget());
                 if (BindingUtil.unBind(user)){

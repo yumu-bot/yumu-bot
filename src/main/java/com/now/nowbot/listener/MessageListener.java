@@ -15,6 +15,7 @@ import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.*;
+import net.mamoe.mirai.message.data.FileMessage;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,9 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
+        if (event.getMessage() instanceof FileMessage fileMessage){
+            log.info("收到文件");
+        }
         messageMapper.save(new MsgLite(event.getMessage()));
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){

@@ -1,4 +1,4 @@
-package com.now.nowbot.model.beatmap;
+package com.now.nowbot.model;
 
 import com.now.nowbot.util.lzma.LZMAInputStream;
 
@@ -61,7 +61,6 @@ public class Replay {
         mods = bf.getInt();
         var Hp = readString(bf);
         date = readLong(bf);
-        System.out.println(date);
         dataLength = bf.getInt();
         var data = new byte[dataLength];
         bf.get(data, 0, dataLength);
@@ -168,6 +167,9 @@ public class Replay {
     }
     public static Replay readByteToRep(ByteBuffer buffer){
         return new Replay(buffer);
+    }
+    public static Replay readByteToRep(byte[] buffer){
+        return new Replay(ByteBuffer.wrap(buffer));
     }
 
     public byte getMode() {

@@ -5,7 +5,9 @@ import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,14 +34,20 @@ public class BphtService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         BinUser nu = null;
-        if(matcher.group("name") != null && !matcher.group("name").trim().equals("")){
+        At at = QQMsgUtil.getType(event.getMessage(), At.class);
+        // 是否为绑定用户
+        boolean isBind = true;
+        if (at != null) {
+            nu = BindingUtil.readUser(at.getTarget());
+        } if(matcher.group("name") != null && !matcher.group("name").trim().equals("")){
             //查询其他人 bpht [name]
             String name = matcher.group("name").trim();
                 nu = new BinUser();
                 //构建只有 name + id 的对象
                 nu.setOsuID(osuGetService.getOsuId(name));
                 nu.setOsuName(name);
-        }else {
+                isBind = false;
+        } else {
             //处理没有参数的情况 查询自身
             nu = BindingUtil.readUser(event.getSender().getId());
         }
@@ -53,7 +61,7 @@ public class BphtService implements MessageService{
                 mode = OsuMode.OSU;
             case OSU: {
                 //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
-                if(nu.getAccessToken() != null){
+                if(isBind){
                     Bps = osuGetService.getOsuBestPerformance(nu, 0,100);
 
                 }else {
@@ -61,21 +69,21 @@ public class BphtService implements MessageService{
                 }
             }break;
             case TAIKO:{
-                if(nu.getAccessToken() != null){
+                if(isBind){
                     Bps = osuGetService.getTaikoBestPerformance(nu,  0, 100);
                 }else {
                     Bps = osuGetService.getTaikoBestPerformance(nu.getOsuID(),  0, 100);
                 }
             }break;
             case CATCH:{
-                if(nu.getAccessToken() != null){
+                if(isBind){
                     Bps = osuGetService.getCatchBestPerformance(nu, 0,100);
                 }else {
                     Bps = osuGetService.getCatchBestPerformance(nu.getOsuID(), 0,100);
                 }
             }break;
             case MANIA:{
-                if(nu.getAccessToken() != null){
+                if(isBind){
                     Bps = osuGetService.getManiaBestPerformance(nu, 0,100);
                 }else {
                     Bps = osuGetService.getManiaBestPerformance(nu.getOsuID(),0,100);
