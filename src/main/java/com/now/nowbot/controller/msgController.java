@@ -5,11 +5,11 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -23,8 +23,12 @@ public class msgController {
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
     @Autowired
     OsuGetService osuGetService;
+    Bot bot;
     @Autowired
-    ThreadPoolTaskExecutor threadPool;
+    public msgController(Bot bot, OsuGetService osuGetService){
+        this.bot = bot;
+        this.osuGetService = osuGetService;
+    }
 
     public String saveBind(String code, String[] date) {
         StringBuffer sb = new StringBuffer();
@@ -80,5 +84,12 @@ public class msgController {
         var ret = saveBind(code, date);
         log.info("绑定api端口被访问,参数: state->{} code->{}:{}",stat,code,ret);
         return ret;
+    }
+    @PostMapping("/gitup")
+    public void update(@RequestHeader("User-Agent") String agent, @RequestHeader("X-Gitee-Event") String event, @RequestBody JsonNode body){
+        if (agent.trim().equals("git-oschina-hook")){
+            log.info("收到一条推送\n{}",body.toString());
+            bot.getGroup(746671531L).sendMessage("git收到推送事件 " + event);
+        }
     }
 }
