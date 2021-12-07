@@ -147,14 +147,15 @@ public class PPmService implements MessageService {
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();
+            byte[] imgData = panelImage.encodeToData().getBytes();
             if (debugFlag){
                 sb.append("绘制").append(System.currentTimeMillis() - draw).append('\n');
                 draw = System.currentTimeMillis();
             }
-            var image = ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from);
+            var image = ExternalResource.uploadAsImage(ExternalResource.create(imgData), from);
             if (debugFlag){
                 sb.append("上传完成").append(System.currentTimeMillis() - draw).append('\n');
-                from.sendMessage(sb.toString());
+                draw = System.currentTimeMillis();
             }
             from.sendMessage(image);
             if (debugFlag){
