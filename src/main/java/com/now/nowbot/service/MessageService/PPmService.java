@@ -342,19 +342,19 @@ public class PPmService implements MessageService {
     private void switchRank(int i, double date, Action3<Integer, String, Integer> temp) {
         if (date == 1.2D){
             temp.call(i, "X+", PanelUtil.COLOR_X_PLUS);
-        } else if (date > 1){
+        } else if (date >= 1){
             temp.call(i, "SS", PanelUtil.COLOR_SS);
-        } else if (date > 0.95) {
+        } else if (date >= 0.95) {
             temp.call(i, "S+", PanelUtil.COLOR_S_PLUS);
-        } else if (date > 0.90) {
+        } else if (date >= 0.90) {
             temp.call(i, "S", PanelUtil.COLOR_S);
-        } else if (date > 0.85) {
+        } else if (date >= 0.85) {
             temp.call(i, "A+", PanelUtil.COLOR_A_PLUS);
-        } else if (date > 0.80) {
+        } else if (date >= 0.80) {
             temp.call(i, "A", PanelUtil.COLOR_A);
-        } else if (date > 0.70) {
+        } else if (date >= 0.70) {
             temp.call(i, "B", PanelUtil.COLOR_B);
-        } else if (date > 0.60) {
+        } else if (date >= 0.60) {
             temp.call(i, "C", PanelUtil.COLOR_C);
         } else if (date > 0) {
             temp.call(i, "D", PanelUtil.COLOR_D);
