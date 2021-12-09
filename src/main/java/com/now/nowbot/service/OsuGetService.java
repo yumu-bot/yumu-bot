@@ -240,6 +240,39 @@ public class OsuGetService {
         user.setOsuName(c.getBody().getString("username"));
         return c.getBody();
     }
+    /***
+     * 使用本机token获取user信息
+     * @param id
+     * @return
+     */
+    public OsuUser getPlayerOsuInfoN(int id) {
+        return getPlayerInfoN(id, "osu");
+    }
+    public OsuUser getPlayerTaikoInfoN(int id) {
+        return getPlayerInfoN(id, "taiko");
+    }
+    public OsuUser getPlayerCatchInfoN(int id) {
+        return getPlayerInfoN(id, "fruits");
+    }
+    public OsuUser getPlayerManiaInfoN(int id) {
+        return getPlayerInfoN(id, "mania");
+    }
+
+
+    public OsuUser getPlayerInfoN(int id, String mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
+                .queryParam("key", "id")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
+        return c.getBody();
+    }
 
     /***
      * 使用本机token获取user信息

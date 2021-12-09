@@ -210,7 +210,7 @@ public class PPmCatch implements PPmObject {
         //3.4 稳定STB stability (-0.16)-1.2 stb
 
         {
-            double GRD = (this.xx + this.xs * 0.8 + this.xa * 0.4 + this.xb * 0 - this.xc * 0.2 - this.xd * 0.4) / prbp.size();
+            double GRD = (this.xx + this.xs * 0.9 + this.xa * 0.8 + this.xb * 0.4 - this.xc * 0.2 - this.xd * 0.2) / prbp.size();
             double FCN = (this.xx + this.xs) / 100D;
             double PFN = Math.pow((1 - 1.0 * this.notfc / prbp.size()), 2);
             stb = GRD * 0.8 + FCN * 0.2 + PFN * 0.2;

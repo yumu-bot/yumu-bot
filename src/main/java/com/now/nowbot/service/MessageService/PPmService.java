@@ -2,7 +2,10 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPm.PPmObject;
+import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
@@ -19,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("ppm")
@@ -28,60 +32,56 @@ public class PPmService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        if (matcher.group("vs") != null) {
-            // 就不写一堆了,整个方法把
-            doVs(event, matcher);
-            return;
-        }
-        boolean debugFlag = false;
+//        if (matcher.group("vs") != null) {
+//            // 就不写一堆了,整个方法把
+//            doVs(event, matcher);
+//            return;
+//        }
         StringBuilder sb = null;
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
         PPmObject userinfo = null;
+        Ppm ppm;
         JSONObject userdate;
+        OsuUser user;
+        List<BpInfo> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
-        if (mode == OsuMode.MANIA) {
-            throw new PpmException(PpmException.Type.PPM_Default_ManiaComingSoon);
-        }
+
         if (at != null) {
             // 包含有@
-            var user = BindingUtil.readUser(at.getTarget());
-            userdate = osuGetService.getPlayerInfo(user, mode.toString());
-            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+            var userBin = BindingUtil.readUser(at.getTarget());
+            userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
+            var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
             userinfo = PPmObject.pres(userdate, bpdate, mode);
+
+            user = osuGetService.getPlayerInfoN(userBin, mode.getName());
+            bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
+            ppm = Ppm.getInstance(mode, user, bps);
         } else {
             // 不包含@ 分为查自身/查他人
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
-                if (matcher.group("name").trim().equals("debug")){
-                    debugFlag = true;
-                    sb = new StringBuilder();
-                    sb.append("加载用户数据");
-                    Long lode = System.currentTimeMillis();
-                    var user = BindingUtil.readUser(event.getSender().getId());
-                    userdate = osuGetService.getPlayerInfo(user, mode.toString());
-                    var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
-                    userinfo = PPmObject.pres(userdate, bpdate, mode);
-                    sb.append(System.currentTimeMillis() - lode).append('\n');
-                }else {
-                    int id = osuGetService.getOsuId(matcher.group("name").trim());
-                    userdate = osuGetService.getPlayerInfo(id, mode.toString());
-                    var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
-                    userinfo = PPmObject.pres(userdate, bpdate, mode);
-                }
-            } else {
-                var user = BindingUtil.readUser(event.getSender().getId());
-                userdate = osuGetService.getPlayerInfo(user, mode.toString());
-                var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
+                int id = osuGetService.getOsuId(matcher.group("name").trim());
+                userdate = osuGetService.getPlayerInfo(id, mode.toString());
+                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
                 userinfo = PPmObject.pres(userdate, bpdate, mode);
+
+                user = osuGetService.getPlayerInfoN(id, mode.getName());
+                bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
+                ppm = Ppm.getInstance(mode, user, bps);
+            } else {
+                var userBin = BindingUtil.readUser(event.getSender().getId());
+                userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
+                var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
+                userinfo = PPmObject.pres(userdate, bpdate, mode);
+
+                user = osuGetService.getPlayerInfoN(userBin, mode.getName());
+                bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
+                ppm = Ppm.getInstance(mode, user, bps);
             }
-        }
-        Long draw = null;
-        if (debugFlag){
-            draw = System.currentTimeMillis();
         }
         if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
         if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
@@ -96,20 +96,20 @@ public class PPmService implements MessageService {
             default -> "?";
         };
         //获得背景
-        Image uBg = PanelUtil.getBgUrl("用户自定义路径", userinfo.getBackgroundURL(), true);
+        Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
 
         //绘制卡片A
         var card = PanelUtil.getA1Builder(uBg)
-                .drawA1(userinfo.getHeadURL())
-                .drawA2(PanelUtil.getFlag(userdate.getJSONObject("country").getString("code")))
-                .drawA3(userinfo.getName());
-        card.drawB2("#" + userdate.getJSONObject("statistics").getString("global_rank"))
-                .drawB1(userdate.getJSONObject("country").getString("code") + "#" + userdate.getJSONObject("statistics").getString("country_rank"))
-                .drawC2(userdate.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
-                        userdate.getJSONObject("statistics").getJSONObject("level").getString("current") +
-                        "(" + userdate.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
-                .drawC1(userdate.getJSONObject("statistics").getIntValue("pp") + "PP");
-        if (userdate.getBoolean("is_supporter")) {
+                .drawA1(user.getAvatarUrl())
+                .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
+                .drawA3(user.getUsername());
+        card.drawB2("#" + user.getStatustucs().getGlobalRank())
+                .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
+                .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
+                        user.getStatustucs().getLevelCurrent() +
+                        "(" + user.getStatustucs().getLevelProgress() + "%)")
+                .drawC1(user.getPp().intValue() + "PP");
+        if (user.getSupportLeve()>0) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         //计算六边形数据
@@ -148,20 +148,8 @@ public class PPmService implements MessageService {
         try (uBg; panelImage) {
             card.build().close();
             byte[] imgData = panelImage.encodeToData().getBytes();
-            if (debugFlag){
-                sb.append("绘制").append(System.currentTimeMillis() - draw).append('\n');
-                draw = System.currentTimeMillis();
-            }
             var image = ExternalResource.uploadAsImage(ExternalResource.create(imgData), from);
-            if (debugFlag){
-                sb.append("上传完成").append(System.currentTimeMillis() - draw).append('\n');
-                draw = System.currentTimeMillis();
-            }
             from.sendMessage(image);
-            if (debugFlag){
-                sb.append("发送结束").append(System.currentTimeMillis() - draw);
-                from.sendMessage(sb.toString());
-            }
         }
     }
 

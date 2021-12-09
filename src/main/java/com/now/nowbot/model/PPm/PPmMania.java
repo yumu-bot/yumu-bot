@@ -215,8 +215,8 @@ public class PPmMania implements PPmObject {
             double GRD = (this.xx + this.xs*0.9 + this.xa* 0.8 + this.xb*0.4 + this.xc*0.2 - this.xd*0.2)/100;
             double FCN = (100-this.notfc)/100D;
             double PFN = (this.xs+ this.xx)/100D;
-            stb = GRD*0.8+(FCN+PFN)*0.2;
-            stb = check(stb, 0, 1.2);
+//            stb = GRD*0.8+(FCN+PFN)*0.2;
+//            stb = check(stb, 0, 1.2);
         }
         //1.5 肝力ENG energy eng
 
@@ -235,7 +235,7 @@ public class PPmMania implements PPmObject {
             sth = Math.pow((HPS-2.5)/2,0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
+//        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
         san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
         //san = rsan
         if (san < 1){
@@ -265,14 +265,17 @@ public class PPmMania implements PPmObject {
                 ppv0 += jsb.getPp();
                 accv0 += jsb.getAccuracy();
                 lengv0 += jsb.getBeatmap().getTotalLength();
+                pgr0 += 1f*jsb.getStatistics().getCountGeki()/jsb.getStatistics().getCount300();
             } else if (j >= 45 && j < 55) {
                 ppv45 += jsb.getPp();
                 accv45 += jsb.getAccuracy();
                 lengv45 += jsb.getBeatmap().getTotalLength();
+                pgr45 += 1f*jsb.getStatistics().getCountGeki()/jsb.getStatistics().getCount300();
             } else if (j >= 90) {
                 ppv90 += jsb.getPp();
                 accv90 += jsb.getAccuracy();
                 lengv90 += jsb.getBeatmap().getTotalLength();
+                pgr90 += 1f*jsb.getStatistics().getCountGeki()/jsb.getStatistics().getCount300();
             }
         }
         double sumOxy = 0.0D;
@@ -714,7 +717,7 @@ public class PPmMania implements PPmObject {
 
     @Override
     public double getStb() {
-        return stb;
+        return 0;
     }
 
     @Override
@@ -753,7 +756,7 @@ public class PPmMania implements PPmObject {
         fa *= n;
         eng *= n;
         sth *= n;
-        stb *= n;
+//        stb *= n;
         sta *= n;
         ptt *= n;
         ttl *= n;
