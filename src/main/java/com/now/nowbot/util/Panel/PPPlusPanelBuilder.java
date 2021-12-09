@@ -50,4 +50,10 @@ public class PPPlusPanelBuilder extends PPPanelBuilder{
         super.drawLeftValueN(n, bigText, simText);
         return this;
     }
+
+    @Override
+    public Image build() {
+        drawPanelName("PP+");
+        return super.build();
+    }
 }

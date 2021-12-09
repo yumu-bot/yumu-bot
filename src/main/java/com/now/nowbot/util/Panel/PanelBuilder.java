@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 public class PanelBuilder {
     final Paint p_white = new Paint().setARGB(255, 255, 255, 255).setStrokeWidth(10);
     final float TopTipeFontSize = 24;
+    static final short TOPTEXT_OFFSET= 10;
     protected int width;
     protected int hight;
     protected final Surface surface;
@@ -68,7 +69,7 @@ public class PanelBuilder {
 
     Image build(int r, String text) {
         if (isClose) return outImage;
-        drawPanelInfo(surface, r, text);
+        drawPanelInfo(surface, TOPTEXT_OFFSET, text);
         return build(r);
     }
 
