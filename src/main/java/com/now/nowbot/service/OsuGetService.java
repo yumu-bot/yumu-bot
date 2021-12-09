@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
@@ -177,7 +178,39 @@ public class OsuGetService {
     }
 
     /***
-     * 拿到详细的个人信息
+     * 拿到详细的个人信息 新
+     * @param user
+     * @return
+     */
+    public OsuUser getPlayerOsuInfoN(BinUser user) {
+        return getPlayerInfoN(user, "osu");
+    }
+    public OsuUser getPlayerTaikoInfoN(BinUser user) {
+        return getPlayerInfoN(user, "taiko");
+    }
+    public OsuUser getPlayerCatchInfoN(BinUser user) {
+        return getPlayerInfoN(user, "fruits");
+    }
+    public OsuUser getPlayerManiaInfoN(BinUser user) {
+        return getPlayerInfoN(user, "mania");
+    }
+
+    public OsuUser getPlayerInfoN(BinUser user, String mode) {
+        String url = this.URL + "me" + '/' + mode;
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
+        var data = c.getBody();
+        user.setOsuID(data.getId());
+        user.setOsuName(data.getUsername());
+        return c.getBody();
+    }
+    /***
+     * 拿到详细的个人信息 旧
      * @param user
      * @return
      */

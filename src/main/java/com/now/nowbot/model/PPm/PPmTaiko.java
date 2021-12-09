@@ -455,17 +455,17 @@ public class PPmTaiko implements PPmObject {
      * @return
      */
     @Override
-    public float getHC0() {
+    public float getPGR0() {
         return 0;
     }
 
     @Override
-    public float getHC45() {
+    public float getPGR45() {
         return 0;
     }
 
     @Override
-    public float getHC90() {
+    public float getPGR90() {
         return 0;
     }
 }

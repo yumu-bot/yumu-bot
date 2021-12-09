@@ -83,7 +83,7 @@ public class BpInfo {
         this.maxCombo = maxCombo;
     }
 
-    public Boolean getPassed() {
+    public Boolean isPassed() {
         return passed;
     }
 
@@ -91,7 +91,7 @@ public class BpInfo {
         this.passed = passed;
     }
 
-    public Boolean getPerfect() {
+    public Boolean isPerfect() {
         return perfect;
     }
 

@@ -2,6 +2,10 @@ package com.now.nowbot.model.PPm;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.OsuUser;
+
+import java.util.List;
 
 public class PPmCatch implements PPmObject {
     float ppv0 = 0;
@@ -24,8 +28,8 @@ public class PPmCatch implements PPmObject {
     int xx = 0;
     int notfc = 0;
     String name;
-    float pp;
-    float acc;
+    Double pp;
+    Double acc;
     int level;
     int rank;
     int combo;
@@ -130,7 +134,7 @@ public class PPmCatch implements PPmObject {
             lengv0 = 0;
         }
         name = prd.getString("username");
-        pp = prd.getJSONObject("statistics").getFloatValue("pp");
+        pp = Double.valueOf(prd.getJSONObject("statistics").getFloatValue("pp"));
         if (pp > rawpp) {
             bonus = pp - rawpp;
         } else {
@@ -138,7 +142,7 @@ public class PPmCatch implements PPmObject {
         }
         headURL = prd.getString("avatar_url");
         bgURL = prd.getString("cover_url");
-        acc = prd.getJSONObject("statistics").getFloatValue("hit_accuracy");
+        acc = Double.valueOf(prd.getJSONObject("statistics").getFloatValue("hit_accuracy"));
         level = prd.getJSONObject("statistics").getJSONObject("level").getIntValue("current");
         rank = prd.getJSONObject("statistics").getIntValue("global_rank");
         combo = prd.getJSONObject("statistics").getIntValue("maximum_combo");
@@ -245,6 +249,104 @@ public class PPmCatch implements PPmObject {
         }else {
             san = 300/san;
         }
+    }
+
+    PPmCatch(OsuUser user, List<BpInfo> bps){
+        double[] ys = new double[bps.size()];
+        for (int j = 0; j < bps.size(); j++) {
+            var jsb = bps.get(j);
+            bpp += jsb.getPp() * Math.pow(0.95d, j);
+            ys[j] = Math.log10(jsb.getPp() * Math.pow(0.95, j)) / Math.log10(100);
+
+            if (jsb.getRank().startsWith("D")) xd++;
+            if (jsb.getRank().startsWith("C")) xc++;
+            if (jsb.getRank().startsWith("B")) xb++;
+            if (jsb.getRank().startsWith("A")) xa++;
+            if (jsb.getRank().startsWith("S")) xs++;
+            if (jsb.getRank().startsWith("X")) xx++;
+            if (!jsb.isPerfect()) notfc++;
+            if (j < 10) {
+                ppv0 += jsb.getPp();
+                accv0 += jsb.getAccuracy();
+                lengv0 += jsb.getBeatmap().getTotalLength();
+            } else if (j >= 45 && j < 55) {
+                ppv45 += jsb.getPp();
+                accv45 += jsb.getAccuracy();
+                lengv45 += jsb.getBeatmap().getTotalLength();
+            } else if (j >= 90) {
+                ppv90 += jsb.getPp();
+                accv90 += jsb.getAccuracy();
+                lengv90 += jsb.getBeatmap().getTotalLength();
+            }
+        }
+        double sumOxy = 0.0D;
+        double sumOx2 = 0.0D;
+        double avgX = 0.0D;
+        double avgY = 0.0D;
+        double sumX = 0.0D;
+        for (int n = 1; n <= ys.length; n++) {
+            double weight = Math.log1p(n + 1.0D);
+            sumX += weight;
+            avgX += n * weight;
+            avgY += ys[n - 1] * weight;
+        }
+        avgX /= sumX;
+        avgY /= sumX;
+        for (int n = 1; n <= ys.length; n++) {
+            sumOxy += (n - avgX) * (ys[n - 1] - avgY) * Math.log1p(n + 1.0D);
+            sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
+        }
+        double Oxy = sumOxy / sumX;
+        double Ox2 = sumOx2 / sumX;
+        for (double n = 100; n <= user.getStatustucs().getPlagCount(); n++) {
+            double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+            if (val <= 0.0D) {
+                break;
+            }
+            bonus += val;
+        }
+        rawpp = bpp + bonus;
+
+        ppv0 /= 10;
+        ppv45 /= 10;
+        ppv90 /= 10;
+        accv0 /= 10;
+        accv45 /= 10;
+        accv90 /= 10;
+        lengv0 /= 10;
+        lengv45 /= 10;
+        lengv90 /= 10;
+        if (bps.size() < 90) {
+            ppv90 = 0;
+            accv90 = 0;
+            lengv90 = 0;
+        }
+        if (bps.size() < 45) {
+            ppv45 = 0;
+            accv45 = 0;
+            lengv45 = 0;
+        }
+        if (bps.size() < 10) {
+            ppv0 = 0;
+            accv0 = 0;
+            lengv0 = 0;
+        }
+        name = user.getUsername();
+        pp = user.getPp();
+        if (pp > rawpp) {
+            bonus = pp - rawpp;
+        } else {
+            bonus = 0;
+        }
+        headURL = user.getAvatarUrl();
+        bgURL = user.getCoverUrl();
+        acc = user.getStatustucs().getAccuracy();
+        level = user.getStatustucs().getLevelCurrent();
+        rank = Math.toIntExact(user.getStatustucs().getGlobalRank());
+        combo = user.getStatustucs().getMaxCombo();
+        thit = user.getStatustucs().getTotalHits();
+        pcont = user.getStatustucs().getPlagCount();
+        ptime = user.getStatustucs().getPlatTime();
     }
 
     @Override
@@ -355,12 +457,12 @@ public class PPmCatch implements PPmObject {
 
     @Override
     public float getPp() {
-        return pp;
+        return pp.floatValue();
     }
 
     @Override
     public float getAcc() {
-        return acc;
+        return acc.floatValue();
     }
 
     @Override
@@ -445,7 +547,7 @@ public class PPmCatch implements PPmObject {
 
     @Override
     public void dovs(){
-        float n = pp*0.25f;
+        float n = (float) (pp*0.25f);
         facc *= n;
         eng *= n;
         sth *= n;
@@ -461,17 +563,17 @@ public class PPmCatch implements PPmObject {
      * @return
      */
     @Override
-    public float getHC0() {
+    public float getPGR0() {
         return 0;
     }
 
     @Override
-    public float getHC45() {
+    public float getPGR45() {
         return 0;
     }
 
     @Override
-    public float getHC90() {
+    public float getPGR90() {
         return 0;
     }
 }

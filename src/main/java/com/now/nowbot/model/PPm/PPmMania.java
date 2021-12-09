@@ -44,9 +44,9 @@ public class PPmMania implements PPmObject {
     String headURL;
     String bgURL;
 
-    float hc0;
-    float hc45;
-    float hc90;
+    float pgr0;
+    float pgr45;
+    float pgr90;
     /***
      * 计算mania ppm
      * @param prd 个人信息 JSON 替换为
@@ -70,17 +70,17 @@ public class PPmMania implements PPmObject {
                 ppv0 += jsb.getFloatValue("pp");
                 accv0 += jsb.getFloatValue("accuracy");
                 lengv0 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                hc0 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
+                pgr0 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
             }else if(j>=45 && j<55){
                 ppv45 += jsb.getFloatValue("pp");
                 accv45 += jsb.getFloatValue("accuracy");
                 lengv45 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                hc45 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
+                pgr45 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
             }else if(j>=90){
                 ppv90 += jsb.getFloatValue("pp");
                 accv90 += jsb.getFloatValue("accuracy");
                 lengv90 += jsb.getJSONObject("beatmap").getFloatValue("total_length");
-                hc90 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
+                pgr90 += jsb.getJSONObject("statistics").getFloatValue("count_geki")/jsb.getJSONObject("statistics").getFloatValue("count_300");
             }
         }
         double sumOxy = 0.0D;
@@ -120,17 +120,17 @@ public class PPmMania implements PPmObject {
         lengv0 /= 10;
         lengv45 /= 10;
         lengv90 /= 10;
-        hc0 /= 10;
-        hc45 /= 10;
-        hc90 /= 10;
+        pgr0 /= 10;
+        pgr45 /= 10;
+        pgr90 /= 10;
         if (prbp.size()<90) {
-            ppv90 = 0; accv90 = 0; lengv90 = 0; hc0 = 0;
+            ppv90 = 0; accv90 = 0; lengv90 = 0; pgr0 = 0;
         }
         if (prbp.size()<45) {
-            ppv45 = 0; accv45 = 0; lengv45 = 0; hc45 = 0;
+            ppv45 = 0; accv45 = 0; lengv45 = 0; pgr45 = 0;
         }
         if (prbp.size()<10) {
-            ppv0 = 0; accv0 = 0; lengv0 = 0; hc90 = 0;
+            ppv0 = 0; accv0 = 0; lengv0 = 0; pgr90 = 0;
         }
         name = prd.getString("username");
         pp = prd.getJSONObject("statistics").getFloatValue("pp");
@@ -456,17 +456,17 @@ public class PPmMania implements PPmObject {
      * @return
      */
     @Override
-    public float getHC0() {
-        return hc0;
+    public float getPGR0() {
+        return pgr0;
     }
 
     @Override
-    public float getHC45() {
-        return hc45;
+    public float getPGR45() {
+        return pgr45;
     }
 
     @Override
-    public float getHC90() {
-        return hc90;
+    public float getPGR90() {
+        return pgr90;
     }
 }

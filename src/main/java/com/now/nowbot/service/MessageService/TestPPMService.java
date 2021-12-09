@@ -117,15 +117,15 @@ public class TestPPMService implements MessageService {
                 .append(userinfo.getPpv0()).append(' ')
                 .append(userinfo.getAccv0()).append(' ')
                 .append(userinfo.getLengv0()).append(' ')
-                .append(userinfo.getHC0()).append(' ')
+                .append(userinfo.getPGR0()).append(' ')
                 .append(userinfo.getPpv45()).append(' ')
                 .append(userinfo.getAccv45()).append(' ')
                 .append(userinfo.getLengv45()).append(' ')
-                .append(userinfo.getHC45()).append(' ')
+                .append(userinfo.getPGR45()).append(' ')
                 .append(userinfo.getPpv90()).append(' ')
                 .append(userinfo.getAccv90()).append(' ')
                 .append(userinfo.getLengv90()).append(' ')
-                .append(userinfo.getHC90()).append(' ');
+                .append(userinfo.getPGR90()).append(' ');
 
         event.getSubject().sendMessage(sb.toString());
     }

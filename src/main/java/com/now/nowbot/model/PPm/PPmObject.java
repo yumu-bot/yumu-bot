@@ -34,11 +34,11 @@ public interface PPmObject {
      * 黄彩比
      * @return
      */
-    float getHC0();
+    float getPGR0();
 
-    float getHC45();
+    float getPGR45();
 
-    float getHC90();
+    float getPGR90();
 
     float getPpv0();
 
