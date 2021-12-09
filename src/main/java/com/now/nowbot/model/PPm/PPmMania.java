@@ -360,6 +360,7 @@ public class PPmMania implements PPmObject {
         {
             double rBPV = ppv0 / (ppv90 + 1);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
+            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
 
             double BPD; // BP density BP密度
             if (rBPD == 0) {
@@ -394,7 +395,7 @@ public class PPmMania implements PPmObject {
                 VWB = 0;
             }
 
-            ptt = Math.pow(BPD * 0.1D , 0.4D) + BPV * 0.9D + VWB;
+            ptt = Math.pow(BPD * 0.1D , 0.4D) + BPV * 0.9D * LPI + VWB;
             ptt = check(ptt, 0, 1.2);
         }
 
@@ -536,9 +537,9 @@ public class PPmMania implements PPmObject {
 
         // 4.8 理智SAN sanity 0-1.2
         {
-            double LPI = pp > 1000 ? 1 : pp / 1000D; // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
+            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
 
-            double rSAN = (fa + 0.5D) * Math.pow(ptt , 10D) * LPI; // raw sanity 理智初值
+            double rSAN = fa * ptt * Math.sqrt(Math.pow(ppv0 , 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI; // raw sanity 理智初值
 
             if (rSAN >= 5) {
                 san = rSAN / 300D;
