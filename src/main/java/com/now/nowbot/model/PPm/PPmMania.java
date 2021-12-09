@@ -504,8 +504,8 @@ public class PPmMania implements PPmObject {
             double HPS;
             if (rHPS >= 18) {
                 HPS = 1;
-            } else if (rHPS >= 6) {
-                HPS = (rHPS - 6) / 12D;
+            } else if (rHPS >= 0) {
+                HPS = rHPS / 18D;
             } else {
                 HPS = 0;
             }
@@ -528,7 +528,7 @@ public class PPmMania implements PPmObject {
                 VHB = 0;
             }
 
-            sth = Math.pow(HPS * 0.2 + PTR * 0.8 , 0.6D) + VHB;
+            sth = Math.pow(HPS * 0.2 + PTR * 0.8 , 0.4D) + VHB;
             sth = check(sth, 0, 1.2);
         }
         // 4.7 总计TTL Total / Overall 0-1.16
