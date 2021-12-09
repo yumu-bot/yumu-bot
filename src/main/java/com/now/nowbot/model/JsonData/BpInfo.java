@@ -1,49 +1,38 @@
 package com.now.nowbot.model.JsonData;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class BpInfo {
-    @JsonProperty("id")
     Long id;
     @JsonProperty("user_id")
     Integer userId;
-    @JsonProperty("accuracy")
     Float accuracy;
-    @JsonProperty("mods")
     List<String> mods;
     @JsonProperty("score")
     Integer score;
     @JsonProperty("max_combo")
     Integer maxCombo;
-    @JsonProperty("passed")
     Boolean passed;
-    @JsonProperty("perfect")
     Boolean perfect;
-    @JsonProperty("rank")
     String rank;
     @JsonProperty("created_at")
     String createTime;
     @JsonProperty("best_id")
     Long bestId;
-    @JsonProperty("pp")
     Float pp;
-    @JsonProperty("mode")
     String mode;
     @JsonProperty("mode_int")
     Integer modeInt;
-    @JsonProperty("replay")
     Boolean replay;
-    @JsonProperty("beatmap")
     BeatMap beatmap;
-    @JsonProperty("beatmapset")
     BeatMapSet beatmapset;
-    @JsonProperty("weight")
     Weight weight;
-    @JsonProperty("statistics")
     Statustucs statistics;
 
     public Long getId() {

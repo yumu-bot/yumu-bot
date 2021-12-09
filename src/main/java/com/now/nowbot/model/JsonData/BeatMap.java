@@ -1,21 +1,20 @@
 package com.now.nowbot.model.JsonData;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class BeatMap {
-    @JsonProperty("id")
     Integer id;
     @JsonProperty("beatmapset_id")
     Integer beatmapsetId;
     @JsonProperty("difficulty_rating")
     Integer difficultyRating;
-    @JsonProperty("mode")
     String mode;
     @JsonProperty("mode_int")
     Integer modeInt;
-    @JsonProperty("status")
     String status;
     @JsonProperty("total_length")
     Integer totalLength;
@@ -23,31 +22,23 @@ public class BeatMap {
     Boolean hitLength;
     @JsonProperty("user_id")
     String userId;
-    @JsonProperty("version")
     String version;
     @JsonProperty("accuracy")
     Float od;
-    @JsonProperty("ar")
     Float ar;
-    @JsonProperty("cs")
     Float cs;
     @JsonProperty("drain")
     Float hp;
-    @JsonProperty("bpm")
     Float bpm;
     @JsonProperty("max_combo")
     Integer maxCombo;
-    @JsonProperty("convert")
     Boolean convert;
     @JsonProperty("is_scoreable")
     Boolean scoreable;
     @JsonProperty("last_updated")
     String updatedTime;
-    @JsonProperty("passcount")
     String passcount;
-    @JsonProperty("playcount")
     String playcount;
-    @JsonProperty("url")
     String url;
     @JsonProperty("checksum")
     String md5;
@@ -57,6 +48,9 @@ public class BeatMap {
     Integer spinners;
     @JsonProperty("count_circles")
     Integer circles;
+    /**
+     * 仅在查询铺面信息的时候有
+     */
     @JsonProperty("beatmapset")
     BeatMapSet beatMapSet;
 

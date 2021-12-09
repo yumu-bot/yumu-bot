@@ -193,7 +193,6 @@ public class PpPlusService implements MessageService{
 
         panel.drawLeftTotal(String.valueOf(pppData.getTotal().intValue()),PanelUtil.cutDecimalPoint(pppData.getTotal()));
         panel.drawRightTotal(String.valueOf(userData.getJSONObject("statistics").getIntValue("pp")));
-        panel.drawPanelName("PP-Plus");
         panel.drawHexagon(hexValue, true);
 
         var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppplusv3.2.png")).build("PANEL-PPP dev.0.0.1");
