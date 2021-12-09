@@ -341,11 +341,11 @@ public class PPmService implements MessageService {
 
     private void switchRank(int i, double date, Action3<Integer, String, Integer> temp) {
         if (date == 1.2D){
-            temp.call(i, "X+", PanelUtil.COLOR_SS);
+            temp.call(i, "X+", PanelUtil.COLOR_X_PLUS);
         } else if (date > 1){
             temp.call(i, "SS", PanelUtil.COLOR_SS);
         } else if (date > 0.95) {
-            temp.call(i, "S+", PanelUtil.COLOR_SS);
+            temp.call(i, "S+", PanelUtil.COLOR_S_PLUS);
         } else if (date > 0.90) {
             temp.call(i, "S", PanelUtil.COLOR_S);
         } else if (date > 0.85) {

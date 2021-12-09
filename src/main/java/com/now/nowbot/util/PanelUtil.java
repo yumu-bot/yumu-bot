@@ -27,7 +27,9 @@ public class PanelUtil {
      * SS-D #FEF668 #F09450 #00B034 #3FBCEF #8E569B #EC6B76 #676EB0
      * 我方#00A8EC 对方 #FF0000
      */
+    public static final int COLOR_X_PLUS = Color.makeRGB(254, 246, 104);
     public static final int COLOR_SS = Color.makeRGB(254, 246, 104);
+    public static final int COLOR_S_PLUS = Color.makeRGB(240, 148, 80);
     public static final int COLOR_S = Color.makeRGB(240, 148, 80);
     public static final int COLOR_A_PLUS = Color.makeRGB(0, 176, 52);
     public static final int COLOR_A = Color.makeRGB(0, 176, 52);
