@@ -52,7 +52,7 @@ public class PpmMania extends Ppm {
                 pgr90 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
             }
             bonus = bonusPP(allBpPP, user.getStatustucs().getPlagCount());
-            rawpp = bpp + bonus;
+            rawpp = bpp + bonus;user.getStatustucs().getPp();
 
             ppv0 /= 10;
             ppv45 /= 10;
@@ -90,7 +90,7 @@ public class PpmMania extends Ppm {
             {
                 double rBPV = ppv0 / (ppv90 + 1);
                 double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
-                double LPI = user.getPp() > 1000 ? 1 : Math.pow(user.getPp() / 1000D , 0.5D);
+                double LPI = user.getStatustucs().getPp() > 1000 ? 1 : Math.pow(user.getStatustucs().getPp() / 1000D , 0.5D);
 
                 double BPD; // BP density BP密度
                 if (rBPD == 0) {
@@ -257,7 +257,7 @@ public class PpmMania extends Ppm {
             value7 = value1 *0.2 + value2*0.1 + value3*0.2 + value4*0.25 + value5*0.05 + value6*0.2;
             value7 *= 100;
             {
-                double LPI = user.getPp() > 1000 ? 1 : Math.pow(user.getPp() / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
+                double LPI = user.getStatustucs().getPp() > 1000 ? 1 : Math.pow(user.getStatustucs().getPp() / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
 
                 double rSAN = value1 * value2 * Math.sqrt(Math.pow(ppv0 , 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI; // raw sanity 理智初值
 
@@ -291,6 +291,7 @@ public class PpmMania extends Ppm {
     @Override
     public void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct) {
         doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        getValue1( val -> (float)(val-5));
     }
 
     @Override

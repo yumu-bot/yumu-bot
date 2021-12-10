@@ -27,6 +27,7 @@ public class Statustucs {
     Long rankedScore;
     @JsonProperty("total_score")
     Long totalScore;
+    Double pp;
     @JsonProperty("hit_accuracy")
     Double accuracy;
     @JsonProperty("play_count")
@@ -253,6 +254,14 @@ public class Statustucs {
 
     public void setA(Integer a) {
         A = a;
+    }
+
+    public Double getPp() {
+        return pp;
+    }
+
+    public void setPp(Double pp) {
+        this.pp = pp;
     }
 
     @Override
