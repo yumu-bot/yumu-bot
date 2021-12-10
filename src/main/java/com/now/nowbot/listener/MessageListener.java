@@ -79,6 +79,7 @@ public class MessageListener extends SimpleListenerHost {
             } else if (e instanceof IllegalArgumentException) {
                 log.error("正则异常",e);
             } else {
+                if (Permission.isSupper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
                 log.error("捕捉其他异常", e);
             }
         }
