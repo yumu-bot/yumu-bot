@@ -9,7 +9,6 @@ import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.serviceException.PpmException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
@@ -33,7 +32,7 @@ public class PPmService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-//        if (matcher.group("vs") != null) {
+//        if (matcher.group("vs") != null) {  //TODO vs部分以后再说
 //            // 就不写一堆了,整个方法把
 //            doVs(event, matcher);
 //            return;
@@ -42,10 +41,10 @@ public class PPmService implements MessageService {
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
-
-        PPmObject userinfo = null;
+        //PPmObject跟JSONObject为老方法
+//        PPmObject userinfo = null;
+//        JSONObject userdate;
         Ppm ppm;
-        JSONObject userdate;
         OsuUser user;
         List<BpInfo> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
@@ -54,9 +53,9 @@ public class PPmService implements MessageService {
         if (at != null) {
             // 包含有@
             var userBin = BindingUtil.readUser(at.getTarget());
-            userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
-            var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
-            userinfo = PPmObject.pres(userdate, bpdate, mode);
+//            userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
+//            var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
+//            userinfo = PPmObject.pres(userdate, bpdate, mode);
 
             user = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
@@ -66,28 +65,28 @@ public class PPmService implements MessageService {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
                 int id = osuGetService.getOsuId(matcher.group("name").trim());
-                userdate = osuGetService.getPlayerInfo(id, mode.toString());
-                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
-                userinfo = PPmObject.pres(userdate, bpdate, mode);
+//                userdate = osuGetService.getPlayerInfo(id, mode.toString());
+//                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
+//                userinfo = PPmObject.pres(userdate, bpdate, mode);
 
                 user = osuGetService.getPlayerInfoN(id, mode.getName());
                 bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
                 var userBin = BindingUtil.readUser(event.getSender().getId());
-                userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
-                var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
-                userinfo = PPmObject.pres(userdate, bpdate, mode);
+//                userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
+//                var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
+//                userinfo = PPmObject.pres(userdate, bpdate, mode);
 
                 user = osuGetService.getPlayerInfoN(userBin, mode.getName());
                 bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             }
         }
-        if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
-        if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
-            throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
-        }
+//        if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
+//        if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
+//            throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
+//        }
         //生成panel名
         String panelName = "PPM:" + switch (mode) {
             case OSU -> "O";
@@ -115,14 +114,14 @@ public class PPmService implements MessageService {
         }
         //计算六边形数据
         float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
-        float[] hexValue = new float[]{
-                (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
-        };
+//        float[] hexValue = new float[]{
+//                (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
+//                (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
+//                (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
+//                (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
+//                (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
+//                (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
+//        };
         // panel new
         var ppmPanel = new PPMPanelBuilder();
         ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png", false));
@@ -136,30 +135,31 @@ public class PPmService implements MessageService {
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
         ppmPanel.drawHexagon(hexDate, true);
-        //生成panel
-        var panel = PanelUtil.getPPMBulider()
-                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
-                .drawOverImage()
-                .drawValueName()
-                .drawLeftCard(card.build())
-                .drawLeftValueN(0, String.valueOf((int) (userinfo.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfo.getFacc() * 100))
-                .drawLeftValueN(1, String.valueOf((int) (userinfo.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfo.getPtt() * 100))
-                .drawLeftValueN(2, String.valueOf((int) (userinfo.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSta() * 100))
-                .drawLeftValueN(3, String.valueOf((int) (userinfo.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfo.getStb() * 100))
-                .drawLeftValueN(4, String.valueOf((int) (userinfo.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfo.getEng() * 100))
-                .drawLeftValueN(5, String.valueOf((int) (userinfo.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSth() * 100))
-                //评级
-                .switchRank(0, userinfo.getFacc())
-                .switchRank(1, userinfo.getPtt())
-                .switchRank(2, userinfo.getSta())
-                .switchRank(3, userinfo.getStb())
-                .switchRank(4, userinfo.getEng())
-                .switchRank(5, userinfo.getSth())
-                .drawLeftTotal(String.valueOf((int) (userinfo.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
-                .drawRightTotal(String.valueOf((int) (userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
-                .drawPanelName(panelName)
-                .drawHexagon(hexValue, true);
-        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
+        //生成panel old
+//        var panel = PanelUtil.getPPMBulider()
+//                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
+//                .drawOverImage()
+//                .drawValueName()
+//                .drawLeftCard(card.build())
+//                .drawLeftValueN(0, String.valueOf((int) (userinfo.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfo.getFacc() * 100))
+//                .drawLeftValueN(1, String.valueOf((int) (userinfo.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfo.getPtt() * 100))
+//                .drawLeftValueN(2, String.valueOf((int) (userinfo.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSta() * 100))
+//                .drawLeftValueN(3, String.valueOf((int) (userinfo.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfo.getStb() * 100))
+//                .drawLeftValueN(4, String.valueOf((int) (userinfo.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfo.getEng() * 100))
+//                .drawLeftValueN(5, String.valueOf((int) (userinfo.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSth() * 100))
+//                //评级
+//                .switchRank(0, userinfo.getFacc())
+//                .switchRank(1, userinfo.getPtt())
+//                .switchRank(2, userinfo.getSta())
+//                .switchRank(3, userinfo.getStb())
+//                .switchRank(4, userinfo.getEng())
+//                .switchRank(5, userinfo.getSth())
+//                .drawLeftTotal(String.valueOf((int) (userinfo.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
+//                .drawRightTotal(String.valueOf((int) (userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
+//                .drawPanelName(panelName)
+//                .drawHexagon(hexValue, true);
+//        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
+        var panelImage = ppmPanel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();
             byte[] imgData = panelImage.encodeToData().getBytes();
