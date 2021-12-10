@@ -1,10 +1,22 @@
 package com.now.nowbot.model.PPm.impl;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.util.Panel.PPMPanelBuilder;
+import com.now.nowbot.util.Panel.PPPanelBuilder;
+import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.SkiaUtil;
+import org.jetbrains.skija.Image;
+import org.jetbrains.skija.Paint;
+import rx.functions.Func2;
+import rx.functions.Func3;
+import rx.functions.Func4;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 
 public class PpmMania extends Ppm {
     public PpmMania(OsuUser user, List<BpInfo> bps){
@@ -259,5 +271,42 @@ public class PpmMania extends Ppm {
                 value8 = check(value8, 0, 1.2);
             }
         }
+    }
+
+    @Override
+    public void drawOverImage(Function<Image, PPMPanelBuilder> doAct) {
+        try {
+            doAct.apply(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct) {
+        var p = new Paint().setARGB(255,161,161,161);
+        doAct.call(0, "STA",null,p);
+    }
+
+    @Override
+    public void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct) {
+        doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+    }
+
+    @Override
+    public void drawRank(Func2<Integer, Double, PPMPanelBuilder> doAct) {
+        doAct.call(0, value1);
+    }
+
+    @Override
+    public void drawTotleName(Function<String, PPPanelBuilder> left, Function<String, PPPanelBuilder> right) {
+        left.apply("Overall");
+        right.apply("Sanity");
+    }
+
+    @Override
+    public void drawTotleValue(Func2<String, String, PPPanelBuilder> left, Func2<String, String, PPPanelBuilder> right) {
+        left.call(String.valueOf((int) value7), PanelUtil.cutDecimalPoint(value7));
+        left.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
     }
 }

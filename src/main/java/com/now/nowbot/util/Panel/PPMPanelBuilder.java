@@ -23,6 +23,10 @@ public class PPMPanelBuilder extends PPPanelBuilder {
         }
         return this;
     }
+    public PPMPanelBuilder drawOverImage(Image off){
+        drawImage(off);
+        return this;
+    }
     /**名字*/
     public PPMPanelBuilder drawValueName(){
         var p = new Paint().setARGB(255,161,161,161);

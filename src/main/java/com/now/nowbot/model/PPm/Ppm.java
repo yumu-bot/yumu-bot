@@ -7,6 +7,13 @@ import com.now.nowbot.model.PPm.impl.PpmMania;
 import com.now.nowbot.model.PPm.impl.PpmOsu;
 import com.now.nowbot.model.PPm.impl.PpmTaiko;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.util.Panel.PPMPanelBuilder;
+import com.now.nowbot.util.Panel.PPPanelBuilder;
+import org.jetbrains.skija.Image;
+import org.jetbrains.skija.Paint;
+import rx.functions.Func2;
+import rx.functions.Func3;
+import rx.functions.Func4;
 
 import java.util.List;
 import java.util.function.Function;
@@ -76,8 +83,31 @@ public abstract class Ppm {
         return value7;
     }
     public double getValue8(){
-        getValues((v)-> (float)Math.pow((v < 0.6 ? 0 : v - 0.6) * 2.5f, 0.8));
         return value8;
+    }
+    public double getValue1(Function<Double, Float> doAct){
+        return doAct.apply(value1);
+    }
+    public double getValue2(Function<Double, Float> doAct){
+        return doAct.apply(value2);
+    }
+    public double getValue3(Function<Double, Float> doAct){
+        return doAct.apply(value3);
+    }
+    public double getValue4(Function<Double, Float> doAct){
+        return doAct.apply(value4);
+    }
+    public double getValue5(Function<Double, Float> doAct){
+        return doAct.apply(value5);
+    }
+    public double getValue6(Function<Double, Float> doAct){
+        return doAct.apply(value6);
+    }
+    public double getValue7(Function<Double, Float> doAct){
+        return doAct.apply(value7);
+    }
+    public double getValue8(Function<Double, Float> doAct){
+        return doAct.apply(value8);
     }
     protected double check(double value, double min, double max){
         if (value>max) return max;else return Math.max(value, min);
@@ -127,4 +157,15 @@ public abstract class Ppm {
         }
         return (float) bonus;
     }
+    public abstract void drawOverImage(Function<Image, PPMPanelBuilder> doAct);
+    public abstract void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct);
+    public abstract void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct);
+
+    /**
+     * 评级
+     * @param doAct
+     */
+    public abstract void drawRank(Func2<Integer, Double, PPMPanelBuilder> doAct);
+    public abstract void drawTotleName(Function<String , PPPanelBuilder> left, Function<String , PPPanelBuilder> right);
+    public abstract void drawTotleValue(Func2<String , String, PPPanelBuilder> left, Func2<String, String , PPPanelBuilder> right);
 }

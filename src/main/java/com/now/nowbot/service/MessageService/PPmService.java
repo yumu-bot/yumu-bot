@@ -11,6 +11,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.PpmException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -113,6 +114,7 @@ public class PPmService implements MessageService {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         //计算六边形数据
+        float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
         float[] hexValue = new float[]{
                 (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
@@ -121,6 +123,19 @@ public class PPmService implements MessageService {
                 (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
                 (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
         };
+        // panel new
+        var ppmPanel = new PPMPanelBuilder();
+        ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png", false));
+        ppm.drawOverImage(ppmPanel::drawOverImage);
+        ppm.drawValueName(ppmPanel::drawLeftNameN);
+        ppm.drawValue(ppmPanel::drawLeftValueN);
+        ppm.drawRank(ppmPanel::switchRank);
+        ppm.drawTotleName(ppmPanel::drawLeftTotleName, ppmPanel::drawRightTotleName);
+        ppm.drawTotleValue(ppmPanel::drawRightTotal, ppmPanel::drawRightTotal);
+
+        ppmPanel.drawLeftCard(card.build());
+        ppmPanel.drawPanelName(panelName);
+        ppmPanel.drawHexagon(hexDate, true);
         //生成panel
         var panel = PanelUtil.getPPMBulider()
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
