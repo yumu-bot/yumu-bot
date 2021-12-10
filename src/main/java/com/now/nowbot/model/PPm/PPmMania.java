@@ -37,7 +37,7 @@ public class PPmMania implements PPmObject {
     long pcont;
     long ptime;
 
-    double fa;
+    double facc;
     double eng;
     double ptt;
     double sth;
@@ -156,8 +156,8 @@ public class PPmMania implements PPmObject {
 
         //1.1 准度fACC formulaic accuracy 0-1 facc
         {
-            fa = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
-            fa = check(fa, 0, 1);
+            facc = ((this.acc / 100) < 0.6D ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5D, 1.776D));
+            facc = check(facc, 0, 1);
         }
         //1.2 1.2 潜力PTT potential 0-1 ptt
 
@@ -236,7 +236,7 @@ public class PPmMania implements PPmObject {
             sth = Math.pow((HPS-2.5)/2,0.2);
             sth = check(sth, 0, 1);
         }
-        ttl = fa*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
+        ttl = facc*0.2 + eng*0.2 + ptt*0.1 + sth*0.2 + stb*0.15 + sta*0.15;
         san = ppv0<20?0:(ppv0/(ppv45+ppv90*0.2+1)*(ptt+0.25)*(sth+0.25));
         //san = rsan
         if (san < 1){
@@ -348,16 +348,28 @@ public class PPmMania implements PPmObject {
         pcont = user.getStatustucs().getPlagCount();
         ptime = user.getStatustucs().getPlatTime();
 
-        // 4.1 准度fACC formulaic accuracy 0-1
+        // 4.1 准度fACC formulaic accuracy 0-1.2
         {
-            if (acc / 100 < 0.6D){
-                fa = 0;
-            }else if(acc / 100 > 0.97D){
-                fa = 1;
+            double rFA;
+            if (acc >= 97){
+                rFA = 1;
+            }else if(acc >= 60){
+                rFA = Math.pow((acc / 100 - 0.6) / 0.37D , 2.567D);
             }else {
-                fa = Math.pow((acc / 100 - 0.6D) * 2.5D, 2.567D);
+                rFA = 0;
             }
-            fa = check(fa, 0, 1);
+
+            double VAB;
+            if (acc / 100 >= 1){
+                VAB = 0.2;
+            }else if(acc / 100 >= 0.97){
+                VAB = 0.2 * Math.pow((acc / 100 - 0.97) / 3D , 0.2D);
+            }else {
+                VAB = 0;
+            }
+
+            facc = rFA + VAB;
+            facc = check(facc, 0, 1.2);
         }
 
         // 4.2 潜力PTT potential 0-1.2
@@ -369,12 +381,12 @@ public class PPmMania implements PPmObject {
             double BPD; // BP density BP密度
             if (rBPD == 0) {
                 BPD = 0;
-            } else if (rBPD >= 19) {
+            } else if (rBPD >= 20) {
                 BPD = 0;
-            } else if (rBPD >= 18) {
-                BPD = (19 - rBPD) * 0.6D;
-            } else if (rBPD >= 14) {
-                BPD = (18 - rBPD) * 0.1D + 0.6D;
+            } else if (rBPD >= 19) {
+                BPD = (20 - rBPD) * 0.6D;
+            } else if (rBPD >= 15) {
+                BPD = (19 - rBPD) * 0.1D + 0.6D;
             } else {
                 BPD = 1;
             }
@@ -391,15 +403,15 @@ public class PPmMania implements PPmObject {
             }
 
             double VWB; // very wide (bp) bonus 超活力奖励
-            if (rBPV >= 3.8) {
+            if (rBPV >= 6.8) {
                 VWB = 0.2;
             } else if (rBPV >= 1.8) {
-                VWB = (rBPV - 1.8) / 10D;
+                VWB = (rBPV - 1.8) / 25D;
             } else {
                 VWB = 0;
             }
 
-            ptt = Math.pow(BPD * 0.1D , 0.4D) + BPV * 0.9D * LPI + VWB;
+            ptt = Math.pow(BPD , 0.4D) * 0.2D + BPV * 0.8D * LPI + VWB;
             ptt = check(ptt, 0, 1.2);
         }
 
@@ -414,7 +426,7 @@ public class PPmMania implements PPmObject {
             } else if (rSPT >= 60){
                 SPT = (rSPT - 60) * 0.0075D + 0.6D;
             } else if (rSPT >= 40){
-                SPT = (rSPT - 40) * 0.06D;
+                SPT = (rSPT - 40) * 0.03D;
             } else {
                 SPT = 0;
             }
@@ -503,8 +515,8 @@ public class PPmMania implements PPmObject {
         {
             double rHPS = ptime == 0 ? 0 : thit * 1.0D / ptime ; // raw hit per second 每秒击打初值
 
-            double rPTR = Math.sqrt(ppv0 * lengv0) * 0.7D + Math.sqrt(ppv45 * lengv45) * 0.2D + Math.sqrt(ppv90 * lengv90) * 0.1D;
-            // raw PP-time root PP-时间均方根初值
+            double rLNB = Math.log1p(ppv0 * lengv0);
+            // raw ln (the) best (performance multiplayer) 最好表现因子自然对数初值
 
             double HPS;
             if (rHPS >= 18) {
@@ -515,35 +527,37 @@ public class PPmMania implements PPmObject {
                 HPS = 0;
             }
 
-            double PTR;
-            if (rPTR >= 400) {
-                PTR = 1;
-            } else if (rPTR >= 50) {
-                PTR = (rPTR - 50) / 350D;
+            double LNB;
+            if (rLNB >= 11.5) {
+                LNB = 1;
+            } else if (rLNB >= 0) {
+                LNB = Math.pow(rLNB / 11.5D , 3.0D);
             } else {
-                PTR = 0;
+                LNB = 0;
             }
 
             double VHB; // very high (pp) bonus 超实力奖励
-            if (rPTR >= 500) {
+            if (rLNB >= 12.5) {
                 VHB = 0.2;
-            } else if (rPTR >= 400) {
-                VHB = (rPTR - 400) / 500D;
+            } else if (rLNB >= 11.5) {
+                VHB = Math.pow(rLNB - 11.5 , 0.5D) * 0.2D;
             } else {
                 VHB = 0;
             }
 
-            sth = Math.pow(HPS * 0.2 + PTR * 0.8 , 0.4D) + VHB;
+            sth = Math.pow(HPS * 0.2 + LNB * 0.8 , 0.4D) + VHB;
             sth = check(sth, 0, 1.2);
         }
-        // 4.7 总计TTL Total / Overall 0-1.16
-        ttl = fa*0.2 + ptt*0.1 + sta*0.2 + pre*0.25 + eng*0.05 + sth*0.2;
+        // 4.7 总计TTL Total / Overall 0-1.2
+        ttl = facc * 0.2 + ptt * 0.1 + sta * 0.2 + pre * 0.25 + eng * 0.05 + sth * 0.2;
 
         // 4.8 理智SAN sanity 0-1.2
         {
             double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
 
-            double rSAN = fa * ptt * Math.sqrt(Math.pow(ppv0 , 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI; // raw sanity 理智初值
+            double PCI = Math.pow(pcont * 30 / (pp + 100) , 0.8D); // play count index PC因子
+
+            double rSAN = facc * ptt * Math.sqrt(Math.pow(ppv0 , 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI * PCI; // raw sanity 理智初值
 
             if (rSAN >= 5) {
                 san = rSAN / 300D;
@@ -703,7 +717,7 @@ public class PPmMania implements PPmObject {
 
     @Override
     public double getFacc() {
-        return fa;
+        return facc;
     }
 
     @Override
@@ -754,7 +768,7 @@ public class PPmMania implements PPmObject {
     @Override
     public void dovs(){
         float n = pp*0.25f;
-        fa *= n;
+        facc *= n;
         eng *= n;
         sth *= n;
         pre *= n;

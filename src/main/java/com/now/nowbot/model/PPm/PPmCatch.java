@@ -347,6 +347,198 @@ public class PPmCatch implements PPmObject {
         thit = user.getStatustucs().getTotalHits();
         pcont = user.getStatustucs().getPlagCount();
         ptime = user.getStatustucs().getPlatTime();
+
+        // 3.1 准度fACC formulaic accuracy 0-1.2
+        {
+            double rFA;
+            if (acc == 100){
+                rFA = 1;
+            }else if(acc >= 60){
+                rFA = Math.pow((acc / 100 - 0.6) / 0.4D , 5D);
+            }else {
+                rFA = 0;
+            }
+
+            double PFB = ((xx + xs + xa + xb + xc + xd - notfc) * 1.0D) / 500; // 完美奖励
+
+            facc = rFA + PFB;
+            facc = check(facc, 0, 1.2);
+        }
+
+        // 3.2 潜力PTT potential 0-1.2
+        {
+            double rBPV = ppv0 / (ppv90 + 1);
+            double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
+            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D , 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+
+            double BPD; // BP density BP密度
+            if (rBPD == 0) {
+                BPD = 0;
+            } else if (rBPD >= 20) {
+                BPD = 0;
+            } else if (rBPD >= 19) {
+                BPD = (20 - rBPD) * 0.6D;
+            } else if (rBPD >= 15) {
+                BPD = (19 - rBPD) * 0.1D + 0.6D;
+            } else {
+                BPD = 1;
+            }
+
+            double BPV; // BP vitality BP活力
+            if (rBPV >= 1.8) {
+                BPV = 1;
+            } else if (rBPV >= 1.4) {
+                BPV = (rBPV - 1.4) + 0.6D;
+            } else if (rBPV >= 1.3) {
+                BPV = (rBPV - 1.3) * 6D;
+            } else {
+                BPV = 0;
+            }
+
+            double VWB; // very wide (bp) bonus 超活力奖励
+            if (rBPV >= 6.8) {
+                VWB = 0.2;
+            } else if (rBPV >= 1.8) {
+                VWB = (rBPV - 1.8) / 25D;
+            } else {
+                VWB = 0;
+            }
+
+            ptt = Math.pow(BPD , 0.4D) * 0.2D + BPV * 0.8D * LPI + VWB;
+            ptt = check(ptt, 0, 1.2);
+        }
+
+        // 3.3 耐力STA stamina 0-1.2
+        {
+            double rSPT = pcont == 0 ? 0 : (ptime * 1.0D / pcont);
+            double SPT; // single play count time 单次游玩时长
+            if (rSPT >= 90){
+                SPT = 1;
+            } else if (rSPT >= 80){
+                SPT = (rSPT - 80) * 0.01D + 0.9D;
+            } else if (rSPT >= 40){
+                SPT = (rSPT - 40) * 0.0075D + 0.6D;
+            } else if (rSPT >= 30){
+                SPT = (rSPT - 30) * 0.06D;
+            } else {
+                SPT = 0;
+            }
+
+            double rBPT = lengv0 * 0.7 + lengv45 * 0.2 + lengv90 * 0.1; // BP playtime BP 游玩时长
+
+            double BPT; // BP playtime BP 游玩时长 等同于旧版fLENT。
+            if (rBPT >= 260){
+                BPT = 1;
+            } else if (rBPT >= 220){
+                BPT = (rBPT - 220) * 0.0025D + 0.9D;
+            } else if (rBPT >= 140){
+                BPT = (rBPT - 140) * 0.00375D + 0.6D;
+            } else if (rBPT >= 100){
+                BPT = (rBPT - 100) * 0.015D;
+            } else {
+                BPT = 0;
+            }
+
+            double VLB; // very long bonus 超长奖励
+            if (rBPT >= 320) {
+                VLB = 0.2;
+            } else if (rBPT >= 280) {
+                VLB = (rBPT - 280) * 0.005D;
+            } else {
+                VLB = 0;
+            }
+
+            sta = Math.pow((SPT * 0.4D + BPT * 0.6D), 0.8D) + VLB;
+            sta = check(sta, 0, 1.2);
+        }
+
+        // 3.4 稳定STB stability 0-1.2
+        {
+            double FCN = (xx + xs) / 100D; // full-combo number 全连数量
+
+            double GRD = (xx * 1.0 + xs * 0.95 + xa * 0.4 + xb * 0.2 - xc * 0.2 - xd * 0.4) / (xx + xs + xa + xb + xc + xd); // grade 评级分数
+            GRD = check(GRD, 0, 1);
+
+            double PFB = ((xx + xs + xa + xb + xc + xd - notfc) * 1.0D) / 500; // 完美奖励
+
+            stb = Math.pow(FCN * 0.2D + GRD * 0.8D , 0.6D) + PFB;
+            stb = check(stb, 0, 1.2);
+        }
+
+        // 3.5 肝力ENG energy 0-1.2
+        {
+            double rLNT = Math.log1p(thit);
+            double LNT; // LNTTH 总击打自然对数分数
+            if (rLNT >= 17) {
+                LNT = 1;
+            } else if (rLNT >= 12) {
+                LNT = (rLNT - 12) * 0.2D;
+            } else {
+                LNT = 0;
+            }
+
+            double VEB; // very energetic bonus 超肝力奖励
+            if (rLNT >= 18) {
+                VEB = 0.2;
+            } else if (rLNT >= 17) {
+                VEB = (rLNT - 17) * 0.2D;
+            } else {
+                VEB = 0;
+            }
+
+            eng = Math.pow(LNT , 0.6D) + VEB;
+            eng = check(eng, 0, 1.2);
+        }
+
+
+        // 3.6 实力STH strength 0-1.2
+        {
+            // rHPS raw hit per second 每秒击打初值在ctb内无意义，故禁用
+
+            double rLNB = Math.log1p(ppv0 * lengv0);
+            // raw ln (the) best (performance multiplayer) 最好表现因子自然对数初值
+
+            double LNB;
+            if (rLNB >= 11.5) {
+                LNB = 1;
+            } else if (rLNB >= 0) {
+                LNB = Math.pow(rLNB / 11.5D , 3.0D);
+            } else {
+                LNB = 0;
+            }
+
+            double VHB; // very high (pp) bonus 超实力奖励
+            if (rLNB >= 12.5) {
+                VHB = 0.2;
+            } else if (rLNB >= 11.5) {
+                VHB = Math.pow(rLNB - 11.5 , 0.5D) * 0.2D;
+            } else {
+                VHB = 0;
+            }
+
+            sth = Math.pow(LNB , 0.4D) + VHB;
+            sth = check(sth, 0, 1.2);
+        }
+        // 3.7 总计TTL Total / Overall 0-1.2
+        ttl = facc * 0.2 + ptt * 0.1 + sta * 0.2 + stb * 0.25 + eng * 0.05 + sth * 0.2;
+
+        // 3.8 理智SAN sanity 0-1.2
+        {
+            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
+
+            double PCI = Math.pow(pcont * 30 / (pp + 100), 0.8D); // play count index PC因子
+
+            double rSAN = facc * ptt * Math.sqrt(Math.pow(ppv0, 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI * PCI; // raw sanity 理智初值
+
+            if (rSAN >= 5) {
+                san = rSAN / 300D;
+            } else if (rSAN >= 1) {
+                san = 1.1 - rSAN * 0.1D;
+            } else {
+                san = 1.2 - rSAN * 0.2D;
+            }
+            san = check(san, 0, 1.2);
+        }
     }
 
     @Override
