@@ -105,10 +105,10 @@ public class PPmService implements MessageService {
                 .drawA3(user.getUsername());
         card.drawB2("#" + user.getStatustucs().getGlobalRank())
                 .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
-                .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
+                .drawC2(String.format("%2f",user.getStatustucs().getaccuracy()) + "% Lv." +
                         user.getStatustucs().getLevelCurrent() +
                         "(" + user.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(user.getStatustucs().getPp().intValue() + "PP");
+                .drawC1(user.getStatustucs().getpp().intValue() + "PP");
         if (user.getSupportLeve()>0) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }

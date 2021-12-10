@@ -136,7 +136,7 @@ public class Statustucs {
         this.totalScore = totalScore;
     }
 
-    public Double getAccuracy() {
+    public Double getaccuracy() {
         return accuracy;
     }
 
@@ -144,7 +144,7 @@ public class Statustucs {
         this.accuracy = accuracy;
     }
 
-    public Long getPlagCount() {
+    public Long getplaycount() {
         return plagCount;
     }
 
@@ -152,7 +152,7 @@ public class Statustucs {
         this.plagCount = plagCount;
     }
 
-    public Long getPlatTime() {
+    public Long getplaytime() {
         return platTime;
     }
 
@@ -160,7 +160,7 @@ public class Statustucs {
         this.platTime = platTime;
     }
 
-    public Long getTotalHits() {
+    public Long gettotalhit() {
         return totalHits;
     }
 
@@ -256,7 +256,7 @@ public class Statustucs {
         A = a;
     }
 
-    public Double getPp() {
+    public Double getpp() {
         return pp;
     }
 

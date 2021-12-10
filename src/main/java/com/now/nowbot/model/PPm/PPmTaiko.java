@@ -154,7 +154,7 @@ public class PPmTaiko implements PPmObject {
             facc = ((this.acc / 100) < 0.6 ? 0 : Math.pow((this.acc / 100 - 0.6) * 2.5, 1.432));
             facc = check(facc, 0, 1);
         }
-        //1.2 1.2 潜力PTT potential 0-1 ptt
+        //1.2 1.2 潜力PTT potential 0-1 value2
 
         double bpmxd = Math.pow(0.9D, this.ppv45 / (this.ppv0 - this.ppv90 + 1));
         {
@@ -292,7 +292,7 @@ public class PPmTaiko implements PPmObject {
         }
         double Oxy = sumOxy / sumX;
         double Ox2 = sumOx2 / sumX;
-        for (double n = 100; n <= user.getStatustucs().getPlagCount(); n++) {
+        for (double n = 100; n <= user.getStatustucs().getplaycount(); n++) {
             double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
             if (val <= 0.0D) {
                 break;
@@ -334,13 +334,13 @@ public class PPmTaiko implements PPmObject {
         }
         headURL = user.getAvatarUrl();
         bgURL = user.getCoverUrl();
-        acc = user.getStatustucs().getAccuracy().floatValue();
+        acc = user.getStatustucs().getaccuracy().floatValue();
         level = user.getStatustucs().getLevelCurrent();
         rank = Math.toIntExact(user.getStatustucs().getGlobalRank());
         combo = user.getStatustucs().getMaxCombo();
-        thit = user.getStatustucs().getTotalHits();
-        pcont = user.getStatustucs().getPlagCount();
-        ptime = user.getStatustucs().getPlatTime();
+        thit = user.getStatustucs().gettotalhit();
+        pcont = user.getStatustucs().getplaycount();
+        ptime = user.getStatustucs().getplaytime();
 
         // 2.1 准度fACC formulaic accuracy 0-1.2
         {
@@ -534,7 +534,7 @@ public class PPmTaiko implements PPmObject {
             double rSAN = facc * ptt * Math.sqrt(Math.pow(ppv0, 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI * PCI; // raw sanity 理智初值
 
             if (rSAN >= 5) {
-                san = rSAN / 300D;
+                san = 3D / rSAN;
             } else if (rSAN >= 1) {
                 san = 1.1 - rSAN * 0.1D;
             } else {
