@@ -144,7 +144,7 @@ public class Statustucs {
         this.accuracy = accuracy;
     }
 
-    public Long getplaycount() {
+    public Long getPlayCount() {
         return plagCount;
     }
 
@@ -152,7 +152,7 @@ public class Statustucs {
         this.plagCount = plagCount;
     }
 
-    public Long getplaytime() {
+    public Long getPlayTime() {
         return platTime;
     }
 
@@ -256,7 +256,7 @@ public class Statustucs {
         A = a;
     }
 
-    public Double getpp() {
+    public Double getPp() {
         return pp;
     }
 

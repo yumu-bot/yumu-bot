@@ -108,7 +108,7 @@ public class PPmService implements MessageService {
                 .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
                         user.getStatustucs().getLevelCurrent() +
                         "(" + user.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(user.getStatustucs().getpp().intValue() + "PP");
+                .drawC1(user.getStatustucs().getPp().intValue() + "PP");
         if (user.getSupportLeve()>0) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }

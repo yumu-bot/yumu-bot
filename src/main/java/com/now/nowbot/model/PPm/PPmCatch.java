@@ -298,7 +298,7 @@ public class PPmCatch implements PPmObject {
         }
         double Oxy = sumOxy / sumX;
         double Ox2 = sumOx2 / sumX;
-        for (double n = 100; n <= user.getStatustucs().getplaycount(); n++) {
+        for (double n = 100; n <= user.getStatustucs().getPlayCount(); n++) {
             double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
             if (val <= 0.0D) {
                 break;
@@ -345,8 +345,8 @@ public class PPmCatch implements PPmObject {
         rank = Math.toIntExact(user.getStatustucs().getGlobalRank());
         combo = user.getStatustucs().getMaxCombo();
         thit = user.getStatustucs().getTotalHits();
-        pcont = user.getStatustucs().getplaycount();
-        ptime = user.getStatustucs().getplaytime();
+        pcont = user.getStatustucs().getPlayCount();
+        ptime = user.getStatustucs().getPlayTime();
 
         // 3.1 准度fACC formulaic accuracy 0-1.2
         {
