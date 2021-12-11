@@ -116,12 +116,12 @@ public abstract class Ppm {
 
     public float[] getValues(Function<Double, Float> doAct){
         float[] out = new float[6];
-        out[0] = doAct.apply(value1);
-        out[1] = doAct.apply(value2);
-        out[2] = doAct.apply(value3);
-        out[3] = doAct.apply(value4);
-        out[4] = doAct.apply(value5);
-        out[5] = doAct.apply(value6);
+        out[0] = doAct.apply(value2);
+        out[1] = doAct.apply(value3);
+        out[2] = doAct.apply(value4);
+        out[3] = doAct.apply(value5);
+        out[4] = doAct.apply(value6);
+        out[5] = doAct.apply(value1);
         return out;
     }
     /**
