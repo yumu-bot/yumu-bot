@@ -312,11 +312,11 @@ public class PpmOsu extends Ppm {
     @Override
     public void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct) {
         doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(1, String.valueOf((int) (value2 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(2, String.valueOf((int) (value3 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(3, String.valueOf((int) (value4 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(4, String.valueOf((int) (value5 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(5, String.valueOf((int) (value6 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        doAct.call(1, String.valueOf((int) (value2 * 100)), PanelUtil.cutDecimalPoint(value2 * 100)/*<-小字部分*/);
+        doAct.call(2, String.valueOf((int) (value3 * 100)), PanelUtil.cutDecimalPoint(value3 * 100)/*<-小字部分*/);
+        doAct.call(3, String.valueOf((int) (value4 * 100)), PanelUtil.cutDecimalPoint(value4 * 100)/*<-小字部分*/);
+        doAct.call(4, String.valueOf((int) (value5 * 100)), PanelUtil.cutDecimalPoint(value5 * 100)/*<-小字部分*/);
+        doAct.call(5, String.valueOf((int) (value6 * 100)), PanelUtil.cutDecimalPoint(value6 * 100)/*<-小字部分*/);
     }
 
     @Override
