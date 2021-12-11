@@ -45,7 +45,7 @@ public class PPMPanelBuilder extends PPPanelBuilder {
             drawLeftRankN(i, "X+", PanelUtil.COLOR_X_PLUS);
         }
         else if(date>=1.00){
-            drawLeftRankN(i, "SS", PanelUtil.COLOR_S);
+            drawLeftRankN(i, "SS", PanelUtil.COLOR_SS);
         }
         else if(date>=0.95){
             drawLeftRankN(i, "S+", PanelUtil.COLOR_S_PLUS);
