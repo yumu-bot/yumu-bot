@@ -8,7 +8,7 @@ import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.serviceException.PpmException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
@@ -35,11 +35,11 @@ public class PPmService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-//        if (matcher.group("vs") != null) {  //TODO vs部分以后再说
-//            // 就不写一堆了,整个方法把
-//            doVs(event, matcher);
-//            return;
-//        }
+        if (matcher.group("vs") != null) {
+            // 就不写一堆了,整个方法把
+            doVs(event, matcher);
+            return;
+        }
         if (Math.random() < 0.01){
             var userBin = BindingUtil.readUser(event.getSender().getId());
             var user = osuGetService.getPlayerOsuInfoN(userBin);
@@ -48,6 +48,7 @@ public class PPmService implements MessageService {
             Surface surface = Surface.makeRasterN32Premul(1920, 1080);
             try (surface){
                 Canvas canvas = surface.getCanvas();
+                canvas.drawImage(di,0,0);
                 canvas.translate(40, 40);
                 canvas.drawImage(card.build(), 0, 0);
                 card.build().close();
@@ -59,9 +60,6 @@ public class PPmService implements MessageService {
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
-        //PPmObject跟JSONObject为老方法
-//        PPmObject userinfo = null;
-//        JSONObject userdate;
         Ppm ppm;
         OsuUser user;
         List<BpInfo> bps;
@@ -71,10 +69,6 @@ public class PPmService implements MessageService {
         if (at != null) {
             // 包含有@
             var userBin = BindingUtil.readUser(at.getTarget());
-//            userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
-//            var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
-//            userinfo = PPmObject.pres(userdate, bpdate, mode);
-
             user = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
             ppm = Ppm.getInstance(mode, user, bps);
@@ -83,28 +77,17 @@ public class PPmService implements MessageService {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
                 int id = osuGetService.getOsuId(matcher.group("name").trim());
-//                userdate = osuGetService.getPlayerInfo(id, mode.toString());
-//                var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
-//                userinfo = PPmObject.pres(userdate, bpdate, mode);
-
                 user = osuGetService.getPlayerInfoN(id, mode.getName());
                 bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
                 var userBin = BindingUtil.readUser(event.getSender().getId());
-//                userdate = osuGetService.getPlayerInfo(userBin, mode.toString());
-//                var bpdate = osuGetService.getBestMap(userBin, mode.toString(), 0, 100);
-//                userinfo = PPmObject.pres(userdate, bpdate, mode);
-
                 user = osuGetService.getPlayerInfoN(userBin, mode.getName());
                 bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             }
         }
-//        if (userinfo == null) throw new PpmException(PpmException.Type.PPM_Default_DefaultException);
-//        if (userinfo.getPtime() < 60 || userinfo.getPcont() < 30) {
-//            throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
-//        }
+
         //生成panel名
         String panelName = "PPM:" + switch (mode) {
             case OSU -> "O";
@@ -120,14 +103,7 @@ public class PPmService implements MessageService {
         var card = getUserCard(user);
         //计算六边形数据
         float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
-//        float[] hexValue = new float[]{
-//                (float) Math.pow((userinfo.getPtt() < 0.6 ? 0 : userinfo.getPtt() - 0.6) * 2.5f, 0.8),
-//                (float) Math.pow((userinfo.getSta() < 0.6 ? 0 : userinfo.getSta() - 0.6) * 2.5f, 0.8),
-//                (float) Math.pow((userinfo.getStb() < 0.6 ? 0 : userinfo.getStb() - 0.6) * 2.5f, 0.8),
-//                (float) Math.pow((userinfo.getEng() < 0.6 ? 0 : userinfo.getEng() - 0.6) * 2.5f, 0.8),
-//                (float) Math.pow((userinfo.getSth() < 0.6 ? 0 : userinfo.getSth() - 0.6) * 2.5f, 0.8),
-//                (float) Math.pow((userinfo.getFacc() < 0.6 ? 0 : userinfo.getFacc() - 0.6) * 2.5f, 0.8),
-//        };
+
         // panel new
         var ppmPanel = new PPMPanelBuilder();
         ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.jpg", false));
@@ -148,30 +124,6 @@ public class PPmService implements MessageService {
         ppmPanel.drawPanelName(panelName);
         ppmPanel.drawHexagon(hexDate, true);
 
-        //生成panel old
-//        var panel = PanelUtil.getPPMBulider()
-//                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
-//                .drawOverImage()
-//                .drawValueName()
-//                .drawLeftCard(card.build())
-//                .drawLeftValueN(0, String.valueOf((int) (userinfo.getFacc() * 100)), PanelUtil.cutDecimalPoint(userinfo.getFacc() * 100))
-//                .drawLeftValueN(1, String.valueOf((int) (userinfo.getPtt() * 100)), PanelUtil.cutDecimalPoint(userinfo.getPtt() * 100))
-//                .drawLeftValueN(2, String.valueOf((int) (userinfo.getSta() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSta() * 100))
-//                .drawLeftValueN(3, String.valueOf((int) (userinfo.getStb() * 100)), PanelUtil.cutDecimalPoint(userinfo.getStb() * 100))
-//                .drawLeftValueN(4, String.valueOf((int) (userinfo.getEng() * 100)), PanelUtil.cutDecimalPoint(userinfo.getEng() * 100))
-//                .drawLeftValueN(5, String.valueOf((int) (userinfo.getSth() * 100)), PanelUtil.cutDecimalPoint(userinfo.getSth() * 100))
-//                //评级
-//                .switchRank(0, userinfo.getFacc())
-//                .switchRank(1, userinfo.getPtt())
-//                .switchRank(2, userinfo.getSta())
-//                .switchRank(3, userinfo.getStb())
-//                .switchRank(4, userinfo.getEng())
-//                .switchRank(5, userinfo.getSth())
-//                .drawLeftTotal(String.valueOf((int) (userinfo.getTtl() * 100)), PanelUtil.cutDecimalPoint(userinfo.getTtl()))
-//                .drawRightTotal(String.valueOf((int) (userinfo.getSan())), PanelUtil.cutDecimalPoint(userinfo.getSan()))
-//                .drawPanelName(panelName)
-//                .drawHexagon(hexValue, true);
-//        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();
@@ -186,15 +138,17 @@ public class PPmService implements MessageService {
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
+        OsuUser userMe;
+        List<BpInfo> bpListMe;
+        OsuUser userOther;
+        List<BpInfo> bpListOther;
+
         PPmObject userinfoMe;
         JSONObject userdateMe;
         PPmObject userinfoOther;
         JSONObject userdateOther;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
-        if (mode == OsuMode.MANIA) {
-            throw new TipsException("等哪天mania社区风气变好了，或许就有PPM-mania了吧...");
-        }
         //生成panel名
         String panelName = "PPM.v:" + switch (mode) {
             case OSU -> "O";
@@ -205,30 +159,41 @@ public class PPmService implements MessageService {
         };
         me://自己的信息
         {
+            var userBin = BindingUtil.readUser(event.getSender().getId());
+            userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
+            bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
+
             var user = BindingUtil.readUser(event.getSender().getId());
             userdateMe = osuGetService.getPlayerInfo(user, mode.toString());
             var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
             userinfoMe = PPmObject.pres(userdateMe, bpdate, mode);
             if (userinfoMe.getPtime() < 60 || userinfoMe.getPcont() < 30) {
-                throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
+                throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
         if (at != null) {//被对比人的信息
             // 包含有@
+            var userBin = BindingUtil.readUser(at.getTarget());
+            userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
+            bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
+
             var user = BindingUtil.readUser(at.getTarget());
             userdateOther = osuGetService.getPlayerInfo(user, mode.toString());
             var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
             userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             int id = osuGetService.getOsuId(matcher.group("name").trim());
+            userOther = osuGetService.getPlayerInfoN(id, mode.getName());
+            bpListOther = osuGetService.getBestPerformance(id, mode.getName(),0,100);
+
             userdateOther = osuGetService.getPlayerInfo(id, mode.toString());
             var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
             userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
         } else {
-            throw new TipsException("你想要对比谁呢");
+            throw new PpmException(PpmException.Type.PPM_Player_VSNotFound);
         }
         if (userinfoOther.getPtime() < 60 || userinfoOther.getPcont() < 30) {
-            throw new TipsException("你的游戏时长太短了，快去多玩几局吧！");
+            throw new PpmException(PpmException.Type.PPM_Player_PlayTimeTooShort);
         }
 
         //背景绘制
