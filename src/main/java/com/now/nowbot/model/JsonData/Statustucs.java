@@ -136,7 +136,7 @@ public class Statustucs {
         this.totalScore = totalScore;
     }
 
-    public Double getaccuracy() {
+    public Double getAccuracy() {
         return accuracy;
     }
 
@@ -160,7 +160,7 @@ public class Statustucs {
         this.platTime = platTime;
     }
 
-    public Long gettotalhit() {
+    public Long getTotalHits() {
         return totalHits;
     }
 

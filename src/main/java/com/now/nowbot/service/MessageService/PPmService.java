@@ -105,7 +105,7 @@ public class PPmService implements MessageService {
                 .drawA3(user.getUsername());
         card.drawB2("#" + user.getStatustucs().getGlobalRank())
                 .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
-                .drawC2(String.format("%2f",user.getStatustucs().getaccuracy()) + "% Lv." +
+                .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
                         user.getStatustucs().getLevelCurrent() +
                         "(" + user.getStatustucs().getLevelProgress() + "%)")
                 .drawC1(user.getStatustucs().getpp().intValue() + "PP");
@@ -124,7 +124,7 @@ public class PPmService implements MessageService {
 //        };
         // panel new
         var ppmPanel = new PPMPanelBuilder();
-        ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png", false));
+        ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.jpg", false));
         ppm.drawOverImage(ppmPanel::drawOverImage);
         ppm.drawValueName(ppmPanel::drawLeftNameN);
         ppm.drawValue(ppmPanel::drawLeftValueN);

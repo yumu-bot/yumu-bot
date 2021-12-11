@@ -340,11 +340,11 @@ public class PPmCatch implements PPmObject {
         }
         headURL = user.getAvatarUrl();
         bgURL = user.getCoverUrl();
-        acc = user.getStatustucs().getaccuracy();
+        acc = user.getStatustucs().getAccuracy();
         level = user.getStatustucs().getLevelCurrent();
         rank = Math.toIntExact(user.getStatustucs().getGlobalRank());
         combo = user.getStatustucs().getMaxCombo();
-        thit = user.getStatustucs().gettotalhit();
+        thit = user.getStatustucs().getTotalHits();
         pcont = user.getStatustucs().getplaycount();
         ptime = user.getStatustucs().getplaytime();
 

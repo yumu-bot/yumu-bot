@@ -77,10 +77,10 @@ public class PpmMania extends Ppm {
             }
 
             double pp = user.getStatustucs().getpp();
-            double acc = user.getStatustucs().getaccuracy();
+            double acc = user.getStatustucs().getAccuracy();
             double pc = user.getStatustucs().getplaycount();
             double pt = user.getStatustucs().getplaytime();
-            double tth = user.getStatustucs().gettotalhit();
+            double tth = user.getStatustucs().getTotalHits();
 
 
             // 4.1 准度fACC formulaic accuracy 0-1.2
@@ -319,13 +319,22 @@ public class PpmMania extends Ppm {
     @Override
     public void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct) {
         var p = new Paint().setARGB(255,161,161,161);
-        doAct.call(0, "STA",null,p);
+        doAct.call(0, "FAC",null,p);
+        doAct.call(1, "PTT",null,p);
+        doAct.call(2, "STA",null,p);
+        doAct.call(3, "PRE",null,p);
+        doAct.call(4, "ENG",null,p);
+        doAct.call(5, "STH",null,p);
     }
 
     @Override
     public void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct) {
         doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        getValue1( val -> (float)(val-5));
+        doAct.call(1, String.valueOf((int) (value2 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        doAct.call(2, String.valueOf((int) (value3 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        doAct.call(3, String.valueOf((int) (value4 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        doAct.call(4, String.valueOf((int) (value5 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
+        doAct.call(5, String.valueOf((int) (value6 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
     }
 
     @Override
