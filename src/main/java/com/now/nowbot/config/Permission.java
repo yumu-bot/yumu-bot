@@ -107,7 +107,7 @@ public class Permission {
             }
         });
         //初始化暗杀名单(
-        supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L);
+        supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
 
         //初始化功能关闭菜单
         var path = Path.of(NowbotConfig.RUN_PATH+"switch.json");

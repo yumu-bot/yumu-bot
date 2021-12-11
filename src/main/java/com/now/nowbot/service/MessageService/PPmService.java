@@ -1,10 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.PPm.PPmObject;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -56,7 +54,6 @@ public class PPmService implements MessageService {
             }
             return;
         }
-        StringBuilder sb = null;
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -96,8 +93,6 @@ public class PPmService implements MessageService {
             case TAIKO -> "T";
             default -> "?";
         };
-        //获得背景
-        Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
 
         //绘制卡片A
         var card = getUserCard(user);
@@ -125,7 +120,7 @@ public class PPmService implements MessageService {
         ppmPanel.drawHexagon(hexDate, true);
 
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
-        try (uBg; panelImage) {
+        try ( panelImage) {
             card.build().close();
             byte[] imgData = panelImage.encodeToData().getBytes();
             var image = ExternalResource.uploadAsImage(ExternalResource.create(imgData), from);
@@ -142,11 +137,9 @@ public class PPmService implements MessageService {
         List<BpInfo> bpListMe;
         OsuUser userOther;
         List<BpInfo> bpListOther;
+        Ppm ppmMe;
+        Ppm ppmOther;
 
-        PPmObject userinfoMe;
-        JSONObject userdateMe;
-        PPmObject userinfoOther;
-        JSONObject userdateOther;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
         //生成panel名
@@ -160,14 +153,10 @@ public class PPmService implements MessageService {
         me://自己的信息
         {
             var userBin = BindingUtil.readUser(event.getSender().getId());
-            userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
-            bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
-
-            var user = BindingUtil.readUser(event.getSender().getId());
-            userdateMe = osuGetService.getPlayerInfo(user, mode.toString());
-            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
-            userinfoMe = PPmObject.pres(userdateMe, bpdate, mode);
-            if (userinfoMe.getPtime() < 60 || userinfoMe.getPcont() < 30) {
+            userMe = osuGetService.getPlayerInfoN(userBin, mode.getName());
+            bpListMe = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
+            ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
+            if (userMe.getStatustucs().getPlayTime() < 60 || userMe.getStatustucs().getPlayCount() < 30) {
                 throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
@@ -176,84 +165,39 @@ public class PPmService implements MessageService {
             var userBin = BindingUtil.readUser(at.getTarget());
             userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
-
-            var user = BindingUtil.readUser(at.getTarget());
-            userdateOther = osuGetService.getPlayerInfo(user, mode.toString());
-            var bpdate = osuGetService.getBestMap(user, mode.toString(), 0, 100);
-            userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
+            ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             int id = osuGetService.getOsuId(matcher.group("name").trim());
             userOther = osuGetService.getPlayerInfoN(id, mode.getName());
             bpListOther = osuGetService.getBestPerformance(id, mode.getName(),0,100);
-
-            userdateOther = osuGetService.getPlayerInfo(id, mode.toString());
-            var bpdate = osuGetService.getBestMap(id, mode.toString(), 0, 100);
-            userinfoOther = PPmObject.pres(userdateOther, bpdate, mode);
+            ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else {
             throw new PpmException(PpmException.Type.PPM_Player_VSNotFound);
         }
-        if (userinfoOther.getPtime() < 60 || userinfoOther.getPcont() < 30) {
+        if (userOther.getStatustucs().getPlayTime() < 60 || userOther.getStatustucs().getPlayCount() < 30) {
             throw new PpmException(PpmException.Type.PPM_Player_PlayTimeTooShort);
         }
 
         //背景绘制
-        Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userinfoMe.getBackgroundURL(), true);
-        Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userinfoOther.getBackgroundURL(), true);
+        Image uBgMe = PanelUtil.getBgUrl("用户自定义路径", userMe.getCoverUrl(), true);
+        Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userOther.getCoverUrl(), true);
 
         //卡片生成
-        var cardMe = PanelUtil.getA1Builder(uBgMe).drawA1(userinfoMe.getHeadURL())
-                .drawA2(PanelUtil.getFlag(userdateMe.getJSONObject("country").getString("code")))
-                .drawA3(userinfoMe.getName());
-        if (userdateMe.getBoolean("is_supporter")) {
-            cardMe.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
-        cardMe.drawB3("")
-                .drawB2("#" + userdateMe.getJSONObject("statistics").getString("global_rank"))
-                .drawB1(userdateMe.getJSONObject("country").getString("code") + "#" + userdateMe.getJSONObject("statistics").getString("country_rank"))
-                .drawC3("")
-                .drawC2(userdateMe.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
-                        userdateMe.getJSONObject("statistics").getJSONObject("level").getString("current") +
-                        "(" + userdateMe.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
-                .drawC1(userdateMe.getJSONObject("statistics").getIntValue("pp") + "PP");
-        var cardOther = PanelUtil.getA1Builder(uBgOther).drawA1(userinfoOther.getHeadURL())
-                .drawA2(PanelUtil.getFlag(userdateOther.getJSONObject("country").getString("code")))
-                .drawA3(userinfoOther.getName());
-        if (userdateOther.getBoolean("is_supporter")) {
-            cardOther.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
-        cardOther.drawB3("")
-                .drawB2("#" + userdateOther.getJSONObject("statistics").getString("global_rank"))
-                .drawB1(userdateOther.getJSONObject("country").getString("code") + "#" + userdateOther.getJSONObject("statistics").getString("country_rank"))
-                .drawC3("")
-                .drawC2(userdateOther.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
-                        userdateOther.getJSONObject("statistics").getJSONObject("level").getString("current") +
-                        "(" + userdateOther.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
-                .drawC1(userdateOther.getJSONObject("statistics").getIntValue("pp") + "PP");
+        var cardMe = getUserCard(userMe);
+        var cardOther = getUserCard(userOther);
+
         //六边形数据
-        float[] hexMe = new float[]{
-                (float) Math.pow((userinfoMe.getPtt() < 0.6 ? 0 : userinfoMe.getPtt() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoMe.getSta() < 0.6 ? 0 : userinfoMe.getSta() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoMe.getStb() < 0.6 ? 0 : userinfoMe.getStb() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoMe.getEng() < 0.6 ? 0 : userinfoMe.getEng() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoMe.getSth() < 0.6 ? 0 : userinfoMe.getSth() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoMe.getFacc() < 0.6 ? 0 : userinfoMe.getFacc() - 0.6) * 2.5f, 0.8),
-        };
-        float[] hexOther = new float[]{
-                (float) Math.pow((userinfoOther.getPtt() < 0.6 ? 0 : userinfoOther.getPtt() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoOther.getSta() < 0.6 ? 0 : userinfoOther.getSta() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoOther.getStb() < 0.6 ? 0 : userinfoOther.getStb() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoOther.getEng() < 0.6 ? 0 : userinfoOther.getEng() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoOther.getSth() < 0.6 ? 0 : userinfoOther.getSth() - 0.6) * 2.5f, 0.8),
-                (float) Math.pow((userinfoOther.getFacc() < 0.6 ? 0 : userinfoOther.getFacc() - 0.6) * 2.5f, 0.8),
-        };
+        float[] hexMe = ppmMe.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
+        float[] hexOther = ppmOther.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
+
         //六边形缩放
-        if(userinfoMe.getPp() > userinfoOther.getPp()){
-            float n = userinfoOther.getPp()/userinfoMe.getPp();
+        if(userMe.getStatustucs().getPp() > userOther.getStatustucs().getPp()){
+            float n = (float) (userOther.getStatustucs().getPp()/userMe.getStatustucs().getPp());
             for (int i = 0; i < hexMe.length; i++) {
                 hexOther[i] *= n;
             }
         } else {
-            float n = userinfoMe.getPp()/userinfoOther.getPp();
+            float n = (float) (userMe.getStatustucs().getPp()/userOther.getStatustucs().getPp());
             for (int i = 0; i < hexMe.length; i++) {
                 hexMe[i] *= n;
             }
@@ -263,57 +207,57 @@ public class PPmService implements MessageService {
                 .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
                 .drawOverImage()
                 .drawValueName();
-        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
-        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
-        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
-        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
-        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
-        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
-
-        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
-        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
-        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
-        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
-        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
-        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
-        //进行因子修正,上方的是原数据
-        userinfoMe.dovs();
-        userinfoOther.dovs();
-        //下方为修正后的数据
-        panel.drawLeftCard(cardMe.build())
-                .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
-                .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
-                .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta())))
-                .drawLeftValueN(3, String.valueOf((int) (userinfoMe.getStb())))
-                .drawLeftValueN(4, String.valueOf((int) (userinfoMe.getEng())))
-                .drawLeftValueN(5, String.valueOf((int) (userinfoMe.getSth())))
-                .drawRightCard(cardOther.build())
-                .drawRightNameN(0, String.valueOf((int) (userinfoOther.getFacc())))
-                .drawRightNameN(1, String.valueOf((int) (userinfoOther.getPtt())))
-                .drawRightNameN(2, String.valueOf((int) (userinfoOther.getSta())))
-                .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb())))
-                .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng())))
-                .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth())))
-                .drawRightValueN(0, getOff(userinfoMe.getFacc(),userinfoOther.getFacc()))
-                .drawRightValueN(1, getOff(userinfoMe.getPtt(),userinfoOther.getPtt()))
-                .drawRightValueN(2, getOff(userinfoMe.getSta(),userinfoOther.getSta()))
-                .drawRightValueN(3, getOff(userinfoMe.getStb(),userinfoOther.getStb()))
-                .drawRightValueN(4, getOff(userinfoMe.getEng(),userinfoOther.getEng()))
-                .drawRightValueN(5, getOff(userinfoMe.getSth(),userinfoOther.getSth()))
-                .drawLeftTotal(String.valueOf((int)userinfoMe.getTtl()))
-                .drawRightTotal(String.valueOf((int) userinfoOther.getTtl()))
-                .drawPanelName(panelName)
-                .drawHexagon(hexOther, false)
-                .drawHexagon(hexMe, true);
-        //生成
-        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"))//叠加层
-                .drawPanelName(panelName)//panel名
-                .build("PANEL-PPMVS dev.0.0.1");
-        try (uBgMe; uBgOther; panelImage) {
-            cardMe.build().close();
-            cardOther.build().close();
-            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
-        }
+//        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
+//        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
+//        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
+//        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
+//        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
+//        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
+//
+//        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
+//        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
+//        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
+//        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
+//        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
+//        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
+//        //进行因子修正,上方的是原数据
+//        userinfoMe.dovs();
+//        userinfoOther.dovs();
+//        //下方为修正后的数据
+//        panel.drawLeftCard(cardMe.build())
+//                .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
+//                .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
+//                .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta())))
+//                .drawLeftValueN(3, String.valueOf((int) (userinfoMe.getStb())))
+//                .drawLeftValueN(4, String.valueOf((int) (userinfoMe.getEng())))
+//                .drawLeftValueN(5, String.valueOf((int) (userinfoMe.getSth())))
+//                .drawRightCard(cardOther.build())
+//                .drawRightNameN(0, String.valueOf((int) (userinfoOther.getFacc())))
+//                .drawRightNameN(1, String.valueOf((int) (userinfoOther.getPtt())))
+//                .drawRightNameN(2, String.valueOf((int) (userinfoOther.getSta())))
+//                .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb())))
+//                .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng())))
+//                .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth())))
+//                .drawRightValueN(0, getOff(userinfoMe.getFacc(),userinfoOther.getFacc()))
+//                .drawRightValueN(1, getOff(userinfoMe.getPtt(),userinfoOther.getPtt()))
+//                .drawRightValueN(2, getOff(userinfoMe.getSta(),userinfoOther.getSta()))
+//                .drawRightValueN(3, getOff(userinfoMe.getStb(),userinfoOther.getStb()))
+//                .drawRightValueN(4, getOff(userinfoMe.getEng(),userinfoOther.getEng()))
+//                .drawRightValueN(5, getOff(userinfoMe.getSth(),userinfoOther.getSth()))
+//                .drawLeftTotal(String.valueOf((int)userinfoMe.getTtl()))
+//                .drawRightTotal(String.valueOf((int) userinfoOther.getTtl()))
+//                .drawPanelName(panelName)
+//                .drawHexagon(hexOther, false)
+//                .drawHexagon(hexMe, true);
+//        //生成
+//        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"))//叠加层
+//                .drawPanelName(panelName)//panel名
+//                .build("PANEL-PPMVS dev.0.0.1");
+//        try (uBgMe; uBgOther; panelImage) {
+//            cardMe.build().close();
+//            cardOther.build().close();
+//            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
+//        }
     }
 
     private String getOff(double v1, double v2){
