@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -17,7 +18,9 @@ import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
+import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Image;
+import org.jetbrains.skija.Surface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
@@ -37,6 +40,21 @@ public class PPmService implements MessageService {
 //            doVs(event, matcher);
 //            return;
 //        }
+        if (Math.random() < 0.01){
+            var userBin = BindingUtil.readUser(event.getSender().getId());
+            var user = osuGetService.getPlayerOsuInfoN(userBin);
+            var card = getUserCard(user);
+            var di = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
+            Surface surface = Surface.makeRasterN32Premul(1920, 1080);
+            try (surface){
+                Canvas canvas = surface.getCanvas();
+                canvas.translate(40, 40);
+                canvas.drawImage(card.build(), 0, 0);
+                card.build().close();
+                event.getSubject().sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(surface.makeImageSnapshot().encodeToData().getBytes()), event.getSubject()));
+            }
+            return;
+        }
         StringBuilder sb = null;
         var from = event.getSubject();
         // 获得可能的 at
@@ -99,19 +117,7 @@ public class PPmService implements MessageService {
         Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
 
         //绘制卡片A
-        var card = PanelUtil.getA1Builder(uBg)
-                .drawA1(user.getAvatarUrl())
-                .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
-                .drawA3(user.getUsername());
-        card.drawB2("#" + user.getStatustucs().getGlobalRank())
-                .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
-                .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
-                        user.getStatustucs().getLevelCurrent() +
-                        "(" + user.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(user.getStatustucs().getPp().intValue() + "PP");
-        if (user.getSupportLeve()>0) {
-            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
+        var card = getUserCard(user);
         //计算六边形数据
         float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 //        float[] hexValue = new float[]{
@@ -371,5 +377,23 @@ public class PPmService implements MessageService {
         } else {
             temp.call(i, "F", PanelUtil.COLOR_F);
         }
+    }
+
+    private ACardBuilder getUserCard(OsuUser user){
+        Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
+        var card = PanelUtil.getA1Builder(uBg)
+                .drawA1(user.getAvatarUrl())
+                .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
+                .drawA3(user.getUsername());
+        card.drawB2("#" + user.getStatustucs().getGlobalRank())
+                .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
+                .drawC2(String.format("%2f",user.getStatustucs().getAccuracy()) + "% Lv." +
+                        user.getStatustucs().getLevelCurrent() +
+                        "(" + user.getStatustucs().getLevelProgress() + "%)")
+                .drawC1(user.getStatustucs().getPp().intValue() + "PP");
+        if (user.getSupportLeve()>0) {
+            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
+        }
+        return card;
     }
 }
