@@ -29,11 +29,14 @@ public class IocAllReadyRunner implements CommandLineRunner {
         this.check = check;
     }
     @Override
+    /**
+     * ioc容器加载完毕运行
+     */
     public void run(String... args) throws Exception {
         PanelUtil.init();
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
             if (bot != null && bot.getGroup(746671531L) != null) {
                 bot.getGroup(746671531L).sendMessage("程序关闭");
