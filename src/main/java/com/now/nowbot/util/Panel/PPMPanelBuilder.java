@@ -41,22 +41,28 @@ public class PPMPanelBuilder extends PPPanelBuilder {
         return this;
     }
     public PPMPanelBuilder switchRank(int i, double date){
-        if (date>0.95){
-            drawLeftRankN(i, "SS", PanelUtil.COLOR_SS);
+        if (date==1.20){
+            drawLeftRankN(i, "X+", PanelUtil.COLOR_X_PLUS);
         }
-        else if(date>0.90){
+        else if(date>=1.00){
+            drawLeftRankN(i, "SS", PanelUtil.COLOR_S);
+        }
+        else if(date>=0.95){
+            drawLeftRankN(i, "S+", PanelUtil.COLOR_S_PLUS);
+        }
+        else if(date>=0.90){
             drawLeftRankN(i, "S", PanelUtil.COLOR_S);
         }
-        else if(date>0.85){
+        else if(date>=0.85){
             drawLeftRankN(i, "A+", PanelUtil.COLOR_A_PLUS);
         }
-        else if(date>0.80){
+        else if(date>=0.80){
             drawLeftRankN(i, "A", PanelUtil.COLOR_A);
         }
-        else if(date>0.70){
+        else if(date>=0.70){
             drawLeftRankN(i, "B", PanelUtil.COLOR_B);
         }
-        else if(date>0.60){
+        else if(date>=0.60){
             drawLeftRankN(i, "C", PanelUtil.COLOR_C);
         }
         else if(date>0){

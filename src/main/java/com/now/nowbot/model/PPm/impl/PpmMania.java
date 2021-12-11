@@ -291,7 +291,7 @@ public class PpmMania extends Ppm {
         {
             double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
 
-            double PCI = Math.pow(pc * 30 / (pp + 100), 0.8D); // play count index PC因子
+            double PCI = Math.pow(ppv0 * 30 / (pc + 100), 0.8D); // play count index PC因子
 
             double rSAN = value1 * value2 * Math.sqrt(Math.pow(ppv0, 2.0D) / ((ppv45 + 1.0) * (ppv90 + 1.0))) * LPI * PCI; // raw sanity 理智初值
 
@@ -344,6 +344,11 @@ public class PpmMania extends Ppm {
     @Override
     public void drawRank(Func2<Integer, Double, PPMPanelBuilder> doAct) {
         doAct.call(0, value1);
+        doAct.call(1, value2);
+        doAct.call(2, value3);
+        doAct.call(3, value4);
+        doAct.call(4, value5);
+        doAct.call(5, value6);
     }
 
     @Override
