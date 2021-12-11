@@ -103,7 +103,7 @@ public class PpmOsu extends Ppm {
 
         // 1.2 潜力PTT potential 0-1.2
         {
-            double rBPV = ppv0 / (ppv90 + 1);
+            double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
             double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
 
@@ -165,14 +165,14 @@ public class PpmOsu extends Ppm {
             double rBPT = lengv0 * 0.7 + lengv45 * 0.2 + lengv90 * 0.1; // BP playtime BP 游玩时长
 
             double BPT; // BP playtime BP 游玩时长 等同于旧版fLENT。
-            if (rBPT >= 260) {
+            if (rBPT >= 240) {
                 BPT = 1;
-            } else if (rBPT >= 220) {
-                BPT = (rBPT - 220) * 0.0025D + 0.9D;
-            } else if (rBPT >= 140) {
-                BPT = (rBPT - 140) * 0.00375D + 0.6D;
-            } else if (rBPT >= 100) {
-                BPT = (rBPT - 100) * 0.015D;
+            } else if (rBPT >= 200) {
+                BPT = (rBPT - 200) * 0.0025D + 0.9D;
+            } else if (rBPT >= 50) {
+                BPT = (rBPT - 50) * 0.002D + 0.6D;
+            } else if (rBPT >= 30) {
+                BPT = (rBPT - 30) * 0.03D;
             } else {
                 BPT = 0;
             }
@@ -180,8 +180,8 @@ public class PpmOsu extends Ppm {
             double VLB; // very long bonus 超长奖励
             if (rBPT >= 320) {
                 VLB = 0.2;
-            } else if (rBPT >= 280) {
-                VLB = (rBPT - 280) * 0.005D;
+            } else if (rBPT >= 240) {
+                VLB = (rBPT - 240) * 0.0025D;
             } else {
                 VLB = 0;
             }

@@ -109,7 +109,7 @@ public class PpmMania extends Ppm {
         }
         // 4.2 潜力PTT potential 0-1.2
         {
-            double rBPV = ppv0 / (ppv90 + 1);
+            double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
             double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
 
@@ -127,12 +127,12 @@ public class PpmMania extends Ppm {
             }
 
             double BPV; // BP vitality BP活力
-            if (rBPV >= 1.8) {
+            if (rBPV >= 1.4) {
                 BPV = 1;
-            } else if (rBPV >= 1.4) {
-                BPV = (rBPV - 1.4) + 0.6D;
-            } else if (rBPV >= 1.3) {
-                BPV = (rBPV - 1.3) * 6D;
+            } else if (rBPV >= 1.2) {
+                BPV = (rBPV - 1.2) * 2D + 0.6D;
+            } else if (rBPV >= 1.0) {
+                BPV = (rBPV - 1.0) * 3D;
             } else {
                 BPV = 0;
             }
@@ -216,7 +216,7 @@ public class PpmMania extends Ppm {
                 VPB = 0;
             }
 
-            value4 = PGR + VPB;
+            value4 = Math.pow(PGR, 0.4D) + VPB;
             value4 = check(value4, 0, 1.2);
         }
 
