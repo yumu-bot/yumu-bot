@@ -10,6 +10,7 @@ import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
+import org.springframework.lang.Nullable;
 import rx.functions.Func2;
 import rx.functions.Func3;
 import rx.functions.Func4;
@@ -285,7 +286,11 @@ public class PpmOsu extends Ppm {
         }
     }
     @Override
-    public void drawOverImage(Function<Image, PPMPanelBuilder> doAct) {
+    public void drawOverImage(Function<Image, PPMPanelBuilder> doAct, @Nullable Image userImg) {
+        if (userImg != null) {
+            doAct.apply(userImg);
+            return;
+        }
         try {
             doAct.apply(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus.png"));
         } catch (IOException e) {

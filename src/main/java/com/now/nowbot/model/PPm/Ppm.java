@@ -11,6 +11,7 @@ import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPPanelBuilder;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
+import org.springframework.lang.Nullable;
 import rx.functions.Func2;
 import rx.functions.Func3;
 import rx.functions.Func4;
@@ -157,7 +158,7 @@ public abstract class Ppm {
         }
         return (float) bonus;
     }
-    public abstract void drawOverImage(Function<Image, PPMPanelBuilder> doAct);
+    public abstract void drawOverImage(Function<Image, PPMPanelBuilder> doAct, @Nullable Image userImg);
     public abstract void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct);
     public abstract void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct);
 

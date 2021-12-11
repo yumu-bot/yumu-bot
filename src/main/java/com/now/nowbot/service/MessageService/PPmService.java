@@ -125,7 +125,7 @@ public class PPmService implements MessageService {
         // panel new
         var ppmPanel = new PPMPanelBuilder();
         ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.jpg", false));
-        ppm.drawOverImage(ppmPanel::drawOverImage);
+        ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
         ppm.drawValueName(ppmPanel::drawLeftNameN);
         ppm.drawValue(ppmPanel::drawLeftValueN);
         ppm.drawRank(ppmPanel::switchRank);
@@ -135,6 +135,7 @@ public class PPmService implements MessageService {
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
         ppmPanel.drawHexagon(hexDate, true);
+
         //生成panel old
 //        var panel = PanelUtil.getPPMBulider()
 //                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
@@ -159,7 +160,7 @@ public class PPmService implements MessageService {
 //                .drawPanelName(panelName)
 //                .drawHexagon(hexValue, true);
 //        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
-        var panelImage = ppmPanel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png")).build("PANEL-PPM dev.0.0.1");
+        var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
         try (uBg; panelImage) {
             card.build().close();
             byte[] imgData = panelImage.encodeToData().getBytes();
