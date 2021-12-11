@@ -142,7 +142,7 @@ public class PPmService implements MessageService {
         ppm.drawValue(ppmPanel::drawLeftValueN);
         ppm.drawRank(ppmPanel::switchRank);
         ppm.drawTotleName(ppmPanel::drawLeftTotleName, ppmPanel::drawRightTotleName);
-        ppm.drawTotleValue(ppmPanel::drawRightTotal, ppmPanel::drawRightTotal);
+        ppm.drawTotleValue(ppmPanel::drawLeftTotal, ppmPanel::drawRightTotal);
 
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
