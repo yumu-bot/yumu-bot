@@ -317,6 +317,6 @@ public class PpmCatch extends Ppm {
     @Override
     public void drawTotleValue(Func2<String, String, PPPanelBuilder> left, Func2<String, String, PPPanelBuilder> right) {
         left.call(String.valueOf((int) value7), PanelUtil.cutDecimalPoint(value7));
-        left.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
+        right.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
     }
 }

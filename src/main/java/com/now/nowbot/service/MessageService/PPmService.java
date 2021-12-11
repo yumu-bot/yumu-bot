@@ -125,6 +125,12 @@ public class PPmService implements MessageService {
         // panel new
         var ppmPanel = new PPMPanelBuilder();
         ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.jpg", false));
+
+        if (false){//底图自定义预留,当有自定义的底图时,走true
+            ppmPanel.drawOverImage( null );
+        } else {
+            ppmPanel.drawOverImage();
+        }
         ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
         ppm.drawValueName(ppmPanel::drawLeftNameN);
         ppm.drawValue(ppmPanel::drawLeftValueN);
