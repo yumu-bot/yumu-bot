@@ -49,33 +49,33 @@ public class PpmTaiko extends Ppm {
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatmap().getTotalLength();
             }
-            bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
-            rawpp = bpp + bonus;
+        }
+        bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
+        rawpp = bpp + bonus;
 
-            ppv0 /= 10;
-            ppv45 /= 10;
-            ppv90 /= 10;
-            accv0 /= 10;
-            accv45 /= 10;
-            accv90 /= 10;
-            lengv0 /= 10;
-            lengv45 /= 10;
-            lengv90 /= 10;
-            if (bps.size() < 90) {
-                ppv90 = 0;
-                accv90 = 0;
-                lengv90 = 0;
-            }
-            if (bps.size() < 45) {
-                ppv45 = 0;
-                accv45 = 0;
-                lengv45 = 0;
-            }
-            if (bps.size() < 10) {
-                ppv0 = 0;
-                accv0 = 0;
-                lengv0 = 0;
-            }
+        ppv0 /= 10;
+        ppv45 /= 10;
+        ppv90 /= 10;
+        accv0 /= 10;
+        accv45 /= 10;
+        accv90 /= 10;
+        lengv0 /= 10;
+        lengv45 /= 10;
+        lengv90 /= 10;
+        if (bps.size() < 90) {
+            ppv90 = 0;
+            accv90 = 0;
+            lengv90 = 0;
+        }
+        if (bps.size() < 45) {
+            ppv45 = 0;
+            accv45 = 0;
+            lengv45 = 0;
+        }
+        if (bps.size() < 10) {
+            ppv0 = 0;
+            accv0 = 0;
+            lengv0 = 0;
         }
         double pp = user.getStatustucs().getPp();
         double acc = user.getStatustucs().getAccuracy();

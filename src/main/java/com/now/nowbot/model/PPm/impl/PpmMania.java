@@ -52,31 +52,30 @@ public class PpmMania extends Ppm {
                 lengv90 += bp.getBeatmap().getTotalLength();
                 pgr90 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
             }
-            bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
-            rawpp = bpp + bonus;user.getStatustucs().getPp();
+        }
+        bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
+        rawpp = bpp + bonus;user.getStatustucs().getPp();
 
-            ppv0 /= 10;
-            ppv45 /= 10;
-            ppv90 /= 10;
-            accv0 /= 10;
-            accv45 /= 10;
-            accv90 /= 10;
-            lengv0 /= 10;
-            lengv45 /= 10;
-            lengv90 /= 10;
-            pgr0 /= 10;
-            pgr45 /= 10;
-            pgr90 /= 10;
-            if (bps.size()<90) {
-                ppv90 = 0; accv90 = 0; lengv90 = 0; pgr0 = 0;
-            }
-            if (bps.size()<45) {
-                ppv45 = 0; accv45 = 0; lengv45 = 0; pgr45 = 0;
-            }
-            if (bps.size()<10) {
-                ppv0 = 0; accv0 = 0; lengv0 = 0; pgr90 = 0;
-            }
-
+        ppv0 /= 10;
+        ppv45 /= 10;
+        ppv90 /= 10;
+        accv0 /= 10;
+        accv45 /= 10;
+        accv90 /= 10;
+        lengv0 /= 10;
+        lengv45 /= 10;
+        lengv90 /= 10;
+        pgr0 /= 10;
+        pgr45 /= 10;
+        pgr90 /= 10;
+        if (bps.size()<90) {
+            ppv90 = 0; accv90 = 0; lengv90 = 0; pgr0 = 0;
+        }
+        if (bps.size()<45) {
+            ppv45 = 0; accv45 = 0; lengv45 = 0; pgr45 = 0;
+        }
+        if (bps.size()<10) {
+            ppv0 = 0; accv0 = 0; lengv0 = 0; pgr90 = 0;
         }
         double pp = user.getStatustucs().getPp();
         double acc = user.getStatustucs().getAccuracy();
