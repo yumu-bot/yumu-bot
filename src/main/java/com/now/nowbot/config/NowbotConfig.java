@@ -27,7 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Configuration
-@ConfigurationProperties(prefix = "nowbot.config")
+@ConfigurationProperties(prefix = "nowbot.config") //todo 等重构
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
 
