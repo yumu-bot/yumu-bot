@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.PPPlusObject;
+import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.serviceException.PppException;
@@ -67,7 +67,7 @@ public class PpPlusService implements MessageService{
         headUrl = userData.getString("avatar_url");
 
 
-        PPPlusObject pppData = null;
+        PpPlus pppData = null;
         try {
             pppData = ppPlusDao.getobject(idString);
         } catch (Exception e) {
@@ -162,7 +162,7 @@ public class PpPlusService implements MessageService{
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(datebyte),from));
         }
     }
-    private void ppp(Contact from, PPPlusObject pppData, JSONObject userData) throws IOException, LogException {
+    private void ppp(Contact from, PpPlus pppData, JSONObject userData) throws IOException, LogException {
         var card = PanelUtil.getA1Builder(PanelUtil.getBgUrl("用户自定义路径", userData.getString("cover_url"), true));
         card.drawA1(userData.getString("avatar_url"))
                 .drawA2(PanelUtil.getFlag(userData.getJSONObject("country").getString("code")))

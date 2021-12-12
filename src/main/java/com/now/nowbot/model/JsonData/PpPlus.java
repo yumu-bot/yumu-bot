@@ -1,4 +1,4 @@
-package com.now.nowbot.model;
+package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PPPlusObject {
+public class PpPlus {
     @JsonProperty("UserID")
     private Long uid;
     @JsonProperty("UserName")
@@ -30,10 +30,10 @@ public class PPPlusObject {
     @JsonProperty("PrecisionTotal")
     private Double Pre;
 
-    public PPPlusObject() {
+    public PpPlus() {
     }
 
-    public PPPlusObject(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
+    public PpPlus(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.uid = uid;
         this.time = time;
         Total = total;
@@ -50,7 +50,7 @@ public class PPPlusObject {
         return uid;
     }
 
-    public PPPlusObject setUid(Long uid) {
+    public PpPlus setUid(Long uid) {
         this.uid = uid;
         return this;
     }
@@ -60,7 +60,7 @@ public class PPPlusObject {
     }
 
 
-    public PPPlusObject setName(String name) {
+    public PpPlus setName(String name) {
         this.name = name;
         return this;
     }
@@ -69,7 +69,7 @@ public class PPPlusObject {
         return time;
     }
 
-    public PPPlusObject setTime(LocalDateTime time) {
+    public PpPlus setTime(LocalDateTime time) {
         this.time = time;
         return this;
     }
@@ -78,7 +78,7 @@ public class PPPlusObject {
         return Total;
     }
 
-    public PPPlusObject setTotal(Double total) {
+    public PpPlus setTotal(Double total) {
         Total = total;
         return this;
     }
@@ -88,7 +88,7 @@ public class PPPlusObject {
     }
 
 
-    public PPPlusObject setJump(Double jump) {
+    public PpPlus setJump(Double jump) {
         Jump = jump;
         return this;
     }
@@ -98,7 +98,7 @@ public class PPPlusObject {
     }
 
 
-    public PPPlusObject setFlow(Double flow) {
+    public PpPlus setFlow(Double flow) {
         Flow = flow;
         return this;
     }
@@ -107,7 +107,7 @@ public class PPPlusObject {
         return Acc;
     }
 
-    public PPPlusObject setAcc(Double acc) {
+    public PpPlus setAcc(Double acc) {
         Acc = acc;
         return this;
     }
@@ -116,7 +116,7 @@ public class PPPlusObject {
         return Sta;
     }
 
-    public PPPlusObject setSta(Double sta) {
+    public PpPlus setSta(Double sta) {
         Sta = sta;
         return this;
     }
@@ -126,7 +126,7 @@ public class PPPlusObject {
     }
 
 
-    public PPPlusObject setSpd(Double spd) {
+    public PpPlus setSpd(Double spd) {
         Spd = spd;
         return this;
     }
@@ -135,7 +135,7 @@ public class PPPlusObject {
         return Pre;
     }
 
-    public PPPlusObject setPre(Double pre) {
+    public PpPlus setPre(Double pre) {
         Pre = pre;
         return this;
     }

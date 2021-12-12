@@ -92,6 +92,9 @@ public class OsuUser {
     }
 
     public Double getPp() {
+        if (pp == null && statustucs != null){
+            return statustucs.getPp();
+        }
         return pp;
     }
 
@@ -239,6 +242,10 @@ public class OsuUser {
         return postCount;
     }
 
+    /**
+     * 论坛发帖数
+     * @param postCount 论坛发帖数
+     */
     public void setPostCount(Integer postCount) {
         this.postCount = postCount;
     }
@@ -297,5 +304,68 @@ public class OsuUser {
 
     public void setCoverUrl(String coverUrl) {
         this.coverUrl = coverUrl;
+    }
+
+    public Double getAccuracy() {
+        if (statustucs != null) {
+            return statustucs.getAccuracy();
+        }
+        return null;
+    }
+
+    public Long getPlagCount() {
+        if (statustucs != null) {
+            return statustucs.getPlayCount();
+        }
+        return null;
+    }
+
+    public Long getPlatTime() {
+        if (statustucs != null) {
+            return statustucs.getPlayTime();
+        }
+        return null;
+    }
+
+    public Long getTotalHits() {
+        if (statustucs != null) {
+            return statustucs.getTotalHits();
+        }
+        return null;
+    }
+
+    public Integer getMaxCombo() {
+        if (statustucs != null) {
+            return statustucs.getMaxCombo();
+        }
+        return null;
+    }
+
+    public Long getGlobalRank() {
+        if (statustucs != null) {
+            return statustucs.getGlobalRank();
+        }
+        return null;
+    }
+
+    public Long getCountryRank() {
+        if (statustucs != null) {
+            return statustucs.getCountryRank();
+        }
+        return null;
+    }
+
+    public Integer getLevelCurrent() {
+        if (statustucs != null) {
+            return statustucs.getLevelCurrent();
+        }
+        return null;
+    }
+
+    public Integer getLevelProgress() {
+        if (statustucs != null) {
+            return statustucs.getLevelProgress();
+        }
+        return null;
     }
 }

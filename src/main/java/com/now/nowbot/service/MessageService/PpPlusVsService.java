@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.PPPlusObject;
+import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
@@ -58,8 +58,8 @@ public class PpPlusVsService implements MessageService {
 
         }
 
-        PPPlusObject date1 = null;
-        PPPlusObject date2 = null;
+        PpPlus date1 = null;
+        PpPlus date2 = null;
         try {
             date1 = ppPlusDao.getobject(id1);
             date2 = ppPlusDao.getobject(id2);

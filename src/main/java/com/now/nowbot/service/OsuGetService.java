@@ -8,7 +8,8 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.PPPlusObject;
+import com.now.nowbot.model.JsonData.PpPlus;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.JacksonUtil;
@@ -331,88 +332,6 @@ public class OsuGetService {
         ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
         return c.getBody();
     }
-
-    /***
-     * 获得个人bp
-     * @param user
-     * @param s 开始坐标，最小为0
-     * @param e 列表长度 1-100之间
-     * @return
-     */
-    public JSONArray getOsuBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "osu", s, e);
-    }
-
-    public JSONArray getOsuBestMap(int id, int s, int e) {
-        return getBestMap(id, "osu", s, e);
-    }
-
-    public JSONArray getTaikoBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "taiko", s, e);
-    }
-
-    public JSONArray getTaikoBestMap(int id, int s, int e) {
-        return getBestMap(id, "taiko", s, e);
-    }
-
-    public JSONArray getCatchBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "fruits", s, e);
-    }
-
-    public JSONArray getCatchBestMap(int id, int s, int e) {
-        return getBestMap(id, "fruits", s, e);
-    }
-
-    public JSONArray getManiaBestMap(BinUser user, int s, int e) {
-        return getBestMap(user, "mania", s, e);
-    }
-
-    public JSONArray getManiaBestMap(int id, int s, int e) {
-        return getBestMap(id, "mania", s, e);
-    }
-
-    /***
-     * 获得某个模式的bp表
-     * @param user user
-     * @param mode 模式
-     * @param s 起始坐标
-     * @param e 长度
-     * @return
-     */
-    public JSONArray getBestMap(BinUser user, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
-                .queryParam("mode", mode)
-                .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
-    }
-
-    public JSONArray getBestMap(int id, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
-                .queryParam("mode", mode)
-                .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
-    }
-
     /**
      * 获得某个模式的bp表
      * 替换旧的FASTJson
@@ -438,9 +357,11 @@ public class OsuGetService {
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
     }
+    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e){
+        return getBestPerformance(user, mode.getName(), s, e);
+    }
 
     /**
-     * 替换旧的FASTJson
      * @param id
      * @param mode
      * @param s
@@ -463,6 +384,9 @@ public class OsuGetService {
 
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
+    }
+    public List<BpInfo> getBestPerformance(int id, OsuMode mode, int s, int e){
+        return getBestPerformance(id, mode.getName(), s, e);
     }
     public List<BpInfo> getOsuBestPerformance(BinUser user, int s, int e) {
         return getBestPerformance(user, "osu", s, e);
@@ -707,6 +631,11 @@ public class OsuGetService {
         return new String(datebyte);
     }
 
+    /***
+     * 获取map信息
+     * @param bid bid
+     * @return
+     */
     public BeatMap getMapInfo(int bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
@@ -727,7 +656,7 @@ public class OsuGetService {
      * @param uset
      * @return
      */
-    public JSONObject getMapInfo(int bid, BinUser uset) {
+    public BeatMap getMapInfo(int bid, BinUser uset) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -737,13 +666,7 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + uset.getAccessToken(this));
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return null;
-        }
+        ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
         return c.getBody();
     }
 
@@ -785,7 +708,7 @@ public class OsuGetService {
             maxAttempts = 5,
             backoff = @Backoff(delay = 5000L, random = true, multiplier = 1 )
     )
-    public PPPlusObject ppPlus(String name) {
+    public PpPlus ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -796,7 +719,7 @@ public class OsuGetService {
 
         c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
 
-        return JacksonUtil.parseObject(c.getBody().get("user_data"), PPPlusObject.class);
+        return JacksonUtil.parseObject(c.getBody().get("user_data"), PpPlus.class);
     }
 
     /***

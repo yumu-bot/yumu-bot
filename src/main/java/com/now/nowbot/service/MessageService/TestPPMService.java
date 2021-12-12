@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.PPm.PPmObject;
+import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
@@ -10,6 +10,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("t-ppm")
@@ -24,109 +25,170 @@ public class TestPPMService implements MessageService {
     @Override
     @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        PPmObject userinfo;
-        JSONObject userdate;
+
+        OsuUser user;
+        List<BpInfo> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
-        switch (mode) {
-            case OSU: {
-                {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerOsuInfo(id);
-                        var bpdate = osuGetService.getOsuBestMap(id, 0, 100);
-                        userinfo = PPmObject.presOsu(userdate, bpdate);
-                    } else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerOsuInfo(user);
-                        var bpdate = osuGetService.getOsuBestMap(user, 0, 100);
-                        userinfo = PPmObject.presOsu(userdate, bpdate);
-                    }
-                }
-            }
-            break;
-            case TAIKO: {
-                {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerTaikoInfo(id);
-                        var bpdate = osuGetService.getTaikoBestMap(id, 0, 100);
-                        userinfo = PPmObject.presTaiko(userdate, bpdate);
-                    } else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerTaikoInfo(user);
-                        var bpdate = osuGetService.getTaikoBestMap(user, 0, 100);
-                        userinfo = PPmObject.presTaiko(userdate, bpdate);
-                    }
-                }
-            }
-            break;
-            case CATCH: {
-                {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerCatchInfo(id);
-                        var bpdate = osuGetService.getCatchBestMap(id, 0, 100);
-                        userinfo = PPmObject.presCatch(userdate, bpdate);
-                    } else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerCatchInfo(user);
-                        var bpdate = osuGetService.getCatchBestMap(user, 0, 100);
-                        userinfo = PPmObject.presCatch(userdate, bpdate);
-                    }
-                }
-            }
-            break;
-            case MANIA: {
-                {
-                    if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                        int id = osuGetService.getOsuId(matcher.group("name").trim());
-                        userdate = osuGetService.getPlayerManiaInfo(id);
-                        var bpdate = osuGetService.getManiaBestMap(id, 0, 100);
-                        userinfo = PPmObject.presMania(userdate, bpdate);
-                    } else {
-                        var user = BindingUtil.readUser(event.getSender().getId());
-                        userdate = osuGetService.getPlayerManiaInfo(user);
-                        var bpdate = osuGetService.getManiaBestMap(user, 0, 100);
-                        userinfo = PPmObject.presMania(userdate, bpdate);
-                    }
-                }
-            }
-            break;
-            default: {
-                return;
-            }
+        if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+            int id = osuGetService.getOsuId(matcher.group("name").trim());
+            user = osuGetService.getPlayerOsuInfoN(id);
+            bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
+        } else {
+            var userBin = BindingUtil.readUser(event.getSender().getId());
+            user = osuGetService.getPlayerOsuInfoN(userBin);
+            bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
         }
+
+        var date = new ppmtest();
+        date.act(user, bpList);
         StringBuilder sb = new StringBuilder();
-        sb.append(userinfo.getName()).append(' ')
-                .append(userinfo.getRank()).append(' ')
-                .append(userinfo.getPp()).append(' ')
-                .append(userinfo.getAcc()).append(' ')
-                .append(userinfo.getLevel()).append(' ')
-                .append(userinfo.getCombo()).append(' ')
-                .append(userinfo.getThit()).append(' ')
-                .append(userinfo.getPcont()).append(' ')
-                .append(userinfo.getPtime()).append(' ')
-                .append(userinfo.getNotfc()).append(' ')
-                .append(userinfo.getRawpp()).append(' ')
-                .append(userinfo.getXx()).append(' ')
-                .append(userinfo.getXs()).append(' ')
-                .append(userinfo.getXa()).append(' ')
-                .append(userinfo.getXb()).append(' ')
-                .append(userinfo.getXc()).append(' ')
-                .append(userinfo.getXd()).append(' ')
-                .append(userinfo.getPpv0()).append(' ')
-                .append(userinfo.getAccv0()).append(' ')
-                .append(userinfo.getLengv0()).append(' ')
-                .append(userinfo.getPGR0()).append(' ')
-                .append(userinfo.getPpv45()).append(' ')
-                .append(userinfo.getAccv45()).append(' ')
-                .append(userinfo.getLengv45()).append(' ')
-                .append(userinfo.getPGR45()).append(' ')
-                .append(userinfo.getPpv90()).append(' ')
-                .append(userinfo.getAccv90()).append(' ')
-                .append(userinfo.getLengv90()).append(' ')
-                .append(userinfo.getPGR90()).append(' ');
+        sb.append(user.getUsername()).append(' ')
+                .append(user.getGlobalRank()).append(' ')
+                .append(user.getPp()).append(' ')
+                .append(user.getAccuracy()).append(' ')
+                .append(user.getLevelProgress()).append(' ')
+                .append(user.getStatustucs().getMaxCombo()).append(' ')
+                .append(user.getTotalHits()).append(' ')
+                .append(user.getPlagCount()).append(' ')
+                .append(user.getPlatTime()).append(' ')
+                .append(date.notfc).append(' ')
+                .append(date.rawpp).append(' ')
+                .append(date.xx).append(' ')
+                .append(date.xs).append(' ')
+                .append(date.xa).append(' ')
+                .append(date.xb).append(' ')
+                .append(date.xc).append(' ')
+                .append(date.xd).append(' ')
+                .append(date.ppv0).append(' ')
+                .append(date.accv0).append(' ')
+                .append(date.lengv0).append(' ')
+                .append(date.pgr0).append(' ')
+                .append(date.ppv45).append(' ')
+                .append(date.accv45).append(' ')
+                .append(date.lengv45).append(' ')
+                .append(date.pgr45).append(' ')
+                .append(date.ppv90).append(' ')
+                .append(date.accv45).append(' ')
+                .append(date.lengv90).append(' ')
+                .append(date.pgr90).append(' ');
 
         event.getSubject().sendMessage(sb.toString());
+    }
+    class ppmtest{
+        protected float ppv0 = 0;
+        protected float ppv45 = 0;
+        protected float ppv90 = 0;
+        protected float accv0 = 0;
+        protected float pgr0 = 0;
+        protected float pgr45 = 0;
+        protected float pgr90 = 0;
+        protected float accv45 = 0;
+        protected float accv90 = 0;
+        protected long lengv0 = 0;
+        protected long lengv45 = 0;
+        protected long lengv90 = 0;
+        protected double bpp = 0;
+        protected double rawpp = 0;
+        protected double bonus = 0;
+        protected int xd = 0;
+        protected int xc = 0;
+        protected int xb = 0;
+        protected int xa = 0;
+        protected int xs = 0;
+        protected int xx = 0;
+        protected int notfc = 0;
+        private void act(OsuUser user, List<BpInfo> bps){
+            double[] allBpPP = new double[bps.size()];
+            for (int i = 0; i < bps.size(); i++) {
+                var bp = bps.get(i);
+                bpp += bp.getWeight().getPp();
+                allBpPP[i] += Math.log10(bp.getWeight().getPp()) / 2;
+
+                switch (bp.getRank()) {
+                    case "XH", "X" -> xx++;
+                    case "SH", "S" -> xs++;
+                    case "A" -> xa++;
+                    case "B" -> xb++;
+                    case "C" -> xc++;
+                    case "D" -> xd++;
+                }
+                if (!bp.isPerfect()) notfc++;
+                if (i < 10) {
+                    ppv0 += bp.getPp();
+                    accv0 += bp.getAccuracy();
+                    lengv0 += bp.getBeatmap().getTotalLength();
+                } else if (i >= 45 && i < 55) {
+                    ppv45 += bp.getPp();
+                    accv45 += bp.getAccuracy();
+                    lengv45 += bp.getBeatmap().getTotalLength();
+                } else if (i >= 90) {
+                    ppv90 += bp.getPp();
+                    accv90 += bp.getAccuracy();
+                    lengv90 += bp.getBeatmap().getTotalLength();
+                }
+            }
+            bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
+            rawpp = bpp + bonus;
+
+            ppv0 /= 10;
+            ppv45 /= 10;
+            ppv90 /= 10;
+            accv0 /= 10;
+            accv45 /= 10;
+            accv90 /= 10;
+            lengv0 /= 10;
+            lengv45 /= 10;
+            lengv90 /= 10;
+            if (bps.size() < 90) {
+                ppv90 = 0;
+                accv90 = 0;
+                lengv90 = 0;
+            }
+            if (bps.size() < 45) {
+                ppv45 = 0;
+                accv45 = 0;
+                lengv45 = 0;
+            }
+            if (bps.size() < 10) {
+                ppv0 = 0;
+                accv0 = 0;
+                lengv0 = 0;
+            }
+            double pp = user.getStatustucs().getPp();
+            double acc = user.getStatustucs().getAccuracy();
+            double pc = user.getStatustucs().getPlayCount();
+            double pt = user.getStatustucs().getPlayTime();
+            double tth = user.getStatustucs().getTotalHits();
+        }
+    }
+    static float bonusPP(double[] pp, Long pc){
+        double  bonus = 0;
+        double sumOxy = 0;
+        double sumOx2 = 0;
+        double avgX = 0;
+        double avgY = 0;
+        double sumX = 0;
+        for (int i = 1; i <= pp.length; i++) {
+            double weight = Math.log1p(i + 1);
+            sumX += weight;
+            avgX += i * weight;
+            avgY += pp[i - 1] * weight;
+        }
+        avgX /= sumX;
+        avgY /= sumX;
+        for(int n = 1; n <= pp.length; n++){
+            sumOxy += (n - avgX) * (pp[n - 1] - avgY) * Math.log1p(n + 1.0D);
+            sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
+        }
+        double Oxy = sumOxy / sumX;
+        double Ox2 = sumOx2 / sumX;
+        for(int n = 100; n <= pc; n++){
+            double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+            if(val <= 0.0D){
+                break;
+            }
+            bonus += val;
+        }
+        return (float) bonus;
     }
 }

@@ -47,6 +47,8 @@ public class Statustucs {
     @JsonIgnore
     Integer levelCurrent;
     @JsonIgnore
+    Integer levelProgress;
+    @JsonIgnore
     Integer SS;
     @JsonIgnore
     Integer SSH;
@@ -56,8 +58,6 @@ public class Statustucs {
     Integer SH;
     @JsonIgnore
     Integer A;
-    @JsonIgnore
-    Integer levelProgress;
     @JsonProperty("level")
     public void setLevel(Map<String, Integer> map){
         levelCurrent = map.get("current");

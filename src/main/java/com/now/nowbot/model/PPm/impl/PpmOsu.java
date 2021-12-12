@@ -77,11 +77,11 @@ public class PpmOsu extends Ppm {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getStatustucs().getPp();
-        double acc = user.getStatustucs().getAccuracy();
-        double pc = user.getStatustucs().getPlayCount();
-        double pt = user.getStatustucs().getPlayTime();
-        double tth = user.getStatustucs().getTotalHits();
+        double pp = user.getPp();
+        double acc = user.getAccuracy();
+        double pc = user.getPlagCount();
+        double pt = user.getPlatTime();
+        double tth = user.getTotalHits();
 
 
         // 1.1 准度fACC formulaic accuracy 0-1.2
