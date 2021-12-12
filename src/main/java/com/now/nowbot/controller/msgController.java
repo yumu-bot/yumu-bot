@@ -5,6 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.UpdateUtil;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -89,7 +91,19 @@ public class msgController {
     public void update(@RequestHeader("User-Agent") String agent, @RequestHeader("X-Gitee-Event") String event, @RequestBody JsonNode body){
         if (agent.trim().equals("git-oschina-hook")){
             log.info("收到一条推送\n{}",body.toString());
-            bot.getGroup(746671531L).sendMessage("git收到推送事件 " + event);
+            String msg = body.findValue("message").asText("nothing");
+            var gp = bot.getGroup(746671531L);
+            if (gp != null) {
+                gp.sendMessage("git收到推送事件 " + event + "\n" + msg);
+                if (msg.startsWith("update")) {
+                    try {
+                        gp.sendMessage("即将更新重启...");
+                        UpdateUtil.update();
+                    } catch (IOException e) {
+                        gp.sendMessage("error");
+                    }
+                }
+            }
         }
     }
 }
