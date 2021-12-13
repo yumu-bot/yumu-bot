@@ -108,7 +108,6 @@ public class PPmService implements MessageService {
         } else {
             ppmPanel.drawOverImage();
         }
-        ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
         ppm.drawValueName(ppmPanel::drawLeftNameN);
         ppm.drawValue(ppmPanel::drawLeftValueN);
         ppm.drawRank(ppmPanel::switchRank);
@@ -118,6 +117,7 @@ public class PPmService implements MessageService {
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
         ppmPanel.drawHexagon(hexDate, true);
+        ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
 
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
         try ( panelImage) {
