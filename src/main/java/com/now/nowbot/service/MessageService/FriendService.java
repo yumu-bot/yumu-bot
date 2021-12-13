@@ -65,7 +65,7 @@ public class FriendService implements MessageService{
                         "(" + infoMe.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
                 .drawC1(infoMe.getJSONObject("statistics").getIntValue("pp") + "PP");
 
-        p.drawBanner(PanelUtil.getBgFile(null/*"个人banner路径"*/, PanelUtil.EXPORT_FOLE_V3.resolve("Banner/b3.jpg").toString(),false));
+        p.drawBanner(PanelUtil.getBgFile(null/*"个人banner路径"*/, PanelUtil.EXPORT_FOLE_V3.resolve("Banner/b3.png").toString(),false));
         p.mainCard(card.build());
         //单线程实现好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {

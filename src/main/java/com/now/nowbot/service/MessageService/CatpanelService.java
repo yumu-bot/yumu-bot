@@ -153,35 +153,48 @@ public class CatpanelService implements MessageService {
                                     continue;
                                 }
                             }
-                            from.sendMessage("倍率修改为 "+scaleX+'x'+scaleY+" -> 修改后像素"+imgWidth*scaleX+'x'+imgHeight*scaleY);
-                            break;
+
                         }else {
                             var temp = Float.parseFloat(m.group("x"));
-                            if (temp<1200 || m.group("y") == null || Float.parseFloat(m.group("y"))<857){
+                            if (temp<CATPANLE_WHITE || m.group("y") == null || Float.parseFloat(m.group("y"))<CATPANLE_HEIGHT){
                                 from.sendMessage("像素参数无效");
                                 continue;
                             }
                             scaleX = temp / imgWidth;
                             scaleY = Float.parseFloat(m.group("y")) / imgHeight;
-                            from.sendMessage("像素修改后 缩放倍率修改为 "+scaleX+'x'+scaleY+" -> 修改后像素"+imgWidth*scaleX+'x'+imgHeight*scaleY+"\n即将发送预览图");
-                            canvas.clear(0);
-                            canvas.drawImage(img,offsetX,offsetY);
-                            drowSee(canvas,offsetX,offsetY);
-                            from.sendMessage(
-                                    ExternalResource.uploadAsImage(
-                                            ExternalResource.create(
-                                                    surface.makeImageSnapshot(IRect.makeXYWH(0,0,(int)(imgWidth*scaleX),(int) (imgHeight*scaleY))).encodeToData(EncodedImageFormat.JPEG,40).getBytes()
-                                            ),from
-                                    )
-                            );
-                            from.sendMessage("再次输入参数可以重新设定,输入'确定'保存缩放设置,输入exit中止本次生成");
                         }
+
+
+                        offsetX = (int)(0.5 * (scaleX * imgWidth - CATPANLE_WHITE));
+                        offsetY = (int)(0.5 * (scaleY * imgWidth - CATPANLE_HEIGHT));
+
+                        from.sendMessage("像素修改后 缩放倍率修改为 "+scaleX+'x'+scaleY+" -> 修改后像素"+imgWidth*scaleX+'x'+imgHeight*scaleY+"\n即将发送预览图");
+                        canvas.clear(0);
+                        canvas.save();
+                        canvas.scale(scaleX, scaleY);
+                        canvas.drawImage(img,0,0);
+                        drowSee(canvas,(int)(offsetX/scaleX),(int)(offsetY/scaleY));
+                        canvas.restore();
+                        from.sendMessage(
+                                ExternalResource.uploadAsImage(
+                                        ExternalResource.create(
+                                                surface.makeImageSnapshot(IRect.makeXYWH(0,0,(int)(imgWidth*scaleX),(int) (imgHeight*scaleY))).encodeToData(EncodedImageFormat.JPEG,40).getBytes()
+                                        ),from
+                                )
+                        );
+                        from.sendMessage("再次输入参数可以重新设定,输入'确定'保存缩放设置,输入exit中止本次生成");
                     }else {
-                        from.sendMessage("参数错误,请重新尝试,输入exit结束");
+                        from.sendMessage("参数错误,请重新尝试,输入'确定'保存缩放设置,输入exit结束");
                     }
                 }
             } while (true);
 
+
+//            from.sendMessage("""
+//                    输入位置偏移""");
+//            do {
+//
+//            }while (true);
 
 //            from.sendMessage("""
 //                    输入背景暗化程度""");
@@ -191,7 +204,7 @@ public class CatpanelService implements MessageService {
             canvas.clear(0);
             canvas.save();
             canvas.scale(scaleX,scaleY);
-            canvas.drawImage(img, -offsetX, -offsetY);
+            canvas.drawImage(img, -offsetX/scaleX, -offsetY/scaleY);
             from.sendMessage(
                     ExternalResource.uploadAsImage(
                             ExternalResource.create(
