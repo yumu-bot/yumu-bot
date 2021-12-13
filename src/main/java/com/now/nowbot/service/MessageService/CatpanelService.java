@@ -64,9 +64,9 @@ public class CatpanelService implements MessageService {
             qc(skijaimg, event, CATPANLE_WHITE, CATPANLE_HEIGHT);
             return;
         }
-        var cutimg = SkiaUtil.getScaleCenterImage(skijaimg, 1200,857);
+        var cutimg = SkiaUtil.getScaleCenterImage(skijaimg, CATPANLE_WHITE,CATPANLE_HEIGHT);
 
-        var surface = Surface.makeRasterN32Premul(1200,857);
+        var surface = Surface.makeRasterN32Premul(CATPANLE_WHITE,CATPANLE_HEIGHT);
         var t1 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "panel06.png");
         var t2 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + (stl?"ylbx.png":"lbx.png"));
 
@@ -82,7 +82,7 @@ public class CatpanelService implements MessageService {
         }
     }
 
-    private void qc(org.jetbrains.skija.Image img, MessageEvent event, int w, int h) throws InterruptedException {
+    private void qc(org.jetbrains.skija.Image img, MessageEvent event, int w, int h) throws InterruptedException, TipsException {
         var from = event.getSubject();
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
@@ -120,14 +120,14 @@ public class CatpanelService implements MessageService {
             );
             //重缩放
             from.sendMessage("""
-                    是否修改缩放大小,输入'倍率 倍率[:高度倍率]'修改范围[默认缩放值,10*默认缩放值] 或 '像素 宽度像素:高度像素'
+                    是否修改背景图大小,输入'倍率 倍率[:高度倍率]'修改范围[默认缩放值,10*默认缩放值] 或 '像素 宽度像素:高度像素'
                     输入倍率时,支持float精度,如果要分别修改高宽倍率,注意使用':'分隔,修改像素两个参数都要填
                     示例:倍率 1.25:1
-                    输入像素时,输入宽/高不得低于1200:857,输入no跳过缩放设置,输入exit中止本次生成
+                    输入像素时,输入宽/高不得低于1200:857,输入'确定'跳过或保存缩放设置,输入exit中止本次生成
                     示例:像素 1920:1080""");
             do {
                 var nevent = ASyncMessageUtil.getEvent(lock);
-                if (nevent == null) return;
+                if (nevent == null) throw new TipsException("时间超时,停止本次任务");
                 String page = nevent.getMessage().contentToString();
                 if (page.contains("exit"))return;else
                 if (page.contains("no"))break;else {
@@ -163,22 +163,39 @@ public class CatpanelService implements MessageService {
                             }
                             scaleX = temp / imgWidth;
                             scaleY = Float.parseFloat(m.group("y")) / imgHeight;
-                            from.sendMessage("像素修改后 缩放倍率修改为 "+scaleX+'x'+scaleY+" -> 修改后像素"+imgWidth*scaleX+'x'+imgHeight*scaleY);
-                            break;
+                            from.sendMessage("像素修改后 缩放倍率修改为 "+scaleX+'x'+scaleY+" -> 修改后像素"+imgWidth*scaleX+'x'+imgHeight*scaleY+"\n即将发送预览图");
+                            canvas.clear(0);
+                            canvas.drawImage(img,offsetX,offsetY);
+                            drowSee(canvas,offsetX,offsetY);
+                            from.sendMessage(
+                                    ExternalResource.uploadAsImage(
+                                            ExternalResource.create(
+                                                    surface.makeImageSnapshot(IRect.makeXYWH(0,0,(int)(imgWidth*scaleX),(int) (imgHeight*scaleY))).encodeToData(EncodedImageFormat.JPEG,40).getBytes()
+                                            ),from
+                                    )
+                            );
+                            from.sendMessage("再次输入参数可以重新设定,输入'确定'保存缩放设置,输入exit中止本次生成");
                         }
                     }else {
-                        from.sendMessage("参数错误,请重新尝试");
-                        continue;
+                        from.sendMessage("参数错误,请重新尝试,输入exit结束");
                     }
                 }
             } while (true);
+
+
+//            from.sendMessage("""
+//                    输入背景暗化程度""");
+//            do {
+//
+//            }while (true);
             canvas.clear(0);
-            canvas.drawImage(img,offsetX,offsetY);
-            drowSee(canvas,offsetX,offsetY);
+            canvas.save();
+            canvas.scale(scaleX,scaleY);
+            canvas.drawImage(img, -offsetX, -offsetY);
             from.sendMessage(
                     ExternalResource.uploadAsImage(
                             ExternalResource.create(
-                                    surface.makeImageSnapshot(IRect.makeXYWH(0,0,(int)(imgWidth*scaleX),(int) (imgHeight*scaleY))).encodeToData(EncodedImageFormat.JPEG,40).getBytes()
+                                    surface.makeImageSnapshot(IRect.makeXYWH(0,0, CATPANLE_WHITE, CATPANLE_HEIGHT)).encodeToData(EncodedImageFormat.PNG).getBytes()
                             ),from
                     )
             );
@@ -189,7 +206,7 @@ public class CatpanelService implements MessageService {
     private void drowSee(Canvas canvas, int offsetX, int offsetY){
         canvas.save();
         canvas.translate(offsetX, offsetY);
-        canvas.drawRect(Rect.makeWH(1200,857),new Paint().setARGB(100,230,0,0));
+        canvas.drawRect(Rect.makeWH(CATPANLE_WHITE,CATPANLE_HEIGHT),new Paint().setARGB(100,230,0,0));
         canvas.restore();
 
     }
