@@ -180,7 +180,7 @@ public class PpPlusService implements MessageService{
         var hexValue = ppPlusDao.ppsize(pppData);
         DecimalFormat dx = new DecimalFormat("0");
         var panel = new PPPlusPanelBuilder();
-        panel.drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
+        panel.drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b"+System.currentTimeMillis()%6+".png"))
                 .drawOverImage()
                 .drawValueName()
                 .drawLeftCard(card.build());
