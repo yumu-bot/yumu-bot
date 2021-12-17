@@ -12,6 +12,7 @@ import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -122,9 +123,7 @@ public class PPmService implements MessageService {
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
         try ( panelImage) {
             card.build().close();
-            byte[] imgData = panelImage.encodeToData().getBytes();
-            var image = ExternalResource.uploadAsImage(ExternalResource.create(imgData), from);
-            from.sendMessage(image);
+            QQMsgUtil.sendImage(from, panelImage);
         }
     }
 
