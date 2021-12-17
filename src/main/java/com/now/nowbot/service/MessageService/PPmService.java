@@ -101,7 +101,7 @@ public class PPmService implements MessageService {
 
         // panel new
         var ppmPanel = new PPMPanelBuilder();
-        ppmPanel.drawBanner(PanelUtil.getBgFile(null, NowbotConfig.BG_PATH + "ExportFileV3/Banner/b"+System.currentTimeMillis()%6+".png", false));
+        ppmPanel.drawBanner(PanelUtil.getBanner(null));
 
         if (false){//底图自定义预留,当有自定义的底图时,走true
             ppmPanel.drawOverImage( null );
@@ -204,7 +204,7 @@ public class PPmService implements MessageService {
         }
 
         var panel = new PPMVSPanelBuilder()
-                .drawBanner(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/Banner/b3.png"))
+                .drawBanner(PanelUtil.getBanner(null))
                 .drawOverImage()
                 .drawValueName();
 //        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);

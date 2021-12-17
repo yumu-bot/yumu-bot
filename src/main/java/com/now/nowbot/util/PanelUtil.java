@@ -1,6 +1,7 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.BCardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
@@ -48,6 +49,9 @@ public class PanelUtil {
     public static Image OBJECT_MAPSTATUS_LOVED;
 
     public static Image OBJECT_CARD_SUPPORTER;
+
+    public static int BANNER_INDEX_MIN = 1;
+    public static int BANNER_INDEX_MAX = 8;
 
     //    
     public static final String MODE_OSU = "\uE800";
@@ -205,5 +209,14 @@ public class PanelUtil {
             img = s.makeImageSnapshot();
         }
         return img;
+    }
+    static int bannerIndex = 1;
+    public static Image getBanner(BinUser user) throws IOException {
+        if(bannerIndex > BANNER_INDEX_MAX){
+            bannerIndex = BANNER_INDEX_MIN;
+        }
+        Image banner = SkiaUtil.fileToImage(EXPORT_FOLE_V3.resolve("Banner/b"+bannerIndex+".png").toString());
+        bannerIndex ++;
+        return banner;
     }
 }

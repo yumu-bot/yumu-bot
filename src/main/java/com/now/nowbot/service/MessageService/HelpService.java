@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -20,6 +20,6 @@ public class HelpService implements MessageService {
 //                sb.append(ins.getDesc()).append("\n");
 //        }
 //        from.sendMessage(sb.toString());
-        from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png"))), from));
+        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
     }
 }

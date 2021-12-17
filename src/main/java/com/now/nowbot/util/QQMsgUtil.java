@@ -1,10 +1,15 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.dao.QQMessageDao;
+import net.mamoe.mirai.contact.Contact;
+import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
 import net.mamoe.mirai.message.data.QuoteReply;
+import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.skija.EncodedImageFormat;
+import org.jetbrains.skija.Image;
 
 public class QQMsgUtil {
 
@@ -26,6 +31,23 @@ public class QQMsgUtil {
     @Nullable
     public static MessageChain getReply(QuoteReply reply){
         return qqMessageDao.getReply(reply);
+    }
+
+    public static MessageReceipt sendImage(Contact from, Image img){
+        var date = img.encodeToData(EncodedImageFormat.PNG).getBytes();
+        return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
+    }
+    public static MessageReceipt sendImage(Contact from, Image img, EncodedImageFormat format){
+        var date = img.encodeToData(format).getBytes();
+        return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
+    }
+    public static MessageReceipt sendImage(Contact from, Image img, int size){
+        if (size < 0 || size > 100) throw new RuntimeException("范围异常");
+        var date = img.encodeToData(EncodedImageFormat.JPEG,size).getBytes();
+        return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
+    }
+    public static MessageReceipt sendImage(Contact from, byte[] imgDate){
+        return from.sendMessage(from.uploadImage(ExternalResource.create(imgDate)));
     }
 
 }
