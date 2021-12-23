@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
 import java.util.regex.Matcher;
 
 @Service("friend")
@@ -35,9 +37,12 @@ public class FriendService implements MessageService{
 
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;
+        boolean hasParm = true;
         if (matcher.group("m") == null){
+            hasParm = false;
             n2 = matcher.group("n") == null? 23 : Integer.parseInt(matcher.group("n"));
         }else {
+            hasParm = false;
             n1 = Integer.parseInt(matcher.group("n"));
             n2 = Integer.parseInt(matcher.group("m"));
             if(n1 > n2) {n1 ^= n2; n2 ^= n1; n1 ^= n2;}
@@ -67,10 +72,29 @@ public class FriendService implements MessageService{
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());
+       int[] index = null;
+       if (hasParm) {
+           //构造随机数组
+           index = new int[allFriend.size()];
+           for (int i = 0; i < index.length; i++) {
+               index[i] = i;
+           }
+           for (int i = 0; i < index.length; i++) {
+               int rand = rand(i,index.length);
+               index[i] =  index[rand] + index[i];
+               index[rand] = index[i] - index[rand];
+               index[i] -= index[rand];
+           }
+       }
         //单线程实现好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
-                var infoO = allFriend.get(i);
+                JsonNode infoO;
+                if (hasParm){
+                    infoO = allFriend.get(index[i]);
+                }else {
+                    infoO = allFriend.get(i);
+                }
 
                 var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
                 cardO.drawA1(infoO.findValue("avatar_url").asText())
@@ -100,5 +124,9 @@ public class FriendService implements MessageService{
 //        Files.write(Path.of("D:/ffxx.jpg"),p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());调试代码,勿动
         card.build().close();
         p.build().close();
+    }
+    static final Random random = new Random();
+    int rand(int min, int max){
+        return min + random.nextInt(max-min);
     }
 }
