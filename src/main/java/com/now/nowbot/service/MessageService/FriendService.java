@@ -131,26 +131,4 @@ public class FriendService implements MessageService{
         return min + random.nextInt(max-min);
     }
 
-    public static void main(String[] args) {
-        int[] index = null;
-        if (true) {
-            //构造随机数组
-            index = new int[10];
-            for (int i = 0; i < index.length; i++) {
-                index[i] = i;
-            }
-            for (int i = 0; i < index.length; i++) {
-                int rand = rand(i,index.length);
-                if (rand != 1) {
-                    int temp = index[rand];
-                    index[rand] = index[i];
-                    index[i] = temp;
-                }
-            }
-        }
-
-        for (int i = 0; i < 20 && i < index.length; i++) {
-            System.out.print(index[i]+",");
-        }
-    }
 }
