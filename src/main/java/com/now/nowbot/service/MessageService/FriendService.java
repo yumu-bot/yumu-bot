@@ -37,12 +37,11 @@ public class FriendService implements MessageService{
 
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;
-        boolean hasParm = true;
+        boolean doRandom = true;
         if (matcher.group("m") == null){
-            hasParm = false;
             n2 = matcher.group("n") == null? 23 : Integer.parseInt(matcher.group("n"));
         }else {
-            hasParm = false;
+            doRandom = false;
             n1 = Integer.parseInt(matcher.group("n"));
             n2 = Integer.parseInt(matcher.group("m"));
             if(n1 > n2) {n1 ^= n2; n2 ^= n1; n1 ^= n2;}
@@ -73,7 +72,7 @@ public class FriendService implements MessageService{
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());
        int[] index = null;
-       if (hasParm) {
+       if (doRandom) {
            //构造随机数组
            index = new int[allFriend.size()];
            for (int i = 0; i < index.length; i++) {
@@ -81,16 +80,18 @@ public class FriendService implements MessageService{
            }
            for (int i = 0; i < index.length; i++) {
                int rand = rand(i,index.length);
-               index[i] =  index[rand] + index[i];
-               index[rand] = index[i] - index[rand];
-               index[i] -= index[rand];
+               if (rand != 1) {
+                   int temp = index[rand];
+                   index[rand] = index[i];
+                   index[i] = temp;
+               }
            }
        }
         //单线程实现好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
                 JsonNode infoO;
-                if (hasParm){
+                if (doRandom){
                     infoO = allFriend.get(index[i]);
                 }else {
                     infoO = allFriend.get(i);
@@ -126,7 +127,30 @@ public class FriendService implements MessageService{
         p.build().close();
     }
     static final Random random = new Random();
-    int rand(int min, int max){
+    static int rand(int min, int max){
         return min + random.nextInt(max-min);
+    }
+
+    public static void main(String[] args) {
+        int[] index = null;
+        if (true) {
+            //构造随机数组
+            index = new int[10];
+            for (int i = 0; i < index.length; i++) {
+                index[i] = i;
+            }
+            for (int i = 0; i < index.length; i++) {
+                int rand = rand(i,index.length);
+                if (rand != 1) {
+                    int temp = index[rand];
+                    index[rand] = index[i];
+                    index[i] = temp;
+                }
+            }
+        }
+
+        for (int i = 0; i < 20 && i < index.length; i++) {
+            System.out.print(index[i]+",");
+        }
     }
 }
