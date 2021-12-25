@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,17 @@ public class MutualFriendService implements MessageService{
             StringBuilder sb = new StringBuilder();
             while (m.find()){
                 String name = m.group("name").trim();
-                int id = osuGetService.getOsuId(name);
-                sb.append(name).append(" : ").append(id).append("\n");
+                try {
+                    int id = osuGetService.getOsuId(name);
+                    sb.append(name).append(" : ").append(id).append("\n");
+                } catch (Exception res) {
+                    if (res instanceof RequestException r && r.status.getReasonPhrase().equals("Not Found")) {
+                        sb.append(name).append(" : ").append("请求目标不存在").append("\n");
+                    } else {
+                        sb.append(name).append(" : ").append("未知错误").append("\n");
+                        res.printStackTrace();
+                    }
+                }
             }
             event.getSubject().sendMessage(sb.toString());
             return;
