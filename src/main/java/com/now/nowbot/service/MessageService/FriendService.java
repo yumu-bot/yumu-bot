@@ -122,7 +122,6 @@ public class FriendService implements MessageService{
         }
 
         from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
-//        Files.write(Path.of("D:/ffxx.jpg"),p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());调试代码,勿动
         card.build().close();
         p.build().close();
     }

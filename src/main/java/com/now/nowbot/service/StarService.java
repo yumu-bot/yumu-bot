@@ -6,7 +6,6 @@ import com.now.nowbot.model.BinUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,16 +15,7 @@ import java.nio.file.Path;
 @Service
 public class StarService {
     final Logger log = LoggerFactory.getLogger(StarService.class);
-    public String path;
-    @Value("${dir.rundir}star/")
-    public void setPath(String path) throws IOException{
-        Path pt = Path.of(path);
-        if(!Files.isDirectory(pt)){
-            Files.createDirectories(pt);
-        }
-        this.path = path;
-    }
-
+    public String path = "";
     @Autowired
     OsuGetService osuGetService;
 

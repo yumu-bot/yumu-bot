@@ -4,8 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
@@ -14,7 +15,6 @@ import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.retry.annotation.Backoff;
@@ -36,21 +36,25 @@ import java.util.List;
 @Service
 public class OsuGetService {
     public static BinUser botUser = new BinUser();
-    @Value("${ppy.id}")
+
     private int oauthId;
-    @Value("${ppy.callBackUrl}")
     private String redirectUrl;
-    @Value("${ppy.token}")
     private String oauthToken;
-    @Value("${ppy.url}")
     private String URL;
-    @Value("${ppy.v1token:null}")
-    private String tokenv1;
 
     static final ObjectMapper jsonMapper = new ObjectMapper();
 
-    @Autowired
     RestTemplate template;
+    @Autowired
+    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig){
+        oauthId = osuConfig.getId();
+        redirectUrl = osuConfig.getCallBackUrl();
+        oauthToken = osuConfig.getToken();
+        URL = osuConfig.getUrl();
+
+        template = restTemplate;
+    }
+
 
     /***
      * 拼合授权链接

@@ -9,14 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
@@ -26,119 +25,34 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Component
 @Configuration
-@ConfigurationProperties(prefix = "nowbot.config") //todo 等重构
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
-
     public static String RUN_PATH;
-    @Value("${dir.rundir}")
-    public void setRunPath(String RUN_PATH){
-        Path pt = Path.of(RUN_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(RUN_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.RUN_PATH = RUN_PATH;
-    }
-
     public static String BOT_PATH;
-    @Value("${dir.mirai}")
-    public void setBotPath(String BOT_PATH){
-        Path pt = Path.of(BOT_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(BOT_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.BOT_PATH = BOT_PATH;
-    }
-
     public static String BIN_PATH;
-    @Value("${dir.bin}")
-    public void setBinPath(String BIN_PATH) {
-        Path pt = Path.of(BIN_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(BIN_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.BIN_PATH = BIN_PATH;
-    }
-
     public static String FONT_PATH;
-    @Value("${dir.font}")
-    public void setFontPath(String FONT_PATH){
-        Path pt = Path.of(FONT_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(FONT_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.FONT_PATH = FONT_PATH;
-    }
-
     public static String BG_PATH;
-    @Value("${dir.bgdir}")
-    public void setBgPath(String BG_PATH){
-        Path pt = Path.of(BG_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(BG_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.BG_PATH = BG_PATH;
-    }
-
     public static String IMGBUFFER_PATH;
-    @Value("${dir.imghc}")
-    public void setImgbufferPath(String IMGBUFFER_PATH){
-        Path pt = Path.of(IMGBUFFER_PATH);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(IMGBUFFER_PATH+"创建失败",e);
-            }
-        }
-        NowbotConfig.IMGBUFFER_PATH = IMGBUFFER_PATH;
-    }
-
     public static String OSU_ID;
-    @Value("${dir.osuid}")
-    public void setOsuId(String OSU_ID){
-        Path pt = Path.of(OSU_ID);
-        if(!Files.isDirectory(pt)) {
-            try {
-                Files.createDirectories(pt);
-            } catch (IOException e) {
-                log.error(OSU_ID+"创建失败",e);
-            }
-        }
-        NowbotConfig.OSU_ID = OSU_ID;
-    }
 
     public static long QQ;
-    @Value("${mirai.qq}")
-    public void setQQ(long QQ){
-        NowbotConfig.QQ = QQ;
-    }
-
     public static String PASSWORD;
-    @Value("${mirai.password}")
-    public void setPASSWORD(String PASSWORD){
-        NowbotConfig.PASSWORD = PASSWORD;
+    public static boolean QQ_LOGIN;
+    @Autowired
+    public NowbotConfig (FileConfig fileConfig, QQConfig qqConfig){
+        RUN_PATH = createDir(fileConfig.root);
+        BOT_PATH = createDir(fileConfig.mirai);
+        BIN_PATH = createDir(fileConfig.bind);
+        FONT_PATH = createDir(fileConfig.font);
+        BG_PATH = createDir(fileConfig.bgdir);
+        IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
+        OSU_ID = createDir(fileConfig.osuid);
+
+        QQ = qqConfig.qq;
+        PASSWORD = qqConfig.password;
+        QQ_LOGIN = qqConfig.login;
     }
 
     @Bean
@@ -155,9 +69,6 @@ public class NowbotConfig {
         });
         return template;
     }
-    @Value("${mirai.start}")
-    boolean isLogin;
-    public static boolean QQ_LOGIN;
 
     @Autowired
     MessageListener messageListener;
@@ -181,8 +92,7 @@ public class NowbotConfig {
         //配置完成，注册bot
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         //登录
-        QQ_LOGIN = isLogin;
-        if (isLogin) bot.login();
+        if (QQ_LOGIN) bot.login();
         //注册监听 messageListener需要继承SimpleListenerHost类
 //        bot.getEventChannel().registerListenerHost(messageListener);
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
@@ -192,6 +102,18 @@ public class NowbotConfig {
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    public String createDir(String path){
+        Path pt = Path.of(path);
+        if(!Files.isDirectory(pt)) {
+            try {
+                Files.createDirectories(pt);
+            } catch (IOException e) {
+                log.error(BOT_PATH+"创建失败",e);
+            }
+        }
+        return path;
     }
 
     @Bean
