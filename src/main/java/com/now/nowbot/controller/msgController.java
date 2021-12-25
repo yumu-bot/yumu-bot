@@ -14,8 +14,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 @RestController
@@ -31,7 +29,11 @@ public class msgController {
         this.bot = bot;
         this.osuGetService = osuGetService;
     }
-
+    @GetMapping("${osu.callbackpath}")
+    public String bind(@RequestParam("code")String code, @RequestParam("state") String stat){
+        var data = stat.split(" ");
+        return saveBind(code, data);
+    }
     public String saveBind(String code, String[] date) {
         StringBuffer sb = new StringBuffer();
         if (date.length == 2) {
@@ -69,9 +71,7 @@ public class msgController {
                     .append(e.getLocalizedMessage());
                 }
             } else {
-                long secend = msg.key() / 1000;
-                log.info("异常绑定:绑定超时\n超时时间:{}\n", LocalDateTime.ofEpochSecond(secend, 0, ZoneOffset.ofHours(8)));
-                sb.append("绑定链接已失效,请重新绑定\n请勿重复绑定");
+                sb.append("绑定链接失效\n请重新绑定");
             }
         } else {
             sb.append("非法的访问\n连接异常,确认是否为绑定链接");
