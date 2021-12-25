@@ -38,16 +38,17 @@ public enum Instruction {
     UPDATE("update",Pattern.compile("^&!update$"),null),
     FRIEND("friend",Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?"),"只能查自己,参数n,n-m,最大100,太多就1-100,101-200..."),
     CATPANEL("cpanel", Pattern.compile("[!！]testbg(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?"), null),
+    MUTUAL("mu",    Pattern.compile("[!！](?i)(?<t>test)mu"), null),
     /*
     新建服务并指定@Service("name"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<name>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST("test",    Pattern.compile("^[!！]test.*"),null),
     TESTID("t-id",    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)"),null),
     TESTPPM("t-ppm",    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))"),null),
+    TESTMUTUAL("mu",    Pattern.compile("[!！](?i)(?<t>test)mu(?<names>.*)"), null),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！
-//    FRIEND-ymf ymfriend [num] 获取玩家指定数量好友的信息（上限100，若超过100则发送多张图片，详情查阅群内ymf介绍文档）
 //    BPS-ymbps [num]获取玩家指定数量BP的信息（上限100，详情查阅群内ymbps介绍文档）
 
 
@@ -234,18 +235,16 @@ ymban/ymunban
     }
 
     public static void main(String[] args) {
-        var p = Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)");
-        var m = p.matcher("!ids 2314,2543,6645,23142432");
-        if(m.find()){
+        var p = Pattern.compile("([\\s,]+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
+        var m = p.matcher("!testmu a,b,vdfs    --sdf,d");
+        while (m.find()){
 //            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
 //            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
 //            s ^= e;
 //            e ^= s;
 //            s ^= e;
-            String as = m.group("ids");
-            for (var s : as.split(",")){
-                System.out.println(s);
-            }
+            String as = m.group("name").trim();
+            System.out.println(as);
         }
     }
 }
