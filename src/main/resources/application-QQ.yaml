@@ -1,0 +1,4 @@
+mirai:
+  qq:
+  password:
+  login: true #此项决定程序运行后是否登录bot

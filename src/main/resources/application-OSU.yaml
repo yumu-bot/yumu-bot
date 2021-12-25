@@ -1,0 +1,9 @@
+osu:
+  url: https://osu.ppy.sh/api/v2/
+  #api接口
+  callbackpath: /oauth
+  #访问服务器的url
+  callBackUrl: http://localhost:8388${osu.callbackpath}
+  #oauth应用的id与token
+  id:
+  token:

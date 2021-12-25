@@ -1,0 +1,50 @@
+#服务监听端口
+server:
+  port: 8388
+#botfile 程序的运行路径
+botfile:
+  root: C:/bot #您想运行的位置
+  bind: ${botfile.root}bind/
+  mirai: ${botfile.root}
+  bgdir: ${botfile.root}bg/
+  font: ${botfile.root}font/
+  imgbuffer: ${botfile.root}imgbuffer/
+  osuid: ${botfile.root}Id/
+#数据源
+spring:
+  profiles:
+    include:
+      QQ,OSU
+#使用SQLite小型数据库
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:${botfile.root}db/nowbot.db
+    username:
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+
+#使用MySql数据库
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://{路径}:{端口}/{库}?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC&useSSL=true
+#    username:
+#    password:
+#    hikari:
+#      maximum-pool-size: 10
+#      minimum-idle: 1
+
+#jpa配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.sqlite.hibernate.dialect.SQLiteDialect
+    properties:
+      hibernate:
+        format_sql: true
+#log配置,可有可无,只是位置,详细设定请写在 logback.xml
+logging:
+  file:
+    name: ${botfile.root}botlog/bot.log
