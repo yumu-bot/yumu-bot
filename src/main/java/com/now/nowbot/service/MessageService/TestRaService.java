@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.service.OsuGetService;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -11,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
@@ -33,13 +30,18 @@ public class TestRaService implements MessageService {
         var from = event.getSubject();
 
         StringBuffer sb = new StringBuffer();
+        from.sendMessage("正在处理"+matcher.group("id"));
         mo(Integer.parseInt(matcher.group("id")), -1, sb);
 
-        var filepath = Path.of(NowbotConfig.RUN_PATH+f2.format(LocalDateTime.now())+".txt");
-        Files.writeString(filepath,sb.toString());
         if (from instanceof Group group){
-            var f = group.getFiles().uploadNewFile(filepath.getFileName().toString(), ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
-            group.sendMessage("如失败,自行下载\n"+f.getUrl());
+            long tm = System.currentTimeMillis();
+            try {
+                var f = group.getFiles().uploadNewFile(System.currentTimeMillis()+".txt", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+                group.sendMessage("如失败,自行下载\n"+f.getUrl());
+            } catch (Exception e) {
+                from.sendMessage(e.getMessage());
+            }
+            from.sendMessage("uploaded time"+(System.currentTimeMillis()-tm)/1000);
         } else {
             from.sendMessage("私聊不行");
         }
