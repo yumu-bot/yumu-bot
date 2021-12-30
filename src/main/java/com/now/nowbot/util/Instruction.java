@@ -44,6 +44,7 @@ public enum Instruction {
      */
     TEST("test",    Pattern.compile("^[!！]test.*"),null),
     TESTID("t-id",    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)"),null),
+    TESTRA("t-ra",    Pattern.compile("[!！]testra(\\s+(?<id>\\d+))"),null),
     TESTPPM("t-ppm",    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))"),null),
     TESTMUTUAL("mu",    Pattern.compile("[!！](?i)(?<t>test)mu(?<names>.*)"), null),
 

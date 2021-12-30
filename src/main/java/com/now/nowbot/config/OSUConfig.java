@@ -2,9 +2,11 @@ package com.now.nowbot.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
+import org.springframework.validation.annotation.Validated;
 
 @Primary
-@ConfigurationProperties(prefix = "osu")
+@Validated
+@ConfigurationProperties(prefix = "osu", ignoreInvalidFields = true)
 public class OSUConfig {
     String url;
     String callbackpath;

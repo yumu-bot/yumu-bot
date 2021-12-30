@@ -50,7 +50,7 @@ public class TestService implements MessageService {
 
             int flag = 1;
             for (var kk : sblist) {
-                grp.sendMessage(kk.toString() + (flag++));
+                grp.sendMessage(kk.toString() + (flag++)).recallIn(100*1000);
                 Thread.sleep(1000);
             }
         }
