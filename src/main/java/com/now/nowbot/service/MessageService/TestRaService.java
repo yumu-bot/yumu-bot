@@ -38,7 +38,8 @@ public class TestRaService implements MessageService {
         var filepath = Path.of(NowbotConfig.RUN_PATH+f2.format(LocalDateTime.now())+".txt");
         Files.writeString(filepath,sb.toString());
         if (from instanceof Group group){
-            var f = group.getFiles().uploadNewFile(filepath.toString(), ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+            var f = group.getFiles().uploadNewFile(filepath.getFileName().toString(), ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+            group.sendMessage("如失败,自行下载\n"+f.getUrl());
         } else {
             from.sendMessage("私聊不行");
         }

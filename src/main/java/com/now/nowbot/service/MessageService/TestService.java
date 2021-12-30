@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,22 +38,22 @@ public class TestService implements MessageService {
         var grp = ((GroupMessageEvent) event).getGroup();
         //这不是啥功能,这是木子取ppm 原始数据留下的接口,只允许他用,不需要单独做成功能
         var ppmPat = Pattern.compile("");
-        var mo = Pattern.compile("!testra(\\s+(?<id>\\d+))");
+//        var mo = Pattern.compile("!testra(\\s+(?<id>\\d+))");
+//        var mathcer_mo = mo.matcher(msg.contentToString());
+//
+//         if (mathcer_mo.find()) {
+////                var s = osuGetService.getMatchInfo();
+//            List<StringBuffer> sblist = new LinkedList<>();
+//            mo(Integer.parseInt(mathcer_mo.group("id")), -1, sblist);
+//
+//            int flag = 1;
+//            for (var kk : sblist) {
+//                grp.sendMessage(kk.toString() + (flag++)).recallIn(100*1000);
+//                Thread.sleep(1000);
+//            }
+//        }
+
         var ppmMch = ppmPat.matcher(msg.contentToString());
-        var mathcer_mo = mo.matcher(msg.contentToString());
-
-         if (mathcer_mo.find()) {
-//                var s = osuGetService.getMatchInfo();
-            List<StringBuffer> sblist = new LinkedList<>();
-            mo(Integer.parseInt(mathcer_mo.group("id")), -1, sblist);
-
-            int flag = 1;
-            for (var kk : sblist) {
-                grp.sendMessage(kk.toString() + (flag++)).recallIn(100*1000);
-                Thread.sleep(1000);
-            }
-        }
-
         ppmPat = Pattern.compile("^[!！]roll(\\s+(?<num>[0-9]{1,5}))?");
         ppmMch = ppmPat.matcher(msg.contentToString());
         if (ppmMch.find()) {
