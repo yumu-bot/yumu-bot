@@ -34,14 +34,11 @@ public class TestRaService implements MessageService {
         mo(Integer.parseInt(matcher.group("id")), -1, sb);
 
         if (from instanceof Group group){
-            long tm = System.currentTimeMillis();
             try {
                 var f = group.getFiles().uploadNewFile(System.currentTimeMillis()+".txt", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
-                group.sendMessage("如失败,自行下载\n"+f.getUrl());
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
             }
-            from.sendMessage("uploaded time"+(System.currentTimeMillis()-tm)/1000);
         } else {
             from.sendMessage("私聊不行");
         }
