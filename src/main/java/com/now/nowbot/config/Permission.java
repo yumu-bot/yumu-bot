@@ -163,7 +163,7 @@ public class Permission {
      * @return
      */
     public static boolean serviceIsClouse(Instruction i){
-        return OFF_SERVICE.contains(i) || i == Instruction.SWITCH;
+        return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
     }
 
     public static void clouseService(Instruction i){
