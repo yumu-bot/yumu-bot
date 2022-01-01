@@ -10,7 +10,6 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -114,12 +113,12 @@ public class MessageListener extends SimpleListenerHost {
                 service.HandleMessage(event, matcher);
             }
         }
-        if (!(event instanceof GroupMessageEvent)){
-            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));
-            for (var s1 : s){
-                event.getSubject().sendMessage(s1);
-            }
-        }
+//        if (!(event instanceof GroupMessageEvent)){
+//            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));
+//            for (var s1 : s){
+//                event.getSubject().sendMessage(s1);
+//            }
+//        }
     }
 
     /***
