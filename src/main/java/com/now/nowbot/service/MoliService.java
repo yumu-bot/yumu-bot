@@ -5,9 +5,10 @@ import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-public class MoliAiService {
+@Service
+public class MoliService {
     RestTemplate restTemplate;
     String url = "https://i.mly.app/reply";
     HttpHeaders headers = new HttpHeaders();
@@ -21,7 +22,7 @@ public class MoliAiService {
         return new Group(e.getMessage().contentToString(), e.getSenderName(), e.getSender().getId(), e.getGroup().getName(), e.getGroup().getId());
     }
     @Autowired
-    public MoliAiService(RestTemplate restTemplate){
+    public MoliService(RestTemplate restTemplate){
         this.restTemplate = restTemplate;
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Api-Key", "438983az3zr8riuk");
@@ -29,7 +30,9 @@ public class MoliAiService {
     }
 
     public String[] getMsg(Friend friend){
-        HttpEntity<Friend> httpEntity = new HttpEntity<>(friend, headers);
+        post body = new post(friend.id(), friend.name());
+        body.setContent(friend.sg());
+        HttpEntity<post> httpEntity = new HttpEntity<>(body, headers);
         ResponseEntity<JsonNode> c = restTemplate.exchange(url, HttpMethod.POST, httpEntity, JsonNode.class);
         var data = c.getBody();
         if ("00000".equals(data.get("code").asText())) {
@@ -44,8 +47,9 @@ public class MoliAiService {
         }
     }
     public String[] getMsg(Group group){
-//        post body = new post();
-        HttpEntity<Group> httpEntity = new HttpEntity<>(group, headers);
+        post body = new post(group.id(), group.name(), group.groupId(), group.groupName());
+        body.setContent(group.sg());
+        HttpEntity<post> httpEntity = new HttpEntity<>(body, headers);
         ResponseEntity<JsonNode> c = restTemplate.exchange(url, HttpMethod.POST, httpEntity, JsonNode.class);
         var data = c.getBody();
         if ("00000".equals(data.get("code").asText())) {
@@ -67,18 +71,18 @@ public class MoliAiService {
         Long to;
         String toName;
 
-        public post(int type, Long from, String fromName) {
+        public post(Long from, String fromName) {
             this.content = "";
-            this.type = type;
+            this.type = 1;
             this.from = from;
             this.fromName = fromName;
             this.to = 0L;
             this.toName="";
         }
 
-        public post(int type, Long from, String fromName, Long to, String toName) {
+        public post(Long from, String fromName, Long to, String toName) {
             this.content = "";
-            this.type = type;
+            this.type = 2;
             this.from = from;
             this.fromName = fromName;
             this.to = to;

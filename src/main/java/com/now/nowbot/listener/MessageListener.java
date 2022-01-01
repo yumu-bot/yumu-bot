@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.service.MoliService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsException;
@@ -37,8 +38,14 @@ public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
-    @Autowired
+
     MessageMapper messageMapper;
+    MoliService moliService;
+    @Autowired
+    public MessageListener(MessageMapper messageMapper, MoliService moliService){
+        this.messageMapper = messageMapper;
+        this.moliService = moliService;
+    }
     private static Map<String, MessageService> messageServiceMap = null;
 
     public void init(Map<String, MessageService> beanMap) throws BeansException {
@@ -106,6 +113,12 @@ public class MessageListener extends SimpleListenerHost {
             if (matcher.find()) {
                 var service = messageServiceMap.get(ins.getName());
                 service.HandleMessage(event, matcher);
+            }
+        }
+        if (!(event instanceof GroupMessageEvent)){
+            var s = moliService.getMsg(MoliService.getFriend(event));
+            for (var s1 : s){
+                event.getSubject().sendMessage(s1);
             }
         }
     }
