@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,11 +33,9 @@ public class Permission {
     private static Set<Long> supetList;
 
     private static PermissionDao permissionDao;
-    private final ApplicationContext applicationContext;
     @Autowired
-    public Permission(PermissionDao permissionDao, ApplicationContext applicationContext) {
+    public Permission(PermissionDao permissionDao){
         Permission.permissionDao = permissionDao;
-        this.applicationContext = applicationContext;
     }
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -49,8 +46,7 @@ public class Permission {
     private static Map<String ,PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
     private static CopyOnWriteArraySet<Instruction> OFF_SERVICE = null;
 
-    @PostConstruct
-    void init() {
+    void init(ApplicationContext applicationContext) {
         //初始化全局名单
         if (permissionDao == null) System.out.println("*****************************************");
         assert permissionDao != null;

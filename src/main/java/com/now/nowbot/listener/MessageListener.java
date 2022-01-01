@@ -4,13 +4,13 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.service.MoliService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
+import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -40,12 +40,11 @@ public class MessageListener extends SimpleListenerHost {
 
 
     MessageMapper messageMapper;
-    MoliService moliService;
     @Autowired
-    public MessageListener(MessageMapper messageMapper, MoliService moliService){
+    public MessageListener(MessageMapper messageMapper){
         this.messageMapper = messageMapper;
-        this.moliService = moliService;
     }
+
     private static Map<String, MessageService> messageServiceMap = null;
 
     public void init(Map<String, MessageService> beanMap) throws BeansException {
@@ -116,7 +115,7 @@ public class MessageListener extends SimpleListenerHost {
             }
         }
         if (!(event instanceof GroupMessageEvent)){
-            var s = moliService.getMsg(MoliService.getFriend(event));
+            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));
             for (var s1 : s){
                 event.getSubject().sendMessage(s1);
             }

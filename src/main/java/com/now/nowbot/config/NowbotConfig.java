@@ -91,8 +91,6 @@ public class NowbotConfig {
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         //配置完成，注册bot
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
-        //登录
-        if (QQ_LOGIN) bot.login();
         //注册监听 messageListener需要继承SimpleListenerHost类
 //        bot.getEventChannel().registerListenerHost(messageListener);
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);

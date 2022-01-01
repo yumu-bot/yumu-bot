@@ -1,17 +1,16 @@
-package com.now.nowbot.service;
+package com.now.nowbot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-@Service
-public class MoliService {
-    RestTemplate restTemplate;
-    String url = "https://i.mly.app/reply";
-    HttpHeaders headers = new HttpHeaders();
+
+
+public class MoliUtil {
+    private static RestTemplate restTemplate;
+    private static final String url = "https://i.mly.app/reply";
+    private static final HttpHeaders headers = new HttpHeaders();
     public static record Friend(String sg, String name, Long id){};
     public static record Group(String sg, String name, Long id, String groupName, Long groupId){};
 
@@ -21,15 +20,14 @@ public class MoliService {
     public static Group getGroup(GroupMessageEvent e){
         return new Group(e.getMessage().contentToString(), e.getSenderName(), e.getSender().getId(), e.getGroup().getName(), e.getGroup().getId());
     }
-    @Autowired
-    public MoliService(RestTemplate restTemplate){
-        this.restTemplate = restTemplate;
+    public static void init(RestTemplate restTemplate){
+        MoliUtil.restTemplate = restTemplate;
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Api-Key", "438983az3zr8riuk");
         headers.set("Api-Secret", "vissf8jj");
     }
 
-    public String[] getMsg(Friend friend){
+    public static String[] getMsg(Friend friend){
         post body = new post(friend.id(), friend.name());
         body.setContent(friend.sg());
         HttpEntity<post> httpEntity = new HttpEntity<>(body, headers);
@@ -46,7 +44,7 @@ public class MoliService {
             throw new RuntimeException(data.get("message").asText());
         }
     }
-    public String[] getMsg(Group group){
+    public static String[] getMsg(Group group){
         post body = new post(group.id(), group.name(), group.groupId(), group.groupName());
         body.setContent(group.sg());
         HttpEntity<post> httpEntity = new HttpEntity<>(body, headers);
@@ -63,7 +61,7 @@ public class MoliService {
             throw new RuntimeException(data.get("message").asText());
         }
     }
-    public class post{
+    private static class post{
         String content;
         int type;
         Long from;
@@ -117,6 +115,4 @@ public class MoliService {
             return toName;
         }
     }
-//https://mly.app/profile/index.html#/dashboard
-
 }
