@@ -107,7 +107,7 @@ public class Permission {
         OFF_SERVICE = new CopyOnWriteArraySet<>();
         for ( var i : Instruction.values() ){
             var p = serviceSwitchMapper.findById(i.getName());
-            if( p.isEmpty() || !p.get().isSwitch() ){
+            if( p.isPresent() && !p.get().isSwitch() ){
                 OFF_SERVICE.add(i);
             }
         }
@@ -163,7 +163,7 @@ public class Permission {
      * @return
      */
     public static boolean serviceIsClouse(Instruction i){
-        return OFF_SERVICE.contains(i);
+        return OFF_SERVICE.contains(i) || i == Instruction.SWITCH;
     }
 
     public static void clouseService(Instruction i){
