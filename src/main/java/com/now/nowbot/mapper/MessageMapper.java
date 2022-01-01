@@ -10,10 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 public interface MessageMapper extends JpaRepository<MsgLite, Long> , JpaSpecificationExecutor<MsgLite> {
+    /**
+     * 群聊消息统计
+     * @return
+     */
     @Query(value = "select target_id as groupid , count(target_id)  as msgs from qq_message group by (target_id) order by count(target_id) desc", nativeQuery = true)
-    public List<Map<String, Long>> contGroup();
+    public List<Map<String, Number>> contGroup();
     @Query(value = "select target_id as groupid , count(target_id)  as msgs from qq_message where time > :start and time< :end group by (target_id) order by count(target_id) desc", nativeQuery = true)
-    public List<Map<String, Long>> contGroup(@Param("start") int start, @Param("end") int end);
+    public List<Map<String, Number>> contGroup(@Param("start") int start, @Param("end") int end);
 
     public List<MsgLite> getAllByTargetIdAndTimeBetween(Long targetId, Long start_time, Long end_time);
 

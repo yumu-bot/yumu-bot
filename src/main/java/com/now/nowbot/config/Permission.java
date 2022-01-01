@@ -1,10 +1,10 @@
 package com.now.nowbot.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.PermissionDao;
+import com.now.nowbot.entity.ServiceSwitchLite;
+import com.now.nowbot.mapper.ServiceSwitchMapper;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -15,10 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +29,7 @@ public class Permission {
     private static Set<Long> supetList;
 
     private static PermissionDao permissionDao;
+    private static ServiceSwitchMapper serviceSwitchMapper;
     @Autowired
     public Permission(PermissionDao permissionDao){
         Permission.permissionDao = permissionDao;
@@ -106,17 +103,13 @@ public class Permission {
         supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
 
         //初始化功能关闭菜单
-        var path = Path.of(NowbotConfig.RUN_PATH+"switch.json");
-        if (Files.isRegularFile(path)){
-            try {
-                JavaType type = mapper.getTypeFactory().constructParametricType(CopyOnWriteArraySet.class, Instruction.class);
-                OFF_SERVICE = mapper.readValue(new File(NowbotConfig.RUN_PATH+"switch.json"), CopyOnWriteArraySet.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-                OFF_SERVICE = new CopyOnWriteArraySet<>();
+        serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
+        OFF_SERVICE = new CopyOnWriteArraySet<>();
+        for ( var i : Instruction.values() ){
+            var p = serviceSwitchMapper.findById(i.getName());
+            if( p.isEmpty() || !p.get().isSwitch() ){
+                OFF_SERVICE.add(i);
             }
-        }else {
-            OFF_SERVICE = new CopyOnWriteArraySet<>();
         }
 
         log.info("名单初始化完成");
@@ -175,26 +168,12 @@ public class Permission {
 
     public static void clouseService(Instruction i){
         OFF_SERVICE.add(i);
-        try {
-            String s = mapper.writeValueAsString(OFF_SERVICE);
-            Files.writeString(Path.of(NowbotConfig.RUN_PATH+"switch.json"), s);
-        } catch (JsonProcessingException e) {
-            log.error("序列化失败", e);
-        } catch (IOException e) {
-            log.error("文件写入失败", e);
-        }
+        serviceSwitchMapper.save(new ServiceSwitchLite(i.getName(), false));
     }
 
     public static void openService(Instruction i){
         OFF_SERVICE.remove(i);
-        try {
-            String s = mapper.writeValueAsString(OFF_SERVICE);
-            Files.writeString(Path.of(NowbotConfig.RUN_PATH+"switch.json"), s);
-        } catch (JsonProcessingException e) {
-            log.error("序列化失败", e);
-        } catch (IOException e) {
-            log.error("文件写入失败", e);
-        }
+        serviceSwitchMapper.save(new ServiceSwitchLite(i.getName(), true));
     }
 
     /**
