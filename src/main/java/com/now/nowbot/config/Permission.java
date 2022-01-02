@@ -1,11 +1,11 @@
 package com.now.nowbot.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
 import com.now.nowbot.mapper.ServiceSwitchMapper;
 import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
@@ -34,7 +34,6 @@ public class Permission {
     public Permission(PermissionDao permissionDao){
         Permission.permissionDao = permissionDao;
     }
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     //全局名单
     private static PermissionData ALL_W;
@@ -81,15 +80,21 @@ public class Permission {
                     Set<Long> group = null;
                     // 存放好友名单
                     if ($beansCheck.friend()) {
-                        if ($beansCheck.isWhite())
+                        if ($beansCheck.isWhite()) {
                             friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
-                        else friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
+                        }
+                        else {
+                            friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
+                        }
                     }
                     // 存放群组名单
                     if ($beansCheck.group()) {
-                        if ($beansCheck.isWhite())
+                        if ($beansCheck.isWhite()) {
                             group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_W));
-                        else group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_B));
+                        }
+                        else {
+                            group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_B));
+                        }
                     }
                     //写入存储对象
                     var obj = new PermissionData(friend, group);
@@ -145,6 +150,51 @@ public class Permission {
         return p.hasFriend(id);
     }
 
+    public boolean addGroup(String sName, Long id, boolean isSuper) {
+        var perm = PERMISSIONS.get(sName);
+        if (perm != null && (!perm.isSupper() || isSuper)) {
+            if (perm.isWhite()) {
+                if (perm.getGroupList().add(id)) {
+                    permissionDao.addGroup(sName, PermissionType.GROUP_W, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            } else {
+                if (perm.getGroupList().add(id)) {
+                    permissionDao.addGroup(sName, PermissionType.GROUP_B, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean addFriend(String sName, Long id){
+        var perm = PERMISSIONS.get(sName);
+        if (perm != null){
+            if (perm.isWhite()) {
+                if (perm.getFriendList().add(id)) {
+                    permissionDao.addFriend(sName, PermissionType.FRIEND_W, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            } else {
+                if (perm.getFriendList().add(id)) {
+                    permissionDao.addFriend(sName, PermissionType.FRIEND_B, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            }
+        }
+        return false;
+    }
+
+
     /**
      * 仅针对全局黑白名单
      */
@@ -158,7 +208,7 @@ public class Permission {
     }
 
     /**
-     * 基于文件保存的 单功能开关
+     * 单功能开关
      * @param i
      * @return
      */

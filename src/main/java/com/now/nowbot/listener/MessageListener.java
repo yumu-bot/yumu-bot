@@ -9,6 +9,7 @@ import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
@@ -98,20 +99,25 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        if (event.getMessage() instanceof FileMessage fileMessage){
-            log.info("收到文件");
-        }
-        messageMapper.save(new MsgLite(event.getMessage()));
-        ASyncMessageUtil.put(event);
-        for(var ins : Instruction.values()){
-            //功能关闭 优先级高于aop拦截
-            if (Permission.serviceIsClouse(ins)) continue;
-
-            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
-            if (matcher.find()) {
-                var service = messageServiceMap.get(ins.getName());
-                service.HandleMessage(event, matcher);
+        ContextUtil.setContext("event",event);
+        try {
+            if (event.getMessage() instanceof FileMessage fileMessage){
+                log.info("收到文件");
             }
+            messageMapper.save(new MsgLite(event.getMessage()));
+            ASyncMessageUtil.put(event);
+            for(var ins : Instruction.values()){
+                //功能关闭 优先级高于aop拦截
+                if (Permission.serviceIsClouse(ins)) continue;
+
+                Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
+                if (matcher.find()) {
+                    var service = messageServiceMap.get(ins.getName());
+                    service.HandleMessage(event, matcher);
+                }
+            }
+        } finally {
+            ContextUtil.remove();
         }
 //        if (!(event instanceof GroupMessageEvent)){
 //            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));

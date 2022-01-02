@@ -109,9 +109,12 @@ public class PPmService implements MessageService {
         } else {
             ppmPanel.drawOverImage();
         }
+        //左侧 名称+数据
         ppm.drawValueName(ppmPanel::drawLeftNameN);
         ppm.drawValue(ppmPanel::drawLeftValueN);
+        //左侧 rank
         ppm.drawRank(ppmPanel::switchRank);
+
         ppm.drawTotleName(ppmPanel::drawLeftTotleName, ppmPanel::drawRightTotleName);
         ppm.drawTotleValue(ppmPanel::drawLeftTotal, ppmPanel::drawRightTotal);
 
@@ -206,6 +209,21 @@ public class PPmService implements MessageService {
                 .drawBanner(PanelUtil.getBanner(null))
                 .drawOverImage()
                 .drawValueName();
+        //左侧 名称+数据
+        ppmMe.drawValueName(panel::drawLeftNameN);
+        ppmMe.drawValue(panel::drawLeftValueN);
+        ppmMe.drawRank(panel::switchLeftRank);
+        ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)->{return null;});
+
+        panel.drawLeftTotleName("-_-");
+        panel.drawRightTotleName("-_-");
+
+        ppmOther.drawValueName(panel::drawRightNameN);
+        ppmOther.drawValue(panel::drawRightValueN);
+        ppmOther.drawRank(panel::switchRightRank);
+        ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)->{return null;});
+        panel.drawLeftCard(cardMe.build());
+        panel.drawRightCard(cardOther.build());
 //        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
 //        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
 //        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
@@ -252,11 +270,12 @@ public class PPmService implements MessageService {
 //        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"))//叠加层
 //                .drawPanelName(panelName)//panel名
 //                .build("PANEL-PPMVS dev.0.0.1");
-//        try (uBgMe; uBgOther; panelImage) {
-//            cardMe.build().close();
-//            cardOther.build().close();
-//            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));
-//        }
+        try (uBgMe; uBgOther) {
+            cardMe.build().close();
+            cardOther.build().close();
+            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create( panel.build().encodeToData().getBytes()), from));
+            panel.build().close();
+        }
     }
 
     private String getOff(double v1, double v2){

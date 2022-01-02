@@ -7,10 +7,7 @@ import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -37,6 +34,7 @@ public class CheckAspect {
 
     /***
      * 注解权限切点
+     * 加了@CheckPermission注解的
      * @param point
      * @param CheckPermission
      * @return
@@ -83,8 +81,6 @@ public class CheckAspect {
 
         var servicename = Service.value();
 //        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
-        //todo
-
         try {
             if (Permission.isSupper(event.getSender().getId())){
                 //超管无视任何限制
@@ -117,4 +113,9 @@ public class CheckAspect {
             s.sendMessage("bot即将重启,放弃所有未完成任务,请稍后重试(具体时间请联系管理员)");
         }
     }
+//    @Around("execution (public * com.now.nowbot..*(..))")
+//        public Object setConttext(JoinPoint point){
+//        point.getSignature();
+//        return null;
+//    }
 }

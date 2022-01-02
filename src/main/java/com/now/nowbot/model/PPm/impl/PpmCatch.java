@@ -4,8 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPm.Ppm;
-import com.now.nowbot.util.Panel.PPMPanelBuilder;
-import com.now.nowbot.util.Panel.PPPanelBuilder;
+import com.now.nowbot.util.Panel.PanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.Image;
@@ -269,7 +268,7 @@ public class PpmCatch extends Ppm {
         }
     }
     @Override
-    public void drawOverImage(Function<Image, PPMPanelBuilder> doAct, @Nullable Image userImg) {
+    public void drawOverImage(Function<Image, PanelBuilder> doAct, @Nullable Image userImg) {
         if (userImg != null) {
             doAct.apply(userImg);
             return;
@@ -282,7 +281,7 @@ public class PpmCatch extends Ppm {
     }
 
     @Override
-    public void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct) {
+    public void drawValueName(Func4<Integer, String, String, Paint, PanelBuilder> doAct) {
         var p = new Paint().setARGB(255,161,161,161);
         doAct.call(0, "FAC",null,p);
         doAct.call(1, "PTT",null,p);
@@ -293,7 +292,7 @@ public class PpmCatch extends Ppm {
     }
 
     @Override
-    public void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct) {
+    public void drawValue(Func3<Integer, String, String, PanelBuilder> doAct) {
         doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
         doAct.call(1, String.valueOf((int) (value2 * 100)), PanelUtil.cutDecimalPoint(value2 * 100)/*<-小字部分*/);
         doAct.call(2, String.valueOf((int) (value3 * 100)), PanelUtil.cutDecimalPoint(value3 * 100)/*<-小字部分*/);
@@ -303,7 +302,7 @@ public class PpmCatch extends Ppm {
     }
 
     @Override
-    public void drawRank(Func2<Integer, Double, PPMPanelBuilder> doAct) {
+    public void drawRank(Func2<Integer, Double, PanelBuilder> doAct) {
         doAct.call(0, value1);
         doAct.call(1, value2);
         doAct.call(2, value3);
@@ -313,13 +312,13 @@ public class PpmCatch extends Ppm {
     }
 
     @Override
-    public void drawTotleName(Function<String, PPPanelBuilder> left, Function<String, PPPanelBuilder> right) {
+    public void drawTotleName(Function<String, PanelBuilder> left, Function<String, PanelBuilder> right) {
         left.apply("Overall");
         right.apply("Sanity");
     }
 
     @Override
-    public void drawTotleValue(Func2<String, String, PPPanelBuilder> left, Func2<String, String, PPPanelBuilder> right) {
+    public void drawTotleValue(Func2<String, String, PanelBuilder> left, Func2<String, String, PanelBuilder> right) {
         left.call(String.valueOf((int) value7), PanelUtil.cutDecimalPoint(value7));
         right.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
     }

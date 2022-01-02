@@ -60,6 +60,7 @@ public class SwitchService implements MessageService{
                     try {
                         var i = Instruction.valueOf(p2.toUpperCase());
                         Permission.clouseService(i);
+                        from.sendMessage("已关闭");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("没找到这个服务");
                     }
@@ -70,6 +71,7 @@ public class SwitchService implements MessageService{
                     try {
                         var i = Instruction.valueOf(p2.toUpperCase());
                         Permission.openService(i);
+                        from.sendMessage("已启动");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("没找到这个服务");
                     }
@@ -91,7 +93,19 @@ public class SwitchService implements MessageService{
                     event.getSubject().sendMessage(text);
                 }
             }
-            case "ban", "unban" -> event.getSubject().sendMessage("过几天再说");
+            case "ban" -> {
+                if (p2 != null && event instanceof GroupMessageEvent group) {
+                    try {
+                        var i = Instruction.valueOf(p2.toUpperCase());
+                        var f = permission.addGroup(i.getName(), group.getGroup().getId(), Permission.isSupper(event.getSender().getId()));
+                        String s = f ? "ok" : "error";
+                        from.sendMessage(s);
+                    } catch (IllegalArgumentException e) {
+                        from.sendMessage("没找到这个服务");
+                    }
+                }
+            }
         }
     }
+
 }

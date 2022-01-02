@@ -7,8 +7,7 @@ import com.now.nowbot.model.PPm.impl.PpmMania;
 import com.now.nowbot.model.PPm.impl.PpmOsu;
 import com.now.nowbot.model.PPm.impl.PpmTaiko;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.util.Panel.PPMPanelBuilder;
-import com.now.nowbot.util.Panel.PPPanelBuilder;
+import com.now.nowbot.util.Panel.PanelBuilder;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.springframework.lang.Nullable;
@@ -158,15 +157,15 @@ public abstract class Ppm {
         }
         return (float) bonus;
     }
-    public abstract void drawOverImage(Function<Image, PPMPanelBuilder> doAct, @Nullable Image userImg);
-    public abstract void drawValueName(Func4<Integer, String, String, Paint, PPPanelBuilder> doAct);
-    public abstract void drawValue(Func3<Integer, String, String, PPMPanelBuilder> doAct);
+    public abstract void drawOverImage(Function<Image, PanelBuilder> doAct, @Nullable Image userImg);
+    public abstract void drawValueName(Func4<Integer, String, String, Paint, PanelBuilder> doAct);
+    public abstract void drawValue(Func3<Integer, String, String, PanelBuilder> doAct);
 
     /**
      * 评级
      * @param doAct
      */
-    public abstract void drawRank(Func2<Integer, Double, PPMPanelBuilder> doAct);
-    public abstract void drawTotleName(Function<String , PPPanelBuilder> left, Function<String , PPPanelBuilder> right);
-    public abstract void drawTotleValue(Func2<String , String, PPPanelBuilder> left, Func2<String, String , PPPanelBuilder> right);
+    public abstract void drawRank(Func2<Integer, Double, PanelBuilder> doAct);
+    public abstract void drawTotleName(Function<String , PanelBuilder> left, Function<String , PanelBuilder> right);
+    public abstract void drawTotleValue(Func2<String , String, PanelBuilder> left, Func2<String, String , PanelBuilder> right);
 }
