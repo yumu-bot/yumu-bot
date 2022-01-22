@@ -64,7 +64,6 @@ public class TestRaService implements MessageService {
                 var game = node.get("game");
                 try {
                     strData.append(LocalDateTime.from(f1.parse(game.get("start_time").asText())).format(f2)).append(' ')
-                            .append(LocalDateTime.from(f1.parse(game.get("end_time").asText(""))).format(f2)).append(' ')
                             .append(game.get("mode").asText()).append(' ')
                             .append(game.get("scoring_type").asText()).append(' ')
                             .append(game.get("team_type").asText()).append(' ')
