@@ -72,6 +72,7 @@ public class TestRaService implements MessageService {
                             .append(game.get("beatmap").get("total_length").asText()).append(' ')
                             .append(game.get("mods").toString()).append(' ')
                             .append(game.get("beatmap").get("id").asInt()).append(' ')
+                            .append(osuGetService.getMapInfo(game.get("beatmap").get("id").asInt()).getMaxCombo()).append(' ')
                             .append('\n');
                 } catch (Exception e) {
                     strData.append(e.getMessage()).append('\n');//.append("  error---->")
