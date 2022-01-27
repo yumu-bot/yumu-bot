@@ -166,6 +166,9 @@ public class MessageListener extends SimpleListenerHost {
     @EventHandler
     public void msg(MessagePreSendEvent event) throws Exception {
         SendmsgUtil.check(event);
+        if (event instanceof GroupTempMessagePreSendEvent || event instanceof StrangerMessagePreSendEvent){
+            event.cancel();
+        }
     }
 
     /***
