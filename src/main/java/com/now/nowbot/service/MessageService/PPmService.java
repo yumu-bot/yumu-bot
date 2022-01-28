@@ -224,52 +224,8 @@ public class PPmService implements MessageService {
         ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)->{return null;});
         panel.drawLeftCard(cardMe.build());
         panel.drawRightCard(cardOther.build());
-//        switchRank(0, userinfoMe.getFacc(), panel::drawLeftRankN);
-//        switchRank(1, userinfoMe.getPtt(), panel::drawLeftRankN);
-//        switchRank(2, userinfoMe.getSta(), panel::drawLeftRankN);
-//        switchRank(3, userinfoMe.getStb(), panel::drawLeftRankN);
-//        switchRank(4, userinfoMe.getEng(), panel::drawLeftRankN);
-//        switchRank(5, userinfoMe.getSth(), panel::drawLeftRankN);
-//
-//        switchRank(0, userinfoOther.getFacc(), panel::drawRightRankN);
-//        switchRank(1, userinfoOther.getPtt(), panel::drawRightRankN);
-//        switchRank(2, userinfoOther.getSta(), panel::drawRightRankN);
-//        switchRank(3, userinfoOther.getStb(), panel::drawRightRankN);
-//        switchRank(4, userinfoOther.getEng(), panel::drawRightRankN);
-//        switchRank(5, userinfoOther.getSth(), panel::drawRightRankN);
-//        //进行因子修正,上方的是原数据
-//        userinfoMe.dovs();
-//        userinfoOther.dovs();
-//        //下方为修正后的数据
-//        panel.drawLeftCard(cardMe.build())
-//                .drawLeftValueN(0, String.valueOf((int) (userinfoMe.getFacc())))
-//                .drawLeftValueN(1, String.valueOf((int) (userinfoMe.getPtt())))
-//                .drawLeftValueN(2, String.valueOf((int) (userinfoMe.getSta())))
-//                .drawLeftValueN(3, String.valueOf((int) (userinfoMe.getStb())))
-//                .drawLeftValueN(4, String.valueOf((int) (userinfoMe.getEng())))
-//                .drawLeftValueN(5, String.valueOf((int) (userinfoMe.getSth())))
-//                .drawRightCard(cardOther.build())
-//                .drawRightNameN(0, String.valueOf((int) (userinfoOther.getFacc())))
-//                .drawRightNameN(1, String.valueOf((int) (userinfoOther.getPtt())))
-//                .drawRightNameN(2, String.valueOf((int) (userinfoOther.getSta())))
-//                .drawRightNameN(3, String.valueOf((int) (userinfoOther.getStb())))
-//                .drawRightNameN(4, String.valueOf((int) (userinfoOther.getEng())))
-//                .drawRightNameN(5, String.valueOf((int) (userinfoOther.getSth())))
-//                .drawRightValueN(0, getOff(userinfoMe.getFacc(),userinfoOther.getFacc()))
-//                .drawRightValueN(1, getOff(userinfoMe.getPtt(),userinfoOther.getPtt()))
-//                .drawRightValueN(2, getOff(userinfoMe.getSta(),userinfoOther.getSta()))
-//                .drawRightValueN(3, getOff(userinfoMe.getStb(),userinfoOther.getStb()))
-//                .drawRightValueN(4, getOff(userinfoMe.getEng(),userinfoOther.getEng()))
-//                .drawRightValueN(5, getOff(userinfoMe.getSth(),userinfoOther.getSth()))
-//                .drawLeftTotal(String.valueOf((int)userinfoMe.getTtl()))
-//                .drawRightTotal(String.valueOf((int) userinfoOther.getTtl()))
-//                .drawPanelName(panelName)
-//                .drawHexagon(hexOther, false)
-//                .drawHexagon(hexMe, true);
-//        //生成
-//        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminusv3.2.png"))//叠加层
-//                .drawPanelName(panelName)//panel名
-//                .build("PANEL-PPMVS dev.0.0.1");
+        panel.drawHexagon(hexOther,false);
+        panel.drawHexagon(hexMe,true);
         try (uBgMe; uBgOther) {
             cardMe.build().close();
             cardOther.build().close();

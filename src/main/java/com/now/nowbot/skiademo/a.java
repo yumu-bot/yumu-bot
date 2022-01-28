@@ -1,5 +1,6 @@
 package com.now.nowbot.skiademo;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
@@ -19,6 +20,11 @@ public class a {
         //清空/重置画面
         canvas.clear(Color.makeRGB(255,255,255));
 
+        try {
+            SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //绘制图片
         Image head = SkiaUtil.lodeNetWorkImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
 //        canvas.drawImage(head, 0, 0, new Paint());
