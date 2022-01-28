@@ -76,4 +76,13 @@ public class StartService implements MessageService{
     static double newBp(int indexBP){
         return 5-indexBP*0.005;
     }
+
+    int initGold(BinUser user){
+        var u1 = osuGetService.getPlayerOsuInfoN(user);
+        var u2 = osuGetService.getPlayerTaikoInfoN(user);
+        var u3 = osuGetService.getPlayerCatchInfoN(user);
+        var u4 = osuGetService.getPlayerManiaInfoN(user);
+        var ppsum = u1.getPp()+ u2.getPp()+u3.getPp()+u4.getPp();
+        return Math.toIntExact(1611 + Math.round(ppsum * 0.4396));
+    }
 }
