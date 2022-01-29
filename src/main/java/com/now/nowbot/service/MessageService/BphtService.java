@@ -142,8 +142,8 @@ public class BphtService implements MessageService{
         }
         dtbf.append("累计mod有:\n");
         modeSum.forEach((mod, sum)-> dtbf.append(mod).append(' ').append(sum.value).append(';'));
-        dtbf.append("\n您bp中S rank及以上有").append(sSum).append("个,达到满cb的fc有").append(fcSum).append('个');
-        if (xSum != 0) dtbf.append(",其中SS数量有").append(xSum).append('个');
+        dtbf.append("\n您bp中S rank及以上有").append(sSum).append("个\n达到满cb的fc有").append(fcSum).append('个');
+        if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
 
@@ -159,9 +159,10 @@ public class BphtService implements MessageService{
         Surface surface = Surface.makeRasterN32Premul((int)maxWidth, (int)((lines.length+1)*lines[0].getHeight()));
         try (surface){
             var canvas = surface.getCanvas();
+            canvas.clear(Color.makeRGB(38,51,57));
             for (int i = 0; i < lines.length; i++) {
                 var line = lines[i];
-                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setARGB(255,255,205,255));
+                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setARGB(255,221,239,227));
                 canvas.translate(0, lines[i].getHeight());
             }
         QQMsgUtil.sendImage(from, surface.makeImageSnapshot().encodeToData(EncodedImageFormat.JPEG,70).getBytes());
