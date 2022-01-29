@@ -6,8 +6,10 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +20,14 @@ import java.util.regex.Matcher;
 
 @Service("bpht")
 public class BphtService implements MessageService{
-    @Autowired
+    private static final int FONT_SIZE = 30;
     OsuGetService osuGetService;
+    Font font;
+
+    @Autowired
+    public BphtService(OsuGetService osuGetService){
+        this.osuGetService = osuGetService;
+    }
     class intValue{
         int value = 1;
         public intValue add() {
@@ -139,7 +147,37 @@ public class BphtService implements MessageService{
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp()-Bps.get(Bps.size()-1).getPp()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp/Bps.size()));
 
-        from.sendMessage(dtbf.toString());
+        var allstr = dtbf.toString().split("\n");
+        TextLine[] lines = new TextLine[allstr.length];
+        float maxWidth = 0;
+        for (int i = 0; i < allstr.length; i++) {
+            lines[i] = TextLine.make(allstr[i], getFont());
+            if (maxWidth < lines[i].getWidth()){
+                maxWidth = lines[i].getWidth();
+            }
+        }
+        Surface surface = Surface.makeRasterN32Premul((int)maxWidth, (int)((lines.length+1)*lines[0].getHeight()));
+        try (surface){
+            var canvas = surface.getCanvas();
+            for (int i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setARGB(255,255,205,255));
+                canvas.translate(0, lines[i].getHeight());
+            }
+        QQMsgUtil.sendImage(from, surface.makeImageSnapshot().encodeToData(EncodedImageFormat.JPEG,70).getBytes());
+        }finally {
+            for (var line:lines){
+                line.close();
+            }
+        }
+//        from.sendMessage(dtbf.toString());
+    }
+
+    private Font getFont(){
+        if (font == null){
+            font = new Font(SkiaUtil.getPUHUITI(),FONT_SIZE);
+        }
+        return font;
     }
 }
 
