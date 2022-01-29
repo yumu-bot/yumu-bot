@@ -156,10 +156,11 @@ public class BphtService implements MessageService{
                 maxWidth = lines[i].getWidth();
             }
         }
-        Surface surface = Surface.makeRasterN32Premul((int)maxWidth, (int)((lines.length+1)*lines[0].getHeight()));
+        Surface surface = Surface.makeRasterN32Premul((int)maxWidth+50, (int)((lines.length+1)*lines[0].getHeight())+50);
         try (surface){
             var canvas = surface.getCanvas();
             canvas.clear(Color.makeRGB(38,51,57));
+            canvas.translate(25,40);
             for (int i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setARGB(255,221,239,227));

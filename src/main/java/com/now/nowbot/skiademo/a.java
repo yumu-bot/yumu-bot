@@ -1,6 +1,5 @@
 package com.now.nowbot.skiademo;
 
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
@@ -20,11 +19,7 @@ public class a {
         //清空/重置画面
         canvas.clear(Color.makeRGB(255,255,255));
 
-        try {
-            SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule.png");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         //绘制图片
         Image head = SkiaUtil.lodeNetWorkImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
 //        canvas.drawImage(head, 0, 0, new Paint());
@@ -53,8 +48,10 @@ public class a {
         Typeface typeface = Typeface.makeDefault();
         Font font = new Font(typeface, 30);
         TextLine line = TextLine.make("字",font);
-        canvas.drawTextLine(line,0,line.getCapHeight()+30*0.2f,new Paint().setARGB(100,255,0,255));
-
+        canvas.drawRect(Rect.makeXYWH(0,0,line.getWidth(), line.getHeight()), new Paint().setARGB(50, 0,0,0));
+        canvas.drawRect(Rect.makeXYWH(line.getWidth(),0,line.getWidth(), line.getXHeight()), new Paint().setARGB(50, 255,0,0));
+        canvas.drawRect(Rect.makeXYWH(line.getWidth()*2,0,line.getWidth(), line.getCapHeight()), new Paint().setARGB(50, 0,255,0));
+        canvas.drawTextLine(line,0,line.getHeight()-line.getXHeight(),new Paint().setARGB(255,255,0,255));
         canvas.restore();
         //输出
 

