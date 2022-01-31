@@ -20,7 +20,18 @@ public class RunTimeService {
     @Autowired
     Bot bot;
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
-
+    @Scheduled(cron = "20 58 23 31 * 1")
+    public void happynewyear(){
+        var groups = bot.getGroups();
+        groups.forEach(group -> {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+            group.sendMessage("祝大家春节快乐");
+        });
+    }
     /*
     提醒ec睡觉
     @Scheduled(cron = "0 0 0 * * *")
@@ -48,7 +59,7 @@ public class RunTimeService {
     /***
      * 白天输出内存占用信息
      */
-    @Scheduled(cron = "0 0/30 8-18 * * *")
+//    @Scheduled(cron = "0 0/30 8-18 * * *")
     public void alive(){
         var m = ManagementFactory.getMemoryMXBean();
         var nm = m.getNonHeapMemoryUsage();
