@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Parameter;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -18,8 +19,43 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class SkiaUtil {
+    static final int[] COLOR_SUGER = new int[]{
+            Color.makeRGB(73,250,255),
+            Color.makeRGB(255,253,73),
+            Color.makeRGB(255,73,73),
+            Color.makeRGB(205,255,183),
+            Color.makeRGB(201,146,255),
+            Color.makeRGB(200,143,110),
+    };
+
+    static final int[][] COLOR_GRAdDIENT = new int[][]{
+            {},{}
+    };
+
+    public static int HexToRGB(String colorstr){
+        Pattern p = Pattern.compile("^#?(?<a>[\\wa-f]{2})?(?<r>[\\wa-f]{2})(?<g>[\\wa-f]{2})(?<b>[\\wa-f]{2})$");
+        var m = p.matcher(colorstr);
+        if (m.find()){
+            if (m.group("a") != null){
+                return Color.makeARGB(
+                            Integer.parseInt(m.group("a"), 16),
+                            Integer.parseInt(m.group("r"), 16),
+                            Integer.parseInt(m.group("g"), 16),
+                            Integer.parseInt(m.group("b"), 16)
+                        );
+            } else {
+                return Color.makeRGB(
+                        Integer.parseInt(m.group("r"), 16),
+                        Integer.parseInt(m.group("g"), 16),
+                        Integer.parseInt(m.group("b"), 16)
+                );
+            }
+        } else throw new Error("color error");
+    }
+
     static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     //字体文件
     static Typeface TORUS_REGULAR;
