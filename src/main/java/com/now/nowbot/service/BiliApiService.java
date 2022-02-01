@@ -15,10 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class BiliApiService {
@@ -30,15 +27,15 @@ public class BiliApiService {
     RestTemplate restTemplate;
     Bot bot;
 
-    private static final HashMap<String, Long> sendGroupMap = new HashMap<>();
-    private static final List<String> lastList = new ArrayList<>();
+    private static final HashMap<Long, Long> sendGroupMap = new HashMap<>();
+    private static final Set<Long> lastList = new HashSet<>();
     @Autowired
     public BiliApiService(RestTemplate restTemplate, Bot bot){
         this.restTemplate = restTemplate;
         this.bot = bot;
-        sendGroupMap.put("545149341", 733244168L);
-        sendGroupMap.put("73769122", 733244168L);
-        sendGroupMap.put("14172231", 135214594L);
+        sendGroupMap.put(545149341L, 733244168L);
+        sendGroupMap.put(73769122L, 733244168L);
+        sendGroupMap.put(14172231L, 135214594L);
     }
 
     public List<LiveRoom> getLiveRooms(Long[] roomid){
@@ -71,14 +68,9 @@ public class BiliApiService {
     }
 
     public void check(){
-        var set = sendGroupMap.keySet();
-        Long[] roomsId = new Long[set.size()];
-        var d = set.iterator();
-        for (int i = 0; d.hasNext(); i++) {
-            roomsId[i] = Long.parseLong(d.next());
-        }
+        Long[] roomsId = sendGroupMap.keySet().toArray(new Long[0]);
         var data = getLiveRooms(roomsId);
-        data.forEach(room -> {
+        for (var room : data){
             if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.CLOSE){
                 lastList.remove(room.getUid());
                 sendmsg(room, sendGroupMap.get(room.getUid()),false);
@@ -89,7 +81,6 @@ public class BiliApiService {
                 sendmsg(room, sendGroupMap.get(room.getUid()),true);
 //                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
-//            log.info("直播开启的数量{}",lastList.size());
-        });
+        }
     }
 }
