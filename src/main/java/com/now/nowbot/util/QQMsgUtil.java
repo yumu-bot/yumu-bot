@@ -5,6 +5,7 @@ import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
+import net.mamoe.mirai.message.data.PlainText;
 import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,9 @@ public class QQMsgUtil {
     }
     public static MessageReceipt sendImage(Contact from, byte[] imgDate){
         return from.sendMessage(from.uploadImage(ExternalResource.create(imgDate)));
+    }
+    public static MessageReceipt sendTextAndImage(Contact from,String text, byte[] imgDate){
+        return from.sendMessage(new PlainText(text).plus(from.uploadImage(ExternalResource.create(imgDate))));
     }
 
 }
