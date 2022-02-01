@@ -11,7 +11,7 @@ public class LiveRoom {
     //关键帧
     String keyframeUrl;
     LiveStatus status;
-    Long uid;
+    String uid;
     //秒 时间戳
     Long liveTime;
     Integer online;
@@ -44,12 +44,12 @@ public class LiveRoom {
         this.roomId = roomId;
     }
 
-    public Long getUid() {
+    public String getUid() {
         return uid;
     }
 
     public void setUid(Long uid) {
-        this.uid = uid;
+        this.uid = uid.toString();
     }
 
     public String getUserName() {

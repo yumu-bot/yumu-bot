@@ -30,15 +30,15 @@ public class BiliApiService {
     RestTemplate restTemplate;
     Bot bot;
 
-    private static final HashMap<Long, Long> sendGroupMap = new HashMap<>();
-    private static final List<Long> lastList = new ArrayList<>();
+    private static final HashMap<String, Long> sendGroupMap = new HashMap<>();
+    private static final List<String> lastList = new ArrayList<>();
     @Autowired
     public BiliApiService(RestTemplate restTemplate, Bot bot){
         this.restTemplate = restTemplate;
         this.bot = bot;
-        sendGroupMap.put(545149341L, 733244168L);
-        sendGroupMap.put(73769122L, 733244168L);
-        sendGroupMap.put(14172231L, 135214594L);
+        sendGroupMap.put("545149341", 733244168L);
+        sendGroupMap.put("73769122", 733244168L);
+        sendGroupMap.put("14172231", 135214594L);
     }
 
     public List<LiveRoom> getLiveRooms(Long[] roomid){
@@ -77,14 +77,14 @@ public class BiliApiService {
             if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.CLOSE){
                 lastList.remove(room.getUid());
                 sendmsg(room, sendGroupMap.get(room.getUid()),false);
-                log.info("close->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
+//                log.info("close->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
             if (!lastList.contains(room.getUid()) && room.getStatus() == LiveStatus.OPEN){
                 lastList.add(room.getUid());
                 sendmsg(room, sendGroupMap.get(room.getUid()),true);
-                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
+//                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
-            log.info("直播开启的数量{}",lastList.size());
+//            log.info("直播开启的数量{}",lastList.size());
         });
     }
 }
