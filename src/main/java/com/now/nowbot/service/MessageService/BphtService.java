@@ -156,14 +156,16 @@ public class BphtService implements MessageService{
                 maxWidth = lines[i].getWidth();
             }
         }
-        Surface surface = Surface.makeRasterN32Premul((int)maxWidth+50, (int)((lines.length+1)*lines[0].getHeight())+50);
-        try (surface){
+        int h = (int)((lines.length+1)*lines[0].getHeight())+50;
+        Surface surface = Surface.makeRasterN32Premul((int)maxWidth+50, h);
+        Shader shader = Shader.makeLinearGradient(0,0,0,h, SkiaUtil.getRandomColors());
+        try (surface;shader){
             var canvas = surface.getCanvas();
             canvas.clear(Color.makeRGB(38,51,57));
             canvas.translate(25,40);
             for (int i = 0; i < lines.length; i++) {
                 var line = lines[i];
-                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setARGB(255,221,239,227));
+                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setColor(SkiaUtil.getRandomColor()));
                 canvas.translate(0, lines[i].getHeight());
             }
         QQMsgUtil.sendImage(from, surface.makeImageSnapshot().encodeToData(EncodedImageFormat.JPEG,70).getBytes());

@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Parameter;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,39 +18,43 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 public class SkiaUtil {
     static final int[] COLOR_SUGER = new int[]{
-            Color.makeRGB(73,250,255),
-            Color.makeRGB(255,253,73),
-            Color.makeRGB(255,73,73),
-            Color.makeRGB(205,255,183),
-            Color.makeRGB(201,146,255),
-            Color.makeRGB(200,143,110),
+            Color.makeRGB(73, 250, 255),
+            Color.makeRGB(255, 253, 73),
+            Color.makeRGB(255, 73, 73),
+            Color.makeRGB(205, 255, 183),
+            Color.makeRGB(201, 146, 255),
+            Color.makeRGB(200, 143, 110),
     };
 
     static final int[][] COLOR_GRAdDIENT = new int[][]{
-            {},{}
+            {hexToRGB("#4e54c8"),hexToRGB("#8f94fb")},
+            {hexToRGB("#11998e"),hexToRGB("#11998e")},
+            {hexToRGB("#FC5C7D"),hexToRGB("#FC5C7D")},
+            {hexToRGB("#74ebd5"),hexToRGB("#ACB6E5")},
+            {hexToRGB("#7F00FF"),hexToRGB("#7F00FF")},
     };
 
-    public static int HexToRGB(String colorstr){
-        Pattern p = Pattern.compile("^#?(?<a>[\\wa-f]{2})?(?<r>[\\wa-f]{2})(?<g>[\\wa-f]{2})(?<b>[\\wa-f]{2})$");
-        var m = p.matcher(colorstr);
-        if (m.find()){
-            if (m.group("a") != null){
-                return Color.makeARGB(
-                            Integer.parseInt(m.group("a"), 16),
-                            Integer.parseInt(m.group("r"), 16),
-                            Integer.parseInt(m.group("g"), 16),
-                            Integer.parseInt(m.group("b"), 16)
-                        );
-            } else {
-                return Color.makeRGB(
-                        Integer.parseInt(m.group("r"), 16),
-                        Integer.parseInt(m.group("g"), 16),
-                        Integer.parseInt(m.group("b"), 16)
-                );
+    public static int hexToRGB(String colorstr) {
+        if (colorstr.startsWith("#")) {
+            colorstr = colorstr.substring(1);
+        }
+
+        if (colorstr.length() == 8) {
+            try {
+                return Integer.parseInt(colorstr, 16);
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
+            }
+        } else if (colorstr.length() == 6) {
+            try {
+                return Integer.parseInt(colorstr, 16) | 0xff000000;
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
             }
         } else throw new Error("color error");
     }
@@ -59,73 +62,83 @@ public class SkiaUtil {
     static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     //字体文件
     static Typeface TORUS_REGULAR;
-    public static Typeface getTorusRegular(){
-        if(TORUS_REGULAR == null || TORUS_REGULAR.isClosed()){
+
+    public static Typeface getTorusRegular() {
+        if (TORUS_REGULAR == null || TORUS_REGULAR.isClosed()) {
             try {
 //                InputStream in = SkiaUtil.class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
 //                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
                 TORUS_REGULAR = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-Regular.ttf");
             } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-Regular.ttf",e);
+                log.error("未读取到目标字体:Torus-Regular.ttf", e);
                 TORUS_REGULAR = Typeface.makeDefault();
             }
         }
         return TORUS_REGULAR;
     }
+
     static Typeface TORUS_SEMIBOLD;
-    public static Typeface getTorusSemiBold(){
-        if(TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()){
+
+    public static Typeface getTorusSemiBold() {
+        if (TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()) {
             try {
                 TORUS_SEMIBOLD = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Torus-SemiBold.ttf");
             } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-SemiBold.ttf",e);
+                log.error("未读取到目标字体:Torus-SemiBold.ttf", e);
                 TORUS_SEMIBOLD = Typeface.makeDefault();
             }
         }
         return TORUS_SEMIBOLD;
     }
+
     static Typeface PUHUITI;
-    public static Typeface getPUHUITI(){
-        if(PUHUITI == null || PUHUITI.isClosed()){
+
+    public static Typeface getPUHUITI() {
+        if (PUHUITI == null || PUHUITI.isClosed()) {
             try {
                 PUHUITI = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Puhuiti.ttf");
             } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf",e);
+                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
                 PUHUITI = Typeface.makeDefault();
             }
         }
         return PUHUITI;
     }
+
     static Typeface PUHUITI_MEDIUM;
-    public static Typeface getPuhuitiMedium(){
-        if(PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()){
+
+    public static Typeface getPuhuitiMedium() {
+        if (PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()) {
             try {
                 PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
             } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf",e);
+                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
                 PUHUITI_MEDIUM = Typeface.makeDefault();
             }
         }
         return PUHUITI_MEDIUM;
     }
+
     static Typeface EXTRA;
-    public static Typeface getEXTRA() throws Exception{
-        if(EXTRA == null || EXTRA.isClosed()){
+
+    public static Typeface getEXTRA() throws Exception {
+        if (EXTRA == null || EXTRA.isClosed()) {
             try {
                 EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
             } catch (Exception e) {
-                log.error("未读取到目标字体:extra.ttf",e);
+                log.error("未读取到目标字体:extra.ttf", e);
                 throw e;
             }
         }
         return EXTRA;
     }
+
     /***
      * 网络加载图片
      * @param path
      * @return
      */
-    public static Image lodeNetWorkImage(String path){
+    public static Image lodeNetWorkImage(String path) {
         MessageDigest md = null;
         try {
             md = MessageDigest.getInstance("MD5");
@@ -134,12 +147,12 @@ public class SkiaUtil {
         }
         md.update(path.getBytes());
         md.getAlgorithm();
-        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH+new BigInteger(1, md.digest()).toString(16));
+        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH + new BigInteger(1, md.digest()).toString(16));
         try {
-            if (Files.isRegularFile(pt)){
+            if (Files.isRegularFile(pt)) {
                 md.reset();
                 return Image.makeFromEncoded(Files.readAllBytes(pt));
-            }else {
+            } else {
                 URL url = new URL(path);
                 HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
                 httpConn.connect();
@@ -147,7 +160,7 @@ public class SkiaUtil {
                 byte[] date = cin.readAllBytes();
                 cin.close();
                 Files.createFile(pt);
-                Files.write(pt,date);
+                Files.write(pt, date);
                 System.gc();
                 return Image.makeFromEncoded(date);
             }
@@ -164,9 +177,9 @@ public class SkiaUtil {
      * @param height
      * @return
      */
-    public static Image getScaleImage(Image image, int width, int height){
+    public static Image getScaleImage(Image image, int width, int height) {
         Image img = null;
-        try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
+        try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas()
                     .setMatrix(Matrix33.makeScale(1f * width / image.getWidth(), 1f * height / image.getHeight()))
                     .drawImage(image, 0, 0);
@@ -174,9 +187,10 @@ public class SkiaUtil {
         }
         return img;
     }
-    public static Image getScaleImage(Image image, float scale){
+
+    public static Image getScaleImage(Image image, float scale) {
         Image img = null;
-        try(Surface sms = Surface.makeRasterN32Premul(Math.round(image.getWidth()*scale), Math.round(image.getHeight()*scale))) {
+        try (Surface sms = Surface.makeRasterN32Premul(Math.round(image.getWidth() * scale), Math.round(image.getHeight() * scale))) {
             sms.getCanvas().setMatrix(Matrix33.makeScale(scale)).drawImage(image, 0, 0);
             img = sms.makeImageSnapshot();
         }
@@ -190,21 +204,21 @@ public class SkiaUtil {
      * @param h
      * @return 裁切后的图形
      */
-    public static Image getScaleCenterImage(Image img, int w, int h){
-        try (Surface surface = Surface.makeRasterN32Premul(w,h)){
+    public static Image getScaleCenterImage(Image img, int w, int h) {
+        try (Surface surface = Surface.makeRasterN32Premul(w, h)) {
             var canvas = surface.getCanvas();
             if (1f * img.getWidth() / img.getHeight() < 1f * w / h) {
                 //当原图比目标高
-                canvas.setMatrix(Matrix33.makeScale(1f*w/img.getWidth(),1f*w/img.getWidth()));
+                canvas.setMatrix(Matrix33.makeScale(1f * w / img.getWidth(), 1f * w / img.getWidth()));
                 //与下面同理
-                canvas.translate(0,-0.5f*(1f*img.getHeight()*w/img.getWidth() - h)/w*img.getWidth());
-                canvas.drawImage(img,0,0);
+                canvas.translate(0, -0.5f * (1f * img.getHeight() * w / img.getWidth() - h) / w * img.getWidth());
+                canvas.drawImage(img, 0, 0);
             } else {
                 //当原图比目标宽
-                canvas.setMatrix(Matrix33.makeScale(1f*h/img.getHeight(),1f*h/img.getHeight()));
+                canvas.setMatrix(Matrix33.makeScale(1f * h / img.getHeight(), 1f * h / img.getHeight()));
                 //居中偏移 缩放比例(h/img.getHeight()) 后的宽度(img.getWidth()*h/img.getHeight()) 与 裁剪宽度差的一半
-                canvas.translate(-0.5f*(1f*img.getWidth()*h/img.getHeight() - w)/h*img.getHeight(),0);
-                canvas.drawImage(img,0,0);
+                canvas.translate(-0.5f * (1f * img.getWidth() * h / img.getHeight() - w) / h * img.getHeight(), 0);
+                canvas.drawImage(img, 0, 0);
             }
             return surface.makeImageSnapshot();
         }
@@ -220,9 +234,9 @@ public class SkiaUtil {
      * @param h
      * @return
      */
-    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h){
+    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h) {
         canvas.save();
-        canvas.translate(x,y);
+        canvas.translate(x, y);
         canvas.setMatrix(Matrix33.makeScale(1f * w / image.getWidth(), 1f * h / image.getHeight())).drawImage(image, 0, 0);
         canvas.restore();
         return canvas;
@@ -237,11 +251,11 @@ public class SkiaUtil {
      * @param height
      * @return
      */
-    public static Image getCutImage(Image image, int left, int top, int width, int height){
+    public static Image getCutImage(Image image, int left, int top, int width, int height) {
         Image img;
-        try(Surface sms = Surface.makeRasterN32Premul(width, height)) {
+        try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas().drawImage(image, -1 * left, -1 * top);
-            img =  sms.makeImageSnapshot();
+            img = sms.makeImageSnapshot();
         }
         return img;
     }
@@ -258,10 +272,10 @@ public class SkiaUtil {
      * @param height 高
      * @return
      */
-    public static Canvas drawCutImage(Canvas canvas, Image image, float x,  float y, int l, int t, int width, int height){
+    public static Canvas drawCutImage(Canvas canvas, Image image, float x, float y, int l, int t, int width, int height) {
         canvas.save();
-        canvas.translate(x,y);
-        canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
+        canvas.translate(x, y);
+        canvas.clipRect(Rect.makeXYWH(0, 0, width, height));
         canvas.drawImage(image, -1 * l, -1 * t);
         canvas.restore();
         return canvas;
@@ -290,9 +304,9 @@ public class SkiaUtil {
      * @param r
      * @return
      */
-    public static Image getRRectImage( Image image, float w, float h, float r){
+    public static Image getRRectImage(Image image, float w, float h, float r) {
         Image img;
-        try(Surface surface = Surface.makeRasterN32Premul(((int) w), ((int) h))) {
+        try (Surface surface = Surface.makeRasterN32Premul(((int) w), ((int) h))) {
             var canvas = surface.getCanvas();
             canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), true);
             canvas.drawImage(image, 0, 0);
@@ -310,8 +324,8 @@ public class SkiaUtil {
      * @param r
      * @return
      */
-    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y , float r){
-        drawRRectImage(canvas,image,x,y,r,null);
+    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y, float r) {
+        drawRRectImage(canvas, image, x, y, r, null);
         return canvas;
     }
 
@@ -325,11 +339,11 @@ public class SkiaUtil {
      * @param p 指定效果(画笔
      * @return
      */
-    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y , float r, Paint p){
+    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y, float r, Paint p) {
         canvas.save();
-        canvas.translate(x,y);
-        canvas.clipRRect(RRect.makeNinePatchXYWH(0,0,image.getWidth(),image.getHeight(),r,r,r,r), false);
-        canvas.drawImage(image, 0,0,p);
+        canvas.translate(x, y);
+        canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, image.getWidth(), image.getHeight(), r, r, r, r), false);
+        canvas.drawImage(image, 0, 0, p);
         canvas.restore();
         return canvas;
     }
@@ -347,15 +361,16 @@ public class SkiaUtil {
      * @param r 圆角半径
      * @return
      */
-    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r){
-        drawCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r,null);
+    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r) {
+        drawCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r, null);
         return canvas;
     }
-    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy , float fx, float fy, float w, float h, float r, Paint p){
+
+    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r, Paint p) {
         canvas.save();
-        canvas.translate(dx,dy);
-        canvas.clipRRect(RRect.makeNinePatchXYWH(0,0,w,h,r,r,r,r), true);
-        canvas.drawImage(image, -fx,-fy, p);
+        canvas.translate(dx, dy);
+        canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), true);
+        canvas.drawImage(image, -fx, -fy, p);
         canvas.restore();
         return canvas;
     }
@@ -372,14 +387,14 @@ public class SkiaUtil {
      * @param height
      * @return
      */
-    public static Canvas cutImage(Canvas canvas, Image img, float dx, float dy, float fx, float fy, float width, float height){
+    public static Canvas cutImage(Canvas canvas, Image img, float dx, float dy, float fx, float fy, float width, float height) {
         canvas.save();
-        canvas.translate(dx,dy);
-        canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
-        canvas.drawImage(img,-fx, -fy);
+        canvas.translate(dx, dy);
+        canvas.clipRect(Rect.makeXYWH(0, 0, width, height));
+        canvas.drawImage(img, -fx, -fy);
         canvas.restore();
 
-        canvas.drawRect(Rect.makeLTRB(10,10,10,10),new Paint().setARGB(255,255,255,255));
+        canvas.drawRect(Rect.makeLTRB(10, 10, 10, 10), new Paint().setARGB(255, 255, 255, 255));
         return canvas;
     }
 
@@ -395,10 +410,10 @@ public class SkiaUtil {
      * @param svgPreserveAspectRatioScale SVGPreserveAspectRatioScale.MEET/SLICE 保持横纵比的缩放(会有空白)/拉伸填充(会裁切)
      * @return
      */
-    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height, SVGPreserveAspectRatioAlign svgPreserveAspectRatioAlign, SVGPreserveAspectRatioScale svgPreserveAspectRatioScale){
+    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height, SVGPreserveAspectRatioAlign svgPreserveAspectRatioAlign, SVGPreserveAspectRatioScale svgPreserveAspectRatioScale) {
         canvas.save();
-        canvas.translate(x,y);
-        canvas.clipRect(Rect.makeXYWH(0, 0, width,height));
+        canvas.translate(x, y);
+        canvas.clipRect(Rect.makeXYWH(0, 0, width, height));
 //        if(x == 0 && y == 0) /* 调试代码 */
 //                canvas.clear(Color.makeARGB(100,255,0,0));
         try (var root = svg.getRoot()) {
@@ -421,7 +436,7 @@ public class SkiaUtil {
      * @param height
      * @return
      */
-    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height){
+    public static Canvas drawSvg(Canvas canvas, SVGDOM svg, float x, float y, float width, float height) {
         return drawSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
 
@@ -450,19 +465,18 @@ public class SkiaUtil {
      * @param h
      * @param radius 模糊程度 推荐10-20之间
      */
-    public static void drawBlur(Canvas canvas, int x, int y, int w, int h,  int radius) {
+    public static void drawBlur(Canvas canvas, int x, int y, int w, int h, int radius) {
         try (Bitmap bitmap = new Bitmap()) {
-            bitmap.allocPixels(ImageInfo.makeS32(x+w,y+h, ColorAlphaType.OPAQUE));
-            canvas.readPixels(bitmap, x,y);
+            bitmap.allocPixels(ImageInfo.makeS32(x + w, y + h, ColorAlphaType.OPAQUE));
+            canvas.readPixels(bitmap, x, y);
             if (true) {
 
                 try (var shader = bitmap.makeShader();
-                     var blur   = ImageFilter.makeBlur(radius, radius, FilterTileMode.REPEAT);
-                     var fill   = new Paint().setShader(shader).setImageFilter(blur))
-                {
+                     var blur = ImageFilter.makeBlur(radius, radius, FilterTileMode.REPEAT);
+                     var fill = new Paint().setShader(shader).setImageFilter(blur)) {
                     canvas.save();
-                    canvas.translate(x,y);
-                    canvas.drawRect(Rect.makeXYWH(0, 0,w, h), fill);
+                    canvas.translate(x, y);
+                    canvas.drawRect(Rect.makeXYWH(0, 0, w, h), fill);
                     canvas.restore();
                 }
             }
@@ -479,19 +493,18 @@ public class SkiaUtil {
      * @param radius 模糊程度 推荐10-20之间
      * @param r 圆角半径
      */
-    public static void drawRBlur(Canvas canvas, int x, int y, int w, int h,  int radius,int r) {
+    public static void drawRBlur(Canvas canvas, int x, int y, int w, int h, int radius, int r) {
         try (Bitmap bitmap = new Bitmap()) {
-            bitmap.allocPixels(ImageInfo.makeS32(x+w,y+h, ColorAlphaType.OPAQUE));
-            canvas.readPixels(bitmap, x,y);
+            bitmap.allocPixels(ImageInfo.makeS32(x + w, y + h, ColorAlphaType.OPAQUE));
+            canvas.readPixels(bitmap, x, y);
             if (true) {
 
                 try (var shader = bitmap.makeShader();
-                     var blur   = ImageFilter.makeBlur(radius, radius, FilterTileMode.CLAMP);
-                     var fill   = new Paint().setShader(shader).setImageFilter(blur))
-                {
+                     var blur = ImageFilter.makeBlur(radius, radius, FilterTileMode.CLAMP);
+                     var fill = new Paint().setShader(shader).setImageFilter(blur)) {
                     canvas.save();
-                    canvas.translate(x,y);
-                    canvas.drawRRect(RRect.makeNinePatchXYWH(0,0,w,h,r,r,r,r), fill);
+                    canvas.translate(x, y);
+                    canvas.drawRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), fill);
                     canvas.restore();
                 }
             }
@@ -506,11 +519,10 @@ public class SkiaUtil {
      * @param s 文字
      * @param ts 效果
      */
-    public static void drawTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts){
+    public static void drawTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts) {
         TextStyle f = new TextStyle();
-        try (ParagraphStyle ps   = new ParagraphStyle();
-             ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));)
-        {
+        try (ParagraphStyle ps = new ParagraphStyle();
+             ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));) {
             pb.pushStyle(ts);
             pb.addText(s);
             try (Paragraph p = pb.build();) {
@@ -525,13 +537,13 @@ public class SkiaUtil {
      * @param ct 国家缩写
      * @return 国旗url
      */
-    public static String getFlagUrl(String ct){
-        int A =  0x1f1e6;
+    public static String getFlagUrl(String ct) {
+        int A = 0x1f1e6;
         char x1 = ct.charAt(0);
         char x2 = ct.charAt(1);
-        int s1 = A + x1-'A';
-        int s2 = A + x2-'A';
-        return "https://osu.ppy.sh/assets/images/flags/"+Integer.toHexString(s1)+"-"+Integer.toHexString(s2)+".svg";
+        int s1 = A + x1 - 'A';
+        int s2 = A + x2 - 'A';
+        return "https://osu.ppy.sh/assets/images/flags/" + Integer.toHexString(s1) + "-" + Integer.toHexString(s2) + ".svg";
     }
 
     /***
@@ -541,45 +553,45 @@ public class SkiaUtil {
      * @param point 六点数据 长度必须为6 范围[0,1]
      * @return path[0]六边形路径   path[1]转折点路径
      */
-    public static Path[] creat6(float size, float circle_width, float... point){
-        if (point.length != 6)return null;
+    public static Path[] creat6(float size, float circle_width, float... point) {
+        if (point.length != 6) return null;
         var path = new org.jetbrains.skija.Path();
         for (int i = 0; i < 6; i++) {
-            if (point[i]<0) point[i] = 0;
-            if (point[i]>1) point[i] = 1;
+            if (point[i] < 0) point[i] = 0;
+            if (point[i] > 1) point[i] = 1;
         }
-        float[]ponX = new float[6];
-        float[]ponY = new float[6];
-        ponX[0] = -size*point[0]*0.5f;
-        ponY[0] = -size*point[0]*0.866f;
-        ponX[1] = size*point[1]*0.5f;
-        ponY[1] = -size*point[1]*0.866f;
-        ponX[2] = size*point[2];
-        ponY[2] = 0 ;
-        ponX[3] = size*point[3]*0.5f;
-        ponY[3] = size*point[3]*0.866f;
-        ponX[4] = -size*point[4]*0.5f;
-        ponY[4] = size*point[4]*0.866f;
-        ponX[5] = -size*point[5];
-        ponY[5] = 0 ;
-        path.moveTo(ponX[0],ponY[0]);
-        path.lineTo(ponX[1],ponY[1]);
-        path.lineTo(ponX[2],ponY[2]);
-        path.lineTo(ponX[3],ponY[3]);
-        path.lineTo(ponX[4],ponY[4]);
-        path.lineTo(ponX[5],ponY[5]);
+        float[] ponX = new float[6];
+        float[] ponY = new float[6];
+        ponX[0] = -size * point[0] * 0.5f;
+        ponY[0] = -size * point[0] * 0.866f;
+        ponX[1] = size * point[1] * 0.5f;
+        ponY[1] = -size * point[1] * 0.866f;
+        ponX[2] = size * point[2];
+        ponY[2] = 0;
+        ponX[3] = size * point[3] * 0.5f;
+        ponY[3] = size * point[3] * 0.866f;
+        ponX[4] = -size * point[4] * 0.5f;
+        ponY[4] = size * point[4] * 0.866f;
+        ponX[5] = -size * point[5];
+        ponY[5] = 0;
+        path.moveTo(ponX[0], ponY[0]);
+        path.lineTo(ponX[1], ponY[1]);
+        path.lineTo(ponX[2], ponY[2]);
+        path.lineTo(ponX[3], ponY[3]);
+        path.lineTo(ponX[4], ponY[4]);
+        path.lineTo(ponX[5], ponY[5]);
         path.closePath();
-        if (circle_width == 0){
+        if (circle_width == 0) {
             return new Path[]{path};
         }
         Path path1 = new Path();
-        path1.addCircle(ponX[0],ponY[0],circle_width);
-        path1.addCircle(ponX[1],ponY[1],circle_width);
-        path1.addCircle(ponX[2],ponY[2],circle_width);
-        path1.addCircle(ponX[3],ponY[3],circle_width);
-        path1.addCircle(ponX[4],ponY[4],circle_width);
-        path1.addCircle(ponX[5],ponY[5],circle_width);
-        return new Path[]{path,path1};
+        path1.addCircle(ponX[0], ponY[0], circle_width);
+        path1.addCircle(ponX[1], ponY[1], circle_width);
+        path1.addCircle(ponX[2], ponY[2], circle_width);
+        path1.addCircle(ponX[3], ponY[3], circle_width);
+        path1.addCircle(ponX[4], ponY[4], circle_width);
+        path1.addCircle(ponX[5], ponY[5], circle_width);
+        return new Path[]{path, path1};
     }
 
     /***
@@ -588,38 +600,39 @@ public class SkiaUtil {
      * @return 颜色rgb的int按位表示值,
      */
     public static int getStartColot(float star) {
-        var starts = new float[]{1.5f,2f,2.5f,3.375f,4.625f,5.875f,7,8};
+        var starts = new float[]{1.5f, 2f, 2.5f, 3.375f, 4.625f, 5.875f, 7, 8};
         var colorgroup = new int[][]{
-                {79,192,255},
-                {79,255,213},
-                {124,255,79},
-                {246,240,92},
-                {255,128,104},
-                {255,60,113},
-                {101,99,222},
-                {24,21,142},
+                {79, 192, 255},
+                {79, 255, 213},
+                {124, 255, 79},
+                {246, 240, 92},
+                {255, 128, 104},
+                {255, 60, 113},
+                {101, 99, 222},
+                {24, 21, 142},
         };
-        int imax = starts.length-1,imin = 0;
-        if(star<=starts[imin]) return (0xFF) << 24|(colorgroup[imin][0]<<16)|(colorgroup[imin][1]<<8)|(colorgroup[imin][2]);
-        if(star>=starts[imax]) return (0xFF) << 24|(0<<16)|(0<<8)|(0);
-        while(imax - imin>1){
-            int t = (imax+imin)/2;
-            if(starts[t]>star){
+        int imax = starts.length - 1, imin = 0;
+        if (star <= starts[imin])
+            return (0xFF) << 24 | (colorgroup[imin][0] << 16) | (colorgroup[imin][1] << 8) | (colorgroup[imin][2]);
+        if (star >= starts[imax]) return (0xFF) << 24 | (0 << 16) | (0 << 8) | (0);
+        while (imax - imin > 1) {
+            int t = (imax + imin) / 2;
+            if (starts[t] > star) {
                 imax = t;
-            }else if(starts[t]<star){
+            } else if (starts[t] < star) {
                 imin = t;
-            }else {
-                return (0xFF) << 24|(colorgroup[t][0]<<16)|(colorgroup[t][1]<<8)|(colorgroup[t][2]);
+            } else {
+                return (0xFF) << 24 | (colorgroup[t][0] << 16) | (colorgroup[t][1] << 8) | (colorgroup[t][2]);
             }
         }
-        float dy = (star - starts[imin])/(starts[imax] - starts[imin]);
+        float dy = (star - starts[imin]) / (starts[imax] - starts[imin]);
         int[] caa = {
-                (int)(dy*(colorgroup[imax][0] - colorgroup[imin][0])+colorgroup[imin][0]),
-                (int)(dy*(colorgroup[imax][1] - colorgroup[imin][1])+colorgroup[imin][1]),
-                (int)(dy*(colorgroup[imax][2] - colorgroup[imin][2])+colorgroup[imin][2]),
+                (int) (dy * (colorgroup[imax][0] - colorgroup[imin][0]) + colorgroup[imin][0]),
+                (int) (dy * (colorgroup[imax][1] - colorgroup[imin][1]) + colorgroup[imin][1]),
+                (int) (dy * (colorgroup[imax][2] - colorgroup[imin][2]) + colorgroup[imin][2]),
         };
 
-        return (0xFF) << 24|(caa[0]<<16)|(caa[1]<<8)|(caa[2]);
+        return (0xFF) << 24 | (caa[0] << 16) | (caa[1] << 8) | (caa[2]);
     }
 
     /***
@@ -628,19 +641,20 @@ public class SkiaUtil {
      * @return 色组
      */
     private static final float MAIN_COLOR_IMAGE_MAX_SIZE = 500;
-    public static Color[] getMainColor(Image image,int len) {
+
+    public static Color[] getMainColor(Image image, int len) {
         //缩放图片
-        if (Math.max(image.getWidth(),image.getHeight())>MAIN_COLOR_IMAGE_MAX_SIZE){
-            image = getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE/Math.max(image.getWidth(),image.getHeight()));
+        if (Math.max(image.getWidth(), image.getHeight()) > MAIN_COLOR_IMAGE_MAX_SIZE) {
+            image = getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE / Math.max(image.getWidth(), image.getHeight()));
         }
         Bitmap bitmap = Bitmap.makeFromImage(image);
         int x_length = bitmap.getWidth();
         int y_length = bitmap.getHeight();
         //提取色彩int值
-        int[] colors_int = new int[x_length*y_length];
+        int[] colors_int = new int[x_length * y_length];
         for (int x_index = 0; x_index < x_length; x_index++) {
             for (int y_index = 0; y_index < y_length; y_index++) {
-                colors_int[x_index*y_length + y_index] = bitmap.getColor(x_index,y_index);
+                colors_int[x_index * y_length + y_index] = bitmap.getColor(x_index, y_index);
             }
         }
         //色彩排序
@@ -663,4 +677,10 @@ public class SkiaUtil {
         return new Color[len];
     }
 
+    public static int[] getRandomColors(){
+        return COLOR_GRAdDIENT[new Random().nextInt(COLOR_GRAdDIENT.length)];
+    }
+    public static int getRandomColor(){
+        return COLOR_SUGER[new Random().nextInt(COLOR_SUGER.length)];
+    }
 }
