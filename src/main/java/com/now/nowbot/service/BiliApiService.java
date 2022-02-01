@@ -75,8 +75,7 @@ public class BiliApiService {
                 lastList.remove(room.getUid());
 //                sendmsg(room, sendGroupMap.get(room.getUid()),false);
 //                log.info("close->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
-            }
-            if (!lastList.contains(room.getUid()) && room.getStatus() == LiveStatus.OPEN){
+            } else if (!lastList.contains(room.getUid()) && room.getStatus() == LiveStatus.OPEN){
                 lastList.add(room.getUid());
 //                sendmsg(room, sendGroupMap.get(room.getUid()),true);
 //                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
