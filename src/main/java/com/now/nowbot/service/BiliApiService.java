@@ -63,6 +63,12 @@ public class BiliApiService {
                 sb.append(room.getRoomName()).append("-").append(room.getAreaName()).append('\n');
                 sb.append("快戳我围观->https://live.bilibili.com/").append(room.getRoomId()).append('\n');
                 QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaUtil.lodeNetWorkImage(room.getKeyframeUrl()).encodeToData().getBytes());
+            } else {
+                StringBuffer sb = new StringBuffer();
+                sb.append(room.getUserName()).append("爷爷的直播结束了>_<").append('\n');
+                sb.append(room.getRoomName()).append("-").append(room.getAreaName()).append('  已结束').append('\n');
+                sb.append("快戳我关注直播间!->https://live.bilibili.com/").append(room.getRoomId()).append('\n');
+                QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaUtil.lodeNetWorkImage(room.getKeyframeUrl()).encodeToData().getBytes());
             }
         }
     }
