@@ -156,12 +156,14 @@ public class BphtService implements MessageService{
                 maxWidth = lines[i].getWidth();
             }
         }
+        int w = (int)maxWidth+50;
         int h = (int)((lines.length+1)*lines[0].getHeight())+50;
         Surface surface = Surface.makeRasterN32Premul((int)maxWidth+50, h);
         Shader shader = Shader.makeLinearGradient(0,0,0,h, SkiaUtil.getRandomColors());
         try (surface;shader){
             var canvas = surface.getCanvas();
-            canvas.clear(Color.makeRGB(38,51,57));
+//            canvas.clear(Color.makeRGB(38,51,57));
+            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
             canvas.translate(25,40);
             for (int i = 0; i < lines.length; i++) {
                 var line = lines[i];
