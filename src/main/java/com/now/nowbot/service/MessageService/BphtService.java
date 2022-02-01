@@ -162,13 +162,12 @@ public class BphtService implements MessageService{
         Shader shader = Shader.makeLinearGradient(0,0,0,h, SkiaUtil.getRandomColors());
         try (surface;shader){
             var canvas = surface.getCanvas();
-//            canvas.clear(Color.makeRGB(38,51,57));
-            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
+            canvas.clear(Color.makeRGB(38,51,57));
+//            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
             canvas.translate(25,40);
-            for (int i = 0; i < lines.length; i++) {
-                var line = lines[i];
-                canvas.drawTextLine(line,0, line.getCapHeight() + FONT_SIZE*0.2f, new Paint().setColor(SkiaUtil.getRandomColor()));
-                canvas.translate(0, lines[i].getHeight());
+            for (TextLine line : lines) {
+                canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(SkiaUtil.getRandomColor()));
+                canvas.translate(0, line.getHeight());
             }
         QQMsgUtil.sendImage(from, surface.makeImageSnapshot().encodeToData(EncodedImageFormat.JPEG,70).getBytes());
         }finally {
