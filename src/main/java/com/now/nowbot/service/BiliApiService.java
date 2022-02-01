@@ -6,6 +6,8 @@ import com.now.nowbot.model.live.LiveStatus;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.Bot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 @Service
 public class BiliApiService {
+    Logger log = LoggerFactory.getLogger(BiliApiService.class);
     private static final String ROOM_API = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
     private static final String USER_API = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
     private static final String USER_ALLINFO_API = "https://api.bilibili.com/x/space/acc/info?mid=";
@@ -34,6 +37,7 @@ public class BiliApiService {
         this.restTemplate = restTemplate;
         this.bot = bot;
         sendGroupMap.put(545149341L, 733244168L);
+        sendGroupMap.put(73769122L, 733244168L);
         sendGroupMap.put(14172231L, 135214594L);
     }
 
@@ -71,13 +75,16 @@ public class BiliApiService {
         var data = getLiveRooms(roomsId);
         data.forEach(room -> {
             if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.CLOSE){
-                sendmsg(room, sendGroupMap.get(room.getUid()),false);
                 lastList.remove(room.getUid());
+                sendmsg(room, sendGroupMap.get(room.getUid()),false);
+                log.info("close->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
             if (!lastList.contains(room.getUid()) && room.getStatus() == LiveStatus.OPEN){
-                sendmsg(room, sendGroupMap.get(room.getUid()),true);
                 lastList.add(room.getUid());
+                sendmsg(room, sendGroupMap.get(room.getUid()),true);
+                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
+            log.info("直播开启的数量{}",lastList.size());
         });
     }
 }
