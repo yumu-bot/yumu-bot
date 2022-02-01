@@ -19,18 +19,12 @@ public class RunTimeService {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
     @Autowired
     Bot bot;
+    @Autowired
+    BiliApiService biliApiService;
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
-    @Scheduled(cron = "20 58 23 31 * 1")
+    @Scheduled(cron = "14 * * * * *")
     public void happynewyear(){
-        var groups = bot.getGroups();
-        groups.forEach(group -> {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                // do nothing
-            }
-            group.sendMessage("祝大家春节快乐");
-        });
+        biliApiService.check();
     }
     /*
     提醒ec睡觉
