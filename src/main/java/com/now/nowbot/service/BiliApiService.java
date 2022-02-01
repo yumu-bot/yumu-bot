@@ -71,14 +71,14 @@ public class BiliApiService {
         Long[] roomsId = sendGroupMap.keySet().toArray(new Long[0]);
         var data = getLiveRooms(roomsId);
         for (var room : data){
-            if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.CLOSE){
+            if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.OPEN){
                 lastList.remove(room.getUid());
-                sendmsg(room, sendGroupMap.get(room.getUid()),false);
+//                sendmsg(room, sendGroupMap.get(room.getUid()),false);
 //                log.info("close->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
             if (!lastList.contains(room.getUid()) && room.getStatus() == LiveStatus.OPEN){
                 lastList.add(room.getUid());
-                sendmsg(room, sendGroupMap.get(room.getUid()),true);
+//                sendmsg(room, sendGroupMap.get(room.getUid()),true);
 //                log.info("start->{}, has->{}",room.getUid(),lastList.contains(room.getUid()));
             }
         }
