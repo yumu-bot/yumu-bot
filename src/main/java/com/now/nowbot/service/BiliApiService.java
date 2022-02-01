@@ -71,7 +71,12 @@ public class BiliApiService {
     }
 
     public void check(){
-        var roomsId = sendGroupMap.keySet().toArray(new Long[0]);
+        var set = sendGroupMap.keySet();
+        Long[] roomsId = new Long[set.size()];
+        var d = set.iterator();
+        for (int i = 0; d.hasNext(); i++) {
+            roomsId[i] = Long.parseLong(d.next());
+        }
         var data = getLiveRooms(roomsId);
         data.forEach(room -> {
             if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.CLOSE){
