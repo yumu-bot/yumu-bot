@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class a {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         int width = 1200;
         int height = 900;
@@ -61,7 +61,7 @@ public class a {
         }
     }
 
-    private static void drawImg(Canvas canvas, int x, int y){
+    private static void drawImg(Canvas canvas, int x, int y) throws IOException {
         //绘制图片
         Image head = SkiaImageUtil.getImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
         canvas.drawImage(
@@ -70,7 +70,7 @@ public class a {
                 0    //y
         );
     }
-    private static void drawImgWithAlpha(Canvas canvas, int x, int y){
+    private static void drawImgWithAlpha(Canvas canvas, int x, int y) throws IOException {
         //绘制图片
         Image head = SkiaImageUtil.getImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
         canvas.drawImage(head,0,0,

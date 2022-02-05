@@ -21,9 +21,9 @@ import java.nio.file.Path;
 public class PanelUtil {
     static final Logger log = LoggerFactory.getLogger(PanelUtil.class);
     //设置抗锯齿
-    static final Paint PAINT_ANTIALIAS =  new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
+    static final Paint PAINT_ANTIALIAS = new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
     //高斯模糊画笔
-    static final Paint PAINT_BLUR =  new Paint().setImageFilter(ImageFilter.makeBlur(10,10, FilterTileMode.REPEAT));
+    static final Paint PAINT_BLUR = new Paint().setImageFilter(ImageFilter.makeBlur(10, 10, FilterTileMode.REPEAT));
     /* **
      * SS-D #FEF668 #F09450 #00B034 #3FBCEF #8E569B #EC6B76 #676EB0
      * 我方#00A8EC 对方 #FF0000
@@ -36,8 +36,8 @@ public class PanelUtil {
     public static final int COLOR_A = Color.makeRGB(0, 176, 52);
     public static final int COLOR_B = Color.makeRGB(63, 188, 239);
     public static final int COLOR_C = Color.makeRGB(142, 86, 155);
-    public static final int COLOR_D = Color.makeRGB(236,107,118);
-    public static final int COLOR_F = Color.makeRGB(103,110,176);
+    public static final int COLOR_D = Color.makeRGB(236, 107, 118);
+    public static final int COLOR_F = Color.makeRGB(103, 110, 176);
 
     public static final int COLOR_HEX_ME = Color.makeRGB(0, 168, 236);
     public static final int COLOR_HEX_OTHER = Color.makeRGB(255, 0, 0);
@@ -61,17 +61,18 @@ public class PanelUtil {
 
     private static Path PATH_FLAG;
     public static Path EXPORT_FOLE_V3;
-    public static void init(){
-        PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
-        EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH,"ExportFileV3");
-        try {
-            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Ranked.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Qualified.png");
-            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Unranked.png");
-            OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
-            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Loved.png");
 
-            OBJECT_CARD_SUPPORTER = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-card-supporter.png");
+    public static void init() {
+        PATH_FLAG = Path.of(NowbotConfig.BG_PATH + "flag/");
+        EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH, "ExportFileV3");
+        try {
+            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Ranked.png");
+            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Qualified.png");
+            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Unranked.png");
+            OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
+            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Loved.png");
+
+            OBJECT_CARD_SUPPORTER = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-card-supporter.png");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -103,12 +104,13 @@ public class PanelUtil {
 
     /**
      * 获得国/区旗的SVG
+     *
      * @param code 国/区旗Code
      * @return svg
-     *
+     * <p>
      * 旗子压缩成60*40的大小，位置横向 130 纵向 70
      */
-    public static SVGDOM getFlag(String code){
+    public static SVGDOM getFlag(String code) {
         if (!Files.isDirectory(PATH_FLAG)) {
             try {
                 Files.createDirectories(PATH_FLAG);
@@ -118,11 +120,11 @@ public class PanelUtil {
         }
 
         if (code.length() >= 2) {
-            code = code.substring(0,2).toUpperCase();
+            code = code.substring(0, 2).toUpperCase();
             var flagFile = PATH_FLAG.resolve(code);
             SVGDOM svg;
             try {
-                if (Files.isRegularFile(flagFile)){
+                if (Files.isRegularFile(flagFile)) {
                     var svgbytes = Files.readAllBytes(flagFile);
                     svg = new SVGDOM(Data.makeFromBytes(svgbytes));
                 } else {
@@ -151,39 +153,43 @@ public class PanelUtil {
         return null;
     }
 
-    public static String cutDecimalPoint(Double m){
+    public static String cutDecimalPoint(Double m) {
         if (m == null) return "";
         Double s = m - m.intValue();
         if (s < 0.01) return "";
         String r = s.toString();
-        return r.substring(1,Math.min(r.length(),4));
+        return r.substring(1, Math.min(r.length(), 4));
     }
 
-    /** 获得个人背景,如没有则默认从url获取
+    /**
+     * 获得个人背景,如没有则默认从url获取
+     *
      * @param isBlur 是否模糊暗化
-     * */
-    public static Image getBgUrl(@Nullable String filePath, String url, boolean isBlur){
-        Image img;
-        if (filePath != null && Files.isRegularFile(Path.of(filePath))){
-            try {
+     */
+    public static Image getBgUrl(@Nullable String filePath, String url, boolean isBlur) {
+        Image img = null;
+        try {
+            if (filePath != null && Files.isRegularFile(Path.of(filePath))) {
                 img = SkiaImageUtil.getImage(filePath);
                 return img;
-            } catch (IOException e) {
-                log.error("文件读取异常", e);
             }
+            img = SkiaImageUtil.getImage(url);
+        } catch (IOException e) {
+            log.error("文件读取异常", e);
         }
-        img = SkiaImageUtil.getImage(url);
         if (isBlur)
-        return getBlur(img);
+            return getBlur(img);
         else return img;
     }
 
-    /** 获得个人背景,如没有则默认从文件路径获取
+    /**
+     * 获得个人背景,如没有则默认从文件路径获取
+     *
      * @param isBlur 是否模糊暗化
-     * */
-    public static Image getBgFile(@Nullable String filePath, String path, boolean isBlur){
+     */
+    public static Image getBgFile(@Nullable String filePath, String path, boolean isBlur) {
         Image img;
-        if (filePath != null && Files.isRegularFile(Path.of(filePath))){
+        if (filePath != null && Files.isRegularFile(Path.of(filePath))) {
             try {
                 img = SkiaImageUtil.getImage(filePath);
                 return img;
@@ -203,20 +209,22 @@ public class PanelUtil {
     }
 
     protected static Image getBlur(Image img) {
-        try(Surface s = Surface.makeRasterN32Premul(img.getWidth(),img.getHeight())){
-            s.getCanvas().drawImage(img, 0,0,PAINT_BLUR);
-            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()),new Paint().setAlphaf(0.4f));
+        try (Surface s = Surface.makeRasterN32Premul(img.getWidth(), img.getHeight())) {
+            s.getCanvas().drawImage(img, 0, 0, PAINT_BLUR);
+            s.getCanvas().drawRect(Rect.makeWH(s.getWidth(), s.getHeight()), new Paint().setAlphaf(0.4f));
             img = s.makeImageSnapshot();
         }
         return img;
     }
+
     static int bannerIndex = 1;
+
     public static Image getBanner(BinUser user) throws IOException {
-        if(bannerIndex > BANNER_INDEX_MAX){
+        if (bannerIndex > BANNER_INDEX_MAX) {
             bannerIndex = BANNER_INDEX_MIN;
         }
-        Image banner = SkiaImageUtil.getImage(EXPORT_FOLE_V3.resolve("Banner/b"+bannerIndex+".png").toString());
-        bannerIndex ++;
+        Image banner = SkiaImageUtil.getImage(EXPORT_FOLE_V3.resolve("Banner/b" + bannerIndex + ".png").toString());
+        bannerIndex++;
         return banner;
     }
 }

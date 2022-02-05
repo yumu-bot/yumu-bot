@@ -1,8 +1,11 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.SVGDOM;
+
+import java.io.IOException;
 
 public class ACardBuilder extends CardBuilder{
     private static int LOG_OFFSET = 10;
@@ -16,7 +19,7 @@ public class ACardBuilder extends CardBuilder{
      * @param head_url
      * @return
      */
-    public ACardBuilder drawA1(String head_url) {
+    public ACardBuilder drawA1(String head_url) throws IOException {
         canvas.save();
         final Image head = SkiaImageUtil.getImage(head_url);
         try (head) {

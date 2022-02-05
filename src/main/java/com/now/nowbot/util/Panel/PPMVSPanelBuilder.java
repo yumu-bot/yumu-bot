@@ -2,7 +2,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.SkiaUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 

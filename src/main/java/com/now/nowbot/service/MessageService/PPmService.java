@@ -13,7 +13,7 @@ import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.SkiaUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -262,7 +263,7 @@ public class PPmService implements MessageService {
         }
     }
 
-    private ACardBuilder getUserCard(OsuUser user){
+    private ACardBuilder getUserCard(OsuUser user) throws IOException {
         Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
         var card = PanelUtil.getA1Builder(uBg)
                 .drawA1(user.getAvatarUrl())

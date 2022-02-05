@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;

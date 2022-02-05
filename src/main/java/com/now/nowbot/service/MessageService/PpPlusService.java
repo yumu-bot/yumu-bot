@@ -11,6 +11,7 @@ import com.now.nowbot.throwable.serviceException.PppException;
 import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.PPPlusPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
