@@ -4,6 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
@@ -59,7 +60,7 @@ public class CatpanelService implements MessageService {
             event.getSubject().sendMessage("没有任何图片");
             return;
         }
-        var skijaimg = SkiaUtil.lodeNetWorkImage(Image.queryUrl(img));
+        var skijaimg = SkiaImageUtil.getImage(Image.queryUrl(img));
         if (matcher.group("r") != null){
             qc(skijaimg, event, CATPANLE_WHITE, CATPANLE_HEIGHT);
             return;
@@ -67,8 +68,8 @@ public class CatpanelService implements MessageService {
         var cutimg = SkiaUtil.getScaleCenterImage(skijaimg, CATPANLE_WHITE,CATPANLE_HEIGHT);
 
         var surface = Surface.makeRasterN32Premul(CATPANLE_WHITE,CATPANLE_HEIGHT);
-        var t1 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "panel06.png");
-        var t2 = SkiaUtil.fileToImage(NowbotConfig.BG_PATH + (stl?"ylbx.png":"lbx.png"));
+        var t1 = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "panel06.png");
+        var t2 = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + (stl?"ylbx.png":"lbx.png"));
 
         byte[] data;
         try(skijaimg;cutimg;surface;t1;t2){

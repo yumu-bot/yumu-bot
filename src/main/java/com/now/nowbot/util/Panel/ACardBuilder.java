@@ -18,7 +18,7 @@ public class ACardBuilder extends CardBuilder{
      */
     public ACardBuilder drawA1(String head_url) {
         canvas.save();
-        final Image head = SkiaUtil.lodeNetWorkImage(head_url);
+        final Image head = SkiaImageUtil.getImage(head_url);
         try (head) {
             canvas.translate(20, 20);
             canvas.clipRRect(RRect.makeXYWH(0, 0, 100, 100, 10));

@@ -154,7 +154,7 @@ public class PpPlusService implements MessageService{
             canvas.drawTextLine(v1,-v1.getWidth(),v1.getCapHeight(),white);
             canvas.restore();
 
-            PpPlusVsService.drawLhead(canvas, SkiaUtil.lodeNetWorkImage(headUrl));
+            PpPlusVsService.drawLhead(canvas, SkiaImageUtil.getImage(headUrl));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
@@ -195,7 +195,7 @@ public class PpPlusService implements MessageService{
         panel.drawRightTotal(String.valueOf(userData.getJSONObject("statistics").getIntValue("pp")));
         panel.drawHexagon(hexValue, true);
 
-        var panelImage = panel.drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppplusv3.2.png")).build("PANEL-PPP dev.0.0.1");
+        var panelImage = panel.drawImage(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppplusv3.2.png")).build("PANEL-PPP dev.0.0.1");
         try (panelImage) {
             card.build().close();
             from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(panelImage.encodeToData().getBytes()), from));

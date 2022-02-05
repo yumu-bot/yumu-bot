@@ -34,8 +34,9 @@ public class BiliApiService {
         this.restTemplate = restTemplate;
         this.bot = bot;
         sendGroupMap.put(545149341L, 733244168L);
-        sendGroupMap.put(73769122L, 733244168L);
+//        sendGroupMap.put(73769122L, 733244168L);
         sendGroupMap.put(14172231L, 135214594L);
+        sendGroupMap.put(4995808L, 446316073L);
     }
 
     public List<LiveRoom> getLiveRooms(Long[] roomid){
@@ -44,7 +45,6 @@ public class BiliApiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity httpEntity = new HttpEntity(Map.of("uids",roomid),headers);
         var data = restTemplate.postForObject(ALL_ROOM_API, httpEntity, JsonNode.class).get("data");
-        data.get("data");
         List<LiveRoom> rooms = new ArrayList<>();
         for (JsonNode room : data){
             var r = new LiveRoom(room);
@@ -62,13 +62,13 @@ public class BiliApiService {
                 sb.append(room.getUserName()).append("爷爷开始直播了!").append('\n');
                 sb.append(room.getRoomName()).append("-").append(room.getAreaName()).append('\n');
                 sb.append("快戳我围观->https://live.bilibili.com/").append(room.getRoomId()).append('\n');
-                QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaUtil.lodeNetWorkImage(room.getKeyframeUrl()).encodeToData().getBytes());
+                QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaImageUtil.getImage(room.getKeyframeUrl()).encodeToData().getBytes());
             } else {
                 StringBuffer sb = new StringBuffer();
                 sb.append(room.getUserName()).append("爷爷的直播结束了>_<").append('\n');
                 sb.append(room.getRoomName()).append("-").append(room.getAreaName()).append("  已结束").append('\n');
                 sb.append("快戳我关注直播间!->https://live.bilibili.com/").append(room.getRoomId()).append('\n');
-                QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaUtil.lodeNetWorkImage(room.getKeyframeUrl()).encodeToData().getBytes());
+                QQMsgUtil.sendTextAndImage(group, sb.toString(), SkiaImageUtil.getImage(room.getKeyframeUrl()).encodeToData().getBytes());
             }
         }
     }

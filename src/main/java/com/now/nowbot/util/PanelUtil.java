@@ -65,13 +65,13 @@ public class PanelUtil {
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH+"flag/");
         EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH,"ExportFileV3");
         try {
-            OBJECT_MAPSTATUS_RANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Ranked.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Qualified.png");
-            OBJECT_MAPSTATUS_UNRANKED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Unranked.png");
+            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Ranked.png");
+            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Qualified.png");
+            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Unranked.png");
             OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
-            OBJECT_MAPSTATUS_LOVED = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Loved.png");
+            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-mapstatus-Loved.png");
 
-            OBJECT_CARD_SUPPORTER = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/object-card-supporter.png");
+            OBJECT_CARD_SUPPORTER = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/object-card-supporter.png");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -166,13 +166,13 @@ public class PanelUtil {
         Image img;
         if (filePath != null && Files.isRegularFile(Path.of(filePath))){
             try {
-                img = SkiaUtil.fileToImage(filePath);
+                img = SkiaImageUtil.getImage(filePath);
                 return img;
             } catch (IOException e) {
                 log.error("文件读取异常", e);
             }
         }
-        img = SkiaUtil.lodeNetWorkImage(url);
+        img = SkiaImageUtil.getImage(url);
         if (isBlur)
         return getBlur(img);
         else return img;
@@ -185,14 +185,14 @@ public class PanelUtil {
         Image img;
         if (filePath != null && Files.isRegularFile(Path.of(filePath))){
             try {
-                img = SkiaUtil.fileToImage(filePath);
+                img = SkiaImageUtil.getImage(filePath);
                 return img;
             } catch (IOException e) {
                 log.error("文件读取异常", e);
             }
         }
         try {
-            img = SkiaUtil.fileToImage(path);
+            img = SkiaImageUtil.getImage(path);
             if (isBlur)
                 return getBlur(img);
             else return img;
@@ -215,7 +215,7 @@ public class PanelUtil {
         if(bannerIndex > BANNER_INDEX_MAX){
             bannerIndex = BANNER_INDEX_MIN;
         }
-        Image banner = SkiaUtil.fileToImage(EXPORT_FOLE_V3.resolve("Banner/b"+bannerIndex+".png").toString());
+        Image banner = SkiaImageUtil.getImage(EXPORT_FOLE_V3.resolve("Banner/b"+bannerIndex+".png").toString());
         bannerIndex ++;
         return banner;
     }

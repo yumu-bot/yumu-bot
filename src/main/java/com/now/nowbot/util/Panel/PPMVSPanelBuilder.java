@@ -17,7 +17,7 @@ public class PPMVSPanelBuilder extends PPPanelBuilder{
     /**叠加层*/
     public PPMVSPanelBuilder drawOverImage(){
         try {
-            drawImage(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
+            drawImage(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/panel-ppmodule.png"));
         } catch (IOException e) {
             log.error("PPMPanelBuilder->ppm 叠加层素材加载失败", e);
         }

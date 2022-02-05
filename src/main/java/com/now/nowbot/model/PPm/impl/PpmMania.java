@@ -313,7 +313,7 @@ public class PpmMania extends Ppm {
             return;
         }
         try {
-            doAct.apply(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus-maniaSP.png"));
+            doAct.apply(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus-maniaSP.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

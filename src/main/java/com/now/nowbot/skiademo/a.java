@@ -1,5 +1,6 @@
 package com.now.nowbot.skiademo;
 
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
@@ -26,7 +27,7 @@ public class a {
         //移动笔坐边
         canvas.save(); //注意,save只会记录 坐标,缩放
         canvas.translate(256,0);
-        Image head = SkiaUtil.lodeNetWorkImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
+        Image head = SkiaImageUtil.getImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
         canvas.drawImage(head, 0, 0); //画笔偏移 x:256
         canvas.drawImage(head, 256, 0); //在画笔偏移基础上,再偏移x:256 y:0
         canvas.restore();// 坐标,缩放 恢复到上次save
@@ -62,7 +63,7 @@ public class a {
 
     private static void drawImg(Canvas canvas, int x, int y){
         //绘制图片
-        Image head = SkiaUtil.lodeNetWorkImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
+        Image head = SkiaImageUtil.getImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
         canvas.drawImage(
                 head,       //图
                 0,     //x偏移
@@ -71,7 +72,7 @@ public class a {
     }
     private static void drawImgWithAlpha(Canvas canvas, int x, int y){
         //绘制图片
-        Image head = SkiaUtil.lodeNetWorkImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
+        Image head = SkiaImageUtil.getImage("https://a.ppy.sh/17064371?1622380408.jpeg"); //加载网图
         canvas.drawImage(head,0,0,
                 new Paint().setAlpha(150) //设置透明的
         );

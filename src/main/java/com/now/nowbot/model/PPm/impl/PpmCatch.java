@@ -6,7 +6,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.util.Panel.PanelBuilder;
 import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.SkiaUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.springframework.lang.Nullable;
@@ -274,7 +274,7 @@ public class PpmCatch extends Ppm {
             return;
         }
         try {
-            doAct.apply(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus.png"));
+            doAct.apply(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -7,19 +7,8 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.regex.Pattern;
 
 public class SkiaUtil {
     static final int[] COLOR_SUGER = new int[]{
@@ -134,43 +123,6 @@ public class SkiaUtil {
     }
 
     /***
-     * 网络加载图片
-     * @param path
-     * @return
-     */
-    public static Image lodeNetWorkImage(String path) {
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        md.update(path.getBytes());
-        md.getAlgorithm();
-        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH + new BigInteger(1, md.digest()).toString(16));
-        try {
-            if (Files.isRegularFile(pt)) {
-                md.reset();
-                return Image.makeFromEncoded(Files.readAllBytes(pt));
-            } else {
-                URL url = new URL(path);
-                HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-                httpConn.connect();
-                InputStream cin = httpConn.getInputStream();
-                byte[] date = cin.readAllBytes();
-                cin.close();
-                Files.createFile(pt);
-                Files.write(pt, date);
-                System.gc();
-                return Image.makeFromEncoded(date);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /***
      * 缩放图形 直接绘制建议使用 drawScaleImage
      * @param image
      * @param width
@@ -281,39 +233,7 @@ public class SkiaUtil {
         return canvas;
     }
 
-    /***
-     * 读取本地图片文件
-     * @param path
-     * @return
-     * @throws IOException
-     */
-    public static Image fileToImage(String path) throws IOException {
-        File f = new File(path);
-        long ln = f.length();
-        byte[] date = new byte[Math.toIntExact(ln)];
-        FileInputStream in = new FileInputStream(f);
-        in.read(date);
-        return Image.makeFromEncoded(date);
-    }
 
-    /***
-     * 剪切圆角矩形 如果直接绘制建议使用 drawRRectImage
-     * @param image
-     * @param w
-     * @param h
-     * @param r
-     * @return
-     */
-    public static Image getRRectImage(Image image, float w, float h, float r) {
-        Image img;
-        try (Surface surface = Surface.makeRasterN32Premul(((int) w), ((int) h))) {
-            var canvas = surface.getCanvas();
-            canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), true);
-            canvas.drawImage(image, 0, 0);
-            img = surface.makeImageSnapshot();
-        }
-        return img;
-    }
 
     /***
      * 绘制为圆角矩形(默认画笔)
@@ -440,21 +360,6 @@ public class SkiaUtil {
         return drawSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
 
-    /***
-     * 下载svg 大概不用再这里
-     * @param path 下载url
-     * @return svg对象
-     * @throws IOException
-     */
-    public static SVGDOM lodeNetWorkSVGDOM(String path) throws IOException {
-        URL url = new URL(path);
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.connect();
-        InputStream cin = httpConn.getInputStream();
-        byte[] svgbytes = cin.readAllBytes();
-        cin.close();
-        return new SVGDOM(Data.makeFromBytes(svgbytes));
-    }
 
     /***
      * 绘制模糊效果
@@ -530,6 +435,17 @@ public class SkiaUtil {
                 p.paint(canvas, x, y);
             }
         }
+    }
+
+    /***
+     * 获得条状渐变色
+     * @param x 渐变开始坐标
+     * @param x1 渐变结束的坐标
+     * @param colors 色彩组
+     * @return
+     */
+    public static Shader getLinearShader(int x, int y ,int x1, int y1, int...colors){
+        return Shader.makeLinearGradient(x,y,x1,y1,colors);
     }
 
     /***

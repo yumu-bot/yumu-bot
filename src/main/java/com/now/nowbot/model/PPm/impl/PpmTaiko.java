@@ -292,7 +292,7 @@ public class PpmTaiko extends Ppm {
             return;
         }
         try {
-            doAct.apply(SkiaUtil.fileToImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus.png"));
+            doAct.apply(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

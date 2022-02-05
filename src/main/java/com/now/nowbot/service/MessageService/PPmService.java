@@ -43,7 +43,7 @@ public class PPmService implements MessageService {
             var userBin = BindingUtil.readUser(event.getSender().getId());
             var user = osuGetService.getPlayerOsuInfoN(userBin);
             var card = getUserCard(user);
-            var di = SkiaUtil.fileToImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
+            var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
             Surface surface = Surface.makeRasterN32Premul(1920, 1080);
             try (surface){
                 Canvas canvas = surface.getCanvas();

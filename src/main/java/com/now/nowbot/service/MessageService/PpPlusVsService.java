@@ -197,8 +197,8 @@ public class PpPlusVsService implements MessageService {
             canvas.drawTextLine(v1, 0, v1.getCapHeight(), white);
             canvas.restore();
 
-            drawLhead(canvas, SkiaUtil.lodeNetWorkImage(head1));
-            drawRhead(canvas, SkiaUtil.lodeNetWorkImage(head2));
+            drawLhead(canvas, SkiaImageUtil.getImage(head1));
+            drawRhead(canvas, SkiaImageUtil.getImage(head2));
 
             datebyte = surface.makeImageSnapshot().encodeToData().getBytes();
         }
