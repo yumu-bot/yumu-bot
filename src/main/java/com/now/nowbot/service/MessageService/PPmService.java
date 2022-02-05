@@ -216,8 +216,8 @@ public class PPmService implements MessageService {
         ppmMe.drawRank(panel::switchLeftRank);
         ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)->{return null;});
 
-        panel.drawLeftTotleName("-_-");
-        panel.drawRightTotleName("-_-");
+//        panel.drawLeftTotleName("-_-");
+//        panel.drawRightTotleName("-_-");
 
         ppmOther.drawValueName(panel::drawRightNameN);
         ppmOther.drawValue(panel::drawRightValueN);
