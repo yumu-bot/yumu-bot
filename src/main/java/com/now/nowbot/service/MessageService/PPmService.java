@@ -216,9 +216,6 @@ public class PPmService implements MessageService {
         ppmMe.drawRank(panel::switchLeftRank);
         ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)->{return null;});
 
-//        panel.drawLeftTotleName("-_-");
-//        panel.drawRightTotleName("-_-");
-
         ppmOther.drawValueName(panel::drawRightNameN);
         ppmOther.drawValue(panel::drawRightValueN);
         ppmOther.drawRank(panel::switchRightRank);
@@ -227,6 +224,7 @@ public class PPmService implements MessageService {
         panel.drawRightCard(cardOther.build());
         panel.drawHexagon(hexOther,false);
         panel.drawHexagon(hexMe,true);
+        panel.drawPanelName(panelName);
         try (uBgMe; uBgOther) {
             cardMe.build().close();
             cardOther.build().close();

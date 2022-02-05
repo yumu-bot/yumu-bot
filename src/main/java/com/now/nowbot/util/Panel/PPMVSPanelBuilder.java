@@ -102,4 +102,9 @@ public class PPMVSPanelBuilder extends PPPanelBuilder{
         }
         return this;
     }
+
+    @Override
+    public Image build() {
+        return super.build("PANEL-PPM Dev");
+    }
 }
