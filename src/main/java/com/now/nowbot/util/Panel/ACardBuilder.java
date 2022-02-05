@@ -25,7 +25,7 @@ public class ACardBuilder extends CardBuilder{
         try (head) {
             canvas.translate(20, 20);
             canvas.clipRRect(RRect.makeXYWH(0, 0, 100, 100, 10));
-            canvas.drawImage(SkiaUtil.getScaleCenterImage(head, 100, 100), 0, 0);
+            canvas.drawImage(SkiaImageUtil.getScaleCenterImage(head, 100, 100), 0, 0);
         }
         canvas.restore();
         return this;

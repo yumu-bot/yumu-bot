@@ -1,5 +1,6 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
@@ -30,7 +31,7 @@ public class PanelBuilder {
         hight = h;
         surface = Surface.makeRasterN32Premul(w, h);
         canvas = surface.getCanvas();
-        if (bg.getWidth() != w || bg.getHeight() != h) bg = SkiaUtil.getScaleCenterImage(bg, w, h);
+        if (bg.getWidth() != w || bg.getHeight() != h) bg = SkiaImageUtil.getScaleCenterImage(bg, w, h);
         canvas.drawImage(bg, 0, 0);
     }
 

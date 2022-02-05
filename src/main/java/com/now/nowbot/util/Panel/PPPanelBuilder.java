@@ -1,6 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.*;
@@ -72,7 +73,7 @@ public class PPPanelBuilder extends PanelBuilder {
     private static final float FONT_OFFSET = 16;
 
     public PPPanelBuilder drawBanner(Image bg) {
-        var temp = SkiaUtil.getScaleCenterImage(bg, 1920, 320);
+        var temp = SkiaImageUtil.getScaleCenterImage(bg, 1920, 320);
         try (temp) {
             canvas.drawImage(temp, 0, 0);
         }

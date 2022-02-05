@@ -5,7 +5,6 @@ import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.message.data.MessageChain;
@@ -65,7 +64,7 @@ public class CatpanelService implements MessageService {
             qc(skijaimg, event, CATPANLE_WHITE, CATPANLE_HEIGHT);
             return;
         }
-        var cutimg = SkiaUtil.getScaleCenterImage(skijaimg, CATPANLE_WHITE,CATPANLE_HEIGHT);
+        var cutimg = SkiaImageUtil.getScaleCenterImage(skijaimg, CATPANLE_WHITE,CATPANLE_HEIGHT);
 
         var surface = Surface.makeRasterN32Premul(CATPANLE_WHITE,CATPANLE_HEIGHT);
         var t1 = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "panel06.png");

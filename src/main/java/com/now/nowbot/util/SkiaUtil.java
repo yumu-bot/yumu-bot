@@ -2,7 +2,6 @@ package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
 import org.jetbrains.skija.*;
-import org.jetbrains.skija.paragraph.*;
 import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +20,11 @@ public class SkiaUtil {
     };
 
     static final int[][] COLOR_GRAdDIENT = new int[][]{
-            {hexToRGB("#4e54c8"),hexToRGB("#8f94fb")},
-            {hexToRGB("#11998e"),hexToRGB("#11998e")},
-            {hexToRGB("#FC5C7D"),hexToRGB("#FC5C7D")},
-            {hexToRGB("#74ebd5"),hexToRGB("#ACB6E5")},
-            {hexToRGB("#7F00FF"),hexToRGB("#7F00FF")},
+            {hexToRGB("#4e54c8"), hexToRGB("#8f94fb")},
+            {hexToRGB("#11998e"), hexToRGB("#11998e")},
+            {hexToRGB("#FC5C7D"), hexToRGB("#FC5C7D")},
+            {hexToRGB("#74ebd5"), hexToRGB("#ACB6E5")},
+            {hexToRGB("#7F00FF"), hexToRGB("#7F00FF")},
     };
 
     public static int hexToRGB(String colorstr) {
@@ -122,153 +121,7 @@ public class SkiaUtil {
         return EXTRA;
     }
 
-    /***
-     * 缩放图形 直接绘制建议使用 drawScaleImage
-     * @param image
-     * @param width
-     * @param height
-     * @return
-     */
-    public static Image getScaleImage(Image image, int width, int height) {
-        Image img = null;
-        try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
-            sms.getCanvas()
-                    .setMatrix(Matrix33.makeScale(1f * width / image.getWidth(), 1f * height / image.getHeight()))
-                    .drawImage(image, 0, 0);
-            img = sms.makeImageSnapshot();
-        }
-        return img;
-    }
-
-    public static Image getScaleImage(Image image, float scale) {
-        Image img = null;
-        try (Surface sms = Surface.makeRasterN32Premul(Math.round(image.getWidth() * scale), Math.round(image.getHeight() * scale))) {
-            sms.getCanvas().setMatrix(Matrix33.makeScale(scale)).drawImage(image, 0, 0);
-            img = sms.makeImageSnapshot();
-        }
-        return img;
-    }
-
-    /***
-     * 按比例缩放并裁切中间位置
-     * @param img
-     * @param w
-     * @param h
-     * @return 裁切后的图形
-     */
-    public static Image getScaleCenterImage(Image img, int w, int h) {
-        try (Surface surface = Surface.makeRasterN32Premul(w, h)) {
-            var canvas = surface.getCanvas();
-            if (1f * img.getWidth() / img.getHeight() < 1f * w / h) {
-                //当原图比目标高
-                canvas.setMatrix(Matrix33.makeScale(1f * w / img.getWidth(), 1f * w / img.getWidth()));
-                //与下面同理
-                canvas.translate(0, -0.5f * (1f * img.getHeight() * w / img.getWidth() - h) / w * img.getWidth());
-                canvas.drawImage(img, 0, 0);
-            } else {
-                //当原图比目标宽
-                canvas.setMatrix(Matrix33.makeScale(1f * h / img.getHeight(), 1f * h / img.getHeight()));
-                //居中偏移 缩放比例(h/img.getHeight()) 后的宽度(img.getWidth()*h/img.getHeight()) 与 裁剪宽度差的一半
-                canvas.translate(-0.5f * (1f * img.getWidth() * h / img.getHeight() - w) / h * img.getHeight(), 0);
-                canvas.drawImage(img, 0, 0);
-            }
-            return surface.makeImageSnapshot();
-        }
-    }
-
-    /***
-     * 绘制缩放图形
-     * @param canvas
-     * @param image
-     * @param x 被绘制的坐标
-     * @param y
-     * @param w 缩放后的高宽
-     * @param h
-     * @return
-     */
-    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h) {
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.setMatrix(Matrix33.makeScale(1f * w / image.getWidth(), 1f * h / image.getHeight())).drawImage(image, 0, 0);
-        canvas.restore();
-        return canvas;
-    }
-
-    /***
-     * 剪切矩形 如果直接绘制建议使用 drawCutImage
-     * @param image
-     * @param left
-     * @param top
-     * @param width
-     * @param height
-     * @return
-     */
-    public static Image getCutImage(Image image, int left, int top, int width, int height) {
-        Image img;
-        try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
-            sms.getCanvas().drawImage(image, -1 * left, -1 * top);
-            img = sms.makeImageSnapshot();
-        }
-        return img;
-    }
-
-    /***
-     * 绘制裁切图形
-     * @param canvas
-     * @param image
-     * @param x 被绘制的位置(底图)
-     * @param y
-     * @param l 要绘制的图片(上层图)
-     * @param t
-     * @param width 宽
-     * @param height 高
-     * @return
-     */
-    public static Canvas drawCutImage(Canvas canvas, Image image, float x, float y, int l, int t, int width, int height) {
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.clipRect(Rect.makeXYWH(0, 0, width, height));
-        canvas.drawImage(image, -1 * l, -1 * t);
-        canvas.restore();
-        return canvas;
-    }
-
-
-
-    /***
-     * 绘制为圆角矩形(默认画笔)
-     * @param canvas
-     * @param image
-     * @param x
-     * @param y
-     * @param r
-     * @return
-     */
-    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y, float r) {
-        drawRRectImage(canvas, image, x, y, r, null);
-        return canvas;
-    }
-
-    /***
-     * 绘制为圆角矩形
-     * @param canvas
-     * @param image
-     * @param x
-     * @param y
-     * @param r
-     * @param p 指定效果(画笔
-     * @return
-     */
-    public static Canvas drawRRectImage(Canvas canvas, Image image, float x, float y, float r, Paint p) {
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, image.getWidth(), image.getHeight(), r, r, r, r), false);
-        canvas.drawImage(image, 0, 0, p);
-        canvas.restore();
-        return canvas;
-    }
-
-    /***
+    /*
      * 直接绘制为剪切的圆角矩形
      * @param canvas
      * @param image
@@ -281,42 +134,20 @@ public class SkiaUtil {
      * @param r 圆角半径
      * @return
      */
-    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r) {
-        drawCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r, null);
-        return canvas;
-    }
+//    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r) {
+//        drawCutRRectImage(canvas, image, dx, dy, fx, fy, w, h, r, null);
+//        return canvas;
+//    }
+//
+//    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r, Paint p) {
+//        canvas.save();
+//        canvas.translate(dx, dy);
+//        canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), true);
+//        canvas.drawImage(image, -fx, -fy, p);
+//        canvas.restore();
+//        return canvas;
+//    }
 
-    public static Canvas drawCutRRectImage(Canvas canvas, Image image, float dx, float dy, float fx, float fy, float w, float h, float r, Paint p) {
-        canvas.save();
-        canvas.translate(dx, dy);
-        canvas.clipRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), true);
-        canvas.drawImage(image, -fx, -fy, p);
-        canvas.restore();
-        return canvas;
-    }
-
-    /***
-     * 裁剪绘制图形
-     * @param canvas
-     * @param img
-     * @param dx 针对底图位置偏移x,y(被绘制的对象上)
-     * @param dy
-     * @param fx 上层图偏移x,y(要绘制的)
-     * @param fy
-     * @param width
-     * @param height
-     * @return
-     */
-    public static Canvas cutImage(Canvas canvas, Image img, float dx, float dy, float fx, float fy, float width, float height) {
-        canvas.save();
-        canvas.translate(dx, dy);
-        canvas.clipRect(Rect.makeXYWH(0, 0, width, height));
-        canvas.drawImage(img, -fx, -fy);
-        canvas.restore();
-
-        canvas.drawRect(Rect.makeLTRB(10, 10, 10, 10), new Paint().setARGB(255, 255, 255, 255));
-        return canvas;
-    }
 
     /***
      * 绘制svg
@@ -360,83 +191,6 @@ public class SkiaUtil {
         return drawSvg(canvas, svg, x, y, width, height, SVGPreserveAspectRatioAlign.XMID_YMIN, SVGPreserveAspectRatioScale.SLICE);
     }
 
-
-    /***
-     * 绘制模糊效果
-     * @param canvas
-     * @param x
-     * @param y
-     * @param w
-     * @param h
-     * @param radius 模糊程度 推荐10-20之间
-     */
-    public static void drawBlur(Canvas canvas, int x, int y, int w, int h, int radius) {
-        try (Bitmap bitmap = new Bitmap()) {
-            bitmap.allocPixels(ImageInfo.makeS32(x + w, y + h, ColorAlphaType.OPAQUE));
-            canvas.readPixels(bitmap, x, y);
-            if (true) {
-
-                try (var shader = bitmap.makeShader();
-                     var blur = ImageFilter.makeBlur(radius, radius, FilterTileMode.REPEAT);
-                     var fill = new Paint().setShader(shader).setImageFilter(blur)) {
-                    canvas.save();
-                    canvas.translate(x, y);
-                    canvas.drawRect(Rect.makeXYWH(0, 0, w, h), fill);
-                    canvas.restore();
-                }
-            }
-        }
-    }
-
-    /***
-     * 绘制圆角模糊效果
-     * @param canvas
-     * @param x
-     * @param y
-     * @param w
-     * @param h
-     * @param radius 模糊程度 推荐10-20之间
-     * @param r 圆角半径
-     */
-    public static void drawRBlur(Canvas canvas, int x, int y, int w, int h, int radius, int r) {
-        try (Bitmap bitmap = new Bitmap()) {
-            bitmap.allocPixels(ImageInfo.makeS32(x + w, y + h, ColorAlphaType.OPAQUE));
-            canvas.readPixels(bitmap, x, y);
-            if (true) {
-
-                try (var shader = bitmap.makeShader();
-                     var blur = ImageFilter.makeBlur(radius, radius, FilterTileMode.CLAMP);
-                     var fill = new Paint().setShader(shader).setImageFilter(blur)) {
-                    canvas.save();
-                    canvas.translate(x, y);
-                    canvas.drawRRect(RRect.makeNinePatchXYWH(0, 0, w, h, r, r, r, r), fill);
-                    canvas.restore();
-                }
-            }
-        }
-    }
-
-    /***
-     * 绘制字体阴影,也可以实现其他效果
-     * @param canvas
-     * @param x 位置
-     * @param y
-     * @param s 文字
-     * @param ts 效果
-     */
-    public static void drawTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts) {
-        TextStyle f = new TextStyle();
-        try (ParagraphStyle ps = new ParagraphStyle();
-             ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));) {
-            pb.pushStyle(ts);
-            pb.addText(s);
-            try (Paragraph p = pb.build();) {
-                p.layout(Float.POSITIVE_INFINITY);
-                p.paint(canvas, x, y);
-            }
-        }
-    }
-
     /***
      * 获得条状渐变色
      * @param x 渐变开始坐标
@@ -444,8 +198,8 @@ public class SkiaUtil {
      * @param colors 色彩组
      * @return
      */
-    public static Shader getLinearShader(int x, int y ,int x1, int y1, int...colors){
-        return Shader.makeLinearGradient(x,y,x1,y1,colors);
+    public static Shader getLinearShader(int x, int y, int x1, int y1, int... colors) {
+        return Shader.makeLinearGradient(x, y, x1, y1, colors);
     }
 
     /***
@@ -561,7 +315,7 @@ public class SkiaUtil {
     public static Color[] getMainColor(Image image, int len) {
         //缩放图片
         if (Math.max(image.getWidth(), image.getHeight()) > MAIN_COLOR_IMAGE_MAX_SIZE) {
-            image = getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE / Math.max(image.getWidth(), image.getHeight()));
+            image = SkiaImageUtil.getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE / Math.max(image.getWidth(), image.getHeight()));
         }
         Bitmap bitmap = Bitmap.makeFromImage(image);
         int x_length = bitmap.getWidth();
@@ -593,10 +347,11 @@ public class SkiaUtil {
         return new Color[len];
     }
 
-    public static int[] getRandomColors(){
+    public static int[] getRandomColors() {
         return COLOR_GRAdDIENT[new Random().nextInt(COLOR_GRAdDIENT.length)];
     }
-    public static int getRandomColor(){
+
+    public static int getRandomColor() {
         return COLOR_SUGER[new Random().nextInt(COLOR_SUGER.length)];
     }
 }
