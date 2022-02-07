@@ -34,7 +34,7 @@ public class TestPPMService implements MessageService {
             user = osuGetService.getPlayerOsuInfoN(id);
             bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
         } else {
-            var userBin = BindingUtil.readUser(event.getSender().getId());
+            var userBin = bindDao.getUser(event.getSender().getId());
             user = osuGetService.getPlayerOsuInfoN(userBin);
             bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
         }

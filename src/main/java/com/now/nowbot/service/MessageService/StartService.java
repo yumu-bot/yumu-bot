@@ -35,9 +35,9 @@ public class StartService implements MessageService{
         Contact from = event.getSubject();
         BinUser user;
         if (at != null){
-            user = BindingUtil.readUser(at.getTarget());
+            user = bindDao.getUser(at.getTarget());
         }else {
-            user = BindingUtil.readUser(event.getSender().getId());
+            user = bindDao.getUser(event.getSender().getId());
         }
         StringBuffer sb = new StringBuffer();
         StarService.Score sc = starService.getScore(user);

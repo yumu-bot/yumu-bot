@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
@@ -24,8 +25,13 @@ import java.util.regex.Matcher;
 public class BindService implements MessageService {
     public record bind(Long key, MessageReceipt<Contact> receipt, Long qq){}
     public static final Map<Long, bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    @Autowired
     OsuGetService osuGetService;
+    BindDao bindDao;
+    @Autowired
+    public BindService(OsuGetService osuGetService, BindDao bindDao){
+        this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
@@ -33,8 +39,9 @@ public class BindService implements MessageService {
         if (Permission.isSupper(event.getSender().getId())){
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null){
-                var user = BindingUtil.readUser(at.getTarget());
-                if (BindingUtil.unBind(user)){
+                var user = bindDao.getUser(at.getTarget());
+
+                if (bindDao.unBind(user)){
                     throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
                 }else {
                     throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);
@@ -59,7 +66,7 @@ public class BindService implements MessageService {
         if ((event.getSubject() instanceof Group)) {
             BinUser user = null;
             try {
-                user = BindingUtil.readUser(event.getSender().getId());
+                user = bindDao.getUser(event.getSender().getId());
             } catch (TipsException e) {//未绑定时会出现file not find
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value

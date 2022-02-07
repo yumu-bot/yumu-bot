@@ -41,7 +41,7 @@ public class PPmService implements MessageService {
             return;
         }
         if (Math.random() < 0.01){
-            var userBin = BindingUtil.readUser(event.getSender().getId());
+            var userBin = bindDao.getUser(event.getSender().getId());
             var user = osuGetService.getPlayerOsuInfoN(userBin);
             var card = getUserCard(user);
             var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
@@ -67,7 +67,7 @@ public class PPmService implements MessageService {
 
         if (at != null) {
             // 包含有@
-            var userBin = BindingUtil.readUser(at.getTarget());
+            var userBin = bindDao.getUser(at.getTarget());
             user = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
             ppm = Ppm.getInstance(mode, user, bps);
@@ -80,7 +80,7 @@ public class PPmService implements MessageService {
                 bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
-                var userBin = BindingUtil.readUser(event.getSender().getId());
+                var userBin = bindDao.getUser(event.getSender().getId());
                 user = osuGetService.getPlayerInfoN(userBin, mode.getName());
                 bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
@@ -155,7 +155,7 @@ public class PPmService implements MessageService {
         };
         me://自己的信息
         {
-            var userBin = BindingUtil.readUser(event.getSender().getId());
+            var userBin = bindDao.getUser(event.getSender().getId());
             userMe = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bpListMe = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
@@ -165,7 +165,7 @@ public class PPmService implements MessageService {
         }
         if (at != null) {//被对比人的信息
             // 包含有@
-            var userBin = BindingUtil.readUser(at.getTarget());
+            var userBin = bindDao.getUser(at.getTarget());
             userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
             bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);

@@ -2,12 +2,12 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.Image;
@@ -26,11 +26,15 @@ import java.util.regex.Matcher;
 public class YmpService implements MessageService{
     private static final Logger log = LoggerFactory.getLogger(YmpService.class);
 
-    @Autowired
     RestTemplate template;
-
-    @Autowired
     OsuGetService osuGetService;
+    BindDao bindDao;
+    @Autowired
+    public YmpService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao){
+        template = restTemplate;
+        this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -43,12 +47,12 @@ public class YmpService implements MessageService{
         BinUser user = null;
         Long id = 0L;
         if (at != null){
-            user = BindingUtil.readUser(at.getTarget());
+            user = bindDao.getUser(at.getTarget());
         }else {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")){
                 id = osuGetService.getOsuId(matcher.group("name").trim());
             }else {
-                user = BindingUtil.readUser(event.getSender().getId());
+                user = bindDao.getUser(event.getSender().getId());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));

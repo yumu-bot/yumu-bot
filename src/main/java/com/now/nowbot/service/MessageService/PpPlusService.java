@@ -45,12 +45,12 @@ public class PpPlusService implements MessageService{
         At at;
         at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if (at != null){
-            user = BindingUtil.readUser(at.getTarget());
+            user = bindDao.getUser(at.getTarget());
             id = user.getOsuID();
         }else {
             String name = matcher.group("name");
             if(name == null || name.trim().equals("")){
-                user = BindingUtil.readUser(event.getSender().getId());
+                user = bindDao.getUser(event.getSender().getId());
                 id = user.getOsuID();
             }else {
                 id = (long) osuGetService.getOsuId(name);

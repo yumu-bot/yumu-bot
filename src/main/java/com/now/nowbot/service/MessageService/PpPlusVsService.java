@@ -32,7 +32,7 @@ public class PpPlusVsService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
-        BinUser user = BindingUtil.readUser(event.getSender().getId());
+        BinUser user = bindDao.getUser(event.getSender().getId());
 
         String id1, id2, head1, head2;
         id1 = String.valueOf(user.getOsuID());
@@ -41,7 +41,7 @@ public class PpPlusVsService implements MessageService {
         if (at != null) {
             BinUser userx;
             try {
-                userx = BindingUtil.readUser(at.getTarget());
+                userx = bindDao.getUser(at.getTarget());
             } catch (Exception e) {
                 //拦截错误 此处一般为被@的人没有绑定信息
                 throw new TipsException("对比的玩家没有绑定");

@@ -34,12 +34,12 @@ public class YmiService implements MessageService{
         BinUser user = null;
         Long id = 0L;
         if (at != null){
-            user = BindingUtil.readUser(at.getTarget());
+            user = bindDao.getUser(at.getTarget());
         }else {
             if (name != null && !name.trim().equals("")){
                 id = osuGetService.getOsuId(matcher.group("name").trim());
             }else {
-                user = BindingUtil.readUser(event.getSender().getId());
+                user = bindDao.getUser(event.getSender().getId());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));

@@ -40,7 +40,7 @@ public class MutualFriendService implements MessageService{
             event.getSubject().sendMessage(sb.toString());
             return;
         }
-        var user = BindingUtil.readUser(event.getSender().getId());
+        var user = bindDao.getUser(event.getSender().getId());
         var id = user.getOsuID();
 
         event.getSubject().sendMessage("https://osu.ppy.sh/users/" + id);

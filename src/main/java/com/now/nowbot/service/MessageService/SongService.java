@@ -30,7 +30,7 @@ public class SongService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         
         var from = event.getSubject();
-        BinUser user = BindingUtil.readUser(event.getSender().getId());
+        BinUser user = bindDao.getUser(event.getSender().getId());
         int id = 0;
         boolean isBid = true;
         if (matcher.group("id") != null) {

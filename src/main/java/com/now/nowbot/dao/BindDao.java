@@ -5,11 +5,14 @@ import com.now.nowbot.mapper.BindMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.TipsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BindDao {
+    Logger log = LoggerFactory.getLogger(BindDao.class);
     BindMapper bindMapper;
 
     @Autowired
@@ -35,6 +38,16 @@ public class BindDao {
 
     public void updateMod(Long uid, OsuMode mode) {
         bindMapper.updateMode(uid, mode);
+    }
+
+    public boolean unBind(BinUser user){
+        try {
+            bindMapper.unBind(user.getOsuID());
+            return true;
+        } catch (Exception e) {
+            log.error("unbind error",e);
+            return false;
+        }
     }
 
     public Long getQQ(Long uid) {

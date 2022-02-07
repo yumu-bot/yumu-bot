@@ -32,8 +32,8 @@ public class FriendService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        var user = BindingUtil.readUser(event.getSender().getId());
-//        var user = BindingUtil.readUser(2480557535L); 调试代码
+        var user = bindDao.getUser(event.getSender().getId());
+//        var user = bindDao.getUser(2480557535L); 调试代码
 
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;

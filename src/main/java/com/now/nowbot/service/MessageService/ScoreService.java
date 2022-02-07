@@ -27,13 +27,13 @@ public class ScoreService implements MessageService {
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if (at != null) {
             try {
-                user = BindingUtil.readUser(at.getTarget());
+                user = bindDao.getUser(at.getTarget());
             } catch (Exception e) {
                 throw new TipsException("该玩家没有绑定");
             }
         }
         else {
-            user = BindingUtil.readUser(event.getSender().getId());
+            user = bindDao.getUser(event.getSender().getId());
         }
         int bid = Integer.parseInt(matcher.group("bid"));
         JSONObject score = osuGetService.getScore(bid, user);
