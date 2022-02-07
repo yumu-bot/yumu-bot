@@ -54,10 +54,17 @@ public class BindDao {
         return bindMapper.getqq(uid);
     }
 
+    //todo 一会切换到name表
     public Long getOsuId(String name) {
         var data = bindMapper.getByOsuNameLike('%' + name + '%');
         if (data != null && data.getOsuId() != null) return data.getOsuId();
         else return null;
+    }
+    public void removeOsuNameToId(Long osuId){
+
+    }
+    public void saveOsuNameToId(Long id, String... name){
+
     }
 
     public static BinUser fromLite(QQUserLite qqUserLite) {

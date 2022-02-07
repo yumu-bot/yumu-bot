@@ -55,21 +55,21 @@ public class FriendService implements MessageService{
         var allFriend = osuGetService.getFrendList(user);
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
-        var infoMe = osuGetService.getPlayerOsuInfo(user);
-        var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getJSONObject("cover").getString("url"),true));
-        card.drawA1(infoMe.getString("avatar_url"))
-                .drawA2(PanelUtil.getFlag(infoMe.getJSONObject("country").getString("code")))
-                .drawA3(infoMe.getString("username"));
-        if (infoMe.getBoolean("is_supporter")){
+        var infoMe = osuGetService.getPlayerInfoN(user);
+        var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
+        card.drawA1(infoMe.getAvatarUrl())
+                .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))
+                .drawA3(infoMe.getUsername());
+        if (infoMe.getSupportLeve() != 0){
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         card.drawB3("")
-                .drawB2(infoMe.getJSONObject("country").getString("code") + "#" + infoMe.getJSONObject("statistics").getString("country_rank"))
-                .drawB1("U" + infoMe.getString("id"))
-                .drawC2(infoMe.getJSONObject("statistics").getString("hit_accuracy").substring(0, 4) + "% Lv." +
-                        infoMe.getJSONObject("statistics").getJSONObject("level").getString("current") +
-                        "(" + infoMe.getJSONObject("statistics").getJSONObject("level").getString("progress") + "%)")
-                .drawC1(infoMe.getJSONObject("statistics").getIntValue("pp") + "PP");
+                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatustucs().getCountryRank())
+                .drawB1("U" + infoMe.getId())
+                .drawC2(infoMe.getStatustucs().getAccuracy() + "% Lv." +
+                        infoMe.getStatustucs().getLevelCurrent() +
+                        "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
+                .drawC1(infoMe.getStatustucs().getPp() + "PP");
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());

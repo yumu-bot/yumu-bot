@@ -46,8 +46,9 @@ public class OsuGetService {
     static final ObjectMapper jsonMapper = new ObjectMapper();
 
     RestTemplate template;
+
     @Autowired
-    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind){
+    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind) {
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
@@ -162,6 +163,14 @@ public class OsuGetService {
 
         }
         var date = getPlayerInfoN(name);
+        bindDao.removeOsuNameToId(date.getId());
+        String[] names = new String[date.getPreviousName().size() + 1];
+        int i = 0;
+        names[i++] = date.getUsername().toUpperCase();
+        for (var nName : date.getPreviousName()) {
+            names[i++] = nName;
+        }
+        bindDao.saveOsuNameToId(date.getId(), names);
         return date.getId();
 //        BindingUtil.writeOsuID(date.getString("username"), id);
     }
@@ -185,12 +194,15 @@ public class OsuGetService {
     public OsuUser getPlayerOsuInfoN(BinUser user) {
         return getPlayerInfoN(user, "osu");
     }
+
     public OsuUser getPlayerTaikoInfoN(BinUser user) {
         return getPlayerInfoN(user, "taiko");
     }
+
     public OsuUser getPlayerCatchInfoN(BinUser user) {
         return getPlayerInfoN(user, "fruits");
     }
+
     public OsuUser getPlayerManiaInfoN(BinUser user) {
         return getPlayerInfoN(user, "mania");
     }
@@ -206,8 +218,20 @@ public class OsuGetService {
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
+
+    /**
+     *
+     * @param user
+     * @return
+     */
     public OsuUser getPlayerInfoN(BinUser user) {
-        String url = this.URL + "me";
+        String url;
+        if (user.getMode() == null) {
+            url = this.URL + "me";
+        }
+        else {
+            url = this.URL + "me" + '/' + user.getMode().getName();
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -221,6 +245,13 @@ public class OsuGetService {
         user.setMode(data.getPlayMode());
         return data;
     }
+
+    /**
+     * 仅通过name获取user信息
+     *
+     * @param userName
+     * @return
+     */
     public OsuUser getPlayerInfoN(String userName) {
         String url = this.URL + "users/" + userName;
 
@@ -238,6 +269,7 @@ public class OsuGetService {
         var data = c.getBody();
         return data;
     }
+
     public JSONObject getPlayerInfo(String name, String mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
                 .queryParam("key", "username")
@@ -261,12 +293,15 @@ public class OsuGetService {
     public JSONObject getPlayerOsuInfo(BinUser user) {
         return getPlayerInfo(user, "osu");
     }
+
     public JSONObject getPlayerTaikoInfo(BinUser user) {
         return getPlayerInfo(user, "taiko");
     }
+
     public JSONObject getPlayerCatchInfo(BinUser user) {
         return getPlayerInfo(user, "fruits");
     }
+
     public JSONObject getPlayerManiaInfo(BinUser user) {
         return getPlayerInfo(user, "mania");
     }
@@ -284,6 +319,7 @@ public class OsuGetService {
         user.setOsuName(c.getBody().getString("username"));
         return c.getBody();
     }
+
     /***
      * 使用本机token获取user信息
      * @param id
@@ -292,15 +328,19 @@ public class OsuGetService {
     public OsuUser getPlayerOsuInfoN(Long id) {
         return getPlayerInfoN(id, "osu");
     }
+
     public OsuUser getPlayerTaikoInfoN(Long id) {
         return getPlayerInfoN(id, "taiko");
     }
+
     public OsuUser getPlayerCatchInfoN(Long id) {
         return getPlayerInfoN(id, "fruits");
     }
+
     public OsuUser getPlayerManiaInfoN(Long id) {
         return getPlayerInfoN(id, "mania");
     }
+
     public OsuUser getPlayerInfoN(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
                 .queryParam("key", "id")
@@ -340,12 +380,15 @@ public class OsuGetService {
     public JSONObject getPlayerOsuInfo(int id) {
         return getPlayerInfo(id, "osu");
     }
+
     public JSONObject getPlayerTaikoInfo(int id) {
         return getPlayerInfo(id, "taiko");
     }
+
     public JSONObject getPlayerCatchInfo(int id) {
         return getPlayerInfo(id, "fruits");
     }
+
     public JSONObject getPlayerManiaInfo(int id) {
         return getPlayerInfo(id, "mania");
     }
@@ -379,6 +422,7 @@ public class OsuGetService {
     /**
      * 获得某个模式的bp表
      * 替换旧的FASTJson
+     *
      * @param user
      * @param mode
      * @param s
@@ -398,10 +442,12 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
+        });
         return c.getBody();
     }
-    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e){
+
+    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
         return getBestPerformance(user, mode.getName(), s, e);
     }
 
@@ -426,12 +472,15 @@ public class OsuGetService {
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
+        });
         return c.getBody();
     }
-    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e){
+
+    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e) {
         return getBestPerformance(id, mode.getName(), s, e);
     }
+
     public List<BpInfo> getOsuBestPerformance(BinUser user, int s, int e) {
         return getBestPerformance(user, "osu", s, e);
     }
@@ -463,6 +512,7 @@ public class OsuGetService {
     public List<BpInfo> getManiaBestPerformance(Long id, int s, int e) {
         return getBestPerformance(id, "mania", s, e);
     }
+
     /***
      * 获得score(最近游玩列表
      * @param user
@@ -478,11 +528,11 @@ public class OsuGetService {
         return getRecent(id, "osu", s, e);
     }
 
-    public JSONArray getOsuAllRecent(BinUser user, int s, int e){
+    public JSONArray getOsuAllRecent(BinUser user, int s, int e) {
         return getAllRecent(user, "osu", s, e);
     }
 
-    public JSONArray getOsuAllRecent(int id, int s, int e){
+    public JSONArray getOsuAllRecent(int id, int s, int e) {
         return getAllRecent(id, "osu", s, e);
     }
 
@@ -531,6 +581,7 @@ public class OsuGetService {
 
     /**
      * 获得上次成绩,不包含fail
+     *
      * @param id
      * @param mode
      * @param s
@@ -721,7 +772,7 @@ public class OsuGetService {
      * @return
      */
     public byte[] getReplay(String mode, long id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/"+mode+"/"+id+"/download")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/" + mode + "/" + id + "/download")
 //                .queryParam("mode","osu")
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -750,7 +801,7 @@ public class OsuGetService {
     @Retryable(
             value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
             maxAttempts = 5,
-            backoff = @Backoff(delay = 5000L, random = true, multiplier = 1 )
+            backoff = @Backoff(delay = 5000L, random = true, multiplier = 1)
     )
     public PpPlus ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
@@ -787,8 +838,8 @@ public class OsuGetService {
      * @param id
      * @return
      */
-    public JsonNode getPlayersInfo(int... id){
-        if (id.length<=0 || id.length>50 ){
+    public JsonNode getPlayersInfo(int... id) {
+        if (id.length <= 0 || id.length > 50) {
             return null;
         }
         StringBuilder sb = new StringBuilder();
@@ -801,7 +852,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " +getToken());
+        headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
@@ -814,8 +865,8 @@ public class OsuGetService {
      * @param mid
      * @return
      */
-    public JsonNode getMatchInfo(int mid){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" +mid)
+    public JsonNode getMatchInfo(int mid) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -827,15 +878,16 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
         } catch (Exception exc) {
-            var e = (RequestException)exc.getCause();
+            var e = (RequestException) exc.getCause();
             System.out.println(e.message);
         }
         return data;
     }
-    public JsonNode getMatchInfo(int mid, long before){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" +mid)
-                .queryParam("before",before)
-                .queryParam("limit",100)
+
+    public JsonNode getMatchInfo(int mid, long before) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
+                .queryParam("before", before)
+                .queryParam("limit", 100)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -847,7 +899,7 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
         } catch (Exception exc) {
-            var e = (RequestException)exc.getCause();
+            var e = (RequestException) exc.getCause();
             System.out.println(e.message);
         }
         return data;
