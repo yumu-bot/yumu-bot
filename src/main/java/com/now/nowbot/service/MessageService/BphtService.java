@@ -73,28 +73,28 @@ public class BphtService implements MessageService{
                     Bps = osuGetService.getOsuBestPerformance(nu, 0,100);
 
                 }else {
-                    Bps = osuGetService.getOsuBestPerformance(nu.getOsuID().intValue(),0,100);
+                    Bps = osuGetService.getOsuBestPerformance(nu.getOsuID(),0,100);
                 }
             }break;
             case TAIKO:{
                 if(isBind){
                     Bps = osuGetService.getTaikoBestPerformance(nu,  0, 100);
                 }else {
-                    Bps = osuGetService.getTaikoBestPerformance(nu.getOsuID().intValue(),  0, 100);
+                    Bps = osuGetService.getTaikoBestPerformance(nu.getOsuID(),  0, 100);
                 }
             }break;
             case CATCH:{
                 if(isBind){
                     Bps = osuGetService.getCatchBestPerformance(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getCatchBestPerformance(nu.getOsuID().intValue(), 0,100);
+                    Bps = osuGetService.getCatchBestPerformance(nu.getOsuID(), 0,100);
                 }
             }break;
             case MANIA:{
                 if(isBind){
                     Bps = osuGetService.getManiaBestPerformance(nu, 0,100);
                 }else {
-                    Bps = osuGetService.getManiaBestPerformance(nu.getOsuID().intValue(),0,100);
+                    Bps = osuGetService.getManiaBestPerformance(nu.getOsuID(),0,100);
                 }
             }break;
         }

@@ -30,7 +30,7 @@ public class TestPPMService implements MessageService {
         List<BpInfo> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-            int id = osuGetService.getOsuId(matcher.group("name").trim());
+            var id = osuGetService.getOsuId(matcher.group("name").trim());
             user = osuGetService.getPlayerOsuInfoN(id);
             bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
         } else {

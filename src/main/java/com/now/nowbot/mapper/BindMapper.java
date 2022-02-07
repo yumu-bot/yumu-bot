@@ -18,8 +18,8 @@ public interface BindMapper extends JpaRepository<QQUserLite, Long>, JpaSpecific
 
     @Modifying
     @Transactional
-    @Query("update QQUserLite o set o.accessToken = ?2,o.refreshToken = ?3 where osuId=?1")
-    void updateToken(Long uid, String accessToken, String refreshToken);
+    @Query("update QQUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where osuId=:uid")
+    void updateToken(Long uid, String accessToken, String refreshToken, Long time);
 
     @Modifying
     @Transactional

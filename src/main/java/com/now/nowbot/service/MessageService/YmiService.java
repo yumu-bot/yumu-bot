@@ -1,10 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -30,10 +29,10 @@ public class YmiService implements MessageService{
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
-        JSONObject date;
+        OsuUser date;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
-        int id = 0;
+        Long id = 0L;
         if (at != null){
             user = BindingUtil.readUser(at.getTarget());
         }else {
@@ -50,59 +49,59 @@ public class YmiService implements MessageService{
                     mode = OsuMode.OSU;
                 case OSU: {
                     if (user != null) {
-                        date = osuGetService.getPlayerOsuInfo(user);
+                        date = osuGetService.getPlayerOsuInfoN(user);
                     } else {
-                        date = osuGetService.getPlayerOsuInfo(id);
+                        date = osuGetService.getPlayerOsuInfoN(id);
                     }
                 }
                 break;
                 case TAIKO: {
                     if (user != null) {
-                        date = osuGetService.getPlayerTaikoInfo(user);
+                        date = osuGetService.getPlayerTaikoInfoN(user);
                     } else {
-                        date = osuGetService.getPlayerTaikoInfo(id);
+                        date = osuGetService.getPlayerTaikoInfoN(id);
                     }
                 }
                 break;
                 case CATCH: {
                     if (user != null) {
-                        date = osuGetService.getPlayerCatchInfo(user);
+                        date = osuGetService.getPlayerCatchInfoN(user);
                     } else {
-                        date = osuGetService.getPlayerCatchInfo(id);
+                        date = osuGetService.getPlayerCatchInfoN(id);
                     }
                 }
                 break;
                 case MANIA: {
                     if (user != null) {
-                        date = osuGetService.getPlayerManiaInfo(user);
+                        date = osuGetService.getPlayerManiaInfoN(user);
                     } else {
-                        date = osuGetService.getPlayerManiaInfo(id);
+                        date = osuGetService.getPlayerManiaInfoN(id);
                     }
                 }
                 break;
             }
         }
-        if(date.size()==0){
-            throw new TipsException("没有查询到您的信息呢");
-        }
+//        if(date.size()==0){
+//            throw new TipsException("没有查询到您的信息呢");
+//        }
         StringBuilder sb = new StringBuilder();
-        var statistics = date.getJSONObject("statistics");
+        var statistics = date.getStatustucs();
         // Muziyami(osu):10086PP
-        sb.append(date.getString("username")).append('(').append(mode).append(')').append(':').append(statistics.getFloatValue("pp")).append("PP").append('\n');
+        sb.append(date.getUsername()).append('(').append(mode).append(')').append(':').append(statistics.getPp()).append("PP").append('\n');
         // #114514 CN#1919 (LV.100(32%))
-        sb.append('#').append(statistics.getIntValue("global_rank")).append(' ')
-                .append(date.getJSONObject("country").getString("code")).append('#').append(statistics.getIntValue("country_rank")).append(' ')
-                .append("(LV.").append(statistics.getJSONObject("level").getIntValue("current")).append('(').append(statistics.getJSONObject("level").getIntValue("progress")).append("%))").append('\n');
+        sb.append('#').append(statistics.getGlobalRank()).append(' ')
+                .append(date.getCountry().countryCode()).append('#').append(statistics.getCountryRank()).append(' ')
+                .append("(LV.").append(statistics.getLevelCurrent()).append('(').append(statistics.getLevelProgress()).append("%))").append('\n');
         // PC:2.01w TTH:743.52w
         sb.append("PC:");
-        int PC = statistics.getIntValue("play_count");
+        long PC = statistics.getPlayCount();
         if (PC>10_000) {
             sb.append((PC / 100) / 100D).append('w');
         }else {
             sb.append(PC);
         }
         sb.append(" TTH:");
-        int TTH = statistics.getIntValue("total_hits");
+        long TTH = statistics.getTotalHits();
         if (TTH>10_000) {
             sb.append((TTH / 100) / 100D).append('w');
         }else {
@@ -111,7 +110,7 @@ public class YmiService implements MessageService{
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
         sb.append("PT:");
-        int PT = statistics.getIntValue("play_time");
+        long PT = statistics.getPlayTime();
         if(PT>86400){
             sb.append(PT/86400).append('d');
         }
@@ -121,31 +120,28 @@ public class YmiService implements MessageService{
         if(PT>60){
             sb.append((PT%3600)/60).append('m');
         }
-        sb.append(" ACC:").append(statistics.getFloatValue("hit_accuracy")).append('%').append('\n');
+        sb.append(" ACC:").append(statistics.getAccuracy()).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
-        sb.append("♡: ").append(date.getIntValue("follower_count"))
-                .append(" kds:").append(date.getJSONObject("kudosu").getIntValue("total")).append('\n');
+        sb.append("♡: ").append(date.getFollowerCount())
+                .append(" kds:").append(date.getKudosu().total()).append('\n');
         // SS:26(107) S:157(844) A:1083
-        sb.append("SS:").append(statistics.getJSONObject("grade_counts").getIntValue("ss"))
-                .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("ssh")).append(')')
-                .append(" S:").append(statistics.getJSONObject("grade_counts").getIntValue("s"))
-                .append('(').append(statistics.getJSONObject("grade_counts").getIntValue("sh")).append(')')
-                .append(" A:").append(statistics.getJSONObject("grade_counts").getIntValue("a")).append('\n');
+        sb.append("SS:").append(statistics.getSS())
+                .append('(').append(statistics.getSSH()).append(')')
+                .append(" S:").append(statistics.getS())
+                .append('(').append(statistics.getSH()).append(')')
+                .append(" A:").append(statistics.getA()).append('\n');
         // uid:7003013
-        sb.append("UID:").append(date.getIntValue("id")).append('\n');
+        sb.append("UID:").append(date.getId()).append('\n');
 
-        String occupation = (String) date.getOrDefault("occupation","");
-        String discord = (String) date.getOrDefault("discord","");
-        String interests = (String) date.getOrDefault("interests","");
-        if ((occupation != null && !occupation.trim().equals("")) || (discord != null && !discord.trim().equals("")) || (interests != null && !interests.trim().equals(""))){
-            sb.append('\n');
-            if (occupation != null && !occupation.trim().equals("")) {
-                sb.append("occupation: ").append(occupation.trim()).append('\n');
-            }if (discord != null && !discord.trim().equals("")) {
-                sb.append("discord: ").append(discord.trim()).append('\n');
-            }if (interests != null && !interests.trim().equals("")) {
-                sb.append("interests: ").append(interests.trim()).append('\n');
-            }
+        String occupation =  date.getOccupation();
+        String discord =  date.getDiscord();
+        String interests =  date.getInterests();
+        if (occupation != null && !occupation.trim().equals("")) {
+            sb.append('\n').append("occupation: ").append(occupation.trim());
+        }if (discord != null && !discord.trim().equals("")) {
+            sb.append('\n').append("discord: ").append(discord.trim());
+        }if (interests != null && !interests.trim().equals("")) {
+            sb.append('\n').append("interests: ").append(interests.trim());
         }
 //        Image img = from.uploadImage(ExternalResource.create());
         from.sendMessage(sb.toString());

@@ -1,10 +1,10 @@
 package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.UpdateUtil;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
@@ -21,13 +21,14 @@ import java.time.format.DateTimeFormatter;
 public class msgController {
     static final Logger log = LoggerFactory.getLogger(msgController.class);
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
-    @Autowired
     OsuGetService osuGetService;
     Bot bot;
+    BindDao bindDao;
     @Autowired
-    public msgController(Bot bot, OsuGetService osuGetService){
+    public msgController(Bot bot, OsuGetService osuGetService, BindDao dao){
         this.bot = bot;
         this.osuGetService = osuGetService;
+        bindDao = dao;
     }
     @GetMapping("${osu.callbackpath}")
     public String bind(@RequestParam("code")String code, @RequestParam("state") String stat){
@@ -56,9 +57,7 @@ public class msgController {
                     }
                     BinUser bd = new BinUser(msg.qq(), code);
                     osuGetService.getToken(bd);
-                    osuGetService.getPlayerOsuInfo(bd);
-                    BindingUtil.writeUser(bd);
-                    BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID().intValue());
+                    bindDao.saveUser(bd);
                     msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                     BindService.BIND_MSG_MAP.remove(key);
                     sb.append("成功绑定:\n")

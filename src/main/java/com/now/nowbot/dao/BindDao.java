@@ -29,8 +29,8 @@ public class BindDao {
         bindMapper.save(data);
     }
 
-    public void updateToken(Long uid, String accessToken, String refreshToken) {
-        bindMapper.updateToken(uid, accessToken, refreshToken);
+    public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
+        bindMapper.updateToken(uid, accessToken, refreshToken, time);
     }
 
     public void updateMod(Long uid, OsuMode mode) {
@@ -39,6 +39,12 @@ public class BindDao {
 
     public Long getQQ(Long uid) {
         return bindMapper.getqq(uid);
+    }
+
+    public Long getOsuId(String name) {
+        var data = bindMapper.getByOsuNameLike('%' + name + '%');
+        if (data != null && data.getOsuId() != null) return data.getOsuId();
+        else return null;
     }
 
     public static BinUser fromLite(QQUserLite qqUserLite) {

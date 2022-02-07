@@ -23,7 +23,11 @@ public class OsuUser {
     public record Kudosu(Integer total, Integer available){}
     public record RankHistory(OsuMode mode, List<Integer> history){}
 
+    @JsonProperty("playmode")
+    String playMode;
     String occupation;
+    String discord;
+    String interests;
     @JsonProperty("unranked_beatmapset_count")
     Integer beatmapSetCountUnranked;
     @JsonProperty("ranked_beatmapset_count")
@@ -56,6 +60,8 @@ public class OsuUser {
     short supportLeve;
     @JsonProperty("post_count")
     Integer postCount;
+    @JsonProperty("follower_count")
+    Integer followerCount;
     @JsonProperty("raw")
     String page;
     @JsonProperty("avatar_url")
@@ -96,6 +102,22 @@ public class OsuUser {
             return statustucs.getPp();
         }
         return pp;
+    }
+
+    public Integer getFollowerCount() {
+        return followerCount;
+    }
+
+    public void setFollowerCount(Integer followerCount) {
+        this.followerCount = followerCount;
+    }
+
+    public OsuMode getPlayMode() {
+        return OsuMode.getMode(playMode);
+    }
+
+    public void setPlayMode(String playMode) {
+        this.playMode = playMode;
     }
 
     public void setPp(Double pp) {
@@ -367,5 +389,21 @@ public class OsuUser {
             return statustucs.getLevelProgress();
         }
         return null;
+    }
+
+    public String getDiscord() {
+        return discord;
+    }
+
+    public void setDiscord(String discord) {
+        this.discord = discord;
+    }
+
+    public String getInterests() {
+        return interests;
+    }
+
+    public void setInterests(String interests) {
+        this.interests = interests;
     }
 }

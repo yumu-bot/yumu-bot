@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.config.OSUConfig;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BpInfo;
@@ -12,7 +13,6 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.RequestException;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -41,17 +41,19 @@ public class OsuGetService {
     private String redirectUrl;
     private String oauthToken;
     private String URL;
+    BindDao bindDao;
 
     static final ObjectMapper jsonMapper = new ObjectMapper();
 
     RestTemplate template;
     @Autowired
-    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig){
+    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind){
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
         URL = osuConfig.getUrl();
 
+        bindDao = bind;
         template = restTemplate;
     }
 
@@ -76,7 +78,7 @@ public class OsuGetService {
      * @param binUser
      * @return
      */
-    public JSONObject getToken(BinUser binUser) {
+    public JsonNode getToken(BinUser binUser) {
         String url = "https://osu.ppy.sh/oauth/token";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -89,15 +91,14 @@ public class OsuGetService {
         body.add("redirect_uri", redirectUrl);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
-        JSONObject s = template.postForObject(url, httpEntity, JSONObject.class);
-        binUser.setAccessToken(s.getString("access_token"));
-        binUser.setRefreshToken(s.getString("refresh_token"));
-        binUser.nextTime(s.getLong("expires_in"));
-        try {
-            BindingUtil.writeUser(binUser);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        var s = template.postForObject(url, httpEntity, JsonNode.class);
+        binUser.setAccessToken(s.get("access_token").asText());
+        binUser.setRefreshToken(s.get("refresh_token").asText());
+        binUser.nextTime(s.get("expires_in").asLong());
+
+        getPlayerInfoN(binUser);
+        bindDao.saveUser(binUser);
+
         return s;
     }
 
@@ -131,7 +132,7 @@ public class OsuGetService {
      * @param binUser
      * @return
      */
-    public JSONObject refreshToken(BinUser binUser) {
+    public JsonNode refreshToken(BinUser binUser) {
         String url = "https://osu.ppy.sh/oauth/token";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -144,15 +145,8 @@ public class OsuGetService {
         body.add("redirect_uri", redirectUrl);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
-        JSONObject s = template.postForObject(url, httpEntity, JSONObject.class);
-        binUser.setAccessToken(s.getString("access_token"));
-        binUser.setRefreshToken(s.getString("refresh_token"));
-        binUser.nextTime(s.getLong("expires_in"));
-        try {
-            BindingUtil.writeUser(binUser);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        JsonNode s = template.postForObject(url, httpEntity, JsonNode.class);
+        bindDao.updateToken(binUser.getOsuID(), s.get("access_token").asText(), s.get("refresh_token").asText(), s.get("expires_in").asLong());
         return s;
     }
 
@@ -161,14 +155,15 @@ public class OsuGetService {
      * @param name
      * @return
      */
-    public int getOsuId(String name) {
-        int id = BindingUtil.readOsuID(name);
-        if (id == 0) {
-            var date = getPlayerOsuInfo(name);
-            id = date.getIntValue("id");
-            BindingUtil.writeOsuID(date.getString("username"), id);
+    public Long getOsuId(String name) {
+        var id = bindDao.getOsuId(name);
+        if (id != null) {
+            return id;
+
         }
-        return id;
+        var date = getPlayerInfoN(name);
+        return date.getId();
+//        BindingUtil.writeOsuID(date.getString("username"), id);
     }
 
     public JsonNode getFrendList(BinUser user) {
@@ -209,11 +204,55 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
+        return c.getBody();
+    }
+    public OsuUser getPlayerInfoN(BinUser user) {
+        String url = this.URL + "me";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
         user.setOsuID(data.getId());
         user.setOsuName(data.getUsername());
+        user.setMode(data.getPlayMode());
+        return data;
+    }
+    public OsuUser getPlayerInfoN(String userName) {
+        String url = this.URL + "users/" + userName;
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName)
+                .queryParam("key", "username")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
+        var data = c.getBody();
+        return data;
+    }
+    public JSONObject getPlayerInfo(String name, String mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
+                .queryParam("key", "username")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
         return c.getBody();
     }
+
     /***
      * 拿到详细的个人信息 旧
      * @param user
@@ -250,21 +289,35 @@ public class OsuGetService {
      * @param id
      * @return
      */
-    public OsuUser getPlayerOsuInfoN(int id) {
+    public OsuUser getPlayerOsuInfoN(Long id) {
         return getPlayerInfoN(id, "osu");
     }
-    public OsuUser getPlayerTaikoInfoN(int id) {
+    public OsuUser getPlayerTaikoInfoN(Long id) {
         return getPlayerInfoN(id, "taiko");
     }
-    public OsuUser getPlayerCatchInfoN(int id) {
+    public OsuUser getPlayerCatchInfoN(Long id) {
         return getPlayerInfoN(id, "fruits");
     }
-    public OsuUser getPlayerManiaInfoN(int id) {
+    public OsuUser getPlayerManiaInfoN(Long id) {
         return getPlayerInfoN(id, "mania");
+    }
+    public OsuUser getPlayerInfoN(Long id) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
+                .queryParam("key", "id")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
+        return c.getBody();
     }
 
 
-    public OsuUser getPlayerInfoN(int id, String mode) {
+    public OsuUser getPlayerInfoN(Long id, String mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
@@ -322,20 +375,7 @@ public class OsuGetService {
         return getPlayerInfo(name, "osu");
     }
 
-    public JSONObject getPlayerInfo(String name, String mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
-                .queryParam("key", "username")
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        return c.getBody();
-    }
     /**
      * 获得某个模式的bp表
      * 替换旧的FASTJson
@@ -372,7 +412,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestPerformance(int id, String mode, int s, int e) {
+    public List<BpInfo> getBestPerformance(Long id, String mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -389,14 +429,14 @@ public class OsuGetService {
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>(){});
         return c.getBody();
     }
-    public List<BpInfo> getBestPerformance(int id, OsuMode mode, int s, int e){
+    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e){
         return getBestPerformance(id, mode.getName(), s, e);
     }
     public List<BpInfo> getOsuBestPerformance(BinUser user, int s, int e) {
         return getBestPerformance(user, "osu", s, e);
     }
 
-    public List<BpInfo> getOsuBestPerformance(int id, int s, int e) {
+    public List<BpInfo> getOsuBestPerformance(Long id, int s, int e) {
         return getBestPerformance(id, "osu", s, e);
     }
 
@@ -404,7 +444,7 @@ public class OsuGetService {
         return getBestPerformance(user, "taiko", s, e);
     }
 
-    public List<BpInfo> getTaikoBestPerformance(int id, int s, int e) {
+    public List<BpInfo> getTaikoBestPerformance(Long id, int s, int e) {
         return getBestPerformance(id, "taiko", s, e);
     }
 
@@ -412,7 +452,7 @@ public class OsuGetService {
         return getBestPerformance(user, "fruits", s, e);
     }
 
-    public List<BpInfo> getCatchBestPerformance(int id, int s, int e) {
+    public List<BpInfo> getCatchBestPerformance(Long id, int s, int e) {
         return getBestPerformance(id, "fruits", s, e);
     }
 
@@ -420,7 +460,7 @@ public class OsuGetService {
         return getBestPerformance(user, "mania", s, e);
     }
 
-    public List<BpInfo> getManiaBestPerformance(int id, int s, int e) {
+    public List<BpInfo> getManiaBestPerformance(Long id, int s, int e) {
         return getBestPerformance(id, "mania", s, e);
     }
     /***

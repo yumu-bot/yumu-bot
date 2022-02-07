@@ -26,7 +26,7 @@ public class MutualFriendService implements MessageService{
             while (m.find()){
                 String name = m.group("name").trim();
                 try {
-                    int id = osuGetService.getOsuId(name);
+                    Long id = osuGetService.getOsuId(name);
                     sb.append(name).append(" : ").append(id).append("\n");
                 } catch (Exception res) {
                     if (res instanceof RequestException r && r.status.getReasonPhrase().equals("Not Found")) {

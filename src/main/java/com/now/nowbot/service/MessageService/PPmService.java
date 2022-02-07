@@ -75,7 +75,7 @@ public class PPmService implements MessageService {
             // 不包含@ 分为查自身/查他人
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
-                int id = osuGetService.getOsuId(matcher.group("name").trim());
+                var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = osuGetService.getPlayerInfoN(id, mode.getName());
                 bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
@@ -170,7 +170,7 @@ public class PPmService implements MessageService {
             bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-            int id = osuGetService.getOsuId(matcher.group("name").trim());
+            var id = osuGetService.getOsuId(matcher.group("name").trim());
             userOther = osuGetService.getPlayerInfoN(id, mode.getName());
             bpListOther = osuGetService.getBestPerformance(id, mode.getName(),0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);

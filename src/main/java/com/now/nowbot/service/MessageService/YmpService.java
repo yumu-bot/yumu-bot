@@ -41,7 +41,7 @@ public class YmpService implements MessageService{
         JSONArray dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
-        int id = 0;
+        Long id = 0L;
         if (at != null){
             user = BindingUtil.readUser(at.getTarget());
         }else {
@@ -102,10 +102,10 @@ public class YmpService implements MessageService{
         else
             return osuGetService.getRecent(user, mode, 0, 1);
     }
-    private JSONArray getDates(int id, String mode, boolean isAll){
+    private JSONArray getDates(Long id, String mode, boolean isAll){
         if (isAll)
-            return osuGetService.getAllRecent(id, mode, 0, 1);
+            return osuGetService.getAllRecent(Math.toIntExact(id), mode, 0, 1);
         else
-            return osuGetService.getRecent(id, mode, 0, 1);
+            return osuGetService.getRecent(Math.toIntExact(id), mode, 0, 1);
     }
 }
