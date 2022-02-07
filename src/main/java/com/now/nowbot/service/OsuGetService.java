@@ -241,7 +241,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JSONObject> c = template.exchange(url, HttpMethod.GET, httpEntity, JSONObject.class);
-        user.setOsuID(c.getBody().getIntValue("id"));
+        user.setOsuID(c.getBody().getLong("id"));
         user.setOsuName(c.getBody().getString("username"));
         return c.getBody();
     }

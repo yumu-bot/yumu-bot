@@ -1,22 +1,39 @@
 package com.now.nowbot.model;
 
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 
 public class BinUser {
-    //qq号
+    /**
+     * qq号
+     */
     long qq;
-    //osu id
+    /**
+     * osu name
+     */
     String osuName;
-    //个人主页后面那串数
-    int osuID;
-    //当前令牌
+    /**
+     * 个人主页后面那串数
+     */
+    Long osuID;
+    /**
+     * 当前令牌
+     */
     String accessToken;
-    //刷新令牌
+    /**
+     * 刷新令牌
+     */
     String refreshToken;
-    //过期时间戳
+    /**
+     * 过期时间戳
+     */
     long time;
+    /**
+     * 主模式
+     */
+    OsuMode mode;
 
-    public BinUser(){
+    public BinUser() {
         reTime();
     }
 
@@ -42,12 +59,15 @@ public class BinUser {
         this.osuName = osuName;
     }
 
-    public int getOsuID() {
+    public Long getOsuID() {
         return osuID;
     }
 
-    public void setOsuID(int osuID) {
+    public void setOsuID(Long osuID) {
         this.osuID = osuID;
+    }
+    public void setOsuID(int osuID) {
+        this.osuID = (long) osuID;
     }
 
     public String getRefreshToken() {
@@ -61,8 +81,9 @@ public class BinUser {
     public String getAccessToken() {
         return accessToken;
     }
+
     public String getAccessToken(OsuGetService service) {
-        if(isPassed())
+        if (isPassed())
             service.refreshToken(this);
         return accessToken;
     }
@@ -79,15 +100,24 @@ public class BinUser {
         this.time = time;
     }
 
-    public void reTime(){
+    public void reTime() {
         time = System.currentTimeMillis();
     }
-    public void nextTime(long addTime){
+
+    public void nextTime(long addTime) {
         time = System.currentTimeMillis() + addTime * 1000;
     }
 
-    public boolean isPassed(){
+    public boolean isPassed() {
         return System.currentTimeMillis() > time;
+    }
+
+    public OsuMode getMode() {
+        return mode;
+    }
+
+    public void setMode(OsuMode mode) {
+        this.mode = mode;
     }
 
     @Override

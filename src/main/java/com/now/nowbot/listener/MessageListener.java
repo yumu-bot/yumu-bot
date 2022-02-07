@@ -108,7 +108,7 @@ public class MessageListener extends SimpleListenerHost {
             ASyncMessageUtil.put(event);
             for(var ins : Instruction.values()){
                 //功能关闭 优先级高于aop拦截
-                if (Permission.serviceIsClouse(ins)) continue;
+                if (Permission.serviceIsClouse(ins) && !Permission.isSupper(event.getSender().getId())) continue;
 
                 Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
                 if (matcher.find()) {

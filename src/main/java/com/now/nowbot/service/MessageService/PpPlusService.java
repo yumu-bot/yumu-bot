@@ -41,7 +41,7 @@ public class PpPlusService implements MessageService{
         Contact from = event.getSubject();
 
         BinUser user = null;
-        int id;
+        Long id;
         At at;
         at = (At)event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if (at != null){
@@ -53,7 +53,7 @@ public class PpPlusService implements MessageService{
                 user = BindingUtil.readUser(event.getSender().getId());
                 id = user.getOsuID();
             }else {
-                id = osuGetService.getOsuId(name);
+                id = (long) osuGetService.getOsuId(name);
             }
         }
 
@@ -63,7 +63,7 @@ public class PpPlusService implements MessageService{
         if (user != null) {
             userData = osuGetService.getPlayerOsuInfo(user);
         }else {
-            userData = osuGetService.getPlayerOsuInfo(id);
+            userData = osuGetService.getPlayerOsuInfo(Math.toIntExact(id));
         }
         headUrl = userData.getString("avatar_url");
 

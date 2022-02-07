@@ -58,7 +58,7 @@ public class msgController {
                     osuGetService.getToken(bd);
                     osuGetService.getPlayerOsuInfo(bd);
                     BindingUtil.writeUser(bd);
-                    BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID());
+                    BindingUtil.writeOsuID(bd.getOsuName(), bd.getOsuID().intValue());
                     msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                     BindService.BIND_MSG_MAP.remove(key);
                     sb.append("成功绑定:\n")

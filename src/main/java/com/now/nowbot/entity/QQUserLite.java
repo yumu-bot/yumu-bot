@@ -1,12 +1,16 @@
 package com.now.nowbot.entity;
 
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "qq_user")
+@Table(name = "qq_user", indexes = {
+        @Index(name = "bind_qid", columnList = "qq"),
+        @Index(name = "bind_oid", columnList = "osu_id"),
+})
 public class QQUserLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +34,18 @@ public class QQUserLite {
     //主模式
     @Column(name = "main_mode")
     private OsuMode mainMode;
+
+    public QQUserLite(BinUser data){
+        this.joinDate = LocalDateTime.now();
+        this.osuId = (long) data.getOsuID();
+        this.osuName = data.getOsuName();
+        this.qq = data.getQq();
+        this.accessToken = data.getAccessToken();
+        this.refreshToken = getRefreshToken();
+        this.time = data.getTime();
+        this.mainMode = data.getMode();
+    }
+    public QQUserLite(){}
 
     public Long getId() {
         return id;
