@@ -1,13 +1,13 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.serviceException.PpmException;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
@@ -32,6 +32,8 @@ import java.util.regex.Matcher;
 public class PPmService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -214,12 +216,12 @@ public class PPmService implements MessageService {
         ppmMe.drawValueName(panel::drawLeftNameN);
         ppmMe.drawValue(panel::drawLeftValueN);
         ppmMe.drawRank(panel::switchLeftRank);
-        ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)->{return null;});
+        ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)-> null);
 
         ppmOther.drawValueName(panel::drawRightNameN);
         ppmOther.drawValue(panel::drawRightValueN);
         ppmOther.drawRank(panel::switchRightRank);
-        ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)->{return null;});
+        ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)-> null);
         panel.drawLeftCard(cardMe.build());
         panel.drawRightCard(cardOther.build());
         panel.drawHexagon(hexOther,false);

@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.service.StarService;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
@@ -18,10 +18,12 @@ public class StartService implements MessageService{
 
     StarService starService;
     OsuGetService osuGetService;
+    BindDao bindDao;
     @Autowired
-    public StartService(StarService service, OsuGetService osuGetService){
+    public StartService(StarService service, OsuGetService osuGetService,BindDao bindDao){
         this.starService = service;
         this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
     }
 
     @Override

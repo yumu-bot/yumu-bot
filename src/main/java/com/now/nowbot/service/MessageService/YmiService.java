@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
@@ -23,6 +23,8 @@ public class YmiService implements MessageService{
 
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

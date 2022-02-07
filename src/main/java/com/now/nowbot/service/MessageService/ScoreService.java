@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +16,8 @@ import java.util.regex.Matcher;
 public class ScoreService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

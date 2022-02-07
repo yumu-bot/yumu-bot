@@ -1,11 +1,11 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,10 +16,12 @@ import java.util.regex.Matcher;
 @Service("t-ppm")
 public class TestPPMService implements MessageService {
     @Autowired
-    public TestPPMService(OsuGetService osuGetService) {
+    public TestPPMService(OsuGetService osuGetService,BindDao bindDao) {
         this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
     }
 
+    BindDao bindDao;
     private OsuGetService osuGetService;
 
     @Override

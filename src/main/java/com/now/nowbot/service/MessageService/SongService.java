@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.contact.AudioSupported;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Audio;
@@ -25,6 +25,8 @@ public class SongService implements MessageService{
 
     @Autowired
     OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

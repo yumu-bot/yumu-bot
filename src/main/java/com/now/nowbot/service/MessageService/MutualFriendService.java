@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.RequestException;
-import com.now.nowbot.util.BindingUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 @Service("mu")
 public class MutualFriendService implements MessageService{
     private OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
     @Autowired
     MutualFriendService(OsuGetService osuGetService){
         this.osuGetService = osuGetService;

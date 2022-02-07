@@ -1,9 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -23,10 +23,12 @@ public class FriendService implements MessageService{
 //    static final ThreadPoolExecutor threads = new ThreadPoolExecutor(0, 12, 100, TimeUnit.MILLISECONDS, new LinkedBlockingQueue(256));
     private static final Logger log = LoggerFactory.getLogger(FriendService.class);
 
+    BindDao bindDao;
     OsuGetService osuGetService;
     @Autowired
-    public FriendService(OsuGetService osuGetService){
+    public FriendService(OsuGetService osuGetService,BindDao bindDao){
         this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

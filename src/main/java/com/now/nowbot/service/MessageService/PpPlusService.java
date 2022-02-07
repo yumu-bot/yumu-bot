@@ -2,13 +2,13 @@ package com.now.nowbot.service.MessageService;
 
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.serviceException.PppException;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.Panel.PPPlusPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
@@ -35,6 +35,8 @@ public class PpPlusService implements MessageService{
     OsuGetService osuGetService;
     @Autowired
     PPPlusDao ppPlusDao;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
