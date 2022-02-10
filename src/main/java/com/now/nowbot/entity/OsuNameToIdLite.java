@@ -14,6 +14,7 @@ public class OsuNameToIdLite {
 
     private String name;
     private Long uid;
+    @Column(name="idx")
     private Integer index;
 
     public OsuNameToIdLite() {
