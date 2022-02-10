@@ -1,6 +1,11 @@
 package com.now.nowbot.service;
 
 
+import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.MessageService.BindService;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
@@ -9,7 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /***
  * 统一设置定时任务
@@ -21,6 +31,8 @@ public class RunTimeService {
     Bot bot;
     @Autowired
     BiliApiService biliApiService;
+    @Autowired
+    BindDao bindDao;
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
 
     /*
@@ -47,6 +59,44 @@ public class RunTimeService {
         var t = bot.getGroup(582121443);
         if (t != null){
             t.sendMessage("现在是北京时间 23:00:00");
+        }
+    }
+
+    @Scheduled(cron = "2 10 17 * * *")
+    public void bindMove() {
+        var from = bot.getGroup(746671531);
+        from.sendMessage("开始转移");
+        Path pt = Path.of(NowbotConfig.BIN_PATH);
+        List<Path> allUseer = null;
+        try {
+            allUseer = Files.list(pt).filter((path)-> path.getFileName().toString().endsWith(".json")).collect(Collectors.toList());
+        } catch (IOException e) {
+            from.sendMessage(e.getMessage());
+        }
+        for(var path : allUseer){
+            BinUser date = null;
+            if (Files.isRegularFile(path)) {
+                try {
+                    String s = Files.readString(path);
+                    date = JSONObject.parseObject(s, BinUser.class);
+                } catch (IOException e) {
+                    from.sendMessage(e.getMessage());
+                }
+            }
+            if (date != null ) {
+                date.setMode(OsuMode.OSU);
+                bindDao.saveUser(date);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            var f = Files.list(Path.of("D:\\")).filter((path)-> path.getFileName().toString().endsWith(".png")).collect(Collectors.toList());
+            System.out.println(f.size());
+            System.out.println(f.get(0).toString());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
