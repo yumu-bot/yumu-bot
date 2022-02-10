@@ -157,7 +157,7 @@ public class OsuGetService {
      * @return
      */
     public Long getOsuId(String name) {
-        var id = null;//bindDao.getOsuId(name);
+        Long id = null;//bindDao.getOsuId(name);
         if (id != null) {
             return id;
 
