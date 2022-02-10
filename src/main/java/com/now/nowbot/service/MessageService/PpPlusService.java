@@ -5,6 +5,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.PPPlusDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
@@ -60,14 +61,14 @@ public class PpPlusService implements MessageService{
         }
 
         String idString,headUrl;
-        JSONObject userData;
+        OsuUser userData;
         idString = String.valueOf(id);
         if (user != null) {
-            userData = osuGetService.getPlayerOsuInfo(user);
+            userData = osuGetService.getPlayerOsuInfoN(user);
         }else {
-            userData = osuGetService.getPlayerOsuInfo(Math.toIntExact(id));
+            userData = osuGetService.getPlayerOsuInfoN(id);
         }
-        headUrl = userData.getString("avatar_url");
+        headUrl = userData.getAvatarUrl();
 
 
         PpPlus pppData = null;
@@ -77,7 +78,9 @@ public class PpPlusService implements MessageService{
             log.info("ppp 错误",e);
             throw new PppException(PppException.Type.PPP_Default_APIConnectFailed);
         }
-        ppp(from, pppData, userData);
+        if (true) return;
+//todo     ppp的重构
+//         ppp(from, pppData, userData);
 
         float[] hex1 = ppPlusDao.ppsize(pppData);
 

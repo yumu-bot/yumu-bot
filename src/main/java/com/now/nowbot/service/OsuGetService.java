@@ -810,11 +810,15 @@ public class OsuGetService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = null;
+        ResponseEntity<JsonNode> response = null;
 
-        c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        response = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
 
-        return JacksonUtil.parseObject(c.getBody().get("user_data"), PpPlus.class);
+
+        var data = response.getBody().get("user_data");
+        if (data != null)
+            return JacksonUtil.parseObject(data ,PpPlus.class);
+        else throw new RuntimeException("get response error");
     }
 
     /***

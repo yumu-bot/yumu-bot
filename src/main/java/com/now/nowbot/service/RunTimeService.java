@@ -22,11 +22,13 @@ public class RunTimeService {
     @Autowired
     BiliApiService biliApiService;
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
+
+    /*
     @Scheduled(cron = "14 * * * * *")
     public void happynewyear(){
         biliApiService.check();
     }
-    /*
+
     提醒ec睡觉
     @Scheduled(cron = "0 0 0 * * *")
     public void sleep(){
@@ -40,6 +42,13 @@ public class RunTimeService {
         });
     }
     */
+    @Scheduled(cron = "2 0 0-4,20-23 * * *")
+    public void say(){
+        var t = bot.getGroup(582121443);
+        if (t != null){
+            t.sendMessage("现在是北京时间 23:00:00");
+        }
+    }
 
     /***
      * 每分钟清理未绑定的

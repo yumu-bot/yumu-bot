@@ -7,7 +7,6 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.BindingUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
