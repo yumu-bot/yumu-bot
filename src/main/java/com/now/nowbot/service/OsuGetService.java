@@ -157,20 +157,20 @@ public class OsuGetService {
      * @return
      */
     public Long getOsuId(String name) {
-        var id = bindDao.getOsuId(name);
+        var id = null;//bindDao.getOsuId(name);
         if (id != null) {
             return id;
 
         }
         var date = getPlayerInfoN(name);
-        bindDao.removeOsuNameToId(date.getId());
+        //bindDao.removeOsuNameToId(date.getId());
         String[] names = new String[date.getPreviousName().size() + 1];
         int i = 0;
         names[i++] = date.getUsername().toUpperCase();
         for (var nName : date.getPreviousName()) {
             names[i++] = nName;
         }
-        bindDao.saveOsuNameToId(date.getId(), names);
+        //bindDao.saveOsuNameToId(date.getId(), names);
         return date.getId();
 //        BindingUtil.writeOsuID(date.getString("username"), id);
     }
