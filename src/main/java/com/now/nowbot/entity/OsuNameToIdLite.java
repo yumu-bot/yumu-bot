@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_name_id", indexes = {
-        @Index(name = "osu_find_name", columnList = "name"),
+        @Index(name = "osufindname", columnList = "name"),
 })
 
 public class OsuNameToIdLite {
