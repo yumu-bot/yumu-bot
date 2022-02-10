@@ -1,7 +1,9 @@
 package com.now.nowbot.dao;
 
-import com.now.nowbot.entity.QQUserLite;
+import com.now.nowbot.entity.OsuBindUserLite;
+import com.now.nowbot.entity.OsuNameToIdLite;
 import com.now.nowbot.mapper.BindMapper;
+import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.TipsException;
@@ -14,10 +16,12 @@ import org.springframework.stereotype.Component;
 public class BindDao {
     Logger log = LoggerFactory.getLogger(BindDao.class);
     BindMapper bindMapper;
+    OsuFindNameMapper osuFindNameMapper;
 
     @Autowired
-    public BindDao(BindMapper mapper) {
+    public BindDao(BindMapper mapper, OsuFindNameMapper nameMapper) {
         bindMapper = mapper;
+        osuFindNameMapper = nameMapper;
     }
 
     public BinUser getUser(Long qq) throws TipsException {
@@ -26,8 +30,15 @@ public class BindDao {
         return fromLite(liteData);
     }
 
+    public BinUser getBindUser(String name) {
+        var id = getOsuId(name);
+        if (id == null) return null;
+        var data = bindMapper.getByOsuId(id);
+        return fromLite(data);
+    }
+
     public void saveUser(BinUser user) {
-        var data = new QQUserLite(user);
+        var data = new OsuBindUserLite(user);
         if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
         bindMapper.save(data);
     }
@@ -40,12 +51,12 @@ public class BindDao {
         bindMapper.updateMode(uid, mode);
     }
 
-    public boolean unBind(BinUser user){
+    public boolean unBind(BinUser user) {
         try {
             bindMapper.unBind(user.getOsuID());
             return true;
         } catch (Exception e) {
-            log.error("unbind error",e);
+            log.error("unbind error", e);
             return false;
         }
     }
@@ -56,19 +67,26 @@ public class BindDao {
 
     //todo 一会切换到name表
     public Long getOsuId(String name) {
-        var data = bindMapper.getByOsuNameLike('%' + name + '%');
-        if (data != null && data.getOsuId() != null) return data.getOsuId();
-        else return null;
-    }
-    public void removeOsuNameToId(Long osuId){
-
-    }
-    public void saveOsuNameToId(Long id, String... name){
-
+        var uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
+        return uid;
     }
 
-    public static BinUser fromLite(QQUserLite qqUserLite) {
-        var data = qqUserLite;
+
+    public void removeOsuNameToId(Long osuId) {
+        osuFindNameMapper.deleteByUid(osuId);
+    }
+
+    public void saveOsuNameToId(Long id, String... name) {
+        if (name.length == 0) return;
+        for (int i = 0; i < name.length; i++) {
+            var x = new OsuNameToIdLite(id, name[i], i);
+            osuFindNameMapper.save(x);
+        }
+    }
+
+    public static BinUser fromLite(OsuBindUserLite osuBindUserLite) {
+        if (osuBindUserLite == null) return null;
+        var data = osuBindUserLite;
         var buser = new BinUser();
         buser.setQq(data.getQq());
         buser.setOsuID(data.getOsuId());
@@ -80,7 +98,8 @@ public class BindDao {
         return buser;
     }
 
-    public static QQUserLite fromModel(BinUser user) {
-        return new QQUserLite(user);
+    public static OsuBindUserLite fromModel(BinUser user) {
+        if (user == null) return null;
+        return new OsuBindUserLite(user);
     }
 }

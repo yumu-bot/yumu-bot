@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.MessageService.BindService;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
@@ -62,7 +61,7 @@ public class RunTimeService {
         }
     }
 
-    @Scheduled(cron = "2 10 17 * * *")
+//    @Scheduled(cron = "2 10 17 * * *")
     public void bindMove() {
         var from = bot.getGroup(746671531);
         from.sendMessage("开始转移");
@@ -84,21 +83,11 @@ public class RunTimeService {
                 }
             }
             if (date != null ) {
-                date.setMode(OsuMode.OSU);
                 bindDao.saveUser(date);
             }
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            var f = Files.list(Path.of("D:\\")).filter((path)-> path.getFileName().toString().endsWith(".png")).collect(Collectors.toList());
-            System.out.println(f.size());
-            System.out.println(f.get(0).toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     /***
      * 每分钟清理未绑定的

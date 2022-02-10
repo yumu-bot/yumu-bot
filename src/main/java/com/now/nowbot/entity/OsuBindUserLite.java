@@ -7,11 +7,11 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "qq_user", indexes = {
+@Table(name = "osu_bind_user", indexes = {
         @Index(name = "bind_qid", columnList = "qq"),
         @Index(name = "bind_oid", columnList = "osu_id"),
 })
-public class QQUserLite {
+public class OsuBindUserLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,7 +35,7 @@ public class QQUserLite {
     @Column(name = "main_mode")
     private OsuMode mainMode;
 
-    public QQUserLite(BinUser data){
+    public OsuBindUserLite(BinUser data){
         this.joinDate = LocalDateTime.now();
         this.osuId = (long) data.getOsuID();
         this.osuName = data.getOsuName();
@@ -45,7 +45,7 @@ public class QQUserLite {
         this.time = data.getTime();
         this.mainMode = data.getMode();
     }
-    public QQUserLite(){}
+    public OsuBindUserLite(){}
 
     public Long getId() {
         return id;

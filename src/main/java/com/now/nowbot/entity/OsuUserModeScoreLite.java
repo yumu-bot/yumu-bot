@@ -6,11 +6,11 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "osu_user_mode", indexes = {
+@Table(name = "osu_user_mode_score", indexes = {
         @Index(name = "osu_id",columnList = "osu_id"),
         @Index(name = "usermod_find",columnList = "osu_id,mode")
 })
-public class OsuUserModeLite {
+public class OsuUserModeScoreLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
