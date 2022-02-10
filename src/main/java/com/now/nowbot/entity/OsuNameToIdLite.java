@@ -3,7 +3,9 @@ package com.now.nowbot.entity;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "osu_name_id")
+@Table(name = "osu_name_id", indexes = {
+    @Index(name = "osufindname", columnList = "name"),
+})
 
 public class OsuNameToIdLite {
     @Id
