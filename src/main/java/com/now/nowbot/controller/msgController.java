@@ -57,7 +57,6 @@ public class msgController {
                     }
                     BinUser bd = new BinUser(msg.qq(), code);
                     osuGetService.getToken(bd);
-                    bindDao.saveUser(bd);
                     msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                     BindService.BIND_MSG_MAP.remove(key);
                     sb.append("成功绑定:\n")
