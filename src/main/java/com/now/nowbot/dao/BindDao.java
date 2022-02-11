@@ -67,7 +67,15 @@ public class BindDao {
 
     //todo 一会切换到name表
     public Long getOsuId(String name) {
-        var uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
+        Long uid;
+        try {
+            uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
+        } catch (Exception e) {
+            if (!(e instanceof NullPointerException)) {
+                log.error("get name Error",e);
+            }
+            return null;
+        }
         return uid;
     }
 
