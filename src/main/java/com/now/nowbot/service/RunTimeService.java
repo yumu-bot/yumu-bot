@@ -61,10 +61,10 @@ public class RunTimeService {
         }
     }
 
-//    @Scheduled(cron = "2 10 17 * * *")
+    @Scheduled(cron = "2 50 14 * * *")
     public void bindMove() {
         var from = bot.getGroup(746671531);
-        from.sendMessage("开始转移");
+        from.sendMessage("开始转移数据");
         Path pt = Path.of(NowbotConfig.BIN_PATH);
         List<Path> allUseer = null;
         try {
