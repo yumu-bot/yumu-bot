@@ -37,11 +37,11 @@ public class OsuBindUserLite {
 
     public OsuBindUserLite(BinUser data){
         this.joinDate = LocalDateTime.now();
-        this.osuId = (long) data.getOsuID();
+        this.osuId = data.getOsuID();
         this.osuName = data.getOsuName();
         this.qq = data.getQq();
         this.accessToken = data.getAccessToken();
-        this.refreshToken = getRefreshToken();
+        this.refreshToken = data.getRefreshToken();
         this.time = data.getTime();
         this.mainMode = data.getMode();
     }

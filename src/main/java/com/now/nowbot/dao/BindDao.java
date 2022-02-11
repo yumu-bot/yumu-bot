@@ -38,8 +38,10 @@ public class BindDao {
     }
 
     public void saveUser(BinUser user) {
+        System.out.println("b4  "+user.getRefreshToken());
         var data = new OsuBindUserLite(user);
         if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
+        System.out.println("b5  "+data.getRefreshToken());
         bindMapper.save(data);
     }
 
