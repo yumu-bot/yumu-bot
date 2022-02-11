@@ -53,7 +53,7 @@ public class RunTimeService {
         });
     }
     */
-    @Scheduled(cron = "2 0 0-4,20-23 * * *")
+//    @Scheduled(cron = "2 0 0-4,20-23 * * *")
     public void say(){
         var t = bot.getGroup(582121443);
         if (t != null){
