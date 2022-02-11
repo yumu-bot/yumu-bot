@@ -61,7 +61,7 @@ public class RunTimeService {
         }
     }
 
-    @Scheduled(cron = "2 50 14 * * *")
+    @Scheduled(cron = "2 30 15 11 * *")
     public void bindMove() {
         var from = bot.getGroup(746671531);
         from.sendMessage("开始转移数据");
