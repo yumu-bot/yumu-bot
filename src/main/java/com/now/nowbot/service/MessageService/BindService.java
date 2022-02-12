@@ -49,17 +49,18 @@ public class BindService implements MessageService {
                 if (s != null) {
                     String Oname = s.getMessage().contentToString();
                     var d = osuGetService.getOsuId(Oname);
-                    var buser = bindDao.getUserFromOsuid(d);
-                    if (buser == null) {
-                        event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
-                        bindDao.saveUser(at.getTarget(), Oname, d);
-                    } else {
+                    BinUser buser = null;
+                    try {
+                        buser = bindDao.getUserFromOsuid(d);
                         event.getSubject().sendMessage(at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
                         s = ASyncMessageUtil.getEvent(lock);
                         if (s != null && s.getMessage().contentToString().equals("确定")) {
                             buser.setQq(d);
                             bindDao.saveUser(buser);
                         }
+                    } catch (BindException e) {
+                        event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
+                        bindDao.saveUser(at.getTarget(), Oname, d);
                     }
                 } else {
                     event.getSubject().sendMessage("超时或错误,结束接受");
@@ -71,8 +72,10 @@ public class BindService implements MessageService {
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
         if ((event instanceof GroupMessageEvent)) {
-            BinUser user = bindDao.getUser(event.getSender().getId());
-            if (user == null) {
+            BinUser user = null;
+            try {
+                user = bindDao.getUser(event.getSender().getId());
+            } catch (BindException e) {
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value
                 state = osuGetService.getOauthUrl(state);
