@@ -70,16 +70,27 @@ public class BindService implements MessageService {
         }
         var name = matcher.group("name");
         if (name != null){
-            long d = 0;
+            long d;
             try {
                  d = osuGetService.getOsuId(name);
             } catch (Exception e) {
                 event.getSubject().sendMessage("未找到osu用户"+name);
+                return;
+            }
+            BinUser nuser = null;
+            try {
+                nuser = bindDao.getUser(event.getSender().getId());
+            } catch (BindException e) {
+                //未绑定
+            }
+            if (nuser != null){
+                throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
                 event.getSubject().sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
             } catch (BindException e) {
+
                 bindDao.saveUser(event.getSender().getId(), name, d);
                 event.getSubject().sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
             }
