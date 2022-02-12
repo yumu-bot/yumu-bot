@@ -68,6 +68,23 @@ public class BindService implements MessageService {
                 return;
             }
         }
+        var name = matcher.group("name");
+        if (name != null){
+            long d = 0;
+            try {
+                 d = osuGetService.getOsuId(name);
+            } catch (Exception e) {
+                event.getSubject().sendMessage("未找到osu用户"+name);
+            }
+            try {
+                var buser = bindDao.getUserFromOsuid(d);
+                event.getSubject().sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
+            } catch (BindException e) {
+                bindDao.saveUser(event.getSender().getId(), name, d);
+                event.getSubject().sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
+            }
+            return;
+        }
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
