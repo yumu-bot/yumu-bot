@@ -42,6 +42,7 @@ public class BindDao {
     public void saveUser(Long qqId,String name, Long osuId){
         var data = new OsuBindUserLite();
         data.setMainMode(OsuMode.OSU);
+        data.setQq(qqId);
         data.setOsuName(name);
         data.setOsuId(osuId);
         bindMapper.save(data);

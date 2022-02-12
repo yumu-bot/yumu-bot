@@ -236,18 +236,15 @@ ymban/ymunban
     }
 
     public static void main(String[] args) {
-        var p = Pattern.compile("[!！](?i)(?<t>test)mu(?<name>.*)");
-        var m = p.matcher("!testmu aa,bb");
+        var p = Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind");
+        var m = p.matcher("!bind");
         while (m.find()){
 //            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
 //            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
 //            s ^= e;
 //            e ^= s;
 //            s ^= e;
-            if (m.group("t") != null) {
-                String as = m.group("name").trim();
-                System.out.println(as);
-            }
+            System.out.println(1);
         }
     }
 }
