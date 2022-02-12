@@ -6,7 +6,6 @@ import com.now.nowbot.mapper.BindMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +23,12 @@ public class BindDao {
         osuFindNameMapper = nameMapper;
     }
 
-    public BinUser getUser(Long qq) throws TipsException {
+    public BinUser getUser(Long qq) {
         var liteData = bindMapper.getByQq(qq);
-        if (liteData == null) throw new TipsException("当前用户未绑定");
+        return fromLite(liteData);
+    }
+    public BinUser getUserFromOsuid(Long osuId) {
+        var liteData = bindMapper.getByOsuId(osuId);
         return fromLite(liteData);
     }
 
@@ -35,6 +37,14 @@ public class BindDao {
         if (id == null) return null;
         var data = bindMapper.getByOsuId(id);
         return fromLite(data);
+    }
+
+    public void saveUser(Long qqId,String name, Long osuId){
+        var data = new OsuBindUserLite();
+        data.setMainMode(OsuMode.OSU);
+        data.setOsuName(name);
+        data.setOsuId(osuId);
+        bindMapper.save(data);
     }
 
     public void saveUser(BinUser user) {

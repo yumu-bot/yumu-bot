@@ -4,12 +4,11 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.contact.Group;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.At;
@@ -38,13 +37,7 @@ public class BindService implements MessageService {
         if (Permission.isSupper(event.getSender().getId())){
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null){
-                var user = bindDao.getUser(at.getTarget());
-
-                if (bindDao.unBind(user)){
-                    throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
-                }else {
-                    throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);
-                }
+                unbin(at.getTarget());
             }
             if (at != null) {
                 // 只有管理才有权力@人绑定,提示就不改了
@@ -52,7 +45,20 @@ public class BindService implements MessageService {
                 var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
-                    event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>" + s.getMessage().contentToString());
+                    String Oname = s.getMessage().contentToString();
+                    var d = osuGetService.getOsuId(Oname);
+                    var buser = bindDao.getUserFromOsuid(d);
+                    if (buser == null) {
+                        event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
+                        bindDao.saveUser(at.getTarget(), Oname, d);
+                    }else {
+                        event.getSubject().sendMessage( at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
+                        s = ASyncMessageUtil.getEvent(lock);
+                        if (s != null && s.getMessage().contentToString().equals("确定")) {
+                            buser.setQq(d);
+                            bindDao.saveUser(buser);
+                        }
+                    }
                 }else {
                     event.getSubject().sendMessage("超时或错误,结束接受");
                 }
@@ -62,11 +68,9 @@ public class BindService implements MessageService {
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
-        if ((event.getSubject() instanceof Group)) {
-            BinUser user = null;
-            try {
-                user = bindDao.getUser(event.getSender().getId());
-            } catch (TipsException e) {//未绑定时会出现file not find
+        if ((event instanceof GroupMessageEvent)) {
+            BinUser user = bindDao.getUser(event.getSender().getId());
+            if (user == null){
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value
                 var receipt = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
@@ -83,5 +87,19 @@ public class BindService implements MessageService {
         var receipt = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
         receipt.recallIn(110 * 1000);
         BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
+    }
+
+    private void unbin(Long qqId) throws BindException {
+        if (qqId == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+        BinUser user = bindDao.getUser(qqId);
+        if (user == null){
+            throw new BindException(BindException.Type.BIND_Me_NoBind);
+        }
+
+        if (bindDao.unBind(user)){
+            throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
+        }else {
+            throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);
+        }
     }
 }
