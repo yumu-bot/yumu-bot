@@ -12,6 +12,8 @@ import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.At;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class BindService implements MessageService {
+    private static Logger log = LoggerFactory.getLogger(BindService.class);
     public record bind(Long key, MessageReceipt<Contact> receipt, Long qq){}
     public static final Map<Long, bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     OsuGetService osuGetService;
@@ -33,24 +36,23 @@ public class BindService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
-        System.out.println("---------------------------------bind1---------------------------------------");
-
+        log.error("---------------------------------bind1---------------------------------------");
         if (Permission.isSupper(event.getSender().getId())){
-            System.out.println("---------------------------------bind1-1---------------------------------------");
+            log.error("---------------------------------bind1-1---------------------------------------");
 
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null){
-                System.out.println("---------------------------------bind1-2---------------------------------------");
+                log.error("---------------------------------bind1-2---------------------------------------");
                 unbin(at.getTarget());
             }
             if (at != null) {
-                System.out.println("---------------------------------bind1-3---------------------------------------");
+                log.error("---------------------------------bind1-3---------------------------------------");
                 // 只有管理才有权力@人绑定,提示就不改了
                 event.getSubject().sendMessage("请发送绑定用户名");
                 var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
-                    System.out.println("---------------------------------bind1-4---------------------------------------");
+                    log.error("---------------------------------bind1-4---------------------------------------");
 
                     String Oname = s.getMessage().contentToString();
                     var d = osuGetService.getOsuId(Oname);
@@ -73,16 +75,16 @@ public class BindService implements MessageService {
             }
         }
 
-        System.out.println("---------------------------------bind2---------------------------------------");
+        log.error("---------------------------------bind2---------------------------------------");
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
         if ((event instanceof GroupMessageEvent)) {
-            System.out.println("---------------------------------bind3---------------------------------------");
+            log.error("---------------------------------bind3---------------------------------------");
 
             BinUser user = bindDao.getUser(event.getSender().getId());
             if (user == null){
-                System.out.println("---------------------------------bind4---------------------------------------");
+                log.error("---------------------------------bind4---------------------------------------");
 
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value
@@ -97,7 +99,7 @@ public class BindService implements MessageService {
             }
             throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }
-        System.out.println("---------------------------------bind5---------------------------------------");
+        log.error("---------------------------------bind5---------------------------------------");
 
         //私聊不验证是否绑定
         String state = event.getSender().getId() + "+" + timeMillis;
