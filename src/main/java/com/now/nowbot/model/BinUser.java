@@ -100,8 +100,11 @@ public class BinUser {
         return time;
     }
 
-    public void setTime(long time) {
-        this.time = time;
+    public void setTime(Long time) {
+        if (time == null)
+            this.time = 0;
+        else
+            this.time = time;
     }
 
     public void reTime() {

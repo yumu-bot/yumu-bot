@@ -23,69 +23,56 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class BindService implements MessageService {
-    private static Logger log = LoggerFactory.getLogger(BindService.class);
-    public record bind(Long key, MessageReceipt<Contact> receipt, Long qq){}
     public static final Map<Long, bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
+    private static Logger log = LoggerFactory.getLogger(BindService.class);
     OsuGetService osuGetService;
     BindDao bindDao;
     @Autowired
-    public BindService(OsuGetService osuGetService, BindDao bindDao){
+    public BindService(OsuGetService osuGetService, BindDao bindDao) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
-        log.error("---------------------------------bind1---------------------------------------");
-        if (Permission.isSupper(event.getSender().getId())){
-            log.error("---------------------------------bind1-1---------------------------------------");
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
+        if (Permission.isSupper(event.getSender().getId())) {
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
-            if (matcher.group("un") != null){
-                log.error("---------------------------------bind1-2---------------------------------------");
+            if (matcher.group("un") != null) {
                 unbin(at.getTarget());
             }
             if (at != null) {
-                log.error("---------------------------------bind1-3---------------------------------------");
                 // 只有管理才有权力@人绑定,提示就不改了
                 event.getSubject().sendMessage("请发送绑定用户名");
                 var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
-                    log.error("---------------------------------bind1-4---------------------------------------");
-
                     String Oname = s.getMessage().contentToString();
                     var d = osuGetService.getOsuId(Oname);
                     var buser = bindDao.getUserFromOsuid(d);
                     if (buser == null) {
                         event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
                         bindDao.saveUser(at.getTarget(), Oname, d);
-                    }else {
-                        event.getSubject().sendMessage( at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
+                    } else {
+                        event.getSubject().sendMessage(at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
                         s = ASyncMessageUtil.getEvent(lock);
                         if (s != null && s.getMessage().contentToString().equals("确定")) {
                             buser.setQq(d);
                             bindDao.saveUser(buser);
                         }
                     }
-                }else {
+                } else {
                     event.getSubject().sendMessage("超时或错误,结束接受");
                 }
                 return;
             }
         }
-
-        log.error("---------------------------------bind2---------------------------------------");
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
         if ((event instanceof GroupMessageEvent)) {
-            log.error("---------------------------------bind3---------------------------------------");
-
             BinUser user = bindDao.getUser(event.getSender().getId());
-            if (user == null){
-                log.error("---------------------------------bind4---------------------------------------");
-
+            if (user == null) {
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value
                 state = osuGetService.getOauthUrl(state);
@@ -99,7 +86,6 @@ public class BindService implements MessageService {
             }
             throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }
-        log.error("---------------------------------bind5---------------------------------------");
 
         //私聊不验证是否绑定
         String state = event.getSender().getId() + "+" + timeMillis;
@@ -111,14 +97,17 @@ public class BindService implements MessageService {
     private void unbin(Long qqId) throws BindException {
         if (qqId == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
         BinUser user = bindDao.getUser(qqId);
-        if (user == null){
+        if (user == null) {
             throw new BindException(BindException.Type.BIND_Me_NoBind);
         }
 
-        if (bindDao.unBind(user)){
+        if (bindDao.unBind(user)) {
             throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
-        }else {
+        } else {
             throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);
         }
+    }
+
+    public record bind(Long key, MessageReceipt<Contact> receipt, Long qq) {
     }
 }

@@ -6,6 +6,7 @@ import com.now.nowbot.mapper.BindMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.throwable.serviceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,14 @@ public class BindDao {
         osuFindNameMapper = nameMapper;
     }
 
-    public BinUser getUser(Long qq) {
+    public BinUser getUser(Long qq) throws BindException {
         var liteData = bindMapper.getByQq(qq);
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
         return fromLite(liteData);
     }
-    public BinUser getUserFromOsuid(Long osuId) {
+    public BinUser getUserFromOsuid(Long osuId) throws BindException {
         var liteData = bindMapper.getByOsuId(osuId);
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
         return fromLite(liteData);
     }
 

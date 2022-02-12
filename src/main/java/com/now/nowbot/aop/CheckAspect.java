@@ -92,15 +92,15 @@ public class CheckAspect {
             }
             throw new LogException("权限禁止",new Exception("禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId()));
         } finally {
-            workList.add(event);
+//            workList.add(event);
         }
     }
 
-    @After("servicePoint() && @target(Service)")
-    public void endRepeat(JoinPoint point, Service Service){
-        var event = (MessageEvent) point.getArgs()[0];
-        workList.remove(event);
-    }
+//    @After("servicePoint() && @target(Service)")
+//    public void endRepeat(JoinPoint point, Service Service){
+//        var event = (MessageEvent) point.getArgs()[0];
+//        workList.remove(event);
+//    }
 
     Set<Contact> sended;
     public void doEnd(){
