@@ -7,7 +7,7 @@ public class BinUser {
     /**
      * qq号
      */
-    long qq;
+    Long qq;
     /**
      * osu name
      */
@@ -27,7 +27,7 @@ public class BinUser {
     /**
      * 过期时间戳
      */
-    long time;
+    Long time;
     /**
      * 主模式
      */
@@ -43,11 +43,11 @@ public class BinUser {
         reTime();
     }
 
-    public long getQq() {
+    public Long getQq() {
         return qq;
     }
 
-    public void setQq(long qq) {
+    public void setQq(Long qq) {
         this.qq = qq;
     }
 
@@ -66,6 +66,7 @@ public class BinUser {
     public void setOsuID(Long osuID) {
         this.osuID = osuID;
     }
+
     public void setOsuID(int osuID) {
         this.osuID = (long) osuID;
     }
@@ -83,7 +84,7 @@ public class BinUser {
     }
 
     public String getAccessToken(OsuGetService service) {
-        if (accessToken == null){
+        if (accessToken == null) {
             return service.getToken();
         }
         if (isPassed()) {
@@ -101,10 +102,7 @@ public class BinUser {
     }
 
     public void setTime(Long time) {
-        if (time == null)
-            this.time = 0;
-        else
-            this.time = time;
+        this.time = time;
     }
 
     public void reTime() {
