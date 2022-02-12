@@ -65,6 +65,7 @@ public class BindService implements MessageService {
                 return;
             }
         }
+
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         //群聊验证是否绑定
@@ -73,7 +74,9 @@ public class BindService implements MessageService {
             if (user == null){
                 String state = event.getSender().getId() + "+" + timeMillis;
                 //将消息回执作为 value
-                var receipt = event.getSubject().sendMessage(new At(event.getSender().getId()).plus(osuGetService.getOauthUrl(state)));
+                state = osuGetService.getOauthUrl(state);
+                var send = new At(event.getSender().getId()).plus(state);
+                var receipt = event.getSubject().sendMessage(send);
                 //默认110秒后撤回
                 receipt.recallIn(110 * 1000);
                 //此处在 controller.msgController 处理
