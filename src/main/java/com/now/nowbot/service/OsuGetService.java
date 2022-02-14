@@ -147,7 +147,7 @@ public class OsuGetService {
 
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
         JsonNode s = template.postForObject(url, httpEntity, JsonNode.class);
-        bindDao.updateToken(binUser.getOsuID(), s.get("access_token").asText(), s.get("refresh_token").asText(), s.get("expires_in").asLong());
+        bindDao.updateToken(binUser.getOsuID(), s.get("access_token").asText(), s.get("refresh_token").asText(), binUser.nextTime(s.get("expires_in").asLong()));
         return s;
     }
 

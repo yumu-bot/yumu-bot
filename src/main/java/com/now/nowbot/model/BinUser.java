@@ -88,8 +88,9 @@ public class BinUser {
             return service.getToken();
         }
         if (isPassed()) {
-            service.refreshToken(this);
+            accessToken = service.refreshToken(this).findValue("access_token").asText();
         }
+
         return accessToken;
     }
 
@@ -109,8 +110,9 @@ public class BinUser {
         time = System.currentTimeMillis();
     }
 
-    public void nextTime(long addTime) {
+    public Long nextTime(Long addTime) {
         time = System.currentTimeMillis() + addTime * 1000;
+        return time;
     }
 
     public boolean isPassed() {

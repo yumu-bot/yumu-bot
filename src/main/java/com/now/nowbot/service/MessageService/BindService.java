@@ -104,17 +104,20 @@ public class BindService implements MessageService {
             try {
                 user = bindDao.getUser(event.getSender().getId());
             } catch (BindException e) {
-                String state = event.getSender().getId() + "+" + timeMillis;
-                //将消息回执作为 value
-                state = osuGetService.getOauthUrl(state);
-                var send = new At(event.getSender().getId()).plus(state);
-                var receipt = event.getSubject().sendMessage(send);
-                //默认110秒后撤回
-                receipt.recallIn(110 * 1000);
-                //此处在 controller.msgController 处理
-                BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
-                return;
+                //<<<<<<<<
+//                return;
             }
+            //---------------
+            String state = event.getSender().getId() + "+" + timeMillis;
+            //将消息回执作为 value
+            state = osuGetService.getOauthUrl(state);
+            var send = new At(event.getSender().getId()).plus(state);
+            var receipt = event.getSubject().sendMessage(send);
+            //默认110秒后撤回
+            receipt.recallIn(110 * 1000);
+            //此处在 controller.msgController 处理
+            BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
+            //---------------
             throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }
 
