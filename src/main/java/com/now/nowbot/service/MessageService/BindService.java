@@ -67,9 +67,12 @@ public class BindService implements MessageService {
                 }
                 return;
             }
+        }else if (matcher.group("un") != null){
+            event.getSubject().sendMessage("解绑联系管理员");
+            return;
         }
         var name = matcher.group("name");
-        if (name != null){
+        if (name != null && false){
             long d;
             try {
                  d = osuGetService.getOsuId(name);
@@ -103,6 +106,14 @@ public class BindService implements MessageService {
             BinUser user = null;
             try {
                 user = bindDao.getUser(event.getSender().getId());
+                event.getSubject().sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
+                var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
+                var s = ASyncMessageUtil.getEvent(lock);
+                if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
+
+                }else {
+                    return;
+                }
             } catch (BindException e) {
                 //<<<<<<<<
 //                return;
