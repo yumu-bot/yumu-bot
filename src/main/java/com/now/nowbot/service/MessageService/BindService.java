@@ -129,7 +129,7 @@ public class BindService implements MessageService {
             //此处在 controller.msgController 处理
             BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
             //---------------
-            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
+//            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }
 
         //私聊不验证是否绑定
