@@ -130,13 +130,13 @@ public class BindService implements MessageService {
             BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
             //---------------
 //            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
+        }else {
+            //私聊不验证是否绑定
+            String state = event.getSender().getId() + "+" + timeMillis;
+            var receipt = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
+            receipt.recallIn(110 * 1000);
+            BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
         }
-
-        //私聊不验证是否绑定
-        String state = event.getSender().getId() + "+" + timeMillis;
-        var receipt = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
-        receipt.recallIn(110 * 1000);
-        BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
     }
 
     private void unbin(Long qqId) throws BindException {
