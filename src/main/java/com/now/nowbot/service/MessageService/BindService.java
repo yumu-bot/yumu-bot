@@ -48,14 +48,14 @@ public class BindService implements MessageService {
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
                     String Oname = s.getMessage().contentToString();
-                    Long d = null;
+                    Long d;
                     try {
                         d = osuGetService.getOsuId(Oname);
                     } catch (Exception e) {
                         from.sendMessage("未找到osu用户"+Oname);
                         return;
                     }
-                    BinUser buser = null;
+                    BinUser buser;
                     try {
                         buser = bindDao.getUserFromOsuid(d);
                         if (buser.getQq() == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
@@ -68,16 +68,17 @@ public class BindService implements MessageService {
                         }else {
                             from.sendMessage("已取消");
                         }
-                        return;
+
                     } catch (BindException e) {
                         from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
                         bindDao.saveUser(at.getTarget(), Oname, d);
                         from.sendMessage("绑定成功");
                     }
+                    return;
                 } else {
                     from.sendMessage("超时或错误,结束接受");
+                    return;
                 }
-                return;
             }
         }else if (matcher.group("un") != null){
             from.sendMessage("解绑请联系管理员");
