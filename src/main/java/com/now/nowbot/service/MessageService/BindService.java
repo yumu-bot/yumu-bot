@@ -64,6 +64,8 @@ public class BindService implements MessageService {
                             buser.setQq(buser.getQq());
                             bindDao.saveUser(buser);
                             from.sendMessage("绑定成功");
+                        }else {
+                            from.sendMessage("已取消");
                         }
                     } catch (BindException e) {
                         from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
