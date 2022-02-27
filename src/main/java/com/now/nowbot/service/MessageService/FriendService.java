@@ -55,7 +55,7 @@ public class FriendService implements MessageService{
         var allFriend = osuGetService.getFrendList(user);
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
-        var infoMe = osuGetService.getPlayerInfoN(user);
+        var infoMe = osuGetService.getPlayerInfo(user);
         var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
         card.drawA1(infoMe.getAvatarUrl())
                 .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))

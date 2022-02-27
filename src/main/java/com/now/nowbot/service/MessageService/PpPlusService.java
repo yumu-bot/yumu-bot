@@ -1,32 +1,14 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.PPPlusDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.LogException;
-import com.now.nowbot.throwable.serviceException.PppException;
-import com.now.nowbot.util.Panel.PPPlusPanelBuilder;
-import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.SkiaImageUtil;
-import com.now.nowbot.util.SkiaUtil;
-import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.utils.ExternalResource;
-import org.jetbrains.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("ppp")
@@ -38,7 +20,8 @@ public class PpPlusService implements MessageService{
     PPPlusDao ppPlusDao;
     @Autowired
     BindDao bindDao;
-
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{}
+    /*
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{
         Contact from = event.getSubject();
@@ -208,4 +191,5 @@ public class PpPlusService implements MessageService{
         }
         throw new LogException("结束pp+",null);
     }
+     */
 }

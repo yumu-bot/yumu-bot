@@ -33,11 +33,11 @@ public class TestPPMService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
-            user = osuGetService.getPlayerOsuInfoN(id);
+            user = osuGetService.getPlayerOsuInfo(id);
             bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
         } else {
             var userBin = bindDao.getUser(event.getSender().getId());
-            user = osuGetService.getPlayerOsuInfoN(userBin);
+            user = osuGetService.getPlayerOsuInfo(userBin);
             bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
         }
 

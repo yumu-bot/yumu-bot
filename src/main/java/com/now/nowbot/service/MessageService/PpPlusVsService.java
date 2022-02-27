@@ -1,24 +1,14 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.PPPlusDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.SkiaImageUtil;
-import com.now.nowbot.util.SkiaUtil;
-import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.utils.ExternalResource;
-import org.jetbrains.skija.*;
+import org.jetbrains.skija.Paint;
+import org.jetbrains.skija.PaintMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Files;
-import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 
 @Service("ppvs")
@@ -30,7 +20,8 @@ public class PpPlusVsService implements MessageService {
     PPPlusDao ppPlusDao;
     @Autowired
     BindDao bindDao;
-
+    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable{}
+    /*
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         Contact from = event.getSubject();
@@ -237,4 +228,6 @@ public class PpPlusVsService implements MessageService {
         canvas.drawImage(head, 0, 0, PAINT_ANTIALIAS);
         canvas.restore();
     }
+
+     */
 }

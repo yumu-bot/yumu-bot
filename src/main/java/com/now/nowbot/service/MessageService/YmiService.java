@@ -45,44 +45,8 @@ public class YmiService implements MessageService{
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
-        {
-            switch (mode) {
-                default: //todo 获取账号默认模式
-                    mode = OsuMode.OSU;
-                case OSU: {
-                    if (user != null) {
-                        date = osuGetService.getPlayerOsuInfoN(user);
-                    } else {
-                        date = osuGetService.getPlayerOsuInfoN(id);
-                    }
-                }
-                break;
-                case TAIKO: {
-                    if (user != null) {
-                        date = osuGetService.getPlayerTaikoInfoN(user);
-                    } else {
-                        date = osuGetService.getPlayerTaikoInfoN(id);
-                    }
-                }
-                break;
-                case CATCH: {
-                    if (user != null) {
-                        date = osuGetService.getPlayerCatchInfoN(user);
-                    } else {
-                        date = osuGetService.getPlayerCatchInfoN(id);
-                    }
-                }
-                break;
-                case MANIA: {
-                    if (user != null) {
-                        date = osuGetService.getPlayerManiaInfoN(user);
-                    } else {
-                        date = osuGetService.getPlayerManiaInfoN(id);
-                    }
-                }
-                break;
-            }
-        }
+        date = osuGetService.getPlayerInfo(user,mode);
+
 //        if(date.size()==0){
 //            throw new TipsException("没有查询到您的信息呢");
 //        }

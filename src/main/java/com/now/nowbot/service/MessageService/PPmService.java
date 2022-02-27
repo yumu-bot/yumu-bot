@@ -44,7 +44,7 @@ public class PPmService implements MessageService {
         }
         if (Math.random() < 0.01){
             var userBin = bindDao.getUser(event.getSender().getId());
-            var user = osuGetService.getPlayerOsuInfoN(userBin);
+            var user = osuGetService.getPlayerOsuInfo(userBin);
             var card = getUserCard(user);
             var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
             Surface surface = Surface.makeRasterN32Premul(1920, 1080);
@@ -70,21 +70,21 @@ public class PPmService implements MessageService {
         if (at != null) {
             // 包含有@
             var userBin = bindDao.getUser(at.getTarget());
-            user = osuGetService.getPlayerInfoN(userBin, mode.getName());
-            bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
+            user = osuGetService.getPlayerInfo(userBin, mode);
+            bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
             ppm = Ppm.getInstance(mode, user, bps);
         } else {
             // 不包含@ 分为查自身/查他人
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
-                user = osuGetService.getPlayerInfoN(id, mode.getName());
-                bps = osuGetService.getBestPerformance(id, mode.getName(), 0, 100);
+                user = osuGetService.getPlayerInfo(id, mode);
+                bps = osuGetService.getBestPerformance(id, mode, 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
                 var userBin = bindDao.getUser(event.getSender().getId());
-                user = osuGetService.getPlayerInfoN(userBin, mode.getName());
-                bps = osuGetService.getBestPerformance(userBin, mode.getName(), 0, 100);
+                user = osuGetService.getPlayerInfo(userBin, mode);
+                bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             }
         }
@@ -158,8 +158,8 @@ public class PPmService implements MessageService {
         me://自己的信息
         {
             var userBin = bindDao.getUser(event.getSender().getId());
-            userMe = osuGetService.getPlayerInfoN(userBin, mode.getName());
-            bpListMe = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
+            userMe = osuGetService.getPlayerInfo(userBin, mode);
+            bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
             if (userMe.getStatustucs().getPlayTime() < 60 || userMe.getStatustucs().getPlayCount() < 30) {
                 throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
@@ -168,13 +168,13 @@ public class PPmService implements MessageService {
         if (at != null) {//被对比人的信息
             // 包含有@
             var userBin = bindDao.getUser(at.getTarget());
-            userOther = osuGetService.getPlayerInfoN(userBin, mode.getName());
-            bpListOther = osuGetService.getBestPerformance(userBin, mode.getName(),0,100);
+            userOther = osuGetService.getPlayerInfo(userBin, mode);
+            bpListOther = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
-            userOther = osuGetService.getPlayerInfoN(id, mode.getName());
-            bpListOther = osuGetService.getBestPerformance(id, mode.getName(),0,100);
+            userOther = osuGetService.getPlayerInfo(id, mode);
+            bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else {
             throw new PpmException(PpmException.Type.PPM_Player_VSNotFound);

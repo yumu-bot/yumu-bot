@@ -72,7 +72,7 @@ public class BindService implements MessageService {
             return;
         }
         var name = matcher.group("name");
-        if (name != null && false){
+        if (name != null){
             long d;
             try {
                  d = osuGetService.getOsuId(name);

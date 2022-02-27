@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
@@ -45,8 +44,8 @@ public class StartService implements MessageService{
         StarService.Score sc = starService.getScore(user);
 
         if (starService.isRefouse(sc)){
-            JSONObject date = osuGetService.getPlayerOsuInfo(user);
-            float adsstar = date.getJSONObject("statistics").getFloatValue("pp")/100;
+            var date = osuGetService.getPlayerOsuInfo(user);
+            float adsstar = (float) (date.getStatustucs().getPp()/100);
             starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点金币\n").append("24小时后再次刷新\n");
         }
@@ -80,10 +79,10 @@ public class StartService implements MessageService{
     }
 
     int initGold(BinUser user){
-        var u1 = osuGetService.getPlayerOsuInfoN(user);
-        var u2 = osuGetService.getPlayerTaikoInfoN(user);
-        var u3 = osuGetService.getPlayerCatchInfoN(user);
-        var u4 = osuGetService.getPlayerManiaInfoN(user);
+        var u1 = osuGetService.getPlayerOsuInfo(user);
+        var u2 = osuGetService.getPlayerTaikoInfo(user);
+        var u3 = osuGetService.getPlayerCatchInfo(user);
+        var u4 = osuGetService.getPlayerManiaInfo(user);
         var ppsum = u1.getPp()+ u2.getPp()+u3.getPp()+u4.getPp();
         return Math.toIntExact(1611 + Math.round(ppsum * 0.4396));
     }

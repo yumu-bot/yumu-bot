@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,10 @@ public class TestGetId implements MessageService{
             StringBuilder sb = new StringBuilder();
             for(var idStr : idsStr){
                 var id = Integer.parseInt(idStr);
-                var data = osuGetService.getPlayerOsuInfo(id);
-                sb.append(id).append("***").append(data.getString("username")).append('\n');
+                var data = osuGetService.getPlayerInfo((long) id, OsuMode.OSU);
+                sb.append(id).append("***").append(data.getUsername()).append('\n');
             }
             event.getSubject().sendMessage(sb.toString());
-        }else return;
+        }
     }
 }

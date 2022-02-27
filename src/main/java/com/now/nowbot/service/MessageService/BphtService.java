@@ -71,44 +71,8 @@ public class BphtService implements MessageService {
         //分别处理mode
         var mode = OsuMode.getMode(matcher.group("mode"));
         TreeMap<String, intValue> modeSum = new TreeMap<>();
-        switch (mode) {
-            default://todo 获取账号默认模式
-                mode = OsuMode.OSU;
-            case OSU: {
-                //getAccessToken()判断token是否存在,未绑定为null 使用本机AccessToken
-                if (isBind) {
-                    Bps = osuGetService.getOsuBestPerformance(nu, 0, 100);
+        Bps = osuGetService.getBestPerformance(nu, mode,0,100);
 
-                } else {
-                    Bps = osuGetService.getOsuBestPerformance(nu.getOsuID(), 0, 100);
-                }
-            }
-            break;
-            case TAIKO: {
-                if (isBind) {
-                    Bps = osuGetService.getTaikoBestPerformance(nu, 0, 100);
-                } else {
-                    Bps = osuGetService.getTaikoBestPerformance(nu.getOsuID(), 0, 100);
-                }
-            }
-            break;
-            case CATCH: {
-                if (isBind) {
-                    Bps = osuGetService.getCatchBestPerformance(nu, 0, 100);
-                } else {
-                    Bps = osuGetService.getCatchBestPerformance(nu.getOsuID(), 0, 100);
-                }
-            }
-            break;
-            case MANIA: {
-                if (isBind) {
-                    Bps = osuGetService.getManiaBestPerformance(nu, 0, 100);
-                } else {
-                    Bps = osuGetService.getManiaBestPerformance(nu.getOsuID(), 0, 100);
-                }
-            }
-            break;
-        }
         //...
         //生成结果
         var dtbf = new StringBuffer(nu.getOsuName()).append('[').append(mode).append(']').append('\n');

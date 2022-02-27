@@ -13,6 +13,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.RequestException;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -97,7 +98,7 @@ public class OsuGetService {
         binUser.setRefreshToken(s.get("refresh_token").asText());
         binUser.nextTime(s.get("expires_in").asLong());
 
-        getPlayerInfoN(binUser);
+        getPlayerInfo(binUser);
         bindDao.saveUser(binUser);
 
         return s;
@@ -162,7 +163,7 @@ public class OsuGetService {
             return id;
 
         }
-        var date = getPlayerInfoN(name);
+        var date = getPlayerInfo(name);
         bindDao.removeOsuNameToId(date.getId());
         String[] names = new String[date.getPreviousName().size() + 1];
         int i = 0;
@@ -176,6 +177,7 @@ public class OsuGetService {
     }
 
     public JsonNode getFrendList(BinUser user) {
+        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
@@ -191,24 +193,25 @@ public class OsuGetService {
      * @param user
      * @return
      */
-    public OsuUser getPlayerOsuInfoN(BinUser user) {
-        return getPlayerInfoN(user, "osu");
+    public OsuUser getPlayerOsuInfo(BinUser user) {
+        return getPlayerInfo(user, OsuMode.OSU);
     }
 
-    public OsuUser getPlayerTaikoInfoN(BinUser user) {
-        return getPlayerInfoN(user, "taiko");
+    public OsuUser getPlayerTaikoInfo(BinUser user) {
+        return getPlayerInfo(user, OsuMode.TAIKO);
     }
 
-    public OsuUser getPlayerCatchInfoN(BinUser user) {
-        return getPlayerInfoN(user, "fruits");
+    public OsuUser getPlayerCatchInfo(BinUser user) {
+        return getPlayerInfo(user, OsuMode.CATCH);
     }
 
-    public OsuUser getPlayerManiaInfoN(BinUser user) {
-        return getPlayerInfoN(user, "mania");
+    public OsuUser getPlayerManiaInfo(BinUser user) {
+        return getPlayerInfo(user, OsuMode.MANIA);
     }
 
-    public OsuUser getPlayerInfoN(BinUser user, String mode) {
-        String url = this.URL + "me" + '/' + mode;
+    public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
+        if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID(), mode);
+        String url = this.URL + "me" + '/' + mode.getName();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -220,11 +223,12 @@ public class OsuGetService {
     }
 
     /**
-     *
+     * 通过绑定信息获得user数据
      * @param user
      * @return
      */
-    public OsuUser getPlayerInfoN(BinUser user) {
+    public OsuUser getPlayerInfo(BinUser user) {
+        if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID());
         String url;
         if (user.getMode() == null) {
             url = this.URL + "me";
@@ -252,7 +256,7 @@ public class OsuGetService {
      * @param userName
      * @return
      */
-    public OsuUser getPlayerInfoN(String userName) {
+    public OsuUser getPlayerInfo(String userName) {
         String url = this.URL + "users/" + userName;
 
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName)
@@ -270,78 +274,29 @@ public class OsuGetService {
         return data;
     }
 
-    public JSONObject getPlayerInfo(String name, String mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + name + '/' + mode)
-                .queryParam("key", "username")
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        return c.getBody();
-    }
-
-    /***
-     * 拿到详细的个人信息 旧
-     * @param user
-     * @return
-     */
-    public JSONObject getPlayerOsuInfo(BinUser user) {
-        return getPlayerInfo(user, "osu");
-    }
-
-    public JSONObject getPlayerTaikoInfo(BinUser user) {
-        return getPlayerInfo(user, "taiko");
-    }
-
-    public JSONObject getPlayerCatchInfo(BinUser user) {
-        return getPlayerInfo(user, "fruits");
-    }
-
-    public JSONObject getPlayerManiaInfo(BinUser user) {
-        return getPlayerInfo(user, "mania");
-    }
-
-    public JSONObject getPlayerInfo(BinUser user, String mode) {
-        String url = this.URL + "me" + '/' + mode;
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = template.exchange(url, HttpMethod.GET, httpEntity, JSONObject.class);
-        user.setOsuID(c.getBody().getLong("id"));
-        user.setOsuName(c.getBody().getString("username"));
-        return c.getBody();
-    }
 
     /***
      * 使用本机token获取user信息
      * @param id
      * @return
      */
-    public OsuUser getPlayerOsuInfoN(Long id) {
-        return getPlayerInfoN(id, "osu");
+    public OsuUser getPlayerOsuInfo(Long id) {
+        return getPlayerInfo(id, OsuMode.OSU);
     }
 
-    public OsuUser getPlayerTaikoInfoN(Long id) {
-        return getPlayerInfoN(id, "taiko");
+    public OsuUser getPlayerTaikoInfo(Long id) {
+        return getPlayerInfo(id, OsuMode.TAIKO);
     }
 
-    public OsuUser getPlayerCatchInfoN(Long id) {
-        return getPlayerInfoN(id, "fruits");
+    public OsuUser getPlayerCatchInfo(Long id) {
+        return getPlayerInfo(id, OsuMode.CATCH);
     }
 
-    public OsuUser getPlayerManiaInfoN(Long id) {
-        return getPlayerInfoN(id, "mania");
+    public OsuUser getPlayerManiaInfo(Long id) {
+        return getPlayerInfo(id, OsuMode.MANIA);
     }
 
-    public OsuUser getPlayerInfoN(Long id) {
+    public OsuUser getPlayerInfo(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
                 .queryParam("key", "id")
                 .build().encode().toUri();
@@ -357,7 +312,7 @@ public class OsuGetService {
     }
 
 
-    public OsuUser getPlayerInfoN(Long id, String mode) {
+    public OsuUser getPlayerInfo(Long id, OsuMode mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
@@ -372,56 +327,10 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    /***
-     * 使用本机token获取user信息
-     * @param id
-     * @return
-     */
-    public JSONObject getPlayerOsuInfo(int id) {
-        return getPlayerInfo(id, "osu");
-    }
-
-    public JSONObject getPlayerTaikoInfo(int id) {
-        return getPlayerInfo(id, "taiko");
-    }
-
-    public JSONObject getPlayerCatchInfo(int id) {
-        return getPlayerInfo(id, "fruits");
-    }
-
-    public JSONObject getPlayerManiaInfo(int id) {
-        return getPlayerInfo(id, "mania");
-    }
-
-
-    public JSONObject getPlayerInfo(int id, String mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
-                .queryParam("key", "id")
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        return c.getBody();
-    }
-
-    /***
-     * 使用本机token获取user信息
-     * @param name
-     * @return
-     */
-    public JSONObject getPlayerOsuInfo(String name) {
-        return getPlayerInfo(name, "osu");
-    }
 
 
     /**
      * 获得某个模式的bp表
-     * 替换旧的FASTJson
      *
      * @param user
      * @param mode
@@ -429,12 +338,13 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestPerformance(BinUser user, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
-                .queryParam("mode", mode)
+    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
+        if (user.getAccessToken() == null) return getBestPerformance(user.getOsuID(), mode, s, e);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -447,10 +357,6 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
-        return getBestPerformance(user, mode.getName(), s, e);
-    }
-
     /**
      * @param id
      * @param mode
@@ -458,12 +364,12 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestPerformance(Long id, String mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
-                .queryParam("mode", mode)
+    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -477,41 +383,6 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e) {
-        return getBestPerformance(id, mode.getName(), s, e);
-    }
-
-    public List<BpInfo> getOsuBestPerformance(BinUser user, int s, int e) {
-        return getBestPerformance(user, "osu", s, e);
-    }
-
-    public List<BpInfo> getOsuBestPerformance(Long id, int s, int e) {
-        return getBestPerformance(id, "osu", s, e);
-    }
-
-    public List<BpInfo> getTaikoBestPerformance(BinUser user, int s, int e) {
-        return getBestPerformance(user, "taiko", s, e);
-    }
-
-    public List<BpInfo> getTaikoBestPerformance(Long id, int s, int e) {
-        return getBestPerformance(id, "taiko", s, e);
-    }
-
-    public List<BpInfo> getCatchBestPerformance(BinUser user, int s, int e) {
-        return getBestPerformance(user, "fruits", s, e);
-    }
-
-    public List<BpInfo> getCatchBestPerformance(Long id, int s, int e) {
-        return getBestPerformance(id, "fruits", s, e);
-    }
-
-    public List<BpInfo> getManiaBestPerformance(BinUser user, int s, int e) {
-        return getBestPerformance(user, "mania", s, e);
-    }
-
-    public List<BpInfo> getManiaBestPerformance(Long id, int s, int e) {
-        return getBestPerformance(id, "mania", s, e);
-    }
 
     /***
      * 获得score(最近游玩列表
