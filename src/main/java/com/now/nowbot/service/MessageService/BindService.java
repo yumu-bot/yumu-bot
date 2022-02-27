@@ -58,7 +58,8 @@ public class BindService implements MessageService {
                     BinUser buser = null;
                     try {
                         buser = bindDao.getUserFromOsuid(d);
-                        from.sendMessage(at.getTarget() + "已绑定 " + buser.getOsuName() + " ,确定是否覆盖,回复'确定'生效");
+                        if (buser.getQq() == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+                        from.sendMessage(buser.getOsuName() + "已绑定 " + at.getTarget() + " ,确定是否覆盖,回复'确定'生效");
                         s = ASyncMessageUtil.getEvent(lock);
                         if (s != null && s.getMessage().contentToString().startsWith("确定")) {
                             buser.setQq(buser.getQq());
@@ -67,6 +68,7 @@ public class BindService implements MessageService {
                         }else {
                             from.sendMessage("已取消");
                         }
+                        return;
                     } catch (BindException e) {
                         from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
                         bindDao.saveUser(at.getTarget(), Oname, d);
