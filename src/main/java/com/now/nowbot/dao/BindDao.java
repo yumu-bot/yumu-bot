@@ -29,7 +29,7 @@ public class BindDao {
         if (liteData.size() == 0) {
             throw new BindException(BindException.Type.BIND_Me_NoBind);
         } else if (liteData.size() > 1) {
-            var liteLastUser = bindMapper.getFirstByQqOrderByIdDesc(qq);
+            var liteLastUser = bindMapper.getFirstByQqOOrderByTimeDesc(qq);
             bindMapper.deleteByQqAndIdNot(liteLastUser.getQq(),liteLastUser.getId());
             return fromLite(liteLastUser);
         }
@@ -39,6 +39,11 @@ public class BindDao {
         var liteData = bindMapper.getByOsuId(osuId);
         if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
         return fromLite(liteData);
+    }
+    public OsuBindUserLite getUserLiteFromOsuid(Long osuId) throws BindException {
+        var liteData = bindMapper.getByOsuId(osuId);
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+        return liteData;
     }
 
     public BinUser getBindUser(String name) {
@@ -54,6 +59,7 @@ public class BindDao {
         data.setQq(qqId);
         data.setOsuName(name);
         data.setOsuId(osuId);
+        data.setTime(0L);
         bindMapper.save(data);
     }
 
@@ -63,6 +69,9 @@ public class BindDao {
         bindMapper.save(data);
     }
 
+    public void update(OsuBindUserLite user){
+        bindMapper.save(user);
+    }
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
         bindMapper.updateToken(uid, accessToken, refreshToken, time);
     }

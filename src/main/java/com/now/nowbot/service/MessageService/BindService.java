@@ -48,30 +48,34 @@ public class BindService implements MessageService {
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
                     String Oname = s.getMessage().contentToString();
-                    Long d;
+                    Long id;
                     try {
-                        d = osuGetService.getOsuId(Oname);
+                        id = osuGetService.getOsuId(Oname);
                     } catch (Exception e) {
                         from.sendMessage("未找到osu用户"+Oname);
                         return;
                     }
-                    BinUser buser;
                     try {
-                        buser = bindDao.getUserFromOsuid(d);
-                        if (buser.getQq() == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
-                        from.sendMessage(buser.getOsuName() + "已绑定 " + at.getTarget() + " ,确定是否覆盖,回复'确定'生效");
-                        s = ASyncMessageUtil.getEvent(lock);
-                        if (s != null && s.getMessage().contentToString().startsWith("确定")) {
-                            buser.setQq(buser.getQq());
-                            bindDao.saveUser(buser);
+                        var buser = bindDao.getUserLiteFromOsuid(id);
+                        if (buser.getQq() == null) {
+                            from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + id + ")" + Oname);
+                            buser.setQq(at.getTarget());
+                            bindDao.update(buser);
                             from.sendMessage("绑定成功");
                         }else {
-                            from.sendMessage("已取消");
+                            from.sendMessage(buser.getOsuName() + "已绑定在QQ " + at.getTarget() + " ,确定是否覆盖,回复'确定'生效");
+                            s = ASyncMessageUtil.getEvent(lock);
+                            if (s != null && s.getMessage().contentToString().startsWith("确定")) {
+                                buser.setQq(at.getTarget());
+                                bindDao.update(buser);
+                                from.sendMessage("绑定成功");
+                            }else {
+                                from.sendMessage("已取消");
+                            }
                         }
-
                     } catch (BindException e) {
-                        from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
-                        bindDao.saveUser(at.getTarget(), Oname, d);
+                        from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + id + ")" + Oname);
+                        bindDao.saveUser(at.getTarget(), Oname, id);
                         from.sendMessage("绑定成功");
                     }
                     return;
@@ -99,14 +103,13 @@ public class BindService implements MessageService {
             } catch (BindException e) {
                 //未绑定
             }
-            if (nuser != null){
+            if (nuser != null && nuser.getRefreshToken() != null){
                 throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
                 from.sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
             } catch (BindException e) {
-
                 bindDao.saveUser(event.getSender().getId(), name, d);
                 from.sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
             }
