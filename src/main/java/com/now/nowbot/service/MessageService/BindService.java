@@ -35,7 +35,7 @@ public class BindService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-
+        var from = event.getSubject();
         if (Permission.isSupper(event.getSender().getId())) {
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null) {
@@ -43,8 +43,8 @@ public class BindService implements MessageService {
             }
             if (at != null) {
                 // 只有管理才有权力@人绑定,提示就不改了
-                event.getSubject().sendMessage("请发送绑定用户名");
-                var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
+                from.sendMessage("请发送绑定用户名");
+                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
                     String Oname = s.getMessage().contentToString();
@@ -52,23 +52,24 @@ public class BindService implements MessageService {
                     BinUser buser = null;
                     try {
                         buser = bindDao.getUserFromOsuid(d);
-                        event.getSubject().sendMessage(at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
+                        from.sendMessage(at.getTarget() + "已绑定 " + buser.getQq() + " ,确定是否覆盖,回复'确定'生效");
                         s = ASyncMessageUtil.getEvent(lock);
-                        if (s != null && s.getMessage().contentToString().equals("确定")) {
+                        if (s != null && s.getMessage().contentToString().startsWith("确定")) {
                             buser.setQq(d);
                             bindDao.saveUser(buser);
+                            from.sendMessage("绑定成功");
                         }
                     } catch (BindException e) {
-                        event.getSubject().sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
+                        from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + d + ")" + Oname);
                         bindDao.saveUser(at.getTarget(), Oname, d);
                     }
                 } else {
-                    event.getSubject().sendMessage("超时或错误,结束接受");
+                    from.sendMessage("超时或错误,结束接受");
                 }
                 return;
             }
         }else if (matcher.group("un") != null){
-            event.getSubject().sendMessage("解绑联系管理员");
+            from.sendMessage("解绑请联系管理员");
             return;
         }
         var name = matcher.group("name");
@@ -77,7 +78,7 @@ public class BindService implements MessageService {
             try {
                  d = osuGetService.getOsuId(name);
             } catch (Exception e) {
-                event.getSubject().sendMessage("未找到osu用户"+name);
+                from.sendMessage("未找到osu用户"+name);
                 return;
             }
             BinUser nuser = null;
@@ -91,11 +92,11 @@ public class BindService implements MessageService {
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
-                event.getSubject().sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
+                from.sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
             } catch (BindException e) {
 
                 bindDao.saveUser(event.getSender().getId(), name, d);
-                event.getSubject().sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
+                from.sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
             }
             return;
         }
@@ -106,8 +107,8 @@ public class BindService implements MessageService {
             BinUser user = null;
             try {
                 user = bindDao.getUser(event.getSender().getId());
-                event.getSubject().sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
-                var lock = ASyncMessageUtil.getLock(event.getSubject().getId(), event.getSender().getId());
+                from.sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
+                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
                 if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
 
@@ -123,7 +124,7 @@ public class BindService implements MessageService {
             //将消息回执作为 value
             state = osuGetService.getOauthUrl(state);
             var send = new At(event.getSender().getId()).plus(state);
-            var receipt = event.getSubject().sendMessage(send);
+            var receipt = from.sendMessage(send);
             //默认110秒后撤回
             receipt.recallIn(110 * 1000);
             //此处在 controller.msgController 处理
@@ -133,7 +134,7 @@ public class BindService implements MessageService {
         }else {
             //私聊不验证是否绑定
             String state = event.getSender().getId() + "+" + timeMillis;
-            var receipt = event.getSubject().sendMessage(osuGetService.getOauthUrl(state));
+            var receipt = from.sendMessage(osuGetService.getOauthUrl(state));
             receipt.recallIn(110 * 1000);
             BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
         }
