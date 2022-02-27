@@ -103,7 +103,7 @@ public class BindService implements MessageService {
             } catch (BindException e) {
                 //未绑定
             }
-            if (nuser != null && nuser.getRefreshToken() != null){
+            if (nuser != null){
                 throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
             }
             try {
@@ -122,18 +122,22 @@ public class BindService implements MessageService {
             BinUser user = null;
             try {
                 user = bindDao.getUser(event.getSender().getId());
-                from.sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
-                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
-                var s = ASyncMessageUtil.getEvent(lock);
-                if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
-
-                }else {
-                    return;
-                }
             } catch (BindException e) {
                 //<<<<<<<<
 //                return;
             }
+            if (user == null || user.getAccessToken() == null){
+                //未绑定或未完全绑定
+            }else {
+                from.sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
+                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
+                var s = ASyncMessageUtil.getEvent(lock);
+                if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
+                }else {
+                    return;
+                }
+            }
+
             //---------------
             String state = event.getSender().getId() + "+" + timeMillis;
             //将消息回执作为 value

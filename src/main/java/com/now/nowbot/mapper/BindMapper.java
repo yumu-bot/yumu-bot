@@ -14,7 +14,7 @@ import java.util.List;
 public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
     List<OsuBindUserLite> getByQq(Long qq);
 
-    OsuBindUserLite getFirstByQqOOrderByTimeDesc(Long qq);
+    OsuBindUserLite getFirstByQqOrderByTimeDesc(Long qq);
 
     OsuBindUserLite getByOsuId(Long osuId);
 
