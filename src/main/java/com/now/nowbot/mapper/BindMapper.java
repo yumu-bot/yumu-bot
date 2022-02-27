@@ -2,19 +2,27 @@ package com.now.nowbot.mapper;
 
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.model.enums.OsuMode;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
-    OsuBindUserLite getByQq(Long qq);
+    List<OsuBindUserLite> getByQq(Long qq);
+
+    OsuBindUserLite getFirstByQqOrderByIdDesc(Long qq);
 
     OsuBindUserLite getByOsuId(Long osuId);
 
     OsuBindUserLite getByOsuNameLike(String osuName);
+
+    @Modifying
+    @Transactional
+    void deleteByQqAndIdNot(Long qq, Long id);
 
     @Modifying
     @Transactional

@@ -26,8 +26,14 @@ public class BindDao {
 
     public BinUser getUser(Long qq) throws BindException {
         var liteData = bindMapper.getByQq(qq);
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
-        return fromLite(liteData);
+        if (liteData.size() == 0) {
+            throw new BindException(BindException.Type.BIND_Me_NoBind);
+        } else if (liteData.size() > 1) {
+            var liteLastUser = bindMapper.getFirstByQqOrderByIdDesc(qq);
+            bindMapper.deleteByQqAndIdNot(liteLastUser.getQq(),liteLastUser.getId());
+            return fromLite(liteLastUser);
+        }
+        return fromLite(liteData.get(0));
     }
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
         var liteData = bindMapper.getByOsuId(osuId);
@@ -52,10 +58,8 @@ public class BindDao {
     }
 
     public void saveUser(BinUser user) {
-        System.out.println("b4  "+user.getRefreshToken());
         var data = new OsuBindUserLite(user);
         if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
-        System.out.println("b5  "+data.getRefreshToken());
         bindMapper.save(data);
     }
 

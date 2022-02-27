@@ -44,7 +44,6 @@ public class Permission {
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
-        if (permissionDao == null) System.out.println("*****************************************");
         assert permissionDao != null;
         var AllFw = permissionDao.getQQList("PERMISSION_ALL", PermissionType.FRIEND_W);
         var AllGw = permissionDao.getQQList("PERMISSION_ALL", PermissionType.GROUP_W);
