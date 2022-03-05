@@ -1,5 +1,8 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 import org.slf4j.Logger;
@@ -65,12 +68,7 @@ public class BCardBuilder extends CardBuilder{
         return this;
     }
 
-    /***
-     *      到时候写个enum?
-     * @param mode mod
-     * @param color 颜色
-     * @return
-     */
+
     public BCardBuilder drawD2(String mode, int color) {
         canvas.save();
         Typeface typeface = null;
@@ -90,6 +88,22 @@ public class BCardBuilder extends CardBuilder{
             modeOffset += line.getWidth() + MODE_OFFSET;
         }
         canvas.restore();
+        return this;
+    }
+    /***
+     * 
+     * @param mode mod
+     * @param color 颜色
+     * @return
+     */
+    public BCardBuilder drawD2(OsuMode mode, int color) {
+        switch (mode){
+            case OSU -> drawD2(PanelUtil.MODE_OSU, color);
+            case CATCH -> drawD2(PanelUtil.MODE_CATCH, color);
+            case TAIKO -> drawD2(PanelUtil.MODE_TAIKO, color);
+            case MANIA -> drawD2(PanelUtil.MODE_MANIA, color);
+            default -> { throw new TipsRuntimeException("mode错误");}
+        }
         return this;
     }
 

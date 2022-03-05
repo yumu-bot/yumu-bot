@@ -69,7 +69,7 @@ public class FriendService implements MessageService{
                 .drawC2(infoMe.getStatustucs().getAccuracy() + "% Lv." +
                         infoMe.getStatustucs().getLevelCurrent() +
                         "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(infoMe.getStatustucs().getPp() + "PP");
+                .drawC1(infoMe.getStatustucs().getPp(0) + "PP");
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());
@@ -89,7 +89,7 @@ public class FriendService implements MessageService{
                }
            }
        }
-        //单线程实现好友绘制
+        //好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
                 JsonNode infoO;

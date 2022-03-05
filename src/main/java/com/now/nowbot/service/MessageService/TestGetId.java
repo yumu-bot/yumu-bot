@@ -24,9 +24,14 @@ public class TestGetId implements MessageService{
             StringBuilder sb = new StringBuilder();
             for(var idStr : idsStr){
                 var id = Integer.parseInt(idStr);
-                var data = osuGetService.getPlayerInfo((long) id, OsuMode.OSU);
-                sb.append(id).append("***").append(data.getUsername()).append('\n');
+                try {
+                    var data = osuGetService.getPlayerInfo((long) id, OsuMode.OSU);
+                    sb.append(id).append("***").append(data.getUsername()).append('\n');
+                } catch (Exception e) {
+                    sb.append(id).append("!!!").append("getError").append('\n');
+                }
             }
+
             event.getSubject().sendMessage(sb.toString());
         }
     }

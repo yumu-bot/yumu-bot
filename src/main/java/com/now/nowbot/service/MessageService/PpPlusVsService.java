@@ -100,15 +100,15 @@ public class PpPlusVsService implements MessageService {
 
             canvas.save();
             canvas.translate(280, 440);
-            TextLine text = TextLine.make(date1.getName(), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(date1.getName().substring(0, 8) + "...", fontA);
+            TextLine text = TextLine.make(date1.getaClass(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date1.getaClass().substring(0, 8) + "...", fontA);
             canvas.drawTextLine(text, -0.5f * text.getWidth(), 0.25f * text.getHeight(), white);
             canvas.restore();
 
             canvas.save();
             canvas.translate(1640, 440);
-            text = TextLine.make(date2.getName(), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(date2.getName().substring(0, 8) + "...", fontA);
+            text = TextLine.make(date2.getaClass(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(date2.getaClass().substring(0, 8) + "...", fontA);
             canvas.drawTextLine(text, -0.5f * text.getWidth(), 0.25f * text.getHeight(), white);
             canvas.restore();
 

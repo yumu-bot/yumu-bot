@@ -4,6 +4,7 @@ import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
@@ -15,6 +16,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
@@ -28,7 +31,12 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public IocAllReadyRunner(Bot bot, MessageListener messageListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.bot = bot;
         this.applicationContext = applicationContext;
-        messageListener.init(applicationContext.getBeansOfType(MessageService.class));
+        var serviceMap = new HashMap<Class<? extends MessageService>, MessageService>();
+        for (var i : Instruction.values()){
+            var iClass = i.getaClass();
+            serviceMap.put(iClass, applicationContext.getBean(iClass));
+        }
+        messageListener.init(serviceMap);
         this.check = check;
         this.permission = permission;
     }

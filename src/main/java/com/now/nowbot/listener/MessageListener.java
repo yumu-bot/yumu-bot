@@ -45,9 +45,9 @@ public class MessageListener extends SimpleListenerHost {
         this.messageMapper = messageMapper;
     }
 
-    private static Map<String, MessageService> messageServiceMap = null;
+    private static Map<Class<? extends MessageService>, MessageService> messageServiceMap = null;
 
-    public void init(Map<String, MessageService> beanMap) throws BeansException {
+    public void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException {
         messageServiceMap = beanMap;
     }
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -112,7 +112,7 @@ public class MessageListener extends SimpleListenerHost {
 
                 Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
                 if (matcher.find()) {
-                    var service = messageServiceMap.get(ins.getName());
+                    var service = messageServiceMap.get(ins.getaClass());
                     service.HandleMessage(event, matcher);
                 }
             }

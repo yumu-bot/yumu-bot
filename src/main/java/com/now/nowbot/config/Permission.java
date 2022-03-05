@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
@@ -41,6 +38,8 @@ public class Permission {
     //service名单
     private static Map<String ,PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
     private static CopyOnWriteArraySet<Instruction> OFF_SERVICE = null;
+
+    private static Map<Instruction, String> SERVICE_NAME = new TreeMap<>();
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
@@ -109,13 +108,24 @@ public class Permission {
         //初始化功能关闭菜单
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
         OFF_SERVICE = new CopyOnWriteArraySet<>();
+
+        for (var i : Instruction.values()){
+            var names = applicationContext.getBeanNamesForType(i.getaClass());
+            if (names.length > 0) {
+                SERVICE_NAME.put(i, names[0]);
+                var p = serviceSwitchMapper.findById(names[0]);
+                if( p.isPresent() && !p.get().isSwitch() ){
+                    OFF_SERVICE.add(i);
+                }
+            }
+        }
+
         for ( var i : Instruction.values() ){
-            var p = serviceSwitchMapper.findById(i.getName());
+            var p = serviceSwitchMapper.findById(getServiceName(i));
             if( p.isPresent() && !p.get().isSwitch() ){
                 OFF_SERVICE.add(i);
             }
         }
-
         log.info("名单初始化完成");
     }
 
@@ -217,12 +227,20 @@ public class Permission {
 
     public static void clouseService(Instruction i){
         OFF_SERVICE.add(i);
-        serviceSwitchMapper.save(new ServiceSwitchLite(i.getName(), false));
+        serviceSwitchMapper.save(new ServiceSwitchLite(getServiceName(i), false));
     }
 
     public static void openService(Instruction i){
         OFF_SERVICE.remove(i);
-        serviceSwitchMapper.save(new ServiceSwitchLite(i.getName(), true));
+        serviceSwitchMapper.save(new ServiceSwitchLite(getServiceName(i), true));
+    }
+
+    public static String getServiceName(Instruction i){
+        String out = "";
+        if (SERVICE_NAME != null){
+            out =  SERVICE_NAME.get(i);
+        }
+        return out;
     }
 
     /**

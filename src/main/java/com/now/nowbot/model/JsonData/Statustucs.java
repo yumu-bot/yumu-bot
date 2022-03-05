@@ -260,6 +260,22 @@ public class Statustucs {
         return pp;
     }
 
+    /**
+     * 获得指定小数位的pp
+     * @param x 位数
+     * @return
+     */
+    public float getPp(int x){
+        int n = (int) Math.pow(10, x);
+        double c = 0;
+        if (pp != null){
+            c = pp;
+        }
+        float out = Math.round(c * n);
+        out /= n;
+        return out;
+    }
+
     public void setPp(Double pp) {
         this.pp = pp;
     }

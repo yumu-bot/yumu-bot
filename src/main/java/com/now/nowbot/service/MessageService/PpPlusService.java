@@ -98,8 +98,8 @@ public class PpPlusService implements MessageService{
 
             canvas.save();
             canvas.translate(280,440);
-            TextLine text = TextLine.make(pppData.getName(), fontA);
-            if (text.getWidth() > 500) text = TextLine.make(pppData.getName().substring(0,8)+"...",fontA);
+            TextLine text = TextLine.make(pppData.getaClass(), fontA);
+            if (text.getWidth() > 500) text = TextLine.make(pppData.getaClass().substring(0,8)+"...",fontA);
             canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
             canvas.restore();
 

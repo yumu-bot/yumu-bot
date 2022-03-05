@@ -38,7 +38,7 @@ public class BindService implements MessageService {
         var from = event.getSubject();
         if (Permission.isSupper(event.getSender().getId())) {
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
-            if (matcher.group("un") != null) {
+            if (matcher.group("un") != null && at != null) {
                 unbin(at.getTarget());
             }
             if (at != null) {

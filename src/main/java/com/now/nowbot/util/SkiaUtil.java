@@ -264,6 +264,21 @@ public class SkiaUtil {
         return new Path[]{path, path1};
     }
 
+    public static Image getTextImage(String text, Typeface typeface, float textsize, Paint paint){
+        Image image;
+        var font = new Font(typeface,textsize);
+        var textLine = TextLine.make(text, font);
+        var surface = Surface.makeRasterN32Premul((int)textLine.getWidth(), (int)textLine.getHeight());
+        try (font;textLine;surface){
+            var canvas = surface.getCanvas();
+            canvas.clear(0);
+            canvas.translate(0,textsize*0.2f);
+            canvas.drawTextLine(textLine,0,textLine.getCapHeight(),paint);
+            image = surface.makeImageSnapshot();
+        }
+        return image;
+    }
+
     /***
      * ppy星数->色彩 算法
      * @param star 星数

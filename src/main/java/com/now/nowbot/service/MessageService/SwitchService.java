@@ -97,7 +97,7 @@ public class SwitchService implements MessageService{
                 if (p2 != null && event instanceof GroupMessageEvent group) {
                     try {
                         var i = Instruction.valueOf(p2.toUpperCase());
-                        var f = permission.addGroup(i.getName(), group.getGroup().getId(), Permission.isSupper(event.getSender().getId()));
+                        var f = permission.addGroup(Permission.getServiceName(i), group.getGroup().getId(), Permission.isSupper(event.getSender().getId()));
                         String s = f ? "ok" : "error";
                         from.sendMessage(s);
                     } catch (IllegalArgumentException e) {

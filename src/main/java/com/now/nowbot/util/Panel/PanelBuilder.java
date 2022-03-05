@@ -18,6 +18,13 @@ public class PanelBuilder {
     protected boolean isClose = false;
     protected Image outImage;
 
+    PanelBuilder(){
+        width = 0;
+        hight = 0;
+        surface = Surface.makeRasterN32Premul(width, hight);
+        canvas = surface.getCanvas();
+    }
+
     PanelBuilder(int w, int h) {
         width = w;
         hight = h;
