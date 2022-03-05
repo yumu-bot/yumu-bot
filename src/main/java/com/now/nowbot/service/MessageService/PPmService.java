@@ -65,11 +65,12 @@ public class PPmService implements MessageService {
         OsuUser user;
         List<BpInfo> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
 
         if (at != null) {
             // 包含有@
             var userBin = bindDao.getUser(at.getTarget());
+            //处理默认mode
+            if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
             user = osuGetService.getPlayerInfo(userBin, mode);
             bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
             ppm = Ppm.getInstance(mode, user, bps);
@@ -82,15 +83,15 @@ public class PPmService implements MessageService {
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
-                var userBin = bindDao.getUser(event.getSender().getId());
+                var userBin = bindDao.getUser(event.getSender().getId());//处理默认mode
+                if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
                 user = osuGetService.getPlayerInfo(userBin, mode);
                 bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             }
         }
-
         //生成panel名
-        String panelName = "PPM:" + switch (mode) {
+        String panelName = "PPM:" + switch (user.getPlayMode()) {
             case OSU -> "O";
             case MANIA -> "M";
             case CATCH -> "C";
@@ -139,6 +140,7 @@ public class PPmService implements MessageService {
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
 
         OsuUser userMe;
+        var userBin = bindDao.getUser(event.getSender().getId());
         List<BpInfo> bpListMe;
         OsuUser userOther;
         List<BpInfo> bpListOther;
@@ -146,18 +148,11 @@ public class PPmService implements MessageService {
         Ppm ppmOther;
 
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT) mode = OsuMode.OSU;
-        //生成panel名
-        String panelName = "PPM.v:" + switch (mode) {
-            case OSU -> "O";
-            case MANIA -> "M";
-            case CATCH -> "C";
-            case TAIKO -> "T";
-            default -> "?";
-        };
+        //处理默认mode
+        if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
         me://自己的信息
         {
-            var userBin = bindDao.getUser(event.getSender().getId());
+
             userMe = osuGetService.getPlayerInfo(userBin, mode);
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
@@ -165,11 +160,19 @@ public class PPmService implements MessageService {
                 throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
+        //生成panel名
+        String panelName = "PPM.v:" + switch (userMe.getPlayMode()) {
+            case OSU -> "O";
+            case MANIA -> "M";
+            case CATCH -> "C";
+            case TAIKO -> "T";
+            default -> "?";
+        };
         if (at != null) {//被对比人的信息
             // 包含有@
-            var userBin = bindDao.getUser(at.getTarget());
-            userOther = osuGetService.getPlayerInfo(userBin, mode);
-            bpListOther = osuGetService.getBestPerformance(userBin, mode,0,100);
+            var OtherBin = bindDao.getUser(at.getTarget());
+            userOther = osuGetService.getPlayerInfo(OtherBin, mode);
+            bpListOther = osuGetService.getBestPerformance(OtherBin, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());

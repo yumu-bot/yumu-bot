@@ -34,17 +34,20 @@ public class YmiService implements MessageService{
         OsuUser date;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
-        Long id = 0L;
         if (at != null){
             user = bindDao.getUser(at.getTarget());
         }else {
             if (name != null && !name.trim().equals("")){
-                id = osuGetService.getOsuId(matcher.group("name").trim());
+                var id = osuGetService.getOsuId(matcher.group("name").trim());
+                user = new BinUser();
+                user.setOsuID(id);
             }else {
                 user = bindDao.getUser(event.getSender().getId());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
+        //处理默认mode
+        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
         date = osuGetService.getPlayerInfo(user,mode);
 
 //        if(date.size()==0){

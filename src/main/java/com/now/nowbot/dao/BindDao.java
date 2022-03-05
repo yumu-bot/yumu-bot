@@ -54,17 +54,23 @@ public class BindDao {
     }
 
     public void saveUser(Long qqId,String name, Long osuId){
-        var data = new OsuBindUserLite();
-        data.setMainMode(OsuMode.OSU);
+        var data = new BinUser();
+        data.setMode(OsuMode.OSU);
         data.setQq(qqId);
         data.setOsuName(name);
-        data.setOsuId(osuId);
+        data.setOsuID(osuId);
         data.setTime(0L);
-        bindMapper.save(data);
+        saveUser(data);
     }
 
     public void saveUser(BinUser user) {
         var data = new OsuBindUserLite(user);
+        try {
+            var t = bindMapper.getByOsuId(user.getOsuID());
+            if (t != null) data.setId(t.getId());
+        } catch (Exception e) {
+            // do nothing
+        }
         if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
         bindMapper.save(data);
     }

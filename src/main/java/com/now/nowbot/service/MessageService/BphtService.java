@@ -5,6 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.Panel.BphtPanelBuilder;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -56,11 +57,19 @@ public class BphtService implements MessageService {
         if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             //查询其他人 bpht [name]
             String name = matcher.group("name").trim();
-            nu = new BinUser();
-            //构建只有 name + id 的对象
-            nu.setOsuID(osuGetService.getOsuId(name));
-            nu.setOsuName(name);
-            isBind = false;
+            long id = osuGetService.getOsuId(name);
+            try {
+                nu = bindDao.getUserFromOsuid(id);
+            } catch (BindException e) {
+                //do nothing
+            }
+            if (nu == null){
+                //构建只有 name + id 的对象
+                nu = new BinUser();
+                nu.setOsuID(id);
+                nu.setOsuName(name);
+                isBind = false;
+            }
         } else {
             //处理没有参数的情况 查询自身
             nu = bindDao.getUser(event.getSender().getId());
@@ -69,6 +78,8 @@ public class BphtService implements MessageService {
         List<BpInfo> Bps;
         //分别处理mode
         var mode = OsuMode.getMode(matcher.group("mode"));
+        //处理默认mode
+        if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
         Bps = osuGetService.getBestPerformance(nu, mode,0,100);
 
         if (mode == OsuMode.DEFAULT) mode = nu.getMode();

@@ -56,6 +56,8 @@ public class YmpService implements MessageService{
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
+        //处理默认mode
+        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
         switch (mode){
             default: mode = OsuMode.OSU;
             case OSU:{

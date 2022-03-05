@@ -72,6 +72,9 @@ public enum Instruction {
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
 
+    SETMODE(SetModeService.class,
+            Pattern.compile("^[!！](?i)ymmode\\s*(?<mode>\\w+)")),
+
     FRIEND(FriendService.class,
             Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
