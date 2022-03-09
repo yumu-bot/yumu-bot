@@ -4,12 +4,11 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("kumo")
-public class kumoService implements MessageService{
+@Service("word-cloud")
+public class WordCloudService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        //todo 词云
+        //todo 词云 https://github.com/kennycason/kumo
     }
 }
