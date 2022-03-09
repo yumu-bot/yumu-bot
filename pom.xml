@@ -16,7 +16,7 @@
     <properties>
         <java.version>17</java.version>
         <skipTests>true</skipTests>
-        <mirai.version>2.9.0</mirai.version>
+        <mirai.version>2.10.0</mirai.version>
     </properties>
     <repositories>
         <repository>
