@@ -200,7 +200,7 @@ public class PPmService implements MessageService {
             };
             for (var i:valueFiled){
                 i.setAccessible(true);
-                i.set(ppmOther,999);
+                i.set(ppmOther,99999.999);
             }
         }
 
