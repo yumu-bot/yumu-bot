@@ -27,12 +27,12 @@ public class OsuUserModeScoreLite {
     private Integer level_current;
     private Integer level_progress;
     //rank
-    private Integer global_rank;
-    private Integer country_rank;
-    private Float pp;
-    private Float hit_accuracy;
+    private Long global_rank;
+    private Long country_rank;
+    private Double pp;
+    private Double hit_accuracy;
 
-    private Integer play_count;
+    private Long play_count;
     private Long play_time;
 
     private Long ranked_score;
@@ -95,43 +95,43 @@ public class OsuUserModeScoreLite {
         this.level_progress = level_progress;
     }
 
-    public Integer getGlobal_rank() {
+    public Long getGlobal_rank() {
         return global_rank;
     }
 
-    public void setGlobal_rank(Integer global_rank) {
+    public void setGlobal_rank(Long global_rank) {
         this.global_rank = global_rank;
     }
 
-    public Integer getCountry_rank() {
+    public Long getCountry_rank() {
         return country_rank;
     }
 
-    public void setCountry_rank(Integer country_rank) {
+    public void setCountry_rank(Long country_rank) {
         this.country_rank = country_rank;
     }
 
-    public Float getPp() {
+    public Double getPp() {
         return pp;
     }
 
-    public void setPp(Float pp) {
+    public void setPp(Double pp) {
         this.pp = pp;
     }
 
-    public Float getHit_accuracy() {
+    public Double getHit_accuracy() {
         return hit_accuracy;
     }
 
-    public void setHit_accuracy(Float hit_accuracy) {
+    public void setHit_accuracy(Double hit_accuracy) {
         this.hit_accuracy = hit_accuracy;
     }
 
-    public Integer getPlay_count() {
+    public Long getPlay_count() {
         return play_count;
     }
 
-    public void setPlay_count(Integer play_count) {
+    public void setPlay_count(Long play_count) {
         this.play_count = play_count;
     }
 

@@ -65,6 +65,7 @@ public class MessageListener extends SimpleListenerHost {
             if (event == null) return;
             var e = SimpleListenerHost.getRootCause(exception);
             if (e instanceof TipsException || e instanceof TipsRuntimeException) {
+                log.info("send:",e);
                 event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
             } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 log.info("连接超时:",e);

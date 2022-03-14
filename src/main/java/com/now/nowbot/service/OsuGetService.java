@@ -223,7 +223,7 @@ public class OsuGetService {
     }
 
     /**
-     * 通过绑定信息获得user数据
+     * 通过绑定信息获得user数据 刷新osu name
      * @param user
      * @return
      */
@@ -326,9 +326,6 @@ public class OsuGetService {
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
-
-
-
     /**
      * 获得某个模式的bp表
      *
@@ -408,6 +405,22 @@ public class OsuGetService {
     }
 
     public JSONArray getRecent(BinUser user, String mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
+                .queryParam("mode", mode)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        return c.getBody();
+    }
+    public List<Object> getRecentN(BinUser user, String mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
