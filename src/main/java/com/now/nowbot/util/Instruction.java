@@ -27,6 +27,9 @@ public enum Instruction {
     BPHT(BphtService.class,
             Pattern.compile("^[!！](?i)ymbpht([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
+    TODAYBP(TodayBpService.class,
+            Pattern.compile("^[!！](?i)tbp([:：](?<mode>[\\w\\d]+))?")),
+
     HELP(HelpService.class,
             Pattern.compile("^[!！](?i)(ym)?((help)|h)")),
 

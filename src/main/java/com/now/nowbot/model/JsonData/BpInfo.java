@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true) // 允许忽略json没有的值赋为空
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
 public class BpInfo {
+    static final DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
     Long id;
     @JsonProperty("user_id")
     Integer userId;
@@ -210,6 +213,11 @@ public class BpInfo {
                 ", \nweight=" + weight +
                 ", \nstatistics=" + statistics +
                 '}';
+    }
+
+    public LocalDateTime getTime(){
+        if (createTime != null) return LocalDateTime.parse(createTime, formatter);
+        return LocalDateTime.now();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

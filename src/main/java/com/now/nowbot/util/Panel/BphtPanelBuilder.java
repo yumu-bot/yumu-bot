@@ -94,7 +94,7 @@ public class BphtPanelBuilder{
         int w = (int) maxWidth + 50;
         int h = (int) ((lines.length + 1) * lines[0].getHeight()) + 50;
 
-        Surface surface = Surface.makeRasterN32Premul((int) maxWidth + 50, h);
+        Surface surface = Surface.makeRasterN32Premul(w, h);
         Shader shader = Shader.makeLinearGradient(0, 0, 0, h, SkiaUtil.getRandomColors());
         try (surface; shader) {
             var canvas = surface.getCanvas();
