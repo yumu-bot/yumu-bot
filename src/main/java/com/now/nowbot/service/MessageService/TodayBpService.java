@@ -14,6 +14,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.regex.Matcher;
 
 @Service("T-BP")
@@ -53,7 +54,7 @@ public class TodayBpService implements MessageService{
             var bp = bpList.get(i);
             if (dayBefore.isBefore(bp.getTime())){
                 bp.getMods().forEach(modsb::append);
-                var t = TextLine.make("bp"+i+' '+decimalFormat.format(bp.getPp())+"pp "+decimalFormat.format(bp.getAccuracy())+" +"+modsb, getFont());
+                var t = TextLine.make("bp"+(i+1)+' '+decimalFormat.format(bp.getPp())+"pp "+decimalFormat.format(bp.getAccuracy()*100)+"% +"+modsb, getFont());
                 modsb.setLength(0);
                 if (t.getWidth() >maxWidth) maxWidth = t.getWidth();
                 lines.add(t);
@@ -75,7 +76,7 @@ public class TodayBpService implements MessageService{
 //            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
             canvas.translate(25, 40);
             for (TextLine line : lines) {
-                canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(SkiaUtil.getRandomColor()));
+                canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(randomColor()));
                 canvas.translate(0, line.getHeight());
             }
             var image = surface.makeImageSnapshot();
@@ -87,6 +88,13 @@ public class TodayBpService implements MessageService{
         }
 
 
+    }
+
+    int randomColor(){
+        var t = new Random();
+        var t1 = new Random();
+        var t2 = new Random();
+        return Color.makeRGB(128+t.nextInt(125),128+t1.nextInt(125),128+t2.nextInt(125));
     }
 
 }
