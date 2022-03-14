@@ -110,6 +110,7 @@ public abstract class Ppm {
         return doAct.apply(value8);
     }
     protected double check(double value, double min, double max){
+        if (Double.isNaN(value)) return 0;
         if (value>max) return max;else return Math.max(value, min);
     }
 
