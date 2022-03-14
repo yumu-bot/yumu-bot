@@ -82,6 +82,8 @@ public class PPmService implements MessageService {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = osuGetService.getPlayerInfo(id, mode);
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
+                //默认无主模式
+                if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
                 ppm = Ppm.getInstance(mode, user, bps);
             } else {
                 var userBin = bindDao.getUser(event.getSender().getId());//处理默认mode

@@ -169,7 +169,7 @@ public class OsuGetService {
         int i = 0;
         names[i++] = date.getUsername().toUpperCase();
         for (var nName : date.getPreviousName()) {
-            names[i++] = nName;
+            names[i++] = nName.toUpperCase();
         }
         bindDao.saveOsuNameToId(date.getId(), names);
         return date.getId();
@@ -269,7 +269,7 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
+        ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
         return data;
     }
