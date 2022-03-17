@@ -12,6 +12,7 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Font;
+import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -82,8 +83,12 @@ public class BphtService implements MessageService {
         if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
         Bps = osuGetService.getBestPerformance(nu, mode,0,100);
 
-        if (mode == OsuMode.DEFAULT) mode = nu.getMode();
-        var image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), mode.getName()).build();
+        Image image;
+        if(mode == null || mode == OsuMode.DEFAULT) {
+            image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), "").build();
+        }else {
+            image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), mode.getName()).build();
+        }
         QQMsgUtil.sendImage(from, image.encodeToData(EncodedImageFormat.JPEG).getBytes());
 //        from.sendMessage(dtbf.toString());
     }
