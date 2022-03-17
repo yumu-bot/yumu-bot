@@ -6,7 +6,9 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class SkiaUtil {
@@ -327,14 +329,40 @@ public class SkiaUtil {
      */
     private static final float MAIN_COLOR_IMAGE_MAX_SIZE = 500;
 
-    public static Color[] getMainColor(Image image, int len) {
+    public static int[] getMainColor(Image image, int len) {
         //缩放图片
-        if (Math.max(image.getWidth(), image.getHeight()) > MAIN_COLOR_IMAGE_MAX_SIZE) {
-            image = SkiaImageUtil.getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE / Math.max(image.getWidth(), image.getHeight()));
-        }
+//        if (Math.max(image.getWidth(), image.getHeight()) > MAIN_COLOR_IMAGE_MAX_SIZE) {
+//            image = SkiaImageUtil.getScaleImage(image, MAIN_COLOR_IMAGE_MAX_SIZE / Math.max(image.getWidth(), image.getHeight()));
+//        }
         Bitmap bitmap = Bitmap.makeFromImage(image);
         int x_length = bitmap.getWidth();
         int y_length = bitmap.getHeight();
+        {
+            int[] colorCount = new int[1<<15];
+            for (int x_index = 0; x_index < x_length; x_index++) {
+                for (int y_index = 0; y_index < y_length; y_index++) {
+                    int i = bitmap.getColor(x_index, y_index);
+                    //压缩 RGB555 颜色空间
+                    int r = ((i>>19)&((1<<5)-1));
+                    int g = ((i>>11)&((1<<5)-1));
+                    int b = ((i>>3)&((1<<5)-1));
+                    colorCount[(r<<10)|(g<<5)|b]++;
+                }
+            }
+            List<Integer> colors = new ArrayList<>();
+            for (int i = 0; i < colorCount.length; i++) {
+                if (colorCount[i] != 0 && true/* 接近白色、黑色和红色的颜色。 why? */){
+                    colors.add(i);
+                }
+            }
+            if (colors.size() < len){
+                var data = new int[colors.size()];
+                for (int i = 0; i < colors.size(); i++) {
+                    data[i] = colors.get(i);
+                }
+                return data;
+            }
+        }
         //提取色彩int值
         int[] colors_int = new int[x_length * y_length];
         for (int x_index = 0; x_index < x_length; x_index++) {
@@ -342,6 +370,7 @@ public class SkiaUtil {
                 colors_int[x_index * y_length + y_index] = bitmap.getColor(x_index, y_index);
             }
         }
+        if (len>0)return colors_int;
         //色彩排序
         Arrays.sort(colors_int);
         //计算颜色柱数量
@@ -359,8 +388,9 @@ public class SkiaUtil {
         var mColors = new int[color_size];
         var mColorCounts = new int[color_size];
 
-        return new Color[len];
+        return colors_int;
     }
+
 
     public static int[] getRandomColors() {
         return COLOR_GRAdDIENT[new Random().nextInt(COLOR_GRAdDIENT.length)];
