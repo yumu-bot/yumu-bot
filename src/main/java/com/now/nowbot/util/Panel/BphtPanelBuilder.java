@@ -95,12 +95,12 @@ public class BphtPanelBuilder{
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp() - Bps.get(Bps.size() - 1).getPp()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
-        if (Bps.size()>30) {
-            var tr = Bps.get(2).getPp().intValue()+(int) (Bps.get(9).getPp()*Bps.get(7).getAccuracy());
-            dtbf.append('\n').append(assess[tr%assess.length]);
-        }else {
-            dtbf.append('\n').append("不好评价");
-        }
+//        if (Bps.size()>30) {
+//            var tr = Bps.get(2).getPp().intValue()+(int) (Bps.get(9).getPp()*Bps.get(7).getAccuracy());
+//            dtbf.append('\n').append(assess[tr%assess.length]);
+//        }else {
+//            dtbf.append('\n').append("不好评价");
+//        }
 
         var allstr = dtbf.toString().split("\n");
         TextLine[] lines = new TextLine[allstr.length];
