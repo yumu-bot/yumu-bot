@@ -20,7 +20,7 @@ public class MpScoreInfo {
     Integer perfect;
     //待实现
 //    Statistics statistics;
-    Integer rank;
+    String rank;
     @JsonProperty("created_at")
     OffsetDateTime createdAt;
     @JsonProperty("best_id")
@@ -101,11 +101,11 @@ public class MpScoreInfo {
         this.perfect = perfect;
     }
 
-    public Integer getRank() {
+    public String getRank() {
         return rank;
     }
 
-    public void setRank(Integer rank) {
+    public void setRank(String rank) {
         this.rank = rank;
     }
 
