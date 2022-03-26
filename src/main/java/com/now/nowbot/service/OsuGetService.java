@@ -13,9 +13,10 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
-import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -38,6 +39,7 @@ import java.util.List;
 @Service
 public class OsuGetService {
     public static BinUser botUser = new BinUser();
+    private static final Logger log = LoggerFactory.getLogger(OsuGetService.class);
 
     private int oauthId;
     private String redirectUrl;
@@ -767,8 +769,9 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-            var e = (RequestException) exc.getCause();
-            System.out.println(e.message);
+           log.error("match error ",exc);
+
+           throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
@@ -788,8 +791,9 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-            var e = (RequestException) exc.getCause();
-            System.out.println(e.message);
+            log.error("match error ",exc);
+
+            throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
