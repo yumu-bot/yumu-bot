@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.JacksonUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +25,10 @@ public class RatingService implements MessageService {
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
 
-        var data = osuGetService.getMatchInfo(matchId);
-        Match match = JacksonUtil.toObj(data.toString(), Match.class);
+
+        Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            data = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId());
-            var events = JacksonUtil.toObj(data.toString(), Match.class).getEvents();
+            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
         }
 

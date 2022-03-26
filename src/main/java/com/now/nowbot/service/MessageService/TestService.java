@@ -69,12 +69,12 @@ public class TestService implements MessageService {
     }
 
     private void mo(int id, long eventid, List<StringBuffer> sbList) {
-        JsonNode data;
-        if (eventid > 0) {
-            data = osuGetService.getMatchInfo(id, eventid);
-        } else {
-            data = osuGetService.getMatchInfo(id);
-        }
+        JsonNode data = null;
+//        if (eventid > 0) {
+//            data = osuGetService.getMatchInfo(id, eventid);
+//        } else {
+//            data = osuGetService.getMatchInfo(id);
+//        }
         var events = data.get("events");
         //因为ppy对大于100条event采用的是分页查询,先递归至房间创建的页,然后顺页执行
         if (!events.get(0).get("detail").get("type").asText().equals("match-created")) {

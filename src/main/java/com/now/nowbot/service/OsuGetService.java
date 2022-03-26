@@ -12,6 +12,7 @@ import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PpPlus;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.match.Match;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
@@ -753,7 +754,7 @@ public class OsuGetService {
      * @param mid
      * @return
      */
-    public JsonNode getMatchInfo(int mid) {
+    public Match getMatchInfo(int mid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -762,9 +763,9 @@ public class OsuGetService {
 
         headers.set("Authorization", "Bearer " + getToken());
         HttpEntity httpEntity = new HttpEntity(headers);
-        JsonNode data = null;
+        Match data = null;
         try {
-            data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
+            data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
             var e = (RequestException) exc.getCause();
             System.out.println(e.message);
@@ -772,7 +773,7 @@ public class OsuGetService {
         return data;
     }
 
-    public JsonNode getMatchInfo(int mid, long before) {
+    public Match getMatchInfo(int mid, long before) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
                 .queryParam("before", before)
                 .queryParam("limit", 100)
@@ -783,9 +784,9 @@ public class OsuGetService {
 
         headers.set("Authorization", "Bearer " + getToken());
         HttpEntity httpEntity = new HttpEntity(headers);
-        JsonNode data = null;
+        Match data = null;
         try {
-            data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
+            data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
             var e = (RequestException) exc.getCause();
             System.out.println(e.message);
