@@ -3,16 +3,14 @@ package com.now.nowbot.controller;
 import com.now.nowbot.util.WebsocketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RestController;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-@ServerEndpoint("/CtrlSocket/{key}/{token}")
-@RestController
+//@ServerEndpoint("/CtrlSocket/{key}/{token}")
+//@RestController
 public class CtrlWebsocket {
     private static final Logger log = LoggerFactory.getLogger(CtrlWebsocket.class);
 

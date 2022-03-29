@@ -80,6 +80,10 @@ public class RatingService implements MessageService {
 
                     //填充用户队伍信息和总分信息
                     var user = users.get(scoreInfo.getUserId());
+                    if (user == null) {
+                        user = new UserMatchData(scoreInfo.getUserId(), osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()).getUsername());
+                        users.put(scoreInfo.getUserId(),user);
+                    }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());
                     round.getUserScores().put(user.getId(), scoreInfo.getScore());
