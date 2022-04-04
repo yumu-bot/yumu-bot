@@ -38,33 +38,46 @@ public class TodayBpService implements MessageService{
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        //消息来源
         var from = event.getSubject();
+        //用户
         var user = bindDao.getUser(event.getSender().getId());
 
+        //模式
         var mode = OsuMode.getMode(matcher.group("mode"));
 
+        //bp列表获取
         var bpList = osuGetService.getBestPerformance(user, mode, 0,100);
+        //输出文本行的集合
         var lines = new ArrayList<TextLine>();
+        //第一行 getFont是获取字体
         var t_temp = TextLine.make("24h内bp:", getFont());
         lines.add(t_temp);
+        //计算图片宽度
         float maxWidth = t_temp.getWidth();
+        // 时间计算
         LocalDateTime dayBefore = LocalDateTime.now().plusDays(-1);
+        //文本暂存
         StringBuilder modsb = new StringBuilder();
+        //生成所有文字
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
             if (dayBefore.isBefore(bp.getTime())){
                 bp.getMods().forEach(modsb::append);
                 var t = TextLine.make("bp"+(i+1)+' '+decimalFormat.format(bp.getPp())+"pp "+decimalFormat.format(bp.getAccuracy()*100)+"% +"+modsb, getFont());
                 modsb.setLength(0);
+                //统计文字最宽宽度
                 if (t.getWidth() >maxWidth) maxWidth = t.getWidth();
                 lines.add(t);
             }
         }
+        //没有的话
         if (lines.size() <= 1){
             from.sendMessage("多打打");
-            return;
+            return;//此处结束
         }
 
+        //设置输出大小,宽是最宽文字+50 高是总和+50
         int w = (int) maxWidth + 50;
         int h = (int) ((lines.size() + 1) * t_temp.getHeight()) + 50;
 
@@ -76,7 +89,9 @@ public class TodayBpService implements MessageService{
 //            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
             canvas.translate(25, 40);
             for (TextLine line : lines) {
+                //randomColor 随机颜色
                 canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(randomColor()));
+                //每行往下偏移
                 canvas.translate(0, line.getHeight());
             }
             var image = surface.makeImageSnapshot();

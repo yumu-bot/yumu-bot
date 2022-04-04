@@ -1,5 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
@@ -7,6 +11,12 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import com.vladsch.flexmark.ast.Node;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.parser.ParserEmulationProfile;
+import com.vladsch.flexmark.util.options.MutableDataSet;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -17,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -175,4 +186,64 @@ public class BindService implements MessageService {
 
     public record bind(Long key, MessageReceipt<Contact> receipt, Long qq) {
     }
+
+    public static void main(String[] args) {
+        String text = """
+                name = "wiki"
+                size = 56
+                color=[255,255,255]
+                                
+                #注释 字体大小
+                [[text]]
+                color=[15,66,48] #没有就使用默认颜色
+                styel=1     # 0无 1加粗 2斜体 3加粗斜体
+                size=50     #此段大小 底端对齐 没有使用默认字号
+                text="321\\n"
+                [[text]]
+                text="第二段\\n"
+                """;
+
+
+        var mp = new TomlMapper();
+        try {
+            var o = mp.readValue(text, p.class);
+            System.out.println(o.name);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+// markdown to image
+        MutableDataSet options = new MutableDataSet();
+        options.setFrom(ParserEmulationProfile.MARKDOWN);
+        options.set(Parser.EXTENSIONS, List.of(TablesExtension.create()));
+        Parser parser = Parser.builder(options).build();
+        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+
+        Node document = parser.parse("""
+                # 类型
+                                
+                ## 值类型
+                                
+                **有符号** sbyte short int long float double ***十进制浮点数*** decimal
+                                
+                **无符号** byte ushort uint ulong char *char默认代表UTF-16*""");
+        String html = renderer.render(document);
+        System.out.println(html);
+    }
+
+}
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+class p {
+    String name;
+    Integer size;
+    Integer[] color;
+    List<d> text;
+}
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+class d{
+    Integer[] color;
+    Integer styel;
+    Integer size;
+    String text;
 }

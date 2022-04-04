@@ -3,13 +3,19 @@ package com.now.nowbot.util;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 下图工具,待实现
+ */
 public class OsuMapDownloadUtil {
     public static final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
+            .cookieJar(CookieUtil.getInstance())
             .build();
 
     Cookie s = Cookie.parse(HttpUrl.parse("osu.ppy.sh"),"XSRF-TOKEN");
@@ -33,13 +39,6 @@ public class OsuMapDownloadUtil {
     }
     public static void main(String[] args) {
         var cail = httpClient;
-        var c1 =
-                new Cookie.Builder().path("/").domain(".ppy.sh").name("XSRF-TOKEN").value("")
-                        .httpOnly().secure().build();
-        var c2 =
-                new Cookie.Builder().path("/").domain(".ppy.sh").name("osu_session").value("")
-                        .httpOnly().secure().build();
-        cail.cookieJar().saveFromResponse(HttpUrl.parse("ppy.sh"), List.of(c1,c2));
         Request request = new Request.Builder()
                 .url("https://osu.ppy.sh/beatmapsets/17331/download")
                 .get()
@@ -65,5 +64,29 @@ public class OsuMapDownloadUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+}
+class CookieUtil implements CookieJar{
+    private static CookieUtil instance;
+    private Map<HttpUrl, List<String>> cookieMap;
+    private CookieUtil(){}
+    public static CookieUtil getInstance(){
+        if (instance == null){
+            synchronized (new Object()){
+                instance = new CookieUtil();
+            }
+        }
+        return instance;
+    }
+    @Override
+    public void saveFromResponse(HttpUrl httpUrl, List<Cookie> list) {
+        var x = new ArrayList<String>();
+        list.forEach(e->x.add(JacksonUtil.objectToJsonPretty(e)));
+        cookieMap.put(httpUrl, x);
+    }
+
+    @Override
+    public List<Cookie> loadForRequest(HttpUrl httpUrl) {
+        return null;
     }
 }

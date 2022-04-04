@@ -16,6 +16,33 @@ import java.util.Map;
 public class JacksonUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JacksonUtil.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    public static <T>String objectToJsonPretty(T obj){
+        if(obj == null){
+            return null;
+        }
+        try {
+            return obj instanceof String ? (String) obj : mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+        } catch (Exception e) {
+            log.warn("Parse Object to Json error",e);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static <T>T jsonToObject(String src,Class<T> clazz){
+        if(src == null || "".equals(src.trim()) || clazz == null){
+            return null;
+        }
+        try {
+            return clazz.equals(String.class) ? (T) src : mapper.readValue(src,clazz);
+        } catch (Exception e) {
+            log.warn("Parse Json to Object error",e);
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static String parseString(String body, String field) {
         ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module())

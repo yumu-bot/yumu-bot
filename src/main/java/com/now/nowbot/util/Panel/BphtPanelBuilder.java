@@ -12,20 +12,6 @@ public class BphtPanelBuilder{
     private static final int FONT_SIZE = 30;
     private Font font;
     Image image;
-    String[] assess = {
-            "这...还要多练",
-            "水平有点菜,有待进步",
-            "不错不错,可以多打点pp图",
-            "多刷点flow图吧",
-            "不好评价",
-            "你这bp,别刷跳跳跳了",
-            "兄弟,耐力不行吧,多练",
-            "合理怀疑开挂",
-            "能不能打打长图",
-            "别查了,快去刷pp!",
-            "不好评价",
-            "不好评价",
-    };
 
     public BphtPanelBuilder() {
     }
@@ -95,12 +81,7 @@ public class BphtPanelBuilder{
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp() - Bps.get(Bps.size() - 1).getPp()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
-//        if (Bps.size()>30) {
-//            var tr = Bps.get(2).getPp().intValue()+(int) (Bps.get(9).getPp()*Bps.get(7).getAccuracy());
-//            dtbf.append('\n').append(assess[tr%assess.length]);
-//        }else {
-//            dtbf.append('\n').append("不好评价");
-//        }
+
 
         var allstr = dtbf.toString().split("\n");
         TextLine[] lines = new TextLine[allstr.length];
@@ -119,7 +100,6 @@ public class BphtPanelBuilder{
         try (surface; shader) {
             var canvas = surface.getCanvas();
             canvas.clear(Color.makeRGB(38, 51, 57));
-//            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
             canvas.translate(25, 40);
             for (TextLine line : lines) {
                 canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(SkiaUtil.getRandomColor()));
