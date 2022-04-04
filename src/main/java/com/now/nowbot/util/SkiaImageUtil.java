@@ -231,4 +231,5 @@ public class SkiaImageUtil {
         }
         return new SVGDOM(Data.makeFromBytes(svgbytes));
     }
+
 }

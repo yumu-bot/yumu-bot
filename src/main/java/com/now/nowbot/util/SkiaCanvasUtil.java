@@ -130,7 +130,7 @@ public class SkiaCanvasUtil {
      * @param s 文字
      * @param ts 效果
      */
-    public static void drawTextStyel(Canvas canvas, int x, int y, String s, TextStyle ts) {
+    public static void drawTextStyle(Canvas canvas, int x, int y, String s, TextStyle ts) {
         TextStyle f = new TextStyle();
         try (ParagraphStyle ps = new ParagraphStyle();
              ParagraphBuilder pb = new ParagraphBuilder(ps, new FontCollection().setDefaultFontManager(FontMgr.getDefault()));) {
