@@ -136,4 +136,8 @@ public class HCardBuilder extends PanelBuilder{
             e.printStackTrace();
         }
     }
+
+    public Image build(){
+        return super.build(0);
+    }
 }
