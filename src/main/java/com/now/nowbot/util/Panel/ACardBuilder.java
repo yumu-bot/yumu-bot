@@ -14,6 +14,7 @@ public class ACardBuilder extends CardBuilder{
     public ACardBuilder(Image bg){
         super(bg);
     }
+
     /***
      * 头像
      * @param head_url

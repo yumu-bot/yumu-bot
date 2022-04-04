@@ -403,4 +403,15 @@ public class SkiaUtil {
     public static int getRandomColor() {
         return COLOR_SUGER[new Random().nextInt(COLOR_SUGER.length)];
     }
+
+    public static int getRankColor(String rank) {
+        return switch (rank.trim().toUpperCase()){
+            case "S" -> Color.makeRGB(255,255,255);
+            case "SH" -> Color.makeRGB(255,255,255);
+            case "X" -> Color.makeRGB(255,255,255);
+            case "XH" -> Color.makeRGB(255,255,255);
+            default ->  Color.makeRGB(255,255,255);
+        };
+
+    }
 }

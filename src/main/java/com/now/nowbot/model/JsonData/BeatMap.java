@@ -7,11 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class BeatMap {
-    Integer id;
+    Long id;
     @JsonProperty("beatmapset_id")
     Integer beatmapsetId;
     @JsonProperty("difficulty_rating")
-    Integer difficultyRating;
+    Float difficultyRating;
     String mode;
     @JsonProperty("mode_int")
     Integer modeInt;
@@ -87,11 +87,11 @@ public class BeatMap {
                 '}';
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -103,11 +103,11 @@ public class BeatMap {
         this.beatmapsetId = beatmapsetId;
     }
 
-    public Integer getDifficultyRating() {
+    public Float getDifficultyRating() {
         return difficultyRating;
     }
 
-    public void setDifficultyRating(Integer difficultyRating) {
+    public void setDifficultyRating(Float difficultyRating) {
         this.difficultyRating = difficultyRating;
     }
 

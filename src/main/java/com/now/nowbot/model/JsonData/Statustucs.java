@@ -140,6 +140,22 @@ public class Statustucs {
         return accuracy;
     }
 
+    /**
+     * 获得指定小数位的pp
+     * @param i 位数
+     * @return
+     */
+    public Double getAccuracy(int i) {
+        int n = (int) Math.pow(10, i);
+        double c = 0;
+        if (accuracy != null){
+            c = accuracy;
+        }
+        double out = Math.round(c * n);
+        out /= n;
+        return out;
+    }
+
     public void setAccuracy(Double accuracy) {
         this.accuracy = accuracy;
     }
