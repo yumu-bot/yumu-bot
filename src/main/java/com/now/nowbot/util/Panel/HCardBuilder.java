@@ -19,10 +19,6 @@ public class HCardBuilder extends PanelBuilder{
         canvas.drawRRect(RRect.makeXYWH(0,0,900,110,20),new Paint().setARGB(255,56,46,50));
         canvas.restore();
 
-        //画底层圆角矩形
-        canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0,0,900,110,20),new Paint().setARGB(255,56,46,50));
-        canvas.restore();
 
         //画评级指示矩形
         canvas.save();
