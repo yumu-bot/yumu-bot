@@ -47,7 +47,7 @@ public class HCardBuilder extends PanelBuilder{
 
         //画谱面难度色标指示矩形
         canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColot(info.getBeatmap().getDifficultyRating())));
+        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(info.getBeatmap().getDifficultyRating())));
         canvas.restore();
 
         //画主要缩略图
@@ -93,7 +93,7 @@ public class HCardBuilder extends PanelBuilder{
 
         //画谱面难度色标指示矩形
         canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColot(5.42f)));
+        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(5.42f)));// 星数
         canvas.restore();
 
         //画主要缩略图
@@ -114,8 +114,8 @@ public class HCardBuilder extends PanelBuilder{
         TextLine TextLineH1 = TextLine.make("Fushimi Rio Drunk",FontS36); //标题行
         TextLine TextLineH2 = TextLine.make("Fushimi Rio"+' '+"//"+' '+"YourDad",FontS24); //作者谱师行
         TextLine TextLineH3 = TextLine.make("[Phirida's Insane]"+" - b"+"1146831",FontS24); //难度谱号Bid行
-        TextLine TextLineH4L = TextLine.make("727",FontS48); //PP行1
-        TextLine TextLineH4R = TextLine.make("PP",FontS24); //PP行2
+        TextLine TextLineH4L = TextLine.make("727",FontS48); //PP行
+        TextLine TextLineH4R = TextLine.make("PP",FontS24); //固定的PP
 
         int TextLineH4LW = SkiaUtil.getTextImage("727",Typeface.makeFromFile("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/font/Torus-SemiBold.ttf"),48, new Paint()).getWidth();
         int TextLineH4RW = SkiaUtil.getTextImage("PP",Typeface.makeFromFile("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/font/Torus-SemiBold.ttf"),24, new Paint()).getWidth();
@@ -128,14 +128,19 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate(0,30);
         canvas.drawTextLine(TextLineH3,0,TextLineH3.getHeight()-TextLineH3.getXHeight(),new Paint().setARGB(255,177,177,177));
         canvas.translate(520,-40);
-        canvas.translate((170-TextLineH4LW-TextLineH4RW)/2f,0);
+        canvas.translate((170-TextLineH4LW-TextLineH4RW)/2f,0);//居中处理，170减大减小除以2
         canvas.drawTextLine(TextLineH4L,0,TextLineH4L.getHeight()-TextLineH4L.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.translate(TextLineH4LW,0);
         canvas.drawTextLine(TextLineH4R,0,TextLineH4L.getHeight()-TextLineH4L.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
         //加 mod 图标
-        String HCardMod = "NF";
+        Image DT = SkiaImageUtil.getImage("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/bg/ExportFileV3/Mods/DT.png");
+        Image HD = SkiaImageUtil.getImage("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/bg/ExportFileV3/Mods/HD.png");
+        canvas.save();
+        canvas.translate(620,23);//初始位置
+        canvas.drawImage(DT,0,0);
+        canvas.drawImage(HD,-40,0);//后续每个 mod 都与前面相隔 40px
 
         try{
             Files.write(Path.of("D:/output.png"),
