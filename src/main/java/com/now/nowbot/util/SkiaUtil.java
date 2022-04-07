@@ -6,8 +6,6 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -466,22 +464,6 @@ public class SkiaUtil {
     }
 
     public static void main(String[] args) {
-        TextLine r = TextLine.make("扽|asfasfsdfFFSDErFf_.*-]‱∰⋛√⅔₂₁¹∥", new Font(Typeface.makeDefault(), 50));
-        System.out.println(r.getCapHeight());
-        System.out.println(r.getHeight());
-        System.out.println(r.getXHeight());
 
-        var s = Surface.makeRasterN32Premul((int) r.getWidth(),50);
-        var c = s.getCanvas();
-
-        c.clear(Color.makeRGB(0,0,0));
-
-        c.drawTextLine(r,0,r.getCapHeight(), new Paint().setARGB(255,255,255,255));
-        s.flushAndSubmit();
-        try {
-            Files.write(java.nio.file.Path.of("A:/zr.png"), s.makeImageSnapshot().encodeToData().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
