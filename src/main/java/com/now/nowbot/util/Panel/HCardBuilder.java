@@ -28,7 +28,13 @@ public class HCardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(700,0);
 //                                                                                                                            这里我写了rank -> 颜色
-        canvas.drawRRect(RRect.makeXYWH(0,0,200,110,0,20,20,0),new Paint().setColor(SkiaUtil.getRankColor(info.getRank())));
+//        canvas.drawRRect(RRect.makeXYWH(0,0,200,110,0,20,20,0),new Paint().setColor(SkiaUtil.getRankColor(info.getRank())));
+        canvas.drawRRect(
+                RRect.makeXYWH(0,0,200,110,0,20,20,0),
+                new Paint().setShader(
+                        Shader.makeLinearGradient(0,0,900,0,new int[]{SkiaUtil.getRankColor(info.getRank()),SkiaUtil.getRankColor(info.getRank() + 1)})
+                )
+        );
         canvas.restore();
 
         //画中间层背景图
