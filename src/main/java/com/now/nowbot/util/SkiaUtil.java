@@ -6,6 +6,8 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,14 +24,14 @@ public class SkiaUtil {
     };
 
     static final int[][] COLOR_GRAdDIENT = new int[][]{
-            {hexToRGB("#4e54c8"), hexToRGB("#8f94fb")},
-            {hexToRGB("#11998e"), hexToRGB("#11998e")},
-            {hexToRGB("#FC5C7D"), hexToRGB("#FC5C7D")},
-            {hexToRGB("#74ebd5"), hexToRGB("#ACB6E5")},
-            {hexToRGB("#7F00FF"), hexToRGB("#7F00FF")},
+            {hexToRGBInt("#4e54c8"), hexToRGBInt("#8f94fb")},
+            {hexToRGBInt("#11998e"), hexToRGBInt("#11998e")},
+            {hexToRGBInt("#FC5C7D"), hexToRGBInt("#FC5C7D")},
+            {hexToRGBInt("#74ebd5"), hexToRGBInt("#ACB6E5")},
+            {hexToRGBInt("#7F00FF"), hexToRGBInt("#7F00FF")},
     };
 
-    public static int hexToRGB(String colorstr) {
+    public static int hexToRGBInt(String colorstr) {
         if (colorstr.startsWith("#")) {
             colorstr = colorstr.substring(1);
         }
@@ -47,6 +49,49 @@ public class SkiaUtil {
                 throw new Error("color error");
             }
         } else throw new Error("color error");
+    }
+
+    public static int[] hexToRGB(String colorstr) {
+        if (colorstr.startsWith("#")) {
+            colorstr = colorstr.substring(1);
+        }
+        int color;
+        if (colorstr.length() == 8) {
+            try {
+                color = Integer.parseInt(colorstr, 16);
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
+            }
+        } else if (colorstr.length() == 6) {
+            try {
+                color = Integer.parseInt(colorstr, 16) | 0xff000000;
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
+            }
+        } else throw new Error("color error");
+
+        return new int[]{Color.getR(color), Color.getG(color), Color.getB(color)};
+    }
+    public static int[] hexToARGB(String colorstr) {
+        if (colorstr.startsWith("#")) {
+            colorstr = colorstr.substring(1);
+        }
+        int color;
+        if (colorstr.length() == 8) {
+            try {
+                color = Integer.parseInt(colorstr, 16);
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
+            }
+        } else if (colorstr.length() == 6) {
+            try {
+                color = Integer.parseInt(colorstr, 16) | 0xff000000;
+            } catch (NumberFormatException e) {
+                throw new Error("color error");
+            }
+        } else throw new Error("color error");
+
+        return new int[]{Color.getA(color), Color.getR(color), Color.getG(color), Color.getB(color)};
     }
 
     static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
@@ -274,8 +319,8 @@ public class SkiaUtil {
         try (font;textLine;surface){
             var canvas = surface.getCanvas();
             canvas.clear(0);
-            canvas.translate(0,textsize*0.2f);
-            canvas.drawTextLine(textLine,0,textLine.getCapHeight(),paint);
+            canvas.translate(0,1.2f * textLine.getCapHeight());
+            canvas.drawTextLine(textLine,0,0,paint);
             image = surface.makeImageSnapshot();
         }
         return image;
@@ -286,7 +331,7 @@ public class SkiaUtil {
      * @param star 星数
      * @return 颜色rgb的int按位表示值,
      */
-    public static int getStartColot(float star) {
+    public static int getStartColor(float star) {
         var starts = new float[]{0.1f, 1.25f, 2, 2.5f, 3.3f, 4.2f, 4.9f, 5.8f, 6.7f, 7.7f, 9};
         var colorgroup = new int[][]{
                 {170,170,170},
@@ -405,6 +450,7 @@ public class SkiaUtil {
     }
 
     public static int getRankColor(String rank) {
+        if (rank == null) rank = "F";
         return switch (rank.trim().toUpperCase()){
             case "S" -> Color.makeRGB(240,148,80);
             case "SH" -> Color.makeRGB(180,180,180);
@@ -417,5 +463,25 @@ public class SkiaUtil {
             default ->  Color.makeRGB(129,129,129);
         };
 
+    }
+
+    public static void main(String[] args) {
+        TextLine r = TextLine.make("扽|asfasfsdfFFSDErFf_.*-]‱∰⋛√⅔₂₁¹∥", new Font(Typeface.makeDefault(), 50));
+        System.out.println(r.getCapHeight());
+        System.out.println(r.getHeight());
+        System.out.println(r.getXHeight());
+
+        var s = Surface.makeRasterN32Premul((int) r.getWidth(),50);
+        var c = s.getCanvas();
+
+        c.clear(Color.makeRGB(0,0,0));
+
+        c.drawTextLine(r,0,r.getCapHeight(), new Paint().setARGB(255,255,255,255));
+        s.flushAndSubmit();
+        try {
+            Files.write(java.nio.file.Path.of("A:/zr.png"), s.makeImageSnapshot().encodeToData().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
