@@ -38,13 +38,12 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate(160,0);
         canvas.drawRRect(RRect.makeXYWH(0,0,570,110,20),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
+
         //取背景
         Image HCardLightBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getCover2x());
         Image HCardLightBGSC = SkiaImageUtil.getScaleCenterImage(HCardLightBG,620,140); //缩放至合适大小，这里放大了一点，以应对模糊带来的负面效果
-        canvas.drawImage(HCardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT))
-        );
+        canvas.drawImage(HCardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT)));
         canvas.restore();
-
 
         //画谱面难度色标指示矩形
         canvas.save();
@@ -55,6 +54,7 @@ public class HCardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(20,0);
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
+
         //去背景
         Image HCardMainBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getList2x());
         Image HCardMainBGSC = SkiaImageUtil.getScaleCenterImage(HCardMainBG,176,110); //缩放至合适大小
@@ -86,10 +86,9 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate(160,0);
         canvas.drawRRect(RRect.makeXYWH(0,0,570,110,20),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
-        Image HCardLightBG = SkiaImageUtil.getImage("https://assets.ppy.sh/beatmaps/1087774/covers/cover@2x.jpg");
+        Image HCardLightBG = SkiaImageUtil.getImage("https://assets.ppy.sh/beatmaps/1166831/covers/cover@2x.jpg");
         Image HCardLightBGSC = SkiaImageUtil.getScaleCenterImage(HCardLightBG,620,140); //缩放至合适大小，这里放大了一点，以应对模糊带来的负面效果
-        canvas.drawImage(HCardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT))
-        );
+        canvas.drawImage(HCardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT)));
         canvas.restore();
 
         //画谱面难度色标指示矩形
@@ -101,34 +100,42 @@ public class HCardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(20,0);
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
-        Image HCardMainBG = SkiaImageUtil.getImage("https://assets.ppy.sh/beatmaps/1087774/covers/list@2x.jpg");
+        Image HCardMainBG = SkiaImageUtil.getImage("https://assets.ppy.sh/beatmaps/1166831/covers/list@2x.jpg");
         Image HCardMainBGSC = SkiaImageUtil.getScaleCenterImage(HCardMainBG,176,110); //缩放至合适大小
-        canvas.drawImage(HCardMainBGSC,0, 0,new Paint().setAlphaf(1.0f));
+        canvas.drawImage(HCardMainBGSC,0, 0,new Paint());
         canvas.restore();
 
-        /*
         //写标题
-        Typeface typeface = Typeface.makeDefault();
-        Font FontH48 = new Font(typeface, 48);
-        Font FontH36 = new Font(typeface, 36);
-        Font FontH24 = new Font(typeface, 24);
+        Typeface TorusSB = Typeface.makeFromFile("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/font/Torus-SemiBold.ttf");
+        Font FontS24 = new Font(TorusSB, 24);
+        Font FontS36 = new Font(TorusSB, 36);
+        Font FontS48 = new Font(TorusSB, 48);
 
-        StringBuilder TextH1 = new StringBuilder();
-        StringBuilder TextH2P1 = new StringBuilder();
-        StringBuilder TextH2P2 = new StringBuilder();
-        StringBuilder TextH3P1 = new StringBuilder();
-        StringBuilder TextH3P2 = new StringBuilder();
-        StringBuilder TextH4P1 = new StringBuilder();
-        StringBuilder TextH4P2 = new StringBuilder();
+        TextLine TextLineH1 = TextLine.make("Fushimi Rio Drunk",FontS36); //标题行
+        TextLine TextLineH2 = TextLine.make("Fushimi Rio"+' '+"//"+' '+"YourDad",FontS24); //作者谱师行
+        TextLine TextLineH3 = TextLine.make("[Phirida's Insane]"+" - b"+"1146831",FontS24); //难度谱号Bid行
+        TextLine TextLineH4L = TextLine.make("727",FontS48); //PP行1
+        TextLine TextLineH4R = TextLine.make("PP",FontS24); //PP行2
 
-        int TextH1L = SkiaUtil.getTextImage("标题行",SkiaUtil.getPuhuitiMedium(),20, new Paint()).getWidth();
+        int TextLineH4LW = SkiaUtil.getTextImage("727",Typeface.makeFromFile("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/font/Torus-SemiBold.ttf"),48, new Paint()).getWidth();
+        int TextLineH4RW = SkiaUtil.getTextImage("PP",Typeface.makeFromFile("F:/【osu! 文件大全】/【BOT相关】/nowbot/data/font/Torus-SemiBold.ttf"),24, new Paint()).getWidth();
 
-        TextLine TextLH1 = TextLine.make("标题行",FontH36); //标题行
-        TextLine TextLH2 = TextLine.make("M"+' '+"//"+' '+"",FontH24); //作者谱师行
-        TextLine TextLH3 = TextLine.make("难度行"+"1087774",FontH24); //难度谱号Bid行
-        TextLine TextLH4 = TextLine.make("162"+"PP",FontH48); //PP行
+        canvas.save();
+        canvas.translate(210,10);
+        canvas.drawTextLine(TextLineH1,0,TextLineH1.getHeight()-TextLineH1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(0,40);
+        canvas.drawTextLine(TextLineH2,0,TextLineH2.getHeight()-TextLineH2.getXHeight(),new Paint().setARGB(255,177,177,177));
+        canvas.translate(0,30);
+        canvas.drawTextLine(TextLineH3,0,TextLineH3.getHeight()-TextLineH3.getXHeight(),new Paint().setARGB(255,177,177,177));
+        canvas.translate(520,-40);
+        canvas.translate((170-TextLineH4LW-TextLineH4RW)/2f,0);
+        canvas.drawTextLine(TextLineH4L,0,TextLineH4L.getHeight()-TextLineH4L.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(TextLineH4LW,0);
+        canvas.drawTextLine(TextLineH4R,0,TextLineH4L.getHeight()-TextLineH4L.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.restore();
 
-        */
+        //加 mod 图标
+        String HCardMod = "NF";
 
         try{
             Files.write(Path.of("D:/output.png"),
