@@ -28,7 +28,7 @@ public class TbpPanelBuilder extends PanelBuilder{
         canvas.drawRRect(RRect.makeXYWH(0,290,1920,150 * Math.round(hCards.size()/2f) + 80, 30), c2);
         int evenNum = (hCards.size()%2 == 0) ? hCards.size() : hCards.size()-1;
         canvas.save();
-        canvas.translate(30, 180);
+        canvas.translate(40, 180);
         for (int i = 0; i < evenNum; i+=2) {
             canvas.translate(0,150);
             canvas.drawImage(hCards.get(i), 0, 0);
