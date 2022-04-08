@@ -333,7 +333,7 @@ public class SkiaUtil {
      * @return 颜色rgb的int按位表示值,
      */
     public static int getStartColor(float star) {
-        var starts = new float[]{0.1f, 1.25f, 2, 2.5f, 3.3f, 4.2f, 4.9f, 5.8f, 6.7f, 7.7f, 9};
+        var starts = new float[]{0.0999f, 0.1f, 1.25f, 2, 2.5f, 3.3f, 4.2f, 4.9f, 5.8f, 6.7f, 7.7f, 9};
         var colorgroup = new int[][]{
                 {170,170,170},
                 {66,144,251},
