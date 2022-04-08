@@ -69,7 +69,7 @@ public class TodayBpService implements MessageService{
             return;//此处结束
         }
         //绘制自己的卡片
-        var infoMe = osuGetService.getPlayerInfo(user);
+        var infoMe = osuGetService.getPlayerInfo(user, mode);
         var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
         card.drawA1(infoMe.getAvatarUrl())
                 .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))
