@@ -16,6 +16,7 @@ public class FriendPanelBuilder extends PanelBuilder{
     public FriendPanelBuilder() {
         super(1920, 330);
         drawName("Friend");
+        cards = new LinkedList<>();
         canvas.drawRRect(RRect.makeXYWH(0, 290, 1920, 40,30, 30, 0, 0), c2);
     }
 
