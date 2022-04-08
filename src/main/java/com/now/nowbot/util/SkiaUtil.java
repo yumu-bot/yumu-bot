@@ -314,10 +314,13 @@ public class SkiaUtil {
         var font = new Font(typeface,textsize);
         var textLine = TextLine.make(text, font);
         var surface = Surface.makeRasterN32Premul((int)textLine.getWidth(), (int)textLine.getHeight());
+        System.out.println(textLine.getHeight());
+        System.out.println(textLine.getXHeight());
+        System.out.println(textLine.getCapHeight());
         try (font;textLine;surface){
             var canvas = surface.getCanvas();
             canvas.clear(0);
-            canvas.translate(0,1.2f * textLine.getCapHeight());
+            canvas.translate(0,1.2f*textLine.getCapHeight());
             canvas.drawTextLine(textLine,0,0,paint);
             image = surface.makeImageSnapshot();
         }

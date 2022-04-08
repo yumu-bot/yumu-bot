@@ -14,7 +14,7 @@ public class HCardBuilder extends PanelBuilder{
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
 
-    public HCardBuilder(BpInfo info) throws IOException {
+    public HCardBuilder(BpInfo info, int bpN) throws IOException {
         super(900,110);
 
         //画底层圆角矩形
@@ -65,7 +65,7 @@ public class HCardBuilder extends PanelBuilder{
         // mods
         int textMaxW = drawMods(info.getMods());
         //写标题
-        drawtext(textMaxW, info);
+        drawtext(textMaxW, info, bpN);
 
     }
 
@@ -160,7 +160,7 @@ public class HCardBuilder extends PanelBuilder{
 
  */
 
-    public int drawMods(List<String> mods){
+    private int drawMods(List<String> mods){
         if (mods.size() == 0) return 500;
         canvas.save();
         canvas.translate(620,23);
@@ -179,7 +179,7 @@ public class HCardBuilder extends PanelBuilder{
         return 500 - mx;
     }
 
-    public void drawtext(int maxWidth, BpInfo info){
+    private void drawtext(int maxWidth, BpInfo info, int bpN){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
@@ -248,7 +248,7 @@ public class HCardBuilder extends PanelBuilder{
         TextLine h3;
         {
             sb.delete(0, sb.length());
-            h3 = TextLine.make("[] - b" + info.getBeatmap().getId(), fontS24);
+            h3 = TextLine.make("[] - bp" + bpN, fontS24);
             allWidth = 0;
             backL = 0;
             float tmax = maxWidth - h3.getWidth();
@@ -267,7 +267,7 @@ public class HCardBuilder extends PanelBuilder{
                 sb.delete(backL, sb.length());
                 sb.append("...");
             }
-            sb.insert(0,'[').append("] - b").append(info.getBeatmap().getId());
+            sb.insert(0,'[').append("] - bp").append(bpN);
             h3.close();
             h3 = TextLine.make(sb.toString(), fontS24);
         }

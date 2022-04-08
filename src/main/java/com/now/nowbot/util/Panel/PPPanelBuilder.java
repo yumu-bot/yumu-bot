@@ -75,7 +75,7 @@ public class PPPanelBuilder extends PanelBuilder {
     public PPPanelBuilder drawBanner(Image bg) {
         var temp = SkiaImageUtil.getScaleCenterImage(bg, 1920, 320);
         try (temp) {
-            canvas.drawImage(temp, 0, 0);
+            drawImage(temp);
         }
         return this;
     }

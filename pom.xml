@@ -17,14 +17,23 @@
         <java.version>17</java.version>
         <skipTests>true</skipTests>
         <mirai.version>2.10.0</mirai.version>
+        <run.os>linux</run.os>
+        <flexmark.version>0.26.4</flexmark.version>
     </properties>
     <repositories>
         <repository>
             <id>space-maven</id>
-            <url>https://packages.jetbrains.team/maven/p/skija/maven</url>
+            <name>skija</name>
+            <url>https://packages.jetbrains.team/maven/p/skija/maven/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
         </repository>
     </repositories>
+
     <dependencies>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -59,13 +68,17 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-log4j2</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-log4j2</artifactId>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-toml</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -85,7 +98,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.skija</groupId>
-            <artifactId>skija-linux</artifactId>
+            <artifactId>skija-${run.os}</artifactId>
             <version>0.93.1</version>
         </dependency>
         <dependency>
@@ -94,7 +107,7 @@
             <version>1.14.3</version>
         </dependency>
 
-<!--        sqlite-->
+        <!--        sqlite-->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
@@ -115,6 +128,23 @@
             <artifactId>kumo-tokenizers</artifactId>
             <version>1.28</version>
         </dependency>
+        <!--markdown to html-->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-util</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-tables</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <!--markdown to html end-->
     </dependencies>
     <build>
         <plugins>

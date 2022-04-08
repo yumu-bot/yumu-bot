@@ -1,6 +1,5 @@
 package com.now.nowbot.util.Panel;
 
-import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.util.LinkedList;
@@ -16,17 +15,7 @@ public class FriendPanelBuilder extends PanelBuilder{
 
     public FriendPanelBuilder() {
         super(1920, 330);
-        cards = new LinkedList<>();
-        canvas.drawRRect(RRect.makeXYWH(510,40, 195, 60, 15), c1);
-        canvas.save();
-        var typeface = SkiaUtil.getTorusSemiBold();
-        var font = new Font(typeface, 48);
-        var text = TextLine.make("Friend",font);
-        try(font;text){
-            canvas.translate(607.5f, 50+40*0.2f);
-            canvas.drawTextLine(text,-0.5f*text.getWidth(),text.getCapHeight(),p_white);
-        }
-        canvas.restore();
+        drawName("Friend");
         canvas.drawRRect(RRect.makeXYWH(0, 290, 1920, 40,30, 30, 0, 0), c2);
     }
 

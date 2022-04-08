@@ -75,6 +75,19 @@ public class PanelBuilder {
         }
     }
 
+    void drawName(String name){
+        canvas.save();
+        canvas.drawRRect(RRect.makeXYWH(510,40, 195, 60, 15), new Paint().setARGB(255,56,46,50));
+        var typeface = SkiaUtil.getTorusSemiBold();
+        var font = new Font(typeface, 48);
+        var text = TextLine.make(name,font);
+        try(font;text){
+            canvas.translate(607.5f, 50);
+            canvas.drawTextLine(text,-0.5f*text.getWidth(),1.2f*text.getCapHeight(),p_white);
+        }
+        canvas.restore();
+    }
+
     Image build(int r, String text) {
         if (isClose) return outImage;
         drawPanelInfo(surface, TOPTEXT_OFFSET, text);
@@ -90,9 +103,9 @@ public class PanelBuilder {
         Paint p = new Paint().setARGB(100, 0, 0, 0);
         try (font; leftLine; rightLine;p) {
 //                    canvas.drawRRect(RRect.makeXYWH(0, 0, leftLine.getWidth() + 2*r, leftLine.getHeight(), r), p);
-            canvas.drawTextLine(leftLine, r, leftLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
+            canvas.drawTextLine(leftLine, r, leftLine.getCapHeight()*1.2f, p_white);
 //                    canvas.drawRRect(RRect.makeXYWH(surface.getWidth() - rightLine.getWidth() - 2*r, 0, rightLine.getWidth() + r, leftLine.getHeight(), r), p);
-            canvas.drawTextLine(rightLine, surface.getWidth() - r - rightLine.getWidth(), rightLine.getCapHeight()+0.2f* TopTipeFontSize, p_white);
+            canvas.drawTextLine(rightLine, surface.getWidth() - r - rightLine.getWidth(), rightLine.getCapHeight()*1.2f, p_white);
         }
     }
 

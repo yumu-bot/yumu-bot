@@ -4,11 +4,11 @@ import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.MoliUtil;
-import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.*;
+import com.now.nowbot.util.Panel.HCardBuilder;
 import net.mamoe.mirai.Bot;
+import org.jetbrains.skija.Font;
+import org.jetbrains.skija.TextLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +56,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
                 bot.getGroup(746671531L).sendMessage("程序关闭");
             }
         }, "endThread"));
+        initHcard();
         log.info("启动成功");
         if (NowbotConfig.QQ_LOGIN) {
             //登录
@@ -65,5 +66,16 @@ public class IocAllReadyRunner implements CommandLineRunner {
             }
         }
 
+    }
+
+    void initHcard(){
+        var face = SkiaUtil.getTorusSemiBold();
+        Font fontS24 = new Font(face, 24);
+        Font fontS36 = new Font(face, 36);
+
+        for (int i = 0; i < 254; i++) {
+            HCardBuilder.F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
+            HCardBuilder.F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
+        }
     }
 }

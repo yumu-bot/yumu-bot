@@ -112,6 +112,7 @@ public class SkiaImageUtil {
      * @return 目标图
      */
     public static Image getScaleImage(Image image, int width, int height) {
+        if (image.getWidth() == width || image.getHeight() == height) return image;
         Image img = null;
         try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
             sms.getCanvas()
@@ -145,6 +146,7 @@ public class SkiaImageUtil {
      * @return 缩放并裁切后的图形
      */
     public static Image getScaleCenterImage(Image img, int w, int h) {
+        if (img.getWidth() == w || img.getHeight() == h) return img;
         try (Surface surface = Surface.makeRasterN32Premul(w, h)) {
             var canvas = surface.getCanvas();
             if (1f * img.getWidth() / img.getHeight() < 1f * w / h) {

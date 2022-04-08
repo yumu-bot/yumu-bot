@@ -66,7 +66,7 @@ public class FriendService implements MessageService{
         card.drawB3("")
                 .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatustucs().getCountryRank())
                 .drawB1("U" + infoMe.getId())
-                .drawC2(infoMe.getStatustucs().getAccuracy() + "% Lv." +
+                .drawC2(infoMe.getStatustucs().getAccuracy(2) + "% Lv." +
                         infoMe.getStatustucs().getLevelCurrent() +
                         "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
                 .drawC1(infoMe.getStatustucs().getPp(0) + "PP");
