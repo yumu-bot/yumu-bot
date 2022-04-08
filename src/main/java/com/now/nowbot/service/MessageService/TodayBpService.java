@@ -3,10 +3,16 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.Panel.ACardBuilder;
+import com.now.nowbot.util.Panel.HCardBuilder;
+import com.now.nowbot.util.Panel.TbpPanelBuilder;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
-import org.jetbrains.skija.*;
+import org.jetbrains.skija.Color;
+import org.jetbrains.skija.Font;
+import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,37 +44,23 @@ public class TodayBpService implements MessageService{
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        //消息来源
+
         var from = event.getSubject();
-        //用户
         var user = bindDao.getUser(event.getSender().getId());
 
-        //模式
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        //bp列表获取
         var bpList = osuGetService.getBestPerformance(user, mode, 0,100);
-        //输出文本行的集合
-        var lines = new ArrayList<TextLine>();
-        //第一行 getFont是获取字体
-        var t_temp = TextLine.make("24h内bp:", getFont());
-        lines.add(t_temp);
-        //计算图片宽度
-        float maxWidth = t_temp.getWidth();
+        var lines = new ArrayList<Image>();
+
         // 时间计算
         LocalDateTime dayBefore = LocalDateTime.now().plusDays(-1);
-        //文本暂存
-        StringBuilder modsb = new StringBuilder();
-        //生成所有文字
+
+        //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
             if (dayBefore.isBefore(bp.getTime())){
-                bp.getMods().forEach(modsb::append);
-                var t = TextLine.make("bp"+(i+1)+' '+decimalFormat.format(bp.getPp())+"pp "+decimalFormat.format(bp.getAccuracy()*100)+"% +"+modsb, getFont());
-                modsb.setLength(0);
-                //统计文字最宽宽度
-                if (t.getWidth() >maxWidth) maxWidth = t.getWidth();
-                lines.add(t);
+                lines.add(new HCardBuilder(bp, i+1).build());
             }
         }
         //没有的话
@@ -76,33 +68,26 @@ public class TodayBpService implements MessageService{
             from.sendMessage("多打打");
             return;//此处结束
         }
-
-        //设置输出大小,宽是最宽文字+50 高是总和+50
-        int w = (int) maxWidth + 50;
-        int h = (int) ((lines.size() + 1) * t_temp.getHeight()) + 50;
-
-        Surface surface = Surface.makeRasterN32Premul(w, h);
-        Shader shader = Shader.makeLinearGradient(0, 0, 0, h, SkiaUtil.getRandomColors());
-        try (surface; shader) {
-            var canvas = surface.getCanvas();
-            canvas.clear(Color.makeRGB(38, 51, 57));
-//            canvas.drawRect(Rect.makeWH(w,h),new Paint().setShader(shader));
-            canvas.translate(25, 40);
-            for (TextLine line : lines) {
-                //randomColor 随机颜色
-                canvas.drawTextLine(line, 0, line.getCapHeight() + FONT_SIZE * 0.2f, new Paint().setColor(randomColor()));
-                //每行往下偏移
-                canvas.translate(0, line.getHeight());
-            }
-            var image = surface.makeImageSnapshot();
-            QQMsgUtil.sendImage(from, image);
-        } finally {
-            for (var line : lines) {
-                line.close();
-            }
+        //绘制自己的卡片
+        var infoMe = osuGetService.getPlayerInfo(user);
+        var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
+        card.drawA1(infoMe.getAvatarUrl())
+                .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))
+                .drawA3(infoMe.getUsername());
+        if (infoMe.getSupportLeve() != 0){
+            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
+        card.drawB3("")
+                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatustucs().getCountryRank())
+                .drawB1("U" + infoMe.getId())
+                .drawC2(infoMe.getStatustucs().getAccuracy(2) + "% Lv." +
+                        infoMe.getStatustucs().getLevelCurrent() +
+                        "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
+                .drawC1(infoMe.getStatustucs().getPp(0) + "PP");
 
-
+        var panel = new TbpPanelBuilder(lines.size());
+        panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
+        QQMsgUtil.sendImage(from, panel.build());
     }
 
     int randomColor(){
