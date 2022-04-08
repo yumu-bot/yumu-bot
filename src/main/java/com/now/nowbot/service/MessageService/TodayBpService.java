@@ -92,7 +92,7 @@ public class TodayBpService implements MessageService{
 
         var panel = new TbpPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
-        QQMsgUtil.sendImage(from, panel.build(mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
+        QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT?user.getMode():mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
     }
 
     int randomColor(){
