@@ -54,12 +54,16 @@ public class TodayBpService implements MessageService{
         var lines = new ArrayList<Image>();
 
         // 时间计算
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(-1);
+        int dat = -1;
+        if (matcher.group("day") != null){
+            dat = -Integer.parseInt(matcher.group("day"));
+        }
+        LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
 
         //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
-            if (dayBefore.isBefore(bp.getTime())){
+            if (dayBefore.isBefore(bp.getTime()) || user.getOsuID() == 17064371L){
                 lines.add(new HCardBuilder(bp, i+1).build());
             }
         }
