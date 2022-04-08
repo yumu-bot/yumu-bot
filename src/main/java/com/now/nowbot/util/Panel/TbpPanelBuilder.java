@@ -1,6 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 
+import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.jetbrains.skija.RRect;
@@ -48,8 +49,15 @@ public class TbpPanelBuilder extends PanelBuilder{
         return this;
     }
 
-    public Image build() {
-        drawName("TBP");
+    public Image build(OsuMode mode) {
+        var modeStr = switch (mode){
+            case OSU -> ":O";
+            case TAIKO -> ":T";
+            case CATCH -> ":C";
+            case MANIA -> ":M";
+            case default -> "";
+        };
+        drawName("TBP"+modeStr);
         return super.build(20, "Today BP");
     }
 }
