@@ -34,9 +34,11 @@ public class AtReplyService implements MessageService{
             var tx = QQMsgUtil.getType(event.getMessage(), PlainText.class);
             if (tx != null) {
                 var text = tx.contentToString().trim();
-                wtfMapper.save(new Wtf(text));
+                if (!text.equals("")) {
+                    wtfMapper.save(new Wtf(text));
+                    return;
+                }
             }
-            return;
         }
 
         var p = random.nextInt(Math.toIntExact(wtfMapper.count()));
