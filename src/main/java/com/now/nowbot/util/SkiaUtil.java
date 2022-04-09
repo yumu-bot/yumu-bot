@@ -456,7 +456,7 @@ public class SkiaUtil {
             case "S" -> Color.makeRGB(240,148,80);
             case "SH" -> Color.makeRGB(180,180,180);
             case "X" -> Color.makeRGB(254,246,103);
-            case "XH" -> Color.makeRGB(230,230,230);
+            case "XH" -> Color.makeRGB(250,250,250);
             case "A" -> Color.makeRGB(121,196,113);
             case "B" -> Color.makeRGB(62,188,239);
             case "C" -> Color.makeRGB(151,129,183);
