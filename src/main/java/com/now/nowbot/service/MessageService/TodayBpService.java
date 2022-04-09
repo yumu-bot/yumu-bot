@@ -11,6 +11,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.skija.Color;
+import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Font;
 import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +92,7 @@ public class TodayBpService implements MessageService{
 
         var panel = new TbpPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
-        QQMsgUtil.sendImage(from, panel.build());
+        QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT?user.getMode():mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
     }
 
     int randomColor(){
