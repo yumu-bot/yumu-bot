@@ -272,7 +272,6 @@ public class HCardBuilder extends PanelBuilder{
             h3 = TextLine.make(sb.toString(), fontS24);
         }
 
-
         //pp
         TextLine h4l = TextLine.make(String.valueOf(info.getPp().intValue()),fontS48); //PP行
         TextLine h4r = TextLine.make("PP",fontS24); //固定的PP
@@ -284,14 +283,21 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate(210,10);
         canvas.drawTextLine(h1,0,h1.getHeight()-h1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.translate(0,40);
-        canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,177,177,177));
+        canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.translate(0,30);
-        canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,177,177,177));
+        canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.translate(520,-40);
         canvas.translate((170-TextLineH4LW-TextLineH4RW)/2f,0);//居中处理，170减大减小除以2
-        canvas.drawTextLine(h4l,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
-        canvas.translate(TextLineH4LW,0);
-        canvas.drawTextLine(h4r,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
+
+        if (info.getRank() == "XH" || info.getRank() == "X") {
+            canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+            canvas.translate(TextLineH4LW, 0);
+            canvas.drawTextLine(h4r, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        } else {
+                canvas.drawTextLine(h4l,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
+                canvas.translate(TextLineH4LW,0);
+                canvas.drawTextLine(h4r,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
+        }
         canvas.restore();
     }
 
