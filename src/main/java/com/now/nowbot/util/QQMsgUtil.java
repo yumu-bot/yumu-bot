@@ -3,14 +3,14 @@ package com.now.nowbot.util;
 import com.now.nowbot.dao.QQMessageDao;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.message.MessageReceipt;
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.MessageSource;
-import net.mamoe.mirai.message.data.PlainText;
-import net.mamoe.mirai.message.data.QuoteReply;
+import net.mamoe.mirai.message.data.*;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Image;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class QQMsgUtil {
 
@@ -24,6 +24,9 @@ public class QQMsgUtil {
     @Nullable
     public static <T> T getType(MessageChain msg, Class<T> T){
         return (T) msg.stream().filter(it -> T.isAssignableFrom(it.getClass())).findFirst().orElse(null);
+    }
+    public static <T extends MessageContent> List<T> getTypeAll(MessageChain msg, Class<T> T){
+        return msg.stream().filter(it -> T.isAssignableFrom(it.getClass())).map(it->(T)it).collect(Collectors.toList());
     }
     public static MessageChain getReplyMsg(MessageChain msg){
         var rep = getType(msg, QuoteReply.class);

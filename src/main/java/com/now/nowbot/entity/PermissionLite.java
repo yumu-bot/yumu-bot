@@ -1,6 +1,5 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.config.PermissionType;
 
 import javax.persistence.*;

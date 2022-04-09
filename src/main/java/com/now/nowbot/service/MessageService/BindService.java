@@ -134,12 +134,9 @@ public class BindService implements MessageService {
             try {
                 user = bindDao.getUser(event.getSender().getId());
             } catch (BindException e) {
-                //<<<<<<<<
-//                return;
+                //<<<<<<<< 没有这个人
             }
-            if (user == null || user.getAccessToken() == null){
-                //未绑定或未完全绑定
-            }else {
+            if (user != null && user.getAccessToken() != null){
                 from.sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
@@ -148,8 +145,7 @@ public class BindService implements MessageService {
                     return;
                 }
             }
-
-            //---------------
+            //未绑定或未完全绑定
             String state = event.getSender().getId() + "+" + timeMillis;
             //将消息回执作为 value
             state = osuGetService.getOauthUrl(state);

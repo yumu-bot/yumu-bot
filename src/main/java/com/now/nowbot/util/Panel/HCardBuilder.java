@@ -65,7 +65,7 @@ public class HCardBuilder extends PanelBuilder{
 
         // mods
         int textMaxW = drawMods(info.getMods());
-        //写标题
+        //写文字
         drawtext(textMaxW, info, bpN);
 
     }
