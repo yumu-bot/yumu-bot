@@ -291,9 +291,9 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate((170-TextLineH4LW-TextLineH4RW)/2f,0);//居中处理，170减大减小除以2
 
         if (Objects.equals(info.getRank(), "XH") || Objects.equals(info.getRank(), "X")) {
-            canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+            canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
             canvas.translate(TextLineH4LW, 0);
-            canvas.drawTextLine(h4r, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+            canvas.drawTextLine(h4r, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
         } else {
                 canvas.drawTextLine(h4l,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
                 canvas.translate(TextLineH4LW,0);
