@@ -10,10 +10,12 @@ import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.PlainText;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.Random;
 import java.util.regex.Matcher;
 
+@Service("at-replay")
 public class AtReplyService implements MessageService{
     WtfMapper wtfMapper;
     Random random = new Random(1611);
