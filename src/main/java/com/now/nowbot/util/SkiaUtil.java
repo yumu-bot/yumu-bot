@@ -456,13 +456,13 @@ public class SkiaUtil {
             case "S" -> Color.makeRGB(240,148,80);
             case "SH" -> Color.makeRGB(180,180,180);
             case "X" -> Color.makeRGB(254,246,103);
-            case "XH" -> Color.makeRGB(250,250,250);
+            case "XH" -> Color.makeRGB(205,205,205);
             case "A" -> Color.makeRGB(121,196,113);
             case "B" -> Color.makeRGB(62,188,239);
             case "C" -> Color.makeRGB(151,129,183);
             case "D" -> Color.makeRGB(234,107,72);
             default ->  Color.makeRGB(32,32,32);
-        };
+        }; //注意，这里有R+3，G-5，B+3的操作，保证不要溢出
 
     }
 
