@@ -108,7 +108,10 @@ public enum Instruction {
     //TODO 次级重要的功能
 //    RATING("rating", Pattern.compile("^[!！]ymra\\s?(?<matchid>\\d+)(\\s+(?<numberofround>\\d+))?(\\s*:\\s*(?<includingfail>\\d+))?(\\s*(?<numberofwarmup>\\d+))?"),null);
     RATING(RatingService.class,
-            Pattern.compile("^[!！]ymra\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<includingfail>\\d))?"));
+            Pattern.compile("^[!！]ymra\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+
+    WTF(AtReplyService.class,
+            Pattern.compile(".*"));
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),
