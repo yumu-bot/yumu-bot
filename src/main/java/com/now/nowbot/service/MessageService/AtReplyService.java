@@ -41,7 +41,12 @@ public class AtReplyService implements MessageService{
             }
         }
 
-        var p = random.nextInt(Math.toIntExact(wtfMapper.count()));
+        int p = 0;
+        try {
+            p = random.nextInt(Math.toIntExact(wtfMapper.count()));
+        } catch (Exception e) {
+            //
+        }
         var text = wtfMapper.findAll(Pageable.ofSize(1).withPage(p)).stream().findFirst().orElse(defaultWtf).getText();
         text.replaceAll("\\$\\{from}", event.getSenderName());
         event.getSubject().sendMessage(text);
