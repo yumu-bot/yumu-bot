@@ -115,7 +115,7 @@ public class RatingService implements MessageService {
 
         //从大到小排序
         List<UserMatchData> sortedUsers = new ArrayList<>(users.values());
-        sortedUsers.sort((o1, o2) -> (int) ((o2.getERA() - o1.getERA()) * 10000));
+        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000));
 
         var teamPoint = matchStatistics.getTeamPoint();
 
