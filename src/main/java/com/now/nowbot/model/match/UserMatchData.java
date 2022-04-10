@@ -17,13 +17,16 @@ public class UserMatchData {
     //AMG/Average(AMG) 场均标准分的相对值
     Double MQ;
     //(MQ - min(MQ))/(1 - min(MQ))
-    Double MRA;
+    Double ERA;
     //(TMG*playerNumber)/参赛人次
-    Double MDRA;
+    Double DRA;
+    //MRA = 0.7 * ERA + 0.3 * DRA
+    Double MRA;
 
     //与MRA,MDRA相同，范围扩大到正常联赛的多次match
-    Double SRA;
+    Double SERA;
     Double SDRA;
+    Double SMRA;
 
     //胜负场次
     Integer wins = 0;
@@ -41,12 +44,16 @@ public class UserMatchData {
         MQ = AMG / averageAMG;
     }
 
-    public void calculateMRA(double minMQ) {
-        MRA = (MQ - minMQ) / (1 - minMQ);
+    public void calculateERA(double minMQ) {
+        ERA = (MQ - minMQ) / (1 - minMQ);
     }
 
-    public void calculateMDRA(int playerNum, int scoreNum) {
-        MDRA = (TMG / scoreNum) * playerNum;
+    public void calculateDRA(int playerNum, int scoreNum) {
+        DRA = (TMG / scoreNum) * playerNum;
+    }
+
+    public void calculateMRA() {
+        MRA = 0.7 * ERA + 0.3 * DRA;
     }
 
     public Double getTotalScore() {
@@ -86,9 +93,7 @@ public class UserMatchData {
         this.scores = scores;
     }
 
-    public String getTeam() {
-        return team;
-    }
+    public String getTeam(){return team;}
 
     public void setTeam(String team) {
         this.team = team;
@@ -142,28 +147,32 @@ public class UserMatchData {
         this.MQ = MQ;
     }
 
-    public Double getMRA() {
-        return MRA;
+    public Double getERA() {
+        return ERA;
+    }
+
+    public void setERA(Double ERA) {
+        this.ERA = ERA;
+    }
+
+    public Double getDRA() {
+        return DRA;
     }
 
     public void setMRA(Double MRA) {
         this.MRA = MRA;
     }
 
-    public Double getMDRA() {
-        return MDRA;
+    public Double getMRA() {
+        return MRA;
     }
 
-    public void setMDRA(Double MDRA) {
-        this.MDRA = MDRA;
+    public Double getSERA() {
+        return SERA;
     }
 
-    public Double getSRA() {
-        return SRA;
-    }
-
-    public void setSRA(Double SRA) {
-        this.SRA = SRA;
+    public void setSERA(Double SERA) {
+        this.SERA = SERA;
     }
 
     public Double getSDRA() {

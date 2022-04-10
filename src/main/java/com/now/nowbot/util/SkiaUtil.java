@@ -456,14 +456,31 @@ public class SkiaUtil {
             case "S" -> Color.makeRGB(240,148,80);
             case "SH" -> Color.makeRGB(180,180,180);
             case "X" -> Color.makeRGB(254,246,103);
-            case "XH" -> Color.makeRGB(250,250,250);
+            case "XH" -> Color.makeRGB(248,248,248);
             case "A" -> Color.makeRGB(121,196,113);
             case "B" -> Color.makeRGB(62,188,239);
             case "C" -> Color.makeRGB(151,129,183);
             case "D" -> Color.makeRGB(234,107,72);
             default ->  Color.makeRGB(32,32,32);
         }; //注意，这里有R+3，G-5，B+3的操作，保证不要溢出
+    }
 
+    public static int getPlayerJudgeColor(String Judge){
+        if (Judge == null) Judge = "F";
+        return switch (Judge.toUpperCase()){
+            case "BC" -> Color.makeRGB(254,246,103);
+            case "CA" -> Color.makeRGB(240,148,80);
+            case "MF" -> Color.makeRGB(48,181,115);
+            case "SP" -> Color.makeRGB(170,212,110);
+            case "WF" -> Color.makeRGB(49,68,150);
+            case "GE" -> Color.makeRGB(180,180,180);
+            case "GU" -> Color.makeRGB(62,188,239);
+            case "SU" -> Color.makeRGB(106,80,154);
+            case "SG" -> Color.makeRGB(236,107,158);
+            case "NO" -> Color.makeRGB(234,107,72);
+            case "FU" -> Color.makeRGB(150,0,20);
+            default -> Color.makeRGB(32,32,32);
+        }; //是这么写的吗 我不会 还得写个判断judge的
     }
 
     public static void main(String[] args) {

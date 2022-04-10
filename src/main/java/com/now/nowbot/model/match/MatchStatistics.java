@@ -29,16 +29,18 @@ public class MatchStatistics {
                 minMQ = user.getMQ();
         }
 
-        //挨个计算MRA和MDRA
+        //挨个计算ERA、DRA、MRA
         for (var user : users.values()) {
-            user.calculateMRA(minMQ);
-            user.calculateMDRA(users.size(), scoreNum);
+            user.calculateERA(minMQ);
+            user.calculateDRA(users.size(), scoreNum);
+            user.calculateMRA();
         }
 
-        //如果人数<=2或者没换过人, 则MRA==MQ
+        //如果人数<=2或者没换过人, 则ERA==MQ,并重新计算最终的MRA
         if (users.size() <= 2 || users.size() * gameRounds.size() == scoreNum) {
             for (var user : users.values()) {
-                user.setMRA(user.getMQ());
+                user.setERA(user.getMQ());
+                user.calculateMRA();
             }
         }
 

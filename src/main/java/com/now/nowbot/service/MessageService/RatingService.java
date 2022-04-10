@@ -115,7 +115,7 @@ public class RatingService implements MessageService {
 
         //从大到小排序
         List<UserMatchData> sortedUsers = new ArrayList<>(users.values());
-        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000));
+        sortedUsers.sort((o1, o2) -> (int) ((o2.getERA() - o1.getERA()) * 10000));
 
         var teamPoint = matchStatistics.getTeamPoint();
 
@@ -128,12 +128,10 @@ public class RatingService implements MessageService {
 
         for (int i = 0; i < sortedUsers.size(); i++) {
             var user = sortedUsers.get(i);
-            sb.append(String.format("#%d [%.2f] %s %s", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
+            sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
-                    .append(String.format("DMG %.2f (%.2fM)", user.getMDRA(), user.getTotalScore()))
-                    .append("\n")
-                    .append(String.format("%dW-%dL (%d%%)", user.getWins(), user.getLost(),
-                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost()))))
+                    .append(String.format("%dW-%dL %d%% (%.2fM)", user.getWins(), user.getLost(),
+                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore()))
                     .append("\n\n");
         }
 
@@ -142,8 +140,8 @@ public class RatingService implements MessageService {
 //            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
 //                    .append("TMG: ").append(user.getTMG()).append("\n")
 //                    .append("AMG: ").append(user.getAMG()).append("\n")
-//                    .append("MRA: ").append(user.getMRA()).append("\n")
-//                    .append("MDRA: ").append(user.getMDRA()).append("\n");
+//                    .append("ERA: ").append(user.getERA()).append("\n")
+//                    .append("DRA: ").append(user.getDRA()).append("\n");
 //            //输出完整的分数信息
 ////                    .append("Scores And RRAs: ").append("\n");
 ////            for(int i=0;i<user.getScores().size();i++){
