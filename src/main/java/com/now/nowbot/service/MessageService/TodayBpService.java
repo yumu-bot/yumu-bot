@@ -69,7 +69,7 @@ public class TodayBpService implements MessageService{
             }
         }
         //没有的话
-        if (lines.size() <= 1){
+        if (lines.size() < 1){
             from.sendMessage("多打打");
             return;//此处结束
         }
