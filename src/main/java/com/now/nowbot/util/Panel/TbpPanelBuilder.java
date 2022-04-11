@@ -11,7 +11,7 @@ import java.util.List;
 public class TbpPanelBuilder extends PanelBuilder{
     private static final Paint c2 = new Paint().setARGB(255,42,34,38);
     public TbpPanelBuilder(int size){
-        super(1920, 340 + 150 * Math.round(size/2f));
+        super(1920, 330 + 150 * Math.round(size/2f));
     }
 
 
