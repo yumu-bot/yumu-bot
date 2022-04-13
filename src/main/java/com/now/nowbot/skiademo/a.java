@@ -136,6 +136,17 @@ public class a {
         canvas.drawRRect(RRect.makeXYWH(0,0,100,100,10,10,10,10), new Paint().setShader(shader));
         canvas.restore();
 
+        //划弧型
+        canvas.save();
+        canvas.translate(200,200);
+        canvas.drawArc(
+                0,0,  //所在弧形"补全(椭)圆"的外接矩形 左上顶点坐标
+                50,50, //所在弧形"补全(椭)圆"的外接矩形 尺寸
+                10,70,// 起始角度 从圆心往右顺时针 起始/结束 角度制,允许负数,0-360一圈
+                true, //是否填充三角区域
+                new Paint().setARGB(255,15,34,74)
+                );
+        canvas.restore();
 
         var data = surface.makeImageSnapshot().encodeToData().getBytes();
         try {
