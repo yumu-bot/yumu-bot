@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class a {
+
+    Paint t = new Paint().setAntiAlias(true); // 设置抗锯齿
     public static void main(String[] args) throws IOException {
 
         int width = 1200;

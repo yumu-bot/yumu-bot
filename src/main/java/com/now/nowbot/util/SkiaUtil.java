@@ -327,6 +327,33 @@ public class SkiaUtil {
         return image;
     }
 
+    public static Path get(int width, int height, float... t){
+        if (t.length < 2) return new Path();
+        float step = 1f * width / (t.length-1);
+        float max = t[0],min = t[0];
+
+        for (var temp : t){
+            if (max < temp) max = temp;
+            if (min > temp) min = temp;
+        }
+        float stepY = height / (min - max);
+        Path out = new Path();
+        out.moveTo(0,height + stepY * (t[0]-min));
+
+        for (int i = 1; i < t.length-1; i++) {
+//            out.lineTo(i*step, height + stepY * (t[i]-min));
+//            out.quadTo(i*step, height + stepY * (t[i]-min), (i+1)*step, height + stepY * (t[(i+1)]-min));// 二次贝塞尔曲线
+//            out.cubicTo()// 三次贝塞尔曲线
+            out.cubicTo(
+                    (i-0.5f)*step,  height + stepY * ((t[i-1]+t[i])/2-min),
+                    i*step, height + stepY * (t[i]-min),
+                    (i+0.5f)*step,  height + stepY * ((t[i+1]+t[i])/2-min)
+            );
+        }
+        out.quadTo((t.length-2)*step, height + stepY * (t[t.length-2]-min),(t.length-1)*step, height + stepY * (t[t.length-1]-min));
+        return out;
+    }
+
     /***
      * ppy星数->色彩 算法
      * @param star 星数

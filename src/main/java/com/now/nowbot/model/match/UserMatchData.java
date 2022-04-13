@@ -182,4 +182,11 @@ public class UserMatchData {
     public void setSDRA(Double SDRA) {
         this.SDRA = SDRA;
     }
+
+    public static calculateUtil calculate(){
+        return new calculateUtil();
+    }
+    static class calculateUtil{
+
+    }
 }
