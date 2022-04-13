@@ -47,7 +47,7 @@ public class AtReplyService implements MessageService{
         } catch (Exception ignored) {
         }
         var text = wtfMapper.findAll(Pageable.ofSize(1).withPage(p)).stream().findFirst().orElse(defaultWtf).getText();
-        text.replaceAll("\\$\\{from}", event.getSenderName());
+        text = text.replaceAll("\\$\\{from}", event.getSenderName());
         event.getSubject().sendMessage(text);
     }
 }
