@@ -56,7 +56,7 @@ public class RatingService implements MessageService {
         }
 
         //跳过前几轮
-        games.subList(skipedRounds, games.size()).clear();
+        games.subList(0, skipedRounds).clear();
 
         int scoreNum = 0;
         //每一局单独计算
@@ -142,11 +142,25 @@ public class RatingService implements MessageService {
             var user = finalUsers.get(i);
             sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
-                    .append(String.format("%dW-%dL %d%% (%.2fM)", user.getWins(), user.getLost(),
-                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore()))
+                    .append(String.format("%dW-%dL %d%% (%.2fM) -- %s", user.getWins(), user.getLost(),
+                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getRating().name))
                     .append("\n\n");
         }
 
+//        //色彩debug
+//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
+//        var c = s.getCanvas();
+//        finalUsers.forEach(
+//                userMatchData -> {
+//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
+//                    c.translate(0,50);
+//                }
+//        );
+//        try {
+//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 //        //输出完整用户数据
 //        for(var user:sortedUsers){
 //            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")

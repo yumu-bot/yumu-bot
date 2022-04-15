@@ -235,8 +235,8 @@ public class UserMatchData {
         NO("NO", Color.makeRGB(234,107,72)),
         FU("FU", Color.makeRGB(150,0,20)),;
 
-        String name;
-        int color;
+        public final String name;
+        public final int color;
 
         Rating(String name, int color) {
             this.name = name;
