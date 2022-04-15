@@ -1,5 +1,7 @@
 package com.now.nowbot.model.match;
 
+import org.jetbrains.skija.Color;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,9 @@ public class UserMatchData {
     //胜负场次
     Integer wins = 0;
     Integer lost = 0;
+
+    double ERA_index;
+    double DRA_index;
 
     public void calculateAMG() {
         TMG = 0d;
@@ -183,10 +188,59 @@ public class UserMatchData {
         this.SDRA = SDRA;
     }
 
-    public static calculateUtil calculate(){
-        return new calculateUtil();
-    }
-    static class calculateUtil{
 
+    public void setERA_index(double ERA_index) {
+        this.ERA_index = ERA_index;
+    }
+
+    public void setDRA_index(double DRA_index) {
+        this.DRA_index = DRA_index;
+    }
+
+    public Rating getRating(){
+        double sum = ERA_index + DRA_index;
+        if (sum <= 0.33){
+            return Rating.BC;
+        } else if (sum <= 0.66){
+            return Rating.CA;
+        } else if (sum > 1.66){
+            return Rating.FU;
+        } else if (sum > 1.33){
+            return Rating.NO;
+        } else {
+            if (ERA_index <= 0.33){
+                if (DRA_index <= 0.66) return Rating.MF;
+                else return Rating.SP;
+            } else if (DRA_index <= 0.33){
+                if (ERA_index <= 0.66) return Rating.WF;
+                else return Rating.SP;
+            } else if (ERA_index > 0.66) return Rating.SG;
+            else if (DRA_index > 0.66) return Rating.GU;
+            else return Rating.GE;
+
+        }
+
+    }
+
+    public enum Rating{
+        BC("BC", Color.makeRGB(254,246,103)),
+        CA("CA", Color.makeRGB(240,148,80)),
+        MF("MF", Color.makeRGB(48,181,115)),
+        SP("SP", Color.makeRGB(170,212,110)),
+        WF("WF", Color.makeRGB(49,68,150)),
+        GE("GE", Color.makeRGB(180,180,180)),
+        GU("GU", Color.makeRGB(62,188,239)),
+        SU("SU", Color.makeRGB(106,80,154)),
+        SG("SG", Color.makeRGB(236,107,158)),
+        NO("NO", Color.makeRGB(234,107,72)),
+        FU("FU", Color.makeRGB(150,0,20)),;
+
+        String name;
+        int color;
+
+        Rating(String name, int color) {
+            this.name = name;
+            this.color = color;
+        }
     }
 }

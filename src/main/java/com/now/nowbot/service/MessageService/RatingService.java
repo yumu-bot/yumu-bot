@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 @Service("rating")
 public class RatingService implements MessageService {
@@ -54,7 +56,7 @@ public class RatingService implements MessageService {
         }
 
         //跳过前几轮
-        games = games.subList(skipedRounds, games.size());
+        games.subList(skipedRounds, games.size()).clear();
 
         int scoreNum = 0;
         //每一局单独计算
@@ -103,19 +105,29 @@ public class RatingService implements MessageService {
         matchStatistics.setScoreNum(scoreNum);
 
         //剔除没参赛的用户
-        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
-        while (it.hasNext()) {
-            var user = it.next().getValue();
-            if (user.getRRAs().size() == 0)
-                it.remove();
-        }
+//        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
+//        while (it.hasNext()) {
+//            var user = it.next().getValue();
+//            if (user.getRRAs().size() == 0)
+//                it.remove();
+//        } //22-04-15 尝试缩短代码
+        users.values().removeIf(user-> user.getRRAs().size() == 0);
 
         //计算步骤封装
         matchStatistics.calculate();
 
         //从大到小排序
-        List<UserMatchData> sortedUsers = new ArrayList<>(users.values());
-        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000));
+        List<UserMatchData> finalUsers = new ArrayList<>(users.values());
+//        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
+        AtomicInteger tp1 = new AtomicInteger();
+        AtomicInteger tp2 = new AtomicInteger();
+        final int alluserssize = finalUsers.size();
+        finalUsers = finalUsers.stream()
+                .sorted(Comparator.comparing(UserMatchData::getERA).reversed())
+                .peek(r->r.setERA_index(1.0*tp1.getAndIncrement()/alluserssize))
+                .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
+                .peek(r->r.setDRA_index(1.0*tp2.getAndIncrement()/alluserssize))
+                .sorted(Comparator.comparing(UserMatchData::getMRA).reversed()).collect(Collectors.toList());
 
         var teamPoint = matchStatistics.getTeamPoint();
 
@@ -126,8 +138,8 @@ public class RatingService implements MessageService {
                 .append(teamPoint.getOrDefault("blue", 0)).append("\n")
                 .append("mp").append(matchId).append(" ").append(games.get(0).getTeamType()).append("\n");
 
-        for (int i = 0; i < sortedUsers.size(); i++) {
-            var user = sortedUsers.get(i);
+        for (int i = 0; i < finalUsers.size(); i++) {
+            var user = finalUsers.get(i);
             sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
                     .append(String.format("%dW-%dL %d%% (%.2fM)", user.getWins(), user.getLost(),
@@ -151,7 +163,5 @@ public class RatingService implements MessageService {
 //        }
         event.getSubject().sendMessage(sb.toString());
     }
-
-
 }
 
