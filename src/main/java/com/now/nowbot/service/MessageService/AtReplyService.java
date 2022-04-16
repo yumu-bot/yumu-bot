@@ -50,4 +50,6 @@ public class AtReplyService implements MessageService{
         text = text.replaceAll("\\$\\{from}", event.getSenderName());
         event.getSubject().sendMessage(text);
     }
+
 }
+

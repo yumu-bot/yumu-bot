@@ -119,8 +119,8 @@ public class RatingService implements MessageService {
         //从大到小排序
         List<UserMatchData> finalUsers = new ArrayList<>(users.values());
 //        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
-        AtomicInteger tp1 = new AtomicInteger();
-        AtomicInteger tp2 = new AtomicInteger();
+        AtomicInteger tp1 = new AtomicInteger(1);
+        AtomicInteger tp2 = new AtomicInteger(1);
         final int alluserssize = finalUsers.size();
         finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getERA).reversed())

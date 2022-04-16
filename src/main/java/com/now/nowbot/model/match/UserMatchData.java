@@ -198,28 +198,51 @@ public class UserMatchData {
     }
 
     public Rating getRating(){
-        double sum = ERA_index + DRA_index;
-        if (sum <= 0.33){
-            return Rating.BC;
-        } else if (sum <= 0.66){
-            return Rating.CA;
-        } else if (sum > 1.66){
-            return Rating.FU;
-        } else if (sum > 1.33){
-            return Rating.NO;
+        if (ERA_index <= 1f/6) {
+            if (DRA_index <= 1f/6) {
+                return Rating.BC;
+            } else if (DRA_index <= 2f/6) {
+                return Rating.CA;
+            } else if (DRA_index <= 4f/6) {
+                return Rating.MF;
+            } else {
+                return Rating.SP;
+            }
+        } else if (ERA_index < 2f/6) {
+            if (DRA_index <= 2f/6) {
+                return Rating.CA;
+            } else if (DRA_index <= 4f/6) {
+                return Rating.MF;
+            } else {
+                return Rating.SP;
+            }
+        } else if (ERA_index < 4f/6) {
+            if (DRA_index <= 2f/6) {
+                return Rating.WF;
+            } else if (DRA_index <= 4f/6) {
+                return Rating.GE;
+            } else {
+                return Rating.GU;
+            }
+        } else if (ERA_index < 5f/6) {
+            if (DRA_index <= 2f/6) {
+                return Rating.SP;
+            } else if (DRA_index <= 4f/6) {
+                return Rating.SG;
+            } else {
+                return Rating.NO;
+            }
         } else {
-            if (ERA_index <= 0.33){
-                if (DRA_index <= 0.66) return Rating.MF;
-                else return Rating.SP;
-            } else if (DRA_index <= 0.33){
-                if (ERA_index <= 0.66) return Rating.WF;
-                else return Rating.SP;
-            } else if (ERA_index > 0.66) return Rating.SG;
-            else if (DRA_index > 0.66) return Rating.GU;
-            else return Rating.GE;
-
+            if (DRA_index <= 2f/6) {
+                return Rating.SP;
+            } else if (DRA_index <= 4f/6) {
+                return Rating.SG;
+            } else if (DRA_index <= 5f/6) {
+                return Rating.NO;
+            } else {
+                return Rating.FU;
+            }
         }
-
     }
 
     public enum Rating{
