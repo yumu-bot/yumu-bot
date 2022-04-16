@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.BpInfo;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.PpPlus;
+import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.throwable.TipsRuntimeException;
@@ -188,6 +185,19 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(url, HttpMethod.GET, httpEntity, JsonNode.class);
+        return c.getBody();
+    }
+
+    public List<FriendUser> getFrendListN(BinUser user) {
+        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
+        String url = this.URL + "friends";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<List<FriendUser>> c = template.exchange(url, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<FriendUser>>() {
+        });
         return c.getBody();
     }
 

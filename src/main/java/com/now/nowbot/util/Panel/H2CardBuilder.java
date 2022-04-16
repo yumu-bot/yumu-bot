@@ -21,7 +21,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.restore();
 
         //画玩家评价圆角矩形
-        var colorA = SkiaUtil.getPlayerJudgeColor(info.getRank()); //getJudge
+        var colorA = SkiaUtil.getRankColor(info.getRank()); //getJudge
         var colorB = Color.makeRGB(Color.getR(colorA)-3, Color.getG(colorA)+5, Color.getB(colorA)-3);
         canvas.drawRRect(
                 RRect.makeXYWH(0,0,200,110,0,20,20,0),

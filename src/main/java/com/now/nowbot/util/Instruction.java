@@ -85,7 +85,7 @@ public enum Instruction {
             Pattern.compile("[!！]testbg(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?")),
 
     MUTUAL(MutualFriendService.class,
-            Pattern.compile("[!！](?i)(?!(?<t>test))mu")),
+            Pattern.compile("[!！](?i)(test)?mu(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
@@ -97,8 +97,6 @@ public enum Instruction {
     TESTRA(TestRaService.class,    Pattern.compile("[!！]testra(\\s+(?<id>\\d+))")),
 
     TESTPPM(TestPPMService.class,    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
-
-    TESTMUTUAL(MutualFriendService.class,    Pattern.compile("[!！](?i)(?<t>test)mu(?<names>.*)")),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！

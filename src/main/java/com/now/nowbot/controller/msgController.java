@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
 public class msgController {
+    public static final boolean debug = false;
     static final Logger log = LoggerFactory.getLogger(msgController.class);
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
     OsuGetService osuGetService;
@@ -46,18 +47,22 @@ public class msgController {
                         .append(e.getMessage());
             }
             var msg = BindService.BIND_MSG_MAP.get(key);
-            if (msg != null) {
+            if (debug || msg != null) {
                 try {
-                    try {
-                        msg.receipt().recall();
-                    } catch (Exception e) {
-                        log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
-                        sb.append("绑定连接已超时\n请重新绑定");
-                        return  sb.toString();
+                    if (!debug) {
+                        try {
+                            msg.receipt().recall();
+                        } catch (Exception e) {
+                            log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
+                            sb.append("绑定连接已超时\n请重新绑定");
+                            return  sb.toString();
+                        }
                     }
                     BinUser bd = new BinUser(msg.qq(), code);
                     osuGetService.getToken(bd);
-                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+                    if (!debug) {
+                        msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+                    }
                     BindService.BIND_MSG_MAP.remove(key);
                     sb.append("成功绑定:\n")
                             .append(bd.getQq())

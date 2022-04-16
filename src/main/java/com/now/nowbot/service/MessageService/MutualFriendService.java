@@ -2,13 +2,16 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.RequestException;
+import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.MessageUtils;
+import net.mamoe.mirai.message.data.PlainText;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("mu")
 public class MutualFriendService implements MessageService{
@@ -21,27 +24,36 @@ public class MutualFriendService implements MessageService{
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        if (matcher.group("t") != null){
-            Pattern pattern = Pattern.compile("([\\s,]+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
-            var m = pattern.matcher(matcher.group("names"));
-            StringBuilder sb = new StringBuilder();
-            while (m.find()){
-                String name = m.group("name").trim();
-                try {
-                    Long id = osuGetService.getOsuId(name);
-                    sb.append(name).append(" : ").append(id).append("\n");
-                } catch (Exception res) {
-                    if (res instanceof RequestException r && r.status.getReasonPhrase().equals("Not Found")) {
-                        sb.append(name).append(" : ").append("请求目标不存在").append("\n");
-                    } else {
-                        sb.append(name).append(" : ").append("未知错误").append("\n");
-                        res.printStackTrace();
+
+        var atList = QQMsgUtil.getTypeAll(event.getMessage(), At.class);
+        if (atList.size() > 0){
+            var data = MessageUtils.newChain();
+            atList.forEach(at->{
+                data.add(at);
+
+                    try {
+                        var u = bindDao.getUser(at.getTarget());
+                        data.add(new PlainText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n'));
+                    } catch (BindException e) {
+                        data.add(new PlainText(" 未绑定\n"));
                     }
-                }
+            });
+            event.getSubject().sendMessage(data);
+            return;
+        }
+        var s = matcher.group("names");
+        if (s != null && !s.trim().equals("")){
+            var names = s.split(",");
+            StringBuilder sb = new StringBuilder();
+            for (var name:names){
+                Long id = osuGetService.getOsuId(name);
+                sb.append(name).append(" : https://osu.ppy.sh/users/").append(id).append("\n");
             }
             event.getSubject().sendMessage(sb.toString());
             return;
         }
+
+
         var user = bindDao.getUser(event.getSender().getId());
         var id = user.getOsuID();
 

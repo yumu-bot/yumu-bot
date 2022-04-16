@@ -1,13 +1,17 @@
 package com.now.nowbot.service.MessageService;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.FriendUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
+import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.slf4j.Logger;
@@ -35,7 +39,36 @@ public class FriendService implements MessageService{
         var from = event.getSubject();
 
         var user = bindDao.getUser(event.getSender().getId());
-//        var user = bindDao.getUser(2480557535L); 调试代码
+
+        var at = QQMsgUtil.getType(event.getMessage(), At.class);
+        if (at != null){ // 转为好友鉴定功能
+            StringBuilder sb = new StringBuilder();
+
+
+            final BinUser userFriend ;
+            try {
+                userFriend = bindDao.getUser(at.getTarget());
+            } catch (BindException ignored) {
+                throw new TipsException("对方没有绑定哦");
+            }
+
+            var myList = osuGetService.getFrendListN(user);
+            boolean otherIsMyFriend = myList.stream().filter(o-> o.getId().equals(userFriend.getOsuID())).findFirst().orElse(null) != null;
+            if (otherIsMyFriend){
+                sb.append("你已经mu了").append(userFriend.getOsuName()).append('\n');
+            } else {
+                sb.append("你还没有mu").append(userFriend.getOsuName()).append(",快速连接 https://osu.ppy.sh/users/").append(userFriend.getOsuID()).append('\n');
+            }
+            var otherList = osuGetService.getFrendListN(userFriend);
+            boolean IisOtherFriend = otherList.stream().filter(o-> o.getId().equals(user.getOsuID())).findFirst().orElse(null) != null;
+            if (IisOtherFriend){
+                sb.append("ta已经mu了你");
+            } else {
+                sb.append("ta还没有mu你,快速连接 https://osu.ppy.sh/users/").append(user.getOsuID());
+            }
+            from.sendMessage(sb.toString());
+            return;
+        }
 
         //拿到参数,默认1-24个
         int n1 = 0,n2=0;
@@ -52,7 +85,7 @@ public class FriendService implements MessageService{
             throw new TipsException("参数范围错误!");
         }
 
-        var allFriend = osuGetService.getFrendList(user);
+        var allFriend = osuGetService.getFrendListN(user);
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
         var infoMe = osuGetService.getPlayerInfo(user);
@@ -92,30 +125,30 @@ public class FriendService implements MessageService{
         //好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
-                JsonNode infoO;
+                FriendUser infoO;
                 if (doRandom){
                     infoO = allFriend.get(index[i]);
                 }else {
                     infoO = allFriend.get(i);
                 }
 
-                var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.findValue("url").asText(),true));
-                cardO.drawA1(infoO.findValue("avatar_url").asText())
-                        .drawA2(PanelUtil.getFlag(infoO.findValue("country_code").asText()))
-                        .drawA3(infoO.findValue("username").asText());
-                if (infoO.findValue("is_supporter").asBoolean(false)){
+                var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.getCover().url(),true));
+                cardO.drawA1(infoO.getAvatar())
+                        .drawA2(PanelUtil.getFlag(infoO.getCountry().countryCode()))
+                        .drawA3(infoO.getName());
+                if (infoO.getSupporter()){
                     cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
                 }
                 //对bot特殊处理
-                if(infoO.findValue("is_bot").asBoolean(false)){
-                    cardO.drawB1("U" + infoO.findValue("id").asText("NaN")).drawC1("Bot");
+                if(infoO.getBot()){
+                    cardO.drawB1("U" + infoO.getId()).drawC1("Bot");
                 } else {
-                    cardO.drawB2("#" + infoO.findValue("global_rank").asText("0"))
-                            .drawB1("U" + infoO.findValue("id").asText("NaN"))
-                            .drawC2(infoO.findValue("hit_accuracy").asText().substring(0, 4) + "% Lv." +
-                                    infoO.findValue("current").asText("NaN") +
-                                    "(" + infoO.findValue("progress").asText("NaN") + "%)")
-                            .drawC1(infoO.findValue("pp").asInt() + "PP");
+                    cardO.drawB2("#" + infoO.getStatustucs().getGlobalRank())
+                            .drawB1("U" + infoO.getId())
+                            .drawC2(infoO.getStatustucs().getAccuracy(4) + "% Lv." +
+                                    infoO.getStatustucs().getLevelCurrent() +
+                                    "(" + infoO.getStatustucs().getLevelProgress() + "%)")
+                            .drawC1(infoO.getStatustucs().getPp() + "PP");
                 }
                 p.addFriendCard(cardO.build());
             } catch (Exception e) {
