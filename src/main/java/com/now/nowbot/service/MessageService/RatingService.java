@@ -51,7 +51,9 @@ public class RatingService implements MessageService {
                     .append(String.format("%dW-%dL %d%% (%.2fM) -- %s", user.getWins(), user.getLost(),
                             Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getRating().name))
                     .append("\n\n");
+
         }
+
 
 //        //色彩debug
 //        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
@@ -95,10 +97,7 @@ public class RatingService implements MessageService {
 
         //获取所有user
         for (var jUser : JUsers) {
-            Integer id = jUser.getId().intValue();
-            String username = jUser.getName();
-            users.put(id, new UserMatchData(id, username, osuGetService.getPlayerInfo(jUser.getId())));
-
+            users.put(jUser.getId().intValue(), new UserMatchData(jUser));
         }
 
         //获取所有轮的游戏

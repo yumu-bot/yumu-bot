@@ -51,7 +51,7 @@ public class PanelUtil {
     public static Image OBJECT_CARD_SUPPORTER;
 
     public static int BANNER_INDEX_MIN = 1;
-    public static int BANNER_INDEX_MAX = 16;
+    public static int BANNER_INDEX_MAX = 26;
 
     //    
     public static final String MODE_OSU = "\uE800";
