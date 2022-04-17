@@ -10,7 +10,7 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true) // 允许忽略json没有的值赋为空
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
-public class FriendUser {
+public class MicroUser {
     @JsonProperty("avatar_url")
     String avatar;
     @JsonProperty("default_group")

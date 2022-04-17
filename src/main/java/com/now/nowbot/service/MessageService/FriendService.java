@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.FriendUser;
+import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
@@ -125,7 +125,7 @@ public class FriendService implements MessageService{
         //好友绘制
         for (int i = n1; i <= n2 && i < allFriend.size(); i++) {
             try {
-                FriendUser infoO;
+                MicroUser infoO;
                 if (doRandom){
                     infoO = allFriend.get(index[i]);
                 }else {

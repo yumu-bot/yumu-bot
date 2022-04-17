@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 @Service("rating")
 public class RatingService implements MessageService {
     private static final Logger log = LoggerFactory.getLogger(RatingService.class);
+    public static record RatingData(int red, int blue, String type, List<UserMatchData> allUsers){}
 
     @Autowired
     OsuGetService osuGetService;
@@ -34,19 +34,71 @@ public class RatingService implements MessageService {
             match.getEvents().addAll(0, events);
         }
 
+        var data = calculate(match, skipedRounds, includingFail, osuGetService);
+        List<UserMatchData> finalUsers = data.allUsers;
+
+        //结果数据
+        StringBuilder sb = new StringBuilder();
+        sb.append(match.getMatchInfo().getName()).append("\n")
+                .append(data.red).append(" : ")
+                .append(data.blue).append("\n")
+                .append("mp").append(matchId).append(" ").append(data.type).append("\n");
+
+        for (int i = 0; i < finalUsers.size(); i++) {
+            var user = finalUsers.get(i);
+            sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
+                    .append("\n")
+                    .append(String.format("%dW-%dL %d%% (%.2fM) -- %s", user.getWins(), user.getLost(),
+                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getRating().name))
+                    .append("\n\n");
+        }
+
+//        //色彩debug
+//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
+//        var c = s.getCanvas();
+//        finalUsers.forEach(
+//                userMatchData -> {
+//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
+//                    c.translate(0,50);
+//                }
+//        );
+//        try {
+//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        //输出完整用户数据
+//        for(var user:sortedUsers){
+//            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
+//                    .append("TMG: ").append(user.getTMG()).append("\n")
+//                    .append("AMG: ").append(user.getAMG()).append("\n")
+//                    .append("ERA: ").append(user.getERA()).append("\n")
+//                    .append("DRA: ").append(user.getDRA()).append("\n");
+//            //输出完整的分数信息
+////                    .append("Scores And RRAs: ").append("\n");
+////            for(int i=0;i<user.getScores().size();i++){
+////                sb.append(user.getScores().get(i)).append(" ")
+////                        .append(user.getRRAs().get(i)).append("\n");
+////            }
+//        }
+        event.getSubject().sendMessage(sb.toString());
+    }
+
+    public static RatingData calculate(Match match, int skipedRounds, boolean includingFail, OsuGetService osuGetService){
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
         List<GameInfo> games = new ArrayList<>();
-        JsonNode JUsers = match.getUsers();
+        var JUsers = match.getUsers();
         Map<Integer, UserMatchData> users = new HashMap<>();
         matchStatistics.setUsers(users);
 
         //获取所有user
         for (var jUser : JUsers) {
-            Integer id = Integer.parseInt(jUser.get("id").toString());
-            String username = jUser.get("username").asText();
-            users.put(id, new UserMatchData(id, username));
+            Integer id = jUser.getId().intValue();
+            String username = jUser.getName();
+            users.put(id, new UserMatchData(id, username, osuGetService.getPlayerInfo(jUser.getId())));
+
         }
 
         //获取所有轮的游戏
@@ -83,7 +135,7 @@ public class RatingService implements MessageService {
                     //填充用户队伍信息和总分信息
                     var user = users.get(scoreInfo.getUserId());
                     if (user == null) {
-                        user = new UserMatchData(scoreInfo.getUserId(), osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()).getUsername());
+                        user = new UserMatchData(scoreInfo.getUserId(), osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()));
                         users.put(scoreInfo.getUserId(),user);
                     }
                     user.setTeam(team);
@@ -131,51 +183,7 @@ public class RatingService implements MessageService {
 
         var teamPoint = matchStatistics.getTeamPoint();
 
-        //结果数据
-        StringBuilder sb = new StringBuilder();
-        sb.append(match.getMatchInfo().getName()).append("\n")
-                .append(teamPoint.getOrDefault("red", 0)).append(" : ")
-                .append(teamPoint.getOrDefault("blue", 0)).append("\n")
-                .append("mp").append(matchId).append(" ").append(games.get(0).getTeamType()).append("\n");
-
-        for (int i = 0; i < finalUsers.size(); i++) {
-            var user = finalUsers.get(i);
-            sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
-                    .append("\n")
-                    .append(String.format("%dW-%dL %d%% (%.2fM) -- %s", user.getWins(), user.getLost(),
-                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getRating().name))
-                    .append("\n\n");
-        }
-
-//        //色彩debug
-//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
-//        var c = s.getCanvas();
-//        finalUsers.forEach(
-//                userMatchData -> {
-//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
-//                    c.translate(0,50);
-//                }
-//        );
-//        try {
-//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        //输出完整用户数据
-//        for(var user:sortedUsers){
-//            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
-//                    .append("TMG: ").append(user.getTMG()).append("\n")
-//                    .append("AMG: ").append(user.getAMG()).append("\n")
-//                    .append("ERA: ").append(user.getERA()).append("\n")
-//                    .append("DRA: ").append(user.getDRA()).append("\n");
-//            //输出完整的分数信息
-////                    .append("Scores And RRAs: ").append("\n");
-////            for(int i=0;i<user.getScores().size();i++){
-////                sb.append(user.getScores().get(i)).append(" ")
-////                        .append(user.getRRAs().get(i)).append("\n");
-////            }
-//        }
-        event.getSubject().sendMessage(sb.toString());
+        return new RatingData(teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
     }
 }
 

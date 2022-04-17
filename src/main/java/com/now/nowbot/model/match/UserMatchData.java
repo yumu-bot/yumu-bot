@@ -1,5 +1,6 @@
 package com.now.nowbot.model.match;
 
+import com.now.nowbot.model.JsonData.OsuUser;
 import org.jetbrains.skija.Color;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class UserMatchData {
     //胜负场次
     Integer wins = 0;
     Integer lost = 0;
+    OsuUser userData;
 
     double ERA_index;
     double DRA_index;
@@ -69,9 +71,15 @@ public class UserMatchData {
         return totalScore/1000000;
     }
 
-    public UserMatchData(Integer id, String username) {
+    public UserMatchData(Integer id, String username, OsuUser userdata) {
         this.id = id;
         this.username = username;
+        this.userData = userdata;
+    }
+    public UserMatchData(Integer id,  OsuUser userdata) {
+        this.id = id;
+        this.username = userdata.getUsername();
+        this.userData = userdata;
     }
 
     public Integer getWins() {
@@ -242,12 +250,13 @@ public class UserMatchData {
             } else {
                 return Rating.FU;
             }
+
         }
     }
 
     public enum Rating{
-        BC("BC", Color.makeRGB(254,246,103)),
-        CA("CA", Color.makeRGB(240,148,80)),
+        BC("big car", Color.makeRGB(254,246,103)),
+        CA("...", Color.makeRGB(240,148,80)),
         MF("MF", Color.makeRGB(48,181,115)),
         SP("SP", Color.makeRGB(170,212,110)),
         WF("WF", Color.makeRGB(49,68,150)),

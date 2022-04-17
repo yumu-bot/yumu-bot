@@ -188,7 +188,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public List<FriendUser> getFrendListN(BinUser user) {
+    public List<MicroUser> getFrendListN(BinUser user) {
         if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
@@ -196,7 +196,7 @@ public class OsuGetService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<FriendUser>> c = template.exchange(url, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<FriendUser>>() {
+        ResponseEntity<List<MicroUser>> c = template.exchange(url, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<MicroUser>>() {
         });
         return c.getBody();
     }
