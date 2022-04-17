@@ -265,17 +265,17 @@ public class UserMatchData {
     }
 
     public enum Rating{
-        BC("big car", Color.makeRGB(254,246,103)),
-        CA("...", Color.makeRGB(240,148,80)),
-        MF("MF", Color.makeRGB(48,181,115)),
-        SP("SP", Color.makeRGB(170,212,110)),
-        WF("WF", Color.makeRGB(49,68,150)),
-        GE("GE", Color.makeRGB(180,180,180)),
-        GU("GU", Color.makeRGB(62,188,239)),
-        SU("SU", Color.makeRGB(106,80,154)),
-        SG("SG", Color.makeRGB(236,107,158)),
-        NO("NO", Color.makeRGB(234,107,72)),
-        FU("FU", Color.makeRGB(150,0,20)),;
+        BC("Big Carry", Color.makeRGB(254,246,103)), //大爹
+        CA("Carry", Color.makeRGB(240,148,80)), //大哥
+        MF("Main Force", Color.makeRGB(48,181,115)), //主力
+        SP("Specialized",Color.makeRGB(170,212,110)), //专精
+        WF("Work Force", Color.makeRGB(49,68,150)), //打工
+        GE("General",Color.makeRGB(180,180,180)), //普通
+        GU("Guest", Color.makeRGB(62,188,239)), //客串
+        SU("Support",Color.makeRGB(106,80,154)), //抗压
+        SG("ScapeGoat", Color.makeRGB(236,107,158)), //背锅
+        NO("Noob", Color.makeRGB(234,107,72)), //小弟
+        FU("Futile", Color.makeRGB(150,0,20)),; //炮灰
 
         public final String name;
         public final int color;
