@@ -1,14 +1,6 @@
 package com.now.nowbot.util.Panel;
 
-import com.now.nowbot.model.match.UserMatchData;
-import com.now.nowbot.util.SkiaImageUtil;
-import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-
+/*
 public class H2CardBuilder extends PanelBuilder {
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
@@ -61,7 +53,7 @@ public class H2CardBuilder extends PanelBuilder {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 }
+
+ */
