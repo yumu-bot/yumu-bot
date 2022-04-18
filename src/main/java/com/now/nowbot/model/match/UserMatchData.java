@@ -244,7 +244,7 @@ public class UserMatchData {
             }
         } else if (ERA_index < 5f/6) {
             if (DRA_index <= 2f/6) {
-                return Rating.SP;
+                return Rating.SU;
             } else if (DRA_index <= 4f/6) {
                 return Rating.SG;
             } else {
@@ -252,7 +252,7 @@ public class UserMatchData {
             }
         } else {
             if (DRA_index <= 2f/6) {
-                return Rating.SP;
+                return Rating.SU;
             } else if (DRA_index <= 4f/6) {
                 return Rating.SG;
             } else if (DRA_index <= 5f/6) {
