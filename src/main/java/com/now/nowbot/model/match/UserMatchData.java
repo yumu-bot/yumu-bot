@@ -216,46 +216,46 @@ public class UserMatchData {
     }
 
     public Rating getRating(){
-        if (ERA_index <= 1f/6) {
-            if (DRA_index <= 1f/6) {
+        if (ERA_index < 1f/6) {
+            if (DRA_index < 1f/6) {
                 return Rating.BC;
-            } else if (DRA_index <= 2f/6) {
+            } else if (DRA_index < 2f/6) {
                 return Rating.CA;
-            } else if (DRA_index <= 4f/6) {
+            } else if (DRA_index < 4f/6) {
                 return Rating.MF;
             } else {
                 return Rating.SP;
             }
         } else if (ERA_index < 2f/6) {
-            if (DRA_index <= 2f/6) {
+            if (DRA_index < 2f/6) {
                 return Rating.CA;
-            } else if (DRA_index <= 4f/6) {
+            } else if (DRA_index < 4f/6) {
                 return Rating.MF;
             } else {
                 return Rating.SP;
             }
         } else if (ERA_index < 4f/6) {
-            if (DRA_index <= 2f/6) {
+            if (DRA_index < 2f/6) {
                 return Rating.WF;
-            } else if (DRA_index <= 4f/6) {
+            } else if (DRA_index < 4f/6) {
                 return Rating.GE;
             } else {
                 return Rating.GU;
             }
         } else if (ERA_index < 5f/6) {
-            if (DRA_index <= 2f/6) {
+            if (DRA_index < 2f/6) {
                 return Rating.SU;
-            } else if (DRA_index <= 4f/6) {
+            } else if (DRA_index < 4f/6) {
                 return Rating.SG;
             } else {
                 return Rating.NO;
             }
         } else {
-            if (DRA_index <= 2f/6) {
+            if (DRA_index < 2f/6) {
                 return Rating.SU;
-            } else if (DRA_index <= 4f/6) {
+            } else if (DRA_index < 4f/6) {
                 return Rating.SG;
-            } else if (DRA_index <= 5f/6) {
+            } else if (DRA_index < 5f/6) {
                 return Rating.NO;
             } else {
                 return Rating.FU;

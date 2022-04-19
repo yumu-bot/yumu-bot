@@ -47,7 +47,7 @@ public class TestRaService implements MessageService {
     }
 
     void mo(int id, long eventid, StringBuffer strData) {
-        Match match =null;
+        Match match =osuGetService.getMatchInfo(id);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
