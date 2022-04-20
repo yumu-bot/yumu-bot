@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -58,7 +57,7 @@ public class TestRaService implements MessageService {
             if (node.getGame() != null) {
                 var game = node.getGame();
                 try {
-                    strData.append(LocalDateTime.from(f1.parse(game.getScoringType())).format(f2)).append(' ')
+                    strData.append(game.getStartTime().format(f2)).append(' ')
                             .append(game.getMode()).append(' ')
                             .append(game.getScoringType()).append(' ')
                             .append(game.getTeamType()).append(' ')
@@ -75,7 +74,7 @@ public class TestRaService implements MessageService {
                     try {
                         strData.append(score.getUserId()).append(' ')
                                 .append((score.getAccuracy() + "     "), 0, 6).append(' ')
-                                .append(Arrays.toString(score.getMods())).append(' ')
+                                .append('[').append(String.join(",", score.getMods())).append("] ")
                                 .append(score.getScore()).append(' ')
                                 .append(score.getMaxCombo()).append(' ')
                                 .append(score.getPassed()).append(' ')
