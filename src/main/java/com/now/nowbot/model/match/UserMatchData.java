@@ -48,13 +48,13 @@ public class UserMatchData {
         AMG = TMG / RRAs.size();
     }
 
-
     public void calculateMQ(double averageAMG) {
         MQ = AMG / averageAMG;
     }
 
     public void calculateERA(double minMQ) {
-        ERA = (MQ - minMQ) / (1 - minMQ);
+        //ERA = (MQ - minMQ) / (1 - minMQ);
+        ERA = MQ;// ERA放缩取消，现在ERA与MQ等同了
     }
 
     public void calculateDRA(int playerNum, int scoreNum) {
