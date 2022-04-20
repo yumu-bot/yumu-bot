@@ -7,13 +7,10 @@ import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class H2CardBuilder extends PanelBuilder {
-    public static final ArrayList<Float> F24L = new ArrayList<>();
-    public static final ArrayList<Float> F36L = new ArrayList<>();
 
-    public H2CardBuilder(UserMatchData usermatchdata, int playerN) throws IOException {
+    public H2CardBuilder(UserMatchData usermatchdata) {
         super(900,110);
 
         //画底层圆角矩形
@@ -37,7 +34,12 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.translate(160,0);
         canvas.drawRRect(RRect.makeXYWH(0,0,570,110,20),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
-        Image H2CardLightBG = SkiaImageUtil.getImage();// 这里获取玩家头像吧，但是如果有玩家卡片或者玩家主页背景图更好
+        Image H2CardLightBG = null;   // 这里获取玩家头像吧，但是如果有玩家卡片或者玩家主页背景图(usermatchdata.getCoverUrl();)更好
+        try {
+            H2CardLightBG = SkiaImageUtil.getImage(usermatchdata.getCoverUrl());
+        } catch (IOException e) {
+            throw new RuntimeException(" get cover image error ");
+        }
         Image H2CardLightBGSC = SkiaImageUtil.getScaleCenterImage(H2CardLightBG,620,140); //缩放至合适大小，这里放大了一点，以应对模糊带来的负面效果
         canvas.drawImage(H2CardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT)));
         canvas.restore();
@@ -51,12 +53,12 @@ public class H2CardBuilder extends PanelBuilder {
         } else if(team.equals("BLUE")){
             canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,0,168,236));
         }
-
         canvas.restore();
+        drawUserRatingIndex(usermatchdata.getRating());
     }
 
     // MRA V3.1 新增部分
-    public void drawUserRatingIndex(UserMatchData.Rating Rating){
+    private void drawUserRatingIndex(UserMatchData.Rating Rating){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
 
@@ -82,6 +84,10 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.translate(20,8);
         canvas.drawTextLine(MVP,0,MVP.getHeight()-MVP.getXHeight(),new Paint().setARGB(255,255,255,255));// 画评价字
         canvas.restore();
+    }
+
+    public Image build() {
+        return super.build(20);
     }
 }
 /*

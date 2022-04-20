@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 public class Permission {
     private static final Logger log = LoggerFactory.getLogger(Permission.class);
     private static Set<Long> supetList;
+    private static final String PERMISSION_ALL = "PERMISSION_ALL";
 
     private static PermissionDao permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
@@ -44,11 +45,11 @@ public class Permission {
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
         assert permissionDao != null;
-        var AllFw = permissionDao.getQQList("PERMISSION_ALL", PermissionType.FRIEND_W);
-        var AllGw = permissionDao.getQQList("PERMISSION_ALL", PermissionType.GROUP_W);
+        var AllFw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
+        var AllGw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
         ALL_W = new PermissionData(Set.copyOf(AllFw), Set.copyOf(AllGw));
-        var AllFb = permissionDao.getQQList("PERMISSION_ALL", PermissionType.FRIEND_B);
-        var AllGb = permissionDao.getQQList("PERMISSION_ALL", PermissionType.GROUP_B);
+        var AllFb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
+        var AllGb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
         ALL_B = new PermissionData(Set.copyOf(AllFb), Set.copyOf(AllGb));
         //初始化各功能名单
 
@@ -112,7 +113,7 @@ public class Permission {
         for (var i : Instruction.values()){
             var names = applicationContext.getBeanNamesForType(i.getaClass());
             if (names.length > 0) {
-                SERVICE_NAME.put(i, names[0]);
+                SERVICE_NAME.put(i, String.join(",", names));
                 var p = serviceSwitchMapper.findById(names[0]);
                 if( p.isPresent() && !p.get().isSwitch() ){
                     OFF_SERVICE.add(i);
@@ -121,9 +122,11 @@ public class Permission {
         }
 
         for ( var i : Instruction.values() ){
-            var p = serviceSwitchMapper.findById(getServiceName(i));
-            if( p.isPresent() && !p.get().isSwitch() ){
-                OFF_SERVICE.add(i);
+            for (String s : getServiceName(i)) {
+                var p = serviceSwitchMapper.findById(s);
+                if( p.isPresent() && !p.get().isSwitch() ){
+                    OFF_SERVICE.add(i);
+                }
             }
         }
         log.info("名单初始化完成");
@@ -180,6 +183,27 @@ public class Permission {
         }
         return false;
     }
+    public boolean addGroup(Long id, boolean isSuper) {
+        var perm = ALL_B;
+        if (!perm.isSupper() || isSuper) {
+            if (perm.isWhite()) {
+                if (perm.getGroupList().add(id)) {
+                    permissionDao.addGroup(PERMISSION_ALL, PermissionType.GROUP_W, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            } else {
+                if (perm.getGroupList().add(id)) {
+                    permissionDao.addGroup(PERMISSION_ALL, PermissionType.GROUP_B, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            }
+        }
+        return false;
+    }
 
     public boolean addFriend(String sName, Long id){
         var perm = PERMISSIONS.get(sName);
@@ -194,6 +218,28 @@ public class Permission {
             } else {
                 if (perm.getFriendList().add(id)) {
                     permissionDao.addFriend(sName, PermissionType.FRIEND_B, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean addFriend(Long id){
+        var perm = ALL_B;
+        if (perm != null){
+            if (perm.isWhite()) {
+                if (perm.getFriendList().add(id)) {
+                    permissionDao.addFriend(PERMISSION_ALL, PermissionType.FRIEND_W, id);
+                    return true;
+                } else {
+                    throw new TipsRuntimeException("已经有了");
+                }
+            } else {
+                if (perm.getFriendList().add(id)) {
+                    permissionDao.addFriend(PERMISSION_ALL, PermissionType.FRIEND_B, id);
                     return true;
                 } else {
                     throw new TipsRuntimeException("已经有了");
@@ -227,18 +273,22 @@ public class Permission {
 
     public static void clouseService(Instruction i){
         OFF_SERVICE.add(i);
-        serviceSwitchMapper.save(new ServiceSwitchLite(getServiceName(i), false));
+        for (String s : getServiceName(i)) {
+            serviceSwitchMapper.save(new ServiceSwitchLite(s, false));
+        }
     }
 
     public static void openService(Instruction i){
         OFF_SERVICE.remove(i);
-        serviceSwitchMapper.save(new ServiceSwitchLite(getServiceName(i), true));
+        for (String s : getServiceName(i)) {
+            serviceSwitchMapper.save(new ServiceSwitchLite(s, true));
+        }
     }
 
-    public static String getServiceName(Instruction i){
-        String out = "";
+    public static String[] getServiceName(Instruction i){
+        String[] out = new String[0];
         if (SERVICE_NAME != null){
-            out =  SERVICE_NAME.get(i);
+            out =  SERVICE_NAME.get(i).split(",");
         }
         return out;
     }

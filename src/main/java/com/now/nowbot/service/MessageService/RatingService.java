@@ -2,6 +2,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.Panel.MatchRatingPanelBuilder;
+import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +86,12 @@ public class RatingService implements MessageService {
 ////                        .append(user.getRRAs().get(i)).append("\n");
 ////            }
 //        }
-        event.getSubject().sendMessage(sb.toString());
+
+
+
+//        event.getSubject().sendMessage(sb.toString());
+        var img = new MatchRatingPanelBuilder(finalUsers.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(finalUsers).build();
+        QQMsgUtil.sendImage(event.getSubject(), img);
     }
 
     public static RatingData calculate(Match match, int skipedRounds, boolean includingFail, OsuGetService osuGetService){

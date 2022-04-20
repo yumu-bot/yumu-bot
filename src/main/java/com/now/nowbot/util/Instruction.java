@@ -86,6 +86,9 @@ public enum Instruction {
 
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！](?i)(test)?mu(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
+
+    BAN(BanService.class,
+            Pattern.compile("[!！](?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
@@ -285,6 +288,10 @@ ymban/ymunban
     public static void main(String[] args) {
         var p = Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
         var m = p.matcher("!bind   ffff");
+        var rp = valueOf("ban".toUpperCase());
+        var rm = rp.regex.matcher("!ban ymf f 22");
+        System.out.println(rm.find());
+        System.out.println(rm.group("gf"));
         while (m.find()){
 //            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
 //            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;

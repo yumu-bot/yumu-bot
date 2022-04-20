@@ -93,18 +93,7 @@ public class SwitchService implements MessageService{
                     event.getSubject().sendMessage(text);
                 }
             }
-            case "ban" -> {
-                if (p2 != null && event instanceof GroupMessageEvent group) {
-                    try {
-                        var i = Instruction.valueOf(p2.toUpperCase());
-                        var f = permission.addGroup(Permission.getServiceName(i), group.getGroup().getId(), Permission.isSupper(event.getSender().getId()));
-                        String s = f ? "ok" : "error";
-                        from.sendMessage(s);
-                    } catch (IllegalArgumentException e) {
-                        from.sendMessage("没找到这个服务");
-                    }
-                }
-            }
+
         }
     }
 

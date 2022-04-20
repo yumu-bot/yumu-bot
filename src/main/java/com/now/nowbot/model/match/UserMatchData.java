@@ -264,6 +264,18 @@ public class UserMatchData {
         }
     }
 
+    public String getHeaderUrl(){
+        return "https://a.ppy.sh/"+id;
+    }
+
+    public String getCoverUrl(){
+        if (microUserData != null)
+            return microUserData.getCover().url();
+        else if (userData != null)
+            return userData.getCoverUrl();
+        else return "";
+    }
+
     public enum Rating{
         BC("Big Carry", Color.makeRGB(254,246,103)), //大爹
         CA("Carry", Color.makeRGB(240,148,80)), //大哥
