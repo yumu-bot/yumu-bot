@@ -3,6 +3,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.match.UserMatchData;
 import com.now.nowbot.util.SkiaImageUtil;
+import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
@@ -46,22 +47,50 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         var team = usermatchdata.getTeam().toUpperCase();
         if (team.equals("RED")) {
-            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(usermatchdata.getRating().color));
+            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,227,0,123));
         } else if(team.equals("BLUE")){
-
+            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,0,168,236));
         }
 
         canvas.restore();
     }
 
-    public void drawSpe(){
+    // MRA V3.1 新增部分
+    public void drawUserRatingIndex(UserMatchData.Rating Rating){
+        Typeface TorusSB = SkiaUtil.getTorusSemiBold();
+        Font fontS24 = new Font(TorusSB, 24);
+
+        TextLine RatingName = TextLine.make(Rating.name,fontS24);
+
         canvas.save();
-        canvas.translate(100,10);
+        canvas.translate(700 - 40 - RatingName.getWidth(),10);
+        canvas.drawRRect(RRect.makeXYWH(0,0,40 + RatingName.getWidth(),34,17),new Paint().setARGB(255,56,46,50)); // 画评价背景矩形
+        canvas.translate(20,8);
+        canvas.drawTextLine(RatingName,0,RatingName.getHeight()-RatingName.getXHeight(),new Paint().setARGB(255,255,255,255));// 画评价字
         canvas.restore();
     }
 
-    public void drawMvp(){
+    public void drawUserRatingMVP(){
+        Typeface TorusSB = SkiaUtil.getTorusSemiBold();
+        Font fontS24 = new Font(TorusSB, 24);
 
+        TextLine MVP = TextLine.make("MVP",fontS24);
+
+        canvas.save();
+        canvas.translate(700 - 40 - MVP.getWidth(),54);
+        canvas.drawRRect(RRect.makeXYWH(0,0,40 + MVP.getWidth(),34,17),new Paint().setARGB(255,56,46,50)); // 画评价背景矩形
+        canvas.translate(20,8);
+        canvas.drawTextLine(MVP,0,MVP.getHeight()-MVP.getXHeight(),new Paint().setARGB(255,255,255,255));// 画评价字
+        canvas.restore();
     }
 }
+/*
+        try{
+            Files.write(Path.of("D:/output.png"),
+            surface.makeImageSnapshot().encodeToData(EncodedImageFormat.PNG).getBytes()
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+ */
