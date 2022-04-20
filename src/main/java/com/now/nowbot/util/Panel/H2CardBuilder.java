@@ -36,7 +36,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
         Image H2CardLightBG = null;   // 这里获取玩家头像吧，但是如果有玩家卡片或者玩家主页背景图(usermatchdata.getCoverUrl();)更好
         try {
-            H2CardLightBG = SkiaImageUtil.getImage(usermatchdata.getCoverUrl());
+            H2CardLightBG = SkiaImageUtil.getImage(usermatchdata.getHeaderUrl());
         } catch (IOException e) {
             throw new RuntimeException(" get cover image error ");
         }
