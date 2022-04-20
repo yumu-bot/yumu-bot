@@ -1,6 +1,13 @@
 package com.now.nowbot.util.Panel;
 
-/*
+
+import com.now.nowbot.model.match.UserMatchData;
+import com.now.nowbot.util.SkiaImageUtil;
+import org.jetbrains.skija.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class H2CardBuilder extends PanelBuilder {
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
@@ -39,21 +46,22 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         var team = usermatchdata.getTeam().toUpperCase();
         if (team.equals("RED")) {
-            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor();
+            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(usermatchdata.getRating().color));
         } else if(team.equals("BLUE")){
 
         }
 
         canvas.restore();
+    }
 
-        try {
-            var panel = new H2CardBuilder();
-            var img = panel.build();
-            Files.write(Path.of("D:/output.png"), img.encodeToData().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void drawSpe(){
+        canvas.save();
+        canvas.translate(100,10);
+        canvas.restore();
+    }
+
+    public void drawMvp(){
+
     }
 }
 
- */
