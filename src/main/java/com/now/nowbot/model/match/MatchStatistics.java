@@ -37,12 +37,15 @@ public class MatchStatistics {
         }
 
         //如果人数<=2或者没换过人, 则ERA==MQ,并重新计算最终的MRA
+        //不用放缩ERA的模型了，直接用MQ模型，这样能解决掉某些极端情况的问题
+        /*
         if (users.size() <= 2 || users.size() * gameRounds.size() == scoreNum) {
             for (var user : users.values()) {
                 user.setERA(user.getMQ());
                 user.calculateMRA();
             }
         }
+         */
 
         //计算比分
         for (var round : gameRounds) {
