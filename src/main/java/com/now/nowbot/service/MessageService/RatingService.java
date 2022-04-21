@@ -105,7 +105,7 @@ public class RatingService implements MessageService {
 
         //获取所有user
         for (var jUser : JUsers) {
-            users.put(jUser.getId().intValue(), new UserMatchData(jUser));
+            users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
         }
 
         //获取所有轮的游戏
@@ -142,7 +142,7 @@ public class RatingService implements MessageService {
                     //填充用户队伍信息和总分信息
                     var user = users.get(scoreInfo.getUserId());
                     if (user == null) {
-                        user = new UserMatchData(scoreInfo.getUserId(), osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()));
+                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()));
                         users.put(scoreInfo.getUserId(),user);
                     }
                     user.setTeam(team);

@@ -1,6 +1,5 @@
 package com.now.nowbot.model.match;
 
-import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import org.jetbrains.skija.Color;
 
@@ -36,7 +35,6 @@ public class UserMatchData {
     Integer wins = 0;
     Integer lost = 0;
     OsuUser userData;
-    MicroUser microUserData;
 
     double ERA_index;
     double DRA_index;
@@ -73,13 +71,8 @@ public class UserMatchData {
         return totalScore/1000000;
     }
 
-    public UserMatchData(MicroUser user) {
-        this.id = user.getId().intValue();
-        this.username = user.getName();
-        this.microUserData = user;
-    }
-    public UserMatchData(Integer id,  OsuUser userdata) {
-        this.id = id;
+    public UserMatchData(OsuUser userdata) {
+        this.id = Math.toIntExact(userdata.getId());
         this.username = userdata.getUsername();
         this.userData = userdata;
     }
@@ -269,9 +262,7 @@ public class UserMatchData {
     }
 
     public String getCoverUrl(){
-        if (microUserData != null)
-            return microUserData.getCover().url();
-        else if (userData != null)
+        if (userData != null)
             return userData.getCoverUrl();
         else return "";
     }
