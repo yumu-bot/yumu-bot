@@ -66,7 +66,7 @@ public class HCardBuilder extends PanelBuilder{
         // mods
         int textMaxW = drawMods(info.getMods());
         //写文字
-        drawtext(textMaxW, info, bpN);
+        drawText(textMaxW, info, bpN);
 
     }
 
@@ -180,7 +180,7 @@ public class HCardBuilder extends PanelBuilder{
         return 500 - mx;
     }
 
-    private void drawtext(int maxWidth, BpInfo info, int bpN){
+    private void drawText(int maxWidth, BpInfo info, int bpN){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);

@@ -7,10 +7,11 @@ import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class H2CardBuilder extends PanelBuilder {
 
-    public H2CardBuilder(UserMatchData usermatchdata) {
+    public H2CardBuilder(UserMatchData usermatchdata) throws IOException {
         super(900,110);
 
         //画底层圆角矩形
@@ -54,7 +55,54 @@ public class H2CardBuilder extends PanelBuilder {
             canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,0,168,236));
         }
         canvas.restore();
+
+        //画主要缩略图
+        canvas.save();
+        canvas.translate(20,0);
+        canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
+        Image H2CardMainBG = SkiaImageUtil.getImage("usermatchdata.getUserData().getCoverUrl()");
+        Image H2CardMainBGSC = SkiaImageUtil.getScaleCenterImage(H2CardMainBG,176,110); //缩放至合适大小
+        canvas.drawImage(H2CardMainBGSC,0, 0,new Paint());
+        canvas.restore();
+
+        // 调用以下方法
         drawUserRatingIndex(usermatchdata.getRating());
+        drawUserRatingMVP();
+        //drawText();
+    }
+
+    private void drawText (UserMatchData usermatchdata, int usermatchrank){
+        Typeface TorusSB = SkiaUtil.getTorusSemiBold();
+        Font fontS36 = new Font(TorusSB, 36);
+        Font fontS48 = new Font(TorusSB, 48);
+
+        /*
+        Muziyami
+        39.2M // 99W-0L 100%
+        #1
+         */
+
+        TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
+        TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS36);
+        TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS36);
+        TextLine h4 = TextLine.make(String.valueOf(usermatchdata.getMRA()),fontS48);
+
+        canvas.save();
+        canvas.translate(210,10);
+        canvas.drawTextLine(h1,0,h1.getHeight()-h1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(0,40);
+        canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.translate(0,30);
+        canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.translate(520,-40);
+        canvas.translate((170 - h4.getWidth())/2f,0);//居中处理，170减大减小除以2
+
+        if (Objects.equals(usermatchdata.getRating().name, "Big Carry")) {
+        canvas.drawTextLine(h4, 0, h4.getHeight() - h4.getXHeight(), new Paint().setARGB(255, 43,34,39));
+    } else {
+        canvas.drawTextLine(h4,0,h4.getHeight()-h4.getXHeight(),new Paint().setARGB(255,255,255,255));
+        }
+        canvas.restore();
     }
 
     // MRA V3.1 新增部分
