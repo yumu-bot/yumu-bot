@@ -75,6 +75,7 @@ public class H2CardBuilder extends PanelBuilder {
 
     private void drawText (UserMatchData usermatchdata, int usermatchrank){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
+        Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
         Font fontS48 = new Font(TorusSB, 48);
 
@@ -85,9 +86,9 @@ public class H2CardBuilder extends PanelBuilder {
          */
 
         TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
-        TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS36);
-        TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS36);
-        TextLine h4 = TextLine.make(String.valueOf(usermatchdata.getMRA()),fontS48);
+        TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
+        TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS24);
+        TextLine h4 = TextLine.make(String.format("#%.2f", usermatchdata.getMRA()),fontS48);
 
         canvas.save();
         canvas.translate(210,10);
