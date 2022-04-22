@@ -5,6 +5,7 @@ import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.jetbrains.skija.RRect;
 
+import java.io.IOException;
 import java.util.List;
 
 public class MatchRatingPanelBuilder extends PanelBuilder{
@@ -21,7 +22,7 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
         drawImage(main, 40, 40);
         return this;
     }
-    public MatchRatingPanelBuilder drawUser(List<UserMatchData> userMatchData){
+    public MatchRatingPanelBuilder drawUser(List<UserMatchData> userMatchData) throws IOException {
         canvas.drawRRect(RRect.makeXYWH(0,290,1920,150 * Math.round(userMatchData.size()/2f) + 80, 30), c2);
         int evenNum = (userMatchData.size()%2 == 0) ? userMatchData.size() : userMatchData.size()-1;
         canvas.save();
