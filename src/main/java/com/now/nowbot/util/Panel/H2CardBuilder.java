@@ -37,7 +37,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
         Image H2CardLightBG = null;   // 这里获取玩家头像吧，但是如果有玩家卡片或者玩家主页背景图(usermatchdata.getCoverUrl();)更好
         try {
-            H2CardLightBG = SkiaImageUtil.getImage(usermatchdata.getHeaderUrl());
+            H2CardLightBG = SkiaImageUtil.getImage(usermatchdata.getCoverUrl());
         } catch (IOException e) {
             throw new RuntimeException(" get cover image error ");
         }
@@ -60,7 +60,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(20,0);
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
-        Image H2CardMainBG = SkiaImageUtil.getImage("usermatchdata.getUserData().getCoverUrl()");
+        Image H2CardMainBG = SkiaImageUtil.getImage(usermatchdata.getHeaderUrl());
         Image H2CardMainBGSC = SkiaImageUtil.getScaleCenterImage(H2CardMainBG,176,110); //缩放至合适大小
         canvas.drawImage(H2CardMainBGSC,0, 0,new Paint());
         canvas.restore();
