@@ -55,33 +55,29 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
     }
     public MatchRatingPanelBuilder drawUser(List<UserMatchData> blue, List<UserMatchData> red) throws IOException {
         canvas.drawRRect(RRect.makeXYWH(0,290,1920,150 * Math.max(blue.size(), red.size()) + 80, 30), c2);
-        boolean mvpIsBlue = blue.get(0).getMRA() > red.get(0).getMRA();
         canvas.save();
         canvas.translate(40, 180);
-        for (int i = 0; i < blue.size(); i++) {
-            canvas.translate(0,150);
-            Image usetImg;
-            if (i == 0 && mvpIsBlue)
-                usetImg = new H2CardBuilder(blue.get(i), i).drawUserRatingMVP().build();
-            else
-                usetImg = new H2CardBuilder(blue.get(i), i).build();
-            canvas.drawImage(usetImg, 0, 0);
-        }
+        drawCard(blue);
         canvas.restore();
         canvas.save();
         canvas.translate(980, 180);
-        for (int i = 0; i < red.size(); i++) {
-            canvas.translate(0,150);
-            Image usetImg;
-            if (i == 0 && !mvpIsBlue)
-                usetImg = new H2CardBuilder(red.get(i), i).drawUserRatingMVP().build();
-            else
-                usetImg = new H2CardBuilder(red.get(i), i).build();
-            canvas.drawImage(usetImg, 0, 0);
-        }
+        drawCard(red);
         canvas.restore();
         return this;
     }
+
+    private void drawCard(List<UserMatchData> r) throws IOException {
+        for (int i = 0; i < r.size(); i++) {
+            canvas.translate(0,150);
+            Image usetImg;
+            if (r.get(i).getIndx() == 1)
+                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndx()).drawUserRatingMVP().build();
+            else
+                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndx()).build();
+            canvas.drawImage(usetImg, 0, 0);
+        }
+    }
+
     public Image build() {
         drawName("MRA");
         return super.build(20, "match rating");

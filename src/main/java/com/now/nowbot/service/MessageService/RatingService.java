@@ -182,13 +182,15 @@ public class RatingService implements MessageService {
 //        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
         AtomicInteger tp1 = new AtomicInteger(1);
         AtomicInteger tp2 = new AtomicInteger(1);
+        AtomicInteger tpIndex = new AtomicInteger(1);
         final int alluserssize = finalUsers.size();
         finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getERA).reversed())
                 .peek(r->r.setERA_index(1.0*tp1.getAndIncrement()/alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
                 .peek(r->r.setDRA_index(1.0*tp2.getAndIncrement()/alluserssize))
-                .sorted(Comparator.comparing(UserMatchData::getMRA).reversed()).collect(Collectors.toList());
+                .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
+                .peek(r->r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList());
 
         var teamPoint = matchStatistics.getTeamPoint();
 
