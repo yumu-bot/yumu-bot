@@ -52,9 +52,9 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         var team = usermatchdata.getTeam().toUpperCase();
         if (team.equals("RED")) {
-            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,227,0,123));
+            canvas.drawRRect(RRect.makeXYWH(0,0,196,110,20),new Paint().setARGB(255,223,0,36));
         } else if(team.equals("BLUE")){
-            canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setARGB(255,0,168,236));
+            canvas.drawRRect(RRect.makeXYWH(0,0,196,110,20),new Paint().setARGB(255,0,168,236));
         }
         canvas.restore();
 
