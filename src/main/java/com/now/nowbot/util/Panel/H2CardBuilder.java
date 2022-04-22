@@ -91,17 +91,34 @@ public class H2CardBuilder extends PanelBuilder {
         TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
         TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS24);
         TextLine h4l = TextLine.make(String.format("%d.", usermatchdata.getMRA().intValue()),fontS48);
-        TextLine h4r = TextLine.make(String.format("%d", MRA2f),fontS36);
 
-        canvas.save();
-        canvas.translate(210,10);
-        canvas.drawTextLine(h1,0,h1.getHeight()-h1.getXHeight(),new Paint().setARGB(255,255,255,255));
-        canvas.translate(0,40);
-        canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(0,30);
-        canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(520,-40);
-        canvas.translate((170 - h4l.getWidth() - h4r.getWidth()) / 2f,0);//居中处理，170减大减小除以2
+        //我暴力if了，用%2f能解决但我不会，看到了记得帮我简化一下
+        if (MRA2f < 10){
+            TextLine h4r = TextLine.make(String.format("0%d", MRA2f),fontS36);
+
+            canvas.save();
+            canvas.translate(210,10);
+            canvas.drawTextLine(h1,0,h1.getHeight()-h1.getXHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.translate(0,40);
+            canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,170,170,170));
+            canvas.translate(0,30);
+            canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
+            canvas.translate(520,-40);
+            canvas.translate((170 - h4l.getWidth() - h4r.getWidth()) / 2f,0);//居中处理，170减大减小除以2
+        } else {
+            TextLine h4r = TextLine.make(String.format("%d", MRA2f),fontS36);
+
+            canvas.save();
+            canvas.translate(210,10);
+            canvas.drawTextLine(h1,0,h1.getHeight()-h1.getXHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.translate(0,40);
+            canvas.drawTextLine(h2,0,h2.getHeight()-h2.getXHeight(),new Paint().setARGB(255,170,170,170));
+            canvas.translate(0,30);
+            canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
+            canvas.translate(520,-40);
+            canvas.translate((170 - h4l.getWidth() - h4r.getWidth()) / 2f,0);//居中处理，170减大减小除以2
+        }
+
 
         if (Objects.equals(usermatchdata.getRating().name, "Big Carry")) {
             canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
