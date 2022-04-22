@@ -85,10 +85,13 @@ public class H2CardBuilder extends PanelBuilder {
         #1
          */
 
+        var MRA2f = usermatchdata.getMRA() * 100;
+
         TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
         TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
         TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS24);
-        TextLine h4 = TextLine.make(String.format("#%.2f", usermatchdata.getMRA()),fontS48);
+        TextLine h4l = TextLine.make(String.format("%d", usermatchdata.getMRA().intValue()),fontS48);
+        TextLine h4r = TextLine.make(String.format("%d", (int)MRA2f),fontS36);
 
         canvas.save();
         canvas.translate(210,10);
@@ -98,12 +101,16 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.translate(0,30);
         canvas.drawTextLine(h3,0,h3.getHeight()-h3.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.translate(520,-40);
-        canvas.translate((170 - h4.getWidth())/2f,0);//居中处理，170减大减小除以2
+        canvas.translate((170 - h4l.getWidth() - h4r.getWidth()) / 2f,0);//居中处理，170减大减小除以2
 
         if (Objects.equals(usermatchdata.getRating().name, "Big Carry")) {
-        canvas.drawTextLine(h4, 0, h4.getHeight() - h4.getXHeight(), new Paint().setARGB(255, 43,34,39));
-    } else {
-        canvas.drawTextLine(h4,0,h4.getHeight()-h4.getXHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
+            canvas.translate(h4l.getWidth(), 0);
+            canvas.drawTextLine(h4r, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
+        } else {
+            canvas.drawTextLine(h4l,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.translate(h4l.getWidth(),0);
+            canvas.drawTextLine(h4r,0,h4l.getHeight()-h4l.getXHeight(),new Paint().setARGB(255,255,255,255));
         }
         canvas.restore();
     }
