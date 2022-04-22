@@ -14,6 +14,10 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
         super(1920, 330 + 150 * Math.round(size/2f));
     }
 
+    public MatchRatingPanelBuilder(int line1, int line2){
+        super(1920, 330 + 150 * Math.max(line1, line2));
+    }
+
     public MatchRatingPanelBuilder drawBanner(Image banner){
         drawImage(banner);
         return this;
@@ -29,19 +33,53 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
         canvas.translate(40, 180);
         for (int i = 0; i < evenNum; i+=2) {
             canvas.translate(0,150);
-            canvas.drawImage(new H2CardBuilder(userMatchData.get(i)).build(), 0, 0);
+            Image usetImg;
+            if (i == 0)
+                usetImg = new H2CardBuilder(userMatchData.get(i), i).drawUserRatingMVP().build();
+            else
+                usetImg = new H2CardBuilder(userMatchData.get(i), i).build();
+            canvas.drawImage(usetImg, 0, 0);
         }
         canvas.restore();
         canvas.save();
         canvas.translate(980, 180);
         for (int i = 1; i < evenNum; i+=2) {
             canvas.translate(0,150);
-            canvas.drawImage(new H2CardBuilder(userMatchData.get(i)).build(), 0, 0);
+            canvas.drawImage(new H2CardBuilder(userMatchData.get(i), i).build(), 0, 0);
         }
         canvas.restore();
         if (evenNum < userMatchData.size()){
-            canvas.drawImage(new H2CardBuilder(userMatchData.get(evenNum)).build(),510,330+75*evenNum);
+            canvas.drawImage(new H2CardBuilder(userMatchData.get(evenNum), evenNum).build(),510,330+75*evenNum);
         }
+        return this;
+    }
+    public MatchRatingPanelBuilder drawUser(List<UserMatchData> blue, List<UserMatchData> red) throws IOException {
+        canvas.drawRRect(RRect.makeXYWH(0,290,1920,150 * Math.max(blue.size(), red.size()) + 80, 30), c2);
+        boolean mvpIsBlue = blue.get(0).getMRA() > red.get(0).getMRA();
+        canvas.save();
+        canvas.translate(40, 180);
+        for (int i = 0; i < blue.size(); i++) {
+            canvas.translate(0,150);
+            Image usetImg;
+            if (i == 0 && mvpIsBlue)
+                usetImg = new H2CardBuilder(blue.get(i), i).drawUserRatingMVP().build();
+            else
+                usetImg = new H2CardBuilder(blue.get(i), i).build();
+            canvas.drawImage(usetImg, 0, 0);
+        }
+        canvas.restore();
+        canvas.save();
+        canvas.translate(980, 180);
+        for (int i = 0; i < red.size(); i++) {
+            canvas.translate(0,150);
+            Image usetImg;
+            if (i == 0 && !mvpIsBlue)
+                usetImg = new H2CardBuilder(red.get(i), i).drawUserRatingMVP().build();
+            else
+                usetImg = new H2CardBuilder(red.get(i), i).build();
+            canvas.drawImage(usetImg, 0, 0);
+        }
+        canvas.restore();
         return this;
     }
     public Image build() {

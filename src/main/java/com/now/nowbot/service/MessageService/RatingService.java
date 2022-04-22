@@ -90,7 +90,9 @@ public class RatingService implements MessageService {
 
 
 //        event.getSubject().sendMessage(sb.toString());
-        var img = new MatchRatingPanelBuilder(finalUsers.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(finalUsers).build();
+        var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
+        var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
+        var img = new MatchRatingPanelBuilder(bl.size(), rl.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(rl,bl).build();
         QQMsgUtil.sendImage(event.getSubject(), img);
     }
 

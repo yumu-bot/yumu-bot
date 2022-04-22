@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public class H2CardBuilder extends PanelBuilder {
 
-    public H2CardBuilder(UserMatchData usermatchdata) throws IOException {
+    public H2CardBuilder(UserMatchData usermatchdata, int index) throws IOException {
         super(900,110);
 
         //画底层圆角矩形
@@ -69,7 +69,7 @@ public class H2CardBuilder extends PanelBuilder {
 
         // 调用以下方法
         drawUserRatingIndex(usermatchdata.getRating());
-        drawUserRatingMVP();
+        drawText(usermatchdata, index);
         //drawText();
     }
 
@@ -122,7 +122,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    public void drawUserRatingMVP(){
+    public H2CardBuilder drawUserRatingMVP(){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
 
@@ -134,6 +134,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.translate(20,8);
         canvas.drawTextLine(MVP,0,MVP.getHeight()-MVP.getXHeight(),new Paint().setARGB(255,255,255,255));// 画评价字
         canvas.restore();
+        return this;
     }
 
     public Image build() {
