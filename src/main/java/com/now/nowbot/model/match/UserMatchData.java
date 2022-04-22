@@ -38,6 +38,7 @@ public class UserMatchData {
 
     double ERA_index;
     double DRA_index;
+    int indx;
 
     public void calculateAMG() {
         TMG = 0d;
@@ -206,6 +207,14 @@ public class UserMatchData {
 
     public void setUserData(OsuUser userData) {
         this.userData = userData;
+    }
+
+    public int getIndx() {
+        return indx;
+    }
+
+    public void setIndx(int indx) {
+        this.indx = indx;
     }
 
     public Rating getRating(){
