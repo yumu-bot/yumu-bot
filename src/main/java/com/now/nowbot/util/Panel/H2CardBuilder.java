@@ -99,7 +99,6 @@ public class H2CardBuilder extends PanelBuilder {
 
         } else {
             h4r = TextLine.make(String.format("%d", MRA2f), fontS36);
-
         }
         canvas.save();
         canvas.translate(210,10);
