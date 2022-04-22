@@ -20,6 +20,8 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.restore();
 
         //画玩家评价圆角矩形
+        canvas.save();
+        canvas.translate(700,0);
         var colorA = usermatchdata.getRating().color; //getJudge
         var colorB = Color.makeRGB(Color.getR(colorA)-3, Color.getG(colorA)+5, Color.getB(colorA)-3);
         canvas.drawRRect(
