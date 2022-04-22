@@ -90,8 +90,8 @@ public class H2CardBuilder extends PanelBuilder {
         TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
         TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
         TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS24);
-        TextLine h4l = TextLine.make(String.format("%d", usermatchdata.getMRA().intValue()),fontS48);
-        TextLine h4r = TextLine.make(String.format(".%d", MRA2f),fontS36);
+        TextLine h4l = TextLine.make(String.format("%d.", usermatchdata.getMRA().intValue()),fontS48);
+        TextLine h4r = TextLine.make(String.format("%d", MRA2f),fontS36);
 
         canvas.save();
         canvas.translate(210,10);
