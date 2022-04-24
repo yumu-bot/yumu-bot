@@ -78,7 +78,7 @@ public class NowbotConfig {
         BotConfiguration botConfiguration = new BotConfiguration();
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
-        botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
+        botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.NONE);
         botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
