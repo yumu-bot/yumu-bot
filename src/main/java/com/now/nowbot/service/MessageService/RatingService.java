@@ -19,7 +19,9 @@ import java.util.stream.Collectors;
 @Service("rating")
 public class RatingService implements MessageService {
     private static final Logger log = LoggerFactory.getLogger(RatingService.class);
-    public static record RatingData(int red, int blue, String type, List<UserMatchData> allUsers){}
+
+    public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
+    }
 
     @Autowired
     OsuGetService osuGetService;
@@ -88,15 +90,19 @@ public class RatingService implements MessageService {
 //        }
 
 
-
 //        event.getSubject().sendMessage(sb.toString());
-        var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
-        var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
-        var img = new MatchRatingPanelBuilder(bl.size(), rl.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(rl,bl).build();
-        QQMsgUtil.sendImage(event.getSubject(), img);
+        if (data.isTeamVs()) {
+            var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
+            var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
+            var img = new MatchRatingPanelBuilder(bl.size(), rl.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(rl, bl).build();
+            QQMsgUtil.sendImage(event.getSubject(), img);
+        } else {
+            var img = new MatchRatingPanelBuilder(finalUsers.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(finalUsers).build();
+            QQMsgUtil.sendImage(event.getSubject(), img);
+        }
     }
 
-    public static RatingData calculate(Match match, int skipedRounds, boolean includingFail, OsuGetService osuGetService){
+    public static RatingData calculate(Match match, int skipedRounds, boolean includingFail, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
@@ -140,12 +146,14 @@ public class RatingService implements MessageService {
                     i--;
                 } else {
                     String team = scoreInfos.get(i).getMatch().get("team").asText();
-
+                    if (team.equals("none") && matchStatistics.isTeamVs()) {
+                        matchStatistics.setTeamVs(false);
+                    }
                     //填充用户队伍信息和总分信息
                     var user = users.get(scoreInfo.getUserId());
                     if (user == null) {
                         user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()));
-                        users.put(scoreInfo.getUserId(),user);
+                        users.put(scoreInfo.getUserId(), user);
                     }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());
@@ -172,7 +180,7 @@ public class RatingService implements MessageService {
 //            if (user.getRRAs().size() == 0)
 //                it.remove();
 //        } //22-04-15 尝试缩短代码
-        users.values().removeIf(user-> user.getRRAs().size() == 0);
+        users.values().removeIf(user -> user.getRRAs().size() == 0);
 
         //计算步骤封装
         matchStatistics.calculate();
@@ -186,15 +194,16 @@ public class RatingService implements MessageService {
         final int alluserssize = finalUsers.size();
         finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getERA).reversed())
-                .peek(r->r.setERA_index(1.0*tp1.getAndIncrement()/alluserssize))
+                .peek(r -> r.setERA_index(1.0 * tp1.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
-                .peek(r->r.setDRA_index(1.0*tp2.getAndIncrement()/alluserssize))
+                .peek(r -> r.setDRA_index(1.0 * tp2.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
-                .peek(r->r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList());
+                .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList());
 
         var teamPoint = matchStatistics.getTeamPoint();
 
-        return new RatingData(teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
+
+        return new RatingData(matchStatistics.isTeamVs(), teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
     }
 }
 

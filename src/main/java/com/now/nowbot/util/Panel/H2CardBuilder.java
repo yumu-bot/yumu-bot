@@ -55,6 +55,8 @@ public class H2CardBuilder extends PanelBuilder {
             canvas.drawRRect(RRect.makeXYWH(0,0,196,110,20),new Paint().setARGB(255,223,0,36));
         } else if(team.equals("BLUE")){
             canvas.drawRRect(RRect.makeXYWH(0,0,196,110,20),new Paint().setARGB(255,0,168,236));
+        } else {
+            canvas.drawRRect(RRect.makeXYWH(0,0,196,110,20),new Paint().setColor(SkiaUtil.hexToRGBInt("#a1a1a1")));
         }
         canvas.restore();
 

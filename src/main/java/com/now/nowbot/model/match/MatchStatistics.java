@@ -13,6 +13,7 @@ public class MatchStatistics {
     Integer scoreNum;
     Double totalAMG = 0d;
     Double minMQ = 100d;
+    boolean teamVs = true;
 
 
     public void calculate() {
@@ -107,5 +108,13 @@ public class MatchStatistics {
 
     public void setGameRounds(List<GameRound> gameRounds) {
         this.gameRounds = gameRounds;
+    }
+
+    public boolean isTeamVs() {
+        return teamVs;
+    }
+
+    public void setTeamVs(boolean teamVs) {
+        this.teamVs = teamVs;
     }
 }
