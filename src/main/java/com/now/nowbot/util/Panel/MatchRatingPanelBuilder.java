@@ -35,9 +35,9 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
             canvas.translate(0,150);
             Image usetImg;
             if (i == 0)
-                usetImg = new H2CardBuilder(userMatchData.get(i), i).drawUserRatingMVP().build();
+                usetImg = new H2CardBuilder(userMatchData.get(i), i+1).drawUserRatingMVP().build();
             else
-                usetImg = new H2CardBuilder(userMatchData.get(i), i).build();
+                usetImg = new H2CardBuilder(userMatchData.get(i), i+1).build();
             canvas.drawImage(usetImg, 0, 0);
         }
         canvas.restore();
@@ -45,11 +45,11 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
         canvas.translate(980, 180);
         for (int i = 1; i < evenNum; i+=2) {
             canvas.translate(0,150);
-            canvas.drawImage(new H2CardBuilder(userMatchData.get(i), i).build(), 0, 0);
+            canvas.drawImage(new H2CardBuilder(userMatchData.get(i), i+1).build(), 0, 0);
         }
         canvas.restore();
         if (evenNum < userMatchData.size()){
-            canvas.drawImage(new H2CardBuilder(userMatchData.get(evenNum), evenNum).build(),510,330+75*evenNum);
+            canvas.drawImage(new H2CardBuilder(userMatchData.get(evenNum), evenNum+1).build(),510,330+75*evenNum);
         }
         return this;
     }
