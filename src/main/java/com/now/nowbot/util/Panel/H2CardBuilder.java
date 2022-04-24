@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public class H2CardBuilder extends PanelBuilder {
 
-    public H2CardBuilder(UserMatchData usermatchdata, int index) throws IOException {
+    public H2CardBuilder(UserMatchData usermatchdata, int index) {
         super(900,110);
 
         //画底层圆角矩形
@@ -64,7 +64,12 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(20,0);
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
-        Image H2CardMainBG = SkiaImageUtil.getImage(usermatchdata.getHeaderUrl());
+        Image H2CardMainBG = null;
+        try {
+            H2CardMainBG = SkiaImageUtil.getImage(usermatchdata.getHeaderUrl());
+        } catch (IOException e) {
+            H2CardMainBG = H2CardLightBG;
+        }
         Image H2CardMainBGSC = SkiaImageUtil.getScaleCenterImage(H2CardMainBG,176,110); //缩放至合适大小
         canvas.drawImage(H2CardMainBGSC,0, 0,new Paint());
         canvas.restore();
