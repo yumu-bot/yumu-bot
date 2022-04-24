@@ -79,7 +79,7 @@ public class NowbotConfig {
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.NONE);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.IPAD);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
         File logdir = new File(BOT_PATH+"log");
