@@ -97,7 +97,6 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        if (event != null) return;
         ContextUtil.setContext("event",event);
         try {
             if (event.getMessage() instanceof FileMessage fileMessage){
@@ -134,8 +133,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
-        if (event != null) return;
-        event.accept();
+//        event.accept();
     }
     @Async
     @EventHandler
@@ -155,8 +153,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(NewFriendRequestEvent event) throws Exception {
-        if (event != null) return;
-        event.accept();
+//        event.accept();
     }
 
     /***
