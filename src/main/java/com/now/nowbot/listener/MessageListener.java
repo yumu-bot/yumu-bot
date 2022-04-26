@@ -60,9 +60,7 @@ public class MessageListener extends SimpleListenerHost {
     static int RECAL_TIME = 1000*100;
     @Override
     public void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception) {
-        if (SimpleListenerHost.getEvent(exception) instanceof MessageEvent) {
-            MessageEvent event = (MessageEvent) SimpleListenerHost.getEvent(exception);
-            if (event == null) return;
+        if (SimpleListenerHost.getEvent(exception) instanceof MessageEvent event) {
             var e = SimpleListenerHost.getRootCause(exception);
             if (e instanceof TipsException || e instanceof TipsRuntimeException) {
                 event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
@@ -79,7 +77,7 @@ public class MessageListener extends SimpleListenerHost {
                     event.getSubject().sendMessage("未知的请求异常,错误代码" + reser.status.value() + "->" + reser.status.getReasonPhrase());
                 }
             } else if (e instanceof EventCancelledException) {
-                log.info("取消消息发送", e.getMessage());
+                log.info("取消消息发送 {}", e.getMessage());
             } else if (e instanceof LogException) {
                 log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else if (e instanceof IllegalArgumentException) {
@@ -99,6 +97,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
+        if (event != null) return;
         ContextUtil.setContext("event",event);
         try {
             if (event.getMessage() instanceof FileMessage fileMessage){
@@ -135,11 +134,13 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
+        if (event != null) return;
         event.accept();
     }
     @Async
     @EventHandler
     public void msg(BotJoinGroupEvent event){
+        if (event != null) return;
         StringBuffer sb = new StringBuffer();
         sb.append("已加入群聊:").append(event.getGroup().getId()).append('\n').append(event.getGroup().getName());
         //发送给管理群
@@ -154,6 +155,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(NewFriendRequestEvent event) throws Exception {
+        if (event != null) return;
         event.accept();
     }
 
