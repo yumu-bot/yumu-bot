@@ -257,10 +257,10 @@ public class BphtPanelBuilder{
         dtbf.append("pp/tth收益最大的是bp").append(maxTimeToPp+1)
                 .append(" 斩获").append(decimalFormat.format(maxTimeToPpValue)).append("pp/tth").append('\n');
 
-        dtbf.append("常打bpm:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
+        dtbf.append("bpm统计:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
 
         dtbf.append("bp中mapper统计:\n");
-        var mappers = mapperSum.values().stream().sorted(Comparator.comparing(u->u.size))
+        var mappers = mapperSum.values().stream().sorted(Comparator.comparing(t->-t.size))
                 .limit(6).collect(Collectors.toList());
         mappers.forEach(mapperDate -> {
             var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);

@@ -21,7 +21,7 @@ public class BeatMap {
     @JsonProperty("hit_length")
     Boolean hitLength;
     @JsonProperty("user_id")
-    String userId;
+    Integer userId;
     String version;
     @JsonProperty("accuracy")
     Float od;
@@ -151,11 +151,11 @@ public class BeatMap {
         this.hitLength = hitLength;
     }
 
-    public String getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 
