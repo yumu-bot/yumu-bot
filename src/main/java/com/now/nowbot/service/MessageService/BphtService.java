@@ -84,10 +84,18 @@ public class BphtService implements MessageService {
         Bps = osuGetService.getBestPerformance(nu, mode,0,100);
 
         Image image;
-        if(mode == null || mode == OsuMode.DEFAULT) {
-            image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), "").build();
-        }else {
-            image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), mode.getName()).build();
+        if (matcher.group("info") == null){
+            if(mode == null || mode == OsuMode.DEFAULT) {
+                image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), "").build();
+            }else {
+                image = new BphtPanelBuilder().draw(Bps, nu.getOsuName(), mode.getName()).build();
+            }
+        } else {
+            if(mode == null || mode == OsuMode.DEFAULT) {
+                image = new BphtPanelBuilder().mf(Bps, nu.getOsuName(), "", osuGetService).build();
+            }else {
+                image = new BphtPanelBuilder().mf(Bps, nu.getOsuName(), mode.getName(), osuGetService).build();
+            }
         }
         QQMsgUtil.sendImage(from, image.encodeToData(EncodedImageFormat.JPEG).getBytes());
 //        from.sendMessage(dtbf.toString());
