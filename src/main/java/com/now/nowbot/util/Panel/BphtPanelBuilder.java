@@ -41,6 +41,7 @@ public class BphtPanelBuilder{
         }
         mapperDate add(float pp){
             allPP += pp;
+            size++;
             return this;
         }
 
@@ -61,6 +62,7 @@ public class BphtPanelBuilder{
         }
         modDate add(float pp){
             allPP += pp;
+            size++;
             return this;
         }
 
@@ -260,11 +262,12 @@ public class BphtPanelBuilder{
         dtbf.append("bpm统计:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
 
         dtbf.append("bp中mapper统计:\n");
-        var mappers = mapperSum.values().stream().sorted(Comparator.comparing(t->-t.size))
+        var mappers = mapperSum.values().stream()
+                .sorted(Comparator.comparing(mapperDate::getSize).reversed())
                 .limit(6).collect(Collectors.toList());
         mappers.forEach(mapperDate -> {
             var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);
-            dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append('个').append("总计")
+            dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")
                     .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
         });
         dtbf.append("累计mod有:\n");
