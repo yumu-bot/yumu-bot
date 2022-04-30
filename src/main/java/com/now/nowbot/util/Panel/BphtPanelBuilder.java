@@ -220,7 +220,7 @@ public class BphtPanelBuilder{
                 maxLengthValue = map.getTotalLength();
             }
 
-            if (map.getMaxCombo() < minComboValue){
+            if (jsb.getMaxCombo() < minComboValue){
                 minCommbo = i;
                 minComboValue = jsb.getMaxCombo();
             } else if (jsb.getMaxCombo() > maxComboValue){
