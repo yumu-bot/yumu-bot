@@ -101,6 +101,8 @@ public enum Instruction {
 
     TESTPPM(TestPPMService.class,    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
+    GROUP(JoinGroupService.class,    Pattern.compile("(是)|(否)")),
+
 
     //TODO 待实现的指令，十万紧急，请优先完成！
 //    BPS-ymbps [num]获取玩家指定数量BP的信息（上限100，详情查阅群内ymbps介绍文档）

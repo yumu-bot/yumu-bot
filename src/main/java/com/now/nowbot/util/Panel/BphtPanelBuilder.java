@@ -190,16 +190,16 @@ public class BphtPanelBuilder{
             float bpm = map.getBpm();
             jsb.getMods().forEach(r->{
                 if (modeSum.containsKey(r)){
-                    modeSum.get(r).add(jsb.getPp());
+                    modeSum.get(r).add(jsb.getWeight().getPp());
                 } else {
-                    modeSum.put(r, new modDate(jsb.getPp()));
+                    modeSum.put(r, new modDate(jsb.getWeight().getPp()));
                 }
             });
             if (jsb.getMods().contains("DT") || jsb.getMods().contains("NC")){
-                length *=1.5;
+                length *=0.75;
                 bpm *= 1.5;
             } else if (jsb.getMods().stream().anyMatch(r->r.equals("HT"))){
-                length *= 0.75;
+                length *= 1.5;
                 bpm *= 0.75;
             }
 
@@ -274,7 +274,7 @@ public class BphtPanelBuilder{
         float finalAllPP = allPP;
         modeSum.forEach((mod, sum) -> dtbf.append(mod).append('*').append(sum.size).append(' ').append("总计")
                 .append(sum.getAllPP())
-                .append('[').append(decimalFormat.format(sum.getAllPP()/ finalAllPP)).append('%').append(']')
+                .append('[').append(decimalFormat.format(100*sum.getAllPP()/ finalAllPP)).append('%').append(']')
                 .append('\n'));
 
 

@@ -3,6 +3,7 @@ package com.now.nowbot.listener;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
+import com.now.nowbot.service.MessageService.JoinGroupService;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.RequestException;
@@ -133,7 +134,9 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
-//        event.accept();
+        event.getBot().getGroup(746671531L).sendMessage("收到来自"+event.getInvitorNick()
+                + '['+event.getInvitor().getId()+"] 邀请加入群"+event.getGroupName()+'('+event.getGroupId()+')');
+        JoinGroupService.GROUPS.put(event.getGroupId(), event);
     }
     @Async
     @EventHandler
