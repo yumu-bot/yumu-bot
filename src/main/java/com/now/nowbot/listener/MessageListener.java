@@ -134,7 +134,7 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
-        event.getBot().getGroup(746671531L).sendMessage('('+event.getGroupId()+')'+"\n收到来自"+event.getInvitorNick()
+        event.getBot().getGroup(746671531L).sendMessage("("+event.getGroupId() + ")\n收到来自"+event.getInvitorNick()
                 + '['+event.getInvitor().getId()+"] 邀请加入群"+event.getGroupName());
         JoinGroupService.GROUPS.put(event.getGroupId(), event);
     }
