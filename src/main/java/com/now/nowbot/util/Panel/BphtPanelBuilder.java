@@ -256,7 +256,7 @@ public class BphtPanelBuilder{
         dtbf.append("最长是bp").append(maxCommbo+1).append(' ').append(maxComboValue).append('\n');
         dtbf.append("最短是bp").append(minCommbo+1).append(' ').append(minComboValue).append('\n');
 
-        dtbf.append("pp/tth收益最大的是bp").append(maxTimeToPp+1)
+        dtbf.append("单图pp/tth收益最大的是bp").append(maxTimeToPp+1)
                 .append(" 斩获").append(decimalFormat.format(maxTimeToPpValue)).append("pp/tth").append('\n');
 
         dtbf.append("bpm统计:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
@@ -264,7 +264,7 @@ public class BphtPanelBuilder{
         dtbf.append("bp中mapper统计:\n");
         var mappers = mapperSum.values().stream()
                 .sorted(Comparator.comparing(mapperDate::getSize).reversed())
-                .limit(6).collect(Collectors.toList());
+                .limit(20).collect(Collectors.toList());
         mappers.forEach(mapperDate -> {
             var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);
             dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")

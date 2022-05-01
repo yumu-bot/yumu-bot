@@ -21,7 +21,7 @@ public class JoinGroupService implements MessageService{
             var r = QQMsgUtil.getType(event.getMessage(), QuoteReply.class);
             if (r != null && r.getSource().getBotId() == r.getSource().getFromId()){
                 var t = r.getSource().getOriginalMessage().contentToString();
-                var m = Pattern.compile("\\((?<x>\\d+)\\)$").matcher(t);
+                var m = Pattern.compile("^\\((?<x>\\d+)\\)").matcher(t);
                 if (m.find()){
                     var e = GROUPS.get(Long.parseLong(m.group("x")));
                     if (e != null) {
