@@ -25,7 +25,7 @@ public enum Instruction {
             Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BPHT(BphtService.class,
-            Pattern.compile("^[!！](?i)ymbpht(?<info>-i)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！](?i)ymbpht(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！](?i)tbp(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),

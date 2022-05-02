@@ -166,9 +166,18 @@ public class BphtPanelBuilder{
         var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
 
         var  t1 = bps.get(0);
-        int maxBpm = 0; float maxBpmValue = t1.getBeatmap().getBpm();
+        var t1Bpm = t1.getBeatmap().getBpm();
+        float t1BLength = t1.getBeatmap().getTotalLength();
+        if (t1.getMods().contains("DT") || t1.getMods().contains("NC")){
+            t1Bpm /= 1.5f;
+            t1BLength *= 1.5f;
+        } else if (t1.getMods().stream().anyMatch(r->r.equals("HT"))){
+            t1BLength /= 1.5f;
+            t1Bpm *= 0.75f;
+        }
+        int maxBpm = 0; float maxBpmValue = t1Bpm;
         int maxCommbo = 0; int maxComboValue = t1.getMaxCombo();
-        int maxLength = 0; int maxLengthValue = t1.getBeatmap().getTotalLength();
+        int maxLength = 0; int maxLengthValue = (int)t1BLength;
 
         int minBpm = 0; float minBpmValue = maxBpmValue;
         int minCommbo = 0;int minComboValue = maxComboValue;
@@ -214,7 +223,6 @@ public class BphtPanelBuilder{
             }
 
             if (length < minLengthValue){
-                if (jsb.getMods().stream().findAny().isPresent())
                 minLength = i;
                 minLengthValue = map.getTotalLength();
             } else if (length > maxLengthValue){
