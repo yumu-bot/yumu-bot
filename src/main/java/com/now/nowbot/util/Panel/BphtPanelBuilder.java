@@ -272,11 +272,16 @@ public class BphtPanelBuilder{
         dtbf.append("bp中mapper统计:\n");
         var mappers = mapperSum.values().stream()
                 .sorted(Comparator.comparing(mapperDate::getSize).reversed())
-                .limit(20).collect(Collectors.toList());
+                .limit(6).collect(Collectors.toList());
         mappers.forEach(mapperDate -> {
-            var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);
-            dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")
-                    .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
+            try {
+                var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);
+                dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")
+                        .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
+            } catch (Exception e) {
+                dtbf.append("id为").append(mapperDate.uid).append("暂未找到,但是有").append(mapperDate.size).append("个 总计")
+                        .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
+            }
         });
         dtbf.append("累计mod有:\n");
         float finalAllPP = allPP;
