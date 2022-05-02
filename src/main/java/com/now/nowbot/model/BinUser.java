@@ -86,8 +86,7 @@ public class BinUser {
     public String getAccessToken(OsuGetService service) {
         if (accessToken == null) {
             return service.getToken();
-        }
-        if (isPassed()) {
+        } else if (isPassed()) {
             accessToken = service.refreshToken(this).findValue("access_token").asText();
         }
 

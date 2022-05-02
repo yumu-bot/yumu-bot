@@ -339,6 +339,29 @@ public class OsuGetService {
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
+
+    /***
+     * 使用他人token获取user信息
+     * @param id
+     * @param user 绑定用户
+     * @param mode
+     * @return
+     */
+    public OsuUser getPlayerInfo(Long id, BinUser user, OsuMode mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
+                .queryParam("key", "id")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
+        return c.getBody();
+    }
+
     /**
      * 获得某个模式的bp表
      *

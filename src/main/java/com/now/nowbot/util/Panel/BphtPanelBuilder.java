@@ -1,6 +1,8 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
@@ -161,9 +163,9 @@ public class BphtPanelBuilder{
         return this;
     }
 
-    public BphtPanelBuilder mf(List<BpInfo> bps, String name, String mode, OsuGetService osuGetService){
+    public BphtPanelBuilder mf(List<BpInfo> bps, String name, OsuMode mode, OsuGetService osuGetService, BinUser binUser){
         if (bps.size() == 0) return this;
-        var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
+        var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
 
         var  t1 = bps.get(0);
         var t1Bpm = t1.getBeatmap().getBpm();
@@ -275,7 +277,7 @@ public class BphtPanelBuilder{
                 .limit(6).collect(Collectors.toList());
         mappers.forEach(mapperDate -> {
             try {
-                var user = osuGetService.getPlayerOsuInfo((long) mapperDate.uid);
+                var user = osuGetService.getPlayerInfo((long) mapperDate.uid, binUser, mode);
                 dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")
                         .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
             } catch (Exception e) {
