@@ -52,14 +52,14 @@ public class FriendService implements MessageService{
                 throw new TipsException("对方没有绑定哦");
             }
 
-            var myList = osuGetService.getFrendListN(user);
+            var myList = osuGetService.getFrendList(user);
             boolean otherIsMyFriend = myList.stream().filter(o-> o.getId().equals(userFriend.getOsuID())).findFirst().orElse(null) != null;
             if (otherIsMyFriend){
                 sb.append("你已经mu了").append(userFriend.getOsuName()).append('\n');
             } else {
                 sb.append("你还没有mu").append(userFriend.getOsuName()).append(",快速连接 https://osu.ppy.sh/users/").append(userFriend.getOsuID()).append('\n');
             }
-            var otherList = osuGetService.getFrendListN(userFriend);
+            var otherList = osuGetService.getFrendList(userFriend);
             boolean IisOtherFriend = otherList.stream().filter(o-> o.getId().equals(user.getOsuID())).findFirst().orElse(null) != null;
             if (IisOtherFriend){
                 sb.append("ta已经mu了你");
@@ -85,7 +85,7 @@ public class FriendService implements MessageService{
             throw new TipsException("参数范围错误!");
         }
 
-        var allFriend = osuGetService.getFrendListN(user);
+        var allFriend = osuGetService.getFrendList(user);
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
         var infoMe = osuGetService.getPlayerInfo(user);

@@ -10,7 +10,7 @@ import java.util.Map;
  * 注意,countxxx只有成绩相关的statustucs存在,而且不包含其他部分,别问为啥掺在一起,问就是ppysb
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Statustucs {
+public class Statistics {
     @JsonProperty("count_50")
     Integer count50;
     @JsonProperty("count_100")

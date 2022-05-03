@@ -36,7 +36,7 @@ public class BpInfo {
     BeatMap beatmap;
     BeatMapSet beatmapset;
     Weight weight;
-    Statustucs statistics;
+    Statistics statistics;
 
     public Long getId() {
         return id;
@@ -182,11 +182,11 @@ public class BpInfo {
         this.weight = weight;
     }
 
-    public Statustucs getStatistics() {
+    public Statistics getStatistics() {
         return statistics;
     }
 
-    public void setStatistics(Statustucs statistics) {
+    public void setStatistics(Statistics statistics) {
         this.statistics = statistics;
     }
 

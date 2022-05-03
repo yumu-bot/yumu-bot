@@ -8,7 +8,7 @@ import javax.persistence.*;
 })
 public class OsuUserNameHisLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private Long uid;
     private String name;

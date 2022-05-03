@@ -58,36 +58,10 @@ public class YmpService implements MessageService{
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
-        switch (mode){
-            default: mode = OsuMode.OSU;
-            case OSU:{
-                if (user != null){
-                    dates = getDates(user,"osu",isAll);
-                }else {
-                    dates = getDates(id,"osu",isAll);
-                }
-            } break;
-            case TAIKO:{
-                if (user != null){
-                    dates = getDates(user,"taiko",isAll);
-                }else {
-                    dates = getDates(id,"taiko",isAll);
-                }
-            } break;
-            case CATCH:{
-                if (user != null){
-                    dates = getDates(user,"fruits",isAll);
-                }else {
-                    dates = getDates(id,"fruits",isAll);
-                }
-            } break;
-            case MANIA:{
-                if (user != null){
-                    dates = getDates(user,"mania",isAll);
-                }else {
-                    dates = getDates(id,"mania",isAll);
-                }
-            }break;
+        if (user != null){
+            dates = getDates(user,mode,isAll);
+        }else {
+            dates = getDates(id,mode,isAll);
         }
         if(dates.size()==0){
             throw new TipsException("24h内无记录");
@@ -102,13 +76,13 @@ public class YmpService implements MessageService{
 //            log.info(starService.ScoreToStar(user, date));
 //        }
     }
-    private JSONArray getDates(BinUser user, String mode, boolean isAll){
+    private JSONArray getDates(BinUser user, OsuMode mode, boolean isAll){
         if (isAll)
             return osuGetService.getAllRecent(user, mode, 0, 1);
         else
             return osuGetService.getRecent(user, mode, 0, 1);
     }
-    private JSONArray getDates(Long id, String mode, boolean isAll){
+    private JSONArray getDates(Long id, OsuMode mode, boolean isAll){
         if (isAll)
             return osuGetService.getAllRecent(Math.toIntExact(id), mode, 0, 1);
         else

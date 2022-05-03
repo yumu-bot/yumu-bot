@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Table(name = "permission")
 public class PermissionLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     //service名为 PERMISSION_ALL 则是全局名单,所有的服务都要经过此权限表
     private String service;

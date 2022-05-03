@@ -10,7 +10,7 @@ import javax.persistence.*;
 })
 public class BeatmapLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @Column(name = "beatmap_id")
     private Integer beatmap_id;

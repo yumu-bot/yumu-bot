@@ -16,7 +16,7 @@ public class OsuUser {
     Double pp;
     String username;
     @JsonProperty("statistics")
-    Statustucs statustucs;
+    Statistics statistics;
 
 
     public record Country(String  countryCode, String  countryName){}
@@ -101,8 +101,8 @@ public class OsuUser {
     }
 
     public Double getPp() {
-        if (pp == null && statustucs != null){
-            return statustucs.getPp();
+        if (pp == null && statistics != null){
+            return statistics.getPp();
         }
         return pp;
     }
@@ -127,12 +127,12 @@ public class OsuUser {
         this.pp = pp;
     }
 
-    public Statustucs getStatustucs() {
-        return statustucs;
+    public Statistics getStatustucs() {
+        return statistics;
     }
 
-    public void setStatustucs(Statustucs statustucs) {
-        this.statustucs = statustucs;
+    public void setStatustucs(Statistics statistics) {
+        this.statistics = statistics;
     }
 
     public String getOccupation() {
@@ -332,64 +332,64 @@ public class OsuUser {
     }
 
     public Double getAccuracy() {
-        if (statustucs != null) {
-            return statustucs.getAccuracy();
+        if (statistics != null) {
+            return statistics.getAccuracy();
         }
         return null;
     }
 
     public Long getPlagCount() {
-        if (statustucs != null) {
-            return statustucs.getPlayCount();
+        if (statistics != null) {
+            return statistics.getPlayCount();
         }
         return null;
     }
 
     public Long getPlatTime() {
-        if (statustucs != null) {
-            return statustucs.getPlayTime();
+        if (statistics != null) {
+            return statistics.getPlayTime();
         }
         return null;
     }
 
     public Long getTotalHits() {
-        if (statustucs != null) {
-            return statustucs.getTotalHits();
+        if (statistics != null) {
+            return statistics.getTotalHits();
         }
         return null;
     }
 
     public Integer getMaxCombo() {
-        if (statustucs != null) {
-            return statustucs.getMaxCombo();
+        if (statistics != null) {
+            return statistics.getMaxCombo();
         }
         return null;
     }
 
     public Long getGlobalRank() {
-        if (statustucs != null) {
-            return statustucs.getGlobalRank();
+        if (statistics != null) {
+            return statistics.getGlobalRank();
         }
         return null;
     }
 
     public Long getCountryRank() {
-        if (statustucs != null) {
-            return statustucs.getCountryRank();
+        if (statistics != null) {
+            return statistics.getCountryRank();
         }
         return null;
     }
 
     public Integer getLevelCurrent() {
-        if (statustucs != null) {
-            return statustucs.getLevelCurrent();
+        if (statistics != null) {
+            return statistics.getLevelCurrent();
         }
         return null;
     }
 
     public Integer getLevelProgress() {
-        if (statustucs != null) {
-            return statustucs.getLevelProgress();
+        if (statistics != null) {
+            return statistics.getLevelProgress();
         }
         return null;
     }

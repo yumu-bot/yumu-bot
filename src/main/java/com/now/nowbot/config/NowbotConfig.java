@@ -99,7 +99,7 @@ public class NowbotConfig {
     public static ApplicationContext applicationContext;
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        NowbotConfig.applicationContext = applicationContext;
     }
 
     public String createDir(String path){

@@ -54,7 +54,7 @@ public class MicroUser {
             this.cover = new Cover(cover.get("custom_url"),cover.get("url"),cover.get("id"));
     }
     @JsonProperty("statistics")
-    Statustucs statustucs;
+    Statistics statistics;
 
     public String getAvatar() {
         return avatar;
@@ -145,12 +145,12 @@ public class MicroUser {
         this.country = country;
     }
 
-    public Statustucs getStatustucs() {
-        return statustucs;
+    public Statistics getStatustucs() {
+        return statistics;
     }
 
-    public void setStatustucs(Statustucs statustucs) {
-        this.statustucs = statustucs;
+    public void setStatustucs(Statistics statistics) {
+        this.statistics = statistics;
     }
 
     public String getName() {

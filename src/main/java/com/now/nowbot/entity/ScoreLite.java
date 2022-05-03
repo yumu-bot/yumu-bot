@@ -1,8 +1,5 @@
 package com.now.nowbot.entity;
 
-import org.hibernate.annotations.ColumnDefault;
-import org.springframework.context.annotation.Primary;
-
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -12,7 +9,7 @@ import java.time.LocalDateTime;
 })
 public class ScoreLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @Column(name = "score_id")
     private Long scoreId;

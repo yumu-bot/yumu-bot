@@ -176,19 +176,19 @@ public class OsuGetService {
 //        BindingUtil.writeOsuID(date.getString("username"), id);
     }
 
-    public JsonNode getFrendList(BinUser user) {
-        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
-        String url = this.URL + "friends";
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(url, HttpMethod.GET, httpEntity, JsonNode.class);
-        return c.getBody();
-    }
+//    public JsonNode getFrendList(BinUser user) {
+//        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
+//        String url = this.URL + "friends";
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+//        HttpEntity httpEntity = new HttpEntity(headers);
+//        ResponseEntity<JsonNode> c = template.exchange(url, HttpMethod.GET, httpEntity, JsonNode.class);
+//        return c.getBody();
+//    }
 
-    public List<MicroUser> getFrendListN(BinUser user) {
+    public List<MicroUser> getFrendList(BinUser user) {
         if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
@@ -425,22 +425,22 @@ public class OsuGetService {
      * @return
      */
     public JSONArray getOsuRecent(BinUser user, int s, int e) {
-        return getRecent(user, "osu", s, e);
+        return getRecent(user, OsuMode.OSU, s, e);
     }
 
     public JSONArray getOsuRecent(int id, int s, int e) {
-        return getRecent(id, "osu", s, e);
+        return getRecent(id, OsuMode.OSU, s, e);
     }
 
     public JSONArray getOsuAllRecent(BinUser user, int s, int e) {
-        return getAllRecent(user, "osu", s, e);
+        return getAllRecent(user, OsuMode.OSU, s, e);
     }
 
     public JSONArray getOsuAllRecent(int id, int s, int e) {
-        return getAllRecent(id, "osu", s, e);
+        return getAllRecent(id, OsuMode.OSU, s, e);
     }
 
-    public JSONArray getRecent(BinUser user, String mode, int s, int e) {
+    public JSONArray getRecent(BinUser user, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -456,7 +456,7 @@ public class OsuGetService {
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
-    public List<Object> getRecentN(BinUser user, String mode, int s, int e) {
+    public List<Score> getRecentN(BinUser user, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -469,7 +469,8 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity,  new ParameterizedTypeReference<List<Score>>() {
+        });
         return c.getBody();
     }
 
@@ -481,7 +482,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public JSONArray getAllRecent(BinUser user, String mode, int s, int e) {
+    public JSONArray getAllRecent(BinUser user, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("include_fails", 1)
@@ -508,7 +509,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public JSONArray getRecent(int id, String mode, int s, int e) {
+    public JSONArray getRecent(int id, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
@@ -531,7 +532,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public JSONArray getAllRecent(int id, String mode, int s, int e) {
+    public JSONArray getAllRecent(int id, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("include_fails", 1)
