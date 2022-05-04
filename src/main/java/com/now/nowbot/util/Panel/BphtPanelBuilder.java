@@ -33,7 +33,7 @@ public class BphtPanelBuilder{
         }
     }
     class mapperDate{
-        int allPP;
+        float allPP;
         int size;
         int uid;
         mapperDate(float pp, int uid){
@@ -47,7 +47,7 @@ public class BphtPanelBuilder{
             return this;
         }
 
-        public int getAllPP() {
+        public float getAllPP() {
             return allPP;
         }
 
@@ -56,7 +56,7 @@ public class BphtPanelBuilder{
         }
     }
     class modDate{
-        int allPP;
+        float allPP;
         int size;
         modDate(float pp){
             allPP += pp;
@@ -68,7 +68,7 @@ public class BphtPanelBuilder{
             return this;
         }
 
-        public int getAllPP() {
+        public float getAllPP() {
             return allPP;
         }
 
@@ -171,47 +171,50 @@ public class BphtPanelBuilder{
         var t1Bpm = t1.getBeatmap().getBpm();
         float t1BLength = t1.getBeatmap().getTotalLength();
         if (t1.getMods().contains("DT") || t1.getMods().contains("NC")){
-            t1Bpm /= 1.5f;
-            t1BLength *= 1.5f;
-        } else if (t1.getMods().stream().anyMatch(r->r.equals("HT"))){
             t1BLength /= 1.5f;
+            t1Bpm *= 1.5f;
+        } else if (t1.getMods().stream().anyMatch(r->r.equals("HT"))){
+            t1BLength /= 0.75f;
             t1Bpm *= 0.75f;
         }
         int maxBpm = 0; float maxBpmValue = t1Bpm;
         int maxCommbo = 0; int maxComboValue = t1.getMaxCombo();
-        int maxLength = 0; int maxLengthValue = (int)t1BLength;
+        int maxLength = 0; float maxLengthValue = t1BLength;
 
         int minBpm = 0; float minBpmValue = maxBpmValue;
         int minCommbo = 0;int minComboValue = maxComboValue;
-        int minLength = 0;int minLengthValue = maxLengthValue;
+        int minLength = 0;float minLengthValue = maxLengthValue;
 
         int avgLength = 0;
         int avgCombo = 0;
         int maxTimeToPp = 0; float maxTimeToPpValue = 0;
         float allPP = 0;
+        float nowPP = 0;
 
-        TreeMap<String, modDate> modeSum = new TreeMap<>(); //各个mod的数量
+        TreeMap<String, modDate> modSum = new TreeMap<>(); //各个mod的数量
 
         TreeMap<Integer, mapperDate> mapperSum = new TreeMap<>();
         DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
+
+        float debugx = 0;
         for (int i = 0; i < bps.size(); i++) {
             var jsb = bps.get(i);
             var map = jsb.getBeatmap();
             int length = map.getTotalLength();
             float bpm = map.getBpm();
             jsb.getMods().forEach(r->{
-                if (modeSum.containsKey(r)){
-                    modeSum.get(r).add(jsb.getWeight().getPp());
+                if (modSum.containsKey(r)){
+                    modSum.get(r).add(jsb.getWeight().getPp());
                 } else {
-                    modeSum.put(r, new modDate(jsb.getWeight().getPp()));
+                    modSum.put(r, new modDate(jsb.getWeight().getPp()));
                 }
             });
             if (jsb.getMods().contains("DT") || jsb.getMods().contains("NC")){
-                length *=0.75;
+                length /= 1.5f;
                 bpm *= 1.5;
             } else if (jsb.getMods().stream().anyMatch(r->r.equals("HT"))){
-                length *= 1.5;
-                bpm *= 0.75;
+                length /= 0.75f;
+                bpm *= 0.75f;
             }
 
             avgLength += length;
@@ -226,10 +229,10 @@ public class BphtPanelBuilder{
 
             if (length < minLengthValue){
                 minLength = i;
-                minLengthValue = map.getTotalLength();
+                minLengthValue = length;
             } else if (length > maxLengthValue){
                 maxLength = i;
-                maxLengthValue = map.getTotalLength();
+                maxLengthValue = length;
             }
 
             if (jsb.getMaxCombo() < minComboValue){
@@ -252,15 +255,15 @@ public class BphtPanelBuilder{
             } else {
                 mapperSum.put(map.getUserId(), new mapperDate(jsb.getPp(), map.getUserId()));
             }
-
+            nowPP += jsb.getWeight().getPp();
             allPP += jsb.getPp();
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();
 
         dtbf.append("bp平均长度: ").append(getTimeStr(avgLength)).append('\n');
-        dtbf.append("最长是bp").append(maxLength+1).append(' ').append(getTimeStr(maxLengthValue)).append('\n');
-        dtbf.append("最短是bp").append(minLength+1).append(' ').append(getTimeStr(minLengthValue)).append('\n');
+        dtbf.append("最长是bp").append(maxLength+1).append(' ').append(getTimeStr((int) maxLengthValue)).append('\n');
+        dtbf.append("最短是bp").append(minLength+1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
 
         dtbf.append("bp平均combo: ").append(avgCombo).append('\n');
         dtbf.append("最长是bp").append(maxCommbo+1).append(' ').append(maxComboValue).append('\n');
@@ -286,8 +289,8 @@ public class BphtPanelBuilder{
             }
         });
         dtbf.append("累计mod有:\n");
-        float finalAllPP = allPP;
-        modeSum.forEach((mod, sum) -> dtbf.append(mod).append('*').append(sum.size).append(' ').append("总计")
+        float finalAllPP = nowPP;
+        modSum.forEach((mod, sum) -> dtbf.append(mod).append('*').append(sum.size).append(' ').append("总计")
                 .append(sum.getAllPP())
                 .append('[').append(decimalFormat.format(100*sum.getAllPP()/ finalAllPP)).append('%').append(']')
                 .append('\n'));

@@ -206,4 +206,6 @@ public class Score {
     public void setUser(User user) {
         this.user = user;
     }
+
+
 }
