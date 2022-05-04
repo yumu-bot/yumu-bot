@@ -10,7 +10,7 @@ public class Wtf {
         this.text = text;
     }
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
     @Column(length = 1000)
     String text;

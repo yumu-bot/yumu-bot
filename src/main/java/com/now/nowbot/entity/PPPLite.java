@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "osu_pp_plus")
 public class PPPLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long userId;

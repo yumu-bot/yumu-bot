@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name = "qq_id")
 public class QQID {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     //true group   |    false friend

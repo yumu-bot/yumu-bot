@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "qq_start")
 public class StartLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "qq_id")

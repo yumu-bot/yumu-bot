@@ -11,7 +11,7 @@ import javax.persistence.*;
 })//主要是可能会有其他消息的记录,先设定表名为qq_message
 public class MsgLite{
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "row_id")
     private Integer rawId;

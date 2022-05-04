@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 })
 public class OsuUserLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "osu_id")
     private Integer osuID;
