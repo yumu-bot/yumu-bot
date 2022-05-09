@@ -30,6 +30,11 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
+        <repository>
+            <id>yoava</id>
+            <name>AOL yoava</name>
+            <url>http://yoava.artifactoryonline.com/yoava/repo</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -135,20 +140,30 @@
             <version>1.28</version>
         </dependency>
         <!--markdown to html-->
+<!--        <dependency>-->
+<!--            <groupId>com.vladsch.flexmark</groupId>-->
+<!--            <artifactId>flexmark</artifactId>-->
+<!--            <version>${flexmark.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.vladsch.flexmark</groupId>-->
+<!--            <artifactId>flexmark-util</artifactId>-->
+<!--            <version>${flexmark.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.vladsch.flexmark</groupId>-->
+<!--            <artifactId>flexmark-ext-tables</artifactId>-->
+<!--            <version>${flexmark.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark</artifactId>
-            <version>${flexmark.version}</version>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.64.0</version>
         </dependency>
         <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-util</artifactId>
-            <version>${flexmark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-tables</artifactId>
-            <version>${flexmark.version}</version>
+            <groupId>gui.ava</groupId>
+            <artifactId>html2image</artifactId>
+            <version>0.9</version>
         </dependency>
         <!--markdown to html end-->
     </dependencies>
