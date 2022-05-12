@@ -160,11 +160,11 @@
             <artifactId>flexmark-all</artifactId>
             <version>0.64.0</version>
         </dependency>
-        <dependency>
-            <groupId>gui.ava</groupId>
-            <artifactId>html2image</artifactId>
-            <version>0.9</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>gui.ava</groupId>-->
+<!--            <artifactId>html2image</artifactId>-->
+<!--            <version>0.9</version>-->
+<!--        </dependency>-->
         <!--markdown to html end-->
     </dependencies>
     <build>

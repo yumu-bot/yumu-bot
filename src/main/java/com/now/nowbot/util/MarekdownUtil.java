@@ -6,7 +6,7 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
-import gui.ava.html.image.generator.HtmlImageGenerator;
+//import gui.ava.html.image.generator.HtmlImageGenerator;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -142,7 +142,7 @@ public class MarekdownUtil {
 
         try {
             Files.write(Path.of("D://html00.png"), bufferImg2byte(getBufferImage_swing(html)));
-            Files.write(Path.of("D://html01.png"), bufferImg2byte(getBufferImage_html2img(html)));
+//            Files.write(Path.of("D://html01.png"), bufferImg2byte(getBufferImage_html2img(html)));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -161,11 +161,11 @@ public class MarekdownUtil {
         return img;
     }
 
-    public static BufferedImage getBufferImage_html2img(String html){
-        HtmlImageGenerator imageGenerator = new HtmlImageGenerator();
-        imageGenerator.loadHtml(html);
-        return imageGenerator.getBufferedImage();
-    }
+//    public static BufferedImage getBufferImage_html2img(String html){
+//        HtmlImageGenerator imageGenerator = new HtmlImageGenerator();
+//        imageGenerator.loadHtml(html);
+//        return imageGenerator.getBufferedImage();
+//    }
 
     public static byte[] bufferImg2byte(BufferedImage img){
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
