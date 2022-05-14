@@ -104,7 +104,7 @@ public class TestMt4 implements MessageService{
                         case XX -> {b++;a++;thisStatus = nextStatus;}
                         case X -> a++;
                     }
-                }
+                } break;
                 case XX:{
                     switch (nextStatus){
                         case OX -> {a++;c++;thisStatus = nextStatus;}
@@ -112,7 +112,7 @@ public class TestMt4 implements MessageService{
                         case OO -> {b++;a++;thisStatus = nextStatus;}
                         case O -> a++;
                     }
-                }
+                } break;
                 case XO:{
                     switch (nextStatus){
                         case OX -> {a++;b++;thisStatus = nextStatus;}
@@ -124,7 +124,7 @@ public class TestMt4 implements MessageService{
                             c++;
                         }
                     }
-                }
+                } break;
                 case OX:{
                     switch (nextStatus){
                         case XO -> {a++;b++;thisStatus = nextStatus;}
