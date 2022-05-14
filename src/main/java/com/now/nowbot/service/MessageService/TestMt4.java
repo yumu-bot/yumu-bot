@@ -34,6 +34,10 @@ public class TestMt4 implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var xtr = matcher.group("data").trim().replaceAll("\\s+",String.valueOf(CHAR_NONE));
+        event.getSubject().sendMessage("结果:"+get(xtr));
+    }
+
+    private float get(String xtr){
         int nexIndex = 4;
         LinkedList<status> statusList = new LinkedList<>();
         var datas = new char[xtr.length()];xtr.getChars(0, xtr.length(), datas, 0);
@@ -80,13 +84,13 @@ public class TestMt4 implements MessageService{
         }
 
 
-        status thisStatus = statusList.peek();
+        status thisStatus = statusList.poll();
         status nextStatus;
 
         int a = 0;
         int b = 0;
         int c = 0;
-        while ((nextStatus = statusList.peek()) != null){
+        while ((nextStatus = statusList.poll()) != null){
             if (nextStatus == status.NONE) {
                 a++;
                 b++;
@@ -135,9 +139,7 @@ public class TestMt4 implements MessageService{
                 }
             }
         }
-        System.out.println(a);
-        System.out.println(b);
-        System.out.println(c);
+        return (0.25f*a + b) * (0.5f*c + 1);
     }
 
     private int checkNext(List<status> statusList, char a, char b, char c, char d){

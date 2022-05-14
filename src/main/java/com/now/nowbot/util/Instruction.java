@@ -42,11 +42,11 @@ public enum Instruction {
     PPM(PPmService.class,
             Pattern.compile("^[!！](?i)(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
-    PPPLUS(PpPlusService.class,
-            Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
-
-    PPPLUSVS(PpPlusVsService.class,
-            Pattern.compile("^[!！](?i)(ym)?p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+//    PPPLUS(PpPlusService.class,
+//            Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+//
+//    PPPLUSVS(PpPlusVsService.class,
+//            Pattern.compile("^[!！](?i)(ym)?p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SETU(SetuService.class,
             Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)")),

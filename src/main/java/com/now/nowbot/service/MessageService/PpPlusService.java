@@ -7,11 +7,10 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("ppp")
+//@Service("ppp")
 public class PpPlusService implements MessageService{
     Logger log = LoggerFactory.getLogger(PpPlusService.class);
     @Autowired
