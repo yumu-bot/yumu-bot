@@ -113,8 +113,8 @@ public enum Instruction {
     RATING(RatingService.class,
             Pattern.compile("^[!！]ymra\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
-//    WTF(AtReplyService.class,
-//            Pattern.compile(".*"))
+    TESTMT(TestMt4.class,
+            Pattern.compile("^[!！]testmt\\s*(?<data>[ox ]+)"));
             ;
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
