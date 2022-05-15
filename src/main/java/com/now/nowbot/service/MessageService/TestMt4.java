@@ -52,8 +52,7 @@ public class TestMt4 implements MessageService{
         } else if (datas[2] == CHAR_NONE){
             statusList.add(status.get(datas[0], datas[1]));
             statusList.add(status.NONE);
-            statusList.add(status.get(datas[3], datas[4]));
-            nexIndex = 5;
+            nexIndex = 3;
         } else if (datas[3] == CHAR_NONE) {
             statusList.add(status.get(datas[0], datas[1]));
             statusList.add(status.get(datas[2], datas[3]));
@@ -84,6 +83,7 @@ public class TestMt4 implements MessageService{
         }
 
 
+        //解析
         status thisStatus = statusList.poll();
         status nextStatus;
 
