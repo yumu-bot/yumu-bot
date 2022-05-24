@@ -57,7 +57,7 @@ public class OsuMapDownloadUtil {
         try {
             data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, httpEntity, byte[].class);
         } catch (RestClientException e) {
-            var homePageSession = visitHomePage();
+            var homePageSession = visitHomePage(account);
             login(account, homePageSession);
             HttpHeaders newHeaders = new HttpHeaders();
             newHeaders.set("referer", "https://osu.ppy.sh/beatmapsets/" + sid);
@@ -67,16 +67,14 @@ public class OsuMapDownloadUtil {
             HttpEntity newHttpEntity = new HttpEntity(newHeaders);
             try {
                 data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, newHttpEntity, byte[].class);
-
-                var session = fromCookie(data.getHeaders());
-                account.setSession(session.session);
-                accountRepository.save(account);
+                fromCookie(data.getHeaders(), account);
             } catch (RestClientException ex) {
                 throw new TipsRuntimeException("下图失败");
             }
         }
 
         if (data != null){
+            fromCookie(data.getHeaders(), account);
             return data.getBody();
         }
         return new byte[0];
@@ -95,18 +93,15 @@ public class OsuMapDownloadUtil {
         HttpEntity httpEntity = new HttpEntity(body, headers);
         var data = template.exchange(LOGIN_URL, HttpMethod.POST, httpEntity, String.class);
 
-        var nowSession = fromCookie(data.getHeaders());
-        account.setSession(nowSession.session());
-        accountRepository.save(account);
-        return nowSession;
+        return fromCookie(data.getHeaders(), account);
     }
 
-    private OsuWebSessionBO visitHomePage(){
+    private OsuWebSessionBO visitHomePage(UserAccountLite account){
         var response = template.getForEntity(HOME_PAGE_URL, String.class);
-        return fromCookie(response.getHeaders());
+        return fromCookie(response.getHeaders(), account);
     }
 
-    private OsuWebSessionBO fromCookie(HttpHeaders headers){
+    private OsuWebSessionBO fromCookie(HttpHeaders headers, UserAccountLite account){
         String token = "";
         String session = "";
         var setCookie = headers.get("set-cookie");
@@ -120,6 +115,10 @@ public class OsuMapDownloadUtil {
                 }
                 if (!token.equals("") && !session.equals("")) break;
             }
+        }
+        if (!session.equals("")){
+            account.setSession(session);
+            accountRepository.save(account);
         }
         return new OsuWebSessionBO(token, session);
     }
