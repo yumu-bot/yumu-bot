@@ -831,4 +831,19 @@ public class OsuGetService {
         }
         return data;
     }
+
+    public JsonNode getAttributes(Long id) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .queryParam("mods",0)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return c.getBody();
+    }
 }

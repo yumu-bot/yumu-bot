@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.entity.UserAccountLite;
 import com.now.nowbot.mapper.AccountRepository;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -66,18 +67,22 @@ public class OsuMapDownloadUtil {
             HttpEntity newHttpEntity = new HttpEntity(newHeaders);
             try {
                 data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, newHttpEntity, byte[].class);
+
+                var session = fromCookie(data.getHeaders());
+                account.setSession(session.session);
+                accountRepository.save(account);
             } catch (RestClientException ex) {
-                ex.printStackTrace();
+                throw new TipsRuntimeException("下图失败");
             }
         }
 
-        if (!data.getStatusCode().is2xxSuccessful()){
-
+        if (data != null){
+            return data.getBody();
         }
-        return data.getBody();
+        return new byte[0];
     }
 
-    private void login(UserAccountLite account, OsuWebSessionBO homePageSession){
+    private OsuWebSessionBO login(UserAccountLite account, OsuWebSessionBO homePageSession){
         HttpHeaders headers = new HttpHeaders();
         headers.set("referer", HOME_PAGE_URL);
         headers.set("cookie", "XSRF-TOKEN=" + homePageSession.csrfToken() + "; osu_session=" + homePageSession.session());
@@ -92,7 +97,8 @@ public class OsuMapDownloadUtil {
 
         var nowSession = fromCookie(data.getHeaders());
         account.setSession(nowSession.session());
-//        accountRepository.save(account);
+        accountRepository.save(account);
+        return nowSession;
     }
 
     private OsuWebSessionBO visitHomePage(){
@@ -112,6 +118,7 @@ public class OsuMapDownloadUtil {
                     if (matcher.group("token") != null && !matcher.group("token").equalsIgnoreCase("deleted")) token = matcher.group("token");
                     else if (matcher.group("session") != null) session = matcher.group("session");
                 }
+                if (!token.equals("") && !session.equals("")) break;
             }
         }
         return new OsuWebSessionBO(token, session);

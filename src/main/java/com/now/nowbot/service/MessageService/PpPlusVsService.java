@@ -7,11 +7,10 @@ import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.skija.Paint;
 import org.jetbrains.skija.PaintMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("ppvs")
+//@Service("ppvs")
 public class PpPlusVsService implements MessageService {
     static final Paint PAINT_ANTIALIAS = new Paint().setAntiAlias(true).setMode(PaintMode.FILL);
     @Autowired
