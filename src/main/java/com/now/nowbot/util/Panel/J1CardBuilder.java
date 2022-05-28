@@ -10,8 +10,7 @@ import java.util.ArrayList;
 
 public class J1CardBuilder extends PanelBuilder{
 
-    public static final ArrayList<Float> F24L = new ArrayList<>();
-    public static final ArrayList<Float> F36L = new ArrayList<>();
+    public static final ArrayList<Float> F48L = new ArrayList<>();
 
     public J1CardBuilder(OsuUser user,int mode) throws IOException {
         super(430,355);
@@ -108,10 +107,10 @@ public class J1CardBuilder extends PanelBuilder{
         String J1t = "0";
         String J2t = "0";
         String J3t = "0";
-        String J4t = "somebody";
+        String J4t = "Anonymous";
         String J5t = "0";
 
-        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlagCount()))); //416.6667 // user.getBeatmapPlaycount()
+        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlagCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
 
         if(mode == 3) {
             J1t = String.valueOf(user.getPp()); // user.get4KPp()
@@ -123,11 +122,39 @@ public class J1CardBuilder extends PanelBuilder{
             J3t = String.valueOf(user.getMaxCombo());
         }
 
+        J5t = String.valueOf(user.getId());
+
         TextLine J1 = TextLine.make(J1t, fontS36);
         TextLine J2 = TextLine.make(J2t, fontS36);
         TextLine J3 = TextLine.make(J3t, fontS36);
-        TextLine J4 = TextLine.make(J4t, fontS48);
+        // T4 需要缩进
         TextLine J5 = TextLine.make(J5t, fontS24);
+
+        // 缩进方法 copied from HCard
+        StringBuilder sb = new StringBuilder();
+        float allWidth = 0;
+        int backL = 0;
+        int maxWidth = 350; // 最大宽度
+        float pointW48 = 3 * F48L.get('.');
+
+        var NameChar = user.getUsername().toCharArray(); // J4t = user.getUsername();
+        //计算字符长度
+        for (var thisChar : NameChar) {
+            if (allWidth > maxWidth){
+                break;
+            }
+            sb.append(thisChar);
+            allWidth += F48L.get(thisChar);
+            if ((allWidth + pointW48) < maxWidth){
+                backL++;
+            }
+        }
+        if (allWidth > maxWidth){
+            sb.delete(backL,sb.length());
+            sb.append("...");
+        }
+        TextLine J4 = TextLine.make(sb.toString(), fontS48);
+        sb.delete(0,sb.length());
 
         canvas.save();
         canvas.translate(80 - J1.getWidth()/2,255);//居中处理
