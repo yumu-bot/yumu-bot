@@ -39,7 +39,7 @@ public class J2CardBuilder extends PanelBuilder{
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
 
-        String Jlr1t = "Ranking"; //左上
+        String Jlu1t = "Ranking"; //左上
 
         double Jl1t = 0D; //正左，坐标参数，需要根据折线数据来判断！
         double Jl2t = 0D;
@@ -60,7 +60,7 @@ public class J2CardBuilder extends PanelBuilder{
         Jb2t = SkiaUtil.getRoundedNumber(Jb2t,1);
         Jb3t = SkiaUtil.getRoundedNumber(Jb3t,1);
 
-        TextLine Jlr1 = TextLine.make(Jlr1t, fontS36);
+        TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
 
         TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + SkiaUtil.getRoundedNumberUnit(Jl1t,1), fontS24);
         TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + SkiaUtil.getRoundedNumberUnit(Jl2t,1), fontS24);
@@ -76,8 +76,8 @@ public class J2CardBuilder extends PanelBuilder{
 
 
         canvas.save();
-        canvas.translate(10,10);
-        canvas.drawTextLine(Jlr1,0,Jlr1.getHeight()-Jlr1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(20,20);
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
 
         canvas.translate(-20 + ( 60 - Jl1.getWidth() / 2 ),36);//居中处理
         canvas.drawTextLine(Jl1,0,Jl1.getHeight()-Jl1.getXHeight(),new Paint().setARGB(255,195,160,30));
