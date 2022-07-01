@@ -3,7 +3,10 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.NowbotApplication;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +45,8 @@ public class Statistics {
     Boolean isRanked;
     @JsonProperty("global_rank")
     Long globalRank;
+    @JsonProperty("replays_watched_by_others")
+    Integer replaysWatchedByOthers;
     @JsonProperty("country_rank")
     Long countryRank;
     @JsonIgnore
@@ -70,6 +75,35 @@ public class Statistics {
         S = map.get("s");
         SH = map.get("sh");
         A = map.get("a");
+    }
+
+    @JsonIgnore
+    Integer countryRank7K;
+    @JsonIgnore
+    Integer countryRank4K;
+    @JsonIgnore
+    Integer rank7K;
+    @JsonIgnore
+    Integer rank4K;
+    @JsonIgnore
+    Double PP7K;
+    @JsonIgnore
+    Double PP4K;
+    @JsonProperty("variants")
+    void setVariants(JsonNode data){
+        if (data != null && data.size() > 0){
+            for (var m : data){
+                if (m.get("variant").asText().equals("4k")){
+                    countryRank4K = m.get("country_rank").asInt();
+                    rank4K = m.get("global_rank").asInt();
+                    PP4K = m.get("pp").asDouble();
+                } else {
+                    countryRank7K = m.get("country_rank").asInt();
+                    rank7K = m.get("global_rank").asInt();
+                    PP7K = m.get("pp").asDouble();
+                }
+            }
+        }
     }
 
     public Integer getCount50() {
@@ -323,5 +357,41 @@ public class Statistics {
                 ", A=" + A +
                 ", levelProgress=" + levelProgress +
                 '}';
+    }
+
+    public Long getPlagCount() {
+        return plagCount;
+    }
+
+    public Long getPlatTime() {
+        return platTime;
+    }
+
+    public Integer getReplaysWatchedByOthers() {
+        return replaysWatchedByOthers;
+    }
+
+    public Integer getCountryRank7K() {
+        return countryRank7K;
+    }
+
+    public Integer getCountryRank4K() {
+        return countryRank4K;
+    }
+
+    public Integer getRank7K() {
+        return rank7K;
+    }
+
+    public Integer getRank4K() {
+        return rank4K;
+    }
+
+    public Double getPP7K() {
+        return PP7K;
+    }
+
+    public Double getPP4K() {
+        return PP4K;
     }
 }

@@ -75,21 +75,21 @@ public class OsuUser {
     @JsonProperty("country")
     void setCountry(Map<String,String> country){
         if (country != null)
-        this.country = new Country(country.get("code"),country.get("name"));
+            this.country = new Country(country.get("code"),country.get("name"));
     }
     @JsonIgnore
     Kudosu kudosu;
     @JsonProperty("kudosu")
     void setKudosu(Map<String,Integer> kudosu){
         if (kudosu != null)
-        this.kudosu = new Kudosu(kudosu.get("total"),kudosu.get("available"));
+            this.kudosu = new Kudosu(kudosu.get("total"),kudosu.get("available"));
     }
     @JsonIgnore
     RankHistory rankHistory;
     @JsonProperty("rank_history")
     void setRankHistory(Map<String,Object> map){
         if (map != null)
-        this.rankHistory = new RankHistory(OsuMode.getMode((String) map.get("mode")), (List<Integer>) map.get("data"));
+            this.rankHistory = new RankHistory(OsuMode.getMode((String) map.get("mode")), (List<Integer>) map.get("data"));
     }
 
     public Long getId() {

@@ -339,6 +339,20 @@ public class OsuGetService {
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
+    public String getPlayerInfoStr(Long id, OsuMode mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
+                .queryParam("key", "id")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return c.getBody().toPrettyString();
+    }
 
     /***
      * 使用他人token获取user信息

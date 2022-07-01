@@ -18,7 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableRetry
 public class NowbotApplication {
-    private static Logger log = LoggerFactory.getLogger(NowbotApplication.class);
+    public static Logger log = LoggerFactory.getLogger(NowbotApplication.class);
     public static void main(String[] args) {
         SpringApplication.run(NowbotApplication.class, args);
     }
