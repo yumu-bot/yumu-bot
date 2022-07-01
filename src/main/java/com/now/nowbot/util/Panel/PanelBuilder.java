@@ -89,6 +89,12 @@ public class PanelBuilder {
         canvas.restore();
     }
 
+    /***
+     * 生成四边圆角,并附带文字
+     * @param r
+     * @param text 文字
+     * @return
+     */
     Image build(int r, String text) {
         if (isClose) return outImage;
         drawPanelInfo(surface, TOPTEXT_OFFSET, text);

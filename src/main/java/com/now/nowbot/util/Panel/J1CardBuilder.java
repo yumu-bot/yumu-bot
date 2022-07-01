@@ -1,6 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
@@ -11,8 +12,16 @@ import java.util.ArrayList;
 public class J1CardBuilder extends PanelBuilder{
 
     public static final ArrayList<Float> F48L = new ArrayList<>();
+    static {
+        var face = SkiaUtil.getTorusSemiBold();
+        Font fontS48 = new Font(face, 48);
 
-    public J1CardBuilder(OsuUser user,int mode) throws IOException {
+        for (int i = 0; i < 254; i++) {
+            F48L.add(TextLine.make(String.valueOf((char) i), fontS48).getWidth());
+        }
+    }
+
+    public J1CardBuilder(OsuUser user,OsuMode mode){
         super(430,355);
 
         drawBaseRRect();
@@ -63,7 +72,7 @@ public class J1CardBuilder extends PanelBuilder{
         canvas.restore();
     }
 
-    private void drawCardText(int mode){
+    private void drawCardText(OsuMode mode){
         //画卡片基础信息
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
@@ -72,7 +81,7 @@ public class J1CardBuilder extends PanelBuilder{
         String J2t = "0";
         String J3t = "0";
 
-        if(mode == 3) {
+        if(mode == OsuMode.MANIA) {
             J1t = "4K.PP";
             J2t = "7K.PP";
             J3t = "M.Combo";
@@ -96,7 +105,7 @@ public class J1CardBuilder extends PanelBuilder{
         canvas.restore();
     }
 
-    private void drawUserText(OsuUser user, int mode){
+    private void drawUserText(OsuUser user, OsuMode mode){
         //画用户基础信息
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS48 = new Font(TorusSB, 48);
@@ -112,7 +121,7 @@ public class J1CardBuilder extends PanelBuilder{
 
         double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlagCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
 
-        if(mode == 3) {
+        if(mode == OsuMode.MANIA) {
             J1t = String.valueOf(user.getPp()); // user.get4KPp()
             J2t = String.valueOf(user.getPp()); // user.get7KPp()
             J3t = String.valueOf(user.getMaxCombo());
@@ -171,5 +180,9 @@ public class J1CardBuilder extends PanelBuilder{
         canvas.translate((J4.getWidth() - J5.getWidth())/2,150);//居中处理
         canvas.drawTextLine(J5,0,J5.getHeight()-J5.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
+    }
+
+    public Image build() {
+        return super.build(20);
     }
 }

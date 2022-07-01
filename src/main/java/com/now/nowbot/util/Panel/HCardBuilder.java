@@ -15,6 +15,17 @@ public class HCardBuilder extends PanelBuilder{
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
 
+    static {
+        var face = SkiaUtil.getTorusSemiBold();
+        Font fontS24 = new Font(face, 24);
+        Font fontS36 = new Font(face, 36);
+
+        for (int i = 0; i < 254; i++) {
+            F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
+            F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
+        }
+    }
+
     public HCardBuilder(BpInfo info, int bpN) throws IOException {
         super(900,110);
 

@@ -56,7 +56,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
                 bot.getGroup(746671531L).sendMessage("程序关闭");
             }
         }, "endThread"));
-        initHcard();
         log.info("启动成功");
         if (NowbotConfig.QQ_LOGIN) {
             //登录
@@ -68,14 +67,4 @@ public class IocAllReadyRunner implements CommandLineRunner {
 
     }
 
-    void initHcard(){
-        var face = SkiaUtil.getTorusSemiBold();
-        Font fontS24 = new Font(face, 24);
-        Font fontS36 = new Font(face, 36);
-
-        for (int i = 0; i < 254; i++) {
-            HCardBuilder.F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
-            HCardBuilder.F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
-        }
-    }
 }
