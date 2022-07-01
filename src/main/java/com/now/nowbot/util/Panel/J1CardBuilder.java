@@ -119,11 +119,11 @@ public class J1CardBuilder extends PanelBuilder{
         String J4t = "Anonymous";
         String J5t = "0";
 
-        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlagCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
+        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlayCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
 
         if(mode == OsuMode.MANIA) {
-            J1t = String.valueOf(user.getPp()); // user.get4KPp()
-            J2t = String.valueOf(user.getPp()); // user.get7KPp()
+            J1t = String.valueOf(user.getStatustucs().getPP4K());
+            J2t = String.valueOf(user.getStatustucs().getPP7K());
             J3t = String.valueOf(user.getMaxCombo());
         } else {
             J1t = String.valueOf(user.getPp());

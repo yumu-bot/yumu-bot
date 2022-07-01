@@ -78,8 +78,8 @@ public class PpmOsu extends Ppm {
         }
         double pp = user.getPp();
         double acc = user.getAccuracy();
-        double pc = user.getPlagCount();
-        double pt = user.getPlatTime();
+        double pc = user.getPlayCount();
+        double pt = user.getPlayTime();
         double tth = user.getTotalHits();
 
 

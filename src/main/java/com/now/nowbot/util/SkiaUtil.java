@@ -577,6 +577,7 @@ public class SkiaUtil {
                 number = Math.round(number * 100D) / 10000000000000D;
             }
         }
+        if (number.equals((double) Math.round(number))) number = (double) Math.round(number);
 
         if (!s) number = - number;
         return number;

@@ -33,8 +33,8 @@ public class OsuUserInfoDao {
         out.setLevel_progress(statustucs.getLevelProgress());
         out.setIs_ranked(statustucs.getRanked());
         out.setMaximum_combo(statustucs.getMaxCombo());
-        out.setPlay_count(data.getPlagCount());
-        out.setPlay_time(data.getPlatTime());
+        out.setPlay_count(data.getPlayCount());
+        out.setPlay_time(data.getPlayTime());
         out.setMode(data.getPlayMode());
         out.setTime(LocalDateTime.now());
         return out;

@@ -42,7 +42,7 @@ public class J3CardBuilder extends PanelBuilder{
     }
 
     private void drawHexagramGraph(){
-        //画折线图
+        //画折线图，这层最好把那个object-hexagon-mini.png用上
     }
 
 
@@ -57,6 +57,7 @@ public class J3CardBuilder extends PanelBuilder{
         Font fontS36 = new Font(TorusSB, 36);
 
         String Jlu1t = "PP+";
+        String Jru1t = "San";
 
         //六个指标，从正左开始顺时针排下去
         double J1t = 0D;
@@ -65,6 +66,7 @@ public class J3CardBuilder extends PanelBuilder{
         double J4t = 0D;
         double J5t = 0D;
         double J6t = 0D;
+        double Jru2t = 0D; //san
 
         J1t = SkiaUtil.getRoundedNumber(J1t,2);
         J2t = SkiaUtil.getRoundedNumber(J2t,2);
@@ -82,6 +84,8 @@ public class J3CardBuilder extends PanelBuilder{
         String J6it = "strength";
 
         TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
+        TextLine Jru1 = TextLine.make(Jru1t, fontS24);
+        TextLine Jru2 = TextLine.make(String.valueOf(Jru2t), fontS36);
 
         TextLine J1 = TextLine.make(String.valueOf(J1t), fontS36);
         TextLine J2 = TextLine.make(String.valueOf(J2t), fontS36);
@@ -102,6 +106,17 @@ public class J3CardBuilder extends PanelBuilder{
             TextLine J4i = TextLine.make(J4it, fontS24);
     }
         canvas.save();
+        //画左上角 PPM
         canvas.translate(20,20);
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.restore();
+        //画右上角 San
+        canvas.translate(430 - 20 - Jru1.getWidth(),20);
+        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.translate(0 - 10 - Jru2.getWidth(),20);
+        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.restore();
+        //画六个指标
+        canvas.translate(430 - 20 - Jru1.getWidth(),20);
     }
 }
