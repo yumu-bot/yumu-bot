@@ -495,6 +495,92 @@ public class SkiaUtil {
             default ->  Color.makeRGB(32,32,32);
         };
     }
+    //注意，这里还需要 2 套大数字省略方法，具体内容如下：
+
+    public static char getRoundedNumberUnit(double number, int level) {
+        char unit = '-';
+        number = Math.abs(number);
+        if (level == 1){
+            if(number < 100D) {
+            unit = 0;
+            } else if(number < 100000D){
+            unit = 'K';
+            } else if(number < 100000000D){
+            unit = 'M';
+            } else if(number < 100000000000D){
+            unit = 'G';
+            } else if(number < 100000000000000D){
+            unit = 'T';
+            } else if(number < 100000000000000000D){
+            unit = 'P';
+            }
+        } else if (level == 2){
+            if(number < 1000D) {
+                unit = 0;
+            } else if(number < 1000000D){
+                unit = 'K';
+            } else if(number < 1000000000D){
+                unit = 'M';
+            } else if(number < 1000000000000D){
+                unit = 'G';
+            } else if(number < 1000000000000000D){
+                unit = 'T';
+            } else if(number < 1000000000000000000D){
+                unit = 'P';
+            }
+        }
+        return unit;
+    }
+
+
+    public static double getRoundedNumber(Double number, int level) {
+
+        boolean s = true; //正负符号
+        // lv1.保留1位小数，结果不超4位字符宽(包含单位)
+        //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
+
+        // lv2.保留2位小数，结果不超7位字符宽(包含单位)
+        //1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf.
+
+        //将负值纳入计算
+        if (number < 0D) {
+            number = Math.abs(number);
+            s = false;
+        }
+
+        if (level == 1) {
+            if (number <= 100D) {
+                number = Math.round(number * 10D) / 10D;
+            } else if (number <= 10000D) {
+                number = Math.round(number * 10D) / 10000D;
+            } else if (number <= 1000000D) {
+                number = Math.round(number * 10D) / 1000000D;
+            } else if (number <= 100000000D) {
+                number = Math.round(number * 10D) / 100000000D;
+            } else if (number <= 100000000000D) {
+                number = Math.round(number * 10D) / 10000000000D;
+            } else if (number <= 10000000000000D) {
+                number = Math.round(number * 10D) / 1000000000000D;
+            }
+        } else if (level == 2) {
+            if (number <= 1000D) {
+                number = Math.round(number * 100D) / 100D;
+            } else if (number <= 100000D) {
+                number = Math.round(number * 100D) / 100000D;
+            } else if (number <= 10000000D) {
+                number = Math.round(number * 100D) / 1000000D;
+            } else if (number <= 1000000000D) {
+                number = Math.round(number * 100D) / 1000000000D;
+            } else if (number <= 1000000000000D) {
+                number = Math.round(number * 100D) / 100000000000D;
+            } else if (number <= 100000000000000D) {
+                number = Math.round(number * 100D) / 10000000000000D;
+            }
+        }
+
+        if (!s) number = - number;
+        return number;
+    }
 
     public class PolylineBuilder{
         ArrayList<Float> point = new ArrayList<>();
@@ -532,3 +618,4 @@ public class SkiaUtil {
         }
     }
 }
+
