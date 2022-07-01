@@ -6,10 +6,7 @@ import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class SkiaUtil {
     static final int[] COLOR_SUGER = new int[]{
@@ -327,7 +324,14 @@ public class SkiaUtil {
         return image;
     }
 
-    public static Path get(int width, int height, float... t){
+    /**
+     * 创建折线图
+     * @param width 宽度
+     * @param height
+     * @param t 数据
+     * @return
+     */
+    public static Path getPolyline(int width, int height, float... t){
         if (t.length < 2) return new Path();
         float step = 1f * width / (t.length-1);
         float max = t[0],min = t[0];
@@ -492,7 +496,39 @@ public class SkiaUtil {
         };
     }
 
-    public static void main(String[] args) {
+    public class PolylineBuilder{
+        ArrayList<Float> point = new ArrayList<>();
+        float width;
+        float height;
+        List<Integer> mark;
+        int max_index = -1;
+        int min_index = -1;
+        boolean poly = false;
 
+        public PolylineBuilder addPoint(int... d){
+            for (int i : d){
+                if (max_index > 0 && (i - point.get(max_index))>0){
+                    max_index = point.size();
+                }
+                if (min_index > 0 && (i - point.get(min_index))<0){
+                    min_index = point.size();
+                }
+
+                point.add((float) i);
+            }
+            return this;
+        }
+        public PolylineBuilder addPoint(float... d){
+            for (float i : d){
+                if (max_index > 0 && (i - point.get(max_index))>0){
+                    max_index = point.size();
+                }
+                if (min_index > 0 && (i - point.get(min_index))<0){
+                    min_index = point.size();
+                }
+                point.add(i);
+            }
+            return this;
+        }
     }
 }
