@@ -67,6 +67,7 @@ public class SkiaUtil {
 
         return new int[]{Color.getR(color), Color.getG(color), Color.getB(color)};
     }
+
     public static int[] hexToARGB(String colorstr) {
         if (colorstr.startsWith("#")) {
             colorstr = colorstr.substring(1);
@@ -306,19 +307,19 @@ public class SkiaUtil {
         return new Path[]{path, path1};
     }
 
-    public static Image getTextImage(String text, Typeface typeface, float textsize, Paint paint){
+    public static Image getTextImage(String text, Typeface typeface, float textsize, Paint paint) {
         Image image;
-        var font = new Font(typeface,textsize);
+        var font = new Font(typeface, textsize);
         var textLine = TextLine.make(text, font);
-        var surface = Surface.makeRasterN32Premul((int)textLine.getWidth(), (int)textLine.getHeight());
+        var surface = Surface.makeRasterN32Premul((int) textLine.getWidth(), (int) textLine.getHeight());
         System.out.println(textLine.getHeight());
         System.out.println(textLine.getXHeight());
         System.out.println(textLine.getCapHeight());
-        try (font;textLine;surface){
+        try (font; textLine; surface) {
             var canvas = surface.getCanvas();
             canvas.clear(0);
-            canvas.translate(0,1.2f*textLine.getCapHeight());
-            canvas.drawTextLine(textLine,0,0,paint);
+            canvas.translate(0, 1.2f * textLine.getCapHeight());
+            canvas.drawTextLine(textLine, 0, 0, paint);
             image = surface.makeImageSnapshot();
         }
         return image;
@@ -326,35 +327,36 @@ public class SkiaUtil {
 
     /**
      * 创建折线图
-     * @param width 宽度
+     *
+     * @param width  宽度
      * @param height
-     * @param t 数据
+     * @param t      数据
      * @return
      */
-    public static Path getPolyline(int width, int height, float... t){
+    public static Path getPolyline(int width, int height, float... t) {
         if (t.length < 2) return new Path();
-        float step = 1f * width / (t.length-1);
-        float max = t[0],min = t[0];
+        float step = 1f * width / (t.length - 1);
+        float max = t[0], min = t[0];
 
-        for (var temp : t){
+        for (var temp : t) {
             if (max < temp) max = temp;
             if (min > temp) min = temp;
         }
         float stepY = height / (min - max);
         Path out = new Path();
-        out.moveTo(0,height + stepY * (t[0]-min));
+        out.moveTo(0, height + stepY * (t[0] - min));
 
-        for (int i = 1; i < t.length-1; i++) {
+        for (int i = 1; i < t.length - 1; i++) {
 //            out.lineTo(i*step, height + stepY * (t[i]-min));
 //            out.quadTo(i*step, height + stepY * (t[i]-min), (i+1)*step, height + stepY * (t[(i+1)]-min));// 二次贝塞尔曲线
 //            out.cubicTo()// 三次贝塞尔曲线
             out.cubicTo(
-                    (i-0.5f)*step,  height + stepY * ((t[i-1]+t[i])/2-min),
-                    i*step, height + stepY * (t[i]-min),
-                    (i+0.5f)*step,  height + stepY * ((t[i+1]+t[i])/2-min)
+                    (i - 0.5f) * step, height + stepY * ((t[i - 1] + t[i]) / 2 - min),
+                    i * step, height + stepY * (t[i] - min),
+                    (i + 0.5f) * step, height + stepY * ((t[i + 1] + t[i]) / 2 - min)
             );
         }
-        out.quadTo((t.length-2)*step, height + stepY * (t[t.length-2]-min),(t.length-1)*step, height + stepY * (t[t.length-1]-min));
+        out.quadTo((t.length - 2) * step, height + stepY * (t[t.length - 2] - min), (t.length - 1) * step, height + stepY * (t[t.length - 1] - min));
         return out;
     }
 
@@ -366,17 +368,17 @@ public class SkiaUtil {
     public static int getStartColor(float star) {
         var starts = new float[]{0.0999f, 0.1f, 1.25f, 2, 2.5f, 3.3f, 4.2f, 4.9f, 5.8f, 6.7f, 7.7f, 9};
         var colorgroup = new int[][]{
-                {170,170,170},
-                {66,144,251},
-                {79,192,255},
-                {79,255,213},
-                {124,255,79},
-                {246,240,92},
-                {255,104,104},
-                {255,78,111},
-                {198,69,184},
-                {101,99,222},
-                {24,21,142},
+                {170, 170, 170},
+                {66, 144, 251},
+                {79, 192, 255},
+                {79, 255, 213},
+                {124, 255, 79},
+                {246, 240, 92},
+                {255, 104, 104},
+                {255, 78, 111},
+                {198, 69, 184},
+                {101, 99, 222},
+                {24, 21, 142},
                 {0, 0, 0},
         };
         int imax = starts.length - 1, imin = 0;
@@ -419,24 +421,24 @@ public class SkiaUtil {
         int x_length = bitmap.getWidth();
         int y_length = bitmap.getHeight();
         {
-            int[] colorCount = new int[1<<15];
+            int[] colorCount = new int[1 << 15];
             for (int x_index = 0; x_index < x_length; x_index++) {
                 for (int y_index = 0; y_index < y_length; y_index++) {
                     int i = bitmap.getColor(x_index, y_index);
                     //压缩 RGB555 颜色空间
-                    int r = ((i>>19)&((1<<5)-1));
-                    int g = ((i>>11)&((1<<5)-1));
-                    int b = ((i>>3)&((1<<5)-1));
-                    colorCount[(r<<10)|(g<<5)|b]++;
+                    int r = ((i >> 19) & ((1 << 5) - 1));
+                    int g = ((i >> 11) & ((1 << 5) - 1));
+                    int b = ((i >> 3) & ((1 << 5) - 1));
+                    colorCount[(r << 10) | (g << 5) | b]++;
                 }
             }
             List<Integer> colors = new ArrayList<>();
             for (int i = 0; i < colorCount.length; i++) {
-                if (colorCount[i] != 0 && true/* 接近白色、黑色和红色的颜色。 why? */){
+                if (colorCount[i] != 0 && true/* 接近白色、黑色和红色的颜色。 why? */) {
                     colors.add(i);
                 }
             }
-            if (colors.size() < len){
+            if (colors.size() < len) {
                 var data = new int[colors.size()];
                 for (int i = 0; i < colors.size(); i++) {
                     data[i] = colors.get(i);
@@ -451,7 +453,7 @@ public class SkiaUtil {
                 colors_int[x_index * y_length + y_index] = bitmap.getColor(x_index, y_index);
             }
         }
-        if (len>0)return colors_int;
+        if (len > 0) return colors_int;
         //色彩排序
         Arrays.sort(colors_int);
         //计算颜色柱数量
@@ -483,16 +485,16 @@ public class SkiaUtil {
 
     public static int getRankColor(String rank) {
         if (rank == null) rank = "F";
-        return switch (rank.trim().toUpperCase()){
-            case "S" -> Color.makeRGB(240,148,80);
-            case "SH" -> Color.makeRGB(180,180,180);
-            case "X" -> Color.makeRGB(254,246,103);
-            case "XH" -> Color.makeRGB(248,248,248);
-            case "A" -> Color.makeRGB(121,196,113);
-            case "B" -> Color.makeRGB(62,188,239);
-            case "C" -> Color.makeRGB(151,129,183);
-            case "D" -> Color.makeRGB(234,107,72);
-            default ->  Color.makeRGB(32,32,32);
+        return switch (rank.trim().toUpperCase()) {
+            case "S" -> Color.makeRGB(240, 148, 80);
+            case "SH" -> Color.makeRGB(180, 180, 180);
+            case "X" -> Color.makeRGB(254, 246, 103);
+            case "XH" -> Color.makeRGB(248, 248, 248);
+            case "A" -> Color.makeRGB(121, 196, 113);
+            case "B" -> Color.makeRGB(62, 188, 239);
+            case "C" -> Color.makeRGB(151, 129, 183);
+            case "D" -> Color.makeRGB(234, 107, 72);
+            default -> Color.makeRGB(32, 32, 32);
         };
     }
     //注意，这里还需要 2 套大数字省略方法，具体内容如下：
@@ -500,35 +502,23 @@ public class SkiaUtil {
     public static char getRoundedNumberUnit(double number, int level) {
         char unit = '-';
         number = Math.abs(number);
-        if (level == 1){
-            if(number < 100D) {
+        if (level < 1 || level > 2) return '-';
+        int m = 1 + level;
+
+        if (number < Math.pow(10, m++)) {  //level==1->100 level==2->1000
             unit = 0;
-            } else if(number < 100000D){
+        } else if (number < Math.pow(10, m++)) {
             unit = 'K';
-            } else if(number < 100000000D){
+        } else if (number < Math.pow(10, m++)) {
             unit = 'M';
-            } else if(number < 100000000000D){
+        } else if (number < Math.pow(10, m++)) {
             unit = 'G';
-            } else if(number < 100000000000000D){
+        } else if (number < Math.pow(10, m++)) {
             unit = 'T';
-            } else if(number < 100000000000000000D){
+        } else if (number < Math.pow(10, m)) {
             unit = 'P';
-            }
-        } else if (level == 2){
-            if(number < 1000D) {
-                unit = 0;
-            } else if(number < 1000000D){
-                unit = 'K';
-            } else if(number < 1000000000D){
-                unit = 'M';
-            } else if(number < 1000000000000D){
-                unit = 'G';
-            } else if(number < 1000000000000000D){
-                unit = 'T';
-            } else if(number < 1000000000000000000D){
-                unit = 'P';
-            }
         }
+
         return unit;
     }
 
@@ -543,46 +533,22 @@ public class SkiaUtil {
         //1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf.
 
         //将负值纳入计算
-        if (number < 0D) {
-            number = Math.abs(number);
-            s = false;
+
+        while (number >= 1000 || number <= -1000) {
+            number /= 1000;
         }
 
         if (level == 1) {
-            if (number <= 100D) {
-                number = Math.round(number * 10D) / 10D;
-            } else if (number <= 10000D) {
-                number = Math.round(number * 10D) / 10000D;
-            } else if (number <= 1000000D) {
-                number = Math.round(number * 10D) / 1000000D;
-            } else if (number <= 100000000D) {
-                number = Math.round(number * 10D) / 100000000D;
-            } else if (number <= 100000000000D) {
-                number = Math.round(number * 10D) / 10000000000D;
-            } else if (number <= 10000000000000D) {
-                number = Math.round(number * 10D) / 1000000000000D;
-            }
-        } else if (level == 2) {
-            if (number <= 1000D) {
-                number = Math.round(number * 100D) / 100D;
-            } else if (number <= 100000D) {
-                number = Math.round(number * 100D) / 100000D;
-            } else if (number <= 10000000D) {
-                number = Math.round(number * 100D) / 1000000D;
-            } else if (number <= 1000000000D) {
-                number = Math.round(number * 100D) / 1000000000D;
-            } else if (number <= 1000000000000D) {
-                number = Math.round(number * 100D) / 100000000000D;
-            } else if (number <= 100000000000000D) {
-                number = Math.round(number * 100D) / 10000000000000D;
-            }
+            number = (double) Math.round(number * 10) / 10D;
+        }
+        if (level == 2) {
+            number = (double) Math.round(number * 100) / 100D;
         }
 
-        if (!s) number = - number;
         return number;
     }
 
-    public class PolylineBuilder{
+    public class PolylineBuilder {
         ArrayList<Float> point = new ArrayList<>();
         float width;
         float height;
@@ -591,12 +557,12 @@ public class SkiaUtil {
         int min_index = -1;
         boolean poly = false;
 
-        public PolylineBuilder addPoint(int... d){
-            for (int i : d){
-                if (max_index > 0 && (i - point.get(max_index))>0){
+        public PolylineBuilder addPoint(int... d) {
+            for (int i : d) {
+                if (max_index > 0 && (i - point.get(max_index)) > 0) {
                     max_index = point.size();
                 }
-                if (min_index > 0 && (i - point.get(min_index))<0){
+                if (min_index > 0 && (i - point.get(min_index)) < 0) {
                     min_index = point.size();
                 }
 
@@ -604,12 +570,13 @@ public class SkiaUtil {
             }
             return this;
         }
-        public PolylineBuilder addPoint(float... d){
-            for (float i : d){
-                if (max_index > 0 && (i - point.get(max_index))>0){
+
+        public PolylineBuilder addPoint(float... d) {
+            for (float i : d) {
+                if (max_index > 0 && (i - point.get(max_index)) > 0) {
                     max_index = point.size();
                 }
-                if (min_index > 0 && (i - point.get(min_index))<0){
+                if (min_index > 0 && (i - point.get(min_index)) < 0) {
                     min_index = point.size();
                 }
                 point.add(i);
