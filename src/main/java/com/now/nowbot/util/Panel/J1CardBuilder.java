@@ -67,7 +67,7 @@ public class J1CardBuilder extends PanelBuilder{
         } catch (IOException e) {
             throw new RuntimeException(" get head image error ");
         }
-        Image J1CardBGSC = SkiaImageUtil.getScaleCenterImage(J1UserAvatar,420,240); //缩放至合适大小，
+        Image J1CardBGSC = SkiaImageUtil.getScaleCenterImage(J1UserAvatar,100,100); //缩放至合适大小，
         canvas.drawImage(J1CardBGSC,0, 0,new Paint().setAlphaf(1f));
         canvas.restore();
     }
@@ -122,11 +122,11 @@ public class J1CardBuilder extends PanelBuilder{
         double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlayCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
 
         if(mode == OsuMode.MANIA) {
-            J1t = String.valueOf(user.getStatustucs().getPP4K());
-            J2t = String.valueOf(user.getStatustucs().getPP7K());
+            J1t = String.valueOf(Math.round(user.getStatustucs().getPP4K()));
+            J2t = String.valueOf(Math.round(user.getStatustucs().getPP7K()));
             J3t = String.valueOf(user.getMaxCombo());
         } else {
-            J1t = String.valueOf(user.getPp());
+            J1t = String.valueOf(Math.round(user.getPp()));
             J2t = String.valueOf(Math.round(rawPP));
             J3t = String.valueOf(user.getMaxCombo());
         }
@@ -139,7 +139,7 @@ public class J1CardBuilder extends PanelBuilder{
         // T4 需要缩进
         TextLine J5 = TextLine.make(J5t, fontS24);
 
-        // 缩进方法 copied from HCard
+        // T4 缩进方法 copied from HCard
         StringBuilder sb = new StringBuilder();
         float allWidth = 0;
         int backL = 0;
