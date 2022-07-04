@@ -544,6 +544,7 @@ public class SkiaUtil {
         if (level == 2) {
             number = (double) Math.round(number * 100) / 100D;
         }
+        if (number.equals((double) Math.round(number))) number = (double) Math.round(number);
 
         return number;
     }

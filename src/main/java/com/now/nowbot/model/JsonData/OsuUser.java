@@ -338,14 +338,14 @@ public class OsuUser {
         return null;
     }
 
-    public Long getPlagCount() {
+    public Long getPlayCount() {
         if (statistics != null) {
             return statistics.getPlayCount();
         }
         return null;
     }
 
-    public Long getPlatTime() {
+    public Long getPlayTime() {
         if (statistics != null) {
             return statistics.getPlayTime();
         }

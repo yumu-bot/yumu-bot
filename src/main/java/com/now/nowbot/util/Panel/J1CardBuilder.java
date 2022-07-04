@@ -58,7 +58,7 @@ public class J1CardBuilder extends PanelBuilder{
     private void drawUserAvatar(OsuUser user) {
         //画头像
         canvas.save();
-        canvas.translate(105,35);
+        canvas.translate(165,35);
         canvas.drawRRect(RRect.makeXYWH(0,0,100,100,10),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,100,100,10));
         Image J1UserAvatar = null;
@@ -119,11 +119,11 @@ public class J1CardBuilder extends PanelBuilder{
         String J4t = "Anonymous";
         String J5t = "0";
 
-        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlagCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
+        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlayCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
 
         if(mode == OsuMode.MANIA) {
-            J1t = String.valueOf(user.getPp()); // user.get4KPp()
-            J2t = String.valueOf(user.getPp()); // user.get7KPp()
+            J1t = String.valueOf(user.getStatustucs().getPP4K());
+            J2t = String.valueOf(user.getStatustucs().getPP7K());
             J3t = String.valueOf(user.getMaxCombo());
         } else {
             J1t = String.valueOf(user.getPp());
@@ -177,7 +177,7 @@ public class J1CardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(215 - J4.getWidth()/2,150);//居中处理
         canvas.drawTextLine(J4,0,J4.getHeight()-J4.getXHeight(),new Paint().setARGB(255,255,255,255));
-        canvas.translate((J4.getWidth() - J5.getWidth())/2,150);//居中处理
+        canvas.translate((J4.getWidth() - J5.getWidth())/2,50);//居中处理
         canvas.drawTextLine(J5,0,J5.getHeight()-J5.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
     }
