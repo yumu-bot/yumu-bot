@@ -507,15 +507,15 @@ public class SkiaUtil {
 
         if (number < Math.pow(10, m)) {  //level==1->100 level==2->1000
             unit = 0;
-        } else if (number < Math.pow(10, (m+=3))) {
+        } else if (number < Math.pow(10, (m += 3))) {
             unit = 'K';
-        } else if (number < Math.pow(10, (m+=3))) {
+        } else if (number < Math.pow(10, (m += 3))) {
             unit = 'M';
-        } else if (number < Math.pow(10, (m+=3))) {
+        } else if (number < Math.pow(10, (m += 3))) {
             unit = 'G';
-        } else if (number < Math.pow(10, (m+=3))) {
+        } else if (number < Math.pow(10, (m += 3))) {
             unit = 'T';
-        } else if (number < Math.pow(10, m+3)) {
+        } else if (number < Math.pow(10, m + 3)) {
             unit = 'P';
         }
 

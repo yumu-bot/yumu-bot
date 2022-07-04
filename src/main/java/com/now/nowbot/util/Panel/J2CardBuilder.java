@@ -37,9 +37,11 @@ public class J2CardBuilder extends PanelBuilder {
 
         var rankHistory = user.getRankHistory().history().stream().filter(i -> i != 0).toList();
 
+        //实际折线所占寬高
         int w = 840;
         int h = 280;
 
+        //相对j2卡片的偏移
         int offset_x = 30;
         int offset_y = 30;
 
@@ -76,6 +78,7 @@ public class J2CardBuilder extends PanelBuilder {
                 (rankHistory.size() - 1) * step, stepY * (rankHistory.get(rankHistory.size() - 1) - rank_min)
         );
 
+        // 最大/最小点的中心坐标(注不用考虑偏移,此处针对折线区域计算)
         float max_x = day_max * step;
         float max_y = h;
         float min_x = day_min * step;
@@ -90,14 +93,19 @@ public class J2CardBuilder extends PanelBuilder {
                 .setARGB(255, 255, 204, 32);
         var rps = new Paint()
                 .setARGB(255, 56, 46, 50);
+
+        //绘图逻辑 在try内绘制文字 注意遮挡关系,代码越靠后效果越靠前
         try (path; p; rpb; rps) {
             canvas.save();
+            //折线
             canvas.translate(offset_x, offset_y);
             canvas.drawPath(path, p);
 
+            //最大点 圆
             canvas.drawCircle(max_x, max_y, 11, rpb);
             canvas.drawCircle(max_x, max_y, 8, rps);
 
+            //最小点 圆
             canvas.drawCircle(min_x, min_y, 11, rpb);
             canvas.drawCircle(min_x, min_y, 8, rps);
 
