@@ -113,10 +113,11 @@ public class J3CardBuilder extends PanelBuilder{
         canvas.restore();
 
         //画右上角 San
-        canvas.translate(430 - 20 - Jru1.getWidth(),20);
-        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(- 10 - Jru2.getWidth(),20);
-        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.save();
+        canvas.translate(430 - 20 - Jru2.getWidth(),20);
+        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.translate(- 10 - Jru1.getWidth(),20);
+        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
         //画六个指标数字
@@ -149,5 +150,9 @@ public class J3CardBuilder extends PanelBuilder{
         canvas.translate(260 + (J5i.getWidth() - J6i.getWidth()) / 2,0);
         canvas.drawTextLine(J6i,0,J6i.getHeight()-J6i.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.restore();
+    }
+
+    public Image build() {
+        return super.build(20);
     }
 }
