@@ -58,7 +58,7 @@ public class J1CardBuilder extends PanelBuilder{
     private void drawUserAvatar(OsuUser user) {
         //画头像
         canvas.save();
-        canvas.translate(105,35);
+        canvas.translate(165,35);
         canvas.drawRRect(RRect.makeXYWH(0,0,100,100,10),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,100,100,10));
         Image J1UserAvatar = null;
@@ -177,7 +177,7 @@ public class J1CardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(215 - J4.getWidth()/2,150);//居中处理
         canvas.drawTextLine(J4,0,J4.getHeight()-J4.getXHeight(),new Paint().setARGB(255,255,255,255));
-        canvas.translate((J4.getWidth() - J5.getWidth())/2,150);//居中处理
+        canvas.translate((J4.getWidth() - J5.getWidth())/2,50);//居中处理
         canvas.drawTextLine(J5,0,J5.getHeight()-J5.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
     }
