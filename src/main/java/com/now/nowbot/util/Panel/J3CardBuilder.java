@@ -116,7 +116,13 @@ public class J3CardBuilder extends PanelBuilder{
         canvas.translate(0 - 10 - Jru2.getWidth(),20);
         canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
-        //画六个指标
-        canvas.translate(430 - 20 - Jru1.getWidth(),20);
+        //画六个指标数字
+        canvas.translate(85 - J1.getWidth() / 2,70);
+        canvas.drawTextLine(J1,0,J1.getHeight()-J1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(260 + (J1.getWidth() - J2.getWidth()) / 2,0);
+        canvas.drawTextLine(J2,0,J2.getHeight()-J2.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(-290 + (J2.getWidth() - J3.getWidth()) / 2,0);
+        canvas.drawTextLine(J3,0,J3.getHeight()-J3.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.translate(-290 + (J2.getWidth() - J3.getWidth()) / 2,0);
     }
 }

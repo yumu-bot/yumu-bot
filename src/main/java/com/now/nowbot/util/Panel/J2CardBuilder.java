@@ -122,7 +122,7 @@ public class J2CardBuilder extends PanelBuilder {
     }
 
     private void drawCardText(OsuUser user) {
-        //画卡片基础信息
+        //画卡片基础信息，2号位本来是中间的坐标值，省略掉了
 
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
@@ -131,11 +131,11 @@ public class J2CardBuilder extends PanelBuilder {
         String Jlu1t = "Ranking"; //左上
 
         double Jl1t = rank_max; //正左，坐标参数，需要根据折线数据来判断！
-        double Jl2t = 0D;
+        //double Jl2t = 0D;
         double Jl3t = rank_min;
 
         double Jb1t = 0D; //正下，坐标参数
-        double Jb2t = 0D;
+        //double Jb2t = 0D;
         double Jb3t = - days - 1;
 
         String Jur1t = "#0"; //右上
