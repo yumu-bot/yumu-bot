@@ -6,6 +6,7 @@ import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.util.*;
 import com.now.nowbot.util.Panel.HCardBuilder;
+import com.now.nowbot.util.Panel.J1CardBuilder;
 import net.mamoe.mirai.Bot;
 import org.jetbrains.skija.Font;
 import org.jetbrains.skija.TextLine;
@@ -49,6 +50,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
         MoliUtil.init(applicationContext.getBean(RestTemplate.class));
         permission.init(applicationContext);
+        initFountWidth();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
@@ -65,6 +67,20 @@ public class IocAllReadyRunner implements CommandLineRunner {
             }
         }
 
+    }
+
+    void initFountWidth() {
+        var face = SkiaUtil.getTorusSemiBold();
+        Font fontS48 = new Font(face, 48);
+        Font fontS24 = new Font(face, 24);
+        Font fontS36 = new Font(face, 36);
+        try (face; fontS48; fontS36; fontS24){
+            for (int i = 0; i < 254; i++) {
+                J1CardBuilder.F48L.add(TextLine.make(String.valueOf((char) i), fontS48).getWidth());
+                HCardBuilder.F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
+                HCardBuilder.F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
+            }
+        }
     }
 
 }

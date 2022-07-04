@@ -505,17 +505,17 @@ public class SkiaUtil {
         if (level < 1 || level > 2) return '-';
         int m = 1 + level;
 
-        if (number < Math.pow(10, m++)) {  //level==1->100 level==2->1000
+        if (number < Math.pow(10, m)) {  //level==1->100 level==2->1000
             unit = 0;
-        } else if (number < Math.pow(10, m++)) {
+        } else if (number < Math.pow(10, (m+=3))) {
             unit = 'K';
-        } else if (number < Math.pow(10, m++)) {
+        } else if (number < Math.pow(10, (m+=3))) {
             unit = 'M';
-        } else if (number < Math.pow(10, m++)) {
+        } else if (number < Math.pow(10, (m+=3))) {
             unit = 'G';
-        } else if (number < Math.pow(10, m++)) {
+        } else if (number < Math.pow(10, (m+=3))) {
             unit = 'T';
-        } else if (number < Math.pow(10, m)) {
+        } else if (number < Math.pow(10, m+3)) {
             unit = 'P';
         }
 
@@ -523,7 +523,7 @@ public class SkiaUtil {
     }
 
 
-    public static double getRoundedNumber(Double number, int level) {
+    public static Double getRoundedNumber(double number, int level) {
 
         boolean s = true; //正负符号
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
@@ -539,12 +539,14 @@ public class SkiaUtil {
         }
 
         if (level == 1) {
+            if (number >= 100) {
+                number /= 1000;
+            }
             number = (double) Math.round(number * 10) / 10D;
+        } else if (level == 2) {
+            number = (double) Math.round(number * 1000) / 1000D;
         }
-        if (level == 2) {
-            number = (double) Math.round(number * 100) / 100D;
-        }
-        if (number.equals((double) Math.round(number))) number = (double) Math.round(number);
+        if (number - Math.round(number) <= 0.000005) number = (double) Math.round(number);
 
         return number;
     }

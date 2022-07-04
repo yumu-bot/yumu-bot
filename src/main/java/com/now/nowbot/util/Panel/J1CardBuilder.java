@@ -12,14 +12,6 @@ import java.util.ArrayList;
 public class J1CardBuilder extends PanelBuilder{
 
     public static final ArrayList<Float> F48L = new ArrayList<>();
-    static {
-        var face = SkiaUtil.getTorusSemiBold();
-        Font fontS48 = new Font(face, 48);
-
-        for (int i = 0; i < 254; i++) {
-            F48L.add(TextLine.make(String.valueOf((char) i), fontS48).getWidth());
-        }
-    }
 
     public J1CardBuilder(OsuUser user,OsuMode mode){
         super(430,355);
@@ -32,10 +24,7 @@ public class J1CardBuilder extends PanelBuilder{
     }
 
     private void drawBaseRRect() {
-        //画底层圆角矩形
-        canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0, 0, 430, 355, 20), new Paint().setARGB(255, 56, 46, 50));
-        canvas.restore();
+        canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
     private void drawUserCover(OsuUser user) {
