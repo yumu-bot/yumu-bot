@@ -7,12 +7,17 @@ import org.jetbrains.skija.*;
 import java.io.IOException;
 
 public class J2CardBuilder extends PanelBuilder {
+    int rank_max;
+    int rank_min;
+
+    int days;
 
     public J2CardBuilder(OsuUser user) throws IOException {
         super(900, 355);
 
         drawBaseRRect();
         drawUserRankingCurve(user);
+        drawCardText(user);
     }
 
     private void drawBaseRRect() {
@@ -60,6 +65,9 @@ public class J2CardBuilder extends PanelBuilder {
             }
         }
 
+        this.rank_max = rank_max;
+        this.rank_min = rank_min;
+        this.days = rankHistory.size();
         float stepY = 1f * h / (rank_max - rank_min);
         day_max = rankHistory.indexOf(rank_max);
         day_min = rankHistory.indexOf(rank_min);
@@ -122,13 +130,13 @@ public class J2CardBuilder extends PanelBuilder {
 
         String Jlu1t = "Ranking"; //左上
 
-        double Jl1t = 0D; //正左，坐标参数，需要根据折线数据来判断！
+        double Jl1t = rank_max; //正左，坐标参数，需要根据折线数据来判断！
         double Jl2t = 0D;
-        double Jl3t = 0D;
+        double Jl3t = rank_min;
 
         double Jb1t = 0D; //正下，坐标参数
         double Jb2t = 0D;
-        double Jb3t = 0D;
+        double Jb3t = - days - 1;
 
         String Jur1t = "#0"; //右上
         String Jur2t = "??";
