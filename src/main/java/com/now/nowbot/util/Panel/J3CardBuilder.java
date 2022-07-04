@@ -42,7 +42,7 @@ public class J3CardBuilder extends PanelBuilder{
     }
 
     private void drawHexagramGraph(){
-        //画折线图，这层最好把那个object-hexagon-mini.png用上
+        //画折线图，这层需要在object-hexagon-mini.png层上面
     }
 
 

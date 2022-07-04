@@ -108,7 +108,7 @@ public class J1CardBuilder extends PanelBuilder {
         String J4t = "Anonymous";
         String J5t = "0";
 
-        double rawPP = user.getPp() - (1000 / 2.4 * (1 - Math.pow(0.9994, user.getPlayCount()))); //416.6667 // PlayCount -> user.getBeatmapPlaycount()
+        double rawPP = user.getPp() - (1000f / 2.4f * (1f - Math.pow(0.9994, user.getBeatmapSetCountPlaycounts()))); //416.6667 // 这里把ppm的 rawPP算法写个公共方法然后拿过来
 
         if (mode == OsuMode.MANIA) {
             J1t = String.valueOf(Math.round(user.getStatustucs().getPP4K()));
