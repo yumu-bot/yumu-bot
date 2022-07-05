@@ -13,7 +13,7 @@ public class J2CardBuilder extends PanelBuilder {
     int days;
 
     public J2CardBuilder(OsuUser user) throws IOException {
-        super(900, 355);
+        super(900, 335);
 
         drawBaseRRect();
         drawUserRankingCurve(user);
@@ -31,8 +31,8 @@ public class J2CardBuilder extends PanelBuilder {
     private void drawUserRankingCurve(OsuUser user) {
         //用户Rank曲线，要求折线描边5px，颜色255,204,34，需要标出最大值。
         //最大值数字一般在曲线最大的右上角，(数字文本的左上角：曲线最大坐标：左移20px，上移20px)，24px高度，颜色同上，
-        //小球半径8，大球半径11
-        //但如果最大值出现在靠近当前天数的五天内，则改为在曲线最大坐标左上角显示。)
+        //小球半径8，大球半径14
+        //
         //
         //我傻逼了，当前值有标识，以我群里发的最终截图为准
 
@@ -43,8 +43,8 @@ public class J2CardBuilder extends PanelBuilder {
         var rankHistory = user.getRankHistory().history().stream().filter(i -> i != 0).toList();
 
         //实际折线所占寬高
-        int w = 1350-570;
-        int h = 610-395;
+        int w = 780;
+        int h = 215;
 
         //相对j2卡片的偏移
         int offset_x = 60;
@@ -110,14 +110,13 @@ public class J2CardBuilder extends PanelBuilder {
             canvas.drawPath(path, p);
 
             //最大点 圆
-//            canvas.drawCircle(max_x, max_y, 11, rpb);
-//            canvas.drawCircle(max_x, max_y, 8, rps);
+            canvas.drawCircle(max_x, max_y, 14, rpb);
+            canvas.drawCircle(max_x, max_y, 8, rps);
 
             //最小点 圆
-            canvas.drawCircle(min_x, min_y, 11, rpb);
+            canvas.drawCircle(min_x, min_y, 14, rpb);
             canvas.drawCircle(min_x, min_y, 8, rps);
 
-//            canvas.drawRect(Rect.makeWH(w,h), new Paint().setARGB(200,0,0,0));
             canvas.restore();
         }
     }
@@ -137,18 +136,18 @@ public class J2CardBuilder extends PanelBuilder {
 
         double Jb1t = 0D; //正下，坐标参数
         //double Jb2t = 0D;
-        double Jb3t = - days;
+        double Jb3t = - days - 1;
 
-        String Jur1t = "#0"; //右上
-        String Jur2t = "??";
-        String Jur3t = "#0";
+        long Jur1t = user.getGlobalRank(); //右上
+        String Jur2t = String.valueOf(user.getCountry());
+        long Jur3t = user.getCountryRank();
 
         Jl1t = SkiaUtil.getRoundedNumber(Jl1t, 1);
         //Jl2t = SkiaUtil.getRoundedNumber(Jl2t, 1);
         Jl3t = SkiaUtil.getRoundedNumber(Jl3t, 1);
-        Jb1t = SkiaUtil.getRoundedNumber(Jb1t, 1);
+        //Jb1t = SkiaUtil.getRoundedNumber(Jb1t, 1); 这不可能需要取整，因为这天数本身就是整数啊
         //Jb2t = SkiaUtil.getRoundedNumber(Jb2t, 1);
-        Jb3t = SkiaUtil.getRoundedNumber(Jb3t, 1);
+        //Jb3t = SkiaUtil.getRoundedNumber(Jb3t, 1);
 
         TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
 
@@ -156,20 +155,21 @@ public class J2CardBuilder extends PanelBuilder {
         //TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + SkiaUtil.getRoundedNumberUnit(Jl2t, 1), fontS24);
         TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + SkiaUtil.getRoundedNumberUnit(Jl3t, 1), fontS24);
 
-        TextLine Jb1 = TextLine.make(String.valueOf(Jb1t) + SkiaUtil.getRoundedNumberUnit(Jb1t, 1), fontS24);
+        TextLine Jb1 = TextLine.make(Jb1t + "D", fontS24);
         //TextLine Jb2 = TextLine.make(String.valueOf(Jb2t) + SkiaUtil.getRoundedNumberUnit(Jb2t, 1), fontS24);
-        TextLine Jb3 = TextLine.make(String.valueOf(Jb3t) + SkiaUtil.getRoundedNumberUnit(Jb3t, 1), fontS24);
+        TextLine Jb3 = TextLine.make(Jb3t + "D", fontS24);
 
-        TextLine Jur1 = TextLine.make(Jur1t, fontS36);
+        TextLine Jur1 = TextLine.make("#" + Jur1t, fontS36);
         TextLine Jur2 = TextLine.make(Jur2t, fontS24);
-        TextLine Jur3 = TextLine.make(Jur3t, fontS24);
+        TextLine Jur3 = TextLine.make("#" + Jur3t, fontS24);
 
 
         canvas.save();
         canvas.translate(20, 20);
         canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.restore();
 
-        canvas.translate(-20 + (60 - Jl1.getWidth() / 2), 36);//居中处理
+        canvas.translate(30 - (Jl1.getWidth() / 2), 56);//居中处理
         canvas.drawTextLine(Jl1, 0, Jl1.getHeight() - Jl1.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         //canvas.translate((Jl1.getWidth() - Jl2.getWidth()) / 2, 107);//居中处理
         //canvas.drawTextLine(Jl2, 0, Jl2.getHeight() - Jl2.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
@@ -179,7 +179,6 @@ public class J2CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jl3, 0, Jl3.getHeight() - Jl3.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         canvas.restore();
 
-        canvas.save();
         canvas.translate(60, 300);
         canvas.drawTextLine(Jb1, 0, Jb1.getHeight() - Jb1.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         //canvas.translate(330 + ((120 - Jb2.getWidth()) / 2), 0);
@@ -190,12 +189,11 @@ public class J2CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jb3, 0, Jb3.getHeight() - Jb3.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         canvas.restore();
 
-        canvas.save();
         canvas.translate(880 - Jur3.getWidth(), 28);
         canvas.drawTextLine(Jur3, 0, Jur3.getHeight() - Jur3.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
         canvas.translate(0 - Jur2.getWidth(), 0);
         canvas.drawTextLine(Jur2, 0, Jur2.getHeight() - Jur2.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
-        canvas.translate(-20 - Jur1.getWidth(), -8);
+        canvas.translate(-10 - Jur1.getWidth(), -8);
         canvas.drawTextLine(Jur1, 0, Jur1.getHeight() - Jur1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
         canvas.restore();
     }

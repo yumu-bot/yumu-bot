@@ -15,7 +15,7 @@ import java.nio.file.Path;
 public class J3CardBuilder extends PanelBuilder{
 
     public J3CardBuilder(OsuUser user) throws IOException {
-        super(430, 355);
+        super(430, 335);
 
         drawBaseRRect();
         drawHexagon();

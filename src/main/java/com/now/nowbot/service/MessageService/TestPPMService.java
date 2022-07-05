@@ -6,6 +6,7 @@ import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,7 +50,7 @@ public class TestPPMService implements MessageService {
                 .append(user.getPp()).append(' ')
                 .append(user.getAccuracy()).append(' ')
                 .append(user.getLevelProgress()).append(' ')
-                .append(user.getStatustucs().getMaxCombo()).append(' ')
+                .append(user.getStatistics().getMaxCombo()).append(' ')
                 .append(user.getTotalHits()).append(' ')
                 .append(user.getPlayCount()).append(' ')
                 .append(user.getPlayTime()).append(' ')
@@ -129,7 +130,7 @@ public class TestPPMService implements MessageService {
                     lengv90 += bp.getBeatmap().getTotalLength();
                 }
             }
-            bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
+            bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());
             rawpp = bpp + bonus;
 
             ppv0 /= 10;
@@ -156,41 +157,12 @@ public class TestPPMService implements MessageService {
                 accv0 = 0;
                 lengv0 = 0;
             }
-            double pp = user.getStatustucs().getPp();
-            double acc = user.getStatustucs().getAccuracy();
-            double pc = user.getStatustucs().getPlayCount();
-            double pt = user.getStatustucs().getPlayTime();
-            double tth = user.getStatustucs().getTotalHits();
+            double pp = user.getStatistics().getPp();
+            double acc = user.getStatistics().getAccuracy();
+            double pc = user.getStatistics().getPlayCount();
+            double pt = user.getStatistics().getPlayTime();
+            double tth = user.getStatistics().getTotalHits();
         }
     }
-    static float bonusPP(double[] pp, Long pc){
-        double  bonus = 0;
-        double sumOxy = 0;
-        double sumOx2 = 0;
-        double avgX = 0;
-        double avgY = 0;
-        double sumX = 0;
-        for (int i = 1; i <= pp.length; i++) {
-            double weight = Math.log1p(i + 1);
-            sumX += weight;
-            avgX += i * weight;
-            avgY += pp[i - 1] * weight;
-        }
-        avgX /= sumX;
-        avgY /= sumX;
-        for(int n = 1; n <= pp.length; n++){
-            sumOxy += (n - avgX) * (pp[n - 1] - avgY) * Math.log1p(n + 1.0D);
-            sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
-        }
-        double Oxy = sumOxy / sumX;
-        double Ox2 = sumOx2 / sumX;
-        for(int n = 100; n <= pc; n++){
-            double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-            if(val <= 0.0D){
-                break;
-            }
-            bonus += val;
-        }
-        return (float) bonus;
-    }
+
 }

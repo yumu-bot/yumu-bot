@@ -159,7 +159,7 @@ public class PPmService implements MessageService {
             userMe = osuGetService.getPlayerInfo(userBin, mode);
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
-            if (userMe.getStatustucs().getPlayTime() < 60 || userMe.getStatustucs().getPlayCount() < 30) {
+            if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
                 throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
@@ -185,7 +185,7 @@ public class PPmService implements MessageService {
         } else {
             throw new PpmException(PpmException.Type.PPM_Player_VSNotFound);
         }
-        if (userOther.getStatustucs().getPlayTime() < 60 || userOther.getStatustucs().getPlayCount() < 30) {
+        if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
             throw new PpmException(PpmException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
@@ -219,13 +219,13 @@ public class PPmService implements MessageService {
         float[] hexOther = ppmOther.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 
         //六边形缩放
-        if(userMe.getStatustucs().getPp() > userOther.getStatustucs().getPp()){
-            float n = (float) (userOther.getStatustucs().getPp()/userMe.getStatustucs().getPp());
+        if(userMe.getStatistics().getPp() > userOther.getStatistics().getPp()){
+            float n = (float) (userOther.getStatistics().getPp()/userMe.getStatistics().getPp());
             for (int i = 0; i < hexMe.length; i++) {
                 hexOther[i] *= n;
             }
         } else {
-            float n = (float) (userMe.getStatustucs().getPp()/userOther.getStatustucs().getPp());
+            float n = (float) (userMe.getStatistics().getPp()/userOther.getStatistics().getPp());
             for (int i = 0; i < hexMe.length; i++) {
                 hexMe[i] *= n;
             }
@@ -292,12 +292,12 @@ public class PPmService implements MessageService {
                 .drawA1(user.getAvatarUrl())
                 .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
                 .drawA3(user.getUsername());
-        card.drawB2("#" + user.getStatustucs().getGlobalRank())
-                .drawB1(user.getCountry().countryCode() + "#" + user.getStatustucs().getCountryRank())
-                .drawC2(String.format("%.2f",user.getStatustucs().getAccuracy()) + "% Lv." +
-                        user.getStatustucs().getLevelCurrent() +
-                        "(" + user.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(user.getStatustucs().getPp().intValue() + "PP");
+        card.drawB2("#" + user.getStatistics().getGlobalRank())
+                .drawB1(user.getCountry().countryCode() + "#" + user.getStatistics().getCountryRank())
+                .drawC2(String.format("%.2f",user.getStatistics().getAccuracy()) + "% Lv." +
+                        user.getStatistics().getLevelCurrent() +
+                        "(" + user.getStatistics().getLevelProgress() + "%)")
+                .drawC1(user.getStatistics().getPp().intValue() + "PP");
         if (user.getSupportLeve()>0) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }

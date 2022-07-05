@@ -10,7 +10,7 @@ import java.io.IOException;
 public class J4CardBuilder extends PanelBuilder{
 
     public J4CardBuilder(OsuUser user){
-        super(430, 355);
+        super(430, 335);
 
         drawBaseRRect();
         drawHexagon(user);
@@ -80,14 +80,11 @@ public class J4CardBuilder extends PanelBuilder{
         Jru1t = user.getLevelProgress();
         Jmu1t = user.getLevelCurrent();
 
-        /*
-        Jmb1t = user.getXRank();
-        Jmb2t = user.getSRank();
-        Jmb3t = user.getARank();
-        Jb1t = user.getXHRank();
-        Jb2t = user.getSHRank();
-         */
-        //你倒是写这里的获取啊
+        Jmb1t = user.getStatistics().getSS();
+        Jmb2t = user.getStatistics().getS();
+        Jmb3t = user.getStatistics().getA();
+        Jb1t = user.getStatistics().getSSH();
+        Jb2t = user.getStatistics().getSH();
 
         TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
         TextLine Jru1 = TextLine.make(String.valueOf(Jru1t), fontS36);

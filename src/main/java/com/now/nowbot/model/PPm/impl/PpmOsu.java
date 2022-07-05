@@ -49,7 +49,7 @@ public class PpmOsu extends Ppm {
                 lengv90 += bp.getBeatmap().getTotalLength();
             }
         }
-        bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
+        bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
         rawpp = bpp + bonus;
 
         ppv0 /= 10;

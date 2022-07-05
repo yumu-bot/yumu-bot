@@ -53,8 +53,8 @@ public class PpmMania extends Ppm {
                 pgr90 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
             }
         }
-        bonus = bonusPP(allBpPP, user.getStatustucs().getPlayCount());
-        rawpp = bpp + bonus;user.getStatustucs().getPp();
+        bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
+        rawpp = bpp + bonus;user.getStatistics().getPp();
 
         ppv0 /= 10;
         ppv45 /= 10;
@@ -77,11 +77,11 @@ public class PpmMania extends Ppm {
         if (bps.size()<10) {
             ppv0 = 0; accv0 = 0; lengv0 = 0; pgr90 = 0;
         }
-        double pp = user.getStatustucs().getPp();
-        double acc = user.getStatustucs().getAccuracy();
-        double pc = user.getStatustucs().getPlayCount();
-        double pt = user.getStatustucs().getPlayTime();
-        double tth = user.getStatustucs().getTotalHits();
+        double pp = user.getStatistics().getPp();
+        double acc = user.getStatistics().getAccuracy();
+        double pc = user.getStatistics().getPlayCount();
+        double pt = user.getStatistics().getPlayTime();
+        double tth = user.getStatistics().getTotalHits();
 
 
         // 4.1 准度fACC formulaic accuracy 0-1.2

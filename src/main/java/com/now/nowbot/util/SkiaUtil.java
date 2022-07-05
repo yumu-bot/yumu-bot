@@ -474,6 +474,41 @@ public class SkiaUtil {
         return colors_int;
     }
 
+    /**
+     * 计算bonusPP
+     * 算法通过 正态分布 "估算"超过bp100的 pp，此方法不严谨
+     */
+
+    public static float getBonusPP(double[] pp, Long pc){
+        double bonus = 0;
+        double sumOxy = 0;
+        double sumOx2 = 0;
+        double avgX = 0;
+        double avgY = 0;
+        double sumX = 0;
+        for (int i = 1; i <= pp.length; i++) {
+            double weight = Math.log1p(i + 1);
+            sumX += weight;
+            avgX += i * weight;
+            avgY += pp[i - 1] * weight;
+        }
+        avgX /= sumX;
+        avgY /= sumX;
+        for(int n = 1; n <= pp.length; n++){
+            sumOxy += (n - avgX) * (pp[n - 1] - avgY) * Math.log1p(n + 1.0D);
+            sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
+        }
+        double Oxy = sumOxy / sumX;
+        double Ox2 = sumOx2 / sumX;
+        for(int n = 100; n <= pc; n++){
+            double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
+            if(val <= 0.0D){
+                break;
+            }
+            bonus += val;
+        }
+        return (float) bonus;
+    }
 
     public static int[] getRandomColors() {
         return COLOR_GRAdDIENT[new Random().nextInt(COLOR_GRAdDIENT.length)];

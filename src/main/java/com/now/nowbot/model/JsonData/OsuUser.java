@@ -127,11 +127,11 @@ public class OsuUser {
         this.pp = pp;
     }
 
-    public Statistics getStatustucs() {
+    public Statistics getStatistics() {
         return statistics;
     }
 
-    public void setStatustucs(Statistics statistics) {
+    public void setStatistics(Statistics statistics) {
         this.statistics = statistics;
     }
 

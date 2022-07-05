@@ -54,7 +54,7 @@ public class YmiService implements MessageService{
 //            throw new TipsException("没有查询到您的信息呢");
 //        }
         StringBuilder sb = new StringBuilder();
-        var statistics = date.getStatustucs();
+        var statistics = date.getStatistics();
         // Muziyami(osu):10086PP
         sb.append(date.getUsername()).append('(').append(mode).append(')').append(':').append(statistics.getPp()).append("PP").append('\n');
         // #114514 CN#1919 (LV.100(32%))
