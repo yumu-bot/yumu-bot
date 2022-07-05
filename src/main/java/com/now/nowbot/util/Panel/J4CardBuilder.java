@@ -142,7 +142,6 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.drawTextLine(Jmb3,0,Jmb3.getHeight()-Jmb3.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
-
         canvas.translate(70 - Jb1.getWidth() / 2,195 + 100);
         canvas.drawTextLine(Jb1,0,Jb1.getHeight()-Jb1.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.translate(145 - (Jb2.getWidth() - Jb1.getWidth())/ 2,0);
