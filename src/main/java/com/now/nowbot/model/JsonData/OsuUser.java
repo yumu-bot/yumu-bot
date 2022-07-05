@@ -131,7 +131,7 @@ public class OsuUser {
         return statistics;
     }
 
-    public void setStatustucs(Statistics statistics) {
+    public void setStatistics(Statistics statistics) {
         this.statistics = statistics;
     }
 
