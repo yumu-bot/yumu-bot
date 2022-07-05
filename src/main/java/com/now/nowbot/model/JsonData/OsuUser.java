@@ -127,7 +127,7 @@ public class OsuUser {
         this.pp = pp;
     }
 
-    public Statistics getStatustucs() {
+    public Statistics getStatistics() {
         return statistics;
     }
 

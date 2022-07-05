@@ -13,7 +13,7 @@ import java.io.IOException;
 public class J3CardBuilder extends PanelBuilder{
 
     public J3CardBuilder(OsuUser user,OsuMode mode) throws IOException {
-        super(430, 355);
+        super(430, 335);
 
         drawBaseRRect();
         drawHexagon();

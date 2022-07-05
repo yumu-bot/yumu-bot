@@ -97,12 +97,12 @@ public class FriendService implements MessageService{
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         card.drawB3("")
-                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatustucs().getCountryRank())
+                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatistics().getCountryRank())
                 .drawB1("U" + infoMe.getId())
-                .drawC2(infoMe.getStatustucs().getAccuracy(2) + "% Lv." +
-                        infoMe.getStatustucs().getLevelCurrent() +
-                        "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(Math.round(infoMe.getStatustucs().getPp()) + "PP");
+                .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
+                        infoMe.getStatistics().getLevelCurrent() +
+                        "(" + infoMe.getStatistics().getLevelProgress() + "%)")
+                .drawC1(Math.round(infoMe.getStatistics().getPp()) + "PP");
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());

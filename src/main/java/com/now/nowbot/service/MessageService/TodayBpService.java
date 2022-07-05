@@ -83,12 +83,12 @@ public class TodayBpService implements MessageService{
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }
         card.drawB3("")
-                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatustucs().getCountryRank())
+                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatistics().getCountryRank())
                 .drawB1("U" + infoMe.getId())
-                .drawC2(infoMe.getStatustucs().getAccuracy(2) + "% Lv." +
-                        infoMe.getStatustucs().getLevelCurrent() +
-                        "(" + infoMe.getStatustucs().getLevelProgress() + "%)")
-                .drawC1(infoMe.getStatustucs().getPp(0) + "PP");
+                .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
+                        infoMe.getStatistics().getLevelCurrent() +
+                        "(" + infoMe.getStatistics().getLevelProgress() + "%)")
+                .drawC1(infoMe.getStatistics().getPp(0) + "PP");
 
         var panel = new TbpPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);

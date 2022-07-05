@@ -17,7 +17,7 @@ public class OsuUserInfoDao {
 
     public static OsuUserModeScoreLite fromModel(OsuUser data){
         var out = new OsuUserModeScoreLite();
-        var statustucs = data.getStatustucs();
+        var statustucs = data.getStatistics();
         out.setGlobal_rank(statustucs.getGlobalRank());
         out.setCountry_rank(statustucs.getCountryRank());
         out.setTotal_score(statustucs.getTotalScore());

@@ -45,7 +45,7 @@ public class StartService implements MessageService{
 
         if (starService.isRefouse(sc)){
             var date = osuGetService.getPlayerOsuInfo(user);
-            float adsstar = (float) (date.getStatustucs().getPp()/100);
+            float adsstar = (float) (date.getStatistics().getPp()/100);
             starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点金币\n").append("24小时后再次刷新\n");
         }
