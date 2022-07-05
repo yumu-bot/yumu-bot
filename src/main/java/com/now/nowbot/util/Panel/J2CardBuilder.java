@@ -43,12 +43,12 @@ public class J2CardBuilder extends PanelBuilder {
         var rankHistory = user.getRankHistory().history().stream().filter(i -> i != 0).toList();
 
         //实际折线所占寬高
-        int w = 840;
-        int h = 280;
+        int w = 1350-570;
+        int h = 610-395;
 
         //相对j2卡片的偏移
-        int offset_x = 30;
-        int offset_y = 30;
+        int offset_x = 60;
+        int offset_y = 65;
 
         if (rankHistory.size() == 0) return;
         int day_max = 0;
@@ -110,13 +110,14 @@ public class J2CardBuilder extends PanelBuilder {
             canvas.drawPath(path, p);
 
             //最大点 圆
-            canvas.drawCircle(max_x, max_y, 11, rpb);
-            canvas.drawCircle(max_x, max_y, 8, rps);
+//            canvas.drawCircle(max_x, max_y, 11, rpb);
+//            canvas.drawCircle(max_x, max_y, 8, rps);
 
             //最小点 圆
             canvas.drawCircle(min_x, min_y, 11, rpb);
             canvas.drawCircle(min_x, min_y, 8, rps);
 
+//            canvas.drawRect(Rect.makeWH(w,h), new Paint().setARGB(200,0,0,0));
             canvas.restore();
         }
     }
@@ -136,7 +137,7 @@ public class J2CardBuilder extends PanelBuilder {
 
         double Jb1t = 0D; //正下，坐标参数
         //double Jb2t = 0D;
-        double Jb3t = - days - 1;
+        double Jb3t = - days;
 
         String Jur1t = "#0"; //右上
         String Jur2t = "??";
