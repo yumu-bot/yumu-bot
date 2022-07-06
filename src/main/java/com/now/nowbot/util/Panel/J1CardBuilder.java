@@ -122,14 +122,14 @@ public class J1CardBuilder extends PanelBuilder {
             allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
         }
             float bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());
-            double rawPP = user.getPerformancePoints() - bonus;
+            double rawPP = user.getPP() - bonus;
 
         if (user.getPlayMode() == OsuMode.MANIA) {
             J1t = String.valueOf(Math.round(user.getStatistics().getPP4K()));
             J2t = String.valueOf(Math.round(user.getStatistics().getPP7K()));
             J3t = String.valueOf(user.getMaxCombo());
         } else {
-            J1t = String.valueOf(Math.round(user.getPerformancePoints()));
+            J1t = String.valueOf(Math.round(user.getPP()));
             J2t = String.valueOf(Math.round(rawPP));
             J3t = String.valueOf(user.getMaxCombo());
         }

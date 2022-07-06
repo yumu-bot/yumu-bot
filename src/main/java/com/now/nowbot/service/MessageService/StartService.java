@@ -83,7 +83,7 @@ public class StartService implements MessageService{
         var u2 = osuGetService.getPlayerTaikoInfo(user);
         var u3 = osuGetService.getPlayerCatchInfo(user);
         var u4 = osuGetService.getPlayerManiaInfo(user);
-        var ppsum = u1.getPerformancePoints()+ u2.getPerformancePoints()+u3.getPerformancePoints()+u4.getPerformancePoints();
+        var ppsum = u1.getPP()+ u2.getPP()+u3.getPP()+u4.getPP();
         return Math.toIntExact(1611 + Math.round(ppsum * 0.4396));
     }
 }

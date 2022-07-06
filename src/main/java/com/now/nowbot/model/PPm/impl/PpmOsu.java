@@ -76,7 +76,7 @@ public class PpmOsu extends Ppm {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getPerformancePoints();
+        double pp = user.getPP();
         double acc = user.getAccuracy();
         double pc = user.getPlayCount();
         double pt = user.getPlayTime();

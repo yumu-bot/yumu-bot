@@ -47,7 +47,7 @@ public class TestPPMService implements MessageService {
         StringBuilder sb = new StringBuilder();
         sb.append(user.getUsername()).append(' ')
                 .append(user.getGlobalRank()).append(' ')
-                .append(user.getPerformancePoints()).append(' ')
+                .append(user.getPP()).append(' ')
                 .append(user.getAccuracy()).append(' ')
                 .append(user.getLevelProgress()).append(' ')
                 .append(user.getStatistics().getMaxCombo()).append(' ')
