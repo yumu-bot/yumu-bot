@@ -14,7 +14,7 @@ public class J4CardBuilder extends PanelBuilder{
 
         drawBaseRRect();
         drawHexagon(user);
-        drawLevelIndex(user);
+        drawLevelText(user);
     }
     private void drawBaseRRect(){
         canvas.clear(Color.makeRGB(56, 46, 50));
@@ -51,7 +51,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.restore();
     }
 
-    private void drawLevelIndex(OsuUser user) {
+    private void drawLevelText(OsuUser user) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
@@ -128,7 +128,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.drawTextLine(Jm3,0,Jm3.getHeight()-Jm3.getXHeight(),new Paint().setARGB(255,124,198,35));
         canvas.restore();
 
-        //画五个指标
+        //画五个数据
         canvas.save();
         canvas.translate(70 - Jmb1.getWidth() / 2,195 + 60);
         canvas.drawTextLine(Jmb1,0,Jmb1.getHeight()-Jmb1.getXHeight(),new Paint().setARGB(255,255,255,255));

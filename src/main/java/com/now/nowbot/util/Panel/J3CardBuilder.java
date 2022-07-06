@@ -21,7 +21,7 @@ public class J3CardBuilder extends PanelBuilder{
         drawBaseRRect();
         drawHexagon();
         drawHexagramGraph();
-        drawPPMIndex(user);
+        drawPPMText(user);
     }
 
     private void drawBaseRRect(){
@@ -53,7 +53,7 @@ public class J3CardBuilder extends PanelBuilder{
     @Autowired
     PPmService PPmService;
 
-    private void drawPPMIndex(OsuUser user) {
+    private void drawPPMText(OsuUser user) {
         //画指标
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
