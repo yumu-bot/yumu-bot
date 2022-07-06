@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +31,7 @@ public class msgController {
         this.bot = bot;
         this.osuGetService = osuGetService;
         bindDao = dao;
+
     }
     @GetMapping("${osu.callbackpath}")
     public String bind(@RequestParam("code")String code, @RequestParam("state") String stat){
