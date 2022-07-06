@@ -13,14 +13,14 @@ public class J1CardBuilder extends PanelBuilder {
 
     public static final ArrayList<Float> F48L = new ArrayList<>();
 
-    public J1CardBuilder(OsuUser user, OsuMode mode) {
+    public J1CardBuilder(OsuUser user) {
         super(430, 355);
 
         drawBaseRRect();
         drawUserCover(user);
         drawUserAvatar(user);
-        drawCardText(mode);
-        drawUserText(user, mode);
+        drawCardText(user.getPlayMode());
+        drawUserText(user);
     }
 
     private void drawBaseRRect() {
@@ -40,7 +40,11 @@ public class J1CardBuilder extends PanelBuilder {
             throw new RuntimeException(" get cover image error ");
         }
         Image J1CardBGSC = SkiaImageUtil.getScaleCenterImage(J1UserCover, 420, 240); //缩放至合适大小，这里放大了一点，以应对模糊带来的负面效果
-        canvas.drawImage(J1CardBGSC, 0, 0, new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT)));
+        J1UserCover.close();
+        var paint = new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT));
+        try (J1CardBGSC; paint){
+            canvas.drawImage(J1CardBGSC, 0, 0, paint);
+        }
         canvas.restore();
     }
 
@@ -94,7 +98,7 @@ public class J1CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawUserText(OsuUser user, OsuMode mode) {
+    private void drawUserText(OsuUser user) {
         //画用户基础信息
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS48 = new Font(TorusSB, 48);
@@ -110,7 +114,7 @@ public class J1CardBuilder extends PanelBuilder {
 
         double rawPP = user.getPp() - (1000f / 2.4f * (1f - Math.pow(0.9994, user.getBeatmapSetCountPlaycounts()))); //416.6667 // 这里把ppm的 rawPP算法写个公共方法然后拿过来
 
-        if (mode == OsuMode.MANIA) {
+        if (user.getPlayMode() == OsuMode.MANIA) {
             J1t = String.valueOf(Math.round(user.getStatistics().getPP4K()));
             J2t = String.valueOf(Math.round(user.getStatistics().getPP7K()));
             J3t = String.valueOf(user.getMaxCombo());

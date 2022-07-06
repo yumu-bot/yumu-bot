@@ -15,6 +15,7 @@ import rx.functions.Func3;
 import rx.functions.Func4;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
@@ -313,7 +314,7 @@ public class PpmMania extends Ppm {
             return;
         }
         try {
-            doAct.apply(SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/overlay-ppminus-maniaSP.png"));
+            doAct.apply(SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH , "ExportFileV3/overlay-ppminus-maniaSP.png")));
         } catch (IOException e) {
             e.printStackTrace();
         }

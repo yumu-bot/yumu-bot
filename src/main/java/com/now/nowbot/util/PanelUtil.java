@@ -65,17 +65,17 @@ public class PanelUtil {
     public static void init() {
         PATH_FLAG = Path.of(NowbotConfig.BG_PATH + "flag/");
         EXPORT_FOLE_V3 = Path.of(NowbotConfig.BG_PATH, "ExportFileV3");
-        try {
-            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Ranked.png");
-            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Qualified.png");
-            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Unranked.png");
-            OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
-            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Loved.png");
-
-            OBJECT_CARD_SUPPORTER = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-card-supporter.png");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Ranked.png");
+//            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Qualified.png");
+//            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Unranked.png");
+//            OBJECT_MAPSTATUS_UNKNOW = OBJECT_MAPSTATUS_UNRANKED;
+//            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-mapstatus-Loved.png");
+//
+//            OBJECT_CARD_SUPPORTER = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/object-card-supporter.png");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     /***

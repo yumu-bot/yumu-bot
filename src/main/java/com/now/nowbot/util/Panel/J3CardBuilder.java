@@ -1,5 +1,6 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.MessageService.PPmService;
@@ -9,16 +10,17 @@ import org.jetbrains.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class J3CardBuilder extends PanelBuilder{
 
-    public J3CardBuilder(OsuUser user,OsuMode mode) throws IOException {
+    public J3CardBuilder(OsuUser user) throws IOException {
         super(430, 335);
 
         drawBaseRRect();
         drawHexagon();
         drawHexagramGraph();
-        drawPPMIndex(user,mode);
+        drawPPMIndex(user);
     }
 
     private void drawBaseRRect(){
@@ -32,7 +34,7 @@ public class J3CardBuilder extends PanelBuilder{
         //画六边形
         Image Hexagon = null;
         try {
-            Hexagon = SkiaImageUtil.getImage("F://【osu! 文件大全】/【BOT相关】/【SP07】0163 YumuBot/s0706 Yumu Panel V3 Chocolate/ExportFileV3/object-hexagon-mini.png");
+            Hexagon = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-hexagon-mini.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -50,8 +52,7 @@ public class J3CardBuilder extends PanelBuilder{
     @Autowired
     PPmService PPmService;
 
-    private void drawPPMIndex(OsuUser user, OsuMode mode) {
-
+    private void drawPPMIndex(OsuUser user) {
         //画指标
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
@@ -95,7 +96,7 @@ public class J3CardBuilder extends PanelBuilder{
         TextLine J5 = TextLine.make(String.valueOf(J5t), fontS36);
         TextLine J6 = TextLine.make(String.valueOf(J6t), fontS36);
 
-        if (mode == OsuMode.MANIA) { //PRE STB互换
+        if (user.getPlayMode() == OsuMode.MANIA) { //PRE STB互换
             J4it = J4it2;
         }
 

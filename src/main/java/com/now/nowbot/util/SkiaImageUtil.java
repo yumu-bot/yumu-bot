@@ -98,10 +98,16 @@ public class SkiaImageUtil {
         if (path.trim().startsWith("http")) {
             return getImageFronNetworkWithCache(path);
         } else {
-            ;
             var data = Files.readAllBytes(Path.of(path));
             return Image.makeFromEncoded(data);
         }
+    }
+
+    public static Image getImage(Path path) throws IOException {
+
+        var data = Files.readAllBytes(path);
+        return Image.makeFromEncoded(data);
+
     }
 
     /***
@@ -125,6 +131,7 @@ public class SkiaImageUtil {
 
     /**
      * 缩放图形 跟据比例缩放
+     *
      * @param image 原图
      * @param scale 缩放比例
      * @return 目标图
@@ -178,7 +185,7 @@ public class SkiaImageUtil {
     public static Image getCutImage(Image image, int left, int top, int width, int height) {
         Image img;
         try (Surface sms = Surface.makeRasterN32Premul(width, height)) {
-            sms.getCanvas().clear(Color.makeRGB(255,255,255));
+            sms.getCanvas().clear(Color.makeRGB(255, 255, 255));
             sms.getCanvas().drawImage(image, -1 * left, -1 * top);
             img = sms.makeImageSnapshot();
         }
@@ -192,11 +199,12 @@ public class SkiaImageUtil {
      * @return 圆角矩形图
      */
     public static Image getRRectImage(Image image, float r) {
-        return getRRectImage(image,image.getWidth(),image.getHeight(),r);
+        return getRRectImage(image, image.getWidth(), image.getHeight(), r);
     }
 
     /**
      * 剪切到指定大小的圆角矩形
+     *
      * @param image 原图
      * @param w
      * @param h
