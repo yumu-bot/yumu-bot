@@ -88,7 +88,7 @@ public class TodayBpService implements MessageService{
                 .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
                         infoMe.getStatistics().getLevelCurrent() +
                         "(" + infoMe.getStatistics().getLevelProgress() + "%)")
-                .drawC1(infoMe.getStatistics().getPp(0) + "PP");
+                .drawC1(infoMe.getStatistics().getPP(0) + "PP");
 
         var panel = new TbpPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);

@@ -28,7 +28,7 @@ public class OsuUserInfoDao {
         out.setGrade_counts_ssh(statustucs.getSSH());
 
         out.setHit_accuracy(statustucs.getAccuracy());
-        out.setPp(statustucs.getPp());
+        out.setPP(statustucs.getPP());
         out.setLevel_current(statustucs.getLevelCurrent());
         out.setLevel_progress(statustucs.getLevelProgress());
         out.setIs_ranked(statustucs.getRanked());

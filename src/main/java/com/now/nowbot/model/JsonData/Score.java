@@ -143,11 +143,11 @@ public class Score {
         this.perfect = perfect;
     }
 
-    public Float getPp() {
+    public Float getPP() {
         return pp;
     }
 
-    public void setPp(Float pp) {
+    public void setPP(Float pp) {
         this.pp = pp;
     }
 

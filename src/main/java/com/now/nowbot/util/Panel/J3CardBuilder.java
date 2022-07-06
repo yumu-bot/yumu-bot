@@ -116,9 +116,9 @@ public class J3CardBuilder extends PanelBuilder{
 
         //画右上角 San
         canvas.save();
-        canvas.translate(430 - 20 - Jru2.getWidth(),20);
+        canvas.translate(430 - 20 - Jru2.getWidth(),20 + 8);
         canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(- 10 - Jru1.getWidth(),20);
+        canvas.translate(- 10 - Jru1.getWidth(),-8);
         canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 

@@ -274,7 +274,7 @@ public class HCardBuilder extends PanelBuilder{
         }
 
         //pp
-        TextLine h4l = TextLine.make(String.valueOf(info.getPp().intValue()),fontS48); //PP行
+        TextLine h4l = TextLine.make(String.valueOf(info.getPP().intValue()),fontS48); //PP行
         TextLine h4r = TextLine.make("PP",fontS24); //固定的PP
 
         float TextLineH4LW = h4l.getWidth();

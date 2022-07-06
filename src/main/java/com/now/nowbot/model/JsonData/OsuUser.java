@@ -38,7 +38,7 @@ public class OsuUser {
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapSetCountPlaycounts;
     @JsonProperty("mapping_follower_count")
-    Integer beatmapSetCountFlollower;
+    Integer mappingFollowerCount;
     @JsonProperty("has_supported")
     Boolean hasSupported;
     @JsonProperty("is_bot")
@@ -100,9 +100,9 @@ public class OsuUser {
         this.id = id;
     }
 
-    public Double getPp() {
+    public Double getPP() {
         if (pp == null && statistics != null){
-            return statistics.getPp();
+            return statistics.getPP();
         }
         return pp;
     }
@@ -175,12 +175,12 @@ public class OsuUser {
         this.beatmapSetCountPlaycounts = beatmapSetCountPlaycounts;
     }
 
-    public Integer getBeatmapSetCountFlollower() {
-        return beatmapSetCountFlollower;
+    public Integer getMappingFollowerCount() {
+        return mappingFollowerCount;
     }
 
-    public void setBeatmapSetCountFlollower(Integer beatmapSetCountFlollower) {
-        this.beatmapSetCountFlollower = beatmapSetCountFlollower;
+    public void setMappingFollowerCount(Integer mappingFollowerCount) {
+        this.mappingFollowerCount = mappingFollowerCount;
     }
 
     public Boolean HasSupported() {

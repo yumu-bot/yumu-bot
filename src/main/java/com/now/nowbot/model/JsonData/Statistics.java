@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.NowbotApplication;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,9 +32,9 @@ public class Statistics {
     @JsonProperty("hit_accuracy")
     Double accuracy;
     @JsonProperty("play_count")
-    Long plagCount;
+    Long playCount;
     @JsonProperty("play_time")
-    Long platTime;
+    Long playTime;
     @JsonProperty("total_hits")
     Long totalHits;
     @JsonProperty("maximum_combo")
@@ -195,19 +193,19 @@ public class Statistics {
     }
 
     public Long getPlayCount() {
-        return plagCount;
+        return playCount;
     }
 
-    public void setPlagCount(Long plagCount) {
-        this.plagCount = plagCount;
+    public void setPlayCount(Long playCount) {
+        this.playCount = playCount;
     }
 
     public Long getPlayTime() {
-        return platTime;
+        return playTime;
     }
 
-    public void setPlatTime(Long platTime) {
-        this.platTime = platTime;
+    public void setPlayTime(Long playTime) {
+        this.playTime = playTime;
     }
 
     public Long getTotalHits() {
@@ -306,7 +304,7 @@ public class Statistics {
         A = a;
     }
 
-    public Double getPp() {
+    public Double getPP() {
         return pp;
     }
 
@@ -315,7 +313,7 @@ public class Statistics {
      * @param x 位数
      * @return
      */
-    public float getPp(int x){
+    public float getPP(int x){
         int n = (int) Math.pow(10, x);
         double c = 0;
         if (pp != null){
@@ -342,8 +340,8 @@ public class Statistics {
                 ", rankedScore=" + rankedScore +
                 ", totalScore=" + totalScore +
                 ", accuracy=" + accuracy +
-                ", plagCount=" + plagCount +
-                ", platTime=" + platTime +
+                ", playCount=" + playCount +
+                ", playTime=" + playTime +
                 ", totalHits=" + totalHits +
                 ", maxCombo=" + maxCombo +
                 ", isRanked=" + isRanked +
@@ -357,14 +355,6 @@ public class Statistics {
                 ", A=" + A +
                 ", levelProgress=" + levelProgress +
                 '}';
-    }
-
-    public Long getPlagCount() {
-        return plagCount;
-    }
-
-    public Long getPlatTime() {
-        return platTime;
     }
 
     public Integer getReplaysWatchedByOthers() {

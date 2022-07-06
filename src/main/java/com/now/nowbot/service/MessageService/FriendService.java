@@ -102,7 +102,7 @@ public class FriendService implements MessageService{
                 .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
                         infoMe.getStatistics().getLevelCurrent() +
                         "(" + infoMe.getStatistics().getLevelProgress() + "%)")
-                .drawC1(Math.round(infoMe.getStatistics().getPp()) + "PP");
+                .drawC1(Math.round(infoMe.getStatistics().getPP()) + "PP");
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());
@@ -148,7 +148,7 @@ public class FriendService implements MessageService{
                             .drawC2(infoO.getStatustucs().getAccuracy(4) + "% Lv." +
                                     infoO.getStatustucs().getLevelCurrent() +
                                     "(" + infoO.getStatustucs().getLevelProgress() + "%)")
-                            .drawC1(Math.round(infoO.getStatustucs().getPp()) + "PP");
+                            .drawC1(Math.round(infoO.getStatustucs().getPP()) + "PP");
                 }
                 p.addFriendCard(cardO.build());
             } catch (Exception e) {

@@ -32,7 +32,7 @@ public class J4CardBuilder extends PanelBuilder{
         float Jmu1t = user.getLevelCurrent();
         float clipAngle = - 90 + (Jmu1t / 100) * 360;//裁剪角度
 
-        //画路径的蒙版
+        //画路径的蒙版，我不知道能不能用啊！先试试
         Path pathArc = new Path();
         Rect rectArc = new Rect(200,200,200,200);
         pathArc.addArc(rectArc,-90,clipAngle);
@@ -103,9 +103,9 @@ public class J4CardBuilder extends PanelBuilder{
 
         //画右上角 Progress
         canvas.save();
-        canvas.translate(430 - 20 - Jru2.getWidth(),20);
+        canvas.translate(430 - 20 - Jru2.getWidth(),20 + 8);
         canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(- 10 - Jru1.getWidth(),0);
+        canvas.translate(- 10 - Jru1.getWidth(),-8);
         canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
