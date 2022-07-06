@@ -532,59 +532,6 @@ public class SkiaUtil {
             default -> Color.makeRGB(32, 32, 32);
         };
     }
-    //注意，这里还需要 2 套大数字省略方法，具体内容如下：
-
-    public static char getRoundedNumberUnit(double number, int level) {
-        char unit = '-';
-        number = Math.abs(number);
-        if (level < 1 || level > 2) return '-';
-        int m = 1 + level;
-
-        if (number < Math.pow(10, m)) {  //level==1->100 level==2->1000
-            unit = 0;
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'K';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'M';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'G';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'T';
-        } else if (number < Math.pow(10, m + 3)) {
-            unit = 'P';
-        }
-
-        return unit;
-    }
-
-
-    public static Double getRoundedNumber(double number, int level) {
-
-        boolean s = true; //正负符号
-        // lv1.保留1位小数，结果不超4位字符宽(包含单位)
-        //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
-
-        // lv2.保留2位小数，结果不超7位字符宽(包含单位)
-        //1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf.
-
-        //将负值纳入计算
-
-        while (number >= 1000 || number <= -1000) {
-            number /= 1000;
-        }
-
-        if (level == 1) {
-            if (number >= 100) {
-                number /= 1000;
-            }
-            number = (double) Math.round(number * 10) / 10D;
-        } else if (level == 2) {
-            number = (double) Math.round(number * 1000) / 1000D;
-        }
-        if (number - Math.round(number) <= 0.000005) number = (double) Math.round(number);
-
-        return number;
-    }
 
     public class PolylineBuilder {
         ArrayList<Float> point = new ArrayList<>();
