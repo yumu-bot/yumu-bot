@@ -1,5 +1,6 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -8,27 +9,22 @@ import org.jetbrains.skija.*;
 import java.io.IOException;
 
 public class J4CardBuilder extends PanelBuilder{
-
     public J4CardBuilder(OsuUser user){
         super(430, 335);
 
         drawBaseRRect();
         drawHexagon(user);
         drawLevelIndex(user);
-
     }
     private void drawBaseRRect(){
-        //画底层圆角矩形
-        canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0, 0, 430, 355, 20), new Paint().setARGB(255, 56, 46, 50));
-        canvas.restore();
+        canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
     private void drawHexagon(OsuUser user){
         //画六边形
         Image Hexagon = null;
         try {
-            Hexagon = SkiaImageUtil.getImage("F://【osu! 文件大全】/【BOT相关】/【SP07】0163 YumuBot/s0706 Yumu Panel V3 Chocolate/ExportFileV3/object-hexagon-level.png");
+            Hexagon = SkiaImageUtil.getImage(java.nio.file.Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-hexagon-level.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -109,7 +105,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(430 - 20 - Jru2.getWidth(),20);
         canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(- 10 - Jru1.getWidth(),20);
+        canvas.translate(- 10 - Jru1.getWidth(),0);
         canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
@@ -142,7 +138,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.drawTextLine(Jmb3,0,Jmb3.getHeight()-Jmb3.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
-
+        canvas.save();
         canvas.translate(70 - Jb1.getWidth() / 2,195 + 100);
         canvas.drawTextLine(Jb1,0,Jb1.getHeight()-Jb1.getXHeight(),new Paint().setARGB(255,170,170,170));
         canvas.translate(145 - (Jb2.getWidth() - Jb1.getWidth())/ 2,0);
