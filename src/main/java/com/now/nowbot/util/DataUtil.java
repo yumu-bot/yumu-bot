@@ -50,4 +50,13 @@ public class DataUtil {
 
         return number;
     }
+
+    public static String Time2HourAndMinient(long time){
+        if (time < 3600000){
+            return String.format("%dM",time / 60000);
+        }
+        var h = time/3600000;
+        var m = (time%3600000) / 60000;
+        return String.format("%dH%dM",h,m);
+    }
 }
