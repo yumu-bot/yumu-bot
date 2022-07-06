@@ -1,6 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
@@ -142,21 +143,21 @@ public class J2CardBuilder extends PanelBuilder {
         String Jur2t = String.valueOf(user.getCountry());
         long Jur3t = user.getCountryRank();
 
-        Jl1t = SkiaUtil.getRoundedNumber(Jl1t, 1);
-        //Jl2t = SkiaUtil.getRoundedNumber(Jl2t, 1);
-        Jl3t = SkiaUtil.getRoundedNumber(Jl3t, 1);
-        //Jb1t = SkiaUtil.getRoundedNumber(Jb1t, 1); 这不可能需要取整，因为这天数本身就是整数啊
-        //Jb2t = SkiaUtil.getRoundedNumber(Jb2t, 1);
-        //Jb3t = SkiaUtil.getRoundedNumber(Jb3t, 1);
+        Jl1t = DataUtil.getRoundedNumber(Jl1t, 1);
+        //Jl2t = DataUtil.getRoundedNumber(Jl2t, 1);
+        Jl3t = DataUtil.getRoundedNumber(Jl3t, 1);
+        //Jb1t = DataUtil.getRoundedNumber(Jb1t, 1); 这不可能需要取整，因为这天数本身就是整数啊
+        //Jb2t = DataUtil.getRoundedNumber(Jb2t, 1);
+        //Jb3t = DataUtil.getRoundedNumber(Jb3t, 1);
 
         TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
 
-        TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + SkiaUtil.getRoundedNumberUnit(Jl1t, 1), fontS24);
-        //TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + SkiaUtil.getRoundedNumberUnit(Jl2t, 1), fontS24);
-        TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + SkiaUtil.getRoundedNumberUnit(Jl3t, 1), fontS24);
+        TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + DataUtil.getRoundedNumberUnit(Jl1t, 1), fontS24);
+        //TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + DataUtil.getRoundedNumberUnit(Jl2t, 1), fontS24);
+        TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + DataUtil.getRoundedNumberUnit(Jl3t, 1), fontS24);
 
         TextLine Jb1 = TextLine.make(Jb1t + "D", fontS24);
-        //TextLine Jb2 = TextLine.make(String.valueOf(Jb2t) + SkiaUtil.getRoundedNumberUnit(Jb2t, 1), fontS24);
+        //TextLine Jb2 = TextLine.make(String.valueOf(Jb2t) + DataUtil.getRoundedNumberUnit(Jb2t, 1), fontS24);
         TextLine Jb3 = TextLine.make(Jb3t + "D", fontS24);
 
         TextLine Jur1 = TextLine.make("#" + Jur1t, fontS36);
