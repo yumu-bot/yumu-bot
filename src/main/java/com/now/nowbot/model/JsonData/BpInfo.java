@@ -126,7 +126,7 @@ public class BpInfo {
         this.bestId = bestId;
     }
 
-    public Float getPp() {
+    public Float getPP() {
         return pp;
     }
 
@@ -235,11 +235,11 @@ public class BpInfo {
             this.percentage = percentage;
         }
 
-        public Float getPp() {
+        public Float getPP() {
             return pp;
         }
 
-        public void setPp(Float pp) {
+        public void setPP(Float pp) {
             this.pp = pp;
         }
 

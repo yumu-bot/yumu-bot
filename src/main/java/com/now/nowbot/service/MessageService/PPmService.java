@@ -219,13 +219,13 @@ public class PPmService implements MessageService {
         float[] hexOther = ppmOther.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 
         //六边形缩放
-        if(userMe.getStatistics().getPp() > userOther.getStatistics().getPp()){
-            float n = (float) (userOther.getStatistics().getPp()/userMe.getStatistics().getPp());
+        if(userMe.getStatistics().getPP() > userOther.getStatistics().getPP()){
+            float n = (float) (userOther.getStatistics().getPP()/userMe.getStatistics().getPP());
             for (int i = 0; i < hexMe.length; i++) {
                 hexOther[i] *= n;
             }
         } else {
-            float n = (float) (userMe.getStatistics().getPp()/userOther.getStatistics().getPp());
+            float n = (float) (userMe.getStatistics().getPP()/userOther.getStatistics().getPP());
             for (int i = 0; i < hexMe.length; i++) {
                 hexMe[i] *= n;
             }
@@ -297,7 +297,7 @@ public class PPmService implements MessageService {
                 .drawC2(String.format("%.2f",user.getStatistics().getAccuracy()) + "% Lv." +
                         user.getStatistics().getLevelCurrent() +
                         "(" + user.getStatistics().getLevelProgress() + "%)")
-                .drawC1(user.getStatistics().getPp().intValue() + "PP");
+                .drawC1(user.getStatistics().getPP().intValue() + "PP");
         if (user.getSupportLeve()>0) {
             card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
         }

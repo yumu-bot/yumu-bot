@@ -111,11 +111,11 @@ public class OsuUserModeScoreLite {
         this.country_rank = country_rank;
     }
 
-    public Double getPp() {
+    public Double getPP() {
         return pp;
     }
 
-    public void setPp(Double pp) {
+    public void setPP(Double pp) {
         this.pp = pp;
     }
 

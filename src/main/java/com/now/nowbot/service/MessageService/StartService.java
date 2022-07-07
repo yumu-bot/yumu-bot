@@ -45,7 +45,7 @@ public class StartService implements MessageService{
 
         if (starService.isRefouse(sc)){
             var date = osuGetService.getPlayerOsuInfo(user);
-            float adsstar = (float) (date.getStatistics().getPp()/100);
+            float adsstar = (float) (date.getStatistics().getPP()/100);
             starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点金币\n").append("24小时后再次刷新\n");
         }
@@ -83,7 +83,7 @@ public class StartService implements MessageService{
         var u2 = osuGetService.getPlayerTaikoInfo(user);
         var u3 = osuGetService.getPlayerCatchInfo(user);
         var u4 = osuGetService.getPlayerManiaInfo(user);
-        var ppsum = u1.getPp()+ u2.getPp()+u3.getPp()+u4.getPp();
+        var ppsum = u1.getPP()+ u2.getPP()+u3.getPP()+u4.getPP();
         return Math.toIntExact(1611 + Math.round(ppsum * 0.4396));
     }
 }

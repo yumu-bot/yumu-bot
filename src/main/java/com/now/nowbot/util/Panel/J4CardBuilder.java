@@ -14,7 +14,7 @@ public class J4CardBuilder extends PanelBuilder{
 
         drawBaseRRect();
         drawHexagon(user);
-        drawLevelIndex(user);
+        drawLevelText(user);
     }
     private void drawBaseRRect(){
         canvas.clear(Color.makeRGB(56, 46, 50));
@@ -32,7 +32,7 @@ public class J4CardBuilder extends PanelBuilder{
         float Jmu1t = user.getLevelCurrent();
         float clipAngle = - 90 + (Jmu1t / 100) * 360;//裁剪角度
 
-        //画路径的蒙版
+        //画路径的蒙版，我不知道能不能用啊！先试试
         Path pathArc = new Path();
         Rect rectArc = new Rect(200,200,200,200);
         pathArc.addArc(rectArc,-90,clipAngle);
@@ -51,7 +51,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.restore();
     }
 
-    private void drawLevelIndex(OsuUser user) {
+    private void drawLevelText(OsuUser user) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
@@ -103,9 +103,9 @@ public class J4CardBuilder extends PanelBuilder{
 
         //画右上角 Progress
         canvas.save();
-        canvas.translate(430 - 20 - Jru2.getWidth(),20);
+        canvas.translate(430 - 20 - Jru2.getWidth(),20 + 8);
         canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
-        canvas.translate(- 10 - Jru1.getWidth(),0);
+        canvas.translate(- 10 - Jru1.getWidth(),-8);
         canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
@@ -128,7 +128,7 @@ public class J4CardBuilder extends PanelBuilder{
         canvas.drawTextLine(Jm3,0,Jm3.getHeight()-Jm3.getXHeight(),new Paint().setARGB(255,124,198,35));
         canvas.restore();
 
-        //画五个指标
+        //画五个数据
         canvas.save();
         canvas.translate(70 - Jmb1.getWidth() / 2,195 + 60);
         canvas.drawTextLine(Jmb1,0,Jmb1.getHeight()-Jmb1.getXHeight(),new Paint().setARGB(255,255,255,255));

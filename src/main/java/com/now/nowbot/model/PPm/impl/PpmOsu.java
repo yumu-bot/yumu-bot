@@ -23,8 +23,8 @@ public class PpmOsu extends Ppm {
         double[] allBpPP = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            bpp += bp.getWeight().getPp();
-            allBpPP[i] += Math.log10(bp.getWeight().getPp()) / 2;
+            bpp += bp.getWeight().getPP();
+            allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
 
             switch (bp.getRank()) {
                 case "XH", "X" -> xx++;
@@ -36,15 +36,15 @@ public class PpmOsu extends Ppm {
             }
             if (!bp.isPerfect()) notfc++;
             if (i < 10) {
-                ppv0 += bp.getPp();
+                ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatmap().getTotalLength();
             } else if (i >= 45 && i < 55) {
-                ppv45 += bp.getPp();
+                ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatmap().getTotalLength();
             } else if (i >= 90) {
-                ppv90 += bp.getPp();
+                ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatmap().getTotalLength();
             }
@@ -76,7 +76,7 @@ public class PpmOsu extends Ppm {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getPp();
+        double pp = user.getPP();
         double acc = user.getAccuracy();
         double pc = user.getPlayCount();
         double pt = user.getPlayTime();

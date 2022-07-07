@@ -56,7 +56,7 @@ public class YmiService implements MessageService{
         StringBuilder sb = new StringBuilder();
         var statistics = date.getStatistics();
         // Muziyami(osu):10086PP
-        sb.append(date.getUsername()).append('(').append(mode).append(')').append(':').append(statistics.getPp()).append("PP").append('\n');
+        sb.append(date.getUsername()).append('(').append(mode).append(')').append(':').append(statistics.getPP()).append("PP").append('\n');
         // #114514 CN#1919 (LV.100(32%))
         sb.append('#').append(statistics.getGlobalRank()).append(' ')
                 .append(date.getCountry().countryCode()).append('#').append(statistics.getCountryRank()).append(' ')

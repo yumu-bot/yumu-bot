@@ -125,11 +125,11 @@ public class MpScoreInfo {
         this.bestId = bestId;
     }
 
-    public Integer getPp() {
+    public Integer getPP() {
         return pp;
     }
 
-    public void setPp(Integer pp) {
+    public void setPP(Integer pp) {
         this.pp = pp;
     }
 }

@@ -93,7 +93,7 @@ public class BphtPanelBuilder{
                 dtbf.append("#")
                         .append(i + 1)
                         .append(' ')
-                        .append(decimalFormat.format(jsb.getPp()))
+                        .append(decimalFormat.format(jsb.getPP()))
                         .append(' ')
                         .append(decimalFormat.format(100 * jsb.getAccuracy()))
 //                        .append(decimalFormat.format(accCoun.getAcc(jsb)))
@@ -109,7 +109,7 @@ public class BphtPanelBuilder{
             } else if (i == 50) {
                 dtbf.append("-------分割线-------\n");
             }
-            allPp += jsb.getPp(); //统计总数
+            allPp += jsb.getPP(); //统计总数
             if (jsb.getMods().size() > 0) {
                 for (int j = 0; j < jsb.getMods().size(); j++) {
                     String mod = jsb.getMods().get(j);
@@ -128,7 +128,7 @@ public class BphtPanelBuilder{
         modeSum.forEach((mod, sum) -> dtbf.append(mod).append(' ').append(sum.value).append(';'));
         dtbf.append("\n您bp中S rank及以上有").append(sSum).append("个\n达到满cb的fc有").append(fcSum).append('个');
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
-        dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPp() - Bps.get(Bps.size() - 1).getPp()));
+        dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPP() - Bps.get(Bps.size() - 1).getPP()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
 
 
@@ -204,9 +204,9 @@ public class BphtPanelBuilder{
             float bpm = map.getBpm();
             jsb.getMods().forEach(r->{
                 if (modSum.containsKey(r)){
-                    modSum.get(r).add(jsb.getWeight().getPp());
+                    modSum.get(r).add(jsb.getWeight().getPP());
                 } else {
-                    modSum.put(r, new modDate(jsb.getWeight().getPp()));
+                    modSum.put(r, new modDate(jsb.getWeight().getPP()));
                 }
             });
             if (jsb.getMods().contains("DT") || jsb.getMods().contains("NC")){
@@ -244,19 +244,19 @@ public class BphtPanelBuilder{
             }
             avgCombo += jsb.getMaxCombo();
 
-            float tthToPp = (jsb.getPp()) / (map.getSliders() + map.getSpinners() + map.getCircles());
+            float tthToPp = (jsb.getPP()) / (map.getSliders() + map.getSpinners() + map.getCircles());
             if (maxTimeToPpValue < tthToPp){
                 maxTimeToPp = i;
                 maxTimeToPpValue = tthToPp;
             }
 
             if (mapperSum.containsKey(map.getUserId())) {
-                mapperSum.get(map.getUserId()).add(jsb.getPp());
+                mapperSum.get(map.getUserId()).add(jsb.getPP());
             } else {
-                mapperSum.put(map.getUserId(), new mapperDate(jsb.getPp(), map.getUserId()));
+                mapperSum.put(map.getUserId(), new mapperDate(jsb.getPP(), map.getUserId()));
             }
-            nowPP += jsb.getWeight().getPp();
-            allPP += jsb.getPp();
+            nowPP += jsb.getWeight().getPP();
+            allPP += jsb.getPP();
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();

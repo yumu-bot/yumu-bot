@@ -1,5 +1,6 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.SkiaImageUtil;
@@ -8,6 +9,7 @@ import org.jetbrains.skija.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class J1CardBuilder extends PanelBuilder {
 
@@ -15,12 +17,13 @@ public class J1CardBuilder extends PanelBuilder {
 
     public J1CardBuilder(OsuUser user) {
         super(430, 355);
+        List<BpInfo> bpList = null;
 
         drawBaseRRect();
         drawUserCover(user);
         drawUserAvatar(user);
         drawCardText(user.getPlayMode());
-        drawUserText(user);
+        drawUserText(user,bpList);
     }
 
     private void drawBaseRRect() {
@@ -98,7 +101,7 @@ public class J1CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawUserText(OsuUser user) {
+    private void drawUserText(OsuUser user, List<BpInfo> bps) {
         //画用户基础信息
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS48 = new Font(TorusSB, 48);
@@ -112,14 +115,21 @@ public class J1CardBuilder extends PanelBuilder {
         String J4t = "Anonymous";
         String J5t = "0";
 
-        double rawPP = user.getPp() - (1000f / 2.4f * (1f - Math.pow(0.9994, user.getBeatmapSetCountPlaycounts()))); //416.6667 // 这里把ppm的 rawPP算法写个公共方法然后拿过来
+        //double rawPP = user.getPp() - (1000f / 2.4f * (1f - Math.pow(0.9994, user.getBeatmapSetCountPlaycounts()))); //416.6667 // 这里把ppm的 rawPP算法写个公共方法然后拿过来
+        double[] allBpPP = new double[bps.size()];
+        for (int i = 0; i < bps.size(); i++) {
+            var bp = bps.get(i);
+            allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
+        }
+            float bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());
+            double rawPP = user.getPP() - bonus;
 
         if (user.getPlayMode() == OsuMode.MANIA) {
             J1t = String.valueOf(Math.round(user.getStatistics().getPP4K()));
             J2t = String.valueOf(Math.round(user.getStatistics().getPP7K()));
             J3t = String.valueOf(user.getMaxCombo());
         } else {
-            J1t = String.valueOf(Math.round(user.getPp()));
+            J1t = String.valueOf(Math.round(user.getPP()));
             J2t = String.valueOf(Math.round(rawPP));
             J3t = String.valueOf(user.getMaxCombo());
         }
