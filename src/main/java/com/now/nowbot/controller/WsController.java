@@ -6,6 +6,7 @@ import com.now.nowbot.service.MessageService.BindService;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +49,7 @@ public class WsController extends WebSocketListener {
         try {
             var data = om.readTree(text);
             if (!data.has("state") || !data.has("code") || !data.has("echo")){
-                webSocket.send("error:argument error");
+                log.info("error:argument error");
             }
             var state = data.get("state").asText().split(" ");
             var code = data.get("code").asText();
@@ -57,9 +58,11 @@ public class WsController extends WebSocketListener {
                 var l = Long.parseLong(state[1]);
                 if (state.length != 2 || !BindService.BIND_MSG_MAP.containsKey(l)) {
                     // 不响应任何
+                    log.error("no find key");
                     return;
                 }
             } catch (NumberFormatException e) {
+                log.error("parse error",e);
                 return;
             }
             if (msgController != null){
@@ -68,6 +71,7 @@ public class WsController extends WebSocketListener {
                 p.put("response", resp);
                 p.put("echo", echo);
                 webSocket.send(om.writeValueAsString(p));
+                log.info("bind over -> {}", resp);
             } else {
                 log.error("ws error:init");
             }
