@@ -2,6 +2,7 @@ package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.now.nowbot.service.MessageService.BindService;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class WsController extends WebSocketListener {
     @Override
     public void onMessage(WebSocket webSocket, String text) {
         super.onMessage(webSocket, text);
+        log.info("receive ws message:{}", text);
         var om = new ObjectMapper();
         try {
             var data = om.readTree(text);
@@ -50,14 +52,23 @@ public class WsController extends WebSocketListener {
             var state = data.get("state").asText().split(" ");
             var code = data.get("code").asText();
             var echo = data.get("echo").asText();
+            try {
+                var l = Long.parseLong(state[1]);
+                if (state.length != 2 || !BindService.BIND_MSG_MAP.containsKey(l)) {
+                    // 不响应任何
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                return;
+            }
             if (msgController != null){
-                var resp = msgController.saveBind(code, state);
+                var resp = msgController.saveBind(code, state[1]);
                 var p = new HashMap<String, String>();
                 p.put("response", resp);
                 p.put("echo", echo);
                 webSocket.send(om.writeValueAsString(p));
             } else {
-                webSocket.send("");
+                log.error("ws error:init");
             }
         } catch (JsonProcessingException e) {
             log.error("ws error:not json");

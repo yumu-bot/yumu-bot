@@ -31,64 +31,76 @@ public class msgController {
         this.bot = bot;
         this.osuGetService = osuGetService;
         bindDao = dao;
-
+        WsController.getInstance().setMsgController(this);
     }
     @GetMapping("${osu.callbackpath}")
     public String bind(@RequestParam("code")String code, @RequestParam("state") String stat){
         var data = stat.split(" ");
-        return saveBind(code, data);
+        if (data.length != 2) {
+            return "噶?";
+        }
+        return saveBind(code, data[1]);
     }
-    public String saveBind(String code, String[] date) {
-        StringBuffer sb = new StringBuffer();
-        if (date.length == 2) {
-            long key = 0;
+
+    public String saveBind(String code, String keyStr) {
+        StringBuilder sb = new StringBuilder();
+
+        long key = 0;
+        try {
+            key = Long.parseLong(keyStr);
+        } catch (NumberFormatException e) {
+            sb.append("非法的访问:参数异常")
+                    .append(e.getMessage());
+        }
+
+        var msg = BindService.BIND_MSG_MAP.get(key);
+        if (debug || msg != null) {
             try {
-                key = Long.parseLong(date[1]);
-            } catch (NumberFormatException e) {
-                sb.append("非法的访问:参数异常")
-                        .append(e.getMessage());
-            }
-            var msg = BindService.BIND_MSG_MAP.get(key);
-            if (debug || msg != null) {
-                try {
-                    if (!debug) {
-                        try {
-                            msg.receipt().recall();
-                        } catch (Exception e) {
-                            log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
-                            sb.append("绑定连接已超时\n请重新绑定");
-                            return  sb.toString();
-                        }
+                if (!debug) {
+                    try {
+                        msg.receipt().recall();
+                    } catch (Exception e) {
+                        log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
+                        sb.append("绑定连接已超时\n请重新绑定");
+                        return  sb.toString();
                     }
-                    BinUser bd = new BinUser(msg.qq(), code);
-                    osuGetService.getToken(bd);
-                    if (!debug) {
-                        msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                    }
-                    BindService.BIND_MSG_MAP.remove(key);
-                    sb.append("成功绑定:\n")
-                            .append(bd.getQq())
-                            .append('>')
-                            .append(bd.getOsuName());
-                } catch (Exception e) {
-                    log.error("绑定时异常", e);
-                    sb.append("出现异常,请截图给开发者让他抓紧修bug\n")
-                    .append(e.getLocalizedMessage());
                 }
-            } else {
-                sb.append("绑定链接失效\n请重新绑定");
+                BinUser bd = new BinUser(msg.qq(), code);
+                osuGetService.getToken(bd);
+                if (!debug) {
+                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+                }
+                BindService.BIND_MSG_MAP.remove(key);
+                sb.append("成功绑定:\n")
+                        .append(bd.getQq())
+                        .append('>')
+                        .append(bd.getOsuName());
+            } catch (Exception e) {
+                log.error("绑定时异常", e);
+                sb.append("出现异常,请截图给开发者让他抓紧修bug\n")
+                        .append(e.getLocalizedMessage());
             }
         } else {
-            sb.append("非法的访问\n连接异常,确认是否为绑定链接");
+            sb.append("绑定链接失效\n请重新绑定");
         }
         return sb.toString();
     }
     @PostMapping("/api")
     public String opa(@RequestHeader("state") @Nullable String stat,
                       @RequestBody @Nullable JsonNode body){
-        var date = stat.split(" ");
-        var code = body.get("code").asText();
-        var ret = saveBind(code, date);
+        String[] data;
+        String code;
+        try {
+            data = stat.split(" ");
+            code = body.get("code").asText();
+        } catch (NullPointerException e) {
+            return e.getMessage();
+        }
+        if (data.length != 2) {
+            return "槲?";
+        }
+
+        var ret = saveBind(code, data[1]);
         log.info("绑定api端口被访问,参数: state->{} code->{}:{}",stat,code,ret);
         return ret;
     }
