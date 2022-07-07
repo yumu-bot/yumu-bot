@@ -177,7 +177,7 @@ public class J5CardBuilder extends PanelBuilder {
     private Paint SignedNumberPaintColor(double Number){
         Paint Color;
         if (Number > 0d){
-            Color = new Paint().setARGB(255, 124, 198, 35);
+            Color = new Paint().setARGB(255,124,198,35);
         } else if (Number < 0d) {
             Color = new Paint().setARGB(255,237,108,158);
         } else {
@@ -186,4 +186,7 @@ public class J5CardBuilder extends PanelBuilder {
         return Color;
     }
 
+    public Image build() {
+        return super.build(20);
+    }
 }
