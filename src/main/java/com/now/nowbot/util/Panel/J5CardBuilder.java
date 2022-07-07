@@ -7,7 +7,7 @@ import org.jetbrains.skija.*;
 
 public class J5CardBuilder extends PanelBuilder {
     public J5CardBuilder(OsuUser user) {
-        super(430, 335);
+        super(900, 335);
 
         drawBaseRRect();
         drawUserIndex();
