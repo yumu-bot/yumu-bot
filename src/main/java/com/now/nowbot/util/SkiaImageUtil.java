@@ -104,10 +104,8 @@ public class SkiaImageUtil {
     }
 
     public static Image getImage(Path path) throws IOException {
-
         var data = Files.readAllBytes(path);
         return Image.makeFromEncoded(data);
-
     }
 
     /***

@@ -1,12 +1,15 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,7 +18,7 @@ public class HCardBuilder extends PanelBuilder{
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
 
-    public HCardBuilder(BpInfo info, int bpN) throws IOException {
+    public HCardBuilder(BpInfo info, int bpN){
         super(900,110);
 
         //画底层圆角矩形
@@ -44,7 +47,17 @@ public class HCardBuilder extends PanelBuilder{
         canvas.translate(160,0);
         canvas.drawRRect(RRect.makeXYWH(0,0,570,110,20),new Paint().setARGB(255,56,46,50));
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
-        Image HCardLightBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getCover2x());
+        Image HCardLightBG = null;
+        try {
+            HCardLightBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getCover2x());
+        } catch (IOException e) {
+            NowbotApplication.log.error("谱面背景下载错误", e);
+            try {
+                HCardLightBG = SkiaImageUtil.getImage(Path.of(PanelUtil.EXPORT_FOLE_V3.toString(),"object-score-backimage-C.jpg"));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         Image HCardLightBGSC = SkiaImageUtil.getScaleCenterImage(HCardLightBG,620,140); //缩放至合适大小，这里放大了一点，以应对模糊带来的负面效果
         canvas.drawImage(HCardLightBGSC,0, 0,new Paint().setAlphaf(0.2f).setImageFilter(ImageFilter.makeBlur(5, 5, FilterTileMode.REPEAT)));
         canvas.restore();
@@ -58,7 +71,17 @@ public class HCardBuilder extends PanelBuilder{
         canvas.save();
         canvas.translate(20,0);
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
-        Image HCardMainBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getList2x());
+        Image HCardMainBG = null;
+        try {
+            HCardMainBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getList2x());
+        } catch (Exception e) {
+            NowbotApplication.log.error("谱面背景下载错误", e);
+            try {
+                HCardMainBG = SkiaImageUtil.getImage(Path.of(PanelUtil.EXPORT_FOLE_V3.toString(),"object-score-backimage-C.jpg"));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         Image HCardMainBGSC = SkiaImageUtil.getScaleCenterImage(HCardMainBG,176,110); //缩放至合适大小
         canvas.drawImage(HCardMainBGSC,0, 0,new Paint());
         canvas.restore();

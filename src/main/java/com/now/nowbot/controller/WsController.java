@@ -36,6 +36,7 @@ public class WsController extends WebSocketListener {
 
     @Override
     public void onOpen(WebSocket webSocket, Response response) {
+        log.info("ws link:{}", response.code());
         this.webSocket = webSocket;
     }
 
