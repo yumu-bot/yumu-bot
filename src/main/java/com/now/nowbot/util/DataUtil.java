@@ -51,6 +51,17 @@ public class DataUtil {
         return number;
     }
 
+    public static String getRoundedNumberStr(double n, int level){
+        var c = getRoundedNumberUnit(n, level);
+        if (c == 0){
+            return String.valueOf(n);
+        }
+        if (level == 1) {
+            return String.format("%.1f%c", getRoundedNumber(n, level), c);
+        } else {
+            return String.format("%.2f%c", getRoundedNumber(n, level), c);
+        }
+    }
     public static String Time2HourAndMinient(long time){
         if (time < 3600000){
             return String.format("%dM",time / 60000);
@@ -59,4 +70,5 @@ public class DataUtil {
         var m = (time%3600000) / 60000;
         return String.format("%dH%dM",h,m);
     }
+
 }

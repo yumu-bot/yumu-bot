@@ -51,27 +51,28 @@ public class J5CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
         canvas.restore();
 
+        var color_170_170_170 = new Paint().setARGB(255,170,170,170);
         //画指标
         canvas.save();
         canvas.translate(20,75);
-        canvas.drawTextLine(Jll1,0,Jll1.getHeight()-Jll1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jll1,0,Jll1.getHeight()-Jll1.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll2,0,Jll2.getHeight()-Jll2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jll2,0,Jll2.getHeight()-Jll2.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll3,0,Jll3.getHeight()-Jll3.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jll3,0,Jll3.getHeight()-Jll3.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll4,0,Jll4.getHeight()-Jll4.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jll4,0,Jll4.getHeight()-Jll4.getXHeight(),color_170_170_170);
         canvas.restore();
 
         canvas.save();
         canvas.translate(470,75);
-        canvas.drawTextLine(Jr1,0,Jr1.getHeight()-Jr1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jr1,0,Jr1.getHeight()-Jr1.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr2,0,Jr2.getHeight()-Jr2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jr2,0,Jr2.getHeight()-Jr2.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr3,0,Jr3.getHeight()-Jr3.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jr3,0,Jr3.getHeight()-Jr3.getXHeight(),color_170_170_170);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr4,0,Jr4.getHeight()-Jr4.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jr4,0,Jr4.getHeight()-Jr4.getXHeight(),color_170_170_170);
         canvas.restore();
     }
 
@@ -80,35 +81,38 @@ public class J5CardBuilder extends PanelBuilder {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
+
+        String Jl1t = DataUtil.getRoundedNumberStr(user.getStatistics().getRankedScore(), 2);
+        String Jl2t = DataUtil.getRoundedNumberStr(user.getStatistics().getTotalScore(), 2);
+        String Jl3t = DataUtil.getRoundedNumberStr(user.getStatistics().getPlayCount(), 2);
+        String Jl4t = DataUtil.getRoundedNumberStr(user.getStatistics().getPlayTime(), 2);
+
+        String Jrr1t = DataUtil.getRoundedNumberStr(user.getBeatmapSetCountPlaycounts(), 2);
+        String Jrr2t = DataUtil.getRoundedNumberStr(user.getStatistics().getReplaysWatchedByOthers(), 2);
+        String Jrr3t = DataUtil.getRoundedNumberStr(user.getFollowerCount(), 2);
+        String Jrr4t = DataUtil.getRoundedNumberStr(user.getMappingFollowerCount(), 2);
+
+/*
+        String Jml1t = "0"; //这里是以上值与上次查询的变化值，需要数据库一类的东西，我不会写  //好像还没写
+        String Jml2t = "0";
+        String Jml3t = "0";
+        String Jml4t = "0";
+
+        String Jmr1t = "0";
+        String Jmr2t = "0";
+        String Jmr3t = "0";
+        String Jmr4t = "0";
+*/
         
-        double Jl1t = DataUtil.getRoundedNumber(user.getStatistics().getRankedScore(), 2);
-        double Jl2t = DataUtil.getRoundedNumber(user.getStatistics().getTotalScore(), 2);
-        double Jl3t = DataUtil.getRoundedNumber(user.getStatistics().getPlayCount(), 2);
-        double Jl4t = DataUtil.getRoundedNumber(user.getStatistics().getPlayTime(), 2);
-
-        double Jrr1t = DataUtil.getRoundedNumber(user.getBeatmapSetCountPlaycounts(), 2);
-        double Jrr2t = DataUtil.getRoundedNumber(user.getStatistics().getReplaysWatchedByOthers(), 2);
-        double Jrr3t = DataUtil.getRoundedNumber(user.getFollowerCount(), 2);
-        double Jrr4t = DataUtil.getRoundedNumber(user.getMappingFollowerCount(), 2);
-
-        double Jml1t = 0; //这里是以上值与上次查询的变化值，需要数据库一类的东西，我不会写
-        double Jml2t = 0;
-        double Jml3t = 0;
-        double Jml4t = 0;
-
-        double Jmr1t = 0;
-        double Jmr2t = 0;
-        double Jmr3t = 0;
-        double Jmr4t = 0;
-        
-        TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + DataUtil.getRoundedNumberUnit(Jl1t, 2), fontS36);
-        TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + DataUtil.getRoundedNumberUnit(Jl2t, 2), fontS36);
-        TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + DataUtil.getRoundedNumberUnit(Jl3t, 2), fontS36);
-        TextLine Jl4 = TextLine.make(String.valueOf(Jl4t) + DataUtil.getRoundedNumberUnit(Jl4t, 2), fontS36);
-        TextLine Jrr1 = TextLine.make(String.valueOf(Jrr1t) + DataUtil.getRoundedNumberUnit(Jrr1t, 2), fontS36);
-        TextLine Jrr2 = TextLine.make(String.valueOf(Jrr2t) + DataUtil.getRoundedNumberUnit(Jrr2t, 2), fontS36);
-        TextLine Jrr3 = TextLine.make(String.valueOf(Jrr3t) + DataUtil.getRoundedNumberUnit(Jrr3t, 2), fontS36);
-        TextLine Jrr4 = TextLine.make(String.valueOf(Jrr4t) + DataUtil.getRoundedNumberUnit(Jrr4t, 2), fontS36);
+        TextLine Jl1 = TextLine.make(Jl1t, fontS36);
+        TextLine Jl2 = TextLine.make(Jl2t, fontS36);
+        TextLine Jl3 = TextLine.make(Jl3t, fontS36);
+        TextLine Jl4 = TextLine.make(Jl4t, fontS36);
+        TextLine Jrr1 = TextLine.make(Jrr1t, fontS36);
+        TextLine Jrr2 = TextLine.make(Jrr2t, fontS36);
+        TextLine Jrr3 = TextLine.make(Jrr3t, fontS36);
+        TextLine Jrr4 = TextLine.make(Jrr4t, fontS36);
+/*
 
         TextLine Jml1 = TextLine.make(getNumberSign(Jml1t) + String.valueOf(Jml1t) + DataUtil.getRoundedNumberUnit(Jml1t, 2), fontS24);
         TextLine Jml2 = TextLine.make(getNumberSign(Jml2t) + String.valueOf(Jml2t) + DataUtil.getRoundedNumberUnit(Jml2t, 2), fontS24);
@@ -118,29 +122,31 @@ public class J5CardBuilder extends PanelBuilder {
         TextLine Jmr2 = TextLine.make(getNumberSign(Jmr2t) + String.valueOf(Jmr2t) + DataUtil.getRoundedNumberUnit(Jmr2t, 2), fontS24);
         TextLine Jmr3 = TextLine.make(getNumberSign(Jmr3t) + String.valueOf(Jmr3t) + DataUtil.getRoundedNumberUnit(Jmr3t, 2), fontS24);
         TextLine Jmr4 = TextLine.make(getNumberSign(Jmr4t) + String.valueOf(Jmr4t) + DataUtil.getRoundedNumberUnit(Jmr4t, 2), fontS24);
-        
+*/
+
+        var color_170_170_170 = new Paint().setARGB(255,170,170,170);
         canvas.save();
         canvas.translate(450 - Jl1.getWidth(),75);
-        canvas.drawTextLine(Jl1,0,Jl1.getHeight()-Jl1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jl1,0,Jl1.getHeight()-Jl1.getXHeight(),color_170_170_170);
         canvas.translate(Jl1.getWidth() - Jl2.getWidth(),60);
-        canvas.drawTextLine(Jl2,0,Jl2.getHeight()-Jl2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jl2,0,Jl2.getHeight()-Jl2.getXHeight(),color_170_170_170);
         canvas.translate(Jl2.getWidth() - Jl3.getWidth(),60);
-        canvas.drawTextLine(Jl3,0,Jl3.getHeight()-Jl3.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jl3,0,Jl3.getHeight()-Jl3.getXHeight(),color_170_170_170);
         canvas.translate(Jl3.getWidth() - Jl4.getWidth(),60);
-        canvas.drawTextLine(Jl4,0,Jl4.getHeight()-Jl4.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jl4,0,Jl4.getHeight()-Jl4.getXHeight(),color_170_170_170);
         canvas.restore();
 
         canvas.save();
         canvas.translate(880 - Jrr1.getWidth(),75);
-        canvas.drawTextLine(Jrr1,0,Jrr1.getHeight()-Jrr1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jrr1,0,Jrr1.getHeight()-Jrr1.getXHeight(),color_170_170_170);
         canvas.translate(Jrr1.getWidth() - Jrr2.getWidth(),60);
-        canvas.drawTextLine(Jrr2,0,Jrr2.getHeight()-Jrr2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jrr2,0,Jrr2.getHeight()-Jrr2.getXHeight(),color_170_170_170);
         canvas.translate(Jrr2.getWidth() - Jrr3.getWidth(),60);
-        canvas.drawTextLine(Jrr3,0,Jrr3.getHeight()-Jrr3.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jrr3,0,Jrr3.getHeight()-Jrr3.getXHeight(),color_170_170_170);
         canvas.translate(Jrr3.getWidth() - Jrr4.getWidth(),60);
-        canvas.drawTextLine(Jrr4,0,Jrr4.getHeight()-Jrr4.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jrr4,0,Jrr4.getHeight()-Jrr4.getXHeight(),color_170_170_170);
         canvas.restore();
-
+        /*
         canvas.save();
         canvas.translate(450 - Jml1.getWidth() - Jl1.getWidth(),75 + 8);
         canvas.drawTextLine(Jml1,0,Jml1.getHeight()-Jml1.getXHeight(), SignedNumberPaintColor(Jml1t));
@@ -162,6 +168,7 @@ public class J5CardBuilder extends PanelBuilder {
         canvas.translate(Jmr3.getWidth() + Jrr3.getWidth() - Jmr4.getWidth() - Jrr4.getWidth(),60);
         canvas.drawTextLine(Jmr4,0,Jmr4.getHeight()-Jmr4.getXHeight(), SignedNumberPaintColor(Jmr4t));
         canvas.restore();
+        */
     }
     
     private char getNumberSign (double Number){
