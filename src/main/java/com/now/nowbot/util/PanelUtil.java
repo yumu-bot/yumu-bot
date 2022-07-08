@@ -45,8 +45,18 @@ public class PanelUtil {
     public static Image OBJECT_MAPSTATUS_RANKED;
     public static Image OBJECT_MAPSTATUS_QUALIFIED;
     public static Image OBJECT_MAPSTATUS_UNRANKED; //也是问号
-    public static Image OBJECT_MAPSTATUS_UNKNOW; //也是问号
     public static Image OBJECT_MAPSTATUS_LOVED;
+
+    static {
+        try {
+            OBJECT_MAPSTATUS_RANKED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-ranked.png"));
+            OBJECT_MAPSTATUS_QUALIFIED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-qualified.png"));
+            OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-unranked.png"));
+            OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-loved.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static Image OBJECT_CARD_SUPPORTER;
 

@@ -37,8 +37,8 @@ public class BeatMap {
     Boolean scoreable;
     @JsonProperty("last_updated")
     String updatedTime;
-    String passcount;
-    String playcount;
+    Integer passcount;
+    Integer playcount;
     String url;
     @JsonProperty("checksum")
     String md5;
@@ -239,19 +239,19 @@ public class BeatMap {
         this.updatedTime = updatedTime;
     }
 
-    public String getPasscount() {
+    public Integer getPasscount() {
         return passcount;
     }
 
-    public void setPasscount(String passcount) {
+    public void setPasscount(Integer passcount) {
         this.passcount = passcount;
     }
 
-    public String getPlaycount() {
+    public Integer getPlaycount() {
         return playcount;
     }
 
-    public void setPlaycount(String playcount) {
+    public void setPlaycount(Integer playcount) {
         this.playcount = playcount;
     }
 
