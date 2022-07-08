@@ -15,6 +15,10 @@ import java.nio.file.Path;
 
 public class J3CardBuilder extends PanelBuilder{
 
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+
     public J3CardBuilder(OsuUser user) throws IOException {
         super(430, 335);
 
@@ -25,10 +29,7 @@ public class J3CardBuilder extends PanelBuilder{
     }
 
     private void drawBaseRRect(){
-        //画底层圆角矩形
-        canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0, 0, 430, 355, 20), new Paint().setARGB(255, 56, 46, 50));
-        canvas.restore();
+        canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
     private void drawHexagon(){
@@ -111,46 +112,46 @@ public class J3CardBuilder extends PanelBuilder{
         //画左上角 PPM
         canvas.save();
         canvas.translate(20,20);
-        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
         canvas.restore();
 
         //画右上角 San
         canvas.save();
         canvas.translate(430 - 20 - Jru2.getWidth(),20 + 8);
-        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),colorGrey);
         canvas.translate(- 10 - Jru1.getWidth(),-8);
-        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),colorWhite);
         canvas.restore();
 
         //画六个指标数字
         canvas.save();
         canvas.translate(85 - J1.getWidth() / 2,70);
-        canvas.drawTextLine(J1,0,J1.getHeight()-J1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J1,0,J1.getHeight()-J1.getXHeight(),colorWhite);
         canvas.translate(260 + (J1.getWidth() - J2.getWidth()) / 2,0);
-        canvas.drawTextLine(J2,0,J2.getHeight()-J2.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J2,0,J2.getHeight()-J2.getXHeight(),colorWhite);
         canvas.translate(-290 + (J2.getWidth() - J3.getWidth()) / 2,100);
-        canvas.drawTextLine(J3,0,J3.getHeight()-J3.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J3,0,J3.getHeight()-J3.getXHeight(),colorWhite);
         canvas.translate(320 + (J3.getWidth() - J4.getWidth()) / 2,0);
-        canvas.drawTextLine(J4,0,J4.getHeight()-J4.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J4,0,J4.getHeight()-J4.getXHeight(),colorWhite);
         canvas.translate(-290 + (J4.getWidth() - J5.getWidth()) / 2,100);
-        canvas.drawTextLine(J5,0,J5.getHeight()-J5.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J5,0,J5.getHeight()-J5.getXHeight(),colorWhite);
         canvas.translate(260 + (J5.getWidth() - J6.getWidth()) / 2,0);
-        canvas.drawTextLine(J6,0,J6.getHeight()-J6.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(J6,0,J6.getHeight()-J6.getXHeight(),colorWhite);
         canvas.restore();
         //画六个指标名称
         canvas.save();
         canvas.translate(85 - J1i.getWidth() / 2,70 + 32);//向下偏移 32 px 即可绘制小字部分
-        canvas.drawTextLine(J1i,0,J1i.getHeight()-J1i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J1i,0,J1i.getHeight()-J1i.getXHeight(),colorGrey);
         canvas.translate(260 + (J1i.getWidth() - J2i.getWidth()) / 2,0);
-        canvas.drawTextLine(J2i,0,J2i.getHeight()-J2i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J2i,0,J2i.getHeight()-J2i.getXHeight(),colorGrey);
         canvas.translate(-290 + (J2i.getWidth() - J3i.getWidth()) / 2,100);
-        canvas.drawTextLine(J3i,0,J3i.getHeight()-J3i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J3i,0,J3i.getHeight()-J3i.getXHeight(),colorGrey);
         canvas.translate(320 + (J3i.getWidth() - J4i.getWidth()) / 2,0);
-        canvas.drawTextLine(J4,0,J4i.getHeight()-J4i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J4,0,J4i.getHeight()-J4i.getXHeight(),colorGrey);
         canvas.translate(-290 + (J4i.getWidth() - J5i.getWidth()) / 2,100);
-        canvas.drawTextLine(J5i,0,J5i.getHeight()-J5i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J5i,0,J5i.getHeight()-J5i.getXHeight(),colorGrey);
         canvas.translate(260 + (J5i.getWidth() - J6i.getWidth()) / 2,0);
-        canvas.drawTextLine(J6i,0,J6i.getHeight()-J6i.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(J6i,0,J6i.getHeight()-J6i.getXHeight(),colorGrey);
         canvas.restore();
     }
 

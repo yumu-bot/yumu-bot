@@ -9,6 +9,14 @@ import org.jetbrains.skija.*;
 import java.io.IOException;
 
 public class J4CardBuilder extends PanelBuilder{
+
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+    Paint colorX = new Paint().setARGB(255,254,246,104);
+    Paint colorS = new Paint().setARGB(255,240,148,80);
+    Paint colorA = new Paint().setARGB(255,124,198,35);
+    
     public J4CardBuilder(OsuUser user){
         super(430, 335);
 
@@ -98,51 +106,51 @@ public class J4CardBuilder extends PanelBuilder{
         //画左上角 Level
         canvas.save();
         canvas.translate(20,20);
-        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
         canvas.restore();
 
         //画右上角 Progress
         canvas.save();
         canvas.translate(430 - 20 - Jru2.getWidth(),20 + 8);
-        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jru2,0,Jru2.getHeight()-Jru2.getXHeight(),colorGrey);
         canvas.translate(- 10 - Jru1.getWidth(),-8);
-        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jru1,0,Jru1.getHeight()-Jru1.getXHeight(),colorWhite);
         canvas.restore();
 
         //画三个rank和正中的level，100以上变成金黄色
         canvas.save();
         canvas.translate(215 - Jmu1.getWidth() / 2,72);
         if (Jmu1t >= 100){
-            canvas.drawTextLine(Jmu1,0,Jmu1.getHeight()-Jmu1.getXHeight(),new Paint().setARGB(255,254,246,104));
+            canvas.drawTextLine(Jmu1,0,Jmu1.getHeight()-Jmu1.getXHeight(), colorX);
         } else {
-            canvas.drawTextLine(Jmu1,0,Jmu1.getHeight()-Jmu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+            canvas.drawTextLine(Jmu1,0,Jmu1.getHeight()-Jmu1.getXHeight(),colorWhite);
         }
         canvas.restore();
 
         canvas.save();
         canvas.translate(70 - Jm1.getWidth() / 2,195);
-        canvas.drawTextLine(Jm1,0,Jm1.getHeight()-Jm1.getXHeight(),new Paint().setARGB(255,254,246,104));
+        canvas.drawTextLine(Jm1,0,Jm1.getHeight()-Jm1.getXHeight(),colorX);
         canvas.translate(145 - (Jm2.getWidth() - Jm1.getWidth())/ 2,0);
-        canvas.drawTextLine(Jm2,0,Jm2.getHeight()-Jm2.getXHeight(),new Paint().setARGB(255,240,148,80));
+        canvas.drawTextLine(Jm2,0,Jm2.getHeight()-Jm2.getXHeight(),colorS);
         canvas.translate(145 - (Jm3.getWidth() - Jm2.getWidth())/ 2,0);
-        canvas.drawTextLine(Jm3,0,Jm3.getHeight()-Jm3.getXHeight(),new Paint().setARGB(255,124,198,35));
+        canvas.drawTextLine(Jm3,0,Jm3.getHeight()-Jm3.getXHeight(),colorA);
         canvas.restore();
 
         //画五个数据
         canvas.save();
         canvas.translate(70 - Jmb1.getWidth() / 2,195 + 60);
-        canvas.drawTextLine(Jmb1,0,Jmb1.getHeight()-Jmb1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jmb1,0,Jmb1.getHeight()-Jmb1.getXHeight(),colorWhite);
         canvas.translate(145 - (Jmb2.getWidth() - Jmb1.getWidth())/ 2,0);
-        canvas.drawTextLine(Jmb2,0,Jmb2.getHeight()-Jmb2.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jmb2,0,Jmb2.getHeight()-Jmb2.getXHeight(),colorWhite);
         canvas.translate(145 - (Jmb3.getWidth() - Jmb2.getWidth())/ 2,0);
-        canvas.drawTextLine(Jmb3,0,Jmb3.getHeight()-Jmb3.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jmb3,0,Jmb3.getHeight()-Jmb3.getXHeight(),colorWhite);
         canvas.restore();
 
         canvas.save();
         canvas.translate(70 - Jb1.getWidth() / 2,195 + 100);
-        canvas.drawTextLine(Jb1,0,Jb1.getHeight()-Jb1.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jb1,0,Jb1.getHeight()-Jb1.getXHeight(),colorGrey);
         canvas.translate(145 - (Jb2.getWidth() - Jb1.getWidth())/ 2,0);
-        canvas.drawTextLine(Jb2,0,Jb2.getHeight()-Jb2.getXHeight(),new Paint().setARGB(255,170,170,170));
+        canvas.drawTextLine(Jb2,0,Jb2.getHeight()-Jb2.getXHeight(),colorGrey);
         canvas.restore();
     }
 

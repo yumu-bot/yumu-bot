@@ -9,6 +9,11 @@ import org.jetbrains.skija.*;
 import java.io.IOException;
 
 public class J6CardBuilder extends PanelBuilder {
+
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+
     public J6CardBuilder(OsuUser user) {
         super(430, 335);
 
@@ -31,7 +36,7 @@ public class J6CardBuilder extends PanelBuilder {
         //画左上角 BPA
         canvas.save();
         canvas.translate(20,20);
-        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
         canvas.restore();
 
         //然后这里需要画饼图，我整不会
@@ -47,7 +52,7 @@ public class J6CardBuilder extends PanelBuilder {
         }
 
         canvas.save();
-        canvas.translate(85,115);
+        canvas.translate(85,105);
         canvas.drawImage(PieChart,0,0,new Paint());
         canvas.restore();
     }
@@ -63,9 +68,9 @@ public class J6CardBuilder extends PanelBuilder {
 
         canvas.save();
         canvas.translate(- Ju.getWidth() / 2,-30);
-        canvas.drawTextLine(Ju,0,Ju.getHeight()-Ju.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Ju,0,Ju.getHeight()-Ju.getXHeight(),colorWhite);
         canvas.translate((Ju.getWidth() - Jb.getWidth()) / 2,36);
-        canvas.drawTextLine(Jb,0,Jb.getHeight()-Jb.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jb,0,Jb.getHeight()-Jb.getXHeight(),colorGrey);
         canvas.restore();
     }
 

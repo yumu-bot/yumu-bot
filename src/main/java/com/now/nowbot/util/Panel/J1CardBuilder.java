@@ -15,6 +15,10 @@ public class J1CardBuilder extends PanelBuilder {
 
     public static final ArrayList<Float> F48L = new ArrayList<>();
 
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+
     public J1CardBuilder(OsuUser user) {
         super(430, 355);
         List<BpInfo> bpList = null;
@@ -34,7 +38,7 @@ public class J1CardBuilder extends PanelBuilder {
         //画头像后的背景层
         canvas.save();
         canvas.translate(20, 20);
-        canvas.drawRRect(RRect.makeXYWH(0, 0, 390, 210, 20), new Paint().setARGB(255, 56, 46, 50));
+        canvas.drawRRect(RRect.makeXYWH(0, 0, 390, 210, 20), colorRRect);
         canvas.clipRRect(RRect.makeXYWH(0, 0, 390, 210, 20));
         Image J1UserCover = null;
         try {
@@ -55,7 +59,7 @@ public class J1CardBuilder extends PanelBuilder {
         //画头像
         canvas.save();
         canvas.translate(165, 35);
-        canvas.drawRRect(RRect.makeXYWH(0, 0, 100, 100, 10), new Paint().setARGB(255, 56, 46, 50));
+        canvas.drawRRect(RRect.makeXYWH(0, 0, 100, 100, 10), colorRRect);
         canvas.clipRRect(RRect.makeXYWH(0, 0, 100, 100, 10));
         Image J1UserAvatar = null;
         try {
@@ -93,11 +97,11 @@ public class J1CardBuilder extends PanelBuilder {
 
         canvas.save();
         canvas.translate(80 - J1.getWidth() / 2, 300);//居中处理
-        canvas.drawTextLine(J1, 0, J1.getHeight() - J1.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        canvas.drawTextLine(J1, 0, J1.getHeight() - J1.getXHeight(), colorGrey);
         canvas.translate(135 + (J1.getWidth() - J2.getWidth()) / 2, 0);//居中处理
-        canvas.drawTextLine(J2, 0, J2.getHeight() - J2.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        canvas.drawTextLine(J2, 0, J2.getHeight() - J2.getXHeight(), colorGrey);
         canvas.translate(135 + (J2.getWidth() - J3.getWidth()) / 2, 0);//居中处理
-        canvas.drawTextLine(J3, 0, J3.getHeight() - J3.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        canvas.drawTextLine(J3, 0, J3.getHeight() - J3.getXHeight(), colorGrey);
         canvas.restore();
     }
 
@@ -170,18 +174,18 @@ public class J1CardBuilder extends PanelBuilder {
 
         canvas.save();
         canvas.translate(80 - J1.getWidth() / 2, 255);//居中处理
-        canvas.drawTextLine(J1, 0, J1.getHeight() - J1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(J1, 0, J1.getHeight() - J1.getXHeight(), colorWhite);
         canvas.translate(135 + (J1.getWidth() - J2.getWidth()) / 2, 0);//居中处理
-        canvas.drawTextLine(J2, 0, J2.getHeight() - J2.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(J2, 0, J2.getHeight() - J2.getXHeight(), colorWhite);
         canvas.translate(135 + (J2.getWidth() - J3.getWidth()) / 2, 0);//居中处理
-        canvas.drawTextLine(J3, 0, J3.getHeight() - J3.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(J3, 0, J3.getHeight() - J3.getXHeight(), colorWhite);
         canvas.restore();
 
         canvas.save();
         canvas.translate(215 - J4.getWidth() / 2, 150);//居中处理
-        canvas.drawTextLine(J4, 0, J4.getHeight() - J4.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(J4, 0, J4.getHeight() - J4.getXHeight(), colorWhite);
         canvas.translate((J4.getWidth() - J5.getWidth()) / 2, 50);//居中处理
-        canvas.drawTextLine(J5, 0, J5.getHeight() - J5.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(J5, 0, J5.getHeight() - J5.getXHeight(), colorWhite);
         canvas.restore();
     }
 
