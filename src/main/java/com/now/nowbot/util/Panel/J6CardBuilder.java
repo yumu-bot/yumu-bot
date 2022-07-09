@@ -2,21 +2,25 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
-import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.beatmap.Mod;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class J6CardBuilder extends PanelBuilder {
 
-    Paint colorRRect = new Paint().setARGB(255,56,46,50);
-    Paint colorGrey = new Paint().setARGB(255,170,170,170);
-    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+    Paint colorRRect = new Paint().setARGB(255, 56, 46, 50);
+    Paint colorGrey = new Paint().setARGB(255, 170, 170, 170);
+    Paint colorWhite = new Paint().setARGB(255, 255, 255, 255);
 
-    record modSum(int modInt, int sum){ }
+    record modSum(int modInt, int sum) {
+    }
+
     public J6CardBuilder(List<BpInfo> bps) {
         super(430, 335);
 
@@ -38,8 +42,8 @@ public class J6CardBuilder extends PanelBuilder {
 
         //画左上角 BPA
         canvas.save();
-        canvas.translate(20,20);
-        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
+        canvas.translate(20, 20);
+        canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), colorWhite);
         canvas.restore();
 
         var x = bps.stream().collect(Collectors.groupingBy(BpInfo::getMods, Collectors.counting()));
@@ -53,7 +57,7 @@ public class J6CardBuilder extends PanelBuilder {
                         c |= modE.value;
                     }
 
-                    c &= (  Mod.Easy.value | Mod.HalfTime.value | Mod.DoubleTime.value |
+                    c &= (Mod.Easy.value | Mod.HalfTime.value | Mod.DoubleTime.value |
                             Mod.Hidden.value | Mod.HardRock.value | Mod.Flashlight.value);
                     return new modSum(c, Math.toIntExact(e.getValue()));
                 })
@@ -66,16 +70,16 @@ public class J6CardBuilder extends PanelBuilder {
 //        var modsStr = modStr(s.get(0).modInt); //mod 组合,包括NM
 //        s.get(0).sum  //这种组合的个数
 
-        var color = new Paint().setARGB(255,255,255,125);
-        drawArc(60, 365f*s.get(0).sum/100, color);
+        var color = new Paint().setARGB(255, 255, 255, 125);
+        drawArc(60, 365f * s.get(0).sum / 100, color);
 //        ...
 
         //这里可以写一个方法，重复利用下面的drawUserIndex来画出指标。
 
     }
 
-    String modStr(int i){
-        if (i == 0){
+    String modStr(int i) {
+        if (i == 0) {
             return "NM";
         }
         StringBuilder sb = new StringBuilder();
@@ -106,8 +110,8 @@ public class J6CardBuilder extends PanelBuilder {
         }
 
         canvas.save();
-        canvas.translate(85,105);
-        canvas.drawImage(PieChart,0,0,new Paint());
+        canvas.translate(85, 105);
+        canvas.drawImage(PieChart, 0, 0, new Paint());
         canvas.restore();
     }
 
@@ -121,10 +125,10 @@ public class J6CardBuilder extends PanelBuilder {
         TextLine Jb = TextLine.make(Mod, fontS24);
 
         canvas.save();
-        canvas.translate(- Ju.getWidth() / 2,-30);
-        canvas.drawTextLine(Ju,0,Ju.getHeight()-Ju.getXHeight(),colorWhite);
-        canvas.translate((Ju.getWidth() - Jb.getWidth()) / 2,36);
-        canvas.drawTextLine(Jb,0,Jb.getHeight()-Jb.getXHeight(),colorGrey);
+        canvas.translate(-Ju.getWidth() / 2, -30);
+        canvas.drawTextLine(Ju, 0, Ju.getHeight() - Ju.getXHeight(), colorWhite);
+        canvas.translate((Ju.getWidth() - Jb.getWidth()) / 2, 36);
+        canvas.drawTextLine(Jb, 0, Jb.getHeight() - Jb.getXHeight(), colorGrey);
         canvas.restore();
     }
 
