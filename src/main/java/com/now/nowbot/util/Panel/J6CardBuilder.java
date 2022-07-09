@@ -9,14 +9,13 @@ import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class J6CardBuilder extends PanelBuilder {
+
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+
     record modSum(int modInt, int sum){ }
     public J6CardBuilder(List<BpInfo> bps) {
         super(430, 335);
@@ -39,8 +38,8 @@ public class J6CardBuilder extends PanelBuilder {
 
         //画左上角 BPA
         canvas.save();
-        canvas.translate(20, 20);
-        canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.translate(20,20);
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
         canvas.restore();
 
         var x = bps.stream().collect(Collectors.groupingBy(BpInfo::getMods, Collectors.counting()));
@@ -107,8 +106,8 @@ public class J6CardBuilder extends PanelBuilder {
         }
 
         canvas.save();
-        canvas.translate(85, 115);
-        canvas.drawImage(PieChart, 0, 0, new Paint());
+        canvas.translate(85,105);
+        canvas.drawImage(PieChart,0,0,new Paint());
         canvas.restore();
     }
 
@@ -122,27 +121,11 @@ public class J6CardBuilder extends PanelBuilder {
         TextLine Jb = TextLine.make(Mod, fontS24);
 
         canvas.save();
-        canvas.translate(-Ju.getWidth() / 2, -30);
-        canvas.drawTextLine(Ju, 0, Ju.getHeight() - Ju.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
-        canvas.translate((Ju.getWidth() - Jb.getWidth()) / 2, 36);
-        canvas.drawTextLine(Jb, 0, Jb.getHeight() - Jb.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.translate(- Ju.getWidth() / 2,-30);
+        canvas.drawTextLine(Ju,0,Ju.getHeight()-Ju.getXHeight(),colorWhite);
+        canvas.translate((Ju.getWidth() - Jb.getWidth()) / 2,36);
+        canvas.drawTextLine(Jb,0,Jb.getHeight()-Jb.getXHeight(),colorGrey);
         canvas.restore();
-    }
-
-    public static void main(String[] args) throws IOException {
-        var s = Surface.makeRasterN32Premul(50, 50);
-        var c = s.getCanvas();
-        c.clear(Color.makeRGB(15, 64, 153));
-        c.drawArc(
-                0, 0,
-                50, 50,
-                0, 60,
-                true, new Paint().setARGB(255, 43, 240, 16)
-        );
-        Files.write(
-                Path.of("/home/spring/c.png"),
-                s.makeImageSnapshot().encodeToData().getBytes()
-        );
     }
 
     public Image build() {

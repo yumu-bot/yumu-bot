@@ -13,6 +13,12 @@ public class J2CardBuilder extends PanelBuilder {
 
     int days;
 
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGolden = new Paint().setARGB(255, 255, 204, 34);
+    Paint colorDarkGolden = new Paint().setARGB(255, 195, 160, 30);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+
     public J2CardBuilder(OsuUser user) throws IOException {
         super(900, 335);
 
@@ -99,7 +105,7 @@ public class J2CardBuilder extends PanelBuilder {
                 .setAntiAlias(true)
                 .setARGB(255, 255, 204, 34);
         var rpb = new Paint()
-                .setARGB(255, 255, 204, 32);
+                .setARGB(255, 255, 204, 34);
         var rps = new Paint()
                 .setARGB(255, 56, 46, 50);
 
@@ -167,35 +173,35 @@ public class J2CardBuilder extends PanelBuilder {
 
         canvas.save();
         canvas.translate(20, 20);
-        canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), colorWhite);
         canvas.restore();
 
         canvas.translate(30 - (Jl1.getWidth() / 2), 56);//居中处理
-        canvas.drawTextLine(Jl1, 0, Jl1.getHeight() - Jl1.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
+        canvas.drawTextLine(Jl1, 0, Jl1.getHeight() - Jl1.getXHeight(), colorDarkGolden);
         //canvas.translate((Jl1.getWidth() - Jl2.getWidth()) / 2, 107);//居中处理
         //canvas.drawTextLine(Jl2, 0, Jl2.getHeight() - Jl2.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         //canvas.translate((Jl2.getWidth() - Jl3.getWidth()) / 2, 107);//居中处理
 
         canvas.translate((Jl1.getWidth() - Jl3.getWidth()) / 2, 214);//居中处理
-        canvas.drawTextLine(Jl3, 0, Jl3.getHeight() - Jl3.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
+        canvas.drawTextLine(Jl3, 0, Jl3.getHeight() - Jl3.getXHeight(), colorDarkGolden);
         canvas.restore();
 
         canvas.translate(60, 300);
-        canvas.drawTextLine(Jb1, 0, Jb1.getHeight() - Jb1.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
+        canvas.drawTextLine(Jb1, 0, Jb1.getHeight() - Jb1.getXHeight(), colorDarkGolden);
         //canvas.translate(330 + ((120 - Jb2.getWidth()) / 2), 0);
         //canvas.drawTextLine(Jb2, 0, Jb2.getHeight() - Jb2.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
         //canvas.translate(330 + (Jb2.getWidth() / 2) + 60, 0);
 
         canvas.translate(780 - Jb3.getWidth(), 0);
-        canvas.drawTextLine(Jb3, 0, Jb3.getHeight() - Jb3.getXHeight(), new Paint().setARGB(255, 195, 160, 30));
+        canvas.drawTextLine(Jb3, 0, Jb3.getHeight() - Jb3.getXHeight(), colorDarkGolden);
         canvas.restore();
 
         canvas.translate(880 - Jur3.getWidth(), 28);
-        canvas.drawTextLine(Jur3, 0, Jur3.getHeight() - Jur3.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        canvas.drawTextLine(Jur3, 0, Jur3.getHeight() - Jur3.getXHeight(), colorGrey);
         canvas.translate(0 - Jur2.getWidth(), 0);
-        canvas.drawTextLine(Jur2, 0, Jur2.getHeight() - Jur2.getXHeight(), new Paint().setARGB(255, 170, 170, 170));
+        canvas.drawTextLine(Jur2, 0, Jur2.getHeight() - Jur2.getXHeight(), colorGrey);
         canvas.translate(-10 - Jur1.getWidth(), -8);
-        canvas.drawTextLine(Jur1, 0, Jur1.getHeight() - Jur1.getXHeight(), new Paint().setARGB(255, 255, 255, 255));
+        canvas.drawTextLine(Jur1, 0, Jur1.getHeight() - Jur1.getXHeight(), colorGrey);
         canvas.restore();
     }
 

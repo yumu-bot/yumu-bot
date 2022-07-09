@@ -6,6 +6,11 @@ import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 public class J5CardBuilder extends PanelBuilder {
+    
+    Paint colorRRect = new Paint().setARGB(255,56,46,50);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorWhite = new Paint().setARGB(255,255,255,255);
+    
     public J5CardBuilder(OsuUser user) {
         super(900, 335);
 
@@ -48,31 +53,30 @@ public class J5CardBuilder extends PanelBuilder {
         //画左上角 Data
         canvas.save();
         canvas.translate(20,20);
-        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),new Paint().setARGB(255,255,255,255));
+        canvas.drawTextLine(Jlu1,0,Jlu1.getHeight()-Jlu1.getXHeight(),colorWhite);
         canvas.restore();
 
-        var color_170_170_170 = new Paint().setARGB(255,170,170,170);
         //画指标
         canvas.save();
         canvas.translate(20,75);
-        canvas.drawTextLine(Jll1,0,Jll1.getHeight()-Jll1.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jll1,0,Jll1.getHeight()-Jll1.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll2,0,Jll2.getHeight()-Jll2.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jll2,0,Jll2.getHeight()-Jll2.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll3,0,Jll3.getHeight()-Jll3.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jll3,0,Jll3.getHeight()-Jll3.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jll4,0,Jll4.getHeight()-Jll4.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jll4,0,Jll4.getHeight()-Jll4.getXHeight(),colorGrey);
         canvas.restore();
 
         canvas.save();
         canvas.translate(470,75);
-        canvas.drawTextLine(Jr1,0,Jr1.getHeight()-Jr1.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jr1,0,Jr1.getHeight()-Jr1.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr2,0,Jr2.getHeight()-Jr2.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jr2,0,Jr2.getHeight()-Jr2.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr3,0,Jr3.getHeight()-Jr3.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jr3,0,Jr3.getHeight()-Jr3.getXHeight(),colorGrey);
         canvas.translate(0,60);
-        canvas.drawTextLine(Jr4,0,Jr4.getHeight()-Jr4.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jr4,0,Jr4.getHeight()-Jr4.getXHeight(),colorGrey);
         canvas.restore();
     }
 
@@ -124,27 +128,26 @@ public class J5CardBuilder extends PanelBuilder {
         TextLine Jmr4 = TextLine.make(getNumberSign(Jmr4t) + String.valueOf(Jmr4t) + DataUtil.getRoundedNumberUnit(Jmr4t, 2), fontS24);
 */
 
-        var color_170_170_170 = new Paint().setARGB(255,170,170,170);
         canvas.save();
         canvas.translate(450 - Jl1.getWidth(),75);
-        canvas.drawTextLine(Jl1,0,Jl1.getHeight()-Jl1.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jl1,0,Jl1.getHeight()-Jl1.getXHeight(),colorWhite);
         canvas.translate(Jl1.getWidth() - Jl2.getWidth(),60);
-        canvas.drawTextLine(Jl2,0,Jl2.getHeight()-Jl2.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jl2,0,Jl2.getHeight()-Jl2.getXHeight(),colorWhite);
         canvas.translate(Jl2.getWidth() - Jl3.getWidth(),60);
-        canvas.drawTextLine(Jl3,0,Jl3.getHeight()-Jl3.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jl3,0,Jl3.getHeight()-Jl3.getXHeight(),colorWhite);
         canvas.translate(Jl3.getWidth() - Jl4.getWidth(),60);
-        canvas.drawTextLine(Jl4,0,Jl4.getHeight()-Jl4.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jl4,0,Jl4.getHeight()-Jl4.getXHeight(),colorWhite);
         canvas.restore();
 
         canvas.save();
         canvas.translate(880 - Jrr1.getWidth(),75);
-        canvas.drawTextLine(Jrr1,0,Jrr1.getHeight()-Jrr1.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jrr1,0,Jrr1.getHeight()-Jrr1.getXHeight(),colorWhite);
         canvas.translate(Jrr1.getWidth() - Jrr2.getWidth(),60);
-        canvas.drawTextLine(Jrr2,0,Jrr2.getHeight()-Jrr2.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jrr2,0,Jrr2.getHeight()-Jrr2.getXHeight(),colorWhite);
         canvas.translate(Jrr2.getWidth() - Jrr3.getWidth(),60);
-        canvas.drawTextLine(Jrr3,0,Jrr3.getHeight()-Jrr3.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jrr3,0,Jrr3.getHeight()-Jrr3.getXHeight(),colorWhite);
         canvas.translate(Jrr3.getWidth() - Jrr4.getWidth(),60);
-        canvas.drawTextLine(Jrr4,0,Jrr4.getHeight()-Jrr4.getXHeight(),color_170_170_170);
+        canvas.drawTextLine(Jrr4,0,Jrr4.getHeight()-Jrr4.getXHeight(),colorWhite);
         canvas.restore();
         /*
         canvas.save();
@@ -170,7 +173,8 @@ public class J5CardBuilder extends PanelBuilder {
         canvas.restore();
         */
     }
-    
+
+    //这里是给变化值用的
     private char getNumberSign (double Number){
         char Sign = 0;
         if (Number >= 0d){
