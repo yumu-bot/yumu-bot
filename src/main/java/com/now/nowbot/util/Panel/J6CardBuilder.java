@@ -46,6 +46,9 @@ public class J6CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), colorWhite);
         canvas.restore();
 
+//        canvas.drawRect(Rect.makeXYWH(85, 105,
+//                200, 200), new Paint().setARGB(150,0,0,0));
+
         var x = bps.stream().collect(Collectors.groupingBy(BpInfo::getMods, Collectors.counting()));
         var s = x.entrySet()
                 .stream()
@@ -71,9 +74,19 @@ public class J6CardBuilder extends PanelBuilder {
 //        s.get(0).sum  //这种组合的个数
 
         var color = new Paint().setARGB(255, 255, 255, 125);
-        drawArc(60, 365f * s.get(0).sum / 100, color);
 //        ...
-
+        int max = 0;
+        for (var m : s){
+            max+=m.sum;
+        }
+        float start = 60;
+        int [] index = new int[]{0,4,1,3,2};
+        for (int i = 0; i < index.length; i++) {
+            var m = s.get(index[i]);
+            float offset = 360f * m.sum / max;
+            drawArc(start, offset, color.setARGB(255,(int)(Math.random()*255),(int)(Math.random()*255),(int)(Math.random()*255)));
+            start += offset;
+        }
         //这里可以写一个方法，重复利用下面的drawUserIndex来画出指标。
 
     }
@@ -94,11 +107,14 @@ public class J6CardBuilder extends PanelBuilder {
     }
 
     void drawArc(float start, float end, Paint paint) {
-        canvas.drawArc(85, 105,
-                200, 200,
+        canvas.save();
+        canvas.translate(85,105);
+        canvas.drawArc(0, 0,
+                220, 220,
                 start, end,
                 true, paint
         );
+        canvas.restore();
     }
 
     private void drawPieChartOverlay() {
