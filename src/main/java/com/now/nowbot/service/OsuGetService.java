@@ -425,8 +425,26 @@ public class OsuGetService {
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
-        });
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
+                new ParameterizedTypeReference<List<BpInfo>>() {});
+        return c.getBody();
+    }
+    public List<JsonNode> getBestPerformance_raw(Long id, OsuMode mode, int s, int e) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
+                .queryParam("limit", e)
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
+
+        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
+                new ParameterizedTypeReference<List<JsonNode>>() {});
         return c.getBody();
     }
 
