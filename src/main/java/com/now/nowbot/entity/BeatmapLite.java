@@ -13,10 +13,10 @@ public class BeatmapLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "beatmap_id")
-    private Integer beatmap_id;
+    private Integer beatmapId;
 
     @Column(name = "map_id")
-    private Integer mapset_id;
+    private Integer mapsetId;
 
     //是否为转谱
     @Column(name = "is_convert")
@@ -52,20 +52,20 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     private Integer mode;
 
-    public Integer getBeatmap_id() {
-        return beatmap_id;
+    public Integer getBeatmapId() {
+        return beatmapId;
     }
 
-    public void setBeatmap_id(Integer bitmapID) {
-        this.beatmap_id = bitmapID;
+    public void setBeatmapId(Integer bitmapID) {
+        this.beatmapId = bitmapID;
     }
 
-    public Integer getMapset_id() {
-        return mapset_id;
+    public Integer getMapsetId() {
+        return mapsetId;
     }
 
-    public void setMapset_id(Integer mapset_id) {
-        this.mapset_id = mapset_id;
+    public void setMapsetId(Integer mapset_id) {
+        this.mapsetId = mapset_id;
     }
 
     public Boolean getConvert() {

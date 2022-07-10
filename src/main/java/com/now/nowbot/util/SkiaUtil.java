@@ -1,11 +1,14 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.BeatMap;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 
 public class SkiaUtil {
@@ -265,6 +268,7 @@ public class SkiaUtil {
      * @param circle_width 转折点大小 半径
      * @param point 六点数据 长度必须为6 范围[0,1]
      * @return path[0]六边形路径   path[1]转折点路径
+     *
      */
     public static Path[] creat6(float size, float circle_width, float... point) {
         if (point.length != 6) return null;
@@ -567,6 +571,24 @@ public class SkiaUtil {
                 point.add(i);
             }
             return this;
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        var img = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-beatmap-mask.png");
+        var image1 = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-score-backimage-C.jpg");
+        var bitmap = Bitmap.makeFromImage(img);
+        var s = Surface.makeRasterN32Premul(150,150);
+        var c = s.getCanvas();
+
+//        c.clear(Color.makeARGB(255,0,0,0));
+        var ems = BlendMode.values();
+        var p = new Paint().setImageFilter(ImageFilter.makeImage(image1));
+
+        for (var e: ems) {
+            p.setBlendMode(e);
+            c.drawImage(img,0,0, p);
+            Files.write(java.nio.file.Path.of("/home/spring/ee-"+e.name()+".png"), s.makeImageSnapshot().encodeToData().getBytes());
         }
     }
 }

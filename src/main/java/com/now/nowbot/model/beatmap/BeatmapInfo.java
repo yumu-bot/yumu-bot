@@ -20,9 +20,23 @@ public class BeatmapInfo {
     Integer userId;
     String version;
 
-    //待添加
-//    BeatMapSet beatMapSet;
+    @JsonProperty("accuracy")
+    Float od;
+    Float ar;
+    Float cs;
+    @JsonProperty("drain")
 
+    Float hp;
+    Float bpm;
+
+    @JsonProperty("hit_length")
+    Integer hitLength;
+
+    Boolean convert;
+    @JsonProperty("is_scoreable")
+    Boolean scoreable;
+
+    String checksum;
 
     public Integer getId() {
         return id;
