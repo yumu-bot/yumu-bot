@@ -14,6 +14,14 @@ public class BeatMap4Pool {
 
     Integer poolId;
 
+    String info;
+
+    String checkModel;
+
+    String checkId;
+
+    String data;
+
     public Integer getId() {
         return id;
     }

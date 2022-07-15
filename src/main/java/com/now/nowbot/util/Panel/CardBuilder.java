@@ -1,7 +1,11 @@
 package com.now.nowbot.util.Panel;
 
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
+
+import java.io.IOException;
 
 public class CardBuilder extends PanelBuilder{
     CardBuilder(Image bg) {
@@ -95,5 +99,23 @@ public class CardBuilder extends PanelBuilder{
 
     public Image build() {
         return build(20);
+    }
+
+    public static ACardBuilder getUserCard(OsuUser user) throws IOException {
+        Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
+        var card = PanelUtil.getA1Builder(uBg)
+                .drawA1(user.getAvatarUrl())
+                .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
+                .drawA3(user.getUsername());
+        card.drawB2("#" + user.getStatistics().getGlobalRank())
+                .drawB1(user.getCountry().countryCode() + "#" + user.getStatistics().getCountryRank())
+                .drawC2(String.format("%.2f",user.getStatistics().getAccuracy()) + "% Lv." +
+                        user.getStatistics().getLevelCurrent() +
+                        "(" + user.getStatistics().getLevelProgress() + "%)")
+                .drawC1(user.getStatistics().getPP().intValue() + "PP");
+        if (user.getSupportLeve()>0) {
+            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
+        }
+        return card;
     }
 }

@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.serviceException.PpmException;
 import com.now.nowbot.util.Panel.ACardBuilder;
+import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -46,7 +47,7 @@ public class PPmService implements MessageService {
         if (Math.random() < 0.01){
             var userBin = bindDao.getUser(event.getSender().getId());
             var user = osuGetService.getPlayerOsuInfo(userBin);
-            var card = getUserCard(user);
+            var card = CardBuilder.getUserCard(user);
             var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
             Surface surface = Surface.makeRasterN32Premul(1920, 1080);
             try (surface){
@@ -103,7 +104,7 @@ public class PPmService implements MessageService {
         };
 
         //绘制卡片A
-        var card = getUserCard(user);
+        var card = CardBuilder.getUserCard(user);
         //计算六边形数据
         float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 
@@ -211,8 +212,8 @@ public class PPmService implements MessageService {
         Image uBgOther = PanelUtil.getBgUrl("用户自定义路径", userOther.getCoverUrl(), true);
 
         //卡片生成
-        var cardMe = getUserCard(userMe);
-        var cardOther = getUserCard(userOther);
+        var cardMe = CardBuilder.getUserCard(userMe);
+        var cardOther = CardBuilder.getUserCard(userOther);
 
         //六边形数据
         float[] hexMe = ppmMe.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
@@ -284,23 +285,5 @@ public class PPmService implements MessageService {
         } else {
             temp.call(i, "F", PanelUtil.COLOR_F);
         }
-    }
-
-    private ACardBuilder getUserCard(OsuUser user) throws IOException {
-        Image uBg = PanelUtil.getBgUrl("用户自定义路径", user.getCoverUrl(), true);
-        var card = PanelUtil.getA1Builder(uBg)
-                .drawA1(user.getAvatarUrl())
-                .drawA2(PanelUtil.getFlag(user.getCountry().countryCode()))
-                .drawA3(user.getUsername());
-        card.drawB2("#" + user.getStatistics().getGlobalRank())
-                .drawB1(user.getCountry().countryCode() + "#" + user.getStatistics().getCountryRank())
-                .drawC2(String.format("%.2f",user.getStatistics().getAccuracy()) + "% Lv." +
-                        user.getStatistics().getLevelCurrent() +
-                        "(" + user.getStatistics().getLevelProgress() + "%)")
-                .drawC1(user.getStatistics().getPP().intValue() + "PP");
-        if (user.getSupportLeve()>0) {
-            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
-        return card;
     }
 }

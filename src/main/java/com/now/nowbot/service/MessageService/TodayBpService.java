@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.ACardBuilder;
+import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TbpPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -75,20 +76,7 @@ public class TodayBpService implements MessageService{
         }
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(user, mode);
-        var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
-        card.drawA1(infoMe.getAvatarUrl())
-                .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))
-                .drawA3(infoMe.getUsername());
-        if (infoMe.getSupportLeve() != 0){
-            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
-        card.drawB3("")
-                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatistics().getCountryRank())
-                .drawB1("U" + infoMe.getId())
-                .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
-                        infoMe.getStatistics().getLevelCurrent() +
-                        "(" + infoMe.getStatistics().getLevelProgress() + "%)")
-                .drawC1(infoMe.getStatistics().getPP(0) + "PP");
+        var card = CardBuilder.getUserCard(infoMe);
 
         var panel = new TbpPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);

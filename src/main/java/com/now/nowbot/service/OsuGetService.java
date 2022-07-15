@@ -8,8 +8,10 @@ import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
+import com.now.nowbot.model.beatmap.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
+import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
@@ -866,6 +868,25 @@ public class OsuGetService {
 
     public JsonNode getAttributes(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+        MultiValueMap body = new LinkedMultiValueMap();
+        body.add("mods", String.valueOf((Mod.DoubleTime.value | Mod.HardRock.value)));
+        body.add("ruleset_id", "2");
+        HttpEntity httpEntity = new HttpEntity(body, headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return c.getBody();
+    }
+    public JsonNode getAttributes(Long id, OsuMode osuMode, Mod... mods) {
+        StringBuilder sb = new StringBuilder();
+        for (var m : mods) {
+            sb.append(m.abbreviation);
+        }
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .queryParam("mods",0)
                 .build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
@@ -875,7 +896,60 @@ public class OsuGetService {
         headers.set("Authorization", "Bearer " + getToken());
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return c.getBody();
+    }
+    public JsonNode getAttributes(Long id, OsuMode osuMode, int mods) {
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = null;
+        try {
+            c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        } catch (Exception e) {
+            log.error("new error", e.getCause());
+        }
+        return c.getBody();
+    }
+    public JsonNode getAttributes(Long id, OsuMode osuMode, String mods) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .queryParam("mods",mods)
+                .queryParam("ruleset_id",osuMode.getModeValue())
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return c.getBody();
+    }
+    public JsonNode serchBeatmap(String name) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/lookup")
+                .queryParam("filename",name)
+                .build().encode().toUri();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + getToken());
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = null;
+        try {
+            c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        } catch (RestClientException e) {
+            throw new RuntimeException(e);
+        }
         return c.getBody();
     }
 }

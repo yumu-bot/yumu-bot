@@ -102,6 +102,7 @@ public enum Instruction {
     TESTPPM(TestPPMService.class,    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
     GROUP(JoinGroupService.class,    Pattern.compile("(是)|(否)")),
+    INFO(InfoService.class,    Pattern.compile("!testinfo")),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！

@@ -7,6 +7,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.Panel.ACardBuilder;
+import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
@@ -89,20 +90,7 @@ public class FriendService implements MessageService{
         final var p = new FriendPanelBuilder();
         //构造自己的卡片
         var infoMe = osuGetService.getPlayerInfo(user);
-        var card = new ACardBuilder(PanelUtil.getBgUrl(null/*"自定义路径"*/,infoMe.getCoverUrl(),true));
-        card.drawA1(infoMe.getAvatarUrl())
-                .drawA2(PanelUtil.getFlag(infoMe.getCountry().countryCode()))
-                .drawA3(infoMe.getUsername());
-        if (infoMe.getSupportLeve() != 0){
-            card.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
-        }
-        card.drawB3("")
-                .drawB2(infoMe.getCountry().countryCode() + "#" + infoMe.getStatistics().getCountryRank())
-                .drawB1("U" + infoMe.getId())
-                .drawC2(infoMe.getStatistics().getAccuracy(2) + "% Lv." +
-                        infoMe.getStatistics().getLevelCurrent() +
-                        "(" + infoMe.getStatistics().getLevelProgress() + "%)")
-                .drawC1(Math.round(infoMe.getStatistics().getPP()) + "PP");
+        var card = CardBuilder.getUserCard(infoMe);
 
         p.drawBanner(PanelUtil.getBanner(user));
         p.mainCard(card.build());
