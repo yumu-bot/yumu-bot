@@ -167,4 +167,8 @@ public class K1CardBuilder extends PanelBuilder {
         canvas.restore();
 
     }
+    private void drawBeatMapHexagon(BeatMap beatMap) {
+        canvas.save();
+        var path = new org.jetbrains.skija.Path();
+    }
 }

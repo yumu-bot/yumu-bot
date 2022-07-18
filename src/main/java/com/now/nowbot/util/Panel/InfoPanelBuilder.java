@@ -38,6 +38,12 @@ public class InfoPanelBuilder extends PanelBuilder{
 
         try (card;j1;j2;j3;j4;j5;j6){
             mainCard(card);
+            canvas.drawImage(j1, 20, 330);
+            canvas.drawImage(j2, 470, 0);
+            canvas.drawImage(j3, 940, 0);
+            canvas.drawImage(j4, - 470 - 940, 380);
+            canvas.drawImage(j5, 470, 0);
+            canvas.drawImage(j6, 940, 0);
         }
         return super.build(20, " Info Panel v3.2 Enhanced");
     }
