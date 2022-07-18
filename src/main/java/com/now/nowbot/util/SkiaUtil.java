@@ -1,7 +1,8 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.beatmap.BeatmapAttribute;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
@@ -9,7 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 public class SkiaUtil {
     static final int[] COLOR_SUGER = new int[]{
@@ -141,7 +145,7 @@ public class SkiaUtil {
 
     static Typeface PUHUITI_MEDIUM;
 
-    public static Typeface getPuhuitiMedium() {
+    public static Typeface getPUHUITIMedium() {
         if (PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()) {
             try {
                 PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
@@ -535,6 +539,22 @@ public class SkiaUtil {
             case "D" -> Color.makeRGB(234, 107, 72);
             default -> Color.makeRGB(32, 32, 32);
         };
+    }
+
+    public static String getV3Score(Score score, BeatmapAttribute beatMap) {
+        int fc = 100_0000;
+        int c = score.getStatistics().getMaxCombo();
+        int m = beatMap.getBeatmapMaxCombo();
+        double ap8 = Math.pow(score.getAccuracy(), 8f);
+        double v3 = 0;
+
+        switch (score.getMode()){
+            case OSU, CATCH, DEFAULT -> v3 = fc * (0.7f * c / m + 0.3f * ap8);
+            case TAIKO -> v3 = fc * ( 0.75f * c / m + 0.25f * ap8);
+            case MANIA -> v3 = fc * ( 0.01f * c / m + 0.99f * ap8);
+        }
+
+        return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求
     }
 
     public class PolylineBuilder {

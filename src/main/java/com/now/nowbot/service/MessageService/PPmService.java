@@ -8,7 +8,6 @@ import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.serviceException.PpmException;
-import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
@@ -25,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -106,7 +104,7 @@ public class PPmService implements MessageService {
         //绘制卡片A
         var card = CardBuilder.getUserCard(user);
         //计算六边形数据
-        float[] hexDate = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
+        float[] HexData = ppm.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 
         // panel new
         var ppmPanel = new PPMPanelBuilder();
@@ -128,7 +126,7 @@ public class PPmService implements MessageService {
 
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
-        ppmPanel.drawHexagon(hexDate, true);
+        ppmPanel.drawHexagon(HexData, true);
         ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
 
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
@@ -216,19 +214,19 @@ public class PPmService implements MessageService {
         var cardOther = CardBuilder.getUserCard(userOther);
 
         //六边形数据
-        float[] hexMe = ppmMe.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
-        float[] hexOther = ppmOther.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
+        float[] HexMe = ppmMe.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
+        float[] HexOther = ppmOther.getValues(d ->  (float) Math.pow((d < 0.6 ? 0 : d - 0.6) * 2.5f, 0.8));
 
         //六边形缩放
         if(userMe.getStatistics().getPP() > userOther.getStatistics().getPP()){
             float n = (float) (userOther.getStatistics().getPP()/userMe.getStatistics().getPP());
-            for (int i = 0; i < hexMe.length; i++) {
-                hexOther[i] *= n;
+            for (int i = 0; i < HexMe.length; i++) {
+                HexOther[i] *= n;
             }
         } else {
             float n = (float) (userMe.getStatistics().getPP()/userOther.getStatistics().getPP());
-            for (int i = 0; i < hexMe.length; i++) {
-                hexMe[i] *= n;
+            for (int i = 0; i < HexMe.length; i++) {
+                HexMe[i] *= n;
             }
         }
 
@@ -248,8 +246,8 @@ public class PPmService implements MessageService {
         ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)-> null);
         panel.drawLeftCard(cardMe.build());
         panel.drawRightCard(cardOther.build());
-        panel.drawHexagon(hexOther,false);
-        panel.drawHexagon(hexMe,true);
+        panel.drawHexagon(HexOther,false);
+        panel.drawHexagon(HexMe,true);
         panel.drawPanelName(panelName);
         try (uBgMe; uBgOther) {
             cardMe.build().close();

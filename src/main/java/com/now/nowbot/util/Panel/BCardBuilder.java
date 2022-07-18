@@ -40,7 +40,7 @@ public class BCardBuilder extends CardBuilder{
      */
     public BCardBuilder drawD4(String text) {
         canvas.save();
-        Typeface typeface = SkiaUtil.getPuhuitiMedium();
+        Typeface typeface = SkiaUtil.getPUHUITIMedium();
         final Font font = new Font(typeface, 36)
                 .setHinting(FontHinting.NONE)
                 .setBaselineSnapped(true);
@@ -55,7 +55,7 @@ public class BCardBuilder extends CardBuilder{
 
     public BCardBuilder drawD3(String text) {
         canvas.save();
-        Typeface typeface = SkiaUtil.getPuhuitiMedium();
+        Typeface typeface = SkiaUtil.getPUHUITIMedium();
         final Font font = new Font(typeface, 24)
                 .setHinting(FontHinting.NONE)
                 .setBaselineSnapped(true);
@@ -109,7 +109,7 @@ public class BCardBuilder extends CardBuilder{
 
     public BCardBuilder drawD1(String text) {
         canvas.save();
-        Typeface typeface = SkiaUtil.getPuhuitiMedium();
+        Typeface typeface = SkiaUtil.getPUHUITIMedium();
         final Font font = new Font(typeface, 24)
                 .setHinting(FontHinting.NONE)
                 .setBaselineSnapped(true);

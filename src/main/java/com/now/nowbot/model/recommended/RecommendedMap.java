@@ -29,10 +29,10 @@ public class RecommendedMap {
         data.bid = mapInfo.getId();
         data.bgUrl = mapInfo.getBeatMapSet().getCovers().getCover2x();
         data.Star = mapInfo.getDifficultyRating().floatValue();
-        data.OD = mapInfo.getOd();
-        data.AR = mapInfo.getAr();
-        data.HP = mapInfo.getHp();
-        data.CS = mapInfo.getCs();
+        data.OD = mapInfo.getOD();
+        data.AR = mapInfo.getAR();
+        data.HP = mapInfo.getHP();
+        data.CS = mapInfo.getCS();
         data.bpm = mapInfo.getBpm();
         data.Objects = mapInfo.getSpinners() + mapInfo.getCircles() + mapInfo.getSliders();
         data.length = mapInfo.getTotalLength();

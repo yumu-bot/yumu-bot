@@ -167,35 +167,35 @@ public class BeatMap {
         this.version = version;
     }
 
-    public Float getOd() {
+    public Float getOD() {
         return od;
     }
 
-    public void setOd(Float od) {
+    public void setOD(Float od) {
         this.od = od;
     }
 
-    public Float getAr() {
+    public Float getAR() {
         return ar;
     }
 
-    public void setAr(Float ar) {
+    public void setAR(Float ar) {
         this.ar = ar;
     }
 
-    public Float getCs() {
+    public Float getCS() {
         return cs;
     }
 
-    public void setCs(Float cs) {
+    public void setCS(Float cs) {
         this.cs = cs;
     }
 
-    public Float getHp() {
+    public Float getHP() {
         return hp;
     }
 
-    public void setHp(Float hp) {
+    public void setHP(Float hp) {
         this.hp = hp;
     }
 
