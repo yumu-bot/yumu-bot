@@ -19,9 +19,8 @@ public class J1CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public J1CardBuilder(OsuUser user) {
-        super(430, 355);
-        List<BpInfo> bpList = null;
+    public J1CardBuilder(OsuUser user, List<BpInfo> bpList) {
+        super(430, 335);
 
         drawBaseRRect();
         drawUserCover(user);

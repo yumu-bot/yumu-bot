@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -27,7 +28,8 @@ public class InfoService implements MessageService{
 
         var img = new InfoPanelBuilder();
         img.drawBanner(PanelUtil.getBanner(bUser));
-        var i = img.build(user, osuGetService.getBestPerformance(bUser, OsuMode.OSU,0,100));
+        var bps = osuGetService.getBestPerformance(bUser, OsuMode.OSU,0,100);
+        var i = img.build(user, bps);
         try (i){
             QQMsgUtil.sendImage(event.getSubject(), i);
         }

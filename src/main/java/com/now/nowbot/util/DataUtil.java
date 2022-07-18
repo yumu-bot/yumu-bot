@@ -1,5 +1,7 @@
 package com.now.nowbot.util;
 
+import java.math.BigDecimal;
+
 public class DataUtil {
     public static char getRoundedNumberUnit(double number, int level) {
         char unit = '-';
@@ -46,7 +48,7 @@ public class DataUtil {
         } else if (level == 2) {
             number = (double) Math.round(number * 1000) / 1000D;
         }
-        if (number - Math.round(number) <= 0.000005) number = (double) Math.round(number);
+        if (number - Math.round(number) <= 0.0001) number = (double) Math.round(number);
 
         return number;
     }
@@ -56,11 +58,11 @@ public class DataUtil {
         if (c == 0){
             return String.valueOf(n);
         }
-        if (level == 1) {
-            return String.format("%.1f%c", getRoundedNumber(n, level), c);
-        } else {
-            return String.format("%.2f%c", getRoundedNumber(n, level), c);
+        var p = getRoundedNumber(n, level);
+        if (p - Math.round(p) < 0.0001) {
+            return String.format("%d%c", Math.round(p), c);
         }
+        return String.format(level == 1 ? "%.1f%c" : "%.2f%c", getRoundedNumber(n, level), c);
     }
     public static String Time2HourAndMinient(long time){
         if (time < 3600000){

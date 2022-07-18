@@ -2,6 +2,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import org.jetbrains.skija.Color;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 
@@ -13,6 +14,7 @@ public class InfoPanelBuilder extends PanelBuilder{
 
     public InfoPanelBuilder () {
         super(1920, 1080);
+        canvas.clear(Color.makeRGB(42,34,38));
     }
 
     public InfoPanelBuilder drawBanner(Image banner){
@@ -29,7 +31,7 @@ public class InfoPanelBuilder extends PanelBuilder{
         drawName("Info");
         var card = CardBuilder.getUserCard(user).build();
 
-        var j1 = new J1CardBuilder(user).build();
+        var j1 = new J1CardBuilder(user, bps).build();
         var j2 = new J2CardBuilder(user).build();
         var j3 = new J3CardBuilder(user).build();
         var j4 = new J4CardBuilder(user).build();
@@ -38,12 +40,12 @@ public class InfoPanelBuilder extends PanelBuilder{
 
         try (card;j1;j2;j3;j4;j5;j6){
             mainCard(card);
-            canvas.drawImage(j1, 20, 330);
-            canvas.drawImage(j2, 470, 0);
-            canvas.drawImage(j3, 940, 0);
-            canvas.drawImage(j4, - 470 - 940, 380);
-            canvas.drawImage(j5, 470, 0);
-            canvas.drawImage(j6, 940, 0);
+            canvas.drawImage(j1, 40, 330);
+            canvas.drawImage(j2, 510, 330);
+            canvas.drawImage(j3, 1450, 330);
+            canvas.drawImage(j4, 40, 705);
+            canvas.drawImage(j5, 510, 705);
+            canvas.drawImage(j6, 1450, 705);
         }
         return super.build(20, " Info Panel v3.2 Enhanced");
     }

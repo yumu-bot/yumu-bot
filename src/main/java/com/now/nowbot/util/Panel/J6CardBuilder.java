@@ -25,7 +25,7 @@ public class J6CardBuilder extends PanelBuilder {
         super(430, 335);
 
         drawBaseRRect();
-        drawUserText(bps);
+//        drawUserText(bps);
         drawPieChartOverlay();
     }
 
