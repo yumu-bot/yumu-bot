@@ -25,6 +25,7 @@ public class DataUtil {
 
         return unit;
     }
+
     public static Double getRoundedNumber(double number, int level) {
 
         boolean s = true; //正负符号
@@ -53,24 +54,46 @@ public class DataUtil {
         return number;
     }
 
-    public static String getRoundedNumberStr(double n, int level){
-        var c = getRoundedNumberUnit(n, level);
-        if (c == 0){
-            return String.valueOf(n);
+    public static String getRoundedNumberStr(double number, int level) {
+        var c = getRoundedNumberUnit(number, level);
+        if (c == 0) {
+            return String.valueOf(number);
         }
-        var p = getRoundedNumber(n, level);
-        if (p - Math.round(p) < 0.0001) {
-            return String.format("%d%c", Math.round(p), c);
+        boolean isInt = false;
+        int intValue = 0;
+
+        while (number >= 1000 || number <= -1000) {
+            number /= 1000;
         }
-        return String.format(level == 1 ? "%.1f%c" : "%.2f%c", getRoundedNumber(n, level), c);
+
+        if (level == 1) {
+            if (number >= 100) {
+                number /= 1000;
+            }
+            number = (double) Math.round(number * 10) / 10D;
+        } else if (level == 2) {
+            number = (double) Math.round(number * 1000) / 1000D;
+        }
+        intValue = (int) Math.round(number);
+        if (level == 1) {
+            isInt = number - intValue <= 0.1;
+        }
+        else {
+            isInt = number - intValue <= 0.001;
+        }
+
+        if (isInt)
+            return String.format("%d%c", intValue, c);
+        return String.format(level == 1 ? "%.1f%c" : "%.2f%c", number, c);
     }
-    public static String Time2HourAndMinient(long time){
-        if (time < 3600000){
-            return String.format("%dM",time / 60000);
+
+    public static String Time2HourAndMinient(long time) {
+        if (time < 3600000) {
+            return String.format("%dM", time / 60000);
         }
-        var h = time/3600000;
-        var m = (time%3600000) / 60000;
-        return String.format("%dH%dM",h,m);
+        var h = time / 3600000;
+        var m = (time % 3600000) / 60000;
+        return String.format("%dH%dM", h, m);
     }
 
 }
