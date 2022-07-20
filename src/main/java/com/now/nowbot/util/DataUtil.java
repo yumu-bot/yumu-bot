@@ -56,11 +56,19 @@ public class DataUtil {
 
     public static String getRoundedNumberStr(double number, int level) {
         var c = getRoundedNumberUnit(number, level);
+        boolean isInt;
+        int intValue;
         if (c == 0) {
+            intValue = (int) number;
+            if (level == 1) {
+                isInt = number - intValue <= 0.1;
+            }
+            else {
+                isInt = number - intValue <= 0.001;
+            }
+            if (isInt) return String.valueOf(intValue);
             return String.valueOf(number);
         }
-        boolean isInt = false;
-        int intValue = 0;
 
         while (number >= 1000 || number <= -1000) {
             number /= 1000;
@@ -74,7 +82,7 @@ public class DataUtil {
         } else if (level == 2) {
             number = (double) Math.round(number * 1000) / 1000D;
         }
-        intValue = (int) Math.round(number);
+        intValue = (int) number;
         if (level == 1) {
             isInt = number - intValue <= 0.1;
         }
@@ -95,5 +103,4 @@ public class DataUtil {
         var m = (time % 3600000) / 60000;
         return String.format("%dH%dM", h, m);
     }
-
 }
