@@ -19,7 +19,7 @@ public class J2CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public J2CardBuilder(OsuUser user) throws IOException {
+    public J2CardBuilder(OsuUser user) {
         super(900, 335);
 
         drawBaseRRect();
@@ -28,10 +28,6 @@ public class J2CardBuilder extends PanelBuilder {
     }
 
     private void drawBaseRRect() {
-        //画底层圆角矩形 以后圆角矩形交给输出,不需要手动画,直接全涂固定颜色
-//        canvas.save();
-//        canvas.drawRRect(RRect.makeXYWH(0, 0, 900, 355, 20), new Paint().setARGB(255, 56, 46, 50));
-//        canvas.restore();
         canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
@@ -84,7 +80,7 @@ public class J2CardBuilder extends PanelBuilder {
         for (int i = 1; i < rankHistory.size() - 1; i++) {
             path.cubicTo(
                     (i - 0.5f) * step, stepY * ((rankHistory.get(i - 1) + rankHistory.get(i)) / 2f - rank_min),
-                    i * step, stepY * (rankHistory.get(i) - rank_min),
+                    i *  step, stepY * (rankHistory.get(i) - rank_min),
                     (i + 0.5f) * step, stepY * ((rankHistory.get(i + 1) + rankHistory.get(i)) / 2f - rank_min)
             );
         }
@@ -176,6 +172,7 @@ public class J2CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jlu1, 0, Jlu1.getHeight() - Jlu1.getXHeight(), colorWhite);
         canvas.restore();
 
+        canvas.save();
         canvas.translate(30 - (Jl1.getWidth() / 2), 56);//居中处理
         canvas.drawTextLine(Jl1, 0, Jl1.getHeight() - Jl1.getXHeight(), colorDarkGolden);
         //canvas.translate((Jl1.getWidth() - Jl2.getWidth()) / 2, 107);//居中处理
@@ -186,6 +183,7 @@ public class J2CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jl3, 0, Jl3.getHeight() - Jl3.getXHeight(), colorDarkGolden);
         canvas.restore();
 
+        canvas.save();
         canvas.translate(60, 300);
         canvas.drawTextLine(Jb1, 0, Jb1.getHeight() - Jb1.getXHeight(), colorDarkGolden);
         //canvas.translate(330 + ((120 - Jb2.getWidth()) / 2), 0);
@@ -196,6 +194,7 @@ public class J2CardBuilder extends PanelBuilder {
         canvas.drawTextLine(Jb3, 0, Jb3.getHeight() - Jb3.getXHeight(), colorDarkGolden);
         canvas.restore();
 
+        canvas.save();
         canvas.translate(880 - Jur3.getWidth(), 28);
         canvas.drawTextLine(Jur3, 0, Jur3.getHeight() - Jur3.getXHeight(), colorGrey);
         canvas.translate(0 - Jur2.getWidth(), 0);
