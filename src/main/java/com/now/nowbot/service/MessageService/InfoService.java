@@ -2,6 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.InfoPanelBuilder;
@@ -10,6 +12,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("info")
@@ -24,12 +27,23 @@ public class InfoService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var bUser = bindDao.getUser(event.getSender().getId());
-        var user = osuGetService.getPlayerInfo(bUser);
+
+        OsuUser user;
+        List<BpInfo> bpList;
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+            var id = osuGetService.getOsuId(matcher.group("name").trim());
+            user = osuGetService.getPlayerOsuInfo(id);
+            bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
+        } else {
+            var userBin = bindDao.getUser(event.getSender().getId());
+            user = osuGetService.getPlayerOsuInfo(userBin);
+            bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
+        }
 
         var img = new InfoPanelBuilder();
         img.drawBanner(PanelUtil.getBanner(bUser));
-        var bps = osuGetService.getBestPerformance(bUser, OsuMode.OSU,0,100);
-        var i = img.build(user, bps);
+        var i = img.build(user, bpList);
         try (i){
             QQMsgUtil.sendImage(event.getSubject(), i);
         }
