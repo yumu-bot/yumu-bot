@@ -55,6 +55,7 @@ public class K2CardBuilder extends PanelBuilder {
 
         canvas.save();
         canvas.clipPath(ArcPath);
+        canvas.translate(40,20);
         canvas.drawImage(AccuracyImage,0,0,new Paint());
         canvas.restore();
 
@@ -124,6 +125,7 @@ public class K2CardBuilder extends PanelBuilder {
         }
 
         canvas.save();
+        canvas.translate(310,20);
         canvas.drawImage(a1,0,0,new Paint());
         canvas.translate(160,0);
         canvas.drawImage(a2,0,0,new Paint());
