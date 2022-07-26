@@ -541,10 +541,10 @@ public class SkiaUtil {
         };
     }
 
-    public static String getV3Score(Score score, BeatmapAttribute beatMap) {
+    public static String getV3Score(Score score, BeatmapAttribute beatMapAttribute) {
         int fc = 100_0000;
         int c = score.getStatistics().getMaxCombo();
-        int m = beatMap.getBeatmapMaxCombo();
+        int m = beatMapAttribute.getBeatmapMaxCombo();
         double ap8 = Math.pow(score.getAccuracy(), 8f);
         double v3 = 0;
 

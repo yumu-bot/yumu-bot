@@ -3,12 +3,14 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.beatmap.BeatmapAttribute;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 public class K2CardBuilder extends PanelBuilder {
@@ -18,14 +20,15 @@ public class K2CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public K2CardBuilder(BeatMap beatMap, Score score) {
+    public K2CardBuilder(BeatMap beatMap, Score score, BeatmapAttribute beatMapAttribute) {
         //这是 pr panel 右上角最主要的信息矩形。
         super(1000,420);
 
         drawBaseRRect();
         drawLeftRank(score);
         drawLeftPassStatus(score);
-        drawScoreIndex(beatMap);
+        drawScoreIndex(score, beatMapAttribute);
+        drawMods(score);
         drawScoreInfo(beatMap);
         drawBeatMapInfo(beatMap);
     }
@@ -125,7 +128,7 @@ public class K2CardBuilder extends PanelBuilder {
         }
 
         canvas.save();
-        canvas.translate(310,20);
+        canvas.translate(20,310);
         canvas.drawImage(a1,0,0,new Paint());
         canvas.translate(160,0);
         canvas.drawImage(a2,0,0,new Paint());
@@ -136,9 +139,51 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawScoreIndex(BeatMap beatMap){
+    private void drawScoreIndex(Score score, BeatmapAttribute beatMapAttribute){
+        Typeface TorusSB = SkiaUtil.getTorusSemiBold();
 
+        Font fontS84 = new Font(TorusSB, 84);
+        Font fontS60 = new Font(TorusSB, 60);
+
+        String Scr = SkiaUtil.getV3Score(score, beatMapAttribute);
+        String s1t = Scr.substring(0,2);
+        String s2t = Scr.substring(3);
+
+        TextLine s1 = TextLine.make(s1t, fontS84);
+        TextLine s2 = TextLine.make(s2t, fontS60);
+
+        canvas.save();
+        canvas.translate(435,20);
+        canvas.drawTextLine(s1, 0, s1.getHeight() - s1.getXHeight(), colorWhite);
+        canvas.translate(s1.getWidth() + 4,16);
+        canvas.drawTextLine(s2, 0, s2.getHeight() - s2.getXHeight(), colorWhite);
+        canvas.restore();
     }
+
+    private void drawMods(Score score){
+        List<String> mods = score.getMods();
+
+        canvas.save();
+        canvas.translate(880,20);
+
+        if (mods.size() >= 4){
+            for(var mod : mods){
+                try {
+                    var modImg = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/Mods/" + mod + ".png");
+                    canvas.drawImage(modImg,0,0);
+                    canvas.translate(-40,0);
+            } catch (IOException ignored) {}}
+        } else if (mods.size() >0){
+            for(var mod : mods){
+                try {
+                    var modImg = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/Mods/" + mod + ".png");
+                    canvas.drawImage(modImg,0,0);
+                    canvas.translate(-100,0);
+                } catch (IOException ignored) {}}
+        }
+        canvas.restore();
+    }
+
     private void drawScoreInfo(BeatMap beatMap){
 
     }

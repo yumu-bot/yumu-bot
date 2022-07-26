@@ -22,7 +22,9 @@ public class K1CardBuilder extends PanelBuilder {
 
         drawLeftRRect(beatMap);
         drawLeftMapSR(beatMap);
+        drawRightRRect(beatMap);
         drawBeatMapHexagon(beatMap);
+        drawBeatMapInfo(beatMap);
     }
 
     private void drawLeftRRect(BeatMap beatMap) {
@@ -219,7 +221,8 @@ public class K1CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(440,94);
         canvas.clipPath(HexagonPath);
-        canvas.drawImage(beatMapBG,0,0,new Paint());
+        canvas.translate(-170,0);
+        canvas.drawImage(SkiaImageUtil.getScaleCenterImage(beatMapBG,380,420),0,0,new Paint());//实测是370-400左右，放大一点好
         canvas.restore();
 
         canvas.save();
