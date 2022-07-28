@@ -38,7 +38,7 @@ public class ScoreService implements MessageService {
             user = bindDao.getUser(event.getSender().getId());
         }
         int bid = Integer.parseInt(matcher.group("bid"));
-        JSONObject score = osuGetService.getScore(bid, user);
+        JSONObject score = null;
         //todo
     }
 }

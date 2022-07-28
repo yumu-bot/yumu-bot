@@ -19,4 +19,14 @@ public class RequestException extends IOException {
         this.response = response;
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("RequestException{");
+        sb.append("response=").append(response);
+        sb.append(", status=").append(status);
+        sb.append(", message='").append(message).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -164,4 +164,25 @@ public class MicroUser {
     public Cover getCover() {
         return cover;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("MicroUser{");
+        sb.append("avatar='").append(avatar).append('\'');
+        sb.append(", group='").append(group).append('\'');
+        sb.append(", id=").append(id);
+        sb.append(", active=").append(active);
+        sb.append(", bot=").append(bot);
+        sb.append(", deleted=").append(deleted);
+        sb.append(", online=").append(online);
+        sb.append(", supporter=").append(supporter);
+        sb.append(", lastTime='").append(lastTime).append('\'');
+        sb.append(", pmOnly=").append(pmOnly);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", country=").append(country);
+        sb.append(", cover=").append(cover);
+        sb.append(", statistics=").append(statistics);
+        sb.append('}');
+        return sb.toString();
+    }
 }

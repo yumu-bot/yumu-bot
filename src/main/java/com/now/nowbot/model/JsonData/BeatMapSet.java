@@ -42,30 +42,6 @@ public class BeatMapSet {
     @JsonProperty("covers")
     Covers covers;
 
-    @Override
-    public String toString() {
-        return "BeatMapSet{" +
-                "id=" + id +
-                ", userId=" + userId +
-                ", bpm=" + bpm +
-                ", artist='" + artist + '\'' +
-                ", artistUTF='" + artistUTF + '\'' +
-                ", title='" + title + '\'' +
-                ", titleUTF='" + titleUTF + '\'' +
-                ", creator='" + creator + '\'' +
-                ", favourite=" + favourite +
-                ", nsfw=" + nsfw +
-                ", playCount=" + playCount +
-                ", musicUrl='" + musicUrl + '\'' +
-                ", source='" + source + '\'' +
-                ", status='" + status + '\'' +
-                ", legacyUrl='" + legacyUrl + '\'' +
-                ", tags='" + tags + '\'' +
-                ", storyboard=" + storyboard +
-                ", covers=" + covers +
-                '}';
-    }
-
     public Integer getId() {
         return id;
     }
@@ -208,5 +184,30 @@ public class BeatMapSet {
 
     public void setCovers(Covers covers) {
         this.covers = covers;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BeatMapSet{");
+        sb.append("id=").append(id);
+        sb.append(", userId=").append(userId);
+        sb.append(", bpm=").append(bpm);
+        sb.append(", artist='").append(artist).append('\'');
+        sb.append(", artistUTF='").append(artistUTF).append('\'');
+        sb.append(", title='").append(title).append('\'');
+        sb.append(", titleUTF='").append(titleUTF).append('\'');
+        sb.append(", creator='").append(creator).append('\'');
+        sb.append(", favourite=").append(favourite);
+        sb.append(", nsfw=").append(nsfw);
+        sb.append(", playCount=").append(playCount);
+        sb.append(", musicUrl='").append(musicUrl).append('\'');
+        sb.append(", source='").append(source).append('\'');
+        sb.append(", status='").append(status).append('\'');
+        sb.append(", legacyUrl='").append(legacyUrl).append('\'');
+        sb.append(", tags='").append(tags).append('\'');
+        sb.append(", storyboard=").append(storyboard);
+        sb.append(", covers=").append(covers);
+        sb.append('}');
+        return sb.toString();
     }
 }

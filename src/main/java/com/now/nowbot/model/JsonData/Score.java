@@ -18,6 +18,8 @@ public class Score {
     Double accuracy;
     @JsonProperty("best_id")
     Long bestId;
+    @JsonProperty("max_combo")
+    Integer maxCombo;
     @JsonProperty("user_id")
     Long userId;
     @JsonProperty("created_at")
@@ -42,20 +44,7 @@ public class Score {
     @JsonProperty("beatmapset")
     BeatMapSet beatMapSet;
 
-    record User(String avatarUrl, String countryCode, Integer id, Boolean active, String name){}
-    @JsonIgnoreProperties
-    User user;
-    @JsonProperty("user")
-    public void setUser(HashMap<String, String> date){
-        if (date!=null){
-            String url = date.get("avatar_url");
-            String cc = date.get("country_code");
-            int id = date.containsKey("id")?Integer.parseInt(date.get("id")):0;
-            boolean act = date.containsKey("is_active") && date.get("is_active").equals("true");
-            String name = date.get("username");
-            user = new User(url,cc,id,act,name);
-        }
-    }
+    MicroUser user;
 
     @JsonProperty("mode")
     public void setMode(String mode){
@@ -199,13 +188,45 @@ public class Score {
         this.beatMapSet = beatMapSet;
     }
 
-    public User getUser() {
+    public MicroUser getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(MicroUser user) {
         this.user = user;
     }
 
+    public Integer getMaxCombo() {
+        return maxCombo;
+    }
 
+    public void setMaxCombo(Integer maxCombo) {
+        this.maxCombo = maxCombo;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Score{");
+        sb.append("accuracy=").append(accuracy);
+        sb.append(", bestId=").append(bestId);
+        sb.append(", maxCombo=").append(maxCombo);
+        sb.append(", userId=").append(userId);
+        sb.append(", createTime='").append(createTime).append('\'');
+        sb.append(", scoreId=").append(scoreId);
+        sb.append(", mode=").append(mode);
+        sb.append(", modeInt=").append(modeInt);
+        sb.append(", mods=").append(mods);
+        sb.append(", passed=").append(passed);
+        sb.append(", perfect=").append(perfect);
+        sb.append(", pp=").append(pp);
+        sb.append(", rank='").append(rank).append('\'');
+        sb.append(", replay=").append(replay);
+        sb.append(", score=").append(score);
+        sb.append(", statistics=").append(statistics);
+        sb.append(", beatMap=").append(beatMap);
+        sb.append(", beatMapSet=").append(beatMapSet);
+        sb.append(", user=").append(user);
+        sb.append('}');
+        return sb.toString();
+    }
 }

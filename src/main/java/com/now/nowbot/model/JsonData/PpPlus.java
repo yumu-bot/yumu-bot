@@ -139,4 +139,21 @@ public class PpPlus {
         Pre = pre;
         return this;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("PpPlus{");
+        sb.append("uid=").append(uid);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", time=").append(time);
+        sb.append(", Total=").append(Total);
+        sb.append(", Jump=").append(Jump);
+        sb.append(", Flow=").append(Flow);
+        sb.append(", Acc=").append(Acc);
+        sb.append(", Sta=").append(Sta);
+        sb.append(", Spd=").append(Spd);
+        sb.append(", Pre=").append(Pre);
+        sb.append('}');
+        return sb.toString();
+    }
 }
