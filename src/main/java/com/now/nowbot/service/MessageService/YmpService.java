@@ -9,6 +9,8 @@ import com.now.nowbot.model.Ymp;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.Image;
@@ -68,13 +70,14 @@ public class YmpService implements MessageService{
         if(dates.size()==0){
             throw new TipsException("24h内无记录");
         }
-//        JSONObject date = dates.getJSONObject(0);
-//        var d = Ymp.getInstance(date);
-//        HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
-//        var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
-//        Image img = from.uploadImage(ExternalResource.create(bytes));
-//        from.sendMessage(img.plus(d.getOut()));
+        var date = dates.get(0);
+        var d = Ymp.getInstance(date);
+        HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
+        var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
+        Image img = from.uploadImage(ExternalResource.create(bytes));
+        from.sendMessage(img.plus(d.getOut()));
 
+//        from.sendMessage(d.getOut());
 //        if (user != null){
 //            log.info(starService.ScoreToStar(user, date));
 //        }

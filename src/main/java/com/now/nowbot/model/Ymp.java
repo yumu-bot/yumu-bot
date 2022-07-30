@@ -2,6 +2,7 @@ package com.now.nowbot.model;
 
 import ch.qos.logback.core.util.TimeUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.now.nowbot.model.JsonData.Score;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -93,7 +94,62 @@ public class Ymp {
         
         if (!passed) rank = "F";
     }
-    public static Ymp getInstance(JSONObject date){
+
+    public Ymp(Score date){
+        var user = date.getUser();
+        name = user.getName();
+        mode = date.getMode().getName();
+        country = user.getCountry().countryCode();
+        var modsdate = date.getMods();
+        mods = new String[modsdate.size()];
+        for (int i = 0; i < mods.length; i++) {
+            mods[i] = modsdate.get(i);
+        }
+        var beatmapset = date.getBeatMapSet();
+        map_name = beatmapset.getTitleUTF();
+        artist = beatmapset.getArtistUTF();
+        url = beatmapset.getCovers().getCard();
+        map_hard = date.getBeatMap().getVersion();
+
+        difficulty = date.getBeatMap().getDifficultyRating();
+        map_length = date.getBeatMap().getTotalLength();
+        int starmun = (int) Math.floor(difficulty);
+        star = "";
+        for (int i = 0; i < starmun && i < 10; i++) {
+            star += '★';
+        }
+        if (0.5<(difficulty-starmun) && starmun < 10){
+            star += '☆';
+        }
+
+        rank = date.getRank();
+        score = date.getScore();
+        acc = (float) ((Math.round(date.getAccuracy())*10000)/100D);
+
+        try {
+            pp = date.getPP();
+        } catch (Exception e) {
+            pp = 0;
+            e.printStackTrace();
+        }
+
+        combo = date.getMaxCombo();
+        bid = Math.toIntExact(date.getBeatMap().getId());
+        passed = date.getPassed();
+        key = date.getBeatMap().getCS().intValue();
+
+        var ndate = date.getStatistics();
+        n_300 = ndate.getCount300();
+        n_100 = ndate.getCount100();
+        n_50 = ndate.getCount50();
+        n_0 = ndate.getCountMiss();
+        n_geki = ndate.getCountGeki();
+        n_katu = ndate.getCountKatu();
+        play_time = date.getCreateTime().toString();
+
+        if (!passed) rank = "F";
+    }
+    public static Ymp getInstance(Score date){
         return new Ymp(date);
     }
     public String getOut(){
