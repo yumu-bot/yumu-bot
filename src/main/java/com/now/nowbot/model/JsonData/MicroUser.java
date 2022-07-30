@@ -34,25 +34,38 @@ public class MicroUser {
     @JsonProperty("username")
     String name;
     @JsonIgnore
+    String countryCode;
+    @JsonIgnore
     OsuUser.Country country;
-    @JsonProperty("country")
-    void setCountry(Map<String,String> country){
-        if (country != null)
-            this.country = new OsuUser.Country(country.get("code"),country.get("name"));
+
+    @JsonProperty("country_code")
+    void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
     }
-    public record Cover(String customUrl, String url, String id){
-        public Long getId(){
+
+    @JsonProperty("country")
+    void setCountry(Map<String, String> country) {
+        if (country != null)
+            this.country = new OsuUser.Country(country.get("code"), country.get("name"));
+    }
+
+    public record Cover(String customUrl, String url, String id) {
+        public Long getId() {
             if (id != null) return Long.parseLong(id);
             return null;
         }
-    };
+    }
+
+    ;
     @JsonIgnore
     Cover cover;
+
     @JsonProperty("cover")
-    void setCover(Map<String,String> cover){
+    void setCover(Map<String, String> cover) {
         if (cover != null)
-            this.cover = new Cover(cover.get("custom_url"),cover.get("url"),cover.get("id"));
+            this.cover = new Cover(cover.get("custom_url"), cover.get("url"), cover.get("id"));
     }
+
     @JsonProperty("statistics")
     Statistics statistics;
 
@@ -165,6 +178,10 @@ public class MicroUser {
         return cover;
     }
 
+    public String getCountryCode() {
+        return countryCode;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("MicroUser{");
@@ -179,6 +196,7 @@ public class MicroUser {
         sb.append(", lastTime='").append(lastTime).append('\'');
         sb.append(", pmOnly=").append(pmOnly);
         sb.append(", name='").append(name).append('\'');
+        sb.append(", countryCode='").append(countryCode).append('\'');
         sb.append(", country=").append(country);
         sb.append(", cover=").append(cover);
         sb.append(", statistics=").append(statistics);

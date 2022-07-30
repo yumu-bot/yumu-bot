@@ -21,7 +21,7 @@ public class Ymp {
     float difficulty;
     String star;
     String rank;
-    String [] mods;
+    String[] mods;
     int score;
     float acc;
     float pp;
@@ -40,8 +40,11 @@ public class Ymp {
     int key;
     String play_time;
 
-    public String getUrl(){return url;}
-    public Ymp(JSONObject date){
+    public String getUrl() {
+        return url;
+    }
+
+    public Ymp(JSONObject date) {
         var user = date.getJSONObject("user");
         name = user.getString("username");
         mode = date.getString("mode");
@@ -63,13 +66,13 @@ public class Ymp {
         for (int i = 0; i < starmun && i < 10; i++) {
             star += '★';
         }
-        if (0.5<(difficulty-starmun) && starmun < 10){
+        if (0.5 < (difficulty - starmun) && starmun < 10) {
             star += '☆';
         }
 
         rank = date.getString("rank");
         score = date.getIntValue("score");
-        acc = (float) (Math.round(date.getFloatValue("accuracy")*10000)/100D);
+        acc = (float) (Math.round(date.getFloatValue("accuracy") * 10000) / 100D);
 
         try {
             pp = date.getFloat("pp");
@@ -91,15 +94,15 @@ public class Ymp {
         n_geki = ndate.getIntValue("count_geki");
         n_katu = ndate.getIntValue("count_katu");
         play_time = date.getString("created_at");
-        
+
         if (!passed) rank = "F";
     }
 
-    public Ymp(Score date){
+    public Ymp(Score date) {
         var user = date.getUser();
         name = user.getName();
         mode = date.getMode().getName();
-        country = user.getCountry().countryCode();
+        country = user.getCountryCode();
         var modsdate = date.getMods();
         mods = new String[modsdate.size()];
         for (int i = 0; i < mods.length; i++) {
@@ -118,19 +121,18 @@ public class Ymp {
         for (int i = 0; i < starmun && i < 10; i++) {
             star += '★';
         }
-        if (0.5<(difficulty-starmun) && starmun < 10){
+        if (0.5 < (difficulty - starmun) && starmun < 10) {
             star += '☆';
         }
 
         rank = date.getRank();
         score = date.getScore();
-        acc = (float) ((Math.round(date.getAccuracy())*10000)/100D);
+        acc = (float) ((Math.round(date.getAccuracy()) * 10000) / 100D);
 
-        try {
-            pp = date.getPP();
-        } catch (Exception e) {
+        if (null == date.getPP()) {
             pp = 0;
-            e.printStackTrace();
+        } else {
+            pp = date.getPP();
         }
 
         combo = date.getMaxCombo();
@@ -149,18 +151,20 @@ public class Ymp {
 
         if (!passed) rank = "F";
     }
-    public static Ymp getInstance(Score date){
+
+    public static Ymp getInstance(Score date) {
         return new Ymp(date);
     }
-    public String getOut(){
+
+    public String getOut() {
         StringBuilder sb = new StringBuilder();
 
         //  "username"("country_code"): "mode" ("key"K)-if needed
-        if ("mania".equals(mode)){
-            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*","");
+        if ("mania".equals(mode)) {
+            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*", "");
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ')
                     .append('(').append(key).append("K").append(')').append('\n');
-        }else {
+        } else {
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
 
@@ -169,42 +173,46 @@ public class Ymp {
 
         //  ★★★★★ "difficulty_rating"* mm:ss
         sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ')
-                .append(map_length/60).append(':').append(String.format("%02d",map_length%60)).append('\n');
+                .append(map_length / 60).append(':').append(String.format("%02d", map_length % 60)).append('\n');
 
         //  ["rank"] +"mods" "score" ("accuracy"%)
         sb.append('[').append(rank).append(']').append(' ');
         for (String mod : mods) {
             sb.append(mod).append(' ');
         }
-        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)","\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)", "\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
 
         //  "pp"(###)PP  "max_combo"/###x
         sb.append(format(pp)).append("(0)PP  ").append(combo).append("/0x").append('\n');
 
         //   "count_300" /  "count_100" / "count_50" / "count_miss"
-        switch (mode){
+        switch (mode) {
             default:
-            case "osu":{
+            case "osu": {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
-            case "taiko":{
+            }
+            break;
+            case "taiko": {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
-            case "mania":{
+            }
+            break;
+            case "mania": {
                 sb.append(n_300).append('+').append(n_geki).append('(');
-                if (n_300 >= n_geki && n_geki != 0){
-                    sb.append(String.format("%.1f",(1F*n_300/n_geki))).append(':').append(1);
-                }else if(n_300 < n_geki && n_300 != 0) {
-                    sb.append(1).append(':').append(String.format("%.1f",(1F*n_geki/n_300)));
-                }else{
+                if (n_300 >= n_geki && n_geki != 0) {
+                    sb.append(String.format("%.1f", (1F * n_300 / n_geki))).append(':').append(1);
+                } else if (n_300 < n_geki && n_300 != 0) {
+                    sb.append(1).append(':').append(String.format("%.1f", (1F * n_geki / n_300)));
+                } else {
                     sb.append('-');
                 }
                 sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-            }break;
+            }
+            break;
             case "catch":
-            case "fruits":{
+            case "fruits": {
                 sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
-            }break;
+            }
+            break;
         }
 
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
@@ -212,8 +220,9 @@ public class Ymp {
         sb.append("bid:").append(bid);
         return sb.toString();
     }
-    static String format(double d){
-        double x = Math.round(d*100)/100D;
+
+    static String format(double d) {
+        double x = Math.round(d * 100) / 100D;
         NumberFormat nf = NumberFormat.getInstance();
         return nf.format(x);
     }
