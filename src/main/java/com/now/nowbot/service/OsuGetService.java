@@ -222,6 +222,7 @@ public class OsuGetService {
 
     /**
      * 通过绑定信息获得user数据 刷新osu name
+     *
      * @param user
      * @return
      */
@@ -230,8 +231,7 @@ public class OsuGetService {
         String url;
         if (user.getMode() == null) {
             url = this.URL + "me";
-        }
-        else {
+        } else {
             url = this.URL + "me" + '/' + user.getMode().getName();
         }
         HttpHeaders headers = getHeader(user);
@@ -308,6 +308,7 @@ public class OsuGetService {
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
+
     public String getPlayerInfoStr(Long id, OsuMode mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
@@ -379,9 +380,11 @@ public class OsuGetService {
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<BpInfo>>() {});
+                new ParameterizedTypeReference<List<BpInfo>>() {
+                });
         return c.getBody();
     }
+
     public List<JsonNode> getBestPerformance_raw(Long id, OsuMode mode, int s, int e) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("limit", e)
@@ -393,7 +396,8 @@ public class OsuGetService {
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
         ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<JsonNode>>() {});
+                new ParameterizedTypeReference<List<JsonNode>>() {
+                });
         return c.getBody();
     }
 
@@ -414,7 +418,7 @@ public class OsuGetService {
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity,  new ParameterizedTypeReference<List<Score>>() {
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }
@@ -436,10 +440,11 @@ public class OsuGetService {
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity,  new ParameterizedTypeReference<List<Score>>() {
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }
+
     public List<Score> getAllRecentN(long userId, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
                 .queryParam("mode", mode)
@@ -450,13 +455,15 @@ public class OsuGetService {
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity,  new ParameterizedTypeReference<List<Score>>() {
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }
+
     public List<Score> getRecentN(int userId, OsuMode mode, int s, int e) {
         return getRecentN((long) userId, mode, s, e);
     }
+
     public List<Score> getAllRecentN(int userId, OsuMode mode, int s, int e) {
         return getAllRecentN((long) userId, mode, s, e);
     }
@@ -473,7 +480,8 @@ public class OsuGetService {
 
         return c.getBody();
     }
-    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, String mods){
+
+    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, String mods) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
                 .queryParam("mode", mode)
                 .queryParam("mods", mods)
@@ -585,7 +593,7 @@ public class OsuGetService {
 
         var data = response.getBody().get("user_data");
         if (data != null)
-            return JacksonUtil.parseObject(data ,PpPlus.class);
+            return JacksonUtil.parseObject(data, PpPlus.class);
         else throw new RuntimeException("get response error");
     }
 
@@ -643,9 +651,9 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-           log.error("match error ",exc);
+            log.error("match error ", exc);
 
-           throw new TipsRuntimeException(exc.getMessage());
+            throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
@@ -661,14 +669,14 @@ public class OsuGetService {
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-            log.error("match error ",exc);
+            log.error("match error ", exc);
 
             throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
 
-    public JsonNode getAttributes(Long id) {
+    public BeatmapDifficultyAttributes getAttributes(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -676,39 +684,55 @@ public class OsuGetService {
         body.add("mods", String.valueOf((Mod.DoubleTime.value | Mod.HardRock.value)));
         body.add("ruleset_id", "2");
         HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode, Mod... mods) {
-        StringBuilder sb = new StringBuilder();
+
+    public BeatmapDifficultyAttributes getAttributes(Integer id) {
+        return getAttributes((long) id);
+    }
+
+    public BeatmapDifficultyAttributes getAttributes(Long id, Mod... mods) {
+        StringBuilder sb = new StringBuilder('[');
         for (var m : mods) {
-            sb.append(m.abbreviation);
+            sb.append(m.abbreviation).append(',');
         }
+        sb.append(']');
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .queryParam("mods",0)
+                .queryParam("mods", sb.toString())
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode, int mods) {
 
+    public BeatmapDifficultyAttributes getAttributes(Integer id, Mod... mods) {
+        return getAttributes((long) id, mods);
+    }
+
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode, Mod... mods) {
+        StringBuilder sb = new StringBuilder('[');
+        for (var m : mods) {
+            sb.append(m.abbreviation).append(',');
+        }
+        sb.append(']');
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .queryParam("mods", sb.toString())
+                .queryParam("ruleset_id", osuMode.getModeValue())
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        } catch (Exception e) {
-            log.error("new error", e.getCause());
-        }
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode) {
+    public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode, Mod... mods) {
+        return getAttributes((long)id, osuMode, mods);
+    }
+
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -716,18 +740,22 @@ public class OsuGetService {
         body.add("ruleset_id", String.valueOf(osuMode.getModeValue()));
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
 
-        var c = template.postForObject(uri, httpEntity, JsonNode.class);
+        var c = template.postForObject(uri, httpEntity, BeatmapDifficultyAttributes.class);
         return c;
     }
+    public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode) {
+        return getAttributes((long)id, osuMode);
+    }
 
-    private HttpHeaders getHeader(){
+    private HttpHeaders getHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
         return headers;
     }
-    private HttpHeaders getHeader(BinUser user){
+
+    private HttpHeaders getHeader(BinUser user) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
