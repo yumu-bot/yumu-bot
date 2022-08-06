@@ -31,14 +31,9 @@ public class MatchStatistics {
         }
 
         //挨个计算ERA、DRA、MRA
-        for (var user : users.values()) {
-            user.calculateERA(minMQ);
-            user.calculateDRA(users.size(), scoreNum);
-            user.calculateMRA();
-        }
 
-        //如果人数<=2或者没换过人, 则ERA==MQ,并重新计算最终的MRA
-        //不用放缩ERA的模型了，直接用MQ模型，这样能解决掉某些极端情况的问题
+        //v1.3 如果人数<=2或者没换过人, 则ERA==MQ,并重新计算最终的MRA
+        //v2.0 不用放缩ERA的模型了，直接用MQ模型，这样能解决掉某些极端情况的问题
         /*
         if (users.size() <= 2 || users.size() * gameRounds.size() == scoreNum) {
             for (var user : users.values()) {
@@ -47,6 +42,19 @@ public class MatchStatistics {
             }
         }
          */
+
+        //v3.2 还是需要放缩ERA，这里有个ERA的缩放效果函数:(2/(1+e^(0.5-0.25参赛人数))-1，如果人数小于2也为0，需要在代码中表示出。
+
+
+        double sf = 2D / (1D + Math.exp(0.5D - 0.25D * users.size())) - 1D; //缩放因子 Scaling Factor
+        if (users.size() < 2) sf = 0D;
+
+        for (var user : users.values()) {
+            user.calculateERA(minMQ,sf);
+            user.calculateDRA(users.size(), scoreNum);
+            user.calculateMRA();
+        }
+
 
         //计算比分
         for (var round : gameRounds) {

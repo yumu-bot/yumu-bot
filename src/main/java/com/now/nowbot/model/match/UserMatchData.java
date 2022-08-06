@@ -51,9 +51,10 @@ public class UserMatchData {
         MQ = AMG / averageAMG;
     }
 
-    public void calculateERA(double minMQ) {
-        //ERA = (MQ - minMQ) / (1 - minMQ);
-        ERA = MQ;// ERA放缩取消，现在ERA与MQ等同了
+    public void calculateERA(double minMQ, double ScalingFactor) {
+        ERA = (MQ - minMQ * ScalingFactor) / (1 - minMQ * ScalingFactor);
+        //ERA = MQ; //ERA放缩取消，现在ERA与MQ等同了
+        //v3.2 ERA 放缩加回
     }
 
     public void calculateDRA(int playerNum, int scoreNum) {
@@ -191,7 +192,6 @@ public class UserMatchData {
     public void setSDRA(Double SDRA) {
         this.SDRA = SDRA;
     }
-
 
     public void setERA_index(double ERA_index) {
         this.ERA_index = ERA_index;
