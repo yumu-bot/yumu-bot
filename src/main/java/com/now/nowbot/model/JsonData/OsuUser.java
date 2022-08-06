@@ -409,4 +409,42 @@ public class OsuUser {
     public void setInterests(String interests) {
         this.interests = interests;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("OsuUser{");
+        sb.append("id=").append(id);
+        sb.append(", pp=").append(pp);
+        sb.append(", username='").append(username).append('\'');
+        sb.append(", statistics=").append(statistics);
+        sb.append(", playMode='").append(playMode).append('\'');
+        sb.append(", occupation='").append(occupation).append('\'');
+        sb.append(", discord='").append(discord).append('\'');
+        sb.append(", interests='").append(interests).append('\'');
+        sb.append(", beatmapSetCountUnranked=").append(beatmapSetCountUnranked);
+        sb.append(", beatmapSetCountRanked=").append(beatmapSetCountRanked);
+        sb.append(", beatmapSetCountRankedAndApproved=").append(beatmapSetCountRankedAndApproved);
+        sb.append(", beatmapSetCountPlaycounts=").append(beatmapSetCountPlaycounts);
+        sb.append(", mappingFollowerCount=").append(mappingFollowerCount);
+        sb.append(", hasSupported=").append(hasSupported);
+        sb.append(", isBot=").append(isBot);
+        sb.append(", pmFriendsOnly=").append(pmFriendsOnly);
+        sb.append(", cover=").append(cover);
+        sb.append(", profileOrder=").append(profileOrder);
+        sb.append(", previousName=").append(previousName);
+        sb.append(", joinDate='").append(joinDate).append('\'');
+        sb.append(", maxFriends=").append(maxFriends);
+        sb.append(", commentsCount=").append(commentsCount);
+        sb.append(", supportLeve=").append(supportLeve);
+        sb.append(", postCount=").append(postCount);
+        sb.append(", followerCount=").append(followerCount);
+        sb.append(", page='").append(page).append('\'');
+        sb.append(", avatarUrl='").append(avatarUrl).append('\'');
+        sb.append(", coverUrl='").append(coverUrl).append('\'');
+        sb.append(", country=").append(country);
+        sb.append(", kudosu=").append(kudosu);
+        sb.append(", rankHistory=").append(rankHistory);
+        sb.append('}');
+        return sb.toString();
+    }
 }

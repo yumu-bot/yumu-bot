@@ -4,10 +4,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.Image;
@@ -20,6 +23,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("ymp")
@@ -42,7 +46,7 @@ public class YmpService implements MessageService{
         boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         String name = matcher.group("name");
-        JSONArray dates;
+        List<Score> dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
         Long id = 0L;
@@ -66,26 +70,28 @@ public class YmpService implements MessageService{
         if(dates.size()==0){
             throw new TipsException("24h内无记录");
         }
-        JSONObject date = dates.getJSONObject(0);
+        var date = dates.get(0);
         var d = Ymp.getInstance(date);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
         Image img = from.uploadImage(ExternalResource.create(bytes));
         from.sendMessage(img.plus(d.getOut()));
+
+//        from.sendMessage(d.getOut());
 //        if (user != null){
 //            log.info(starService.ScoreToStar(user, date));
 //        }
     }
-    private JSONArray getDates(BinUser user, OsuMode mode, boolean isAll){
+    private List<Score> getDates(BinUser user, OsuMode mode, boolean isAll){
         if (isAll)
-            return osuGetService.getAllRecent(user, mode, 0, 1);
+            return osuGetService.getRecentN(user, mode, 0, 1);
         else
-            return osuGetService.getRecent(user, mode, 0, 1);
+            return osuGetService.getRecentN(user, mode, 0, 1);
     }
-    private JSONArray getDates(Long id, OsuMode mode, boolean isAll){
+    private List<Score> getDates(Long id, OsuMode mode, boolean isAll){
         if (isAll)
-            return osuGetService.getAllRecent(Math.toIntExact(id), mode, 0, 1);
+            return osuGetService.getRecentN(id, mode, 0, 1);
         else
-            return osuGetService.getRecent(Math.toIntExact(id), mode, 0, 1);
+            return osuGetService.getRecentN(id, mode, 0, 1);
     }
 }

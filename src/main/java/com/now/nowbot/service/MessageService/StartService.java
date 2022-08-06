@@ -49,9 +49,9 @@ public class StartService implements MessageService{
             starService.refouseStar(sc,adsstar);
             sb.append("今日刷新").append(adsstar).append("点金币\n").append("24小时后再次刷新\n");
         }
-        var date = osuGetService.getOsuRecent(user,0,1);
+        var date = osuGetService.getRecentN(user, user.getMode(),0,1);
         if (date.size()>0) {
-            sb.append(starService.ScoreToStar(user, date.getJSONObject(0)));
+            sb.append(starService.ScoreToStar(user, null));
         }
         sb.append("您有金币").append(sc.getStar()).append("点");
         from.sendMessage(new At(event.getSender().getId()).plus(sb.toString()));

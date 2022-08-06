@@ -13,8 +13,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
@@ -24,6 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 @Configuration
@@ -67,6 +73,13 @@ public class NowbotConfig {
                 throw new RequestException(response, statusCode);
             }
         });
+
+//        List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+//        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+//        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.ALL));
+//        messageConverters.add(converter);
+//
+//        template.setMessageConverters(messageConverters);
         return template;
     }
 

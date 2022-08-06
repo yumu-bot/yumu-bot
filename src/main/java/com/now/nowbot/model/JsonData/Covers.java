@@ -88,15 +88,16 @@ public class Covers {
 
     @Override
     public String toString() {
-        return "Covers{" +
-                "cover='" + cover + '\'' +
-                ", cover2x='" + cover2x + '\'' +
-                ", card='" + card + '\'' +
-                ", card2x='" + card2x + '\'' +
-                ", list='" + list + '\'' +
-                ", list2x='" + list2x + '\'' +
-                ", slimcover='" + slimcover + '\'' +
-                ", slimcover2x='" + slimcover2x + '\'' +
-                '}';
+        final StringBuilder sb = new StringBuilder("Covers{");
+        sb.append("cover='").append(cover).append('\'');
+        sb.append(", cover2x='").append(cover2x).append('\'');
+        sb.append(", card='").append(card).append('\'');
+        sb.append(", card2x='").append(card2x).append('\'');
+        sb.append(", list='").append(list).append('\'');
+        sb.append(", list2x='").append(list2x).append('\'');
+        sb.append(", slimcover='").append(slimcover).append('\'');
+        sb.append(", slimcover2x='").append(slimcover2x).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

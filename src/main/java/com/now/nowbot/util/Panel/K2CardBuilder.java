@@ -20,10 +20,12 @@ public class K2CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
+    public K2CardBuilder(Score score) {
     public K2CardBuilder(BeatMap beatMap, Score score, BeatmapAttribute beatMapAttribute) {
         //这是 pr panel 右上角最主要的信息矩形。
         super(1000,420);
 
+        BeatMap beatMap = score.getBeatMap();
         drawBaseRRect();
         drawLeftRank(score);
         drawLeftPassStatus(score);
@@ -232,5 +234,9 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.translate(0,8);
         canvas.drawTextLine(U4, 0, U4.getHeight() - U4.getXHeight(), colorWhite);
         canvas.restore();
+    }
+
+    public Image build() {
+        return super.build(20);
     }
 }

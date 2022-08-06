@@ -328,35 +328,6 @@ public class Statistics {
         this.pp = pp;
     }
 
-    @Override
-    public String toString() {
-        return "Statustucs{" +
-                "count50=" + count50 +
-                ", count100=" + count100 +
-                ", count300=" + count300 +
-                ", countGeki=" + countGeki +
-                ", countKatu=" + countKatu +
-                ", countMiss=" + countMiss +
-                ", rankedScore=" + rankedScore +
-                ", totalScore=" + totalScore +
-                ", accuracy=" + accuracy +
-                ", playCount=" + playCount +
-                ", playTime=" + playTime +
-                ", totalHits=" + totalHits +
-                ", maxCombo=" + maxCombo +
-                ", isRanked=" + isRanked +
-                ", globalRank=" + globalRank +
-                ", countryRank=" + countryRank +
-                ", levelCurrent=" + levelCurrent +
-                ", SS=" + SS +
-                ", SSH=" + SSH +
-                ", S=" + S +
-                ", SH=" + SH +
-                ", A=" + A +
-                ", levelProgress=" + levelProgress +
-                '}';
-    }
-
     public Integer getReplaysWatchedByOthers() {
         return replaysWatchedByOthers;
     }
@@ -383,5 +354,43 @@ public class Statistics {
 
     public Double getPP4K() {
         return PP4K;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Statistics{");
+        sb.append("count50=").append(count50);
+        sb.append(", count100=").append(count100);
+        sb.append(", count300=").append(count300);
+        sb.append(", countGeki=").append(countGeki);
+        sb.append(", countKatu=").append(countKatu);
+        sb.append(", countMiss=").append(countMiss);
+        sb.append(", rankedScore=").append(rankedScore);
+        sb.append(", totalScore=").append(totalScore);
+        sb.append(", pp=").append(pp);
+        sb.append(", accuracy=").append(accuracy);
+        sb.append(", playCount=").append(playCount);
+        sb.append(", playTime=").append(playTime);
+        sb.append(", totalHits=").append(totalHits);
+        sb.append(", maxCombo=").append(maxCombo);
+        sb.append(", isRanked=").append(isRanked);
+        sb.append(", globalRank=").append(globalRank);
+        sb.append(", replaysWatchedByOthers=").append(replaysWatchedByOthers);
+        sb.append(", countryRank=").append(countryRank);
+        sb.append(", levelCurrent=").append(levelCurrent);
+        sb.append(", levelProgress=").append(levelProgress);
+        sb.append(", SS=").append(SS);
+        sb.append(", SSH=").append(SSH);
+        sb.append(", S=").append(S);
+        sb.append(", SH=").append(SH);
+        sb.append(", A=").append(A);
+        sb.append(", countryRank7K=").append(countryRank7K);
+        sb.append(", countryRank4K=").append(countryRank4K);
+        sb.append(", rank7K=").append(rank7K);
+        sb.append(", rank4K=").append(rank4K);
+        sb.append(", PP7K=").append(PP7K);
+        sb.append(", PP4K=").append(PP4K);
+        sb.append('}');
+        return sb.toString();
     }
 }

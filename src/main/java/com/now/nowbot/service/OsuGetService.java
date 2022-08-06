@@ -1,7 +1,6 @@
 package com.now.nowbot.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.config.OSUConfig;
@@ -125,9 +124,9 @@ public class OsuGetService {
         body.add("scope", "public");
 
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
-        JSONObject s = template.postForObject(url, httpEntity, JSONObject.class);
-        botUser.setAccessToken(s.getString("access_token"));
-        botUser.nextTime(s.getLong("expires_in"));
+        var s = template.postForObject(url, httpEntity, JsonNode.class);
+        botUser.setAccessToken(s.get("access_token").asText());
+        botUser.nextTime(s.get("expires_in").asLong());
         return botUser.getAccessToken();
     }
 
@@ -178,18 +177,6 @@ public class OsuGetService {
 //        BindingUtil.writeOsuID(date.getString("username"), id);
     }
 
-//    public JsonNode getFrendList(BinUser user) {
-//        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
-//        String url = this.URL + "friends";
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-//        HttpEntity httpEntity = new HttpEntity(headers);
-//        ResponseEntity<JsonNode> c = template.exchange(url, HttpMethod.GET, httpEntity, JsonNode.class);
-//        return c.getBody();
-//    }
-
     public List<MicroUser> getFrendList(BinUser user) {
         if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
@@ -227,11 +214,7 @@ public class OsuGetService {
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
         if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID(), mode);
         String url = this.URL + "me" + '/' + mode.getName();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
@@ -239,6 +222,7 @@ public class OsuGetService {
 
     /**
      * 通过绑定信息获得user数据 刷新osu name
+     *
      * @param user
      * @return
      */
@@ -247,15 +231,10 @@ public class OsuGetService {
         String url;
         if (user.getMode() == null) {
             url = this.URL + "me";
-        }
-        else {
+        } else {
             url = this.URL + "me" + '/' + user.getMode().getName();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
@@ -277,11 +256,7 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName)
                 .queryParam("key", "username")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
@@ -315,11 +290,7 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
                 .queryParam("key", "id")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
@@ -331,25 +302,18 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         return c.getBody();
     }
+
     public String getPlayerInfoStr(Long id, OsuMode mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
@@ -367,11 +331,7 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
                 .queryParam("key", "id")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
@@ -394,11 +354,7 @@ public class OsuGetService {
                 .queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
@@ -419,34 +375,29 @@ public class OsuGetService {
                 .queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
         ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<BpInfo>>() {});
+                new ParameterizedTypeReference<List<BpInfo>>() {
+                });
         return c.getBody();
     }
+
     public List<JsonNode> getBestPerformance_raw(Long id, OsuMode mode, int s, int e) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
                 .queryParam("limit", e)
                 .queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
         ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<JsonNode>>() {});
+                new ParameterizedTypeReference<List<JsonNode>>() {
+                });
         return c.getBody();
     }
 
@@ -458,205 +409,87 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public JSONArray getOsuRecent(BinUser user, int s, int e) {
-        return getRecent(user, OsuMode.OSU, s, e);
-    }
-
-    public JSONArray getOsuRecent(int id, int s, int e) {
-        return getRecent(id, OsuMode.OSU, s, e);
-    }
-
-    public JSONArray getOsuAllRecent(BinUser user, int s, int e) {
-        return getAllRecent(user, OsuMode.OSU, s, e);
-    }
-
-    public JSONArray getOsuAllRecent(int id, int s, int e) {
-        return getAllRecent(id, OsuMode.OSU, s, e);
-    }
-
-    public JSONArray getRecent(BinUser user, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
-                .queryParam("mode", mode)
-                .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
-    }
     public List<Score> getRecentN(BinUser user, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = getHeader(user);
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity,  new ParameterizedTypeReference<List<Score>>() {
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }
 
     /***
-     * 包含fail的
-     * @param user
-     * @param mode
-     * @param s
-     * @param e
+     * 获得成绩 不包含fail
+     * @param userId
+     * @param mode 模式
+     * @param s 从开始
+     * @param e 不包含本身
      * @return
      */
-    public JSONArray getAllRecent(BinUser user, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
+    public List<Score> getRecentN(long userId, OsuMode mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
+                .queryParam("mode", mode)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
+        });
+        return c.getBody();
+    }
+
+    public List<Score> getAllRecentN(long userId, OsuMode mode, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
                 .queryParam("mode", mode)
                 .queryParam("include_fails", 1)
                 .queryParam("limit", e)
                 .queryParam("offset", s)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = getHeader();
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
+        });
         return c.getBody();
     }
 
-    /**
-     * 获得上次成绩,不包含fail
-     *
-     * @param id
-     * @param mode
-     * @param s
-     * @param e
-     * @return
-     */
-    public JSONArray getRecent(int id, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
-                .queryParam("mode", mode)
-                .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        } catch (RestClientException restClientException) {
-            restClientException.printStackTrace();
-            return null;
-        }
-        return c.getBody();
+    public List<Score> getRecentN(int userId, OsuMode mode, int s, int e) {
+        return getRecentN((long) userId, mode, s, e);
     }
 
-    public JSONArray getAllRecent(int id, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/recent")
-                .queryParam("mode", mode)
-                .queryParam("include_fails", 1)
-                .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
-        return c.getBody();
+    public List<Score> getAllRecentN(int userId, OsuMode mode, int s, int e) {
+        return getAllRecentN((long) userId, mode, s, e);
     }
 
-    /***
-     * 获取Score成绩的基类
-     * @param bid bid
-     * @param id 用户id
-     * @param mode 游戏模式
-     * @param mods mod,仅支持类似:[HD,DT]
-     * @return
-     */
-    public JSONObject getScore(int bid, int id, String mode, String[] mods) {
-        var uribulid = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + id)
-                .queryParam("mode", mode);
-        if (mods != null)
-            for (int i = 0; i < mods.length; i++) {
-                uribulid.queryParam("mods[]", mods[i]);
-            }
-
-        URI uri = uribulid.build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return c.getBody();
-    }
-
-    public JSONObject getScore(int bid, int uid) {
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, String mods) throws JsonProcessingException {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid)
-                .queryParam("mode", "osu")
+                .queryParam("mode", mode)
+                .queryParam("mods", mods)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = getHeader();
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<BeatmapUserScore> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatmapUserScore.class);
 
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return null;
-        }
         return c.getBody();
     }
 
-    public JSONObject getScore(int bid, BinUser user) {
+    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, String mods) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
-                .queryParam("mode", "osu")
+                .queryParam("mode", mode)
+                .queryParam("mods", mods)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = getHeader(user);
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JSONObject> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return null;
-        }
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<BeatmapUserScore> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatmapUserScore.class);
         return c.getBody();
     }
 
@@ -689,11 +522,7 @@ public class OsuGetService {
     public BeatMap getMapInfo(int bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
@@ -706,14 +535,10 @@ public class OsuGetService {
      * @param uset
      * @return
      */
-    public BeatMap getMapInfo(int bid, BinUser uset) {
+    public BeatMap getMapInfo(int bid, BinUser user) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + uset.getAccessToken(this));
+        HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
@@ -730,11 +555,7 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "scores/" + mode + "/" + id + "/download")
 //                .queryParam("mode","osu")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<byte[]> c = null;
@@ -772,7 +593,7 @@ public class OsuGetService {
 
         var data = response.getBody().get("user_data");
         if (data != null)
-            return JacksonUtil.parseObject(data ,PpPlus.class);
+            return JacksonUtil.parseObject(data, PpPlus.class);
         else throw new RuntimeException("get response error");
     }
 
@@ -808,10 +629,7 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/")
                 .queryParam("ids[]", sb.toString())
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
@@ -827,19 +645,15 @@ public class OsuGetService {
     public Match getMatchInfo(int mid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
         HttpEntity httpEntity = new HttpEntity(headers);
         Match data = null;
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-           log.error("match error ",exc);
+            log.error("match error ", exc);
 
-           throw new TipsRuntimeException(exc.getMessage());
+            throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
@@ -849,107 +663,103 @@ public class OsuGetService {
                 .queryParam("before", before)
                 .queryParam("limit", 100)
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
         HttpEntity httpEntity = new HttpEntity(headers);
         Match data = null;
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
         } catch (Exception exc) {
-            log.error("match error ",exc);
+            log.error("match error ", exc);
 
             throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
     }
 
-    public JsonNode getAttributes(Long id) {
+    public BeatmapDifficultyAttributes getAttributes(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
         MultiValueMap body = new LinkedMultiValueMap();
         body.add("mods", String.valueOf((Mod.DoubleTime.value | Mod.HardRock.value)));
         body.add("ruleset_id", "2");
         HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode, Mod... mods) {
-        StringBuilder sb = new StringBuilder();
+
+    public BeatmapDifficultyAttributes getAttributes(Integer id) {
+        return getAttributes((long) id);
+    }
+
+    public BeatmapDifficultyAttributes getAttributes(Long id, Mod... mods) {
+        StringBuilder sb = new StringBuilder('[');
         for (var m : mods) {
-            sb.append(m.abbreviation);
+            sb.append(m.abbreviation).append(',');
         }
+        sb.append(']');
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .queryParam("mods",0)
+                .queryParam("mods", sb.toString())
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode, int mods) {
 
+    public BeatmapDifficultyAttributes getAttributes(Integer id, Mod... mods) {
+        return getAttributes((long) id, mods);
+    }
+
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode, Mod... mods) {
+        StringBuilder sb = new StringBuilder('[');
+        for (var m : mods) {
+            sb.append(m.abbreviation).append(',');
+        }
+        sb.append(']');
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .queryParam("mods", sb.toString())
+                .queryParam("ruleset_id", osuMode.getModeValue())
                 .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
+        HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        } catch (Exception e) {
-            log.error("new error", e.getCause());
-        }
+        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
         return c.getBody();
     }
-    public JsonNode getAttributes(Long id, OsuMode osuMode, String mods) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .queryParam("mods",mods)
-                .queryParam("ruleset_id",osuMode.getModeValue())
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + getToken());
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
-        return c.getBody();
+    public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode, Mod... mods) {
+        return getAttributes((long)id, osuMode, mods);
     }
-    public JsonNode serchBeatmap(String name) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/lookup")
-                .queryParam("filename",name)
-                .build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
 
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("ruleset_id", String.valueOf(osuMode.getModeValue()));
+        HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
+
+        var c = template.postForObject(uri, httpEntity, BeatmapDifficultyAttributes.class);
+        return c;
+    }
+    public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode) {
+        return getAttributes((long)id, osuMode);
+    }
+
+    private HttpHeaders getHeader() {
+        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
+        return headers;
+    }
 
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = null;
-        try {
-            c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        } catch (RestClientException e) {
-            throw new RuntimeException(e);
-        }
-        return c.getBody();
+    private HttpHeaders getHeader(BinUser user) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        return headers;
     }
 }

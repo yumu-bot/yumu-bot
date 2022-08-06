@@ -190,34 +190,35 @@ public class BpInfo {
         this.statistics = statistics;
     }
 
-    @Override
-    public String toString() {
-        return "BpInfo{" +
-                "id=" + id +
-                ", userId=" + userId +
-                ", accuracy=" + accuracy +
-                ", mods=" + mods +
-                ", score=" + score +
-                ", maxCombo=" + maxCombo +
-                ", passed=" + passed +
-                ", perfect=" + perfect +
-                ", rank='" + rank + '\'' +
-                ", createTime='" + createTime + '\'' +
-                ", bestId=" + bestId +
-                ", pp=" + pp +
-                ", mode='" + mode + '\'' +
-                ", modeInt=" + modeInt +
-                ", replay=" + replay +
-                ", \nbeatmap=" + beatmap +
-                ", \nbeatmapset=" + beatmapset +
-                ", \nweight=" + weight +
-                ", \nstatistics=" + statistics +
-                '}';
-    }
-
     public LocalDateTime getTime(){
         if (createTime != null) return LocalDateTime.parse(createTime, formatter);
         return LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BpInfo{");
+        sb.append("id=").append(id);
+        sb.append(", userId=").append(userId);
+        sb.append(", accuracy=").append(accuracy);
+        sb.append(", mods=").append(mods);
+        sb.append(", score=").append(score);
+        sb.append(", maxCombo=").append(maxCombo);
+        sb.append(", passed=").append(passed);
+        sb.append(", perfect=").append(perfect);
+        sb.append(", rank='").append(rank).append('\'');
+        sb.append(", createTime='").append(createTime).append('\'');
+        sb.append(", bestId=").append(bestId);
+        sb.append(", pp=").append(pp);
+        sb.append(", mode='").append(mode).append('\'');
+        sb.append(", modeInt=").append(modeInt);
+        sb.append(", replay=").append(replay);
+        sb.append(", beatmap=").append(beatmap);
+        sb.append(", beatmapset=").append(beatmapset);
+        sb.append(", weight=").append(weight);
+        sb.append(", statistics=").append(statistics);
+        sb.append('}');
+        return sb.toString();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -245,10 +246,11 @@ public class BpInfo {
 
         @Override
         public String toString() {
-            return "Weight{" +
-                    "percentage=" + percentage +
-                    ", pp=" + pp +
-                    '}';
+            final StringBuilder sb = new StringBuilder("Weight{");
+            sb.append("percentage=").append(percentage);
+            sb.append(", pp=").append(pp);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }
