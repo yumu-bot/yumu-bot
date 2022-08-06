@@ -20,8 +20,7 @@ public class K2CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public K2CardBuilder(Score score) {
-    public K2CardBuilder(BeatMap beatMap, Score score, BeatmapAttribute beatMapAttribute) {
+    public K2CardBuilder(Score score, BeatmapAttribute beatMapAttribute) {
         //这是 pr panel 右上角最主要的信息矩形。
         super(1000,420);
 
