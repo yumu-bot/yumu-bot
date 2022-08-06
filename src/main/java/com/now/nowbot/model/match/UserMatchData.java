@@ -53,8 +53,9 @@ public class UserMatchData {
 
     public void calculateERA(double minMQ, double ScalingFactor) {
         ERA = (MQ - minMQ * ScalingFactor) / (1 - minMQ * ScalingFactor);
-        //ERA = MQ; //ERA放缩取消，现在ERA与MQ等同了
-        //v3.2 ERA 放缩加回
+        //ERA = MQ;
+        //v2.0 ERA放缩取消，现在ERA与MQ等同了
+        //v3.2 ERA放缩加回，增加了缩放因子
     }
 
     public void calculateDRA(int playerNum, int scoreNum) {
