@@ -74,7 +74,7 @@ public class TestRaService implements MessageService {
                 for (var score : game.getScoreInfos()) {
                     try {
                         strData.append(score.getUserId()).append(',')
-                                .append((score.getAccuracy() + "     ").replace(" ",""), 0, 6).append(',')
+                                .append(String.format("%4.4f",score.getAccuracy())).append(',')
                                 .append('[').append(String.join("|", score.getMods())).append("],")
                                 .append(score.getScore()).append(',')
                                 .append(score.getMaxCombo()).append(',')
