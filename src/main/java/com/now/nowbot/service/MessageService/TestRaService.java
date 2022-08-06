@@ -63,7 +63,7 @@ public class TestRaService implements MessageService {
                             .append(game.getTeamType()).append(',')
                             .append((game.getBeatmap().getDifficultyRating())).append(',')
                             .append(game.getBeatmap().getTotalLength()).append(',')
-                            .append(Arrays.toString(game.getMods()).replaceAll(" ","|")).append(',')
+                            .append(Arrays.toString(game.getMods()).replaceAll(", ","|")).append(',')
                             .append(game.getBeatmap().getId()).append(',')
                             .append(osuGetService.getMapInfo(game.getBeatmap().getId()).getMaxCombo()).append(',')
                             .append('\n');
