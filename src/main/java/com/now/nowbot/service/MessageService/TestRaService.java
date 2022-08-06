@@ -16,8 +16,8 @@ import java.util.regex.Matcher;
 
 @Service("t-ra")
 public class TestRaService implements MessageService {
-    static DateTimeFormatter f1 = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-    static DateTimeFormatter f2 = DateTimeFormatter.ofPattern("yy-MM-dd hh:mm:ss");
+    static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
+    static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
     OsuGetService osuGetService;
     @Autowired
     TestRaService(OsuGetService osuGetService){
@@ -57,8 +57,8 @@ public class TestRaService implements MessageService {
             if (node.getGame() != null) {
                 var game = node.getGame();
                 try {
-                    strData.append(game.getStartTime().format(f2)).append(',')
-                            .append("placeholder").append(',')
+                    strData.append(game.getStartTime().format(Date1)).append(',')
+                            .append(game.getStartTime().format(Date2)).append(',')
                             .append(game.getMode()).append(',')
                             .append(game.getScoringType()).append(',')
                             .append(game.getTeamType()).append(',')
