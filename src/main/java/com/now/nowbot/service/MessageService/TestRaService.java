@@ -35,7 +35,7 @@ public class TestRaService implements MessageService {
 
         if (from instanceof Group group){
             try {
-                var f = group.getFiles().uploadNewFile(System.currentTimeMillis()+".txt", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+                var f = group.getFiles().uploadNewFile(matcher.group("id")+".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
             }
@@ -58,6 +58,7 @@ public class TestRaService implements MessageService {
                 var game = node.getGame();
                 try {
                     strData.append(game.getStartTime().format(f2)).append(',')
+                            .append("placeholder").append(',')
                             .append(game.getMode()).append(',')
                             .append(game.getScoringType()).append(',')
                             .append(game.getTeamType()).append(',')
@@ -65,7 +66,7 @@ public class TestRaService implements MessageService {
                             .append(game.getBeatmap().getTotalLength()).append(',')
                             .append(Arrays.toString(game.getMods()).replaceAll(", ","|")).append(',')
                             .append(game.getBeatmap().getId()).append(',')
-                            .append(osuGetService.getMapInfo(game.getBeatmap().getId()).getMaxCombo()).append(',')
+                            .append(osuGetService.getMapInfo(game.getBeatmap().getId()).getMaxCombo())
                             .append('\n');
                 } catch (Exception e) {
                     strData.append(e.getMessage()).append('\n');//.append("  error---->")
@@ -73,7 +74,7 @@ public class TestRaService implements MessageService {
                 for (var score : game.getScoreInfos()) {
                     try {
                         strData.append(score.getUserId()).append(',')
-                                .append((score.getAccuracy() + "     "), 0, 6).append(',')
+                                .append((score.getAccuracy() + "     ").replace(" ",""), 0, 6).append(',')
                                 .append('[').append(String.join("|", score.getMods())).append("],")
                                 .append(score.getScore()).append(',')
                                 .append(score.getMaxCombo()).append(',')
@@ -81,7 +82,7 @@ public class TestRaService implements MessageService {
                                 .append(score.getPerfect() != 0).append(',')
                                 .append(score.getMatch().get("slot").asText()).append(',')
                                 .append(score.getMatch().get("team").asText()).append(',')
-                                .append(score.getMatch().get("pass").asText()).append(',')
+                                .append(score.getMatch().get("pass").asText())
                                 .append("\n");
                     } catch (Exception e) {
                         strData.append("  error---->").append(e.getMessage()).append('\n');
