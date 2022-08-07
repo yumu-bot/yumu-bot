@@ -30,6 +30,7 @@ public class RatingService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
+        int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
 
 
@@ -39,7 +40,7 @@ public class RatingService implements MessageService {
             match.getEvents().addAll(0, events);
         }
 
-        var data = calculate(match, skipedRounds, includingFail, osuGetService);
+        var data = calculate(match, skipedRounds, deletEndRounds, includingFail, osuGetService);
         List<UserMatchData> finalUsers = data.allUsers;
 
         //结果数据
@@ -102,7 +103,7 @@ public class RatingService implements MessageService {
         }
     }
 
-    public static RatingData calculate(Match match, int skipedRounds, boolean includingFail, OsuGetService osuGetService) {
+    public static RatingData calculate(Match match, int skipedRounds, int deletEndRounds, boolean includingFail, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
@@ -123,7 +124,9 @@ public class RatingService implements MessageService {
         }
 
         //跳过前几轮
-        games.subList(0, skipedRounds).clear();
+
+        int s = games.size();
+        games = games.stream().limit(s-deletEndRounds).skip(skipedRounds).toList();
 
         int scoreNum = 0;
         //每一局单独计算
