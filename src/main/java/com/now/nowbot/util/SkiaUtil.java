@@ -528,17 +528,17 @@ public class SkiaUtil {
 
     public static int getRankColor(String rank) {
         if (rank == null) rank = "F";
-        return switch (rank.trim().toUpperCase()) {
-            case "S" -> Color.makeRGB(240, 148, 80);
-            case "SH" -> Color.makeRGB(180, 180, 180);
-            case "X" -> Color.makeRGB(254, 246, 103);
-            case "XH" -> Color.makeRGB(248, 248, 248);
-            case "A" -> Color.makeRGB(121, 196, 113);
-            case "B" -> Color.makeRGB(62, 188, 239);
-            case "C" -> Color.makeRGB(151, 129, 183);
-            case "D" -> Color.makeRGB(234, 107, 72);
-            default -> Color.makeRGB(32, 32, 32);
-        };
+        switch (rank.trim().toUpperCase()) {
+            case "S" : return  Color.makeRGB(240, 148, 80);
+            case "SH" : return  Color.makeRGB(180, 180, 180);
+            case "X" : return  Color.makeRGB(254, 246, 103);
+            case "XH" : return  Color.makeRGB(248, 248, 248);
+            case "A" : return  Color.makeRGB(121, 196, 113);
+            case "B" : return  Color.makeRGB(62, 188, 239);
+            case "C" : return  Color.makeRGB(151, 129, 183);
+            case "D" : return  Color.makeRGB(234, 107, 72);
+            case default : return  Color.makeRGB(32, 32, 32);
+        }
     }
 
     public static String getV3Score(Score score, BeatmapAttribute beatMapAttribute) {
@@ -549,9 +549,9 @@ public class SkiaUtil {
         double v3 = 0;
 
         switch (score.getMode()){
-            case OSU, CATCH, DEFAULT -> v3 = fc * (0.7f * c / m + 0.3f * ap8);
-            case TAIKO -> v3 = fc * ( 0.75f * c / m + 0.25f * ap8);
-            case MANIA -> v3 = fc * ( 0.01f * c / m + 0.99f * ap8);
+            case OSU, CATCH, DEFAULT :  v3 = fc * (0.7f * c / m + 0.3f * ap8); break;
+            case TAIKO :  v3 = fc * ( 0.75f * c / m + 0.25f * ap8); break;
+            case MANIA : v3 = fc * ( 0.01f * c / m + 0.99f * ap8); break;
         }
 
         return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求

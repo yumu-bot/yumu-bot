@@ -57,31 +57,31 @@ public enum Mod {
     }
 
     public static Mod fromStr(String modStr){
-        return switch (modStr.toUpperCase()) {
-            case "" -> None;
-            case "NF" -> NoFail;
-            case "EZ" -> Easy;
-            case "HT" -> HalfTime;
-            case "TD" -> TouchDevice;
-            case "HR" -> HardRock;
-            case "HD" -> Hidden;
-            case "FI" -> FadeIn;
-            case "SD" -> SuddenDeath;
-            case "PF" -> Perfect;
-            case "DT" -> DoubleTime;
-            case "NC" -> Nightcore;
-            case "FL" -> Flashlight;
-            case "RL" -> Relax;
-            case "AP" -> Autopilot;
-            case "AT" -> Autoplay;
-            case "CM" -> Cinema;
-            case "SO" -> SpunOut;
-            case "CP" -> KeyCoop;
-            case "MR" -> Mirror;
-            case "RD" -> Random;
-            case "SV2" -> ScoreV2;
-            default -> Other;
-        };
+        switch (modStr.toUpperCase()) {
+            case "" : return  None;
+            case "NF" : return  NoFail;
+            case "EZ" : return  Easy;
+            case "HT" : return  HalfTime;
+            case "TD" : return  TouchDevice;
+            case "HR" : return  HardRock;
+            case "HD" : return  Hidden;
+            case "FI" : return  FadeIn;
+            case "SD" : return  SuddenDeath;
+            case "PF" : return  Perfect;
+            case "DT" : return  DoubleTime;
+            case "NC" : return  Nightcore;
+            case "FL" : return  Flashlight;
+            case "RL" : return  Relax;
+            case "AP" : return  Autopilot;
+            case "AT" : return  Autoplay;
+            case "CM" : return  Cinema;
+            case "SO" : return  SpunOut;
+            case "CP" : return  KeyCoop;
+            case "MR" : return  Mirror;
+            case "RD" : return  Random;
+            case "SV2" : return  ScoreV2;
+            case default : return  Other;
+        }
     }
 
     public boolean check(int i){

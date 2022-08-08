@@ -40,13 +40,13 @@ public enum OsuMode {
         }
     }
     public static OsuMode getMode(int desc){
-        return switch (desc) {
-            case 0 -> OSU;
-            case 1 -> TAIKO;
-            case 2 -> CATCH;
-            case 3 -> MANIA;
-            default -> DEFAULT;
-        };
+        switch (desc) {
+            case 0 : return OSU;
+            case 1 : return TAIKO;
+            case 2 : return CATCH;
+            case 3 : return MANIA;
+            case default : return DEFAULT;
+        }
     }
 
     @Override
