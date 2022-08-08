@@ -1,22 +1,27 @@
 package com.now.nowbot.entity;
 
+import com.now.nowbot.model.enums.OsuMode;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_beatmap",indexes = {
-        @Index(name = "sid", columnList = "map_id,beatmap_id"),
-        @Index(name = "find", columnList = "beatmap_id"),
-        @Index(name = "map_find", columnList = "map_id")
+        @Index(name = "map_find", columnList = "map_id"),
+        @Index(name = "find", columnList = "beatmap_id, mode"),
+        @Index(name = "sid", columnList = "map_id, beatmap_id"),
 })
 public class BeatmapLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "beatmap_id")
-    private Integer beatmapId;
+    private Long beatmapId;
 
     @Column(name = "map_id")
     private Integer mapsetId;
+
+    @Column(name = "mapper_id")
+    private Integer userId;
 
     //是否为转谱
     @Column(name = "is_convert")
@@ -52,11 +57,11 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     private Integer mode;
 
-    public Integer getBeatmapId() {
+    public Long getBeatmapId() {
         return beatmapId;
     }
 
-    public void setBeatmapId(Integer bitmapID) {
+    public void setBeatmapId(Long bitmapID) {
         this.beatmapId = bitmapID;
     }
 
@@ -196,11 +201,22 @@ public class BeatmapLite {
         this.hit_length = hit_length;
     }
 
-    public Integer getMode() {
+    public OsuMode getMode() {
+        return OsuMode.getMode(mode);
+    }
+    public int getModeInt() {
         return mode;
     }
 
     public void setMode(Integer mode) {
         this.mode = mode;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 }

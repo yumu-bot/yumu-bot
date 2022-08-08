@@ -39,6 +39,15 @@ public enum OsuMode {
             default:return DEFAULT;
         }
     }
+    public static OsuMode getMode(int desc){
+        return switch (desc) {
+            case 0 -> OSU;
+            case 1 -> TAIKO;
+            case 2 -> CATCH;
+            case 3 -> MANIA;
+            default -> DEFAULT;
+        };
+    }
 
     @Override
     public String toString() {

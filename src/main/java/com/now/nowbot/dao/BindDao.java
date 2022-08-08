@@ -35,6 +35,9 @@ public class BindDao {
         }
         return fromLite(liteData.get(0));
     }
+    public BinUser getUser(int qq) throws BindException {
+        return getUser((long) qq);
+    }
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
         var liteData = bindMapper.getByOsuId(osuId);
         if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);

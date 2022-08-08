@@ -74,10 +74,8 @@ public class YmpService implements MessageService{
         var d = Ymp.getInstance(date);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
-        Image img = from.uploadImage(ExternalResource.create(bytes));
-        from.sendMessage(img.plus(d.getOut()));
+        QQMsgUtil.sendImageAndText(from, bytes, d.getOut());
 
-//        from.sendMessage(d.getOut());
 //        if (user != null){
 //            log.info(starService.ScoreToStar(user, date));
 //        }

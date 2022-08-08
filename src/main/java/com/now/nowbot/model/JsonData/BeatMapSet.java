@@ -2,6 +2,9 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.lang.Nullable;
+
+import java.util.HashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BeatMapSet {
@@ -41,6 +44,20 @@ public class BeatMapSet {
     Boolean storyboard;
     @JsonProperty("covers")
     Covers covers;
+
+    @JsonIgnoreProperties
+    Boolean availabilityDownloadDisable;
+    @JsonIgnoreProperties
+    @Nullable
+    String availabilityInformation;
+    @JsonProperty("availability")
+    public void setAvt(HashMap<String, String> map){
+        availabilityDownloadDisable = Boolean.valueOf(map.get("download_disabled"));
+        availabilityInformation = map.get("more_information");
+    }
+
+    @JsonIgnoreProperties
+    boolean fromDatabases = false;
 
     public Integer getId() {
         return id;
@@ -186,7 +203,27 @@ public class BeatMapSet {
         this.covers = covers;
     }
 
-    @Override
+    public Boolean getAvailabilityDownloadDisable() {
+        return availabilityDownloadDisable;
+    }
+
+    public void setAvailabilityDownloadDisable(Boolean availabilityDownloadDisable) {
+        this.availabilityDownloadDisable = availabilityDownloadDisable;
+    }
+
+    @Nullable
+    public String getAvailabilityInformation() {
+        return availabilityInformation;
+    }
+
+    public boolean isFromDatabases() {
+        return fromDatabases;
+    }
+
+    public void FromDatabases() {
+        this.fromDatabases = true;
+    }
+
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMapSet{");
         sb.append("id=").append(id);
@@ -207,6 +244,8 @@ public class BeatMapSet {
         sb.append(", tags='").append(tags).append('\'');
         sb.append(", storyboard=").append(storyboard);
         sb.append(", covers=").append(covers);
+        sb.append(", availabilityDownloadDisable=").append(availabilityDownloadDisable);
+        sb.append(", availabilityInformation='").append(availabilityInformation).append('\'');
         sb.append('}');
         return sb.toString();
     }

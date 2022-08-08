@@ -144,7 +144,7 @@ public class FriendService implements MessageService{
             }
         }
 
-        from.sendMessage(from.uploadImage(ExternalResource.create(p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes())));
+        QQMsgUtil.sendImage(from, p.build().encodeToData(EncodedImageFormat.JPEG,80).getBytes());
         card.build().close();
         p.build().close();
     }

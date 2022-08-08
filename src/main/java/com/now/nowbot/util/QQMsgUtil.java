@@ -39,22 +39,34 @@ public class QQMsgUtil {
 
     public static MessageReceipt sendImage(Contact from, Image img){
         var date = img.encodeToData(EncodedImageFormat.PNG).getBytes();
+        befor(from);
         return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
     }
     public static MessageReceipt sendImage(Contact from, Image img, EncodedImageFormat format){
         var date = img.encodeToData(format).getBytes();
+        befor(from);
         return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
     }
     public static MessageReceipt sendImage(Contact from, Image img, int size){
         if (size < 0 || size > 100) throw new RuntimeException("范围异常");
         var date = img.encodeToData(EncodedImageFormat.JPEG,size).getBytes();
+        befor(from);
         return from.sendMessage(from.uploadImage(ExternalResource.create(date)));
     }
     public static MessageReceipt sendImage(Contact from, byte[] imgDate){
+        befor(from);
         return from.sendMessage(from.uploadImage(ExternalResource.create(imgDate)));
     }
     public static MessageReceipt sendTextAndImage(Contact from,String text, byte[] imgDate){
+        befor(from);
         return from.sendMessage(new PlainText(text).plus(from.uploadImage(ExternalResource.create(imgDate))));
     }
+    public static MessageReceipt sendImageAndText(Contact from, byte[] imgDate,String text){
+        befor(from);
+        return from.sendMessage(from.uploadImage(ExternalResource.create(imgDate)).plus(new PlainText(text)));
+    }
 
+    private static void befor(Contact from) {
+        from.sendMessage("正在处理图片请稍后...");
+    }
 }

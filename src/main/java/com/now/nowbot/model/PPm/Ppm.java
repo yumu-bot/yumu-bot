@@ -52,13 +52,14 @@ public abstract class Ppm {
     protected double value8;
 
     public static Ppm getInstance(OsuMode mode, OsuUser user, List<BpInfo> bps){
-        return switch (mode){
-            case OSU -> new PpmOsu(user, bps);
-            case TAIKO -> new PpmTaiko(user, bps);
-            case CATCH -> new PpmCatch(user, bps);
-            case MANIA -> new PpmMania(user, bps);
-            case default -> null;
+        Ppm ppm = null;
+        switch (mode) {
+            case OSU : ppm = new PpmOsu(user, bps);break;
+            case TAIKO : ppm = new PpmTaiko(user, bps);break;
+            case CATCH : ppm = new PpmCatch(user, bps);break;
+            case MANIA : ppm = new PpmMania(user, bps);break;
         };
+        return ppm;
     }
 
     public double getValue1(){

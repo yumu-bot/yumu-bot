@@ -21,9 +21,9 @@ public class OsuBindUserLite {
     @Column(name = "osu_name")
     private String osuName;
     private Long qq;
-    @Column(name = "access_token", columnDefinition = "LONGTEXT", length = 5000)
+    @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
-    @Column(name = "refresh_token", columnDefinition = "LONGTEXT", length = 5000)
+    @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
     private Long time;
 

@@ -19,7 +19,7 @@ public class BeatMap {
     @JsonProperty("total_length")
     Integer totalLength;
     @JsonProperty("hit_length")
-    Boolean hitLength;
+    Integer hitLength;
     @JsonProperty("user_id")
     Integer userId;
     String version;
@@ -110,11 +110,11 @@ public class BeatMap {
         this.totalLength = totalLength;
     }
 
-    public Boolean getHitLength() {
+    public Integer getHitLength() {
         return hitLength;
     }
 
-    public void setHitLength(Boolean hitLength) {
+    public void setHitLength(Integer hitLength) {
         this.hitLength = hitLength;
     }
 

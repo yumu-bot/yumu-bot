@@ -477,7 +477,9 @@ public class OsuGetService {
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<BeatmapUserScore> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatmapUserScore.class);
-
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
         return c.getBody();
     }
 
@@ -490,6 +492,23 @@ public class OsuGetService {
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<BeatmapUserScore> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatmapUserScore.class);
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
+        return c.getBody();
+    }
+    public JsonNode getScoreR(long bid, BinUser user, OsuMode mode, String mods) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
+                .queryParam("mode", mode)
+                .queryParam("mods", mods)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader(user);
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
         return c.getBody();
     }
 
@@ -520,6 +539,15 @@ public class OsuGetService {
      * @return
      */
     public BeatMap getMapInfo(int bid) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
+        return c.getBody();
+    }
+    public BeatMap getMapInfo(long bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -745,6 +773,17 @@ public class OsuGetService {
     }
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode) {
         return getAttributes((long)id, osuMode);
+    }
+
+    public KudosuHistory getUserKudosu(BinUser user){
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + 9590557 + "/kudosu")
+                .build().encode().toUri();
+        var headers = getHeader(user);
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        var x = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<KudosuHistory>() {
+        });
+        return x.getBody();
     }
 
     private HttpHeaders getHeader() {

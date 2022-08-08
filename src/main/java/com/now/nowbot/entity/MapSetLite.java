@@ -8,8 +8,6 @@ import javax.persistence.*;
 })
 public class MapSetLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "map_id")
     private Integer mapset_id;
 
@@ -25,7 +23,7 @@ public class MapSetLite {
     private String creator;
     private Integer favourite_count;
     private Boolean nsfw;
-    private String play_count;
+    private Long play_count;
     private String preview_url;
     //状态
     private String status;
@@ -37,7 +35,7 @@ public class MapSetLite {
 //    麻婆id?
     private Integer user_id;
     //有没有视频
-    private Boolean video;
+    private Boolean storyboard;
     //是否关闭下载 一般为false true一般是版权原因下架
     private Boolean download_disabled;
     //是否有排名?
@@ -124,11 +122,11 @@ public class MapSetLite {
         this.nsfw = nsfw;
     }
 
-    public String getPlay_count() {
+    public Long getPlayCount() {
         return play_count;
     }
 
-    public void setPlay_count(String play_count) {
+    public void setPlay_count(Long play_count) {
         this.play_count = play_count;
     }
 
@@ -180,12 +178,12 @@ public class MapSetLite {
         this.user_id = user_id;
     }
 
-    public Boolean getVideo() {
-        return video;
+    public Boolean getStoryboard() {
+        return storyboard;
     }
 
-    public void setVideo(Boolean video) {
-        this.video = video;
+    public void setStoryboard(Boolean video) {
+        this.storyboard = video;
     }
 
     public Boolean getDownload_disabled() {

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 
+import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -31,7 +32,7 @@ public class PingService implements MessageService{
             x.close();t.close();
             date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (date != null) from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(date), from)).recallIn(2000);
+        if (date != null) QQMsgUtil.sendImage(from, date).recallIn(2000);
 
     }
 }

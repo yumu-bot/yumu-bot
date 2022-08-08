@@ -126,7 +126,7 @@ public class RatingService implements MessageService {
         //跳过前几轮
 
         int s = games.size();
-        games = games.stream().limit(s-deletEndRounds).skip(skipedRounds).toList();
+        games = games.stream().limit(s-deletEndRounds).skip(skipedRounds).filter(gameInfo -> gameInfo.getEndTime() != null).toList();
 
         int scoreNum = 0;
         //每一局单独计算

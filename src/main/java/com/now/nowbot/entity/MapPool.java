@@ -10,6 +10,10 @@ public class MapPool {
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @Column()
+    Integer fatherId;
+
+    @Column(nullable = false)
     private String info;
 
     public Integer getId() {
@@ -20,4 +24,11 @@ public class MapPool {
         this.id = id;
     }
 
+    public Integer getFatherId() {
+        return fatherId;
+    }
+
+    public void setFatherId(Integer fatherId) {
+        this.fatherId = fatherId;
+    }
 }

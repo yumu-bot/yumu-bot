@@ -4,6 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Image;
@@ -205,14 +206,7 @@ public class CatpanelService implements MessageService {
             canvas.save();
             canvas.scale(scaleX,scaleY);
             canvas.drawImage(img, -offsetX/scaleX, -offsetY/scaleY);
-            from.sendMessage(
-                    ExternalResource.uploadAsImage(
-                            ExternalResource.create(
-                                    surface.makeImageSnapshot(IRect.makeXYWH(0,0, CATPANLE_WHITE, CATPANLE_HEIGHT)).encodeToData(EncodedImageFormat.PNG).getBytes()
-                            ),from
-                    )
-            );
-
+            QQMsgUtil.sendImage(from, surface.makeImageSnapshot(IRect.makeXYWH(0,0, CATPANLE_WHITE, CATPANLE_HEIGHT)).encodeToData(EncodedImageFormat.PNG).getBytes());
         }
     }
 

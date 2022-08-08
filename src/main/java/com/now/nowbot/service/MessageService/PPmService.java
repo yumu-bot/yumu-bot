@@ -16,7 +16,6 @@ import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Surface;
@@ -54,7 +53,7 @@ public class PPmService implements MessageService {
                 canvas.translate(40, 40);
                 canvas.drawImage(card.build(), 0, 0);
                 card.build().close();
-                event.getSubject().sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(surface.makeImageSnapshot().encodeToData().getBytes()), event.getSubject()));
+                QQMsgUtil.sendImage(event.getSubject(), surface.makeImageSnapshot().encodeToData().getBytes());
             }
             return;
         }
@@ -252,7 +251,7 @@ public class PPmService implements MessageService {
         try (uBgMe; uBgOther) {
             cardMe.build().close();
             cardOther.build().close();
-            from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create( panel.build().encodeToData().getBytes()), from));
+            QQMsgUtil.sendImage(from, panel.build().encodeToData().getBytes());
             panel.build().close();
         }
     }
