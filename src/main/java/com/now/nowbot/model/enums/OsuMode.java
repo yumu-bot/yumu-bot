@@ -45,7 +45,7 @@ public enum OsuMode {
             case 1 : return TAIKO;
             case 2 : return CATCH;
             case 3 : return MANIA;
-            case default : return DEFAULT;
+            default : return DEFAULT;
         }
     }
 

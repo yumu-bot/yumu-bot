@@ -80,7 +80,7 @@ public enum Mod {
             case "MR" : return  Mirror;
             case "RD" : return  Random;
             case "SV2" : return  ScoreV2;
-            case default : return  Other;
+            default : return  Other;
         }
     }
 

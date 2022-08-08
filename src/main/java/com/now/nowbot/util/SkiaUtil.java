@@ -537,7 +537,7 @@ public class SkiaUtil {
             case "B" : return  Color.makeRGB(62, 188, 239);
             case "C" : return  Color.makeRGB(151, 129, 183);
             case "D" : return  Color.makeRGB(234, 107, 72);
-            case default : return  Color.makeRGB(32, 32, 32);
+            default : return  Color.makeRGB(32, 32, 32);
         }
     }
 

@@ -50,13 +50,14 @@ public class TbpPanelBuilder extends PanelBuilder{
     }
 
     public Image build(OsuMode mode) {
-        var modeStr = switch (mode){
-            case OSU -> ":O";
-            case TAIKO -> ":T";
-            case CATCH -> ":C";
-            case MANIA -> ":M";
-            case default -> "";
-        };
+        String modeStr;
+        switch (mode){
+            case OSU : modeStr = ":O";
+            case TAIKO : modeStr =  ":T";
+            case CATCH : modeStr =  ":C";
+            case MANIA : modeStr =  ":M";
+            default : modeStr =  "";
+        }
         drawName("TBP"+modeStr);
         return super.build(20, "Today BP");
     }
