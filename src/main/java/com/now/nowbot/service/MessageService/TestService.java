@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +24,8 @@ public class TestService implements MessageService {
 
     OsuGetService osuGetService;
     QQMessageDao qqMessageDao;
+
+    private static Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
     @Autowired
     public TestService(OsuGetService osuGetService, QQMessageDao qqMessageDao){
         this.osuGetService = osuGetService;
@@ -33,6 +36,26 @@ public class TestService implements MessageService {
     @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
         var msg = event.getMessage();
+
+        if (msg.contentToString().startsWith("!testname")){
+           var m = pattern.matcher(msg.contentToString());
+           if (m.find()){
+               var names = m.group("ids").split(",");
+               var nameList = new ArrayList<String>();
+
+               for (var name:names){
+                   var nt = name.trim();
+                   if (!nt.equals("")) nameList.add(nt);
+               }
+
+               StringBuilder sb = new StringBuilder();
+               for (var name:nameList){
+                   sb.append(name).append(" -> ").append(osuGetService.getOsuId(name)).append('\n');
+               }
+               event.getSubject().sendMessage(sb.toString());
+           }
+           return;
+        } else
         if (!(event instanceof GroupMessageEvent) || ((GroupMessageEvent) event).getGroup().getId() != 746671531L)
             return;
         var grp = ((GroupMessageEvent) event).getGroup();

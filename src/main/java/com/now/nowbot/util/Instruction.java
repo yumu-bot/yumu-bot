@@ -95,7 +95,7 @@ public enum Instruction {
     TEST(TestService.class,
             Pattern.compile("^[!！]test.*")),
 
-    TESTID(TestGetId.class,    Pattern.compile("^[!！]ids\\s*(?<ids>((\\d)+(,)?)+)")),
+    TESTID(TestGetId.class,    Pattern.compile("^[!！]testid\\s*(?<ids>((\\d)+(,)?)+)")),
 
     TESTRA(TestRaService.class,    Pattern.compile("[!！]testra(\\s+(?<id>\\d+))")),
 
