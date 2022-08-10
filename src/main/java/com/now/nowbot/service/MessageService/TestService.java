@@ -50,7 +50,14 @@ public class TestService implements MessageService {
 
                StringBuilder sb = new StringBuilder();
                for (var name:nameList){
-                   sb.append(osuGetService.getOsuId(name)).append(',');
+                   Long id = 0L;
+                   try {
+                        id = osuGetService.getOsuId(name);
+
+                   } catch (Exception e) {
+                       // do nothing
+                   }
+                   sb.append(id).append(',');
                }
                event.getSubject().sendMessage(sb.toString());
            }
