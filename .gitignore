@@ -37,3 +37,5 @@ build/
 ### Logs ###
 logs/
 data/
+config/
+.jpb
