@@ -26,7 +26,7 @@ public class TestGetId implements MessageService{
                 var id = Integer.parseInt(idStr);
                 try {
                     var data = osuGetService.getPlayerInfo((long) id, OsuMode.OSU);
-                    sb.append(id).append("***").append(data.getUsername()).append('\n');
+                    sb.append(data.getUsername()).append(',');
                 } catch (Exception e) {
                     sb.append(id).append("!!!").append("getError").append('\n');
                 }
