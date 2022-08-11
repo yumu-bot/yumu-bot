@@ -1,8 +1,9 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.beatmap.BeatmapAttribute;
+import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.skija.*;
 import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
@@ -541,20 +542,97 @@ public class SkiaUtil {
         }
     }
 
-    public static String getV3Score(Score score, BeatmapAttribute beatMapAttribute) {
+    public static double getV3ScoreProgress(Score score, BeatMap beatMap) { //下下策
+        OsuMode mode = score.getMode();
+
+        int s_300 = score.getStatistics().getCount300();
+        int s_100 = score.getStatistics().getCount100();
+        int s_50 = score.getStatistics().getCount50();
+        int s_g = score.getStatistics().getCountGeki();
+        int s_k = score.getStatistics().getCountKatu();
+        int s_0 = score.getStatistics().getCountMiss();
+
+        int s = beatMap.getMaxCombo();
+
+        double progress;
+        if(!score.getPassed()){
+            switch (mode) {
+                case OSU : progress = 1D * (s_300 + s_100 + s_50 + s_0) / s;
+                case TAIKO, CATCH : progress = 1D * (s_300 + s_100 + s_0) / s;
+                case MANIA : progress = 1D * (s_g + s_300 + s_k + s_100 + s_50 + s_0) / s;
+                case default : progress = 1D;
+            }
+        } else {
+            progress = 1D;
+        }
+        return progress;
+    }
+
+    public static String getV3Score(Score score, BeatMap beatmap) {
+        // 算 v3 分（lazer的计分方式
+        // 有个版本指出，目前 stable 的 v2 是这个算法的复杂版本，acc是10次方，转盘分数纳入mod倍率
+
+        OsuMode mode = score.getMode();
+        List<String> mods = score.getMods();
+
         int fc = 100_0000;
+        double i = getV3ModsMultiplier(mods,mode);
+        double p = getV3ScoreProgress(score,beatmap); //下下策
         int c = score.getStatistics().getMaxCombo();
-        int m = beatMapAttribute.getBeatmapMaxCombo();
+        int m = beatmap.getMaxCombo();
         double ap8 = Math.pow(score.getAccuracy(), 8f);
         double v3 = 0;
 
         switch (score.getMode()){
-            case OSU, CATCH, DEFAULT :  v3 = fc * (0.7f * c / m + 0.3f * ap8); break;
-            case TAIKO :  v3 = fc * ( 0.75f * c / m + 0.25f * ap8); break;
-            case MANIA : v3 = fc * ( 0.01f * c / m + 0.99f * ap8); break;
+            case OSU, CATCH, DEFAULT : v3 = fc * i * (0.7f * c / m + 0.3f * ap8) * p;
+            case TAIKO : v3 = fc * i * ( 0.75f * c / m + 0.25f * ap8) * p;
+            case MANIA : v3 = fc * i * ( 0.01f * c / m + 0.99f * ap8) * p;
         }
 
         return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求
+    }
+
+    public static double getV3ModsMultiplier(List<String> mod, OsuMode mode) {
+        double index = 1.00D;
+
+        if (mod.contains("EZ")) index *= 0.50D;
+
+        if (mode == OsuMode.OSU){
+            if (mod.contains("HT")) index *= 0.30D;
+            if (mod.contains("HR")) index *= 1.10D;
+            if (mod.contains("DT")) index *= 1.20D;
+            if (mod.contains("NC")) index *= 1.20D;
+            if (mod.contains("HD")) index *= 1.06D;
+            if (mod.contains("FL")) index *= 1.12D;
+            if (mod.contains("SO")) index *= 0.90D;
+        }
+
+        if (mode == OsuMode.TAIKO){
+            if (mod.contains("HT")) index *= 0.30D;
+            if (mod.contains("HR")) index *= 1.06D;
+            if (mod.contains("DT")) index *= 1.12D;
+            if (mod.contains("NC")) index *= 1.12D;
+            if (mod.contains("HD")) index *= 1.06D;
+            if (mod.contains("FL")) index *= 1.12D;
+
+        }
+
+        if (mode == OsuMode.CATCH){
+            if (mod.contains("HT")) index *= 0.30D;
+            if (mod.contains("HR")) index *= 1.12D;
+            if (mod.contains("DT")) index *= 1.12D;
+            if (mod.contains("NC")) index *= 1.12D;
+            if (mod.contains("FL")) index *= 1.12D;
+
+        }
+
+        if (mode == OsuMode.MANIA){
+            if (mod.contains("HT")) index *= 0.50D;
+            if (mod.contains("CO")) index *= 0.90D;
+
+        }
+
+        return index;
     }
 
     public class PolylineBuilder {

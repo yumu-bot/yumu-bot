@@ -17,10 +17,15 @@ public class K2CardBuilder extends PanelBuilder {
 
     Paint colorRRect = new Paint().setARGB(255,56,46,50);
     Paint colorDarkGrey = new Paint().setARGB(255,100,100,100);
-    Paint colorGrey = new Paint().setARGB(255,170,170,170);
+    Paint colorGrey = new Paint().setARGB(255,170,170,170); //Meh 漏掉的小果
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
+    Paint colorLightBlue = new Paint().setARGB(255,141,207,244); //Perfect 300 良 大果
+    Paint colorYellow = new Paint().setARGB(255,254,246,103); //Great 50 小果
+    Paint colorGreen = new Paint().setARGB(255,121,196,113); //Good 100 可 中果
+    Paint colorBlue = new Paint().setARGB(255,94,138,198); //Ok
+    Paint colorRed = new Paint().setARGB(255,236,107,118); //miss 不可
 
-    public K2CardBuilder(Score score, BeatmapAttribute beatMapAttribute) {
+    public K2CardBuilder(Score score, BeatMap beatmap, BeatmapAttribute beatMapAttribute) {
         //这是 pr panel 右上角最主要的信息矩形。
         super(1000,420);
 
@@ -28,9 +33,9 @@ public class K2CardBuilder extends PanelBuilder {
         drawBaseRRect();
         drawLeftRank(score);
         drawLeftPassStatus(score);
-        drawScoreIndex(score, beatMapAttribute);
+        drawScoreIndex(score, beatmap);
         drawMods(score);
-        drawScoreInfo(beatMap);
+        drawScoreInfo(score);
         drawBeatMapInfo(beatMap);
     }
 
@@ -140,13 +145,13 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawScoreIndex(Score score, BeatmapAttribute beatMapAttribute){
+    private void drawScoreIndex(Score score, BeatMap beatmap){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
-
+        
         Font fontS84 = new Font(TorusSB, 84);
         Font fontS60 = new Font(TorusSB, 60);
 
-        String Scr = SkiaUtil.getV3Score(score, beatMapAttribute);
+        String Scr = SkiaUtil.getV3Score(score, beatmap);
         String s1t = Scr.substring(0,2);
         String s2t = Scr.substring(3);
 
@@ -185,7 +190,7 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawScoreInfo(BeatMap beatMap){
+    private void drawScoreInfo(Score score){
 
     }
     private void drawBeatMapInfo(BeatMap beatMap){
@@ -202,6 +207,60 @@ public class K2CardBuilder extends PanelBuilder {
         }
         return RankImage;
     }
+
+    private void drawScoreUnit (String ScoreIndex, int ScoreCount, int TotalCount){
+        //这是分数显示的组件，因为复用较多，写成私有方法方便调用
+        Paint paint;
+        String ScoreName;
+        String ScoreCountStr;
+
+        switch (ScoreIndex){
+            case "o_300", "t_300", "c_300" -> {ScoreName = "300"; paint = colorLightBlue;}
+            case "o_100", "c_100" -> {ScoreName = "100"; paint = colorGreen;}
+            case "o_50", "c_50" -> {ScoreName = "50"; paint = colorYellow;}
+            case "t_150" -> {ScoreName = "150"; paint = colorGreen;}
+            case "m_320" -> {ScoreName = "320"; paint = colorLightBlue;}
+            case "m_300" -> {ScoreName = "300"; paint = colorYellow;}
+            case "m_200" -> {ScoreName = "200"; paint = colorGreen;}
+            case "m_100" -> {ScoreName = "100"; paint = colorBlue;}
+            case "m_50" -> {ScoreName = "50"; paint = colorGrey;}
+
+            case "c_dl" -> {ScoreName = "DL"; paint = colorGrey;}
+            case "o_0", "t_0", "c_0", "m_0" -> {ScoreName = "0"; paint = colorRed;}
+
+            default -> {ScoreName = "??"; paint = colorDarkGrey;}
+        }
+
+        Typeface TorusSB = SkiaUtil.getTorusSemiBold();
+        Font fontS30 = new Font(TorusSB, 30);
+
+        if (ScoreCount > 9999) {
+            ScoreCountStr = "####";
+        } else if (ScoreCount >= 0){
+            ScoreCountStr = String.valueOf(ScoreCount);
+        } else {
+            ScoreCountStr = "0";
+        }
+
+        TextLine L = TextLine.make(ScoreName, fontS30);
+        TextLine R = TextLine.make(ScoreCountStr, fontS30);
+
+        float RRectLength = 500f * ScoreCount / TotalCount;
+        if (RRectLength < 20f && RRectLength > 0f) RRectLength = 20f; //这是圆角矩形的最小宽度，如果为 0 直接跳过
+
+        canvas.save();
+        if (RRectLength != 0f){
+            canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), paint);
+            canvas.restore();
+        }
+        canvas.translate(- 14 - L.getWidth(),2);
+        canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), colorWhite);
+        canvas.restore();
+
+        canvas.translate(512,2);
+        canvas.drawTextLine(R, 0, R.getHeight() - R.getXHeight(), colorWhite);
+    }
+
 
     private void drawInfoUnit (Image IndexImage, String IndexName, String LargeInfo, String SmallInfo, String AssistInfo) {
         //这是一个 200 * 50 大小的组件，因为复用较多，写成私有方法方便调用

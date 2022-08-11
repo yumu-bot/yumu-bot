@@ -20,31 +20,31 @@ public enum Mod {
     //Autopilot
     Autopilot(1<<13, "AP"),
     Perfect(1<<14, "PF"),
-    Key4(1<<15, ""),
-    Key5(1<<16, ""),
-    Key6(1<<17, ""),
-    Key7(1<<18, ""),
-    Key8(1<<19, ""),
+    Key4(1<<15, "4K"),
+    Key5(1<<16, "5K"),
+    Key6(1<<17, "6K"),
+    Key7(1<<18, "7K"),
+    Key8(1<<19, "8K"),
     FadeIn(1<<20, "FI"),
     // mania rd
     Random(1<<21, "RD"),
     //Cinema
     Cinema(1<<22, "CM"),
     //仅 osu!cuttingedge
-    TargetPractice(1<<23, "?"),
-    Key9(1<<24, "K9"),
+    TargetPractice(1<<23, "TP"),
+    Key9(1<<24, "9K"),
     KeyCoop(1<<25, "CP"),
-    Key1(1<<26, "K1"),
-    Key3(1<<27, "K2"),
-    Key2(1<<28, "K3"),
-    ScoreV2(1<<29, "SV2"),
+    Key1(1<<26, "1K"),
+    Key3(1<<27, "3K"),
+    Key2(1<<28, "2K"),
+    ScoreV2(1<<29, "V2"),
     Mirror(1<<30, "MR"),
     //    keyMod(Key1.value | Key2.value | Key3.value | Key4.value | Key5.value | Key6.value | Key7.value | Key8.value | Key9.value | KeyCoop.value),
     keyMod(521109504, "?"),
     //    FreeModAllowed(NoFail.value | Easy.value | Hidden.value | HardRock.value | SuddenDeath.value | Flashlight.value | FadeIn.value | Relax.value | Relax2.value | SpunOut.value | keyMod.value),
-    FreeModAllowed(522171579, "?"),
+    FreeModAllowed(522171579, "FM"),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
-    ScoreIncreaseMods(1049688, "?"),
+    ScoreIncreaseMods(1049688, "IM"),
     // 其他未上传的mod
     Other(0, "?")
     ;
