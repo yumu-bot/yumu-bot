@@ -558,10 +558,10 @@ public class SkiaUtil {
         if(!score.getPassed()){
             switch (mode) {
                 case OSU : progress = 1D * (s_300 + s_100 + s_50 + s_0) / s; break;
-                case TAIKO:
+                case TAIKO: {}
                 case CATCH : progress = 1D * (s_300 + s_100 + s_0) / s; break;
                 case MANIA : progress = 1D * (s_g + s_300 + s_k + s_100 + s_50 + s_0) / s; break;
-                case default : progress = 1D;
+                default : progress = 1D;
             }
         } else {
             progress = 1D;
