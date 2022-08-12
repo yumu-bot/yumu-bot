@@ -26,15 +26,17 @@ public class msgController {
     OsuGetService osuGetService;
     Bot bot;
     BindDao bindDao;
+
     @Autowired
-    public msgController(Bot bot, OsuGetService osuGetService, BindDao dao){
+    public msgController(Bot bot, OsuGetService osuGetService, BindDao dao) {
         this.bot = bot;
         this.osuGetService = osuGetService;
         bindDao = dao;
         WsController.getInstance().setMsgController(this);
     }
+
     @GetMapping("${osu.callbackpath}")
-    public String bind(@RequestParam("code")String code, @RequestParam("state") String stat){
+    public String bind(@RequestParam("code") String code, @RequestParam("state") String stat) {
         var data = stat.split(" ");
         if (data.length != 2) {
             return "噶?";
@@ -62,7 +64,7 @@ public class msgController {
                     } catch (Exception e) {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
                         sb.append("绑定连接已超时\n请重新绑定");
-                        return  sb.toString();
+                        return sb.toString();
                     }
                 }
                 BinUser bd = new BinUser(msg.qq(), code);
@@ -85,9 +87,10 @@ public class msgController {
         }
         return sb.toString();
     }
+
     @PostMapping("/api")
     public String opa(@RequestHeader("state") @Nullable String stat,
-                      @RequestBody @Nullable JsonNode body){
+                      @RequestBody @Nullable JsonNode body) {
         String[] data;
         String code;
         try {
@@ -101,24 +104,23 @@ public class msgController {
         }
 
         var ret = saveBind(code, data[1]);
-        log.info("绑定api端口被访问,参数: state->{} code->{}:{}",stat,code,ret);
+        log.info("绑定api端口被访问,参数: state->{} code->{}:{}", stat, code, ret);
         return ret;
     }
+
     @PostMapping("/gitup")
-    public void update(@RequestHeader("User-Agent") String agent, @RequestHeader("X-Gitee-Event") String event, @RequestBody JsonNode body){
-        if (agent.trim().equals("git-oschina-hook")){
-            log.info("收到一条推送\n{}",body.toString());
-            String msg = body.findValue("message").asText("nothing");
-            var gp = bot.getGroup(746671531L);
-            if (gp != null) {
-                gp.sendMessage("git收到推送事件 " + event + "\n" + msg);
-                if (msg.startsWith("update")) {
-                    try {
-                        gp.sendMessage("即将更新重启...");
-                        UpdateUtil.update();
-                    } catch (IOException e) {
-                        gp.sendMessage("error");
-                    }
+    public void update(@RequestBody JsonNode body) {
+        log.info("收到一条推送\n{}", body.toString());
+        String name = body.findValue("user_name").asText("unknown user");
+        String msg = body.findValue("title").asText("nothing");
+        var gp = bot.getGroup(746671531L);
+        if (gp != null) {
+            gp.sendMessage("git收到" + name + "推送\n" + msg);
+            if (msg.startsWith("update")) {
+                try {
+                    UpdateUtil.update();
+                } catch (IOException e) {
+                    gp.sendMessage("error");
                 }
             }
         }
