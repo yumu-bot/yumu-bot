@@ -542,34 +542,19 @@ public class SkiaUtil {
         }
     }
 
-    public static double getV3ScoreProgress(Score score, BeatMap beatMap) { //下下策
+    public static double getV3ScoreProgress(Score score) { //下下策
         OsuMode mode = score.getMode();
-
-        int s_300 = score.getStatistics().getCount300();
-        int s_100 = score.getStatistics().getCount100();
-        int s_50 = score.getStatistics().getCount50();
-        int s_g = score.getStatistics().getCountGeki();
-        int s_k = score.getStatistics().getCountKatu();
-        int s_0 = score.getStatistics().getCountMiss();
-
-        int s = beatMap.getMaxCombo();
-
         double progress;
+
         if(!score.getPassed()){
-            switch (mode) {
-                case OSU : progress = 1D * (s_300 + s_100 + s_50 + s_0) / s; break;
-                case TAIKO: {}
-                case CATCH : progress = 1D * (s_300 + s_100 + s_0) / s; break;
-                case MANIA : progress = 1D * (s_g + s_300 + s_k + s_100 + s_50 + s_0) / s; break;
-                default : progress = 1D;
-            }
+            progress = 1D * score.getStatistics().getCountAll(mode) / score.getBeatMap().getMaxCombo();
         } else {
             progress = 1D;
         }
         return progress;
     }
 
-    public static String getV3Score(Score score, BeatMap beatmap) {
+    public static String getV3Score(Score score) {
         // 算 v3 分（lazer的计分方式
         // 有个版本指出，目前 stable 的 v2 是这个算法的复杂版本，acc是10次方，转盘分数纳入mod倍率
 
@@ -578,9 +563,9 @@ public class SkiaUtil {
 
         int fc = 100_0000;
         double i = getV3ModsMultiplier(mods,mode);
-        double p = getV3ScoreProgress(score,beatmap); //下下策
+        double p = getV3ScoreProgress(score); //下下策
         int c = score.getStatistics().getMaxCombo();
-        int m = beatmap.getMaxCombo();
+        int m = score.getBeatMap().getMaxCombo();
         double ap8 = Math.pow(score.getAccuracy(), 8f);
         double v3 = 0;
 
@@ -600,43 +585,45 @@ public class SkiaUtil {
 
         if (mod.contains("EZ")) index *= 0.50D;
 
-        if (mode == OsuMode.OSU){
-            if (mod.contains("HT")) index *= 0.30D;
-            if (mod.contains("HR")) index *= 1.10D;
-            if (mod.contains("DT")) index *= 1.20D;
-            if (mod.contains("NC")) index *= 1.20D;
-            if (mod.contains("HD")) index *= 1.06D;
-            if (mod.contains("FL")) index *= 1.12D;
-            if (mod.contains("SO")) index *= 0.90D;
-        }
+        switch (mode){
+            case OSU:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.10D;
+                if (mod.contains("DT")) index *= 1.20D;
+                if (mod.contains("NC")) index *= 1.20D;
+                if (mod.contains("HD")) index *= 1.06D;
+                if (mod.contains("FL")) index *= 1.12D;
+                if (mod.contains("SO")) index *= 0.90D;
+            } break;
 
-        if (mode == OsuMode.TAIKO){
-            if (mod.contains("HT")) index *= 0.30D;
-            if (mod.contains("HR")) index *= 1.06D;
-            if (mod.contains("DT")) index *= 1.12D;
-            if (mod.contains("NC")) index *= 1.12D;
-            if (mod.contains("HD")) index *= 1.06D;
-            if (mod.contains("FL")) index *= 1.12D;
+            case TAIKO:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.06D;
+                if (mod.contains("DT")) index *= 1.12D;
+                if (mod.contains("NC")) index *= 1.12D;
+                if (mod.contains("HD")) index *= 1.06D;
+                if (mod.contains("FL")) index *= 1.12D;
+            } break;
 
-        }
+            case CATCH:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.12D;
+                if (mod.contains("DT")) index *= 1.12D;
+                if (mod.contains("NC")) index *= 1.12D;
+                if (mod.contains("FL")) index *= 1.12D;
+            } break;
 
-        if (mode == OsuMode.CATCH){
-            if (mod.contains("HT")) index *= 0.30D;
-            if (mod.contains("HR")) index *= 1.12D;
-            if (mod.contains("DT")) index *= 1.12D;
-            if (mod.contains("NC")) index *= 1.12D;
-            if (mod.contains("FL")) index *= 1.12D;
-
-        }
-
-        if (mode == OsuMode.MANIA){
-            if (mod.contains("HT")) index *= 0.50D;
-            if (mod.contains("CO")) index *= 0.90D;
-
+            case MANIA: {
+                if (mod.contains("HT")) index *= 0.50D;
+                if (mod.contains("CO")) index *= 0.90D;
+            }
         }
 
         return index;
     }
+
+
+
 
     public class PolylineBuilder {
         ArrayList<Float> point = new ArrayList<>();

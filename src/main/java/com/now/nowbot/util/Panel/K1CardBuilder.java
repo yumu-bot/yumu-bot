@@ -2,6 +2,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.util.*;
 import org.jetbrains.skija.*;
 
@@ -15,10 +16,12 @@ public class K1CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public K1CardBuilder(BeatMap beatMap) {
+    public K1CardBuilder(Score score) {
         //这是 pr panel的左侧物件合集，严格来说不算卡片。但写一起方便管理。
         //这个卡片没有作为背景的圆角矩形，是透明的，注意！
         super(880,790);
+
+        BeatMap beatMap = score.getBeatMap();
 
         drawLeftRRect(beatMap);
         drawLeftMapSR(beatMap);
@@ -135,11 +138,10 @@ public class K1CardBuilder extends PanelBuilder {
         Image MapStatusImage;
 
         switch (MapStatusStr){
-            case "ranked": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_RANKED;
-            case "qualified": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_QUALIFIED;
-            case "loved": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_LOVED;
-            case "unranked": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_UNRANKED;
-            default: MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_UNRANKED;
+            case "ranked": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_RANKED; break;
+            case "qualified": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_QUALIFIED; break;
+            case "loved": MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_LOVED; break;
+            case "unranked", default: MapStatusImage = PanelUtil.OBJECT_MAPSTATUS_UNRANKED;
         }
 
         //画底层圆角矩形

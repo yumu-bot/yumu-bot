@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.Map;
 
@@ -24,6 +25,7 @@ public class Statistics {
     Integer countKatu;
     @JsonProperty("count_miss")
     Integer countMiss;
+    Integer countAll;
     @JsonProperty("ranked_score")
     Long rankedScore;
     @JsonProperty("total_score")
@@ -154,6 +156,28 @@ public class Statistics {
 
     public Long getRankedScore() {
         return rankedScore;
+    }
+
+    public Integer getCountAll(OsuMode mode) {
+        int countAll = 0;
+        int s_300 = getCount300();
+        int s_100 = getCount100();
+        int s_50 = getCount50();
+        int s_g = getCountGeki();
+        int s_k = getCountKatu();
+        int s_0 = getCountMiss();
+
+        switch (mode) {
+            case OSU : countAll = s_300 + s_100 + s_50 + s_0; break;
+            case TAIKO, CATCH : countAll = s_300 + s_100 + s_0; break;
+            case MANIA : countAll = s_g + s_300 + s_k + s_100 + s_50 + s_0; break;
+            case default :
+        }
+        return countAll;
+    }
+
+    public void setCountAll(Integer countAll) {
+        this.countAll = countAll;
     }
 
     public void setRankedScore(Long rankedScore) {

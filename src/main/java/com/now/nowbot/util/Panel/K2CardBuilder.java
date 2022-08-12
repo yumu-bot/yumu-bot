@@ -1,9 +1,8 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.beatmap.BeatmapAttribute;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
@@ -25,25 +24,24 @@ public class K2CardBuilder extends PanelBuilder {
     Paint colorBlue = new Paint().setARGB(255,94,138,198); //Ok
     Paint colorRed = new Paint().setARGB(255,236,107,118); //miss 不可
 
-    public K2CardBuilder(Score score, BeatMap beatmap, BeatmapAttribute beatMapAttribute) {
+    public K2CardBuilder(Score score) {
         //这是 pr panel 右上角最主要的信息矩形。
         super(1000,420);
 
-        BeatMap beatMap = score.getBeatMap();
         drawBaseRRect();
-        drawLeftRank(score);
-        drawLeftPassStatus(score);
-        drawScoreIndex(score, beatmap);
+        drawRank(score);
+        drawPassStatus(score);
+        drawScore(score);
         drawMods(score);
+        drawScoreIndex(score);
         drawScoreInfo(score);
-        drawBeatMapInfo(beatMap);
     }
 
     private void drawBaseRRect() {
         canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
-    private void drawLeftRank(Score score){
+    private void drawRank(Score score){
         double ArcDegree = score.getAccuracy() * 360f;
         Image RankImage = getRankImage(score.getRank());
         Image AccuracyImage = null;
@@ -76,7 +74,7 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawLeftPassStatus(Score score){
+    private void drawPassStatus(Score score){
         Image Play0 = null;
         Image Clear0 = null;
         Image NoMiss0 = null;
@@ -99,38 +97,38 @@ public class K2CardBuilder extends PanelBuilder {
             e.printStackTrace();
         }
 
-        boolean con1 = true; //这里应该是 游玩时间长于一半，才可算作 play 条件
+        boolean con1 = SkiaUtil.getV3ScoreProgress(score) >= 0.5D; //这里应该是 游玩时间长于一半，才可算作 play 条件，目前用这个下下策方法
         boolean con2 = score.getPassed();
         boolean con3 = score.getStatistics().getCountMiss() == 0;
         boolean con4 = score.getPerfect();
 
         Image a1,a2,a3,a4;
 
-        if (!con1){
+        if (con4){
             a1 = Play0;
             a2 = Clear0;
             a3 = NoMiss0;
-            a4 = FullCombo0;
-        } else if (!con2){
-            a1 = Play1;
+            a4 = FullCombo1;
+        } else if (con3){
+            a1 = Play0;
             a2 = Clear0;
-            a3 = NoMiss0;
+            a3 = NoMiss1;
             a4 = FullCombo0;
-        } else if (!con3){
+        } else if (con2){
             a1 = Play0;
             a2 = Clear1;
             a3 = NoMiss0;
             a4 = FullCombo0;
-        } else if (!con4){
-            a1 = Play0;
+        } else if (con1){
+            a1 = Play1;
             a2 = Clear0;
-            a3 = NoMiss1;
+            a3 = NoMiss0;
             a4 = FullCombo0;
         } else {
             a1 = Play0;
             a2 = Clear0;
             a3 = NoMiss0;
-            a4 = FullCombo1;
+            a4 = FullCombo0;
         }
 
         canvas.save();
@@ -145,15 +143,17 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawScoreIndex(Score score, BeatMap beatmap){
+    private void drawScore(Score score){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         
         Font fontS84 = new Font(TorusSB, 84);
         Font fontS60 = new Font(TorusSB, 60);
 
-        String Scr = SkiaUtil.getV3Score(score, beatmap);
-        String s1t = Scr.substring(0,2);
-        String s2t = Scr.substring(3);
+        String Scr = SkiaUtil.getV3Score(score);
+        String s1t,s2t;
+
+        s1t = Scr.substring(0,3);
+        s2t = Scr.substring(4,7);
 
         TextLine s1 = TextLine.make(s1t, fontS84);
         TextLine s2 = TextLine.make(s2t, fontS60);
@@ -190,13 +190,153 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
+    private void drawScoreIndex(Score score){
+
+        int s_300 = score.getStatistics().getCount300();
+        int s_100 = score.getStatistics().getCount100();
+        int s_50 = score.getStatistics().getCount50();
+        int s_g = score.getStatistics().getCountGeki();
+        int s_k = score.getStatistics().getCountKatu();
+        int s_0 = score.getStatistics().getCountMiss();
+
+        int s = score.getBeatMap().getMaxCombo();
+
+        canvas.save();
+        canvas.translate(400,100);
+        switch (score.getMode()){
+            case OSU:{
+                canvas.translate(0,40);
+                drawScoreUnit("o_300",s_300,s);
+                canvas.translate(0,40);
+                drawScoreUnit("o_100",s_100,s);
+                canvas.translate(0,40);
+                drawScoreUnit("o_50",s_50,s);
+                canvas.translate(0,40);
+                drawScoreUnit("o_0",s_0,s);
+            } break;
+
+            case TAIKO:{
+                canvas.translate(0,40);
+                drawScoreUnit("t_300",s_300,s);
+                canvas.translate(0,40);
+                drawScoreUnit("t_150",s_100,s);
+                canvas.translate(0,80);
+                drawScoreUnit("t_0",s_0,s);
+            } break;
+
+            case CATCH:{
+                canvas.translate(0,40);
+                drawScoreUnit("c_300",s_300,s);
+                canvas.translate(0,40);
+                drawScoreUnit("c_100",s_100,s);
+                canvas.translate(0,40);
+                drawScoreUnit("c_50",s_50,s);
+                canvas.translate(0,40);
+                drawScoreUnit("c_0",s_0,s);
+                canvas.translate(0,40);
+                drawScoreUnit("c_dl",s_k,s); //miss droplet
+            } break;
+
+            case MANIA:{
+                drawScoreUnit("m_320",s_g,s);
+                canvas.translate(0,40);
+                drawScoreUnit("m_300",s_300,s);
+                canvas.translate(0,40);
+                drawScoreUnit("m_200",s_k,s);
+                canvas.translate(0,40);
+                drawScoreUnit("m_100",s_100,s);
+                canvas.translate(0,40);
+                drawScoreUnit("m_50",s_50,s);
+                canvas.translate(0,40);
+                drawScoreUnit("m_0",s_0,s);
+            } break;
+        }
+        canvas.restore();
+    }
+
     private void drawScoreInfo(Score score){
+        OsuMode mode = score.getMode();
+        double acc = 100D * score.getAccuracy();
+        double accGoal;
+        int combo = score.getMaxCombo();
+        int maxcombo = score.getBeatMap().getMaxCombo();
+        float pp = Math.round(score.getPP());
 
+        switch (mode) {
+            case OSU:
+                if (acc < 60D) {
+                    accGoal = acc - 60D;
+                } else if (acc < 75D) {
+                    accGoal = acc - 75D;
+                } else if (acc < 250D / 3D) {//83.33
+                    accGoal = acc - 250D / 3D;
+                } else if (acc < 280D / 3D) {//93.17
+                    accGoal = acc - 280D / 3D;
+                } else {
+                    accGoal = acc - 100D;
+                } break;
+            case TAIKO, MANIA:
+                if (acc < 70D) {
+                    accGoal = acc - 70D;
+                } else if (acc < 80D) {
+                    accGoal = acc - 80D;
+                } else if (acc < 90D) {
+                    accGoal = acc - 90D;
+                } else if (acc < 95D) {
+                    accGoal = acc - 95D;
+                } else {
+                    accGoal = acc - 100D;
+                } break;
+            case CATCH:
+                if (acc < 85D) {
+                    accGoal = acc - 85D;
+                } else if (acc < 90D) {
+                    accGoal = acc - 90D;
+                } else if (acc < 94D) {
+                    accGoal = acc - 94D;
+                } else if (acc < 98D) {
+                    accGoal = acc - 98D;
+                } else {
+                    accGoal = acc - 100D;
+                } break;
+            case default: accGoal = acc - 100D;
+        }
+
+        Image accII = null;
+        String accIN = "accuracy";
+        String accLI = String.valueOf(acc).substring(0,2);
+        String accSI = "." + String.valueOf(acc).substring(4,6) + "%";
+        String accAI = String.valueOf(accGoal).substring(0,5) + "%"; //这是个负数，取五位
+        
+        Image cbII = null;
+        String cbIN = "combo";
+        String cbLI = String.valueOf(combo);
+        String cbSI = "x";
+        String cbAI = maxcombo + "x"; //谱面最大连击
+
+        Image ppII = null;
+        String ppIN = "PP";
+        String ppLI = String.valueOf(pp);
+        String ppSI = null;
+        String ppAI = "-"; //to do:获取谱面理论pp，还没写呢
+
+        try {
+            accII = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-score-accuracy.png"));
+            cbII = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-score-combo.png"));
+            ppII = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-score-pp.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        canvas.save();
+        canvas.translate(440,350);
+        drawInfoUnit(accII,accIN,accLI,accSI,accAI);
+        canvas.translate(210,0);
+        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI);
+        canvas.translate(210,0);
+        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI);
+        canvas.restore();
     }
-    private void drawBeatMapInfo(BeatMap beatMap){
-
-    }
-
     private Image getRankImage (String Rank){
         Image RankImage = null;
 
@@ -210,55 +350,66 @@ public class K2CardBuilder extends PanelBuilder {
 
     private void drawScoreUnit (String ScoreIndex, int ScoreCount, int TotalCount){
         //这是分数显示的组件，因为复用较多，写成私有方法方便调用
-        Paint paint;
+        Paint RRectPaint;
+        Paint IndexPaint = colorWhite;
+        Paint ScorePaint = colorWhite;
         String ScoreName;
         String ScoreCountStr;
-
-        switch (ScoreIndex){
-            case "o_300", "t_300", "c_300" -> {ScoreName = "300"; paint = colorLightBlue;}
-            case "o_100", "c_100" -> {ScoreName = "100"; paint = colorGreen;}
-            case "o_50", "c_50" -> {ScoreName = "50"; paint = colorYellow;}
-            case "t_150" -> {ScoreName = "150"; paint = colorGreen;}
-            case "m_320" -> {ScoreName = "320"; paint = colorLightBlue;}
-            case "m_300" -> {ScoreName = "300"; paint = colorYellow;}
-            case "m_200" -> {ScoreName = "200"; paint = colorGreen;}
-            case "m_100" -> {ScoreName = "100"; paint = colorBlue;}
-            case "m_50" -> {ScoreName = "50"; paint = colorGrey;}
-
-            case "c_dl" -> {ScoreName = "DL"; paint = colorGrey;}
-            case "o_0", "t_0", "c_0", "m_0" -> {ScoreName = "0"; paint = colorRed;}
-
-            default -> {ScoreName = "??"; paint = colorDarkGrey;}
-        }
-
+        
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS30 = new Font(TorusSB, 30);
 
-        if (ScoreCount > 9999) {
+        switch (ScoreIndex){
+            case "o_300" :
+            case "t_300" :
+            case "c_300" : {ScoreName = "300"; RRectPaint = colorLightBlue;} break;
+            case "o_100" :
+            case "c_100" : {ScoreName = "100"; RRectPaint = colorGreen;} break;
+            case "o_50" :
+            case "c_50" : {ScoreName = "50"; RRectPaint = colorYellow;} break;
+            case "t_150" : {ScoreName = "150"; RRectPaint = colorGreen;} break;
+            case "m_320" : {ScoreName = "320"; RRectPaint = colorLightBlue;} break;
+            case "m_300" : {ScoreName = "300"; RRectPaint = colorYellow;} break;
+            case "m_200" : {ScoreName = "200"; RRectPaint = colorGreen;} break;
+            case "m_100" : {ScoreName = "100"; RRectPaint = colorBlue;} break;
+            case "m_50" : {ScoreName = "50"; RRectPaint = colorGrey;} break;
+
+            case "c_dl" : {ScoreName = "DL"; RRectPaint = colorGrey;} break;
+            case "o_0" :
+            case "t_0" :
+            case "c_0" :
+            case "m_0" : {ScoreName = "0"; RRectPaint = colorRed;} break;
+
+            default : {ScoreName = "??"; RRectPaint = colorDarkGrey;}
+        }
+
+        if (ScoreCount > 9999) { //超大和超小数据处理
             ScoreCountStr = "####";
-        } else if (ScoreCount >= 0){
+        } else if (ScoreCount > 0){
             ScoreCountStr = String.valueOf(ScoreCount);
         } else {
             ScoreCountStr = "0";
+            RRectPaint = colorDarkGrey;
+            ScorePaint = colorGrey;
         }
 
         TextLine L = TextLine.make(ScoreName, fontS30);
         TextLine R = TextLine.make(ScoreCountStr, fontS30);
 
-        float RRectLength = 500f * ScoreCount / TotalCount;
-        if (RRectLength < 20f && RRectLength > 0f) RRectLength = 20f; //这是圆角矩形的最小宽度，如果为 0 直接跳过
+        float RRectLength = 480f * ScoreCount / TotalCount + 20f;  //20是圆角矩形的最小宽度
+        if (RRectLength > 500f) RRectLength = 500f;
 
         canvas.save();
         if (RRectLength != 0f){
-            canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), paint);
+            canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), RRectPaint);
             canvas.restore();
         }
         canvas.translate(- 14 - L.getWidth(),2);
-        canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), colorWhite);
+        canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), IndexPaint);
         canvas.restore();
 
         canvas.translate(512,2);
-        canvas.drawTextLine(R, 0, R.getHeight() - R.getXHeight(), colorWhite);
+        canvas.drawTextLine(R, 0, R.getHeight() - R.getXHeight(), ScorePaint);
     }
 
 

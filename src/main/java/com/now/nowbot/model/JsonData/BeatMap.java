@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class BeatMap {
@@ -269,6 +271,23 @@ public class BeatMap {
     public void setBeatMapSet(BeatMapSet beatMapSet) {
         this.beatMapSet = beatMapSet;
     }
+
+    public List<Integer> getBeatMapRatingList() {return null;}
+
+    public double getBeatMapRating() {
+        List<Integer> rl = getBeatMapRatingList();
+        double r = 0;
+        double sum = 0;
+        int i;
+
+        for (i = 0; i < rl.size(); i++) {
+            sum = sum + rl.get(i);
+        }
+
+        for (int j = 0; j <= 10; j++) {
+            r = r + j / 10D * rl.get(j) / sum;
+        }
+        return r;}
 
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMap{");
