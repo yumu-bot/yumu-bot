@@ -124,26 +124,27 @@ public class msgController {
                 var removed = body.findValue("removed");
 
                 if (added.isArray() && added.size() > 0) {
-                    sb.append("\n新增文件\n");
+                    sb.append("\n新增文件:\n");
                     for (var x : added) {
-                        sb.append(getEndFile(x.asText("null")));
+                        sb.append(getEndFile(x.asText("null"))).append('\n');
                     }
                 }
                 if (modified.isArray() && modified.size() > 0) {
-                    sb.append("\n变更文件\n");
+                    sb.append("\n变更文件:\n");
                     for (var x : modified) {
-                        sb.append(getEndFile(x.asText("null")));
+                        sb.append(getEndFile(x.asText("null"))).append('\n');
                     }
                 }
                 if (removed.isArray() && removed.size() > 0) {
-                    sb.append("\n删除文件\n");
+                    sb.append("\n删除文件:\n");
                     for (var x : removed) {
-                        sb.append(getEndFile(x.asText("null")));
+                        sb.append(getEndFile(x.asText("null"))).append('\n');
                     }
                 }
             } catch (Exception e) {
                 // do nothing
             }
+            sb.delete(sb.length()-1, sb.length());
             gp.sendMessage(sb.toString());
             if (msg.startsWith("update")) {
                 try {
