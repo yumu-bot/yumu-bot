@@ -1,9 +1,6 @@
 package com.now.nowbot.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
@@ -11,11 +8,16 @@ import java.util.Objects;
 public class UserAccountLite {
     @Id
     private Long uid;
+    @Lob
     private String username;
+    @Lob
     private String akV1;
+    @Lob
     private String akV2;
+    @Lob
     private String password;
     @Column(length = 1000)
+    @Lob
     private String session;
     private Integer timeZone;
 

@@ -14,15 +14,17 @@ public class BeatMap4Pool {
     private Integer id;
 
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "order_number", nullable = false)
+    @Column(name = "order_number")
     Integer order;
 
     Integer beatmapId;
 
     Integer poolId;
 
+    @Lob
     String info;
 
+    @Lob
     String data;
 
     public Integer getId() {
@@ -31,5 +33,45 @@ public class BeatMap4Pool {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getOrder() {
+        return order;
+    }
+
+    public void setOrder(Integer order) {
+        this.order = order;
+    }
+
+    public Integer getBeatmapId() {
+        return beatmapId;
+    }
+
+    public void setBeatmapId(Integer beatmapId) {
+        this.beatmapId = beatmapId;
+    }
+
+    public Integer getPoolId() {
+        return poolId;
+    }
+
+    public void setPoolId(Integer poolId) {
+        this.poolId = poolId;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
     }
 }

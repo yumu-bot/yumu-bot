@@ -4,35 +4,47 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_mapset", indexes = {
-        @Index(name = "raw",columnList = "map_id")
+        @Index(name = "raw", columnList = "map_id")
 })
 public class MapSetLite {
     @Id
     @Column(name = "map_id")
     private Integer mapset_id;
 
+    @Lob
     private String artist;
+    @Lob
     private String artist_unicode;
     //四种 covers:{}
+    @Lob
     private String cover;
+    @Lob
     private String card;
+    @Lob
     private String list;
+    @Lob
     private String slimcover;
 
     //属性
+    @Lob
     private String creator;
     private Integer favourite_count;
     private Boolean nsfw;
     private Long play_count;
+    @Lob
     private String preview_url;
     //状态
+    @Lob
     private String status;
 
+    @Lob
     private String source;
+    @Lob
     private String title;
+    @Lob
     private String title_unicode;
 
-//    麻婆id?
+    //    麻婆id?
     private Integer user_id;
     //有没有视频
     private Boolean storyboard;

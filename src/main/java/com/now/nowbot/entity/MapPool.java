@@ -14,6 +14,7 @@ public class MapPool {
     Integer fatherId;
 
     @Column(nullable = false)
+    @Lob
     private String info;
 
     public Integer getId() {

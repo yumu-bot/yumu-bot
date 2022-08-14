@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_user_mode_score", indexes = {
-        @Index(name = "osu_id",columnList = "osu_id"),
-        @Index(name = "usermod_find",columnList = "osu_id,mode")
+        @Index(name = "osu_id", columnList = "osu_id"),
+        @Index(name = "usermod_find", columnList = "osu_id,mode")
 })
 public class OsuUserModeScoreLite {
     @Id
@@ -21,7 +21,7 @@ public class OsuUserModeScoreLite {
     private LocalDateTime time;
 
     // ',' 分割
-    @Column(length = 3000)
+    @Lob
     private String rank_history;
     //等级
     private Integer level_current;

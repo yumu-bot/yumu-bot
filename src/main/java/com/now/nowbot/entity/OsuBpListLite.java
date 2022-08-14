@@ -17,6 +17,7 @@ public class OsuBpListLite {
 
     // ','分割的
     @Column(length = 1000)
+    @Lob
     private String bpList;
 
     private LocalDateTime time;

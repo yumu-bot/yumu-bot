@@ -11,6 +11,7 @@ public class OsuUserNameHisLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long uid;
+    @Lob
     private String name;
 
     public Long getId() {

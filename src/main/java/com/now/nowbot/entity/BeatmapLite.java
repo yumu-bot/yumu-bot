@@ -27,6 +27,7 @@ public class BeatmapLite {
     @Column(name = "is_convert")
     private Boolean convert;
     //难度名
+    @Column(columnDefinition = "text")
     private String version;
 
     int playcount;

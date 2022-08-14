@@ -6,6 +6,7 @@ import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
+import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.MessageUtils;
 import net.mamoe.mirai.message.data.PlainText;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,18 +28,18 @@ public class MutualFriendService implements MessageService{
 
         var atList = QQMsgUtil.getTypeAll(event.getMessage(), At.class);
         if (atList.size() > 0){
-            var data = MessageUtils.newChain();
+            var data = new MessageChainBuilder();
             atList.forEach(at->{
-                data.add(at);
+                data.append(at);
 
                     try {
                         var u = bindDao.getUser(at.getTarget());
-                        data.add(new PlainText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n'));
+                        data.append(new PlainText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n'));
                     } catch (BindException e) {
-                        data.add(new PlainText(" 未绑定\n"));
+                        data.append(new PlainText(" 未绑定\n"));
                     }
             });
-            event.getSubject().sendMessage(data);
+            event.getSubject().sendMessage(data.build());
             return;
         }
         var s = matcher.group("names");

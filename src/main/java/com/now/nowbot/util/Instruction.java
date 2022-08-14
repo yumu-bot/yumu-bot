@@ -85,7 +85,7 @@ public enum Instruction {
             Pattern.compile("[!！]testbg(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?")),
 
     MUTUAL(MutualFriendService.class,
-            Pattern.compile("[!！](?i)(test)?mu(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
+            Pattern.compile("[!！](?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
 
     BAN(BanService.class,
             Pattern.compile("[!！](?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),

@@ -11,6 +11,7 @@ public class PermissionLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     //service名为 PERMISSION_ALL 则是全局名单,所有的服务都要经过此权限表
+    @Lob
     private String service;
     @Enumerated(EnumType.STRING)
     private PermissionType type;

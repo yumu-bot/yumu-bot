@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_name_id", indexes = {
-    @Index(name = "osufindname", columnList = "name"),
+        @Index(name = "osufindname", columnList = "name"),
 })
 
 public class OsuNameToIdLite {
@@ -12,15 +12,16 @@ public class OsuNameToIdLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Lob
     private String name;
     private Long uid;
-    @Column(name="idx")
+    @Column(name = "idx")
     private Integer index;
 
     public OsuNameToIdLite() {
     }
 
-    public OsuNameToIdLite(Long uid, String name,Integer index) {
+    public OsuNameToIdLite(Long uid, String name, Integer index) {
         this.name = name.toUpperCase();
         this.uid = uid;
         this.index = index;

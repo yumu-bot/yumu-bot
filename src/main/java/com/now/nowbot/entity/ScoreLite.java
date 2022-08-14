@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "osu_score" ,indexes = {
+@Table(name = "osu_score", indexes = {
         @Index(name = "uid", columnList = "osu_id")
 })
 public class ScoreLite {
@@ -20,6 +20,7 @@ public class ScoreLite {
 
     private Float accuracy;
     //','分割的字符串
+    @Lob
     private String mods;
     private Integer score;
     private Integer maxCombo;

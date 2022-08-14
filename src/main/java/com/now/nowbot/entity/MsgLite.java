@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Table(name = "qq_message", indexes = {
         @Index(name = "msg_find", columnList = "row_id,internal,from_id")
 })//主要是可能会有其他消息的记录,先设定表名为qq_message
-public class MsgLite{
+public class MsgLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,9 +23,10 @@ public class MsgLite{
     @Column(name = "target_id")
     private Long targetId;
     @Column()
+    @Lob
     private String content;
 
-    public MsgLite(MessageChain msg){
+    public MsgLite(MessageChain msg) {
         var source = msg.get(MessageSource.Key);
         rawId = source.getIds()[0];
         internal = source.getInternalIds()[0];
@@ -73,7 +74,7 @@ public class MsgLite{
         this.content = content;
     }
 
-    public MessageChain getMessage(){
+    public MessageChain getMessage() {
         return MessageChain.deserializeFromJsonString(content);
     }
 

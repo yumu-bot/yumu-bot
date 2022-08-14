@@ -468,10 +468,9 @@ public class OsuGetService {
         return getAllRecentN((long) userId, mode, s, e);
     }
 
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, String mods) throws JsonProcessingException {
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) throws JsonProcessingException {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid)
                 .queryParam("mode", mode)
-                .queryParam("mods", mods)
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
 
@@ -483,10 +482,9 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, String mods) {
+    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
                 .queryParam("mode", mode)
-                .queryParam("mods", mods)
                 .build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
@@ -497,10 +495,35 @@ public class OsuGetService {
         }
         return c.getBody();
     }
-    public JsonNode getScoreR(long bid, BinUser user, OsuMode mode, String mods) {
+    public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID() + "/all")
+                .queryParam("mode", mode)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader(user);
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {});
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
+        return c.getBody();
+    }
+    public List<Score> getScoreAll(long bid, long uid, OsuMode mode) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid + "/all")
+                .queryParam("mode", mode)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {});
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
+        return c.getBody();
+    }
+    public JsonNode getScoreR(long bid, BinUser user, OsuMode mode) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
                 .queryParam("mode", mode)
-                .queryParam("mods", mods)
                 .build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 

@@ -19,11 +19,14 @@ public class OsuBindUserLite {
     @Column(name = "osu_id")
     private Long osuId;
     @Column(name = "osu_name")
+    @Lob
     private String osuName;
     private Long qq;
-    @Column(name = "access_token", columnDefinition = "TEXT")
+    @Column(name = "access_token")
+    @Lob
     private String accessToken;
-    @Column(name = "refresh_token", columnDefinition = "TEXT")
+    @Column(name = "refresh_token")
+    @Lob
     private String refreshToken;
     private Long time;
 
@@ -35,7 +38,7 @@ public class OsuBindUserLite {
     @Column(name = "main_mode")
     private OsuMode mainMode;
 
-    public OsuBindUserLite(BinUser data){
+    public OsuBindUserLite(BinUser data) {
         this.joinDate = LocalDateTime.now();
         this.osuId = data.getOsuID();
         this.osuName = data.getOsuName();
@@ -45,7 +48,9 @@ public class OsuBindUserLite {
         this.time = data.getTime();
         this.mainMode = data.getMode();
     }
-    public OsuBindUserLite(){}
+
+    public OsuBindUserLite() {
+    }
 
     public Long getId() {
         return id;

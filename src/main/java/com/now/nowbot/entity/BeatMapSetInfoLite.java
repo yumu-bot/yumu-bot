@@ -11,28 +11,38 @@ public class BeatMapSetInfoLite {
     @Column(name = "id", nullable = false)
     private Integer sid;
 
+    @Lob
     private String artistUnicode;
+    @Lob
     private String artist;
 
+    @Lob
     private String titleUnicode;
+    @Lob
     private String title;
 
-    String mapper;
+    @Lob
+    private String mapper;
 
     Integer mapperId;
 
-    String status;
+    @Lob
+    private String status;
 
     Boolean video;
 
     Boolean nsfw;
 
-    String cover;
+    @Lob
+    private String cover;
 
+    @Lob
     String card;
 
+    @Lob
     String list;
 
+    @Lob
     String slimcover;
 
     public Integer getSid() {
@@ -147,7 +157,7 @@ public class BeatMapSetInfoLite {
         this.title = title;
     }
 
-    public static BeatMapSetInfoLite from(BeatMapSet mapSet){
+    public static BeatMapSetInfoLite from(BeatMapSet mapSet) {
         var t = new BeatMapSetInfoLite();
         t.sid = mapSet.getId();
 
@@ -163,28 +173,28 @@ public class BeatMapSetInfoLite {
         t.status = mapSet.getStatus();
 
         String url = mapSet.getCovers().getCover2x();
-        if (url!=null && !url.equals("")) {
+        if (url != null && !url.equals("")) {
             t.cover = url;
         } else {
             t.cover = mapSet.getCovers().getCover();
         }
 
         url = mapSet.getCovers().getCard2x();
-        if (url!=null && !url.equals("")) {
+        if (url != null && !url.equals("")) {
             t.card = url;
         } else {
             t.card = mapSet.getCovers().getCard();
         }
 
         url = mapSet.getCovers().getList2x();
-        if (url!=null && !url.equals("")) {
+        if (url != null && !url.equals("")) {
             t.list = url;
         } else {
             t.list = mapSet.getCovers().getList();
         }
 
         url = mapSet.getCovers().getSlimcover2x();
-        if (url!=null && !url.equals("")) {
+        if (url != null && !url.equals("")) {
             t.slimcover = url;
         } else {
             t.slimcover = mapSet.getCovers().getSlimcover();

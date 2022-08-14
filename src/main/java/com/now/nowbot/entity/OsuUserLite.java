@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_user", indexes = {
-        @Index(name = "oid",columnList = "osu_id"),
-        @Index(name = "oname",columnList = "username")
+        @Index(name = "oid", columnList = "osu_id"),
+        @Index(name = "oname", columnList = "username")
 })
 public class OsuUserLite {
     @Id
@@ -15,12 +15,16 @@ public class OsuUserLite {
     @Column(name = "osu_id")
     private Integer osuID;
     @Column(name = "username")
+    @Lob
     private String userName;
     // "country": {"code": "CN","name": "China"},            country_code
+    @Lob
     private String countryCode;
+    @Lob
     private String countryName;
 
     // "cover": {custom_url}
+    @Lob
     private String customUrl;
     private Integer beatmapPlaycountsCount;
     // "kudosu": {"total": 0, "available": 0}
@@ -33,7 +37,7 @@ public class OsuUserLite {
     private Integer supportLevel;
     private Integer mappingFollowerCount;
     // 以','分隔的列表
-    @Column(length = 1000)
+    @Lob
     private String previousUsernames;
     private Integer commentsCount; //评论数
 
@@ -41,6 +45,7 @@ public class OsuUserLite {
     private Boolean isSupporter;
     private Integer followerCount;
     private Integer favouriteBeatmapsetCount;
+    @Lob
     private String playmode;
     //上次登录时间
     LocalDateTime lastVisit;
