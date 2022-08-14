@@ -1,8 +1,19 @@
 package com.now.nowbot.util;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.now.nowbot.NowbotApplication;
+
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DataUtil {
+
+    private static final ObjectMapper mapper = JsonMapper.builder().build();
     public static char getRoundedNumberUnit(double number, int level) {
         char unit = '-';
         number = Math.abs(number);
@@ -102,5 +113,14 @@ public class DataUtil {
         var h = time / 3600000;
         var m = (time % 3600000) / 60000;
         return String.format("%dH%dM", h, m);
+    }
+
+    public static <T> T getObject(String filepath, Class<T> T){
+        try {
+            return mapper.readValue(new File(filepath), T);
+        } catch (IOException e) {
+            NowbotApplication.log.error("读取json错误", e);
+            throw new RuntimeException("见上一条");
+        }
     }
 }
