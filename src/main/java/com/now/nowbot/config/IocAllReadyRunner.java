@@ -69,7 +69,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
 
     }
 
-    void initFountWidth() {
+    public static void initFountWidth() {
         var face = SkiaUtil.getTorusSemiBold();
         Font fontS48 = new Font(face, 48);
         Font fontS24 = new Font(face, 24);
