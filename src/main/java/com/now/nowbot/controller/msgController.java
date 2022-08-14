@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -115,7 +116,35 @@ public class msgController {
         String msg = body.findValue("title").asText("nothing");
         var gp = bot.getGroup(746671531L);
         if (gp != null) {
-            gp.sendMessage("git收到" + name + "推送\n" + msg);
+            var sb = new StringBuilder();
+            sb.append("git收到").append(name).append("推送\n").append(msg);
+            try {
+                var added = body.findValue("added");
+                var modified = body.findValue("modified");
+                var removed = body.findValue("removed");
+
+                if (added.isArray() && added.size() > 0) {
+                    sb.append("\n新增文件\n");
+                    for (var x : added) {
+                        sb.append(getEndFile(x.asText("null")));
+                    }
+                }
+                if (modified.isArray() && modified.size() > 0) {
+                    sb.append("\n变更文件\n");
+                    for (var x : modified) {
+                        sb.append(getEndFile(x.asText("null")));
+                    }
+                }
+                if (removed.isArray() && removed.size() > 0) {
+                    sb.append("\n删除文件\n");
+                    for (var x : removed) {
+                        sb.append(getEndFile(x.asText("null")));
+                    }
+                }
+            } catch (Exception e) {
+                // do nothing
+            }
+            gp.sendMessage(sb.toString());
             if (msg.startsWith("update")) {
                 try {
                     UpdateUtil.update();
@@ -124,5 +153,15 @@ public class msgController {
                 }
             }
         }
+    }
+    private Pattern p = Pattern.compile("(\\w+/)+(?<file>[\\w.]+)");
+
+    String getEndFile(String path) {
+        var m = p.matcher(path);
+        if (m.find()){
+            return m.group("file");
+        }
+
+        return "not file";
     }
 }
