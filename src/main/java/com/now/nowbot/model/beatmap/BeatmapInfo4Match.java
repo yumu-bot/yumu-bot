@@ -1,11 +1,10 @@
 package com.now.nowbot.model.beatmap;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BeatmapInfo {
+public class BeatmapInfo4Match {
 
     Integer id;
     @JsonProperty("beatmapset_id")

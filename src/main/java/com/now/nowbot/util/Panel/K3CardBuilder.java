@@ -1,8 +1,8 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.beatmap.BeatmapAttribute;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
@@ -25,7 +25,7 @@ public class K3CardBuilder extends PanelBuilder {
     Paint colorBlue = new Paint().setARGB(255, 94, 138, 198); //Ok
     Paint colorRed = new Paint().setARGB(255, 236, 107, 118); //miss 不可
 
-    public K3CardBuilder(Score score, BeatmapAttribute beatMapAttribute) {
+    public K3CardBuilder(Score score, BeatmapDifficultyAttributes beatMapAttribute) {
         //这是右下角的附加信息矩形
         super(1000, 270);
 
@@ -289,4 +289,7 @@ public class K3CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
+    public Image build() {
+        return super.build(20);
+    }
 }

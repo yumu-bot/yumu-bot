@@ -90,7 +90,7 @@ public class BeatMapDao {
     public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
         var s = new BeatMapSet();
         s.setId(mapSet.getMapset_id());
-        s.setUserId(mapSet.getUser_id());
+        s.setMapperId(mapSet.getUser_id());
         var cover = new Covers();
         cover.setCover(mapSet.getCover());
         cover.setCover2x(mapSet.getCover());
@@ -106,7 +106,7 @@ public class BeatMapDao {
         s.setAvailabilityDownloadDisable(mapSet.getDownload_disabled());
         s.setStoryboard(mapSet.getStoryboard());
 
-        s.setUserId(mapSet.getUser_id());
+        s.setMapperId(mapSet.getUser_id());
         s.setCreator(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
@@ -133,7 +133,7 @@ public class BeatMapDao {
         s.setNsfw(mapSet.getNsfw());
         s.setStoryboard(mapSet.getStoryboard());
 
-        s.setUser_id(mapSet.getUserId());
+        s.setUser_id(mapSet.getMapperId());
         s.setCreator(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());

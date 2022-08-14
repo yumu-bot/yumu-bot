@@ -560,7 +560,7 @@ public class OsuGetService {
     /***
      * 获取map信息
      * @param bid bid
-     * @param uset
+     * @param user
      * @return
      */
     public BeatMap getMapInfo(int bid, BinUser user) {
@@ -709,7 +709,6 @@ public class OsuGetService {
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
         MultiValueMap body = new LinkedMultiValueMap();
-        body.add("mods", String.valueOf((Mod.DoubleTime.value | Mod.HardRock.value)));
         body.add("ruleset_id", "2");
         HttpEntity httpEntity = new HttpEntity(body, headers);
         ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);

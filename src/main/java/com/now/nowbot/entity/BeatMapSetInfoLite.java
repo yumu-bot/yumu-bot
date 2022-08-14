@@ -1,6 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.beatmap.BeatMapSet;
+import com.now.nowbot.model.JsonData.BeatMapSet;
 
 import javax.persistence.*;
 
@@ -151,11 +151,11 @@ public class BeatMapSetInfoLite {
         var t = new BeatMapSetInfoLite();
         t.sid = mapSet.getId();
 
-        t.artistUnicode = mapSet.getArtistUnicode();
+        t.artistUnicode = mapSet.getArtistUTF();
         t.artist = mapSet.getArtist();
         t.title = mapSet.getTitle();
 
-        t.mapper = mapSet.getMapper();
+        t.mapper = mapSet.getCreator();
         t.mapperId = mapSet.getMapperId();
 
         t.nsfw = mapSet.getNsfw();

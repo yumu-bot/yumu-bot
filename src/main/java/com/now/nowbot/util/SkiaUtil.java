@@ -564,7 +564,7 @@ public class SkiaUtil {
         int fc = 100_0000;
         double i = getV3ModsMultiplier(mods,mode);
         double p = getV3ScoreProgress(score); //下下策
-        int c = score.getStatistics().getMaxCombo();
+        int c = score.getMaxCombo();
         int m = score.getBeatMap().getMaxCombo();
         double ap8 = Math.pow(score.getAccuracy(), 8f);
         double v3 = 0;

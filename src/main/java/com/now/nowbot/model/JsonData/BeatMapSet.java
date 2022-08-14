@@ -11,7 +11,7 @@ public class BeatMapSet {
     @JsonProperty("id")
     Integer id;
     @JsonProperty("user_id")
-    Integer userId;
+    Integer mapperId;
     @JsonProperty("bpm")
     Float bpm;
     @JsonProperty("artist")
@@ -42,6 +42,8 @@ public class BeatMapSet {
     String tags;
     @JsonProperty("storyboard")
     Boolean storyboard;
+
+    Boolean video;
     @JsonProperty("covers")
     Covers covers;
 
@@ -67,12 +69,12 @@ public class BeatMapSet {
         this.id = id;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public Integer getMapperId() {
+        return mapperId;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setMapperId(Integer mapperId) {
+        this.mapperId = mapperId;
     }
 
     public Float getBpm() {
@@ -224,10 +226,18 @@ public class BeatMapSet {
         this.fromDatabases = true;
     }
 
+    public Boolean getVideo() {
+        return video;
+    }
+
+    public void setVideo(Boolean video) {
+        this.video = video;
+    }
+
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMapSet{");
         sb.append("id=").append(id);
-        sb.append(", userId=").append(userId);
+        sb.append(", userId=").append(mapperId);
         sb.append(", bpm=").append(bpm);
         sb.append(", artist='").append(artist).append('\'');
         sb.append(", artistUTF='").append(artistUTF).append('\'');

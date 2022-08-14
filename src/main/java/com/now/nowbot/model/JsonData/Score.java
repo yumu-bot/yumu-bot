@@ -133,6 +133,7 @@ public class Score {
     }
 
     public Float getPP() {
+        if (pp == null) return 0f;
         return pp;
     }
 
