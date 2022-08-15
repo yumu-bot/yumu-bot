@@ -35,10 +35,10 @@ public class BiliApiService {
     public BiliApiService(RestTemplate restTemplate, Bot bot) {
         this.restTemplate = restTemplate;
         this.bot = bot;
-        sendGroupMap.put(545149341L, 733244168L);
+//        sendGroupMap.put(545149341L, 733244168L);
 //        sendGroupMap.put(73769122L, 733244168L);
-        sendGroupMap.put(14172231L, 135214594L);
-        sendGroupMap.put(4995808L, 446316073L);
+//        sendGroupMap.put(14172231L, 135214594L);
+//        sendGroupMap.put(4995808L, 446316073L);
     }
 
     public List<LiveRoom> getLiveRooms(Long[] roomid) {
