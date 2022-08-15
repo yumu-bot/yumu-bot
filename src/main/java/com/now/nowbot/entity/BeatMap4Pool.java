@@ -22,9 +22,11 @@ public class BeatMap4Pool {
     Integer poolId;
 
     @Lob
+@Type(type = "org.hibernate.type.TextType")
     String info;
 
     @Lob
+@Type(type = "org.hibernate.type.TextType")
     String data;
 
     public Integer getId() {

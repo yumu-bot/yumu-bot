@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 
 @Entity
@@ -15,6 +17,7 @@ public class MapPool {
 
     @Column(nullable = false)
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String info;
 
     public Integer getId() {

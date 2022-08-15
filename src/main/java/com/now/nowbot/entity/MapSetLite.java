@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 
 @Entity
@@ -12,36 +14,48 @@ public class MapSetLite {
     private Integer mapset_id;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String artist;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String artist_unicode;
     //四种 covers:{}
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String cover;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String card;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String list;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String slimcover;
 
     //属性
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String creator;
     private Integer favourite_count;
     private Boolean nsfw;
     private Long play_count;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String preview_url;
     //状态
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String status;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String source;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String title;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String title_unicode;
 
     //    麻婆id?

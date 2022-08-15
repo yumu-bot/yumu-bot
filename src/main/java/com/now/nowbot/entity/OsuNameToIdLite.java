@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 
 @Entity
@@ -13,6 +15,7 @@ public class OsuNameToIdLite {
     private Long id;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String name;
     private Long uid;
     @Column(name = "idx")

@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -9,15 +11,20 @@ public class UserAccountLite {
     @Id
     private Long uid;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String username;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String akV1;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String akV2;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String password;
     @Column(length = 1000)
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String session;
     private Integer timeZone;
 

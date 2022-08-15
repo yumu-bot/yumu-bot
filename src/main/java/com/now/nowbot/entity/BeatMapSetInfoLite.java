@@ -1,6 +1,7 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.JsonData.BeatMapSet;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
@@ -12,21 +13,27 @@ public class BeatMapSetInfoLite {
     private Integer sid;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String artistUnicode;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String artist;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String titleUnicode;
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String title;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String mapper;
 
     Integer mapperId;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String status;
 
     Boolean video;
@@ -34,15 +41,19 @@ public class BeatMapSetInfoLite {
     Boolean nsfw;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String cover;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     String card;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     String list;
 
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     String slimcover;
 
     public Integer getSid() {

@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -18,6 +20,7 @@ public class OsuBpListLite {
     // ','分割的
     @Column(length = 1000)
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String bpList;
 
     private LocalDateTime time;

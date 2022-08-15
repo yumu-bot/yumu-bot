@@ -1,6 +1,7 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.enums.OsuMode;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class OsuUserModeScoreLite {
 
     // ',' 分割
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String rank_history;
     //等级
     private Integer level_current;

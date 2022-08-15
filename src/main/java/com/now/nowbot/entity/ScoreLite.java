@@ -1,5 +1,7 @@
 package com.now.nowbot.entity;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -21,6 +23,7 @@ public class ScoreLite {
     private Float accuracy;
     //','分割的字符串
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String mods;
     private Integer score;
     private Integer maxCombo;

@@ -2,6 +2,7 @@ package com.now.nowbot.entity;
 
 import net.mamoe.mirai.message.data.MessageChain;
 import net.mamoe.mirai.message.data.MessageSource;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
@@ -24,6 +25,7 @@ public class MsgLite {
     private Long targetId;
     @Column()
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String content;
 
     public MsgLite(MessageChain msg) {

@@ -20,17 +20,17 @@ public class OsuBindUserLite {
     @Column(name = "osu_id")
     private Long osuId;
     @Column(name = "osu_name")
-    @Type(type = "org.hibernate.type.TextType")
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String osuName;
     private Long qq;
     @Column(name = "access_token")
-    @Type(type = "org.hibernate.type.TextType")
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String accessToken;
     @Column(name = "refresh_token")
-    @Type(type = "org.hibernate.type.TextType")
     @Lob
+    @Type(type = "org.hibernate.type.TextType")
     private String refreshToken;
     private Long time;
 
