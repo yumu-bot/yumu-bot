@@ -169,9 +169,9 @@ public class Statistics {
 
         switch (mode) {
             case OSU : countAll = s_300 + s_100 + s_50 + s_0; break;
-            case TAIKO, CATCH : countAll = s_300 + s_100 + s_0; break;
+            case TAIKO:
+            case CATCH : countAll = s_300 + s_100 + s_0; break;
             case MANIA : countAll = s_g + s_300 + s_k + s_100 + s_50 + s_0; break;
-            case default :
         }
         return countAll;
     }
