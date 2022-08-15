@@ -20,6 +20,7 @@ public class OsuBindUserLite {
     @Column(name = "osu_id")
     private Long osuId;
     @Column(name = "osu_name")
+    @Type(type = "org.hibernate.type.TextType")
     @Lob
     private String osuName;
     private Long qq;
