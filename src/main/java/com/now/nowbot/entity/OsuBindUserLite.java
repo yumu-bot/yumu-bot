@@ -2,6 +2,7 @@ package com.now.nowbot.entity;
 
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -23,9 +24,11 @@ public class OsuBindUserLite {
     private String osuName;
     private Long qq;
     @Column(name = "access_token")
+    @Type(type = "org.hibernate.type.TextType")
     @Lob
     private String accessToken;
     @Column(name = "refresh_token")
+    @Type(type = "org.hibernate.type.TextType")
     @Lob
     private String refreshToken;
     private Long time;
