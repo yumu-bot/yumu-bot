@@ -4,12 +4,20 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.config.IocAllReadyRunner;
+import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.util.Panel.J1CardBuilder;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DataUtil {
 
@@ -123,4 +131,37 @@ public class DataUtil {
             throw new RuntimeException("见上一条");
         }
     }
+
+    public static List<Integer> readMap(String mapStr){
+        var bucket = mapStr.split("\\[\\w+]");
+        var hitObjects = bucket[bucket.length-1].split("\\s+");
+        var hitObjectStr = new ArrayList<String>();
+        for (var x : hitObjects){
+            if (!x.trim().equals("")){
+                hitObjectStr.add(x);
+            }
+        }
+
+        var p = Pattern.compile("^\\d+,\\d+,(\\d+)");
+
+        var times = hitObjectStr.stream()
+                .map((m) -> {
+                    var m2 = p.matcher(m);
+                    if (m2.find()) {
+                        return Integer.parseInt(m2.group(1));
+                    } else {
+                        return 0;
+                    }
+                }).toList();
+
+        return times;
+    }
+
+//    public static void main(String[] args) throws IOException {
+//        NowbotConfig.FONT_PATH = "/home/spring/cache/nowbot/font/";
+//        IocAllReadyRunner.initFountWidth();
+//        var data = DataUtil.getObject("/home/spring/data.json", OsuUser.class);
+//        var j1 = new J1CardBuilder(data, new ArrayList<>(0));
+//        Files.write(Path.of("/home/spring/p1.png"), j1.build().encodeToData().getBytes());
+//    }
 }
