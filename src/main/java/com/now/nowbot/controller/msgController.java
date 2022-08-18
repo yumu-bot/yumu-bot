@@ -33,7 +33,7 @@ public class msgController {
         this.bot = bot;
         this.osuGetService = osuGetService;
         bindDao = dao;
-        WsController.getInstance().setMsgController(this);
+        WsController.getInstance(bot).setMsgController(this);
     }
 
     @GetMapping("${osu.callbackpath}")

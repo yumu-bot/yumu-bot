@@ -139,10 +139,23 @@
             <artifactId>kumo-core</artifactId>
             <version>1.28</version>
         </dependency>
+
         <dependency>
             <groupId>com.kennycason</groupId>
             <artifactId>kumo-tokenizers</artifactId>
             <version>1.28</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.4.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.8.1</version>
+            <scope>compile</scope>
         </dependency>
         <!--markdown to html-->
 <!--        <dependency>-->
