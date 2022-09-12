@@ -1,6 +1,8 @@
 package com.now.nowbot.model.match;
 
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.util.PanelUtil;
 import org.jetbrains.skija.Color;
 
 import java.util.ArrayList;
@@ -79,6 +81,12 @@ public class UserMatchData {
         this.username = userdata.getUsername();
         this.userData = userdata;
     }
+
+    public UserMatchData(int id, String name ) {
+        this.id = id;
+        this.username = name;
+    }
+
 
     public Integer getWins() {
         return wins;
@@ -268,13 +276,14 @@ public class UserMatchData {
     }
 
     public String getHeaderUrl(){
+        if (userData == null) return NowbotConfig.BG_PATH + "avatar-guest.png";
         return "https://a.ppy.sh/"+id;
     }
 
     public String getCoverUrl(){
         if (userData != null)
             return userData.getCoverUrl();
-        else return "";
+        else return NowbotConfig.BG_PATH + "avatar-guest.png";
     }
 
     public enum Rating{

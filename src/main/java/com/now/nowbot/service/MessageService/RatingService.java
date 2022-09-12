@@ -114,7 +114,12 @@ public class RatingService implements MessageService {
 
         //获取所有user
         for (var jUser : JUsers) {
-            users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
+            try {
+                users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
+            } catch (Exception e) {
+
+                users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
+            }
         }
 
         //获取所有轮的游戏
@@ -126,7 +131,7 @@ public class RatingService implements MessageService {
         //跳过前几轮
 
         int s = games.size();
-        games = games.stream().limit(s-deletEndRounds).skip(skipedRounds).filter(gameInfo -> gameInfo.getEndTime() != null).toList();
+        games = games.stream().limit(s - deletEndRounds).skip(skipedRounds).filter(gameInfo -> gameInfo.getEndTime() != null).toList();
 
         int scoreNum = 0;
         //每一局单独计算
