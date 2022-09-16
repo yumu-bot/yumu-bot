@@ -28,6 +28,15 @@ public class BeatMapDao {
         beatMapMapper.save(fromBeatmapModel(beatMap));
     }
 
+    public BeatMap getBeatMap(int id){
+        return getBeatMap((long) id);
+    }
+    public BeatMap getBeatMap(long id){
+        var lite = beatMapMapper.findById(id);
+        if (lite.isEmpty()) return null;
+        return fromBeatmapLite(lite.get());
+    }
+
     public static BeatMap fromBeatmapLite(BeatmapLite map){
         var s = new BeatMap();
         s.setHitLength(map.getHit_length());
