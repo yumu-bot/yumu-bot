@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class DataUtil {
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
+
     public static char getRoundedNumberUnit(double number, int level) {
         char unit = '-';
         number = Math.abs(number);
@@ -82,8 +83,7 @@ public class DataUtil {
             intValue = (int) number;
             if (level == 1) {
                 isInt = number - intValue <= 0.1;
-            }
-            else {
+            } else {
                 isInt = number - intValue <= 0.001;
             }
             if (isInt) return String.valueOf(intValue);
@@ -105,14 +105,19 @@ public class DataUtil {
         intValue = (int) number;
         if (level == 1) {
             isInt = number - intValue <= 0.1;
-        }
-        else {
+        } else {
             isInt = number - intValue <= 0.001;
         }
 
-        if (isInt)
+        if (isInt) {
             return String.format("%d%c", intValue, c);
-        return String.format(level == 1 ? "%.1f%c" : "%.2f%c", number, c);
+        }
+        String out = String.format(level == 1 ? "%.1f%c" : "%.2f%c", number, c);
+        if (out.charAt(out.length() - 2) == '0') {
+            char endChar = out.charAt(out.length() - 1);
+            out = out.substring(0, out.length() - 2) + endChar;
+        }
+        return out;
     }
 
     public static String Time2HourAndMinient(long time) {
@@ -124,7 +129,7 @@ public class DataUtil {
         return String.format("%dH%dM", h, m);
     }
 
-    public static <T> T getObject(String filepath, Class<T> T){
+    public static <T> T getObject(String filepath, Class<T> T) {
         try {
             return mapper.readValue(new File(filepath), T);
         } catch (IOException e) {
@@ -133,12 +138,12 @@ public class DataUtil {
         }
     }
 
-    public static List<Integer> readMap(String mapStr){
+    public static List<Integer> readMap(String mapStr) {
         var bucket = mapStr.split("\\[\\w+]");
-        var hitObjects = bucket[bucket.length-1].split("\\s+");
+        var hitObjects = bucket[bucket.length - 1].split("\\s+");
         var hitObjectStr = new ArrayList<String>();
-        for (var x : hitObjects){
-            if (!x.trim().equals("")){
+        for (var x : hitObjects) {
+            if (!x.trim().equals("")) {
                 hitObjectStr.add(x);
             }
         }
@@ -158,22 +163,26 @@ public class DataUtil {
         return times;
     }
 
-    public static List<Integer> t(List<Integer> x){
+    public static List<Integer> t(List<Integer> x) {
         var steps = (x.get(x.size() - 1) - x.get(0)) / 16 + 1;
         var out = new LinkedList<Integer>();
         int m = x.get(0) + steps;
         short sum = 0;
-        for (var i : x){
-            if (i < m){
-                sum ++;
+        for (var i : x) {
+            if (i < m) {
+                sum++;
             } else {
-                out.push((int)sum);
+                out.push((int) sum);
                 sum = 0;
                 m += steps;
             }
         }
-        
+
         return out;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getRoundedNumberStr(4396, 2));
     }
 
 //    public static void main(String[] args) throws IOException {
