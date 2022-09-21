@@ -9,7 +9,6 @@ import org.jetbrains.skija.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 
 public class K3CardBuilder extends PanelBuilder {
@@ -44,7 +43,7 @@ public class K3CardBuilder extends PanelBuilder {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS18 = new Font(TorusSB, 18);
 
-        TextLine Jl = TextLine.make("Judge & Difficulty", fontS18);
+        TextLine Jl = TextLine.make("Judge & Difficulty", fontS18);// 标题
         TextLine Jr = TextLine.make("rating " + "114514", fontS18);// 谱面评级
 
         canvas.save();
@@ -58,15 +57,27 @@ public class K3CardBuilder extends PanelBuilder {
     private void drawRetryFailGraph(Score score) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS18 = new Font(TorusSB, 18);
+
+        int PassPercent;
+        int FailPercent;
+
+        if (score.getBeatMap().getPlaycount() == 0) {
+            PassPercent = 0;
+            FailPercent = 0;
+        } else {
+            PassPercent = (int) (score.getBeatMap().getPasscount() * 100f / score.getBeatMap().getPlaycount());
+            FailPercent = 114514; // (int) (score.getBeatMap().getFailcount() * 100f / score.getBeatMap().getPlaycount());
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("r ")
-                .append("114514") //重试比例
+                .append(PassPercent) //重试比例
                 .append("% // f ")
-                .append("1919810") //失败比例
+                .append(FailPercent) //失败比例
                 .append("%");
 
-        TextLine Jl = TextLine.make("Retry & Fail", fontS18);
-        TextLine Jr = TextLine.make(sb.toString(), fontS18);// 谱面评级
+        TextLine Jl = TextLine.make("Retry & Fail", fontS18);// 标题
+        TextLine Jr = TextLine.make(sb.toString(), fontS18);// retry fail
 
         canvas.save();
         canvas.translate(20,140);
@@ -203,7 +214,8 @@ public class K3CardBuilder extends PanelBuilder {
         canvas.restore();
     }
     private void drawStarRatingRRect(Score score) {
-        List<String> mod = score.getMods();
+        // 这里是右下角那个可以展示状态的东西，但是没想好怎么写，也可以写成和 lazer 一样的星数，也可以写pass fail
+        // List<String> mod = score.getMods();
 
         // if (mod.contains("EZ")) ;
 

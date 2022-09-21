@@ -99,6 +99,7 @@ public class K1CardBuilder extends PanelBuilder {
         }
 
         Float SR = beatMap.getDifficultyRating();
+        int SmallStarTransY = 0; //给最小的那颗星星做y偏移用的
 
         canvas.save();
         canvas.translate(40,105);
@@ -108,11 +109,12 @@ public class K1CardBuilder extends PanelBuilder {
         while (SR >= 1f){
             canvas.drawImage(Star,0,0,new Paint());
             canvas.translate(0,35);
+            SmallStarTransY += 35;
             SR -= 1f;
         }
 
         if (SR > 0f) {
-            SkiaCanvasUtil.drawScaleImage(canvas, Star, (1 - SR)/2f, (1 - SR)/2f, SR * 39f, SR * 39f); //Star 图片宽 39x39
+            SkiaCanvasUtil.drawScaleImage(canvas, Star, (1 - SR)/2f + 40, (1 - SR)/2f + 135 + SmallStarTransY, SR * 39f, SR * 39f); //Star 图片宽 39x39
         }
         canvas.restore();
     }
@@ -122,10 +124,8 @@ public class K1CardBuilder extends PanelBuilder {
 
         Font fontS24 = new Font(TorusSB, 24);
 
-        String MapFavorite = DataUtil.getRoundedNumberStr(beatMap.getBeatMapSet().getFavourite(), 2) +
-                DataUtil.getRoundedNumberUnit(beatMap.getBeatMapSet().getFavourite(), 2);
-        String MapPlayCount = DataUtil.getRoundedNumberStr(beatMap.getPlaycount(),2) +
-                DataUtil.getRoundedNumberUnit(beatMap.getPlaycount(),2);
+        String MapFavorite = DataUtil.getRoundedNumberStr(beatMap.getBeatMapSet().getFavourite(), 1);
+        String MapPlayCount = DataUtil.getRoundedNumberStr(beatMap.getPlaycount(),1);
 
         TextLine MapFav = TextLine.make(MapFavorite, fontS24);
         TextLine MapPC = TextLine.make(MapPlayCount, fontS24);
