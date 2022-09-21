@@ -304,9 +304,9 @@ public class K2CardBuilder extends PanelBuilder {
 
         Image accII = null;
         String accIN = "accuracy";
-        String accLI = String.valueOf(acc).substring(0,2);
-        String accSI = "." + String.valueOf(acc).substring(4,6) + "%";
-        String accAI = String.valueOf(accGoal).substring(0,5) + "%"; //这是个负数，取五位
+        String accLI = String.valueOf(acc).substring(0,3); // 99.
+        String accSI = String.valueOf(acc).substring(4,6) + "%"; // (.)43%
+        String accAI = String.valueOf(accGoal).substring(0,5) + "%"; //这是个负数，取五位 -3.454%
         
         Image cbII = null;
         String cbIN = "combo";

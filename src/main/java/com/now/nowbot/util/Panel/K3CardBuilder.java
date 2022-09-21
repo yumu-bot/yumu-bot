@@ -9,6 +9,7 @@ import org.jetbrains.skija.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class K3CardBuilder extends PanelBuilder {
@@ -29,7 +30,9 @@ public class K3CardBuilder extends PanelBuilder {
         super(1000, 270);
 
         drawBaseRRect();
-        drawJudgeGraph(score);//还没有写柱状图，柱状图宽16，最高80，圆角8，间隔4，共26个
+        drawJudgeIndex(score);
+        drawJudgeGraph(score);
+        drawRetryFailIndex(score);
         drawRetryFailGraph(score);//还没有写两个折线图，折线图高80，宽520，起点在20,170，retry的颜色 Paint colorGoldenYellow，Fail颜色 Paint colorRed
         drawBeatMapInfo(score);
         drawStarRatingRRect(score);
@@ -39,12 +42,14 @@ public class K3CardBuilder extends PanelBuilder {
         canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
-    private void drawJudgeGraph(Score score) {
+    private void drawJudgeIndex(Score score) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS18 = new Font(TorusSB, 18);
 
+        String MapRatingStr = String.format("%.1f",score.getBeatMap().getBeatMapRating());
+
         TextLine Jl = TextLine.make("Judge & Difficulty", fontS18);// 标题
-        TextLine Jr = TextLine.make("rating " + "114514", fontS18);// 谱面评级
+        TextLine Jr = TextLine.make("rating " + MapRatingStr, fontS18);// 谱面评级
 
         canvas.save();
         canvas.translate(20,20);
@@ -54,7 +59,32 @@ public class K3CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawRetryFailGraph(Score score) {
+    private void drawJudgeGraph(Score score) {
+        //还没有写柱状图，柱状图宽16，最高80，圆角8，间隔4，共26个
+
+        int AvailableRRectCount = (int) Math.floor(score.getStatistics().getPlayTime() * 27f / score.getBeatMap().getTotalLength()); // 这里稍微放大一点，免得没法算完
+        if (AvailableRRectCount > 26) AvailableRRectCount = 26;
+        if (AvailableRRectCount < 0) AvailableRRectCount = 0;// 限位
+
+        // 26等分的数据，需要传入DataUtil.readMap的数组
+        int[] ObjectArray = {114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514};
+        int ObjectMax = Arrays.stream(ObjectArray).max().getAsInt();
+
+        canvas.save();
+        canvas.translate(20,130);
+        for (int i = 0; i < ObjectArray.length; i++) {
+
+            if (AvailableRRectCount > 0) { //灰色与蓝色的区别
+                canvas.drawRRect(RRect.makeXYWH(0, -85f * ObjectArray[i] / ObjectMax, 16, 85f * ObjectArray[i] / ObjectMax, 4), colorLightBlue);
+            } else {
+                canvas.drawRRect(RRect.makeXYWH(0, -85f * ObjectArray[i] / ObjectMax, 16, 85f * ObjectArray[i] / ObjectMax, 4), colorGrey);
+            }
+            AvailableRRectCount--;
+            canvas.translate(20,0);
+            }
+        }
+
+    private void drawRetryFailIndex(Score score) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS18 = new Font(TorusSB, 18);
 
@@ -85,6 +115,10 @@ public class K3CardBuilder extends PanelBuilder {
         canvas.translate(520 - Jr.getWidth(),0);
         canvas.drawTextLine(Jr, 0, Jr.getHeight() - Jr.getXHeight(), colorGrey);
         canvas.restore();
+    }
+
+    private void drawRetryFailGraph(Score score) {
+
     }
 
     private void drawBeatMapInfo(Score score) {
