@@ -34,7 +34,7 @@ public class K1CardBuilder extends PanelBuilder {
     private void drawLeftRRect(BeatMap beatMap) {
 
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
-        Typeface ExtraSB = SkiaUtil.getEXTRA();
+        Typeface ExtraSB = null;
         try {
             ExtraSB = SkiaUtil.getEXTRA();
         } catch (Exception e) {
@@ -56,14 +56,14 @@ public class K1CardBuilder extends PanelBuilder {
 
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
         int SRIntI = (int) Math.floor(beatMap.getDifficultyRating());
-        int SRDecI = (int) (beatMap.getDifficultyRating() - Math.floor(beatMap.getDifficultyRating()));
+        double SRDecI = (beatMap.getDifficultyRating() - Math.floor(beatMap.getDifficultyRating()));
 
         StringBuilder SRintSB = new StringBuilder()
                 .append(SRIntI)
                 .append('.');
 
         TextLine SRInt = TextLine.make(String.valueOf(SRintSB), fontS48);
-        TextLine SRDec = TextLine.make(String.valueOf(SRDecI), fontS36);
+        TextLine SRDec = TextLine.make(String.valueOf(SRDecI).substring(2,4), fontS36);
         TextLine SRInt2 = TextLine.make(String.valueOf(SRIntI), fontS48);//这个是dec为0的时候输出的
 
         //画底层圆角矩形
@@ -74,12 +74,12 @@ public class K1CardBuilder extends PanelBuilder {
 
         //画星数
         canvas.save();
-        if (SRDecI != 0){
+        if (SRDecI >= 0.005f){ // 正常输出
             canvas.translate(160 - (SRInt.getWidth() - SRDec.getWidth()) / 2,50);
             canvas.drawTextLine(SRInt, 0, SRInt.getHeight() - SRInt.getXHeight(), colorWhite);
             canvas.translate(SRInt.getWidth(),8);
             canvas.drawTextLine(SRDec, 0, SRDec.getHeight() - SRDec.getXHeight(), colorWhite);
-        } else {
+        } else { //舍去输出
             canvas.translate(160 - SRInt2.getWidth()/ 2,50);
             canvas.drawTextLine(SRInt2, 0, SRInt2.getHeight() - SRInt2.getXHeight(), colorWhite);
         }
@@ -108,13 +108,14 @@ public class K1CardBuilder extends PanelBuilder {
 
         if (SR > 10f) SR = 10f;
 
-        while (SR > 1f){
+        while (SR >= 1f){
             canvas.drawImage(Star,0,0,new Paint());
             canvas.translate(0,35);
             SR -= 1f;
         }
 
-        if (SR != 0f) {
+        if (SR > 0f) {
+            canvas.translate(0,35);
             SkiaCanvasUtil.drawScaleImage(canvas, Star, 1 - SR, 1 - SR, SR, SR);
         }
         canvas.restore();
@@ -231,7 +232,7 @@ public class K1CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(440,94);
         canvas.clipPath(HexagonPath);
-        canvas.translate(-170,0);
+        canvas.translate(-200,0); // 170 - 30, 多出去一点
         canvas.drawImage(SkiaImageUtil.getScaleCenterImage(beatMapBG,380,420),0,0,new Paint());//实测是370-400左右，放大一点好
         canvas.restore();
 

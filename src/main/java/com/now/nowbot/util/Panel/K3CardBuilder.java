@@ -117,10 +117,10 @@ public class K3CardBuilder extends PanelBuilder {
             
         Image bpmII = null;
         String bpmIN = "BPM";
-        String bpmLI = String.valueOf((int) bpm_int);
+        String bpmLI = String.valueOf(bpm_int);
         String bpmSI;
         if (bpm_dec == 0){
-            bpmSI = "." + String.valueOf(bpm_dec).substring(0,2);
+            bpmSI = String.valueOf(bpm_dec).substring(1,3);
         } else {
             bpmSI = null;
         }
@@ -137,7 +137,7 @@ public class K3CardBuilder extends PanelBuilder {
         String csLI = String.valueOf(cs_int);
         String csSI;
         if (bpm_dec == 0){
-            csSI = "." + cs_dec;
+            csSI = String.valueOf(cs_dec).substring(1,3);
         } else {
             csSI = null;
         }
@@ -148,7 +148,7 @@ public class K3CardBuilder extends PanelBuilder {
         String arLI = String.valueOf(ar_int);
         String arSI;
         if (bpm_dec == 0){
-            arSI = "." + ar_dec;
+            arSI = String.valueOf(ar_dec).substring(1,3);
         } else {
             arSI = null;
         }
@@ -159,7 +159,7 @@ public class K3CardBuilder extends PanelBuilder {
         String odLI = String.valueOf(od_int);
         String odSI;
         if (bpm_dec == 0){
-            odSI = "." + od_dec;
+            odSI = String.valueOf(od_dec).substring(1,3);
         } else {
             odSI = null;
         }
@@ -170,7 +170,7 @@ public class K3CardBuilder extends PanelBuilder {
         String hpLI = String.valueOf(hp_int);
         String hpSI;
         if (bpm_dec == 0){
-            hpSI = "." + hp_dec;
+            hpSI = String.valueOf(hp_dec).substring(1,3);
         } else {
             hpSI = null;
         }
@@ -218,12 +218,24 @@ public class K3CardBuilder extends PanelBuilder {
         Paint RRectPaint;
 
         switch (JudgeName) {
-            case "o_300", "t_300", "c_300", "m_320": RRectPaint = colorLightBlue; break;
-            case "o_100", "c_100", "t_150", "m_200": RRectPaint = colorGreen; break;
-            case "o_50", "c_50", "m_300": RRectPaint = colorYellow; break;
+            case "o_300":
+            case "t_300":
+            case "c_300":
+            case "m_320": RRectPaint = colorLightBlue; break;
+            case "o_100":
+            case "c_100":
+            case "t_150":
+            case "m_200": RRectPaint = colorGreen; break;
+            case "o_50":
+            case "c_50":
+            case "m_300": RRectPaint = colorYellow; break;
             case "m_100": RRectPaint = colorBlue; break;
-            case "c_dl","m_50": RRectPaint = colorGrey; break;
-            case "o_0", "t_0", "c_0", "m_0": RRectPaint = colorRed; break;
+            case "c_dl":
+            case "m_50": RRectPaint = colorGrey; break;
+            case "o_0":
+            case "t_0":
+            case "c_0":
+            case "m_0": RRectPaint = colorRed; break;
             default: RRectPaint = colorDarkGrey;
         }
         return RRectPaint;
