@@ -20,7 +20,8 @@ public class K1CardBuilder extends PanelBuilder {
         //这是 pr panel的左侧物件合集，严格来说不算卡片。但写一起方便管理。
         //这个卡片没有作为背景的圆角矩形，是透明的，注意！
         super(880,790);
-
+        //测试时添加的背景
+        canvas.clear(Color.makeRGB(15,25,35));
         BeatMap beatMap = score.getBeatMap();
 
         drawLeftRRect(beatMap);
@@ -33,7 +34,7 @@ public class K1CardBuilder extends PanelBuilder {
     private void drawLeftRRect(BeatMap beatMap) {
 
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
-        Typeface ExtraSB = null;
+        Typeface ExtraSB = SkiaUtil.getEXTRA();
         try {
             ExtraSB = SkiaUtil.getEXTRA();
         } catch (Exception e) {
@@ -43,8 +44,15 @@ public class K1CardBuilder extends PanelBuilder {
         Font fontS36 = new Font(TorusSB, 36);
         Font fontS48 = new Font(TorusSB, 48);
         Font ExtraS48 = new Font(ExtraSB, 48);
-
-        TextLine luMode = TextLine.make(String.valueOf(beatMap.getModeInt()), ExtraS48);
+        String c;
+        switch (beatMap.getModeInt()){
+            default:
+            case 0: c = PanelUtil.MODE_OSU;break;
+            case 1: c = PanelUtil.MODE_TAIKO;break;
+            case 2: c = PanelUtil.MODE_CATCH;break;
+            case 3: c = PanelUtil.MODE_MANIA;break;
+        }
+        TextLine luMode = TextLine.make(c, ExtraS48);
 
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
         int SRIntI = (int) Math.floor(beatMap.getDifficultyRating());

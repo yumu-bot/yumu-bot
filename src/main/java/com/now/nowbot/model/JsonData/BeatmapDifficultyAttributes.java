@@ -54,4 +54,57 @@ public class BeatmapDifficultyAttributes {
      */
     @JsonProperty("great_hit_window")
     Float great_hit_window;
+
+
+    public Integer getMaxCombo() {
+        return maxCombo;
+    }
+
+    public Float getStarRating() {
+        return starRating;
+    }
+
+    public Float getAim() {
+        return aim;
+    }
+
+    public Float getFlashlight() {
+        return flashlight;
+    }
+
+    public Float getOverall() {
+        return overall;
+    }
+
+    public Float getSpeed() {
+        return speed;
+    }
+
+    public Float getSlider() {
+        return slider;
+    }
+
+    public Float getStamina() {
+        return stamina;
+    }
+
+    public Float getRhythm() {
+        return rhythm;
+    }
+
+    public Float getColour() {
+        return colour;
+    }
+
+    public Float getScoreMultiplier() {
+        return scoreMultiplier;
+    }
+
+    public Float getApproachRate() {
+        return approachRate;
+    }
+
+    public Float getGreat_hit_window() {
+        return great_hit_window;
+    }
 }

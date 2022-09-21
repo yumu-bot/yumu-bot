@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -155,6 +156,24 @@ public class DataUtil {
                 }).toList();
 
         return times;
+    }
+
+    public static List<Integer> t(List<Integer> x){
+        var steps = (x.get(x.size() - 1) - x.get(0)) / 16 + 1;
+        var out = new LinkedList<Integer>();
+        int m = x.get(0) + steps;
+        short sum = 0;
+        for (var i : x){
+            if (i < m){
+                sum ++;
+            } else {
+                out.push((int)sum);
+                sum = 0;
+                m += steps;
+            }
+        }
+        
+        return out;
     }
 
 //    public static void main(String[] args) throws IOException {
