@@ -114,8 +114,7 @@ public class DataUtil {
         }
         String out = String.format(level == 1 ? "%.1f%c" : "%.2f%c", number, c);
         if (out.charAt(out.length() - 2) == '0') {
-            char endChar = out.charAt(out.length() - 1);
-            out = out.substring(0, out.length() - 2) + endChar;
+            out = out.substring(0, out.length() - 2) + c;
         }
         return out;
     }
