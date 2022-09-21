@@ -56,15 +56,11 @@ public class K1CardBuilder extends PanelBuilder {
 
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
         int SRIntI = (int) Math.floor(beatMap.getDifficultyRating());
-        double SRDecI = (beatMap.getDifficultyRating() - Math.floor(beatMap.getDifficultyRating()));
+        double SRDecI = beatMap.getDifficultyRating() - SRIntI;
 
-        StringBuilder SRintSB = new StringBuilder()
-                .append(SRIntI)
-                .append('.');
-
-        TextLine SRInt = TextLine.make(String.valueOf(SRintSB), fontS48);
-        TextLine SRDec = TextLine.make(String.valueOf(SRDecI).substring(2,4), fontS36);
-        TextLine SRInt2 = TextLine.make(String.valueOf(SRIntI), fontS48);//这个是dec为0的时候输出的
+        TextLine SRInt = TextLine.make(SRIntI + ".", fontS48); // 3.
+        TextLine SRDec = TextLine.make(String.valueOf(SRDecI).substring(2,4), fontS36); // (.)46
+        TextLine SRInt2 = TextLine.make(String.valueOf(SRIntI), fontS48);// 这个是 dec 为 0 的时候输出的
 
         //画底层圆角矩形
         canvas.save();
@@ -75,7 +71,7 @@ public class K1CardBuilder extends PanelBuilder {
         //画星数
         canvas.save();
         if (SRDecI >= 0.005f){ // 正常输出
-            canvas.translate(160 - (SRInt.getWidth() - SRDec.getWidth()) / 2,50);
+            canvas.translate(160 - (SRInt.getWidth() + SRDec.getWidth()) / 2,50);
             canvas.drawTextLine(SRInt, 0, SRInt.getHeight() - SRInt.getXHeight(), colorWhite);
             canvas.translate(SRInt.getWidth(),8);
             canvas.drawTextLine(SRDec, 0, SRDec.getHeight() - SRDec.getXHeight(), colorWhite);
@@ -87,9 +83,10 @@ public class K1CardBuilder extends PanelBuilder {
 
         //画游戏模式
         canvas.save();
-        canvas.translate(47,44);
+        canvas.translate(47,82); //本来是 47 44 但是实测好像还要再往下 38px
         canvas.drawTextLine(luMode, 0, luMode.getHeight() - luMode.getXHeight(), colorWhite);
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
+        //这里还需要获取谱面难度，并上色 color
         canvas.restore();
     }
 
@@ -115,8 +112,7 @@ public class K1CardBuilder extends PanelBuilder {
         }
 
         if (SR > 0f) {
-            canvas.translate(0,35);
-            SkiaCanvasUtil.drawScaleImage(canvas, Star, 1 - SR, 1 - SR, SR, SR);
+            SkiaCanvasUtil.drawScaleImage(canvas, Star, (1 - SR)/2f, (1 - SR)/2f, SR * 39f, SR * 39f); //Star 图片宽 39x39
         }
         canvas.restore();
     }
@@ -126,10 +122,10 @@ public class K1CardBuilder extends PanelBuilder {
 
         Font fontS24 = new Font(TorusSB, 24);
 
-        String MapFavorite = DataUtil.getRoundedNumberStr(beatMap.getBeatMapSet().getFavourite(), 1) +
-                DataUtil.getRoundedNumberUnit(beatMap.getBeatMapSet().getFavourite(), 1);
-        String MapPlayCount = DataUtil.getRoundedNumberStr(beatMap.getPlaycount(),1) +
-                DataUtil.getRoundedNumberUnit(beatMap.getPlaycount(),1);
+        String MapFavorite = DataUtil.getRoundedNumberStr(beatMap.getBeatMapSet().getFavourite(), 2) +
+                DataUtil.getRoundedNumberUnit(beatMap.getBeatMapSet().getFavourite(), 2);
+        String MapPlayCount = DataUtil.getRoundedNumberStr(beatMap.getPlaycount(),2) +
+                DataUtil.getRoundedNumberUnit(beatMap.getPlaycount(),2);
 
         TextLine MapFav = TextLine.make(MapFavorite, fontS24);
         TextLine MapPC = TextLine.make(MapPlayCount, fontS24);
