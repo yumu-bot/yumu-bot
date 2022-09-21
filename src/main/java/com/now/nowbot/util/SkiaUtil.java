@@ -160,7 +160,7 @@ public class SkiaUtil {
 
     static Typeface EXTRA;
 
-    public static Typeface getEXTRA() throws Exception {
+    public static Typeface getEXTRA(){
         if (EXTRA == null || EXTRA.isClosed()) {
             try {
                 EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
