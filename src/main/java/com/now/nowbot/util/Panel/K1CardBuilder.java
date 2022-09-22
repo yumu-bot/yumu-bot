@@ -34,7 +34,7 @@ public class K1CardBuilder extends PanelBuilder {
     private void drawLeftRRect(BeatMap beatMap) {
 
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
-        Typeface ExtraSB = null;
+        Typeface ExtraSB = SkiaUtil.getEXTRA();
         try {
             ExtraSB = SkiaUtil.getEXTRA();
         } catch (Exception e) {
@@ -114,7 +114,9 @@ public class K1CardBuilder extends PanelBuilder {
         }
 
         if (SR > 0f) {
-            SkiaCanvasUtil.drawScaleImage(canvas, Star, (1 - SR)/2f + 40, (1 - SR)/2f + 135 + SmallStarTransY, SR * 39f, SR * 39f); //Star 图片宽 39x39
+            var x = (1 - SR)/2f + 40;
+            var y = (1 - SR)/2f + 105 + SmallStarTransY;
+            SkiaCanvasUtil.drawScaleImage(canvas, Star, x, y, SR * 39f, SR * 39f); //Star 图片宽 39x39
         }
         canvas.restore();
     }

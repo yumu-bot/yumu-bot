@@ -154,10 +154,10 @@ public class SkiaCanvasUtil {
      * @return canvas
      */
     public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h) {
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.setMatrix(Matrix33.makeScale(1f * w / image.getWidth(), 1f * h / image.getHeight())).drawImage(image, 0, 0);
-        canvas.restore();
+        canvas.setMatrix(Matrix33.makeScale(w / image.getWidth(), h / image.getHeight()))
+                .setMatrix(Matrix33.makeTranslate(x, y))
+                .drawImage(image, 0, 0)
+                .resetMatrix();
         return canvas;
     }
 
