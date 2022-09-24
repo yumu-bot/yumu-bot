@@ -99,7 +99,7 @@ public class K1CardBuilder extends PanelBuilder {
         }
 
         Float SR = beatMap.getDifficultyRating();
-        int SmallStarTransY = 0; //给最小的那颗星星做y偏移用的
+        int SRInt = (int) Math.floor(SR); //给最小的那颗星星做y偏移用的
 
         canvas.save();
         canvas.translate(40,105);
@@ -109,13 +109,12 @@ public class K1CardBuilder extends PanelBuilder {
         while (SR >= 1f){
             canvas.drawImage(Star,0,0,new Paint());
             canvas.translate(0,35);
-            SmallStarTransY += 35;
             SR -= 1f;
         }
 
         if (SR > 0f) {
-            var x = (1 - SR)/2f + 40;
-            var y = (1 - SR)/2f + 105 + SmallStarTransY;
+            var x = (1 - SR)/2f * 39f + 40;
+            var y = (1 - SR)/2f * 39f + SRInt * 35 + 105;
             SkiaCanvasUtil.drawScaleImage(canvas, Star, x, y, SR * 39f, SR * 39f); //Star 图片宽 39x39
         }
         canvas.restore();
@@ -173,9 +172,9 @@ public class K1CardBuilder extends PanelBuilder {
 
         //画数据
         canvas.save();
-        canvas.translate(840 - MapFav.getWidth(),47);
+        canvas.translate(840 - MapFav.getWidth(),46);
         canvas.drawTextLine(MapFav, 0, MapFav.getHeight() - MapFav.getXHeight(), colorWhite);
-        canvas.translate(MapFav.getWidth() - MapPC.getWidth(),27);
+        canvas.translate(MapFav.getWidth() - MapPC.getWidth(),28);
         canvas.drawTextLine(MapPC, 0, MapPC.getHeight() - MapPC.getXHeight(), colorWhite);
         canvas.restore();
 
@@ -255,30 +254,31 @@ public class K1CardBuilder extends PanelBuilder {
 
         //计算字符长度，最好写个公共方法，这里先往这个方法里放着，本质是把Artist缩短，字符最大宽度600
 
-        StringBuilder sb = new StringBuilder();
-        var titleChar = beatMap.getBeatMapSet().getArtist().toCharArray();//这个可能会超长，需要优先缩短
+        StringBuilder sb1 = new StringBuilder();
+        var ArtistChar = beatMap.getBeatMapSet().getArtist().toCharArray();//这个可能会超长，需要优先缩短
+        var TitleChar = beatMap.getBeatMapSet().getTitle().toCharArray();//这个可  能会超长，需要优先缩短
 
         int maxWidth = 600;
         float allWidth = 0;
         int backL = 0;
 
-        for (var thisChar : titleChar) {
+        for (var thisChar : ArtistChar) {
             if (allWidth > maxWidth){
                 break;
             }
-            sb.append(thisChar);
+            sb1.append(thisChar);
             if ((allWidth) < maxWidth){
                 backL++;
             }
         }
         if (allWidth > maxWidth){
-            sb.delete(backL,sb.length());
-            sb.append("...");
+            sb1.delete(backL,sb1.length());
+            sb1.append("...");
         }
 
-        String J4t1 = sb.toString();
+        String J4t1 = sb1.toString();
 
-        sb.delete(0,sb.length());
+        sb1.delete(0,sb1.length());
         allWidth = 0;
         backL = 0;
 

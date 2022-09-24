@@ -213,6 +213,7 @@ public class K2CardBuilder extends PanelBuilder {
                 drawScoreUnit("o_50",s_50,s);
                 canvas.translate(0,40);
                 drawScoreUnit("o_0",s_0,s);
+                canvas.restore();
             } break;
 
             case TAIKO:{
@@ -222,6 +223,7 @@ public class K2CardBuilder extends PanelBuilder {
                 drawScoreUnit("t_150",s_100,s);
                 canvas.translate(0,80);
                 drawScoreUnit("t_0",s_0,s);
+                canvas.restore();
             } break;
 
             case CATCH:{
@@ -235,6 +237,7 @@ public class K2CardBuilder extends PanelBuilder {
                 drawScoreUnit("c_0",s_0,s);
                 canvas.translate(0,40);
                 drawScoreUnit("c_dl",s_k,s); //miss droplet
+                canvas.restore();
             } break;
 
             case MANIA:{
@@ -249,9 +252,9 @@ public class K2CardBuilder extends PanelBuilder {
                 drawScoreUnit("m_50",s_50,s);
                 canvas.translate(0,40);
                 drawScoreUnit("m_0",s_0,s);
+                canvas.restore();
             } break;
         }
-        canvas.restore();
     }
 
     private void drawScoreInfo(Score score){
@@ -410,6 +413,7 @@ public class K2CardBuilder extends PanelBuilder {
 
         canvas.translate(512,2);
         canvas.drawTextLine(R, 0, R.getHeight() - R.getXHeight(), ScorePaint);
+        canvas.restore();
     }
 
 
