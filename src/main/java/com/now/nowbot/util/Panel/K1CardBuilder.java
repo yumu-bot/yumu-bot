@@ -88,7 +88,7 @@ public class K1CardBuilder extends PanelBuilder {
 
         //画游戏模式
         canvas.save();
-        canvas.translate(47,82); //本来是 47 44 但是实测好像还要再往下 38px
+        canvas.translate(47,80); //本来是 47 44 但是实测好像还要再往下 36px
         canvas.drawTextLine(luMode, 0, luMode.getHeight() - luMode.getXHeight(), colorWhite);
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
         //这里还需要获取谱面难度，并上色 color
@@ -253,62 +253,31 @@ public class K1CardBuilder extends PanelBuilder {
         Font fontS48 = new Font(TorusSB, 48);
         Font fontP36 = new Font(PUHUITISB, 36);
 
-        String J1t = beatMap.getBeatMapSet().getTitle();
-        String J2t = beatMap.getBeatMapSet().getTitleUTF();
-        String J3t = beatMap.getVersion();
+        String J1Str = SkiaUtil.getShortenStr(beatMap.getBeatMapSet().getTitle(), 840);// TitleStr
+        String J2Str = SkiaUtil.getShortenStr(beatMap.getBeatMapSet().getTitleUTF(), 840);// TitleUnicodeStr
+        String J3Str = SkiaUtil.getShortenStr(beatMap.getVersion(), 840);// DifficultyStr
 
-        //计算字符长度，最好写个公共方法，这里先往这个方法里放着，本质是把Artist缩短，字符最大宽度600
+        String J4Str1 = SkiaUtil.getShortenStr(beatMap.getBeatMapSet().getArtist(), 600);// ArtistStr
 
-        StringBuilder sb1 = new StringBuilder();
-        var ArtistChar = beatMap.getBeatMapSet().getArtist().toCharArray();//这个可能会超长，需要优先缩短
-        var TitleChar = beatMap.getBeatMapSet().getTitle().toCharArray();//这个可  能会超长，需要优先缩短
-
-        int maxWidth = 600;
-        float allWidth = 0;
-        int backL = 0;
-
-        for (var thisChar : ArtistChar) {
-            if (allWidth > maxWidth){
-                break;
-            }
-            sb1.append(thisChar);
-            if ((allWidth) < maxWidth){
-                backL++;
-            }
-        }
-        if (allWidth > maxWidth){
-            sb1.delete(backL,sb1.length());
-            sb1.append("...");
-        }
-
-        String J4t1 = sb1.toString();
-
-        sb1.delete(0,sb1.length());
-        allWidth = 0;
-        backL = 0;
-
-        String J4t2 = beatMap.getBeatMapSet().getCreator();
-        String J4t3 = String.valueOf(beatMap.getId());
-
-        StringBuilder J4t = new StringBuilder()
-                .append(J4t1)
+        StringBuilder J4sb = new StringBuilder()
+                .append(J4Str1)
                 .append(" - ")
-                .append(J4t2)
+                .append(beatMap.getBeatMapSet().getCreator()) // J4Str2
                 .append(" - b")
-                .append(J4t3);
+                .append(beatMap.getId()); // J4Str3
 
         //歌曲名，歌曲名UTF，谱面难度，曲师 - 谱师 - BID
-        TextLine J1 = TextLine.make(J1t, fontS48);
-        TextLine J2 = TextLine.make(J2t, fontP36);
-        TextLine J3 = TextLine.make(J3t, fontS36);
-        TextLine J4 = TextLine.make(String.valueOf(J4t), fontS24);
+        TextLine J1 = TextLine.make(J1Str, fontS48);
+        TextLine J2 = TextLine.make(J2Str, fontP36);
+        TextLine J3 = TextLine.make(J3Str, fontS36);
+        TextLine J4 = TextLine.make(String.valueOf(J4sb), fontS24);
 
         canvas.save();
         canvas.translate(440 - J1.getWidth() / 2,560);
         canvas.drawTextLine(J1, 0, J1.getHeight() - J1.getXHeight(), colorWhite); //y:850
 
         //如果没有Unicode曲名，则省略J2
-        if (Objects.equals(J1t, J2t)){
+        if (Objects.equals(J1Str, J2Str)){
             canvas.translate(J1.getWidth() - J3.getWidth() / 2,130); //y:980
         } else{
             canvas.translate((J1.getWidth() - J2.getWidth()) / 2,55);

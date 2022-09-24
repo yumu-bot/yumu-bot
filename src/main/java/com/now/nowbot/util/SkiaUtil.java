@@ -1,7 +1,6 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.skija.*;
@@ -622,6 +621,39 @@ public class SkiaUtil {
         return index;
     }
 
+    /***
+     * 缩短字符 220924
+     * @param Str 需要被缩短的字符
+     * @param MaxWidth 最大宽度
+     * @return 返回已缩短的字符
+     */
+    public static String getShortenStr (String Str, int MaxWidth){
+        StringBuilder sb = new StringBuilder();
+        var Char = Str.toCharArray();
+
+        float allWidth = 0;
+        int backL = 0;
+
+        for (var thisChar : Char) {
+            if (allWidth > MaxWidth){
+                break;
+            }
+            sb.append(thisChar);
+            if ((allWidth) < MaxWidth){
+                backL++;
+            }
+        }
+        if (allWidth > MaxWidth){
+            sb.delete(backL,sb.length());
+            sb.append("...");
+        }
+
+        sb.delete(0,sb.length());
+        allWidth = 0;
+        backL = 0;
+
+        return sb.toString();
+    }
 
 
 

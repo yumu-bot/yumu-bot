@@ -42,7 +42,7 @@ public class K2CardBuilder extends PanelBuilder {
     }
 
     private void drawRank(Score score){
-        double ArcDegree = score.getAccuracy() * 360f;
+        float ArcDegree = (float) (score.getAccuracy() * 360f);
         Image RankImage = getRankImage(score.getRank());
         Image AccuracyImage = null;
         Image ColoredCircle = null;
@@ -55,7 +55,7 @@ public class K2CardBuilder extends PanelBuilder {
 
         // 270x270的环，圆中心175,155
         var ArcRect = org.jetbrains.skija.Rect.makeXYWH(40f,20f,270f,270f);
-        var ArcPath = new org.jetbrains.skija.Path().addArc(ArcRect,-90f, (float) (-90f + ArcDegree))
+        var ArcPath = new org.jetbrains.skija.Path().addArc(ArcRect,-90f, ArcDegree)
                 .lineTo(175,155)
                 .lineTo(175,20)
                 .closePath();
@@ -69,7 +69,7 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(70,50);
         canvas.drawImage(ColoredCircle,0,0,new Paint());
-        canvas.translate(59,46);
+        canvas.translate(50,30);// 相比于初版本 -9 -16
         canvas.drawImage(RankImage,0,0,new Paint());
         canvas.restore();
     }
@@ -149,17 +149,17 @@ public class K2CardBuilder extends PanelBuilder {
         Font fontS84 = new Font(TorusSB, 84);
         Font fontS60 = new Font(TorusSB, 60);
 
-        String Scr = SkiaUtil.getV3Score(score);
+        String ScoreStr = SkiaUtil.getV3Score(score);
         String s1t,s2t;
 
-        s1t = Scr.substring(0,3);
-        s2t = Scr.substring(4,7);
+        s1t = ScoreStr.substring(0,3);
+        s2t = ScoreStr.substring(3,7);
 
         TextLine s1 = TextLine.make(s1t, fontS84);
         TextLine s2 = TextLine.make(s2t, fontS60);
 
         canvas.save();
-        canvas.translate(435,20);
+        canvas.translate(335,20);
         canvas.drawTextLine(s1, 0, s1.getHeight() - s1.getXHeight(), colorWhite);
         canvas.translate(s1.getWidth() + 4,16);
         canvas.drawTextLine(s2, 0, s2.getHeight() - s2.getXHeight(), colorWhite);
@@ -177,15 +177,17 @@ public class K2CardBuilder extends PanelBuilder {
                 try {
                     var modImg = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/Mods/" + mod + ".png");
                     canvas.drawImage(modImg,0,0);
-                    canvas.translate(-40,0);
-            } catch (IOException ignored) {}}
-        } else if (mods.size() >0){
+            } catch (IOException ignored) {}
+                canvas.translate(-40,0);
+            }
+        } else if (mods.size() > 0){
             for(var mod : mods){
                 try {
                     var modImg = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/Mods/" + mod + ".png");
                     canvas.drawImage(modImg,0,0);
-                    canvas.translate(-100,0);
-                } catch (IOException ignored) {}}
+                } catch (IOException ignored) {}
+                canvas.translate(-100,0);
+            }
         }
         canvas.restore();
     }
@@ -201,58 +203,36 @@ public class K2CardBuilder extends PanelBuilder {
 
         int s = score.getBeatMap().getMaxCombo();
 
-        canvas.save();
-        canvas.translate(400,100);
         switch (score.getMode()){
             case OSU:{
-                canvas.translate(0,40);
-                drawScoreUnit("o_300",s_300,s);
-                canvas.translate(0,40);
-                drawScoreUnit("o_100",s_100,s);
-                canvas.translate(0,40);
-                drawScoreUnit("o_50",s_50,s);
-                canvas.translate(0,40);
-                drawScoreUnit("o_0",s_0,s);
-                canvas.restore();
+                drawScoreUnit("o_300",s_300,s,400,100);
+                drawScoreUnit("o_100",s_100,s,400,140);
+                drawScoreUnit("o_50",s_50,s,400,180);
+                drawScoreUnit("o_0",s_0,s,400,260);
             } break;
 
             case TAIKO:{
-                canvas.translate(0,40);
-                drawScoreUnit("t_300",s_300,s);
-                canvas.translate(0,40);
-                drawScoreUnit("t_150",s_100,s);
-                canvas.translate(0,80);
-                drawScoreUnit("t_0",s_0,s);
-                canvas.restore();
+                drawScoreUnit("t_300",s_300,s,400,140);
+                drawScoreUnit("t_150",s_100,s,400,180);
+                drawScoreUnit("t_0",s_0,s,400,260);
             } break;
 
             case CATCH:{
-                canvas.translate(0,40);
-                drawScoreUnit("c_300",s_300,s);
-                canvas.translate(0,40);
-                drawScoreUnit("c_100",s_100,s);
-                canvas.translate(0,40);
-                drawScoreUnit("c_50",s_50,s);
-                canvas.translate(0,40);
-                drawScoreUnit("c_0",s_0,s);
-                canvas.translate(0,40);
-                drawScoreUnit("c_dl",s_k,s); //miss droplet
+                drawScoreUnit("c_300",s_300,s,400,100);
+                drawScoreUnit("c_100",s_100,s,400,140);
+                drawScoreUnit("c_50",s_50,s,400,180);
+                drawScoreUnit("c_0",s_0,s,400,260);
+                drawScoreUnit("c_dl",s_k,s,400,300); //miss droplet
                 canvas.restore();
             } break;
 
             case MANIA:{
-                drawScoreUnit("m_320",s_g,s);
-                canvas.translate(0,40);
-                drawScoreUnit("m_300",s_300,s);
-                canvas.translate(0,40);
-                drawScoreUnit("m_200",s_k,s);
-                canvas.translate(0,40);
-                drawScoreUnit("m_100",s_100,s);
-                canvas.translate(0,40);
-                drawScoreUnit("m_50",s_50,s);
-                canvas.translate(0,40);
-                drawScoreUnit("m_0",s_0,s);
-                canvas.restore();
+                drawScoreUnit("m_320",s_g,s,400,100);
+                drawScoreUnit("m_300",s_300,s,400,140);
+                drawScoreUnit("m_200",s_k,s,400,180);
+                drawScoreUnit("m_100",s_100,s,400,220);
+                drawScoreUnit("m_50",s_50,s,400,260);
+                drawScoreUnit("m_0",s_0,s,400,300);
             } break;
         }
     }
@@ -331,15 +311,11 @@ public class K2CardBuilder extends PanelBuilder {
             e.printStackTrace();
         }
 
-        canvas.save();
-        canvas.translate(440,350);
-        drawInfoUnit(accII,accIN,accLI,accSI,accAI);
-        canvas.translate(210,0);
-        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI);
-        canvas.translate(210,0);
-        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI);
-        canvas.restore();
+        drawInfoUnit(accII,accIN,accLI,accSI,accAI,440,350);
+        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI,650,350);
+        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI,860,350);
     }
+
     private Image getRankImage (String Rank){
         Image RankImage = null;
 
@@ -351,8 +327,15 @@ public class K2CardBuilder extends PanelBuilder {
         return RankImage;
     }
 
-    private void drawScoreUnit (String ScoreIndex, int ScoreCount, int TotalCount){
-        //这是分数显示的组件，因为复用较多，写成私有方法方便调用
+    /***
+     * 这是分数显示的组件，因为复用较多，写成私有方法方便调用
+     * @param ScoreIndex 分数名称
+     * @param ScoreCount 分数
+     * @param TotalCount 分数最大值
+     * @param x 横坐标
+     * @param y 纵坐标
+     */
+    private void drawScoreUnit (String ScoreIndex, int ScoreCount, int TotalCount, int x, int y){
         Paint RRectPaint;
         Paint IndexPaint = colorWhite;
         Paint ScorePaint = colorWhite;
@@ -376,7 +359,6 @@ public class K2CardBuilder extends PanelBuilder {
             case "m_200" : {ScoreName = "200"; RRectPaint = colorGreen;} break;
             case "m_100" : {ScoreName = "100"; RRectPaint = colorBlue;} break;
             case "m_50" : {ScoreName = "50"; RRectPaint = colorGrey;} break;
-
             case "c_dl" : {ScoreName = "DL"; RRectPaint = colorGrey;} break;
             case "o_0" :
             case "t_0" :
@@ -403,22 +385,22 @@ public class K2CardBuilder extends PanelBuilder {
         if (RRectLength > 500f) RRectLength = 500f;
 
         canvas.save();
-        if (RRectLength != 0f){
-            canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), RRectPaint);
-            canvas.restore();
-        }
-        canvas.translate(- 14 - L.getWidth(),2);
-        canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), IndexPaint);
-        canvas.restore();
+        canvas.translate(x, y);
+        canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), RRectPaint);
 
-        canvas.translate(512,2);
+        canvas.translate(14 - L.getWidth(),2);
+        canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), IndexPaint);
+
+        canvas.translate(L.getWidth() + 526,0); //+ 14 + 512
         canvas.drawTextLine(R, 0, R.getHeight() - R.getXHeight(), ScorePaint);
         canvas.restore();
     }
 
 
-    private void drawInfoUnit (Image IndexImage, String IndexName, String LargeInfo, String SmallInfo, String AssistInfo) {
-        //这是一个 200 * 50 大小的组件，因为复用较多，写成私有方法方便调用
+    /***
+     * 这是分数显示的组件，因为复用较多，写成私有方法方便调用这是一个 200 * 50 大小的组件，因为复用较多，写成私有方法方便调用
+     */
+    private void drawInfoUnit (Image IndexImage, String IndexName, String LargeInfo, String SmallInfo, String AssistInfo, int x, int y) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS36 = new Font(TorusSB, 36);
         Font fontS24 = new Font(TorusSB, 24);
@@ -430,6 +412,7 @@ public class K2CardBuilder extends PanelBuilder {
         TextLine U4 = TextLine.make(SmallInfo, fontS24);
 
         canvas.save();
+        canvas.translate(x, y);
         canvas.drawImage(IndexImage, 0, 0, new Paint()); //这里可以试着用try catch环绕一下
         canvas.translate(50,0);
         canvas.drawTextLine(U1, 0, U1.getHeight() - U1.getXHeight(), colorGrey);
