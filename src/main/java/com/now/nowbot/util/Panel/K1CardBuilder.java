@@ -55,12 +55,17 @@ public class K1CardBuilder extends PanelBuilder {
         TextLine luMode = TextLine.make(c, ExtraS48);
 
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
-        int SRIntI = (int) Math.floor(beatMap.getDifficultyRating());
-        double SRDecI = beatMap.getDifficultyRating() - SRIntI;
 
-        TextLine SRInt = TextLine.make(SRIntI + ".", fontS48); // 3.
-        TextLine SRDec = TextLine.make(String.valueOf(SRDecI).substring(2,4), fontS36); // (.)46
-        TextLine SRInt2 = TextLine.make(String.valueOf(SRIntI), fontS48);// 这个是 dec 为 0 的时候输出的
+        float SR = beatMap.getDifficultyRating();
+        int SRIntI = (int) Math.floor(SR);
+        float SRDecI = SR - SRIntI;
+
+        String SRIntStr = String.format("%d", SRIntI);
+        String SRDecStr = String.format("%.2f", SRDecI);
+
+        TextLine SRInt = TextLine.make(SRIntStr, fontS48); // 3.
+        TextLine SRDec = TextLine.make(SRDecStr.substring(SRDecStr.indexOf('.'), SRDecStr.indexOf('.')+2), fontS36); // (.)46
+        TextLine SRInt2 = TextLine.make(SRIntStr, fontS48);// 这个是 dec 为 0 的时候输出的
 
         //画底层圆角矩形
         canvas.save();
