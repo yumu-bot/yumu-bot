@@ -88,7 +88,7 @@ public class K1CardBuilder extends PanelBuilder {
 
         //画游戏模式
         canvas.save();
-        canvas.translate(47,80); //本来是 47 44 但是实测好像还要再往下 36px
+        canvas.translate(47,78); //本来是 47 44 但是实测好像还要再往下 34px
         canvas.drawTextLine(luMode, 0, luMode.getHeight() - luMode.getXHeight(), colorWhite);
         //这里应该需要获取谱面“加mod“后的星数难度，需要getBeatmapAttribute什么的
         //这里还需要获取谱面难度，并上色 color
