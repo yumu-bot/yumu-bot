@@ -5,8 +5,6 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;
 
-import java.io.IOException;
-
 public class J2CardBuilder extends PanelBuilder {
     int rank_max;
     int rank_min;
@@ -38,10 +36,6 @@ public class J2CardBuilder extends PanelBuilder {
         //
         //
         //我傻逼了，当前值有标识，以我群里发的最终截图为准
-
-        //注意，这里还需要 2 套大数字省略方法，具体内容如下：
-        //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
-        //1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf
 
         var rankHistory = user.getRankHistory().history().stream().filter(i -> i != 0).toList();
 

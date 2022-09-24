@@ -311,9 +311,9 @@ public class K2CardBuilder extends PanelBuilder {
             e.printStackTrace();
         }
 
-        drawInfoUnit(accII,accIN,accLI,accSI,accAI,440,350);
-        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI,650,350);
-        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI,860,350);
+        drawInfoUnit(accII,accIN,accLI,accSI,accAI,350,350);
+        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI,460,350);
+        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI,570,350);
     }
 
     private Image getRankImage (String Rank){
@@ -388,7 +388,7 @@ public class K2CardBuilder extends PanelBuilder {
         canvas.translate(x, y);
         canvas.drawRRect(RRect.makeXYWH(0,0, RRectLength,28,10), RRectPaint);
 
-        canvas.translate(14 - L.getWidth(),2);
+        canvas.translate(- 14 - L.getWidth(),2);
         canvas.drawTextLine(L, 0, L.getHeight() - L.getXHeight(), IndexPaint);
 
         canvas.translate(L.getWidth() + 526,0); //+ 14 + 512
@@ -398,7 +398,7 @@ public class K2CardBuilder extends PanelBuilder {
 
 
     /***
-     * 这是分数显示的组件，因为复用较多，写成私有方法方便调用这是一个 200 * 50 大小的组件，因为复用较多，写成私有方法方便调用
+     * 这是分数显示的组件，因为复用较多，写成私有方法方便调用
      */
     private void drawInfoUnit (Image IndexImage, String IndexName, String LargeInfo, String SmallInfo, String AssistInfo, int x, int y) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
@@ -425,9 +425,9 @@ public class K2CardBuilder extends PanelBuilder {
             canvas.drawTextLine(U2, 0, U2.getHeight() - U2.getXHeight(), colorDarkGrey);
         }
 
-        canvas.translate(56 - 150 + U2.getWidth(),20);
+        canvas.translate(-144 + U2.getWidth(),20);
         canvas.drawTextLine(U3, 0, U3.getHeight() - U3.getXHeight(), colorWhite);
-        canvas.translate(0,8);
+        canvas.translate(U3.getWidth(),8);
         canvas.drawTextLine(U4, 0, U4.getHeight() - U4.getXHeight(), colorWhite);
         canvas.restore();
     }

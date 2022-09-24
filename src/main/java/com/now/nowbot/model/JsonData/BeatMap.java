@@ -50,6 +50,11 @@ public class BeatMap {
     Integer spinners;
     @JsonProperty("count_circles")
     Integer circles;
+    @JsonProperty("fail")
+    List<Integer> retryList;
+    @JsonProperty("exit")
+    List<Integer> failedList;
+
     /**
      * 仅在查询铺面信息的时候有
      */
@@ -287,7 +292,41 @@ public class BeatMap {
         for (int j = 0; j <= 10; j++) {
             r = r + j / 10D * rl.get(j) / sum;
         }
-        return r;}
+        return r;
+    }
+
+    public List<Integer> getBeatMapRetryList() {return retryList;}
+
+    public void SetBeatMapRetryList(List<Integer> retryList) {
+        this.retryList = retryList;
+    }
+
+    public int getBeatMapRetryCount() {
+        List<Integer> fl = getBeatMapRetryList();
+        int sum = 0;
+
+        for (int i = 0; i < fl.size(); i++) {
+            sum = sum + fl.get(i);
+        }
+        return sum;
+    }
+
+    public List<Integer> getBeatMapFailedList() {return failedList;}
+    
+    public void SetBeatMapFailedList(List<Integer> failedList) {
+        this.failedList = failedList;
+    }
+    
+    public int getBeatMapFailedCount() {
+        List<Integer> fl = getBeatMapFailedList();
+        int sum = 0;
+
+        for (int i = 0; i < fl.size(); i++) {
+            sum = sum + fl.get(i);
+        }
+        return sum;
+    }
+    
 
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMap{");
