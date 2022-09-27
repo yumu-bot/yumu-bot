@@ -118,9 +118,9 @@ public class K1CardBuilder extends PanelBuilder {
         }
 
         if (SR > 0f) {
-            var x = (1 - SR)/2f * 39f + 40;
-            var y = (1 - SR)/2f * 39f + SRInt * 35 + 105;
-            SkiaCanvasUtil.drawScaleImage(canvas, Star, x, y, SR * 39f, SR * 39f); //Star 图片宽 39x39
+            var x = 40;
+            var y = SRInt * 35 + 105;
+            SkiaCanvasUtil.drawScaleImage(canvas, Star, x, y, SR, SR); //Star 图片宽 39x39
         }
         canvas.restore();
     }

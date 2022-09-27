@@ -144,18 +144,22 @@ public class SkiaCanvasUtil {
     }
 
     /***
-     * 绘制缩放图形
+     * 绘制缩放图形 220928 修正算法
      * @param canvas 画笔
      * @param image 要画的图
      * @param x 被绘制的x坐标,取左上顶点
      * @param y y
-     * @param w 缩放后的宽
-     * @param h 高
+     * @param mx x缩放倍率
+     * @param my y缩放倍率
      * @return canvas
      */
-    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float w, float h) {
-        canvas.setMatrix(Matrix33.makeScale(w / image.getWidth(), h / image.getHeight()))
-                .setMatrix(Matrix33.makeTranslate(x, y))
+    public static Canvas drawScaleImage(Canvas canvas, Image image, float x, float y, float mx, float my) {
+        float pw = image.getWidth();
+        float ph = image.getHeight();
+
+        canvas.setMatrix(Matrix33.makeTranslate(-pw / 2f, -ph / 2f))
+                .setMatrix(Matrix33.makeScale(mx, my))
+                .setMatrix(Matrix33.makeTranslate(x + (pw * (1f - mx) / 2f), y + (ph * (1f - my) / 2f)))
                 .drawImage(image, 0, 0)
                 .resetMatrix();
         return canvas;
