@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -43,7 +42,7 @@ public class InfoService implements MessageService{
 
         var img = new InfoPanelBuilder();
         img.drawBanner(PanelUtil.getBanner(bUser));
-        var i = img.build(user, bpList);
+        var i = img.build(user,bpList);
         try (i){
             QQMsgUtil.sendImage(event.getSubject(), i);
         }

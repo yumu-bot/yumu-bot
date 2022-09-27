@@ -3,10 +3,9 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
-import com.now.nowbot.util.Panel.TbpPanelBuilder;
+import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -78,7 +77,7 @@ public class TodayBpService implements MessageService{
         var infoMe = osuGetService.getPlayerInfo(user, mode);
         var card = CardBuilder.getUserCard(infoMe);
 
-        var panel = new TbpPanelBuilder(lines.size());
+        var panel = new TBPPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
         QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT?user.getMode():mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
     }

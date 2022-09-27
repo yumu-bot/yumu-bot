@@ -49,6 +49,6 @@ public class InfoPanelBuilder extends PanelBuilder{
             canvas.drawImage(j5, 510, 705);
             canvas.drawImage(j6, 1450, 705);
         }
-        return super.build(20, " Info Panel v3.2 Enhanced");
+        return super.build(20, "InfoPanel v3.2 Enhanced");
     }
 }

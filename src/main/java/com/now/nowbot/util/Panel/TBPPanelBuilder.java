@@ -8,24 +8,24 @@ import org.jetbrains.skija.RRect;
 
 import java.util.List;
 
-public class TbpPanelBuilder extends PanelBuilder{
+public class TBPPanelBuilder extends PanelBuilder{
     private static final Paint c2 = new Paint().setARGB(255,42,34,38);
-    public TbpPanelBuilder(int size){
+    public TBPPanelBuilder(int size){
         super(1920, 330 + 150 * Math.round(size/2f));
     }
 
 
 
-    public TbpPanelBuilder drawBanner(Image banner){
+    public TBPPanelBuilder drawBanner(Image banner){
         drawImage(banner);
         return this;
     }
-    public TbpPanelBuilder mainCrawCard(Image main){
+    public TBPPanelBuilder mainCrawCard(Image main){
         drawImage(main, 40, 40);
         return this;
     }
 
-    public TbpPanelBuilder drawBp(List<Image> hCards){
+    public TBPPanelBuilder drawBp(List<Image> hCards){
         canvas.drawRRect(RRect.makeXYWH(0,290,1920,150 * Math.round(hCards.size()/2f) + 80, 30), c2);
         int evenNum = (hCards.size()%2 == 0) ? hCards.size() : hCards.size()-1;
         canvas.save();
@@ -59,6 +59,6 @@ public class TbpPanelBuilder extends PanelBuilder{
             default : modeStr =  "";
         }
         drawName("TBP"+modeStr);
-        return super.build(20, "Today BP");
+        return super.build(20, "Today BP Panel v3.5");
     }
 }
