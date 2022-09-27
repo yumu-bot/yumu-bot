@@ -312,8 +312,8 @@ public class K2CardBuilder extends PanelBuilder {
         }
 
         drawInfoUnit(accII,accIN,accLI,accSI,accAI,350,350);
-        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI,460,350);
-        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI,570,350);
+        drawInfoUnit(cbII,cbIN,cbLI,cbSI,cbAI,560,350);
+        drawInfoUnit(ppII,ppIN,ppLI,ppSI,ppAI,770,350);
     }
 
     private Image getRankImage (String Rank){
