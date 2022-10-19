@@ -56,7 +56,7 @@ public class K3CardBuilder extends PanelBuilder {
         String MapRatingStr = String.format("%.1f",score.getBeatMap().getBeatMapRating());
 
         TextLine Jl = TextLine.make("Judge & Difficulty", fontS18);// 标题
-        TextLine Jr = TextLine.make("rating " + MapRatingStr, fontS18);// 谱面评级
+        TextLine Jr = TextLine.make("Rating " + MapRatingStr, fontS18);// 谱面评级
 
         canvas.save();
         canvas.translate(20,20);
