@@ -42,6 +42,7 @@ public class BpShowService implements MessageService {
 
         //生成hcard
         int min = Math.min(bpList.size(), m);
+        from.sendMessage("0-" + min);
         for (int i = 0; i < min; i++) {
             var bp = bpList.get(i);
             lines.add(new HCardBuilder(bp, i+1).build());
