@@ -53,9 +53,10 @@ public enum Instruction {
 
     SONG(SongService.class,
             Pattern.compile("^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
-
+/*
     START(StartService.class,
             Pattern.compile("^[!！]((积分)|(..积分))+.*")),
+*/
 
     YMP(YmpService.class,
             Pattern.compile("^[!！](?i)ym(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -120,8 +121,11 @@ public enum Instruction {
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]map")),
 
+    TESTMAP(TestMapServer.class,
+            Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)")),
+
     BPSHOW(BpShowService.class,
-            Pattern.compile("^[!！]bp\\s*(?<n>\\d)"));
+            Pattern.compile("^[!！]bp\\s*(?<n>\\d+)"));
             ;
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),

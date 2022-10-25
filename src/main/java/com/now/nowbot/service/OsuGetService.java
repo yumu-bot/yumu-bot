@@ -444,6 +444,19 @@ public class OsuGetService {
         });
         return c.getBody();
     }
+    public List<JsonNode> getRecentNR(long userId, OsuMode mode, String s3, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
+                .queryParam("mode", mode)
+                .queryParam("limit", e)
+                .queryParam("offset", s)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<JsonNode>>() {
+        });
+        return c.getBody();
+    }
 
     public List<Score> getAllRecentN(long userId, OsuMode mode, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
