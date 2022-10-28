@@ -8,7 +8,6 @@ import org.jetbrains.skija.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class K3CardBuilder extends PanelBuilder {
@@ -37,7 +36,7 @@ public class K3CardBuilder extends PanelBuilder {
 
         drawBaseRRect();
         drawJudgeIndex(score);
-        drawJudgeGraph(score);
+        // drawJudgeGraph(score);
         drawRetryFailIndex(score);
         drawRetryGraph(score);//还没有写两个折线图，折线图高80，宽520，起点在20,170，retry的颜色 Paint colorGoldenYellow，Fail颜色 Paint colorRed
         drawFailedGraph(score);
@@ -74,7 +73,10 @@ public class K3CardBuilder extends PanelBuilder {
         if (AvailableRRectCount < 0) AvailableRRectCount = 0;// 限位
 
         // 26等分的数据，需要传入DataUtil.readMap的数组
-        int[] ObjectArray = {114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514,1919,810,114,514};
+
+        /*
+        var beatmap = score.getBeatMap();
+        List<Integer> ObjectArray = DataUtil.getGrouping26(DataUtil.getMapObjectList(OsuGetService.get));
         int ObjectMax = Arrays.stream(ObjectArray).max().getAsInt();
 
         canvas.save();
@@ -90,7 +92,8 @@ public class K3CardBuilder extends PanelBuilder {
             canvas.translate(20,0);
             }
         canvas.restore();
-        }
+         */
+    }
 
     private void drawRetryFailIndex(Score score) {
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();

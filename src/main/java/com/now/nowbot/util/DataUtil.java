@@ -1,24 +1,15 @@
 package com.now.nowbot.util;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.config.IocAllReadyRunner;
-import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.util.Panel.J1CardBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class DataUtil {
 
@@ -137,7 +128,7 @@ public class DataUtil {
         }
     }
 
-    public static List<Integer> readMap(String mapStr) {
+    public static List<Integer> getMapObjectList(String mapStr) {
         var bucket = mapStr.split("\\[\\w+]");
         var hitObjects = bucket[bucket.length - 1].split("\\s+");
         var hitObjectStr = new ArrayList<String>();
@@ -162,8 +153,8 @@ public class DataUtil {
         return times;
     }
 
-    public static List<Integer> t(List<Integer> x) {
-        var steps = (x.get(x.size() - 1) - x.get(0)) / 16 + 1;
+    public static List<Integer> getGrouping26(List<Integer> x) {
+        var steps = (x.get(x.size() - 1) - x.get(0)) / 26 + 1;
         var out = new LinkedList<Integer>();
         int m = x.get(0) + steps;
         short sum = 0;

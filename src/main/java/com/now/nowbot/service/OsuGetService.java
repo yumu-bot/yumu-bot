@@ -10,7 +10,6 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.beatmap.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
-import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
@@ -177,7 +176,7 @@ public class OsuGetService {
 //        BindingUtil.writeOsuID(date.getString("username"), id);
     }
 
-    public List<MicroUser> getFrendList(BinUser user) {
+    public List<MicroUser> getFriendList(BinUser user) {
         if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
