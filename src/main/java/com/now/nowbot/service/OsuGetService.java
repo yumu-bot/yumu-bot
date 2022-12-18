@@ -11,6 +11,7 @@ import com.now.nowbot.model.beatmap.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class OsuGetService {
@@ -742,12 +745,8 @@ public class OsuGetService {
     public BeatmapDifficultyAttributes getAttributes(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .build().encode().toUri();
-        HttpHeaders headers = getHeader();
-        MultiValueMap body = new LinkedMultiValueMap();
-        body.add("ruleset_id", "2");
-        HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
-        return c.getBody();
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, null, JsonNode.class);
+        return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
 
     public BeatmapDifficultyAttributes getAttributes(Integer id) {
@@ -755,19 +754,18 @@ public class OsuGetService {
     }
 
     public BeatmapDifficultyAttributes getAttributes(Long id, Mod... mods) {
-        StringBuilder sb = new StringBuilder('[');
+        int i = 0;
         for (var m : mods) {
-            sb.append(m.abbreviation).append(',');
+            i |= m.value;
         }
-        sb.append(']');
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .queryParam("mods", sb.toString())
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
-        return c.getBody();
+        HashMap body = new HashMap<>();
+        body.put("mods", i);
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
 
     public BeatmapDifficultyAttributes getAttributes(Integer id, Mod... mods) {
@@ -775,20 +773,22 @@ public class OsuGetService {
     }
 
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode, Mod... mods) {
-        StringBuilder sb = new StringBuilder('[');
+        int i = 0;
         for (var m : mods) {
-            sb.append(m.abbreviation).append(',');
+            i |= m.value;
         }
-        sb.append(']');
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .queryParam("mods", sb.toString())
-                .queryParam("ruleset_id", osuMode.getModeValue())
-                .build().encode().toUri();
-        HttpHeaders headers = getHeader();
 
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<BeatmapDifficultyAttributes> c = template.exchange(uri, HttpMethod.POST, httpEntity, BeatmapDifficultyAttributes.class);
-        return c.getBody();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+
+
+        HttpHeaders headers = getHeader();
+        HashMap body = new HashMap<>();
+        body.put("mods", i);
+        body.put("ruleset_id", osuMode.getModeValue());
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode, Mod... mods) {
         return getAttributes((long)id, osuMode, mods);
@@ -798,19 +798,19 @@ public class OsuGetService {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("ruleset_id", String.valueOf(osuMode.getModeValue()));
-        HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
+        HashMap body = new HashMap<>();
+        body.put("ruleset_id", osuMode.getModeValue());
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
 
-        var c = template.postForObject(uri, httpEntity, BeatmapDifficultyAttributes.class);
-        return c;
+        var c = template.postForObject(uri, httpEntity, JsonNode.class);
+        return JacksonUtil.parseObject(c.get("attributes"), BeatmapDifficultyAttributes.class);
     }
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode) {
         return getAttributes((long)id, osuMode);
     }
 
     public KudosuHistory getUserKudosu(BinUser user){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + 9590557 + "/kudosu")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/kudosu")
                 .build().encode().toUri();
         var headers = getHeader(user);
 
