@@ -24,15 +24,14 @@ public class TestMapServer implements MessageService{
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
-        sb.append(info.getBeatMapSet().getArtist()).append('-');
-        sb.append(info.getBeatMapSet().getTitle()).append('[');
-        sb.append(info.getVersion()).append(']').append('\n');
+        sb.append(info.getBeatMapSet().getArtistUTF()).append('-');
+        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')');
+        sb.append(info.getBeatMapSet().getTitleUTF());
+        sb.append('[').append(info.getVersion()).append(']').append('\n');
 
 
         if (mod == null || mod.trim().equals("")){
 
-
-            sb.append('(').append(info.getBeatMapSet().getMapperId()).append(')');
             sb.append(info.getDifficultyRating()).append(',')
                     .append(info.getBpm()).append(',')
                     .append(info.getHitLength()).append('\n');
