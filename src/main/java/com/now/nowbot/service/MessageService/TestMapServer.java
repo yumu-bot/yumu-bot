@@ -24,9 +24,9 @@ public class TestMapServer implements MessageService{
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
-        sb.append(info.getBeatMapSet().getArtistUTF()).append('-');
-        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')');
-        sb.append(info.getBeatMapSet().getTitleUTF());
+        sb.append(info.getBeatMapSet().getArtistUTF()).append(' ').append('-').append(' ');
+        sb.append(info.getBeatMapSet().getTitleUTF()).append(' ');
+        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')').append(' ');
         sb.append('[').append(info.getVersion()).append(']').append('\n');
 
 
