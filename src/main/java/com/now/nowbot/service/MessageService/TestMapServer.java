@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.beatmap.Mod;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.DataUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
@@ -45,16 +46,16 @@ public class TestMapServer implements MessageService{
         }
 
         var mods = mod.split(",");
-        var t = Stream.of(mods).map(Mod::fromStr).toList();
-        var a = osuGetService.getAttributes((long)bid, t.toArray(new Mod[0]));
+        int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
+        var a = osuGetService.getAttributes((long)bid, modInt);
         sb.append('(').append(info.getBeatMapSet().getMapperId()).append(')');
         sb.append(a.getStarRating()).append(',')
                 .append(info.getBpm()).append(',')
                 .append(info.getHitLength()).append('\n');
         sb.append(a.getMaxCombo()).append(',')
-                .append(info.getCS()).append(',')
+                .append(DataUtil.CS(info.getCS(), modInt)).append(',')
                 .append(a.getApproachRate()).append(',')
-                .append(info.getOD());
+                .append(DataUtil.OD(info.getOD(), modInt));
 
         event.getSubject().sendMessage(sb.toString());
     }

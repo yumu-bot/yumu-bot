@@ -790,6 +790,31 @@ public class OsuGetService {
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode, int modInt) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+
+
+        HttpHeaders headers = getHeader();
+        HashMap body = new HashMap<>();
+        body.put("mods", modInt);
+        body.put("ruleset_id", osuMode.getModeValue());
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
+    }
+    public BeatmapDifficultyAttributes getAttributes(Long id, int modInt) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+                .build().encode().toUri();
+
+
+        HttpHeaders headers = getHeader();
+        HashMap body = new HashMap<>();
+        body.put("mods", modInt);
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
+        return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
+    }
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode, Mod... mods) {
         return getAttributes((long)id, osuMode, mods);
     }

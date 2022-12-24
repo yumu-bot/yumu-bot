@@ -240,7 +240,7 @@ public class DataUtil {
         if (Mod.hasHr(mod)){
             cs *= 1.3f;
         } else if (Mod.hasEz(mod)) {
-            cs /= 1.3f;
+            cs /= 2f;
         }
         return cs;
     }

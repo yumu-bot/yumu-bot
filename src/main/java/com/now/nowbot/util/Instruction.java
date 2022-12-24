@@ -122,7 +122,7 @@ public enum Instruction {
             Pattern.compile("^[!！]map")),
 
     TESTMAP(TestMapServer.class,
-            Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*[:：](?<mode>[\\w\\d,]+))?")),
+            Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
     BPSHOW(BpShowService.class,
             Pattern.compile("^[!！]bp\\s*(?<n>\\d+)(\\s*[:：](?<mode>[\\w\\d]+))?"));
