@@ -49,7 +49,7 @@ public class TestPPMService implements MessageService {
                 .append(user.getGlobalRank()).append(',')
                 .append(user.getPP()).append(',')
                 .append(user.getAccuracy()).append(',')
-                .append(user.getLevelProgress()).append(',')
+                .append(user.getLevelCurrent()).append(',')
                 .append(user.getStatistics().getMaxCombo()).append(',')
                 .append(user.getTotalHits()).append(',')
                 .append(user.getPlayCount()).append(',')
