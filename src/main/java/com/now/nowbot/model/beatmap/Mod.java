@@ -88,6 +88,26 @@ public enum Mod {
         return (value & i) != 0;
     }
 
+    public static boolean hasDt(int i){
+        return DoubleTime.check(i);
+    }
+    public static boolean hasHt(int i){
+        return HalfTime.check(i);
+    }
+    public static boolean hasHr(int i){
+        return HardRock.check(i);
+    }
+    public static boolean hasEz(int i){
+        return Easy.check(i);
+    }
+
+    public static int add(int old, Mod mod){
+        return old | mod.value;
+    }
+    public int add(int old){
+        return old | this.value;
+    }
+
 
 
     public static void main(String[] args) {
