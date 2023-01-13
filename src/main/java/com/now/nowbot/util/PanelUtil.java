@@ -7,7 +7,7 @@ import com.now.nowbot.util.Panel.BCardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.skija.*;
-import org.jetbrains.skija.svg.SVGDOM;
+import org.jetbrains.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +54,8 @@ public class PanelUtil {
             OBJECT_MAPSTATUS_UNRANKED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-unranked.png"));
             OBJECT_MAPSTATUS_LOVED = SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH, "ExportFileV3/object-beatmap-loved.png"));
         } catch (IOException e) {
-            e.printStackTrace();
-        }
+//            e.printStackTrace();
+        } catch (Exception e){}
     }
 
     public static Image OBJECT_CARD_SUPPORTER;
@@ -236,5 +236,21 @@ public class PanelUtil {
         Image banner = SkiaImageUtil.getImage(EXPORT_FOLE_V3.resolve("Banner/b" + bannerIndex + ".png").toString());
         bannerIndex++;
         return banner;
+    }
+
+    public static void main(String[] args) throws IOException {
+        System.out.println(1);
+        var svgdom = new SVGDOM(Data.makeFromBytes(Files.readAllBytes(Path.of("/home/spring/code/nowbot-img/templete/1.svg"))));
+        var s = Surface.makeRasterN32Premul(600,600);
+        var c = s.getCanvas();
+        svgdom.getRoot()
+                .setWidth(new SVGLength(600))
+                .setPreserveAspectRatio(new SVGPreserveAspectRatio(SVGPreserveAspectRatioAlign.XMIN_YMIN, SVGPreserveAspectRatioScale.SLICE));
+        System.out.println(2);
+        svgdom.render(c);
+
+        Files
+                .write(Path.of("/home/spring/code/nowbot-img/templete/1.png"), s.makeImageSnapshot().encodeToData().getBytes());
+        System.out.println(3);
     }
 }

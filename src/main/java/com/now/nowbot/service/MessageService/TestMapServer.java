@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.model.beatmap.Mod;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.DataUtil;
 import net.mamoe.mirai.event.events.MessageEvent;

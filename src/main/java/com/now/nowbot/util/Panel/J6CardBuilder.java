@@ -2,7 +2,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BpInfo;
-import com.now.nowbot.model.beatmap.Mod;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.skija.*;

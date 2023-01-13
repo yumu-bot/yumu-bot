@@ -7,11 +7,10 @@ import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
-import com.now.nowbot.model.beatmap.Mod;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.throwable.TipsRuntimeException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,6 @@ import java.net.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class OsuGetService {
@@ -46,9 +44,6 @@ public class OsuGetService {
     private String oauthToken;
     private String URL;
     BindDao bindDao;
-
-    static final ObjectMapper jsonMapper = new ObjectMapper();
-
     RestTemplate template;
 
     @Autowired
@@ -176,7 +171,6 @@ public class OsuGetService {
         }
         bindDao.saveOsuNameToId(date.getId(), names);
         return date.getId();
-//        BindingUtil.writeOsuID(date.getString("username"), id);
     }
 
     public List<MicroUser> getFriendList(BinUser user) {

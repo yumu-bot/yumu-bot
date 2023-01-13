@@ -3,7 +3,7 @@ package com.now.nowbot.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.beatmap.Mod;
+import com.now.nowbot.model.enums.Mod;
 
 import java.io.File;
 import java.io.IOException;
