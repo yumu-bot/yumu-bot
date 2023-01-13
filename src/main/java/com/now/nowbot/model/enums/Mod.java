@@ -1,4 +1,4 @@
-package com.now.nowbot.model.beatmap;
+package com.now.nowbot.model.enums;
 
 public enum Mod {
     None(0,""),
