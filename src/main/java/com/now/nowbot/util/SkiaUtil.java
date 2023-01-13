@@ -221,8 +221,8 @@ public class SkiaUtil {
             root.setWidth(new SVGLength(width))
                     .setHeight(new SVGLength(height))
                     .setPreserveAspectRatio(new SVGPreserveAspectRatio(svgPreserveAspectRatioAlign, svgPreserveAspectRatioScale));
+            svg.render(canvas);
         }
-        svg.render(canvas);
         canvas.restore();
         return canvas;
     }
