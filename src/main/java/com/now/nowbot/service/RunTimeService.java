@@ -1,10 +1,7 @@
 package com.now.nowbot.service;
 
 
-import com.alibaba.fastjson.JSONObject;
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
@@ -13,12 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /***
  * 统一设置定时任务
@@ -40,18 +32,6 @@ public class RunTimeService {
         biliApiService.check();
     }
 
-    提醒ec睡觉
-    @Scheduled(cron = "0 0 0 * * *")
-    public void sleep(){
-        bot.getGroups().forEach(group -> {
-            var gs = group.getMembers();
-            try {
-                var n = gs.getOrFail(1529813731L);
-                group.sendMessage(new At(n.getId()).plus("快去睡啦"));
-            } catch (Exception e) {
-            }
-        });
-    }
     */
 //    @Scheduled(cron = "2 0 0-4,20-23 * * *")
     public void say(){
@@ -61,32 +41,6 @@ public class RunTimeService {
         }
     }
 
-//    @Scheduled(cron = "2 30 15 11 * *")
-    public void bindMove() {
-        var from = bot.getGroup(746671531);
-        from.sendMessage("开始转移数据");
-        Path pt = Path.of(NowbotConfig.BIN_PATH);
-        List<Path> allUseer = null;
-        try {
-            allUseer = Files.list(pt).filter((path)-> path.getFileName().toString().endsWith(".json")).collect(Collectors.toList());
-        } catch (IOException e) {
-            from.sendMessage(e.getMessage());
-        }
-        for(var path : allUseer){
-            BinUser date = null;
-            if (Files.isRegularFile(path)) {
-                try {
-                    String s = Files.readString(path);
-                    date = JSONObject.parseObject(s, BinUser.class);
-                } catch (IOException e) {
-                    from.sendMessage(e.getMessage());
-                }
-            }
-            if (date != null ) {
-                bindDao.saveUser(date);
-            }
-        }
-    }
 
 
     /***
