@@ -16,7 +16,7 @@
     <properties>
         <java.version>17</java.version>
         <skipTests>true</skipTests>
-        <mirai.version>2.10.1</mirai.version>
+        <mirai.version>2.14.0</mirai.version>
         <run.os>linux</run.os>
         <flexmark.version>0.26.4</flexmark.version>
     </properties>
@@ -157,22 +157,7 @@
             <version>4.8.1</version>
             <scope>compile</scope>
         </dependency>
-        <!--markdown to html-->
-<!--        <dependency>-->
-<!--            <groupId>com.vladsch.flexmark</groupId>-->
-<!--            <artifactId>flexmark</artifactId>-->
-<!--            <version>${flexmark.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.vladsch.flexmark</groupId>-->
-<!--            <artifactId>flexmark-util</artifactId>-->
-<!--            <version>${flexmark.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.vladsch.flexmark</groupId>-->
-<!--            <artifactId>flexmark-ext-tables</artifactId>-->
-<!--            <version>${flexmark.version}</version>-->
-<!--        </dependency>-->
+
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
