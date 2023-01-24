@@ -1,6 +1,5 @@
 package com.now.nowbot.util;
 
-import io.ktor.utils.io.core.Input;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.UploadObjectArgs;
