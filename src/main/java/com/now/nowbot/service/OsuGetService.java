@@ -39,10 +39,10 @@ public class OsuGetService {
     public static BinUser botUser = new BinUser();
     private static final Logger log = LoggerFactory.getLogger(OsuGetService.class);
 
-    private int oauthId;
-    private String redirectUrl;
-    private String oauthToken;
-    private String URL;
+    private final int oauthId;
+    private final String redirectUrl;
+    private final String oauthToken;
+    private final String URL;
     BindDao bindDao;
     RestTemplate template;
 
@@ -586,6 +586,15 @@ public class OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
+        return c.getBody();
+    }
+    public JsonNode getMapInfoR(long bid) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
         return c.getBody();
     }
 

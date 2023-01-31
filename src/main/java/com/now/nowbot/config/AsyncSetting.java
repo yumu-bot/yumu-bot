@@ -28,6 +28,11 @@ public class AsyncSetting implements AsyncConfigurer {
         threadPool.setThreadNamePrefix("NoBot-");
         threadPool.initialize();
     }
+
+    @Bean("botAsyncExecutor")
+    public ThreadPoolTaskExecutor executor() {
+        return threadPool;
+    }
     @Override
     public Executor getAsyncExecutor() {
         return AsyncSetting.threadPool;
@@ -35,7 +40,12 @@ public class AsyncSetting implements AsyncConfigurer {
 
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-        return new MyAsyncExceptionHandler();
+        return (throwable, method, obj) -> {
+            log.info("Method name - {}", method.getName(),throwable);
+            for (Object param : obj) {
+                log.info("Parameter value - " + param.toString());
+            }
+        };
     }
 
     /**
@@ -43,17 +53,7 @@ public class AsyncSetting implements AsyncConfigurer {
      * @author hry
      *
      */
-    static class MyAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 
-        @Override
-        public void handleUncaughtException(Throwable throwable, Method method, Object... obj) {
-            log.info("Method name - {}", method.getName(),throwable);
-            for (Object param : obj) {
-                log.info("Parameter value - " + param.toString());
-            }
-        }
-
-    }
     @Bean
     public AsyncTaskExecutor AstncConf(){
         return AsyncSetting.threadPool;
