@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.Score;
 import org.jetbrains.skija.Color;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
-import org.jetbrains.skija.RRect;
 
 import java.io.IOException;
 
@@ -19,7 +18,6 @@ public class ScorePanelBuilder extends PanelBuilder{
 
     public ScorePanelBuilder drawBanner(Image banner){
         drawImage(banner);
-        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
 

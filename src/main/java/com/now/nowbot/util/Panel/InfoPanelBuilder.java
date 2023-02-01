@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import org.jetbrains.skija.Color;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
-import org.jetbrains.skija.RRect;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,7 +19,6 @@ public class InfoPanelBuilder extends PanelBuilder{
 
     public InfoPanelBuilder drawBanner(Image banner){
         drawImage(banner);
-        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
 
