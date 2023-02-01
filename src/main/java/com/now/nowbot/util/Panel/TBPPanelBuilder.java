@@ -18,6 +18,7 @@ public class TBPPanelBuilder extends PanelBuilder{
 
     public TBPPanelBuilder drawBanner(Image banner){
         drawImage(banner);
+        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
     public TBPPanelBuilder mainCrawCard(Image main){

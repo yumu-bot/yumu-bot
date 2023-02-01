@@ -97,7 +97,13 @@ public class H2CardBuilder extends PanelBuilder {
         TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
         TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(),
                 Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
-        TextLine h3 = TextLine.make(String.format("#%d (%.2f)", usermatchrank, usermatchdata.getRWS() * 100f),fontS24);
+        TextLine h3;
+
+        // 暴力过滤掉 0.00
+        if (usermatchdata.getRWS() == 0f) {
+            h3 = TextLine.make(String.format("#%d (0)", usermatchrank),fontS24);
+        } else  h3 = TextLine.make(String.format("#%d (%.2f)", usermatchrank, usermatchdata.getRWS() * 100f),fontS24);
+
         TextLine h4l = TextLine.make(String.format("%d.", usermatchdata.getMRA().intValue()),fontS48);
 
         //我暴力if了，用%2f能解决但我不会，看到了记得帮我简化一下

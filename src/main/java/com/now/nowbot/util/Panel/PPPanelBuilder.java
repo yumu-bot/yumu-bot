@@ -72,11 +72,14 @@ public class PPPanelBuilder extends PanelBuilder {
      */
     private static final float FONT_OFFSET = 16;
 
+    private static Paint c2 = new Paint().setARGB(255,42,34,38);
+
     public PPPanelBuilder drawBanner(Image bg) {
         var temp = SkiaImageUtil.getScaleCenterImage(bg, 1920, 320);
         try (temp) {
             drawImage(temp);
         }
+        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
 
