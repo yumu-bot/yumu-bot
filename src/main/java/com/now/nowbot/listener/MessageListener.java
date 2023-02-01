@@ -98,10 +98,11 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
-        if (!(event instanceof GroupMessageEvent e) || e.getGroup().getId() != 746671531){
-            return;
-        }
-        ContextUtil.setContext("event",event);
+//        if (!(event instanceof GroupMessageEvent e) || e.getGroup().getId() != 746671531){
+//            return;
+//        }
+
+//        ContextUtil.setContext("event",event);
         try {
             if (event.getMessage() instanceof FileMessage fileMessage){
                 log.info("收到文件");
@@ -119,7 +120,7 @@ public class MessageListener extends SimpleListenerHost {
                 }
             }
         } finally {
-            ContextUtil.remove();
+//            ContextUtil.remove();
         }
 //        if (!(event instanceof GroupMessageEvent)){
 //            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));
