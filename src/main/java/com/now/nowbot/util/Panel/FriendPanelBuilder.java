@@ -22,6 +22,7 @@ public class FriendPanelBuilder extends PanelBuilder{
 
     public FriendPanelBuilder drawBanner(Image banner){
         this.banner = banner;
+        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
 

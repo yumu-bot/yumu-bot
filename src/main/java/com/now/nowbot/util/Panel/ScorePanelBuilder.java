@@ -19,7 +19,7 @@ public class ScorePanelBuilder extends PanelBuilder{
 
     public ScorePanelBuilder drawBanner(Image banner){
         drawImage(banner);
-        canvas.drawRRect(RRect.makeXYWH(0, 290, 1920, 40,30, 30, 0, 0), c2);
+        canvas.drawRRect(RRect.makeXYWH(0,0, 1920, 290,30,30, 30, 30), c2.setAlphaf(0.4f));
         return this;
     }
 

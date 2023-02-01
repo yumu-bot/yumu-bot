@@ -74,11 +74,11 @@ public class UserMatchData {
         MRA = 0.7 * ERA + 0.3 * DRA;
     }
 
-    public void calculateRWS() {
+    public void calculateRWS(int roundNum) {
         tRWS = 0d;
         for (Double rRWS : RWSs) tRWS += rRWS;
         if (RWSs.size() == 0) RWS = 0d;
-            else RWS = tRWS / RWSs.size();
+            else RWS = tRWS / roundNum;
     }
 
     public Double getTotalScore() {
