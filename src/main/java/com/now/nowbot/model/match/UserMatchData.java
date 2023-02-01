@@ -75,6 +75,7 @@ public class UserMatchData {
     }
 
     public void calculateRWS() {
+        tRWS = 0d;
         for (Double rRWS : RWSs) tRWS += rRWS;
         RWS = tRWS / RWSs.size();
     }
