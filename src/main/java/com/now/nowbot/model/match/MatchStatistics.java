@@ -53,7 +53,7 @@ public class MatchStatistics {
             user.calculateERA(minMQ,scalingFactor);
             user.calculateDRA(users.size(), scoreNum);
             user.calculateMRA();
-            user.calculateRWS();
+            user.calculateRWS(gameRounds.size());
         }
 
         //计算比分
