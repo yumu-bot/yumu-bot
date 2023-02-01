@@ -1,8 +1,6 @@
 package com.now.nowbot.model.match;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class GameRound {
@@ -27,6 +25,16 @@ public class GameRound {
             }
         }
         return winningTeam;
+    }
+
+    public Long getWinningTeamScore(){
+        Long maxScore = 0L;
+        for(var teamScore: teamScores.entrySet()){
+            if(teamScore.getValue()>maxScore){
+                maxScore = teamScore.getValue();
+            }
+        }
+        return maxScore;
     }
 
     public Map<String, Long> getTeamScores() {

@@ -22,7 +22,7 @@ public class H2CardBuilder extends PanelBuilder {
         //画玩家评价圆角矩形
         canvas.save();
         canvas.translate(700,0);
-        var colorA = usermatchdata.getRating().color; //getJudge
+        var colorA = usermatchdata.getPlayerLabelV2().color; //getJudge
         var colorB = Color.makeRGB(Color.getR(colorA)-3, Color.getG(colorA)+5, Color.getB(colorA)-3);
         canvas.drawRRect(
                 RRect.makeXYWH(0,0,200,110,0,20,20,0),
@@ -75,7 +75,7 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.restore();
 
         // 调用以下方法
-        drawUserRatingIndex(usermatchdata.getRating());
+        drawUserRatingIndex(usermatchdata.getPlayerLabelV2());
         drawText(usermatchdata, index);
         //drawText();
     }
@@ -89,14 +89,15 @@ public class H2CardBuilder extends PanelBuilder {
         /*
         Muziyami
         39.2M // 99W-0L 100%
-        #1
+        #1 (39.46)
          */
 
         var MRA2f = (int)((usermatchdata.getMRA() - usermatchdata.getMRA().intValue()) * 100);
 
         TextLine h1 = TextLine.make(usermatchdata.getUsername(),fontS36);
-        TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(), Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
-        TextLine h3 = TextLine.make(String.format("#%d", usermatchrank),fontS24);
+        TextLine h2 = TextLine.make(String.format("%.2fM // %dW-%dL %d%%", usermatchdata.getTotalScore(),usermatchdata.getWins(),usermatchdata.getLost(),
+                Math.round((double) usermatchdata.getWins() * 100 / (usermatchdata.getWins() + usermatchdata.getLost()))),fontS24);
+        TextLine h3 = TextLine.make(String.format("#%d (%.2f)", usermatchrank, usermatchdata.getRWS() * 100f),fontS24);
         TextLine h4l = TextLine.make(String.format("%d.", usermatchdata.getMRA().intValue()),fontS48);
 
         //我暴力if了，用%2f能解决但我不会，看到了记得帮我简化一下
@@ -117,7 +118,9 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.translate(520,-40);
         canvas.translate((170 - h4l.getWidth() - h4r.getWidth()) / 2f,0);//居中处理，170减大减小除以2
 
-        if (Objects.equals(usermatchdata.getRating().name, "Big Carry")) {
+        if (Objects.equals(usermatchdata.getPlayerLabelV2().name, "Strongest Marshal") ||
+                Objects.equals(usermatchdata.getPlayerLabelV2().name, "Competent Marshal") ||
+                Objects.equals(usermatchdata.getPlayerLabelV2().name, "Indomitable Marshal")) {
         canvas.drawTextLine(h4l, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));
         canvas.translate(h4l.getWidth(), 0);
         canvas.drawTextLine(h4r, 0, h4l.getHeight() - h4l.getXHeight(), new Paint().setARGB(255, 43,34,39));

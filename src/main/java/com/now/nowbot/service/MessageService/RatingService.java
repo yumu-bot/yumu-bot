@@ -55,7 +55,7 @@ public class RatingService implements MessageService {
             sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
                     .append("\n")
                     .append(String.format("%dW-%dL %d%% (%.2fM) [%s]", user.getWins(), user.getLost(),
-                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getRating()))
+                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getPlayerLabelV2()))
                     .append("\n\n");
 
         }
@@ -175,6 +175,11 @@ public class RatingService implements MessageService {
             for (var scoreEntry : round.getUserScores().entrySet()) {
                 var user = users.get(scoreEntry.getKey());
                 user.getRRAs().add((((double) scoreEntry.getValue() / round.getTotalScore()) * scoreInfos.size()));
+
+                // YMRA v3.4 添加 BWS
+                if (Objects.equals(round.getWinningTeam(), user.getTeam())) {
+                    user.getRWSs().add((((double) scoreEntry.getValue() / round.getWinningTeamScore()) * scoreInfos.size()));
+                }
             }
 
             scoreNum += scoreInfos.size();
@@ -198,6 +203,7 @@ public class RatingService implements MessageService {
 //        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
         AtomicInteger tp1 = new AtomicInteger(1);
         AtomicInteger tp2 = new AtomicInteger(1);
+        AtomicInteger tp3 = new AtomicInteger(1);
         AtomicInteger tpIndex = new AtomicInteger(1);
         final int alluserssize = finalUsers.size();
         finalUsers = finalUsers.stream()
@@ -206,7 +212,10 @@ public class RatingService implements MessageService {
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
                 .peek(r -> r.setDRA_index(1.0 * tp2.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
-                .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList());
+                .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
+                .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
+                .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList())
+;
 
         var teamPoint = matchStatistics.getTeamPoint();
 

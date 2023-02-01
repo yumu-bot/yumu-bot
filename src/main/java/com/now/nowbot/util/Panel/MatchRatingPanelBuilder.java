@@ -81,6 +81,6 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
 
     public Image build() {
         drawName("MRA");
-        return super.build(20, "Mu Rating V3.2");
+        return super.build(20, "Mu Rating V3.4");
     }
 }

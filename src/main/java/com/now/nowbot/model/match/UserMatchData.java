@@ -2,7 +2,6 @@ package com.now.nowbot.model.match;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.util.PanelUtil;
 import org.jetbrains.skija.Color;
 
 import java.util.ArrayList;
@@ -15,6 +14,8 @@ public class UserMatchData {
     List<Integer> scores = new ArrayList<>();
     //标准化的单场个人得分，即标准分 = score/TotalScore
     List<Double> RRAs = new ArrayList<>();
+    //平均每局胜利分配 RWS v3.4添加
+    List<Double> RWSs = new ArrayList<>();
     //整场比赛的总标准分
     Double TMG;
     //场均标准分
@@ -27,6 +28,9 @@ public class UserMatchData {
     Double DRA;
     //MRA = 0.7 * ERA + 0.3 * DRA
     Double MRA;
+    //RWS = average(win%)
+    Double RWS;
+    Double tRWS;
 
     //与MRA,MDRA相同，范围扩大到正常联赛的多次match
     Double SERA;
@@ -40,6 +44,8 @@ public class UserMatchData {
 
     double ERA_index;
     double DRA_index;
+    double RWS_index;
+
     int indx;
 
     public void calculateAMG() {
@@ -66,6 +72,11 @@ public class UserMatchData {
 
     public void calculateMRA() {
         MRA = 0.7 * ERA + 0.3 * DRA;
+    }
+
+    public void calculateRWS() {
+        for (Double rRWS : RWSs) tRWS += rRWS;
+        RWS = tRWS / RWSs.size();
     }
 
     public Double getTotalScore() {
@@ -210,6 +221,10 @@ public class UserMatchData {
         this.DRA_index = DRA_index;
     }
 
+    public void setRWS_index(double RWS_index) {
+        this.RWS_index = RWS_index;
+    }
+
     public OsuUser getUserData() {
         return userData;
     }
@@ -226,7 +241,23 @@ public class UserMatchData {
         this.indx = indx;
     }
 
-    public Rating getRating(){
+    public List<Double> getRWSs() {
+        return RWSs;
+    }
+
+    public void setRWSs(List<Double> RWSs) {
+        this.RWSs = RWSs;
+    }
+
+    public double getRWS() {
+        return RWS;
+    }
+
+    public void setRWS(double RWS) {
+        this.RWS = RWS;
+    }
+
+    public Rating getPlayerLabelV1(){
         if (ERA_index < 1f/6) {
             if (DRA_index < 1f/6) {
                 return Rating.BC;
@@ -274,6 +305,78 @@ public class UserMatchData {
 
         }
     }
+    public Rating getPlayerLabelV2(){
+        if (ERA_index < 1f/6 && DRA_index < 1f/6) {
+            if (RWS_index < 1f/3) return Rating.SMA;
+                else if (RWS_index < 2f/3) return Rating.CMA;
+                else return Rating.IMA;
+        }
+
+        if (ERA_index >= 5f/6 && DRA_index >= 5f/6) {
+            if (RWS_index < 1f/3) return Rating.LSS;
+            else if (RWS_index < 2f/3) return Rating.LSP;
+            else return Rating.BDT;
+        }
+
+        if (ERA_index < 1f/3 && DRA_index < 1f/3) {
+            if (RWS_index < 1f/3) return Rating.IGE;
+            else if (RWS_index < 2f/3) return Rating.AGE;
+            else return Rating.EGE;
+        }
+
+        if (ERA_index < 1f/3 && DRA_index < 2f/3) {
+            if (RWS_index < 1f/3) return Rating.EMF;
+            else if (RWS_index < 2f/3) return Rating.RMF;
+            else return Rating.SMF;
+        }
+
+        if (ERA_index < 1f/3 && DRA_index >= 2f/3) {
+            if (RWS_index < 1f/3) return Rating.EAS;
+            else if (RWS_index < 2f/3) return Rating.NAS;
+            else return Rating.FAS;
+        }
+
+        if (ERA_index < 2f/3 && DRA_index < 1f/3) {
+            if (RWS_index < 1f/3) return Rating.GCW;
+            else if (RWS_index < 2f/3) return Rating.WCW;
+            else return Rating.BCW;
+        }
+
+        if (ERA_index < 2f/3 && DRA_index < 2f/3) {
+            if (RWS_index < 1f/3) return Rating.KPS;
+            else if (RWS_index < 2f/3) return Rating.CMN;
+            else return Rating.PSB;
+        }
+
+        if (ERA_index < 2f/3 && DRA_index >= 2f/3) {
+            if (RWS_index < 1f/3) return Rating.MAC;
+            else if (RWS_index < 2f/3) return Rating.MIC;
+            else return Rating.FIG;
+        }
+
+        if (ERA_index >= 2f/3 && DRA_index < 1f/3) {
+            if (RWS_index < 1f/3) return Rating.SAM;
+            else if (RWS_index < 2f/3) return Rating.HAS;
+            else return Rating.SIN;
+        }
+
+        if (ERA_index >= 2f/3 && DRA_index < 2f/3) {
+            if (RWS_index < 1f/3) return Rating.ANI;
+            else if (RWS_index < 2f/3) return Rating.MNI;
+            else return Rating.LCS;
+        }
+
+        if (ERA_index >= 2f/3 && DRA_index >= 2f/3) {
+            if (RWS_index < 1f/3) return Rating.LKD;
+            else if (RWS_index < 2f/3) return Rating.QAP;
+            else return Rating.BGN;
+        }
+
+        else {
+            return Rating.CMN;
+        }
+    }
+
 
     public String getHeaderUrl(){
         if (userData == null) return NowbotConfig.BG_PATH + "avatar-guest.png";
@@ -287,6 +390,7 @@ public class UserMatchData {
     }
 
     public enum Rating{
+        // 这一段是 YMRA v1.2 更新内容
         BC("Big Carry", Color.makeRGB(254,246,103)), //大爹
         CA("Carry", Color.makeRGB(240,148,80)), //大哥
         MF("Main Force", Color.makeRGB(48,181,115)), //主力
@@ -295,9 +399,47 @@ public class UserMatchData {
         GE("General",Color.makeRGB(180,180,180)), //普通
         GU("Guest", Color.makeRGB(62,188,239)), //客串
         SU("Support",Color.makeRGB(106,80,154)), //抗压
-        SG("ScapeGoat", Color.makeRGB(236,107,158)), //背锅
+        SG("Scapegoat", Color.makeRGB(236,107,158)), //背锅
         NO("Noob", Color.makeRGB(234,107,72)), //小弟
-        FU("Futile", Color.makeRGB(150,0,20)),; //炮灰
+        FU("Futile", Color.makeRGB(150,0,20)), //炮灰
+
+        SMA("Strongest Marshal", Color.makeRGB(254,246,103)),//最强元帅
+        CMA("Competent Marshal", Color.makeRGB(254,246,103)),//称职元帅
+        IMA("Indomitable Marshal", Color.makeRGB(254,246,103)),//不屈元帅
+        IGE("Invincible General", Color.makeRGB(240,148,80)),//常胜将军
+        AGE("Assiduous General", Color.makeRGB(240,148,80)),//勤奋将军
+        EGE("Exhausted General", Color.makeRGB(240,148,80)),//尽力将军
+        EMF("Effective Main Force", Color.makeRGB(48,181,115)),//突破主力
+        RMF("Reliable Main Force", Color.makeRGB(48,181,115)),//可靠主力
+        SMF("Staunch Main Force", Color.makeRGB(48,181,115)),//坚守主力
+        EAS("Elite Assassin", Color.makeRGB(170,212,110)),//精锐刺客
+        NAS("Normal Assassin", Color.makeRGB(170,212,110)),//普通刺客
+        FAS("Fake Assassin", Color.makeRGB(170,212,110)),//冒牌刺客
+        GCW("Gold Collar Worker", Color.makeRGB(49,68,150)),//金领工人
+        WCW("White Collar Worker", Color.makeRGB(49,68,150)),//白领工人
+        BCW("Blue Collar Worker", Color.makeRGB(49,68,150)),//蓝领工人
+        KPS("Key Person", Color.makeRGB(180,180,180)),//关键人
+        CMN("Common Man", Color.makeRGB(180,180,180)),//普通人
+        PSB("Passer-by", Color.makeRGB(180,180,180)),//路人甲
+        MAC("Major Character", Color.makeRGB(62,188,239)),//主要角色
+        MIC("Minor Character", Color.makeRGB(62,188,239)),//次要角色
+        FIG("Figurant", Color.makeRGB(62,188,239)),//群众演员
+        SAM("Stable as Mountain", Color.makeRGB(106,80,154)),//稳如泰山
+        HAS("Hard as Stone", Color.makeRGB(106,80,154)),//坚若磐石
+        SIN("Seriously Injured", Color.makeRGB(106,80,154)),//伤痕累累
+        ANI("Advanced Ninja", Color.makeRGB(236,107,158)),//上等忍者
+        MNI("Mediocre Ninja", Color.makeRGB(236,107,158)),//普通忍者
+        LCS("Lower-class", Color.makeRGB(236,107,158)),//不入流
+        LKD("Lucky Dog", Color.makeRGB(234,107,72)),//幸运儿
+        QAP("Qualified Apprentice", Color.makeRGB(234,107,72)),//合格学徒
+        BGN("Beginner", Color.makeRGB(234,107,72)),//初学者
+        LSS("Life-saving Straw", Color.makeRGB(150,0,20)),//救命稻草
+        LSP("Little Spark", Color.makeRGB(150,0,20)),//点点星火
+        BDT("Burnt Dust", Color.makeRGB(150,0,20)),//湮灭尘埃
+
+        ;
+
+        // 这一段是 YMRA v3.4 更新内容
 
         public final String name;
         public final int color;
