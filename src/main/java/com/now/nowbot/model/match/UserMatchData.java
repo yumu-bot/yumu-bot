@@ -77,7 +77,8 @@ public class UserMatchData {
     public void calculateRWS() {
         tRWS = 0d;
         for (Double rRWS : RWSs) tRWS += rRWS;
-        RWS = tRWS / RWSs.size();
+        if (RWSs.size() == 0) RWS = 0d;
+            else RWS = tRWS / RWSs.size();
     }
 
     public Double getTotalScore() {

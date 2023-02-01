@@ -178,7 +178,7 @@ public class RatingService implements MessageService {
 
                 // YMRA v3.4 添加 BWS
                 if (Objects.equals(round.getWinningTeam(), user.getTeam())) {
-                    user.getRWSs().add((((double) scoreEntry.getValue() / round.getWinningTeamScore()) * scoreInfos.size()));
+                    user.getRWSs().add((((double) scoreEntry.getValue() / round.getWinningTeamScore())));
                 }
             }
 
@@ -211,9 +211,9 @@ public class RatingService implements MessageService {
                 .peek(r -> r.setERA_index(1.0 * tp1.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
                 .peek(r -> r.setDRA_index(1.0 * tp2.getAndIncrement() / alluserssize))
-                .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
                 .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
                 .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
+                .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
                 .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList())
 ;
 
