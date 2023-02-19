@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAspectJAutoProxy(exposeProxy = true, proxyTargetClass = true)
 @EnableScheduling
 @EnableRetry
+
 public class NowbotApplication {
     public static Logger log = LoggerFactory.getLogger(NowbotApplication.class);
     public static void main(String[] args) {

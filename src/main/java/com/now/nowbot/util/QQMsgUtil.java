@@ -67,6 +67,6 @@ public class QQMsgUtil {
     }
 
     private static void befor(Contact from) {
-//        from.sendMessage("正在处理图片请稍后...");
+//        from.sendMessage("正在处理图片请稍候...");
     }
 }
