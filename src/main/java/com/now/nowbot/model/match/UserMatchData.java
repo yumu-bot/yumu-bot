@@ -407,8 +407,6 @@ public class UserMatchData {
         NO("Noob", Color.makeRGB(255,193,7)), //小弟
         FU("Futile", Color.makeRGB(211,47,47)), //炮灰
 
-        // 这一段是 YMRA v3.5 更新内容
-
         SMA("Strongest Marshal", Color.makeRGB(255,255,0)),//最强元帅
         CMA("Competent Marshal", Color.makeRGB(255,255,0)),//称职元帅
         IMA("Indomitable Marshal", Color.makeRGB(255,255,0)),//不屈元帅
@@ -443,7 +441,7 @@ public class UserMatchData {
         LSP("Little Spark", Color.makeRGB(211,47,47)),//点点星火
         BDT("Burnt Dust", Color.makeRGB(211,47,47)),//湮灭尘埃
 
-
+        // 这一段是 YMRA v3.5 更新内容
         ;
 
         public final String name;
