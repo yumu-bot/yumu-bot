@@ -23,12 +23,9 @@ public class H2CardBuilder extends PanelBuilder {
         canvas.save();
         canvas.translate(700,0);
         var colorA = usermatchdata.getPlayerLabelV2().color; //getJudge
-        var colorB = Color.makeRGB(Color.getR(colorA)-3, Color.getG(colorA)+5, Color.getB(colorA)-3);
         canvas.drawRRect(
                 RRect.makeXYWH(0,0,200,110,0,20,20,0),
-                new Paint().setShader(
-                        Shader.makeLinearGradient(0,0,110,110,new int[]{colorA, colorB})
-                )
+                new Paint().setColor(colorA)
         );
         canvas.restore();
 
