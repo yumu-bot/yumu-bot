@@ -329,7 +329,7 @@ public class UserMatchData {
         }
 
         if (ERA_index < 1f/3 && DRA_index < 2f/3) {
-            if (RWS_index < 2f/9) return Rating.EMF;
+            if (RWS_index < 2f/9) return Rating.BMF;
             else if (RWS_index < 5f/9) return Rating.RMF;
             else return Rating.SMF;
         }
@@ -413,7 +413,7 @@ public class UserMatchData {
         EGE("Ever-Victorious General", Color.makeRGB(255,152,0)),//常胜将军
         AGE("Assiduous General", Color.makeRGB(255,152,0)),//勤奋将军
         SGE("Striven General", Color.makeRGB(255,152,0)),//尽力将军
-        EMF("Effective Main Force", Color.makeRGB(34,172,56)),//突破主力
+        BMF("Breakthrough Main Force", Color.makeRGB(34,172,56)),//突破主力
         RMF("Reliable Main Force", Color.makeRGB(34,172,56)),//可靠主力
         SMF("Staunch Main Force", Color.makeRGB(34,172,56)),//坚守主力
         EAS("Elite Assassin", Color.makeRGB(179,212,101)),//精锐刺客
