@@ -107,7 +107,7 @@ public class MessageListener extends SimpleListenerHost {
             if (event.getMessage() instanceof FileMessage fileMessage){
                 log.info("收到文件");
             }
-            messageMapper.save(new MsgLite(event.getMessage()));
+//            messageMapper.save(new MsgLite(event.getMessage()));
             ASyncMessageUtil.put(event);
             for(var ins : Instruction.values()){
                 //功能关闭 优先级高于aop拦截
