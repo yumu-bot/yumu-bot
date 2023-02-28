@@ -1,7 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -10,13 +12,25 @@ import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 @Service("ymi")
-public class YmiService implements MessageService{
+public class YmiService implements MessageService {
     private static final Logger log = LoggerFactory.getLogger(YmiService.class);
     @Autowired
     RestTemplate template;
@@ -34,21 +48,21 @@ public class YmiService implements MessageService{
         OsuUser date;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
-        if (at != null){
+        if (at != null) {
             user = bindDao.getUser(at.getTarget());
-        }else {
-            if (name != null && !name.trim().equals("")){
+        } else {
+            if (name != null && !name.trim().equals("")) {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
-            }else {
+            } else {
                 user = bindDao.getUser(event.getSender().getId());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
-        date = osuGetService.getPlayerInfo(user,mode);
+        date = osuGetService.getPlayerInfo(user, mode);
 
 //        if(date.size()==0){
 //            throw new TipsException("没有查询到您的信息呢");
@@ -64,30 +78,30 @@ public class YmiService implements MessageService{
         // PC:2.01w TTH:743.52w
         sb.append("PC:");
         long PC = statistics.getPlayCount();
-        if (PC>10_000) {
+        if (PC > 10_000) {
             sb.append((PC / 100) / 100D).append('w');
-        }else {
+        } else {
             sb.append(PC);
         }
         sb.append(" TTH:");
         long TTH = statistics.getTotalHits();
-        if (TTH>10_000) {
+        if (TTH > 10_000) {
             sb.append((TTH / 100) / 100D).append('w');
-        }else {
+        } else {
             sb.append(TTH);
         }
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
         sb.append("PT:");
         long PT = statistics.getPlayTime();
-        if(PT>86400){
-            sb.append(PT/86400).append('d');
+        if (PT > 86400) {
+            sb.append(PT / 86400).append('d');
         }
-        if(PT>3600){
-            sb.append((PT%86400)/3600).append('h');
+        if (PT > 3600) {
+            sb.append((PT % 86400) / 3600).append('h');
         }
-        if(PT>60){
-            sb.append((PT%3600)/60).append('m');
+        if (PT > 60) {
+            sb.append((PT % 3600) / 60).append('m');
         }
         sb.append(" ACC:").append(statistics.getAccuracy()).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
@@ -102,17 +116,48 @@ public class YmiService implements MessageService{
         // uid:7003013
         sb.append("UID:").append(date.getId()).append('\n');
 
-        String occupation =  date.getOccupation();
-        String discord =  date.getDiscord();
-        String interests =  date.getInterests();
+        String occupation = date.getOccupation();
+        String discord = date.getDiscord();
+        String interests = date.getInterests();
         if (occupation != null && !occupation.trim().equals("")) {
             sb.append('\n').append("occupation: ").append(occupation.trim());
-        }if (discord != null && !discord.trim().equals("")) {
+        }
+        if (discord != null && !discord.trim().equals("")) {
             sb.append('\n').append("discord: ").append(discord.trim());
-        }if (interests != null && !interests.trim().equals("")) {
+        }
+        if (interests != null && !interests.trim().equals("")) {
             sb.append('\n').append("interests: ").append(interests.trim());
         }
 //        Image img = from.uploadImage(ExternalResource.create());
         from.sendMessage(sb.toString());
+    }
+
+    private void postImage(BinUser user, OsuMode mod) {
+        var userInfo = osuGetService.getPlayerInfo(user, mod);
+        var bps = osuGetService.getBestPerformance(user, mod, 0, 100);
+        var res = osuGetService.getRecentN(user, mod, 0, 5);
+
+
+        var times = bps.stream().map(BpInfo::getTime).toList();
+        var now = LocalDate.now();
+        var bpNum = new int[90];
+        times.forEach(time -> {
+            var day = (int)(now.toEpochDay() - time.toLocalDate().toEpochDay());
+            if (day >= 0 && day < 90){
+                bpNum[day] ++;
+            }
+        });
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+        var body = Map.of("user",userInfo,
+                    "bp-time",bpNum,
+                    "bp-list", bps.subList(0,5),
+                    "re-list", res
+                );
+        HttpEntity httpEntity = new HttpEntity(body, headers);
+        template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, String.class);
     }
 }

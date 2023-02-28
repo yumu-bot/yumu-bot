@@ -334,6 +334,17 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    public String getPlayerInfoN(Long id) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
+                .queryParam("key", "id")
+                .build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return c.getBody().toPrettyString();
+    }
+
     /**
      * 获得某个模式的bp表
      *
@@ -761,7 +772,7 @@ public class OsuGetService {
         for (var m : mods) {
             i |= m.value;
         }
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL).path("beatmaps/").path(String.valueOf(id)).path("/attributes")
                 .build().encode().toUri();
         HttpHeaders headers = getHeader();
         HashMap body = new HashMap<>();
