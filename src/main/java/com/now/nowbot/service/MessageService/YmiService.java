@@ -62,7 +62,12 @@ public class YmiService implements MessageService {
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
 //        Image img = from.uploadImage(ExternalResource.create());
-        QQMsgUtil.sendImage(from, postImage(user, mode));
+        try {
+            var img = postImage(user, mode);
+            QQMsgUtil.sendImage(from, img);
+        } catch (Exception e) {
+            from.sendMessage(getText(user, mode));
+        }
     }
 
     private String getText(BinUser user, OsuMode mode) {
