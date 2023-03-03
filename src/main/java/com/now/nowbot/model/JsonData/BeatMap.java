@@ -281,6 +281,7 @@ public class BeatMap {
 
     public double getBeatMapRating() {
         List<Integer> rl = getBeatMapRatingList();
+        if (null == rl) return 0D;
         double r = 0;
         double sum = 0;
         int i;
@@ -303,6 +304,7 @@ public class BeatMap {
 
     public int getBeatMapRetryCount() {
         List<Integer> fl = getBeatMapRetryList();
+        if (null == fl) return 0;
         int sum = 0;
 
         for (int i = 0; i < fl.size(); i++) {
@@ -319,8 +321,12 @@ public class BeatMap {
     
     public int getBeatMapFailedCount() {
         List<Integer> fl = getBeatMapFailedList();
-        int sum = 0;
 
+        if (null == fl) {
+            return 0;
+        }
+
+        int sum = 0;
         for (int i = 0; i < fl.size(); i++) {
             sum = sum + fl.get(i);
         }

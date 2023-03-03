@@ -16,7 +16,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Service("nowbot-image")
+//@Service("nowbot-image")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     RestTemplate restTemplate;

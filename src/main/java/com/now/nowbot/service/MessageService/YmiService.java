@@ -7,15 +7,13 @@ import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -62,11 +60,14 @@ public class YmiService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
-        date = osuGetService.getPlayerInfo(user, mode);
 
-//        if(date.size()==0){
-//            throw new TipsException("没有查询到您的信息呢");
-//        }
+//        Image img = from.uploadImage(ExternalResource.create());
+        QQMsgUtil.sendImage(from, postImage(user, mode));
+    }
+
+    private String getText(BinUser user, OsuMode mode) {
+        var date = osuGetService.getPlayerInfo(user, mode);
+
         StringBuilder sb = new StringBuilder();
         var statistics = date.getStatistics();
         // Muziyami(osu):10086PP
@@ -128,14 +129,14 @@ public class YmiService implements MessageService {
         if (interests != null && !interests.trim().equals("")) {
             sb.append('\n').append("interests: ").append(interests.trim());
         }
-//        Image img = from.uploadImage(ExternalResource.create());
-        from.sendMessage(sb.toString());
+
+        return sb.toString();
     }
 
-    private void postImage(BinUser user, OsuMode mod) {
+    public byte[] postImage(BinUser user, OsuMode mod) {
         var userInfo = osuGetService.getPlayerInfo(user, mod);
         var bps = osuGetService.getBestPerformance(user, mod, 0, 100);
-        var res = osuGetService.getRecentN(user, mod, 0, 5);
+        var res = osuGetService.getRecentN(user, mod, 0, 3);
 
 
         var times = bps.stream().map(BpInfo::getTime).toList();
@@ -154,10 +155,11 @@ public class YmiService implements MessageService {
 
         var body = Map.of("user",userInfo,
                     "bp-time",bpNum,
-                    "bp-list", bps.subList(0,5),
+                    "bp-list", bps.subList(0,8),
                     "re-list", res
                 );
         HttpEntity httpEntity = new HttpEntity(body, headers);
-        template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, String.class);
+        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, byte[].class);
+        return s.getBody();
     }
 }

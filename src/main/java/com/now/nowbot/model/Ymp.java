@@ -127,7 +127,7 @@ public class Ymp {
 
         rank = date.getRank();
         score = date.getScore();
-        acc = (float) ((Math.round(date.getAccuracy()) * 10000) / 100D);
+        acc = (float) ((Math.round(date.getAccuracy() * 10000)) / 100D);
 
         if (null == date.getPP()) {
             pp = 0;
