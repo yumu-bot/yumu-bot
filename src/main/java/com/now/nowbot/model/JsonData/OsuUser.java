@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +24,7 @@ public class OsuUser {
     public record Country(String  countryCode, String  countryName){}
     public record Kudosu(Integer total, Integer available){}
     public record RankHistory(OsuMode mode, List<Integer> history){}
+    public record MonthlyPlayCount(String startDate, Integer count){}
 
     @JsonProperty("playmode")
     String playMode;
@@ -68,6 +71,17 @@ public class OsuUser {
     String avatarUrl;
     @JsonProperty("cover_url")
     String coverUrl;
+    @JsonIgnoreProperties
+    List<MonthlyPlayCount> monthlyPlaycounts;
+
+    @JsonProperty("monthly_playcounts")
+    void setMonthlyPlayCount(List<HashMap<String, Object>> dataList){
+        monthlyPlaycounts = new ArrayList<>(dataList.size());
+        for (var d : dataList) {
+            var mp = new MonthlyPlayCount((String) d.get("start_date"), (Integer) d.get("count"));
+            monthlyPlaycounts.add(mp);
+        }
+    }
 
 
     @JsonIgnore

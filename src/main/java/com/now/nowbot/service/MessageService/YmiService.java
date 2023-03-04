@@ -161,7 +161,8 @@ public class YmiService implements MessageService {
         var body = Map.of("user",userInfo,
                     "bp-time",bpNum,
                     "bp-list", bps.subList(0,8),
-                    "re-list", res
+                    "re-list", res,
+                    "mode", mod.getName()
                 );
         HttpEntity httpEntity = new HttpEntity(body, headers);
         ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, byte[].class);
