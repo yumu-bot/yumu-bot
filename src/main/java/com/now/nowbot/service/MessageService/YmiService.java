@@ -66,7 +66,7 @@ public class YmiService implements MessageService {
             var img = postImage(user, mode);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            from.sendMessage(getText(user, mode));
+            from.sendMessage("请求超时,要不咱们一会再试试.");
         }
     }
 
