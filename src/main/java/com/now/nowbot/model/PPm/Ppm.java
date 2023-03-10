@@ -129,7 +129,7 @@ public abstract class Ppm {
      * 计算bonusPP
      * 算法类似于通过 正态分布 "估算"超过bp100的pp数 此方法不严谨
      */
-    public float bonusPP(double[] pp, Long pc){
+    public static float bonusPP(double[] pp, Long pc){
         double  bonus = 0;
         double sumOxy = 0;
         double sumOx2 = 0;

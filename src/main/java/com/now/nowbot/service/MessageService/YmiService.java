@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.QQMsgUtil;
@@ -143,7 +144,11 @@ public class YmiService implements MessageService {
         var bps = osuGetService.getBestPerformance(user, mod, 0, 100);
         var res = osuGetService.getRecentN(user, mod, 0, 3);
 
-
+        float bonus = 0;
+        if (bps.size() < 100) {
+            var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
+            bonus = Ppm.bonusPP(bppps, userInfo.getPlayCount());
+        }
         var times = bps.stream().map(BpInfo::getTime).toList();
         var now = LocalDate.now();
         var bpNum = new int[90];
@@ -162,6 +167,7 @@ public class YmiService implements MessageService {
                     "bp-time",bpNum,
                     "bp-list", bps.subList(0,8),
                     "re-list", res,
+                    "pp-bonus", bonus,
                     "mode", mod.getName()
                 );
         HttpEntity httpEntity = new HttpEntity(body, headers);

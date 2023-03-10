@@ -96,7 +96,7 @@ public class BiliApiService {
     }
 
     public void check() {
-        Long[] roomsId = sendGroupMap.keySet().toArray(new Long[0]);
+        Long[] roomsId = sendGroupMap.keySet().toArray(Long[]::new);
         var data = getLiveRooms(roomsId);
         for (var room : data) {
             if (lastList.contains(room.getUid()) && room.getStatus() != LiveStatus.OPEN) {

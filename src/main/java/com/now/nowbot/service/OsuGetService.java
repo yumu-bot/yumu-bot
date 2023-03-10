@@ -30,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -64,13 +65,7 @@ public class OsuGetService {
      * @return
      */
     public String getOauthUrl(String state) {
-        return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize")
-                .queryParam("client_id", oauthId)
-                .queryParam("redirect_uri", redirectUrl)
-                .queryParam("response_type", "code")
-                .queryParam("scope", "friends.read identify public")
-                .queryParam("state", state)
-                .build().encode().toUriString();
+        return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize").queryParam("client_id", oauthId).queryParam("redirect_uri", redirectUrl).queryParam("response_type", "code").queryParam("scope", "friends.read identify public").queryParam("state", state).build().encode().toUriString();
     }
 
     /***
@@ -249,9 +244,7 @@ public class OsuGetService {
     public OsuUser getPlayerInfo(String userName) {
         String url = this.URL + "users/" + userName;
 
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName)
-                .queryParam("key", "username")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName).queryParam("key", "username").build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -283,9 +276,7 @@ public class OsuGetService {
     }
 
     public OsuUser getPlayerInfo(Long id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
-                .queryParam("key", "id")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id).queryParam("key", "id").build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -295,9 +286,7 @@ public class OsuGetService {
 
 
     public OsuUser getPlayerInfo(Long id, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
-                .queryParam("key", "id")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode).queryParam("key", "id").build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -306,9 +295,7 @@ public class OsuGetService {
     }
 
     public String getPlayerInfoStr(Long id, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
-                .queryParam("key", "id")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode).queryParam("key", "id").build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -324,9 +311,7 @@ public class OsuGetService {
      * @return
      */
     public OsuUser getPlayerInfo(Long id, BinUser user, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode)
-                .queryParam("key", "id")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + '/' + mode).queryParam("key", "id").build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -335,9 +320,7 @@ public class OsuGetService {
     }
 
     public String getPlayerInfoN(Long id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id)
-                .queryParam("key", "id")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id).queryParam("key", "id").build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -356,9 +339,7 @@ public class OsuGetService {
      */
     public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
         if (user.getAccessToken() == null) return getBestPerformance(user.getOsuID(), mode, s, e);
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
@@ -377,18 +358,15 @@ public class OsuGetService {
      * @return
      */
     public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<BpInfo>>() {
-                });
+        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
+        });
         return c.getBody();
     }
 
@@ -402,9 +380,8 @@ public class OsuGetService {
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity,
-                new ParameterizedTypeReference<List<JsonNode>>() {
-                });
+        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<JsonNode>>() {
+        });
         return c.getBody();
     }
 
@@ -417,11 +394,12 @@ public class OsuGetService {
      * @return
      */
     public List<Score> getRecentN(BinUser user, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
-                .queryParam("mode", mode)
+        if (user.getAccessToken() == null) return getRecentN(user.getOsuID(), mode, s, e);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -439,11 +417,11 @@ public class OsuGetService {
      * @return
      */
     public List<Score> getRecentN(long userId, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("mode", mode)
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -451,12 +429,13 @@ public class OsuGetService {
         });
         return c.getBody();
     }
+
     public List<JsonNode> getRecentNR(long userId, OsuMode mode, String s3, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("mode", mode)
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -466,14 +445,14 @@ public class OsuGetService {
     }
 
     public List<Score> getAllRecentN(long userId, OsuMode mode, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("mode", mode)
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
                 .queryParam("include_fails", 1)
                 .queryParam("limit", e)
-                .queryParam("offset", s)
-                .build().encode().toUri();
-        HttpHeaders headers = getHeader();
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        var uri = data.build().encode().toUri();
 
+        HttpHeaders headers = getHeader();
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
@@ -489,9 +468,9 @@ public class OsuGetService {
     }
 
     public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) throws JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid)
-                .queryParam("mode", mode)
-                .build().encode().toUri();
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -503,9 +482,9 @@ public class OsuGetService {
     }
 
     public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
-                .queryParam("mode", mode)
-                .build().encode().toUri();
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID());
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -515,36 +494,41 @@ public class OsuGetService {
         }
         return c.getBody();
     }
+
     public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID() + "/all")
-                .queryParam("mode", mode)
-                .build().encode().toUri();
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID() + "/all");
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {});
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
+        });
         if (c.getStatusCode().is4xxClientError()) {
-            return null;
+            return new ArrayList<>();
         }
         return c.getBody();
     }
+
     public List<Score> getScoreAll(long bid, long uid, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid + "/all")
-                .queryParam("mode", mode)
-                .build().encode().toUri();
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid + "/all");
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {});
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
+        });
         if (c.getStatusCode().is4xxClientError()) {
             return null;
         }
         return c.getBody();
     }
+
     public JsonNode getScoreR(long bid, BinUser user, OsuMode mode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID())
-                .queryParam("mode", mode)
-                .build().encode().toUri();
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID());
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
@@ -582,26 +566,25 @@ public class OsuGetService {
      * @return
      */
     public BeatMap getMapInfo(int bid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
         return c.getBody();
     }
+
     public BeatMap getMapInfo(long bid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
         return c.getBody();
     }
+
     public JsonNode getMapInfoR(long bid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -616,8 +599,7 @@ public class OsuGetService {
      * @return
      */
     public BeatMap getMapInfo(int bid, BinUser user) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -654,14 +636,10 @@ public class OsuGetService {
      * @param name
      * @return
      */
-    @Retryable(
-            value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
-            maxAttempts = 5,
-            backoff = @Backoff(delay = 5000L, random = true, multiplier = 1)
-    )
+    @Retryable(value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
+            maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
     public PpPlus ppPlus(String name) {
-        URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name).build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -672,8 +650,7 @@ public class OsuGetService {
 
 
         var data = response.getBody().get("user_data");
-        if (data != null)
-            return JacksonUtil.parseObject(data, PpPlus.class);
+        if (data != null) return JacksonUtil.parseObject(data, PpPlus.class);
         else throw new RuntimeException("get response error");
     }
 
@@ -706,9 +683,7 @@ public class OsuGetService {
         for (int i : id) {
             sb.append(i).append(',');
         }
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/")
-                .queryParam("ids[]", sb.toString())
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/").queryParam("ids[]", sb.toString()).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -723,8 +698,7 @@ public class OsuGetService {
      * @return
      */
     public Match getMatchInfo(int mid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid).build().encode().toUri();
         HttpHeaders headers = getHeader();
         HttpEntity httpEntity = new HttpEntity(headers);
         Match data = null;
@@ -739,10 +713,7 @@ public class OsuGetService {
     }
 
     public Match getMatchInfo(int mid, long before) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid)
-                .queryParam("before", before)
-                .queryParam("limit", 100)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid).queryParam("before", before).queryParam("limit", 100).build().encode().toUri();
         HttpHeaders headers = getHeader();
         HttpEntity httpEntity = new HttpEntity(headers);
         Match data = null;
@@ -757,8 +728,7 @@ public class OsuGetService {
     }
 
     public BeatmapDifficultyAttributes getAttributes(Long id) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, null, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
@@ -772,8 +742,7 @@ public class OsuGetService {
         for (var m : mods) {
             i |= m.value;
         }
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL).path("beatmaps/").path(String.valueOf(id)).path("/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL).path("beatmaps/").path(String.valueOf(id)).path("/attributes").build().encode().toUri();
         HttpHeaders headers = getHeader();
         HashMap body = new HashMap<>();
         body.put("mods", i);
@@ -792,8 +761,7 @@ public class OsuGetService {
             i |= m.value;
         }
 
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();
 
 
         HttpHeaders headers = getHeader();
@@ -804,9 +772,9 @@ public class OsuGetService {
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
+
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode, int modInt) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();
 
 
         HttpHeaders headers = getHeader();
@@ -817,9 +785,9 @@ public class OsuGetService {
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
+
     public BeatmapDifficultyAttributes getAttributes(Long id, int modInt) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();
 
 
         HttpHeaders headers = getHeader();
@@ -829,13 +797,13 @@ public class OsuGetService {
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
+
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode, Mod... mods) {
-        return getAttributes((long)id, osuMode, mods);
+        return getAttributes((long) id, osuMode, mods);
     }
 
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode osuMode) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes")
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();
         HttpHeaders headers = getHeader();
         HashMap body = new HashMap<>();
         body.put("ruleset_id", osuMode.getModeValue());
@@ -844,13 +812,13 @@ public class OsuGetService {
         var c = template.postForObject(uri, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.get("attributes"), BeatmapDifficultyAttributes.class);
     }
+
     public BeatmapDifficultyAttributes getAttributes(Integer id, OsuMode osuMode) {
-        return getAttributes((long)id, osuMode);
+        return getAttributes((long) id, osuMode);
     }
 
-    public KudosuHistory getUserKudosu(BinUser user){
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/kudosu")
-                .build().encode().toUri();
+    public KudosuHistory getUserKudosu(BinUser user) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/kudosu").build().encode().toUri();
         var headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
