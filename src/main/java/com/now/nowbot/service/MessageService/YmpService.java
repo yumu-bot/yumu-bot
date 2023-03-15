@@ -75,7 +75,8 @@ public class YmpService implements MessageService {
             var osuUser = osuGetService.getPlayerInfo(user, mode);
             var data = postImage(osuUser, dates.get(0));
             QQMsgUtil.sendImage(from, data);
-        } finally {
+        } catch (Exception e) {
+            log.error("???", e);
             handleText(dates.get(0), isAll, from);
         }
 
