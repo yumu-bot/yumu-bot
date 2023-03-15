@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
@@ -46,15 +47,14 @@ public class YmpService implements MessageService {
         boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         String name = matcher.group("name");
-        List<Score> dates;
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         BinUser user = null;
-        Long id = 0L;
         if (at != null) {
             user = bindDao.getUser(at.getTarget());
         } else {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
-                id = osuGetService.getOsuId(matcher.group("name").trim());
+                user = new BinUser();
+                user.setOsuID(osuGetService.getOsuId(matcher.group("name").trim()));
             } else {
                 user = bindDao.getUser(event.getSender().getId());
             }
@@ -62,23 +62,31 @@ public class YmpService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
-        if (user != null) {
+        List<Score> dates;
+        if (user.getAccessToken() != null) {
             dates = getDates(user, mode, isAll);
         } else {
-            dates = getDates(id, mode, isAll);
+            dates = getDates(user.getOsuID(), mode, isAll);
         }
         if (dates.size() == 0) {
             throw new TipsException("24h内无记录");
         }
-        var date = dates.get(0);
-        var d = Ymp.getInstance(date);
+        try {
+            var osuUser = osuGetService.getPlayerInfo(user, mode);
+            var data = postImage(osuUser, dates.get(0));
+            QQMsgUtil.sendImage(from, data);
+        } finally {
+            handleText(dates.get(0), isAll, from);
+        }
+
+    }
+
+    private void handleText(Score score, boolean isAll, Contact from) throws TipsException {
+
+        var d = Ymp.getInstance(score);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
         QQMsgUtil.sendImageAndText(from, bytes, d.getOut());
-
-//        if (user != null){
-//            log.info(starService.ScoreToStar(user, date));
-//        }
     }
 
     private List<Score> getDates(BinUser user, OsuMode mode, boolean isAll) {
