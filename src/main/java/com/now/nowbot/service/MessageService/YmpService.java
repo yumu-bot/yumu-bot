@@ -105,8 +105,9 @@ public class YmpService implements MessageService {
     }
 
     public byte[] postImage(OsuUser user, Score score) {
-        var mods = score.getMods().stream().map(Mod::fromStr).toArray(Mod[]::new);
-        score.setBeatMap(osuGetService.getMapInfo(score.getBeatMap().getId()));
+        var map = osuGetService.getMapInfo(score.getBeatMap().getId());
+        score.setBeatMap(map);
+        score.setBeatMapSet(map.getBeatMapSet());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

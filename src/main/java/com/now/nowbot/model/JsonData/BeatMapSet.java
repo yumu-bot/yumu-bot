@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BeatMapSet {
@@ -46,6 +47,9 @@ public class BeatMapSet {
     Boolean video;
     @JsonProperty("covers")
     Covers covers;
+
+    @JsonProperty("ratings")
+    List<Integer> ratings;
 
     @JsonIgnoreProperties
     Boolean availabilityDownloadDisable;

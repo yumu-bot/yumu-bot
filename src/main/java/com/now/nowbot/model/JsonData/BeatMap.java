@@ -3,8 +3,11 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -60,6 +63,20 @@ public class BeatMap {
      */
     @JsonProperty("beatmapset")
     BeatMapSet beatMapSet;
+
+    @JsonProperty("failtimes")
+    public void setFailTimes(JsonNode data) {
+        if (data.hasNonNull("fail") && data.get("fail").isArray()) {
+            retryList = StreamSupport.stream(data.get("fail").spliterator(), false)
+                    .map(jsonNode -> jsonNode.asInt(0))
+                    .collect(Collectors.toList());
+        }
+        if (data.hasNonNull("exit") && data.get("exit").isArray()) {
+            failedList  = StreamSupport.stream(data.get("exit").spliterator(), false)
+                    .map(jsonNode -> jsonNode.asInt(0))
+                    .collect(Collectors.toList());
+        }
+    }
 
     public Long getId() {
         return id;
