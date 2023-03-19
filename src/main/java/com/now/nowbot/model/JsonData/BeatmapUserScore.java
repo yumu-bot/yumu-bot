@@ -12,6 +12,14 @@ public class BeatmapUserScore {
     @JsonProperty("score")
     Score score;
 
+    public Integer getPosition() {
+        return position;
+    }
+
+    public Score getScore() {
+        return score;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatmapUserScore{");
