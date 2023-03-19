@@ -92,14 +92,14 @@ public class YmpService implements MessageService {
 
     private List<Score> getDates(BinUser user, OsuMode mode, boolean isAll) {
         if (isAll)
-            return osuGetService.getRecentN(user, mode, 0, 1);
+            return osuGetService.getAllRecentN(user, mode, 0, 1);
         else
             return osuGetService.getRecentN(user, mode, 0, 1);
     }
 
     private List<Score> getDates(Long id, OsuMode mode, boolean isAll) {
         if (isAll)
-            return osuGetService.getRecentN(id, mode, 0, 1);
+            return osuGetService.getAllRecentN(id, mode, 0, 1);
         else
             return osuGetService.getRecentN(id, mode, 0, 1);
     }

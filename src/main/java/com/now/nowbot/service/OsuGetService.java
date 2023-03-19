@@ -459,6 +459,21 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    public List<Score> getAllRecentN(BinUser user, OsuMode mode, int s, int e) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
+                .queryParam("include_fails", 1)
+                .queryParam("limit", e)
+                .queryParam("offset", s);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        var uri = data.build().encode().toUri();
+
+        HttpHeaders headers = getHeader(user);
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
+        });
+        return c.getBody();
+    }
+
     public List<Score> getRecentN(int userId, OsuMode mode, int s, int e) {
         return getRecentN((long) userId, mode, s, e);
     }
