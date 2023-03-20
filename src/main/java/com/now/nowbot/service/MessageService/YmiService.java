@@ -155,7 +155,7 @@ public class YmiService implements MessageService {
         var bpNum = new int[90];
         times.forEach(time -> {
             var day = (int)(now.toEpochDay() - time.toLocalDate().toEpochDay());
-            if (day >= 0 && day < 90){
+            if (day > 0 && day <= 90){
                 bpNum[90-day] ++;
             }
         });
