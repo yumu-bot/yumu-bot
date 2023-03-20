@@ -73,7 +73,7 @@ public class MessageListener extends SimpleListenerHost {
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求目标不存在").recallIn(RECAL_TIME);
                 }else if(reser.status.value() == 401 || reser.status.getReasonPhrase().equals("Bad Request")){
-                    event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(私发bot\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
+                    event.getSubject().sendMessage("出现请求错误，可能为您的令牌已失效，请尝试更新令牌(发送\"!bind\")\n若仍未解决，请耐心等待bug修复").recallIn(RECAL_TIME);
                 }else {
                     event.getSubject().sendMessage("未知的请求异常,错误代码" + reser.status.value() + "->" + reser.status.getReasonPhrase());
                 }
