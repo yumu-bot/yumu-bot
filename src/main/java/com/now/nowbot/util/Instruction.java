@@ -62,7 +62,7 @@ public enum Instruction {
             Pattern.compile("^[!！](?i)(ym)?(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     YMI(YmiService.class,
-            Pattern.compile("^[!！](?i)(ym)?i(nfo)?([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！](?i)((yminfo)|((ym)?i(?!nfo)))([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     WIKI(WikiService.class,
             Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?")),
@@ -71,7 +71,7 @@ public enum Instruction {
             Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！](ym)?s(core)?\\s?(?<bid>\\d+)")),
+            Pattern.compile("^[!！]((ymscore)|((ym)?s(?!core)))\\s?(?<bid>\\d+)")),
 
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
