@@ -2,7 +2,7 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -18,7 +18,7 @@ public class HCardBuilder extends PanelBuilder{
     public static final ArrayList<Float> F24L = new ArrayList<>();
     public static final ArrayList<Float> F36L = new ArrayList<>();
 
-    public HCardBuilder(BpInfo info, int bpN){
+    public HCardBuilder(Score info, int bpN){
         super(900,110);
 
         //画底层圆角矩形
@@ -49,7 +49,7 @@ public class HCardBuilder extends PanelBuilder{
         canvas.clipRRect(RRect.makeXYWH(0,0,570,110,20));
         Image HCardLightBG = null;
         try {
-            HCardLightBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getCover2x());
+            HCardLightBG = SkiaImageUtil.getImage(info.getBeatMapSet().getCovers().getCover2x());
         } catch (IOException e) {
             NowbotApplication.log.error("谱面背景下载错误", e);
             try {
@@ -64,7 +64,7 @@ public class HCardBuilder extends PanelBuilder{
 
         //画谱面难度色标指示矩形
         canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(info.getBeatmap().getDifficultyRating())));
+        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(info.getBeatMap().getDifficultyRating())));
         canvas.restore();
 
         //画主要缩略图
@@ -73,7 +73,7 @@ public class HCardBuilder extends PanelBuilder{
         canvas.clipRRect(RRect.makeXYWH(0,0,176,110,20));
         Image HCardMainBG = null;
         try {
-            HCardMainBG = SkiaImageUtil.getImage(info.getBeatmapset().getCovers().getList2x());
+            HCardMainBG = SkiaImageUtil.getImage(info.getBeatMapSet().getCovers().getList2x());
         } catch (Exception e) {
             NowbotApplication.log.error("谱面背景下载错误", e);
             try {
@@ -203,7 +203,7 @@ public class HCardBuilder extends PanelBuilder{
         return 500 - mx;
     }
 
-    private void drawText(int maxWidth, BpInfo info, int bpN){
+    private void drawText(int maxWidth, Score info, int bpN){
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
@@ -215,7 +215,7 @@ public class HCardBuilder extends PanelBuilder{
         TextLine h1;
         int backL = 0;
         float pointW32 = 3*F36L.get('.');
-        var titleChar = info.getBeatmapset().getTitle().toCharArray();
+        var titleChar = info.getBeatMapSet().getTitle().toCharArray();
         //计算字符长度
         for (var thisChar : titleChar) {
             if (allWidth > maxWidth){
@@ -240,15 +240,15 @@ public class HCardBuilder extends PanelBuilder{
         //标题行
         TextLine h2;
         {
-            sb.append(info.getBeatmapset().getCreator());
-            h2 = TextLine.make(info.getBeatmapset().getCreator(), fontS24);
+            sb.append(info.getBeatMapSet().getCreator());
+            h2 = TextLine.make(info.getBeatMapSet().getCreator(), fontS24);
             allWidth = (h2.getWidth() + 2*F24L.get(' ') + 2 * F24L.get('/') + pointW24);
             if (allWidth < maxWidth) {
                 sb.insert(0, " // ");
                 float tmax = maxWidth - (h2.getWidth() + 2 * F24L.get('/'));
                 allWidth = 0;
                 StringBuilder sbt = new StringBuilder();
-                var artistChar = info.getBeatmapset().getArtist().toCharArray();
+                var artistChar = info.getBeatMapSet().getArtist().toCharArray();
                 for (var thisChar : artistChar) {
                     if (allWidth > tmax) {
                         break;
@@ -276,7 +276,7 @@ public class HCardBuilder extends PanelBuilder{
             allWidth = 0;
             backL = 0;
             float tmax = maxWidth - h3.getWidth();
-            var versionChar = info.getBeatmap().getVersion().toCharArray();
+            var versionChar = info.getBeatMap().getVersion().toCharArray();
             for (var thisChar : versionChar){
                 if (allWidth > tmax) {
                     break;

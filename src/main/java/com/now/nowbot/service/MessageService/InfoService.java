@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.InfoPanelBuilder;
@@ -28,7 +28,7 @@ public class InfoService implements MessageService{
         var bUser = bindDao.getUser(event.getSender().getId());
 
         OsuUser user;
-        List<BpInfo> bpList;
+        List<Score> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());

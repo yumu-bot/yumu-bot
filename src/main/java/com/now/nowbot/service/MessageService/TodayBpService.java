@@ -64,7 +64,7 @@ public class TodayBpService implements MessageService{
         //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
-            if (dayBefore.isBefore(bp.getTime()) || user.getOsuID() == 17064371L){
+            if (dayBefore.isBefore(bp.getCreateTime()) || user.getOsuID() == 17064371L){
                 lines.add(new HCardBuilder(bp, i+1).build());
             }
         }

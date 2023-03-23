@@ -59,27 +59,10 @@ public class ScoreService implements MessageService {
         var userInfo = osuGetService.getPlayerInfo(user);
 
         try {
-            var data = postImage(userInfo, score);
+            var data = YmpService.postImage(userInfo, score, osuGetService, template);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             from.sendMessage("出错了出错了,问问管理员");
         }
-    }
-
-    public byte[] postImage(OsuUser user, Score score) {
-        var map = osuGetService.getMapInfo(score.getBeatMap().getId());
-        score.setBeatMap(map);
-        score.setBeatMapSet(map.getBeatMapSet());
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        var body = Map.of("user", user,
-                "score", score
-        );
-        HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_E"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
     }
 }

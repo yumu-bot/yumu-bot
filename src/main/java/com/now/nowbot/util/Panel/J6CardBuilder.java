@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -21,7 +21,7 @@ public class J6CardBuilder extends PanelBuilder {
     record modSum(int modInt, int sum) {
     }
 
-    public J6CardBuilder(List<BpInfo> bps) {
+    public J6CardBuilder(List<Score> bps) {
         super(430, 335);
 
         drawBaseRRect();
@@ -33,7 +33,7 @@ public class J6CardBuilder extends PanelBuilder {
         canvas.clear(Color.makeRGB(56, 46, 50));
     }
 
-    private void drawUserText(List<BpInfo> bps) {
+    private void drawUserText(List<Score> bps) {
         //画数据指标
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS36 = new Font(TorusSB, 36);
@@ -49,7 +49,7 @@ public class J6CardBuilder extends PanelBuilder {
 //        canvas.drawRect(Rect.makeXYWH(85, 105,
 //                200, 200), new Paint().setARGB(150,0,0,0));
 
-        var x = bps.stream().collect(Collectors.groupingBy(BpInfo::getMods, Collectors.counting()));
+        var x = bps.stream().collect(Collectors.groupingBy(Score::getMods, Collectors.counting()));
         var s = x.entrySet()
                 .stream()
                 .map(e -> {

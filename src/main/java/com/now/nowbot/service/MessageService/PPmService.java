@@ -2,8 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -62,7 +62,7 @@ public class PPmService implements MessageService {
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         Ppm ppm;
         OsuUser user;
-        List<BpInfo> bps;
+        List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
 
         if (at != null) {
@@ -142,9 +142,9 @@ public class PPmService implements MessageService {
 
         OsuUser userMe;
         var userBin = bindDao.getUser(event.getSender().getId());
-        List<BpInfo> bpListMe;
+        List<Score> bpListMe;
         OsuUser userOther;
-        List<BpInfo> bpListOther;
+        List<Score> bpListOther;
         Ppm ppmMe;
         Ppm ppmOther;
 

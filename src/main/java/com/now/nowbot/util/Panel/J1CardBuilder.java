@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -19,7 +19,7 @@ public class J1CardBuilder extends PanelBuilder {
     Paint colorGrey = new Paint().setARGB(255,170,170,170);
     Paint colorWhite = new Paint().setARGB(255,255,255,255);
 
-    public J1CardBuilder(OsuUser user, List<BpInfo> bpList) {
+    public J1CardBuilder(OsuUser user, List<Score> bpList) {
         super(430, 335);
 
         drawBaseRRect();
@@ -104,7 +104,7 @@ public class J1CardBuilder extends PanelBuilder {
         canvas.restore();
     }
 
-    private void drawUserText(OsuUser user, List<BpInfo> bps) {
+    private void drawUserText(OsuUser user, List<Score> bps) {
         //画用户基础信息
         Typeface TorusSB = SkiaUtil.getTorusSemiBold();
         Font fontS48 = new Font(TorusSB, 48);

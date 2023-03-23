@@ -2,8 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.SkiaUtil;
@@ -30,7 +30,7 @@ public class TestPPMService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         OsuUser user;
-        List<BpInfo> bpList;
+        List<Score> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
@@ -100,7 +100,7 @@ public class TestPPMService implements MessageService {
         protected int xs = 0;
         protected int xx = 0;
         protected int notfc = 0;
-        private void act(OsuUser user, List<BpInfo> bps){
+        private void act(OsuUser user, List<Score> bps){
             double[] allBpPP = new double[bps.size()];
             for (int i = 0; i < bps.size(); i++) {
                 var bp = bps.get(i);
@@ -119,15 +119,15 @@ public class TestPPMService implements MessageService {
                 if (i < 10) {
                     ppv0 += bp.getPP();
                     accv0 += bp.getAccuracy();
-                    lengv0 += bp.getBeatmap().getTotalLength();
+                    lengv0 += bp.getBeatMap().getTotalLength();
                 } else if (i >= 45 && i < 55) {
                     ppv45 += bp.getPP();
                     accv45 += bp.getAccuracy();
-                    lengv45 += bp.getBeatmap().getTotalLength();
+                    lengv45 += bp.getBeatMap().getTotalLength();
                 } else if (i >= 90) {
                     ppv90 += bp.getPP();
                     accv90 += bp.getAccuracy();
-                    lengv90 += bp.getBeatmap().getTotalLength();
+                    lengv90 += bp.getBeatMap().getTotalLength();
                 }
             }
             bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());

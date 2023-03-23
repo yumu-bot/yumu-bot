@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import org.jetbrains.skija.Color;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
@@ -27,7 +27,7 @@ public class InfoPanelBuilder extends PanelBuilder{
         return this;
     }
 
-    public Image build(OsuUser user, List<BpInfo> bps) throws IOException {
+    public Image build(OsuUser user, List<Score> bps) throws IOException {
         drawName("Info");
         var card = CardBuilder.getUserCard(user).build();
 

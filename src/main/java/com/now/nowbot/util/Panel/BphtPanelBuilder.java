@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.SkiaUtil;
@@ -76,7 +76,7 @@ public class BphtPanelBuilder{
             return size;
         }
     }
-    public BphtPanelBuilder draw(List<BpInfo> Bps, String name, String mode){
+    public BphtPanelBuilder draw(List<Score> Bps, String name, String mode){
 
         var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
@@ -163,13 +163,13 @@ public class BphtPanelBuilder{
         return this;
     }
 
-    public BphtPanelBuilder mf(List<BpInfo> bps, String name, OsuMode mode, OsuGetService osuGetService, BinUser binUser){
+    public BphtPanelBuilder mf(List<Score> bps, String name, OsuMode mode, OsuGetService osuGetService, BinUser binUser){
         if (bps.size() == 0) return this;
         var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
 
         var  t1 = bps.get(0);
-        var t1Bpm = t1.getBeatmap().getBpm();
-        float t1BLength = t1.getBeatmap().getTotalLength();
+        var t1Bpm = t1.getBeatMap().getBpm();
+        float t1BLength = t1.getBeatMap().getTotalLength();
         if (t1.getMods().contains("DT") || t1.getMods().contains("NC")){
             t1BLength /= 1.5f;
             t1Bpm *= 1.5f;
@@ -199,7 +199,7 @@ public class BphtPanelBuilder{
         float debugx = 0;
         for (int i = 0; i < bps.size(); i++) {
             var jsb = bps.get(i);
-            var map = jsb.getBeatmap();
+            var map = jsb.getBeatMap();
             int length = map.getTotalLength();
             float bpm = map.getBpm();
             jsb.getMods().forEach(r->{

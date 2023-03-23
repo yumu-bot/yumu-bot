@@ -2,7 +2,6 @@ package com.now.nowbot.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
@@ -337,7 +336,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
+    public List<Score> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
         if (user.getAccessToken() == null) return getBestPerformance(user.getOsuID(), mode, s, e);
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
@@ -345,7 +344,7 @@ public class OsuGetService {
         HttpHeaders headers = getHeader(user);
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }
@@ -357,7 +356,7 @@ public class OsuGetService {
      * @param e
      * @return
      */
-    public List<BpInfo> getBestPerformance(Long id, OsuMode mode, int s, int e) {
+    public List<Score> getBestPerformance(Long id, OsuMode mode, int s, int e) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
@@ -365,7 +364,7 @@ public class OsuGetService {
 
         HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<List<BpInfo>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<BpInfo>>() {
+        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
         });
         return c.getBody();
     }

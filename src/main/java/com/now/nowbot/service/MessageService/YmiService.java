@@ -1,10 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
@@ -20,11 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -150,7 +145,7 @@ public class YmiService implements MessageService {
             var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
             bonus = Ppm.bonusPP(bppps, userInfo.getPlayCount());
         }
-        var times = bps.stream().map(BpInfo::getTime).toList();
+        var times = bps.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();
         var bpNum = new int[90];
         times.forEach(time -> {

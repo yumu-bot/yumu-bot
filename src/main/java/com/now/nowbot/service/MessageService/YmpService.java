@@ -73,7 +73,7 @@ public class YmpService implements MessageService {
         }
         try {
             var osuUser = osuGetService.getPlayerInfo(user, mode);
-            var data = postImage(osuUser, dates.get(0));
+            var data = postImage(osuUser, dates.get(0), osuGetService, template);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("???", e);
@@ -104,7 +104,7 @@ public class YmpService implements MessageService {
             return osuGetService.getRecentN(id, mode, 0, 1);
     }
 
-    public byte[] postImage(OsuUser user, Score score) {
+    public static byte[] postImage(OsuUser user, Score score, OsuGetService osuGetService, RestTemplate template) {
         var map = osuGetService.getMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());

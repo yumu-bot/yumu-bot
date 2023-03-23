@@ -1,7 +1,7 @@
 package com.now.nowbot.model.PPm;
 
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.impl.PpmCatch;
 import com.now.nowbot.model.PPm.impl.PpmMania;
 import com.now.nowbot.model.PPm.impl.PpmOsu;
@@ -51,7 +51,7 @@ public abstract class Ppm {
     protected double value7;
     protected double value8;
 
-    public static Ppm getInstance(OsuMode mode, OsuUser user, List<BpInfo> bps){
+    public static Ppm getInstance(OsuMode mode, OsuUser user, List<Score> bps){
         Ppm ppm = null;
         switch (mode) {
             case OSU : ppm = new PpmOsu(user, bps);break;

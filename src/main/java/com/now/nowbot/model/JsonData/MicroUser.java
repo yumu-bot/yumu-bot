@@ -134,7 +134,7 @@ public class MicroUser {
     }
 
     public LocalDateTime getLastTime() {
-        if (lastTime != null) return LocalDateTime.parse(lastTime, BpInfo.formatter);
+        if (lastTime != null) return LocalDateTime.parse(lastTime, Score.formatter);
         return LocalDateTime.now();
     }
 

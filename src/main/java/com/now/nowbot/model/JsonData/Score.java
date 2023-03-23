@@ -7,13 +7,12 @@ import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
-    static final DateTimeFormatter formatter = BpInfo.formatter;
+    static final DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
 //    @JsonProperty("statistics")
     Double accuracy;
     @JsonProperty("best_id")
@@ -45,6 +44,10 @@ public class Score {
     BeatMapSet beatMapSet;
 
     MicroUser user;
+    /***
+     * 仅查询bp时存在
+     */
+    Weight weight;
 
     @JsonProperty("mode")
     public void setMode(String mode){
@@ -203,6 +206,59 @@ public class Score {
 
     public void setMaxCombo(Integer maxCombo) {
         this.maxCombo = maxCombo;
+    }
+
+    public Float getPp() {
+        return pp;
+    }
+
+    public void setPp(Float pp) {
+        this.pp = pp;
+    }
+
+    public Weight getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Weight weight) {
+        this.weight = weight;
+    }
+
+    public Boolean isPerfect() {
+        return perfect;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public class Weight {
+        @JsonProperty("percentage")
+        Float percentage;
+        @JsonProperty("pp")
+        Float pp;
+
+        public Float getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(Float percentage) {
+            this.percentage = percentage;
+        }
+
+        public Float getPP() {
+            return pp;
+        }
+
+        public void setPP(Float pp) {
+            this.pp = pp;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Weight{");
+            sb.append("percentage=").append(percentage);
+            sb.append(", pp=").append(pp);
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     @Override

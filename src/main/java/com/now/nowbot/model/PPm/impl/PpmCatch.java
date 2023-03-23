@@ -1,8 +1,8 @@
 package com.now.nowbot.model.PPm.impl;
 
 import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BpInfo;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.util.Panel.PanelBuilder;
 import com.now.nowbot.util.PanelUtil;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class PpmCatch extends Ppm {
-    public PpmCatch(OsuUser user, List<BpInfo> bps){
+    public PpmCatch(OsuUser user, List<Score> bps){
         double [] allBpPP = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
@@ -38,15 +38,15 @@ public class PpmCatch extends Ppm {
             if(i < 10){
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
-                lengv0 += bp.getBeatmap().getTotalLength();
+                lengv0 += bp.getBeatMap().getTotalLength();
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
-                lengv45 += bp.getBeatmap().getTotalLength();
+                lengv45 += bp.getBeatMap().getTotalLength();
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
-                lengv90 += bp.getBeatmap().getTotalLength();
+                lengv90 += bp.getBeatMap().getTotalLength();
             }
         }
         bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());

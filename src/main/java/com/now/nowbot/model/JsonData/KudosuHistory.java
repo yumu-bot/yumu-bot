@@ -31,7 +31,7 @@ public class KudosuHistory {
 
     @JsonProperty("created")
     public void setCreated(String time){
-        this.created = LocalDateTime.from(BpInfo.formatter.parse(time));
+        this.created = LocalDateTime.from(Score.formatter.parse(time));
     }
     @JsonProperty("giver")
     public void setGiver(HashMap<String, String> map){

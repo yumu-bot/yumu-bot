@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BpInfo;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.serviceException.BindException;
@@ -76,7 +76,7 @@ public class BphtService implements MessageService {
             nu = bindDao.getUser(event.getSender().getId());
         }
         //bp列表
-        List<BpInfo> Bps;
+        List<Score> Bps;
         //分别处理mode
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
