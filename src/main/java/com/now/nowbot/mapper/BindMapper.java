@@ -26,17 +26,17 @@ public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpe
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where osuId=:uid")
+    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuId=:uid")
     void updateToken(Long uid, String accessToken, String refreshToken, Long time);
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.mainMode = :mode where osuId = :uid ")
+    @Query("update OsuBindUserLite o set o.mainMode = :mode where o.osuId = :uid ")
     void updateMode(Long uid, OsuMode mode);
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.qq = null where osuId = :uid ")
+    @Query("update OsuBindUserLite o set o.qq = null where o.osuId = :uid ")
     void unBind(Long uid);
 
     @Query("select o.qq from OsuBindUserLite o where o.osuId = :uid")

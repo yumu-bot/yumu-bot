@@ -208,14 +208,6 @@ public class Score {
         this.maxCombo = maxCombo;
     }
 
-    public Float getPp() {
-        return pp;
-    }
-
-    public void setPp(Float pp) {
-        this.pp = pp;
-    }
-
     public Weight getWeight() {
         return weight;
     }
