@@ -27,14 +27,17 @@ public class TestMapServer implements MessageService{
         sb.append(info.getBeatMapSet().getArtistUTF()).append(' ').append('-').append(' ');
         sb.append(info.getBeatMapSet().getTitleUTF()).append(' ');
         sb.append('(').append(info.getBeatMapSet().getCreator()).append(')').append(' ');
-        sb.append('[').append(info.getVersion()).append(']').append('\n');
+        sb.append('[').append(info.getVersion()).append(']').append(',');
 
 
         if (mod == null || mod.trim().equals("")){
 
             sb.append(info.getDifficultyRating()).append(',')
                     .append(info.getBpm()).append(',')
-                    .append(info.getHitLength()).append('\n');
+                    .append(Math.floor(info.getTotalLength() / 60f))
+                    .append(':')
+                    .append(String.format("%02f",info.getTotalLength() % 60f))
+                    .append(',');
             sb.append(info.getMaxCombo()).append(',')
                     .append(info.getCS()).append(',')
                     .append(info.getAR()).append(',')
