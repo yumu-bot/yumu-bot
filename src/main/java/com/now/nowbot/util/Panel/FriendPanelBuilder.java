@@ -17,6 +17,7 @@ public class FriendPanelBuilder extends PanelBuilder{
         super(1920, 330);
         drawName("Friend");
         cards = new LinkedList<>();
+        canvas.drawRRect(RRect.makeXYWH(0, 290, 1920, 40,30, 30, 0, 0), c2);
     }
 
     public FriendPanelBuilder drawBanner(Image banner){
@@ -49,6 +50,7 @@ public class FriendPanelBuilder extends PanelBuilder{
             canvas.drawImage(banner, 0, 0);
         }
 
+        canvas.drawImage(surface.makeImageSnapshot(),0,0);
         //此之后temp指当前card的下标,从0开始
         temp = 0;
         canvas.save();
@@ -60,7 +62,6 @@ public class FriendPanelBuilder extends PanelBuilder{
             temp ++;
         }
         canvas.restore();
-        canvas.drawImage(surface.makeImageSnapshot(),0,0);
 
         try (surface) {
             isClose = true;

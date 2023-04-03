@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -34,8 +35,9 @@ public class ScoreService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-
         BinUser user = null;
+
+
 
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
         if (at != null) {
@@ -44,19 +46,24 @@ public class ScoreService implements MessageService {
             } catch (Exception e) {
                 throw new TipsException("该玩家没有绑定");
             }
-        }
-        else {
+        } else {
             user = bindDao.getUser(event.getSender().getId());
         }
+
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        //处理默认mode
+        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
+
         var bid = Long.parseLong(matcher.group("bid"));
+
         Score score = null;
         try {
-            score = osuGetService.getScore(bid, user, user.getMode()).getScore();
+            score = osuGetService.getScore(bid, user, mode).getScore();
         } catch (Exception e) {
             from.sendMessage("你没打过这张图");
             return;
         }
-        var userInfo = osuGetService.getPlayerInfo(user);
+        var userInfo = osuGetService.getPlayerInfo(user, mode);
 
         try {
             var data = YmpService.postImage(userInfo, score, osuGetService, template);
