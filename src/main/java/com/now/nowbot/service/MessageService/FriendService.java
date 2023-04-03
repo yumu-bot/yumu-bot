@@ -80,6 +80,8 @@ public class FriendService implements MessageService{
             n1 = Integer.parseInt(matcher.group("n"));
             n2 = Integer.parseInt(matcher.group("m"));
             if(n1 > n2) {n1 ^= n2; n2 ^= n1; n1 ^= n2;}
+            n1--;
+            n2--;
         }
         if (n2 == 0 || 100 < n2-n1 ){
             throw new TipsException("参数范围错误!");
