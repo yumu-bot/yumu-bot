@@ -161,7 +161,7 @@ public class YmiService implements MessageService {
 
         var body = Map.of("user",userInfo,
                     "bp-time",bpNum,
-                    "bp-list", bps.subList(0,8),
+                    "bp-list", bps.subList(0,Math.min(bps.size(), 8)),
                     "re-list", res,
                     "pp-bonus", bonus,
                     "mode", mod.getName()
