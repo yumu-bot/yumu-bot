@@ -34,9 +34,9 @@ public class TestMapServer implements MessageService{
 
             sb.append(info.getDifficultyRating()).append(',')
                     .append(info.getBpm()).append(',')
-                    .append(Math.floor(info.getTotalLength() / 60f))
+                    .append(String.format("%d", (int) (Math.floor(info.getTotalLength() / 60f))))
                     .append(':')
-                    .append(String.format("%02f",info.getTotalLength() % 60f))
+                    .append(String.format("%02d", (int) (info.getTotalLength() % 60f)))
                     .append(',');
             sb.append(info.getMaxCombo()).append(',')
                     .append(info.getCS()).append(',')
