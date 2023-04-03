@@ -71,7 +71,7 @@ public enum Instruction {
             Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]((ymscore)|((ym)?s(?!core)))\\s?(?<bid>\\d+)")),
+            Pattern.compile("^[!！]((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)")),
 
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
