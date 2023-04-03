@@ -50,6 +50,7 @@ public class FriendPanelBuilder extends PanelBuilder{
             canvas.drawImage(banner, 0, 0);
         }
 
+        canvas.drawImage(surface.makeImageSnapshot(),0,0);
         //此之后temp指当前card的下标,从0开始
         temp = 0;
         canvas.save();
@@ -61,7 +62,6 @@ public class FriendPanelBuilder extends PanelBuilder{
             temp ++;
         }
         canvas.restore();
-        canvas.drawImage(surface.makeImageSnapshot(),0,0);
 
         try (surface) {
             isClose = true;
