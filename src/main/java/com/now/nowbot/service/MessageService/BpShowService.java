@@ -41,7 +41,7 @@ public class BpShowService implements MessageService {
         var n = Integer.parseInt(matcher.group("n")) - 1;
         if (n < 0) n = 0; else if (n > 99) n = 99;
         int m = 1;
-        var mStr = matcher.group("n");
+        var mStr = matcher.group("m");
         if (mStr != null) {
             m = Integer.parseInt(mStr);
             if (m <= n) m = 1; else if (m > 99) m = 99-n; else m = m - n;
