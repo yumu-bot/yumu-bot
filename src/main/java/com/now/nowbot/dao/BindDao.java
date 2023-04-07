@@ -40,12 +40,12 @@ public class BindDao {
     }
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
         var liteData = bindMapper.getByOsuId(osuId);
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
         return fromLite(liteData);
     }
     public OsuBindUserLite getUserLiteFromOsuid(Long osuId) throws BindException {
         var liteData = bindMapper.getByOsuId(osuId);
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
         return liteData;
     }
 
@@ -71,6 +71,9 @@ public class BindDao {
         try {
             var t = bindMapper.getByOsuId(user.getOsuID());
             if (t != null) data.setId(t.getId());
+            else {
+                throw new BindException(BindException.Type.BIND_Player_NotFound);
+            }
         } catch (Exception e) {
             // do nothing
         }
@@ -94,7 +97,6 @@ public class BindDao {
             bindMapper.unBind(user.getOsuID());
             return true;
         } catch (Exception e) {
-            log.error("unbind error", e);
             return false;
         }
     }

@@ -52,58 +52,64 @@ public enum Instruction {
 //            Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)")),
 
     SONG(SongService.class,
-            Pattern.compile("^[!！]song\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
+            Pattern.compile("^[!！]\\s*(song)\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
 /*
     START(StartService.class,
             Pattern.compile("^[!！]((积分)|(..积分))+.*")),
 */
 
     YMP(YmpService.class,
-            Pattern.compile("^[!！](?i)(ym)?(?<isAll>[p,r])([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
+    // i ymi yminfo :0-3 name
     YMI(YmiService.class,
-            Pattern.compile("^[!！](?i)((yminfo)|((ym)?i(?!nfo)))([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!nfo)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+
+    // b ymb ymbp :0-3 name 1-100
+    BP(BpShowService.class,
+            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
 
     WIKI(WikiService.class,
-            Pattern.compile("^[!！](?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?")),
 
     TRANS(TransService.class,
-            Pattern.compile("^[!！](ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
+            Pattern.compile("^[!！]\\s*(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)")),
+            Pattern.compile("^[!！]\\s*((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)")),
 
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
 
     SETMODE(SetModeService.class,
-            Pattern.compile("^[!！](?i)ymmode\\s*(?<mode>\\w+)")),
+            Pattern.compile("^[!！]\\s*(?i)ymmode\\s*(?<mode>\\w+)")),
 
     FRIEND(FriendService.class,
-            Pattern.compile("^[!！](?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
     CATPANEL(CatpanelService.class,
-            Pattern.compile("[!！]testbg(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?")),
+            Pattern.compile("[!！]\\s*(testbg)(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?")),
 
     MUTUAL(MutualFriendService.class,
-            Pattern.compile("[!！](?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
+            Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
 
     BAN(BanService.class,
-            Pattern.compile("[!！](?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
+            Pattern.compile("[!！]\\s*(?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST(TestService.class,
-            Pattern.compile("^[!！]test.*")),
+            Pattern.compile("^[!！]\\s*test.*")),
 
-    TESTID(TestGetId.class,    Pattern.compile("^[!！]testid\\s*(?<ids>((\\d)+(,)?)+)")),
+    TESTID(TestGetId.class,    Pattern.compile("^[!！]\\s*testid\\s*(?<ids>((\\d)+(,)?)+)")),
 
-    TESTRA(TestRaService.class,    Pattern.compile("[!！]testra(\\s+(?<id>\\d+))")),
+    TESTRA(TestRaService.class,    Pattern.compile("[!！]\\s*testra(\\s+(?<id>\\d+))")),
 
-    TESTPPM(TestPPMService.class,    Pattern.compile("!testppm([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
+    TESTPPM(TestPPMService.class,    Pattern.compile("[!！]\\s*testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
-    GROUP(JoinGroupService.class,    Pattern.compile("(是)|(否)")),
-    INFO(InfoService.class,    Pattern.compile("[!！]testinfo([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
+    GROUP(JoinGroupService.class,    Pattern.compile("(是|确认|(?i)y)|(否|取消|(?i)n)")),
+
+    INFO(InfoService.class,    Pattern.compile("[!！]\\s*(testinfo)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
 
     //TODO 待实现的指令，十万紧急，请优先完成！
@@ -124,9 +130,9 @@ public enum Instruction {
     TESTMAP(TestMapServer.class,
             Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
-    BPSHOW(BpShowService.class,
-            Pattern.compile("^[!！]bp\\s*(?<n>\\d+)(-(?<m>\\d+))?(\\s*[:：](?<mode>[\\w\\d]+))?"));
-            ;
+    ;
+
+
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),

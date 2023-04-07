@@ -42,6 +42,8 @@ public class BpShowService implements MessageService {
         if (n < 0) n = 0; else if (n > 99) n = 99;
         int m = 1;
         var mStr = matcher.group("m");
+        var uStr = matcher.group("name");
+
         if (mStr != null) {
             m = Integer.parseInt(mStr);
             if (m <= n) m = 1; else if (m > 99) m = 99-n; else m = m - n;
@@ -50,6 +52,10 @@ public class BpShowService implements MessageService {
         var from = event.getSubject();
 
         var user = bindDao.getUser(event.getSender().getId());
+
+        if (uStr != null) {
+            // 这里不能用bindDao，只能从uStr获取玩家的名字
+        }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
 

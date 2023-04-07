@@ -39,7 +39,7 @@ public class BindService implements MessageService {
         if (Permission.isSupper(event.getSender().getId())) {
             At at = QQMsgUtil.getType(event.getMessage(), At.class);
             if (matcher.group("un") != null && at != null) {
-                unbin(at.getTarget());
+                unbind(at.getTarget());
             }
             if (at != null) {
                 // 只有管理才有权力@人绑定,提示就不改了
@@ -108,10 +108,10 @@ public class BindService implements MessageService {
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
-                from.sendMessage(name + " 已绑定 (" + buser.getQq() + ") ,若绑定错误,请联系管理员");
+                from.sendMessage(name + " 已绑定 ( " + buser.getQq() + " )，若绑定错误，请联系管理员");
             } catch (BindException e) {
                 bindDao.saveUser(event.getSender().getId(), name, d);
-                from.sendMessage("正在为" + event.getSender().getId() + "绑定 >>(" + d + ")" + name);
+                from.sendMessage("正在绑定: " + event.getSender().getId() + " >>( " + d + " )" + name);
             }
             return;
         }
@@ -155,11 +155,11 @@ public class BindService implements MessageService {
         }
     }
 
-    private void unbin(Long qqId) throws BindException {
-        if (qqId == null) throw new BindException(BindException.Type.BIND_Me_NoBind);
+    private void unbind(Long qqId) throws BindException {
+        if (qqId == null) throw new BindException(BindException.Type.BIND_Player_NotFound);
         BinUser user = bindDao.getUser(qqId);
         if (user == null) {
-            throw new BindException(BindException.Type.BIND_Me_NoBind);
+            throw new BindException(BindException.Type.BIND_Player_NoBind);
         }
 
         if (bindDao.unBind(user)) {
