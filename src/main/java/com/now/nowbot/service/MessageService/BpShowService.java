@@ -38,7 +38,14 @@ public class BpShowService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var m = Integer.parseInt(matcher.group("n"));
+        var n = Integer.parseInt(matcher.group("n")) - 1;
+        if (n < 0) n = 0; else if (n > 99) n = 99;
+        int m = 1;
+        var mStr = matcher.group("n");
+        if (mStr != null) {
+            m = Integer.parseInt(mStr);
+            if (m <= n) m = 1; else if (m > 99) m = 99-n; else m = m - n;
+        }
 
         var from = event.getSubject();
 
@@ -46,9 +53,13 @@ public class BpShowService implements MessageService {
 
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        var bpList = osuGetService.getBestPerformance(user, mode, m, 1);
+        var bpList = osuGetService.getBestPerformance(user, mode, n, m);
 
         try {
+            if (m > 1){
+                oldSend(from, user, mode, bpList);
+                return;
+            }
             var u = osuGetService.getPlayerInfo(user, mode);
             if (bpList.size() == 0) {
 
@@ -62,11 +73,11 @@ public class BpShowService implements MessageService {
         }
     }
 
-    private void oldSend(Contact from, BinUser user, OsuMode mode, List<Score> bpList, int m) throws IOException {
+    private void oldSend(Contact from, BinUser user, OsuMode mode, List<Score> bpList) throws IOException {
         var lines = new ArrayList<Image>();
         //生成hcard
-        int min = Math.min(bpList.size(), m);
-        from.sendMessage("0-" + min);
+        int min = bpList.size();
+//        from.sendMessage("0-" + min);
         for (int i = 0; i < min; i++) {
             var bp = bpList.get(i);
             lines.add(new HCardBuilder(bp, i + 1).build());

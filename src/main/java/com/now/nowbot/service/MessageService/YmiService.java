@@ -141,7 +141,7 @@ public class YmiService implements MessageService {
         var res = osuGetService.getRecentN(user, mod, 0, 3);
 
         float bonus = 0;
-        if (bps.size() < 100) {
+        if (bps.size() <= 100) {
             var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
             bonus = Ppm.bonusPP(bppps, userInfo.getPlayCount());
         }

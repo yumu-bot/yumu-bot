@@ -125,7 +125,7 @@ public enum Instruction {
             Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
     BPSHOW(BpShowService.class,
-            Pattern.compile("^[!！]bp\\s*(?<n>\\d+)(\\s*[:：](?<mode>[\\w\\d]+))?"));
+            Pattern.compile("^[!！]bp\\s*(?<n>\\d+)(-(?<m>\\d+))?(\\s*[:：](?<mode>[\\w\\d]+))?"));
             ;
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
