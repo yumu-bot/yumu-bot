@@ -67,7 +67,7 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
+            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
 
     WIKI(WikiService.class,
             Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?")),

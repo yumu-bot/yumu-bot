@@ -51,10 +51,15 @@ public class BpShowService implements MessageService {
 
         var from = event.getSubject();
 
-        var user = bindDao.getUser(event.getSender().getId());
+        BinUser user ;
 
         if (uStr != null) {
             // 这里不能用bindDao，只能从uStr获取玩家的名字
+            long uid = osuGetService.getOsuId(uStr);
+            user = new BinUser();
+            user.setOsuID(uid);
+        } else {
+            user = bindDao.getUser(event.getSender().getId());
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
