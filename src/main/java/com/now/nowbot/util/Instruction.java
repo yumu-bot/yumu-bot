@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public enum Instruction {
     BIND(BindService.class,
-            Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！](?i)ym(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！](?i)ymbpht(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -67,10 +67,10 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
+            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
 
     WIKI(WikiService.class,
-            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>[^\\s]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>\\s*))?")),
 
     TRANS(TransService.class,
             Pattern.compile("^[!！]\\s*(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
