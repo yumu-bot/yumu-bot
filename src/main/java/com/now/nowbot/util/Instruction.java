@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public enum Instruction {
     BIND(BindService.class,
-            Pattern.compile("^[!！](?i)((ymbi)|(bi)|(ymbind)|((?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！](?i)((ymbi)|(bi(?!nd))|(ymbind)|((?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！](?i)ymbpht(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
