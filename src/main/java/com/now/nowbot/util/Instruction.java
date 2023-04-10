@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public enum Instruction {
     BIND(BindService.class,
-            Pattern.compile("^[!！](?i)ym(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！](?i)((ymbi)|(bi)|(ymbind)|((?<un>un)bind)(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！](?i)ymbpht(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -306,19 +306,19 @@ ymban/ymunban
     }
 
     public static void main(String[] args) {
-        var p = Pattern.compile("^[!！](?i)(ym)?(?<un>un)?bind(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
-        var m = p.matcher("!bind   ffff");
-        var rp = valueOf("ban".toUpperCase());
-        var rm = rp.regex.matcher("!ban ymf f 22");
-        System.out.println(rm.find());
-        System.out.println(rm.group("gf"));
-        while (m.find()){
-//            int s = m.group("n")==null?0:Integer.parseInt(m.group("n"))-1;
-//            int e = m.group("m")==null?15:Integer.parseInt(m.group("m"))-1;
-//            s ^= e;
-//            e ^= s;
-//            s ^= e;
+        var p = Pattern.compile("^[!！](?i)((ymbi)|(bi)|(ym(?<un>un)?bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
+        var m = p.matcher("!bi   ffff");
+        if (m.matches()) {
+            System.out.println(m.group("un"));
             System.out.println(m.group("name"));
+            return;
+        } else {
+            return;
         }
+//        var rp = valueOf("ban".toUpperCase());
+//        var rm = rp.regex.matcher("!ban ymf f 22");
+//        System.out.println(rm.find());
+//        System.out.println(rm.group("gf"));
+
     }
 }
