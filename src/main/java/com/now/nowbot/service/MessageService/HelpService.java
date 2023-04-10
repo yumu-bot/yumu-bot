@@ -21,9 +21,10 @@ public class HelpService implements MessageService {
 //        }
 //        from.sendMessage(sb.toString());
 //        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
-/*
+
         String module = ""; //传东西进来
         String path;
+        /*
         switch (module) {
             case "bot", "b" : path = "help-bot.png"; break;
             case "score", "s" : path = "help-score.png"; break;
