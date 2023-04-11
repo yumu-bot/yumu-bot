@@ -20,26 +20,27 @@ public class HelpService implements MessageService {
 //                sb.append(ins.getDesc()).append("\n");
 //        }
 //        from.sendMessage(sb.toString());
+
+//        这里是之前的代码 你真的是人才
 //        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
 
-        String module = ""; //传东西进来
+        String module = matcher.group("module"); //传东西进来
         String path;
-        /*
         switch (module) {
-            case "bot", "b" : path = "help-bot.png"; break;
-            case "score", "s" : path = "help-score.png"; break;
-            case "player", "p" : path = "help-player.png"; break;
-            case "map", "m" : path = "help-map.png"; break;
-            case "custom", "c" : path = "help-custom.png"; break;
-            case "fun", "f" : path = "help-fun.png"; break;
-            case "aid", "a" : path = "help-aid.png"; break;
-            case "tournament", "t" : path = "help-tournament.png"; break;
+            case "bot": case "b" : path = "help-bot.png"; break;
+            case "score": case "s" : path = "help-score.png"; break;
+            case "player": case "p" : path = "help-player.png"; break;
+            case "map": case "m" : path = "help-map.png"; break;
+            case "chat": case "c" : path = "help-chat.png"; break;
+            case "fun": case "f" : path = "help-fun.png"; break;
+            case "aid": case "a" : path = "help-aid.png"; break;
+            case "tournament": case "t" : path = "help-tournament.png"; break;
             case default : path = "help-default.png"; break;
         }
 
         path = "ExportFileV3/" + path;
 
-        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve(path)))
-        */
+        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve(path)));
+
     }
 }
