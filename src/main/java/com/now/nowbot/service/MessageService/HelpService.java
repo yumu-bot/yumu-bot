@@ -22,27 +22,33 @@ public class HelpService implements MessageService {
 //        from.sendMessage(sb.toString());
 
 //        这里是之前的代码 你真的是人才
-        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
-/*
-        String module = matcher.group("module"); //传东西进来
+//        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
+
+        String module = matcher.group("module").trim(); //传东西进来
         String path;
         switch (module) {
-            case "bot": case "b" : path = "help-bot.png"; break;
-            case "score": case "s" : path = "help-score.png"; break;
-            case "player": case "p" : path = "help-player.png"; break;
-            case "map": case "m" : path = "help-map.png"; break;
-            case "chat": case "c" : path = "help-chat.png"; break;
-            case "fun": case "f" : path = "help-fun.png"; break;
-            case "aid": case "a" : path = "help-aid.png"; break;
-            case "tournament": case "t" : path = "help-tournament.png"; break;
-            case default : path = "help-default.png"; break;
+            case "bot":
+            case "b" : path = "help-bot.png"; break;
+            case "score":
+            case "s" : path = "help-score.png"; break;
+            case "player":
+            case "p" : path = "help-player.png"; break;
+            case "map":
+            case "m" : path = "help-map.png"; break;
+            case "chat":
+            case "c" : path = "help-chat.png"; break;
+            case "fun":
+            case "f" : path = "help-fun.png"; break;
+            case "aid":
+            case "a" : path = "help-aid.png"; break;
+            case "tournament":
+            case "t" : path = "help-tournament.png"; break;
+            default : path = "help-default.png"; break;
         }
 
         path = "ExportFileV3/" + path;
 
         QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve(path)));
-
- */
 
     }
 }
