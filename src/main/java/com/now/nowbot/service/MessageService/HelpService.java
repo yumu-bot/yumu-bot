@@ -22,8 +22,8 @@ public class HelpService implements MessageService {
 //        from.sendMessage(sb.toString());
 
 //        这里是之前的代码 你真的是人才
-//        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
-
+        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
+/*
         String module = matcher.group("module"); //传东西进来
         String path;
         switch (module) {
@@ -41,6 +41,8 @@ public class HelpService implements MessageService {
         path = "ExportFileV3/" + path;
 
         QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve(path)));
+
+ */
 
     }
 }
