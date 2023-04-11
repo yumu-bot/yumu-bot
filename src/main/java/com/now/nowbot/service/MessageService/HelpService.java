@@ -14,37 +14,18 @@ public class HelpService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-//        StringBuilder sb = new StringBuilder();
-//        for(var ins: Instruction.values()) {
-//            if(ins.getDesc()!=null)
-//                sb.append(ins.getDesc()).append("\n");
-//        }
-//        from.sendMessage(sb.toString());
-
-//        这里是之前的代码 你真的是人才
-//        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/panel-help.png")));
-
         String module = matcher.group("module").trim(); //传东西进来
-        String path;
-        switch (module) {
-            case "bot":
-            case "b" : path = "help-bot.png"; break;
-            case "score":
-            case "s" : path = "help-score.png"; break;
-            case "player":
-            case "p" : path = "help-player.png"; break;
-            case "map":
-            case "m" : path = "help-map.png"; break;
-            case "chat":
-            case "c" : path = "help-chat.png"; break;
-            case "fun":
-            case "f" : path = "help-fun.png"; break;
-            case "aid":
-            case "a" : path = "help-aid.png"; break;
-            case "tournament":
-            case "t" : path = "help-tournament.png"; break;
-            default : path = "help-default.png"; break;
-        }
+        String path = switch (module) {
+            case "bot", "b" -> "help-bot.png";
+            case "score", "s" -> "help-score.png";
+            case "player", "p" -> "help-player.png";
+            case "map", "m" -> "help-map.png";
+            case "chat", "c" -> "help-chat.png";
+            case "fun", "f" -> "help-fun.png";
+            case "aid", "a" -> "help-aid.png";
+            case "tournament", "t" -> "help-tournament.png";
+            default -> "help-default.png";
+        };
 
         path = "ExportFileV3/" + path;
 
