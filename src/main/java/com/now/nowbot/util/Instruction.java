@@ -31,7 +31,7 @@ public enum Instruction {
             Pattern.compile("^[!！](?i)tbp(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     HELP(HelpService.class,
-            Pattern.compile("^[!！](?i)(ym)?((help)|h)?(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！](?i)(ym)?((help)|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！](?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
