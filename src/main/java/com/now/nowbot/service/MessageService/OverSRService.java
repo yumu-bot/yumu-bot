@@ -37,11 +37,11 @@ public class OverSRService implements MessageService{
         double hour;
         double day;
 
-        if ((int) (SR * 10f) <= 57) {
+        if ((int) (SR * 100f) <= 570) {
             return "未超星";
-        } else if ((int) (SR * 10f) <= 200){
+        } else if ((int) (SR * 100f) <= 2000){
             // 超 0.01 星加 10 分钟，6星 以上所有乘以二
-            if ((int) (SR * 10f) <= 60) {
+            if ((int) (SR * 100f) <= 600) {
                 minute = (SR - 5.7f) * 1000f;
             } else {
                 minute = (SR - 5.7f) * 2000f;
