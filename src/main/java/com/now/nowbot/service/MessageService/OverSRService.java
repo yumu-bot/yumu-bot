@@ -11,11 +11,16 @@ public class OverSRService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String SRStr = matcher.group("SR");
-        double SR;
+        double SR = 0;
         String message;
 
         if (SRStr != null){
-            SR = Double.parseDouble(SRStr);
+            try {
+                SR = Double.parseDouble(SRStr);
+            } catch (Exception e) {
+                e.printStackTrace();
+                event.getSubject().sendMessage("捞翔恁输嘞是个啥玩应啊？");
+            }
             message = OverSR(SR);
         } else {
             message = "请输入正确的星数！"; //好像不该这么抛错
@@ -30,14 +35,14 @@ public class OverSRService implements MessageService{
         double hour;
         double day;
 
-        if (SR <= 5.7f) {
+        if (SR <= 5.70f) {
             return "未超星";
-        } else if (SR < 20f){
+        } else if (SR <= 20f){
             // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             if (SR < 6f) {
-                minute = (SR - 5.7f) * 1000f;
+                minute = (SR - 5.70f) * 1000f;
             } else {
-                minute = (SR - 5.7f) * 2000f;
+                minute = (SR - 5.70f) * 2000f;
             }
         } else {
             return "真的有那么高的星数吗？";
