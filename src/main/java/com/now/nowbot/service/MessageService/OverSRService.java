@@ -47,7 +47,7 @@ public class OverSRService implements MessageService{
                 minute = (SR - 5.7f) * 2000f;
             }
         } else {
-            return "真的有那么高的星数吗？";
+            return "对方真的糊了那么高星的图吗？还是说你在滥用功能...";
         }
 
         message.append("已超星，预计禁言：");
