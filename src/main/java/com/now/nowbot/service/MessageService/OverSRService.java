@@ -32,13 +32,15 @@ public class OverSRService implements MessageService{
 
         if (SR <= 5.7f) {
             return "未超星";
-        } else {
+        } else if (SR < 20f){
             // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             if (SR < 6f) {
                 minute = (SR - 5.7f) * 1000f;
             } else {
                 minute = (SR - 5.7f) * 2000f;
             }
+        } else {
+            return "真的有那么高的星数吗？";
         }
 
         message.append("已超星，预计禁言：");
