@@ -18,7 +18,7 @@ public class OverSRService implements MessageService{
             SR = Double.parseDouble(SRStr);
             message = OverSR(SR);
         } else {
-            throw new LogException("请输入正确的星数！", null);
+            message = "请输入正确的星数！"; //好像不该这么抛错
         }
 
         event.getSubject().sendMessage(message);
