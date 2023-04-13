@@ -35,14 +35,14 @@ public class OverSRService implements MessageService{
         double hour;
         double day;
 
-        if (SR <= 5.70f) {
+        if ((int) (SR * 10f) <= 57) {
             return "未超星";
-        } else if (SR <= 20f){
+        } else if ((int) (SR * 10f) <= 200){
             // 超 0.01 星加 10 分钟，6星 以上所有乘以二
-            if (SR < 6f) {
-                minute = (SR - 5.70f) * 1000f;
+            if ((int) (SR * 10f) <= 60) {
+                minute = (SR - 5.7f) * 1000f;
             } else {
-                minute = (SR - 5.70f) * 2000f;
+                minute = (SR - 5.7f) * 2000f;
             }
         } else {
             return "真的有那么高的星数吗？";
