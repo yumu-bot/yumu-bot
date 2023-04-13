@@ -11,17 +11,19 @@ public class OverSRService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String SRStr = matcher.group("SR");
-        double SR = 0;
+        double SR;
         String message;
 
         if (SRStr != null){
             try {
                 SR = Double.parseDouble(SRStr);
+                message = OverSR(SR);
+
             } catch (Exception e) {
                 e.printStackTrace();
-                event.getSubject().sendMessage("捞翔恁输嘞是个啥玩应啊？");
+                message = "捞翔恁发嘞是个啥玩应啊？";
             }
-            message = OverSR(SR);
+
         } else {
             message = "请输入正确的星数！"; //好像不该这么抛错
         }
