@@ -130,6 +130,9 @@ public enum Instruction {
     TESTMAP(TestMapServer.class,
             Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
+    OVERSR(OverSRService.class,
+            Pattern.compile("^[!！](?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?"))
+
     ;
 
 
