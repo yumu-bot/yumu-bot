@@ -7,7 +7,7 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.serviceException.PpmException;
+import com.now.nowbot.throwable.ServiceException.PpmException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;

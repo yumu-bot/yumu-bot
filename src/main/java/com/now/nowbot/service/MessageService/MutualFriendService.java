@@ -2,12 +2,11 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
-import net.mamoe.mirai.message.data.MessageUtils;
 import net.mamoe.mirai.message.data.PlainText;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

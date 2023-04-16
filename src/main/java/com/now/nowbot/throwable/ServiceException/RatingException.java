@@ -1,17 +1,19 @@
-package com.now.nowbot.throwable.serviceException;
+package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
 
 public class RatingException extends TipsException {
     public static enum Type {
-        RATING_Parameter_None("欢迎使用YuMu Rating功能！\n指令食用方法：!ymrating / !ymra (:ratingsystem) [matchid] (warmup) (isincludefail?) (isLeftRedTeam?)\n:ratingsystem：斗力系统。可选：木斗力:m，光斗力:g。不输入默认为木斗力。\nmatchid：这场比赛的房间号。\nwarmup：热手数量，默认为0。\nisincludefail?：是否计算失败，默认为1。\nisLeftRedTeam?：是否左红右蓝，默认为1."),//参数_无参数
-        RATING_Parameter_RatingSystemWrong("阿叭叭叭叭叭\nratingsystem：斗力系统。可选：木斗力:m，光斗力:g。不输入默认为木斗力。记得带冒号。"),//参数_评分系统错误
+        RATING_Parameter_None("欢迎使用Yumu Rating系统！\n指令食用方法：!ymrating / !ymra [matchid] (w) (warmup) (isincludefail?)\nmatchid：这场比赛的房间号。\nw：需要抛弃的前面场次（热手）数量，默认为0。\nt：需要抛弃的后面场次（表演赛）数量，默认为0。\nisincludefail?：是否计算失败场次？计算为1，不计算为0，默认1。"),//参数_无参数
+
+        //RATING_Parameter_RatingSystemWrong("阿叭叭叭叭叭\nratingsystem：斗力系统。可选：木斗力:m，光斗力:g。不输入默认为木斗力。记得带冒号。"),//参数_评分系统错误
         RATING_Parameter_MatchIDNotFound("小沐找不到这场比赛哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_MRA模式_比赛未找到
         RATING_Parameter_SeriesIDNotFound("小沐找不到这一系列比赛中的“{}”比赛哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_SRA模式_比赛未找到
-        RATING_Parameter_WarmupWrong("你要在未来热手吗？"),//参数_热手数量负数或者小数
+        RATING_Parameter_WarmupError("你要在未来热手吗？"),//参数_热手数量负数或者小数
+        RATING_Parameter_TieBreakerError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数
 
         RATING_Client_Calculating("正在全力计算中..."),//斗力_计算
-        RATING_Client_CalculatingFailed("一七得七，二七一十四，三八妇女节，五一劳动节...\n算不出来了..."),//斗力_计算失败
+        RATING_Client_CalculatingFailed("一七得七，二七一十四，三八妇女节，五一劳动节...\n算不出来了，请重试..."),//斗力_计算失败
 
         RATING_Warning_MatchNotFinished("探测到当前比赛尚未结束！\n"),//警告_比赛未结束
         RATING_Warning_MatchNotFinishedGuide("输入 !sudo ymra 强制忽略冲突并计算斗力！\n十分钟内有效"),//警告_比赛未结束指引

@@ -1,4 +1,4 @@
-package com.now.nowbot.throwable.serviceException;
+package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
 

@@ -5,7 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Panel.BphtPanelBuilder;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;

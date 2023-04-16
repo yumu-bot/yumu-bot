@@ -5,7 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;

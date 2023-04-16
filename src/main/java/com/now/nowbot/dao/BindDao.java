@@ -6,7 +6,7 @@ import com.now.nowbot.mapper.BindMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

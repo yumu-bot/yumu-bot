@@ -4,7 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.Contact;
@@ -43,7 +43,8 @@ public class BindService implements MessageService {
             }
             if (at != null) {
                 // 只有管理才有权力@人绑定,提示就不改了
-                from.sendMessage("请发送绑定用户名");
+                from.sendMessage("你叫啥名呀？告诉我吧");
+                // throw new BindException(BindException.Type.BIND_Client_BindingNoName);
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
@@ -52,36 +53,39 @@ public class BindService implements MessageService {
                     try {
                         id = osuGetService.getOsuId(Oname);
                     } catch (Exception e) {
-                        from.sendMessage("未找到osu用户"+Oname);
-                        return;
+                        throw new BindException(BindException.Type.BIND_Player_NotFound);
+                        // from.sendMessage("未找到osu用户"+Oname); return;
                     }
                     try {
                         var buser = bindDao.getUserLiteFromOsuid(id);
                         if (buser.getQq() == null) {
-                            from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + id + ")" + Oname);
+                            from.sendMessage("正在为" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
                             buser.setQq(at.getTarget());
                             bindDao.update(buser);
-                            from.sendMessage("绑定成功");
-                        }else {
-                            from.sendMessage(buser.getOsuName() + "已绑定在QQ " + at.getTarget() + " ,确定是否覆盖,回复'确定'生效");
+                            throw new BindException(BindException.Type.BIND_Me_Success);
+                            //from.sendMessage("绑定成功");
+                        } else {
+                            from.sendMessage(buser.getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
                             s = ASyncMessageUtil.getEvent(lock);
-                            if (s != null && s.getMessage().contentToString().startsWith("确定")) {
+                            if (s != null && s.getMessage().contentToString().startsWith("OK")) {
                                 buser.setQq(at.getTarget());
                                 bindDao.update(buser);
-                                from.sendMessage("绑定成功");
-                            }else {
-                                from.sendMessage("已取消");
+                                throw new BindException(BindException.Type.BIND_Me_Success);
+                                //from.sendMessage("绑定成功");
+                            } else {
+                                throw new BindException(BindException.Type.BIND_Client_BindingRefused);
+                                //from.sendMessage("已取消");
                             }
                         }
                     } catch (BindException e) {
-                        from.sendMessage("正在为" + at.getTarget() + "绑定 >>(" + id + ")" + Oname);
+                        from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
                         bindDao.saveUser(at.getTarget(), Oname, id);
-                        from.sendMessage("绑定成功");
+                        throw new BindException(BindException.Type.BIND_Me_Success);
                     }
-                    return;
+                    //return;
                 } else {
-                    from.sendMessage("超时或错误,结束接受");
-                    return;
+                    throw new BindException(BindException.Type.BIND_Client_BindingOvertime);
+                    //from.sendMessage("超时或错误,结束接受"); return;
                 }
             }
         }else if (matcher.group("un") != null){
@@ -94,8 +98,8 @@ public class BindService implements MessageService {
             try {
                  d = osuGetService.getOsuId(name);
             } catch (Exception e) {
-                from.sendMessage("未找到osu用户"+name);
-                return;
+                throw new BindException(BindException.Type.BIND_Player_NotFound);
+                //from.sendMessage("未找到osu用户"+name); return;
             }
             BinUser nuser = null;
             try {
@@ -108,10 +112,10 @@ public class BindService implements MessageService {
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
-                from.sendMessage(name + " 已绑定 ( " + buser.getQq() + " )，若绑定错误，请联系管理员");
+                from.sendMessage(name + " 已绑定 ( " + buser.getQq() + " )，若绑定错误，请联系我的主人！");
             } catch (BindException e) {
                 bindDao.saveUser(event.getSender().getId(), name, d);
-                from.sendMessage("正在绑定: " + event.getSender().getId() + " >>( " + d + " )" + name);
+                from.sendMessage("正在将 " + event.getSender().getId() + " 绑定到 ( " + d + " ) 上" + name);
             }
             return;
         }
@@ -123,10 +127,10 @@ public class BindService implements MessageService {
             try {
                 user = bindDao.getUser(event.getSender().getId());
             } catch (BindException e) {
-                //<<<<<<<< 没有这个人
+                throw new BindException(BindException.Type.BIND_Player_NotFound); //<<<<<<<< 没有这个人
             }
             if (user != null && user.getAccessToken() != null){
-                from.sendMessage("您已绑定("+user.getOsuID()+")"+user.getOsuName()+",确认是否重新绑定,回复'ok'");
+                from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。是否重新绑定？回复 OK 确认");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
                 if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
