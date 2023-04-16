@@ -231,8 +231,7 @@ public class PPmService implements MessageService {
 
         var panel = new PPMVSPanelBuilder()
                 .drawBanner(PanelUtil.getBanner(null))
-                .drawOverImage()
-                .drawValueName();
+                .drawOverImage();
         //左侧 名称+数据
         ppmMe.drawValueName(panel::drawLeftNameN);
         ppmMe.drawValue(panel::drawLeftValueN);
