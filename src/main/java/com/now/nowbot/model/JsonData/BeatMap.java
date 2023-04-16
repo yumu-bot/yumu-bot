@@ -44,6 +44,8 @@ public class BeatMap {
     String updatedTime;
     Integer passcount;
     Integer playcount;
+
+    Integer ranked;
     String url;
     @JsonProperty("checksum")
     String md5;
