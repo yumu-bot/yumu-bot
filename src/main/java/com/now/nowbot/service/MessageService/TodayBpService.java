@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
@@ -21,6 +22,8 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
 
@@ -52,6 +55,11 @@ public class TodayBpService implements MessageService{
         var mode = OsuMode.getMode(matcher.group("mode"));
 
         var bpList = osuGetService.getBestPerformance(user, mode, 0,100);
+
+        if (bpList == null) {
+            throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP); //咋丢
+        }
+
         var lines = new ArrayList<Image>();
 
         // 时间计算
@@ -70,8 +78,13 @@ public class TodayBpService implements MessageService{
         }
         //没有的话
         if (lines.size() < 1){
-            from.sendMessage("多打打");
-            return;//此处结束
+            if (matcher.group("day") == null || Objects.equals(matcher.group("day"), "1")) {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H);
+            } else {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod);
+            }
+            //from.sendMessage("多打打");
+            //return;//此处结束
         }
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(user, mode);
@@ -79,7 +92,12 @@ public class TodayBpService implements MessageService{
 
         var panel = new TBPPanelBuilder(lines.size());
         panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
-        QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT?user.getMode():mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
+        try {
+            QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT ? user.getMode() : mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
+        } catch (Exception e) {
+            throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
+        }
+
     }
 
     int randomColor(){
