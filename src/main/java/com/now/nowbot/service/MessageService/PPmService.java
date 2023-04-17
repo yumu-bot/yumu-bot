@@ -92,7 +92,7 @@ public class PPmService implements MessageService {
             }
         }
         //生成panel名
-        String panelName = "PPM:" + switch (mode) {
+        String panelName = "PPM " + switch (mode) {
             case OSU -> "O";
             case MANIA -> "M";
             case CATCH -> "C";
@@ -162,7 +162,7 @@ public class PPmService implements MessageService {
             }
         }
         //生成panel名
-        String panelName = "VS: " + switch (userMe.getPlayMode()) {
+        String panelName = "VS " + switch (mode) {
             case OSU -> "O";
             case MANIA -> "M";
             case CATCH -> "C";
