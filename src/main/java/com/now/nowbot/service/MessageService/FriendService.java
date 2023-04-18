@@ -71,7 +71,7 @@ public class FriendService implements MessageService{
         }
 
         //拿到参数,默认1-24个
-        int n1 = 1,n2=1;
+        int n1 = 0,n2=0;
         boolean doRandom = true;
         if (matcher.group("m") == null){
             n2 = matcher.group("n") == null? 23 : Integer.parseInt(matcher.group("n"));
