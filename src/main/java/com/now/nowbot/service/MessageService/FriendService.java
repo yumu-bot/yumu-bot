@@ -74,7 +74,7 @@ public class FriendService implements MessageService{
         int n1 = 0,n2=0;
         boolean doRandom = true;
         if (matcher.group("m") == null){
-            n2 = matcher.group("n") == null? 23 : Integer.parseInt(matcher.group("n"));
+            n2 = matcher.group("n") == null? 24 : Integer.parseInt(matcher.group("n"));
         }else {
             doRandom = false;
             n1 = Integer.parseInt(matcher.group("n"));
