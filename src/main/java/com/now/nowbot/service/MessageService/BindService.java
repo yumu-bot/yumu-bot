@@ -59,7 +59,7 @@ public class BindService implements MessageService {
                     try {
                         var buser = bindDao.getUserLiteFromOsuid(id);
                         if (buser.getQq() == null) {
-                            from.sendMessage("正在为" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
+                            from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
                             buser.setQq(at.getTarget());
                             bindDao.update(buser);
                             throw new BindException(BindException.Type.BIND_Me_Success);
@@ -112,10 +112,10 @@ public class BindService implements MessageService {
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
-                from.sendMessage(name + " 已绑定 ( " + buser.getQq() + " )，若绑定错误，请联系我的主人！");
+                from.sendMessage(name + " 已绑定 (" + buser.getQq() + ")，若绑定错误，请尝试重新绑定！");
             } catch (BindException e) {
                 bindDao.saveUser(event.getSender().getId(), name, d);
-                from.sendMessage("正在将 " + event.getSender().getId() + " 绑定到 ( " + d + " ) 上" + name);
+                from.sendMessage("正在将 " + event.getSender().getId() + " 绑定到 (" + d + ") " + name + " 上");
             }
             return;
         }
