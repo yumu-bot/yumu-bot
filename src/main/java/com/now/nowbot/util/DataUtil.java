@@ -260,12 +260,4 @@ public class DataUtil {
         System.out.println(OD(7, Mod.DoubleTime.value));
         System.out.println(OD(7, Mod.add(Mod.HardRock.value, Mod.DoubleTime)));
     }
-
-//    public static void main(String[] args) throws IOException {
-//        NowbotConfig.FONT_PATH = "/home/spring/cache/nowbot/font/";
-//        IocAllReadyRunner.initFountWidth();
-//        var data = DataUtil.getObject("/home/spring/data.json", OsuUser.class);
-//        var j1 = new J1CardBuilder(data, new ArrayList<>(0));
-//        Files.write(Path.of("/home/spring/p1.png"), j1.build().encodeToData().getBytes());
-//    }
 }

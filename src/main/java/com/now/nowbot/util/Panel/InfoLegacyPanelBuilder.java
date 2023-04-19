@@ -9,20 +9,20 @@ import org.jetbrains.skija.Paint;
 import java.io.IOException;
 import java.util.List;
 
-public class InfoPanelBuilder extends PanelBuilder{
+public class InfoLegacyPanelBuilder extends PanelBuilder{
     private static final Paint c2 = new Paint().setARGB(255,42,34,38);
 
-    public InfoPanelBuilder () {
+    public InfoLegacyPanelBuilder() {
         super(1920, 1080);
         canvas.clear(Color.makeRGB(42,34,38));
     }
 
-    public InfoPanelBuilder drawBanner(Image banner){
+    public InfoLegacyPanelBuilder drawBanner(Image banner){
         drawImage(banner);
         return this;
     }
 
-    public InfoPanelBuilder mainCard(Image image){
+    public InfoLegacyPanelBuilder mainCard(Image image){
         canvas.drawImage(image, 40, 40);
         return this;
     }
@@ -47,6 +47,6 @@ public class InfoPanelBuilder extends PanelBuilder{
             canvas.drawImage(j5, 510, 705);
             canvas.drawImage(j6, 1450, 705);
         }
-        return super.build(20, "InfoPanel v3.2 Enhanced");
+        return super.build(20, "v0.2.0 Debug // Info (!testinfo) (v3.2 Enhanced)");
     }
 }

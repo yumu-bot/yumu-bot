@@ -52,13 +52,13 @@ public class TBPPanelBuilder extends PanelBuilder{
     public Image build(OsuMode mode) {
         String modeStr;
         switch (mode){
-            case OSU : modeStr = ":O";
-            case TAIKO : modeStr =  ":T";
-            case CATCH : modeStr =  ":C";
-            case MANIA : modeStr =  ":M";
-            default : modeStr =  "";
+            case OSU -> modeStr = ":O";
+            case TAIKO -> modeStr = ":T";
+            case CATCH -> modeStr = ":C";
+            case MANIA -> modeStr = ":M";
+            default -> modeStr =  "";
         }
         drawName("TBP"+modeStr);
-        return super.build(20, "Today BP Panel v3.5");
+        return super.build(20, "v0.2.0 Debug // TodayBP (!tbp)");
     }
 }

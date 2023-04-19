@@ -76,7 +76,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
         Font fontS36 = new Font(face, 36);
         try (face; fontS48; fontS36; fontS24){
             for (int i = 0; i < 254; i++) {
-                J1CardBuilder.F48L.add(TextLine.make(String.valueOf((char) i), fontS48).getWidth());
                 HCardBuilder.F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
                 HCardBuilder.F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
             }
