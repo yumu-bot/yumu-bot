@@ -53,8 +53,9 @@ public class BindService implements MessageService {
                     try {
                         id = osuGetService.getOsuId(Oname);
                     } catch (Exception e) {
+
+                        from.sendMessage("debug 0 ");
                         throw new BindException(BindException.Type.BIND_Player_NotFound);
-                        // from.sendMessage("未找到osu用户"+Oname); return;
                     }
                     try {
                         var buser = bindDao.getUserLiteFromOsuid(id);
@@ -98,6 +99,7 @@ public class BindService implements MessageService {
             try {
                  d = osuGetService.getOsuId(name);
             } catch (Exception e) {
+                from.sendMessage("debug 1 ");
                 throw new BindException(BindException.Type.BIND_Player_NotFound);
                 //from.sendMessage("未找到osu用户"+name); return;
             }
@@ -127,6 +129,7 @@ public class BindService implements MessageService {
             try {
                 user = bindDao.getUser(event.getSender().getId());
             } catch (BindException e) {
+                from.sendMessage("debug 2");
                 throw new BindException(BindException.Type.BIND_Player_NotFound); //<<<<<<<< 没有这个人
             }
             if (user != null && user.getAccessToken() != null){
