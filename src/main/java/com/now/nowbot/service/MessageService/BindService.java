@@ -54,6 +54,7 @@ public class BindService implements MessageService {
                         id = osuGetService.getOsuId(Oname);
                     } catch (Exception e) {
                         throw new BindException(BindException.Type.BIND_Player_NotFound);
+                        // from.sendMessage("未找到osu用户"+Oname); return;
                     }
                     try {
                         var buser = bindDao.getUserLiteFromOsuid(id);
