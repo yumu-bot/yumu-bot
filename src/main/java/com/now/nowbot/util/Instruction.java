@@ -31,7 +31,7 @@ public enum Instruction {
             Pattern.compile("^[!！](?i)ymping")),
 
     BIND(BindService.class,
-            Pattern.compile("^[!！](?i)((ym)?((bind)|bi)+|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！](?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BAN(BanService.class,
             Pattern.compile("[!！]\\s*(?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
@@ -57,7 +57,7 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))")),
+            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！](?i)tbp(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
@@ -172,9 +172,10 @@ public enum Instruction {
     }
 
     public static void main(String[] args) {
-        var p = Pattern.compile("^[!！](?i)((ymbi)|(bi)|(ym(?<un>un)?bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
-        var m = p.matcher("!bi   ffff");
+        var p = Instruction.BIND.regex;
+        var m = p.matcher("!bi  xx");
         if (m.matches()) {
+            System.out.println("ok************");
             System.out.println(m.group("un"));
             System.out.println(m.group("name"));
             return;
