@@ -31,8 +31,8 @@ public class PPPlusPanelBuilder extends PPPanelBuilder{
         drawLeftNameN(3, "Sta",null, p);
         drawLeftNameN(4, "Spd",null, p);
         drawLeftNameN(5, "Pre",null, p);
-        drawLeftTotleName("Total");
-        drawRightTotleName("PP");
+        drawLeftTitleName("Total");
+        drawRightTitleName("PP");
         return this;
     }
     /***

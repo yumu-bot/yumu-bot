@@ -352,13 +352,13 @@ public class PpmMania extends Ppm {
     }
 
     @Override
-    public void drawTotleName(Function<String, PanelBuilder> left, Function<String, PanelBuilder> right) {
+    public void drawTitleName(Function<String, PanelBuilder> left, Function<String, PanelBuilder> right) {
         left.apply("Overall");
         right.apply("Sanity");
     }
 
     @Override
-    public void drawTotleValue(Func2<String, String, PanelBuilder> left, Func2<String, String, PanelBuilder> right) {
+    public void drawTitleValue(Func2<String, String, PanelBuilder> left, Func2<String, String, PanelBuilder> right) {
         left.call(String.valueOf((int) value7), PanelUtil.cutDecimalPoint(value7));
         right.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
     }
