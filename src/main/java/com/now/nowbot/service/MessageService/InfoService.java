@@ -99,7 +99,7 @@ public class InfoService implements MessageService {
                     "bp-time",bpNum,
                     "bp-list", bps.subList(0,Math.min(bps.size(), 8)),
                     "re-list", res,
-                    "pp-bonus", bonus,
+                    "bonus_pp", bonus,
                     "mode", mod.getName()
                 );
         HttpEntity httpEntity = new HttpEntity(body, headers);

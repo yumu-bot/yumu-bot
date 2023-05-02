@@ -105,6 +105,6 @@ public class PPMVSPanelBuilder extends PPPanelBuilder{
 
     @Override
     public Image build() {
-        return super.build("PPMinus Panel v3.0");
+        return super.build("v0.2.0 Debug // PPMVS (!ppmvs xxx)");
     }
 }
