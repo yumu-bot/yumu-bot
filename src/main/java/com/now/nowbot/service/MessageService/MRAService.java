@@ -1,30 +1,44 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.MatchRatingPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-@Service("rating")
-public class RatingService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(RatingService.class);
+@Service("MRA")
+public class MRAService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger(MRAService.class);
+    @Autowired
+    RestTemplate template;
+
+    @Autowired
+    OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
 
-    @Autowired
-    OsuGetService osuGetService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -32,7 +46,7 @@ public class RatingService implements MessageService {
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
-
+        var from = event.getSubject();
 
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
@@ -75,6 +89,7 @@ public class RatingService implements MessageService {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+//
 //        //输出完整用户数据
 //        for(var user:sortedUsers){
 //            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
@@ -89,9 +104,10 @@ public class RatingService implements MessageService {
 ////                        .append(user.getRRAs().get(i)).append("\n");
 ////            }
 //        }
-
-
 //        event.getSubject().sendMessage(sb.toString());
+
+        //第二版图像渲染
+
         if (data.isTeamVs()) {
             var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
             var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
@@ -103,6 +119,35 @@ public class RatingService implements MessageService {
         }
     }
 
+/*
+        //第三版图像渲染
+
+        try {
+            var img = postImage(finalUsers, match.getMatchInfo());
+            QQMsgUtil.sendImage(from, img);
+        } catch (Exception e) {
+            log.error("MRA 数据请求失败", e);
+            from.sendMessage("MRA 渲染图片超时，请重试。");
+        }
+    }
+
+    public byte[] postImage(List<UserMatchData> userMatchDataList, MatchInfo matchInfo) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+        var body = Map.of(
+                "userMatchDataList", userMatchDataList,
+                "matchInfo", matchInfo
+        );
+
+        HttpEntity httpEntity = new HttpEntity(body, headers);
+        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_C"), HttpMethod.POST, httpEntity, byte[].class);
+        return s.getBody();
+    }
+*/
+    //主计算方法
     public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
