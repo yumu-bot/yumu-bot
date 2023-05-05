@@ -96,8 +96,11 @@ public enum Instruction {
 
     // #5 osu! 比赛指令
 
-    MURATING(MRAService.class,
+    MRALEGACY(MRALegacyService.class,
             Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+
+    MURATING(MRAService.class,
+            Pattern.compile("^[!！](rav3|ymrav3|ymratingv3)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     URA(URAService.class,
             Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),

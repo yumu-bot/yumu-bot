@@ -168,7 +168,7 @@ public class URAService implements MessageService {
                 .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
                 .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
-                .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList())
+                .peek(r -> r.setIndex(tpIndex.getAndIncrement())).collect(Collectors.toList())
         ;
 
         var teamPoint = matchStatistics.getTeamPoint();

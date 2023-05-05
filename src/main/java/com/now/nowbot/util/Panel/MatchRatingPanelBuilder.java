@@ -70,10 +70,10 @@ public class MatchRatingPanelBuilder extends PanelBuilder{
         for (int i = 0; i < r.size(); i++) {
             canvas.translate(0,150);
             Image usetImg;
-            if (r.get(i).getIndx() == 1) {
-                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndx()).drawUserRatingMVP().build();
+            if (r.get(i).getIndex() == 1) {
+                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndex()).drawUserRatingMVP().build();
             } else {
-                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndx()).build();
+                usetImg = new H2CardBuilder(r.get(i), r.get(i).getIndex()).build();
             }
             canvas.drawImage(usetImg, 0, 0);
         }

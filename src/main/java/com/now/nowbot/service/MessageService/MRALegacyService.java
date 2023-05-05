@@ -3,6 +3,8 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.Panel.MatchRatingPanelBuilder;
+import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
@@ -18,9 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-@Service("MRA")
-public class MRAService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(MRAService.class);
+@Service("MRALegacy")
+public class MRALegacyService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger(MRALegacyService.class);
     @Autowired
     RestTemplate template;
 
@@ -99,7 +101,7 @@ public class MRAService implements MessageService {
 //        }
 //        event.getSubject().sendMessage(sb.toString());
 
-/*
+
         //第二版图像渲染
 
         if (data.isTeamVs()) {
@@ -112,34 +114,27 @@ public class MRAService implements MessageService {
             QQMsgUtil.sendImage(event.getSubject(), img);
         }
     }
+    /*
 
-*/
         //第三版图像渲染
-        var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
-        var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
-        var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).collect(Collectors.toList());
 
         try {
-            var img = postImage(redList, blueList, noneList, match.getMatchInfo());
+            var img = postImage(finalUsers, match.getMatchInfo());
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
             from.sendMessage("MRA 渲染图片超时，请重试。");
         }
     }
-
-    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo) {
-
-
+*/
+    public byte[] postImage(List<UserMatchData> userMatchDataList, MatchInfo matchInfo) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
         var body = Map.of(
-                "redUsers", red,
-                "blueUsers", blue,
-                "noneUsers", none,
+                "userMatchDataList", userMatchDataList,
                 "matchInfo", matchInfo
         );
 
