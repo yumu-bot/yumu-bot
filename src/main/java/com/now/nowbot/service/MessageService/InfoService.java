@@ -74,8 +74,8 @@ public class InfoService implements MessageService {
         var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
         var res = osuGetService.getRecentN(user, mode, 0, 3);
 
-        float bonus = 0;
-        if (bps.size() <= 100) {
+        float bonus = 0f;
+        if (bps.size() > 0) {
             var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
             bonus = SkiaUtil.getBonusPP(bppps, userInfo.getPlayCount());
             //我不是吧方法抽到util里了吗

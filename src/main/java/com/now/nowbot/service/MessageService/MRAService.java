@@ -120,7 +120,7 @@ public class MRAService implements MessageService {
         var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).collect(Collectors.toList());
 
         try {
-            var img = postImage(redList, blueList, noneList, match.getMatchInfo());
+            var img = postImage(redList, blueList, noneList, match);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
@@ -128,9 +128,7 @@ public class MRAService implements MessageService {
         }
     }
 
-    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo) {
-
-
+    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, Match match) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -140,7 +138,7 @@ public class MRAService implements MessageService {
                 "redUsers", red,
                 "blueUsers", blue,
                 "noneUsers", none,
-                "matchInfo", matchInfo
+                "matchData", match
         );
 
         HttpEntity httpEntity = new HttpEntity(body, headers);
