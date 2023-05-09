@@ -34,7 +34,7 @@ public class InfoLegacyPanelBuilder extends PanelBuilder{
         var j1 = new J1CardBuilder(user, bps).build();
         var j2 = new J2CardBuilder(user).build();
         var j3 = new J3CardBuilder(user).build();
-        //var j4 = new J4CardBuilder(user).build();
+        var j4 = new J4CardBuilder(user).build();
         var j5 = new J5CardBuilder(user).build();
         var j6 = new J6CardBuilder(bps).build();
 
