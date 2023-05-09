@@ -34,7 +34,7 @@ public class InfoLegacyPanelBuilder extends PanelBuilder{
         var j1 = new J1CardBuilder(user, bps).build();
         var j2 = new J2CardBuilder(user).build();
         var j3 = new J3CardBuilder(user).build();
-        var j4 = new J4CardBuilder(user).build();
+        //var j4 = new J4CardBuilder(user).build();
         var j5 = new J5CardBuilder(user).build();
         var j6 = new J6CardBuilder(bps).build();
 
@@ -43,7 +43,7 @@ public class InfoLegacyPanelBuilder extends PanelBuilder{
             canvas.drawImage(j1, 40, 330);
             canvas.drawImage(j2, 510, 330);
             canvas.drawImage(j3, 1450, 330);
-            canvas.drawImage(j4, 40, 705);
+            //canvas.drawImage(j4, 40, 705);
             canvas.drawImage(j5, 510, 705);
             canvas.drawImage(j6, 1450, 705);
         }
