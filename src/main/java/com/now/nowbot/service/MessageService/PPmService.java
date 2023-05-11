@@ -92,12 +92,12 @@ public class PPmService implements MessageService {
             }
         }
         //生成panel名
-        String panelName = "PPM " + switch (mode) {
-            case OSU -> "O";
-            case MANIA -> "M";
-            case CATCH -> "C";
-            case TAIKO -> "T";
-            default -> "?";
+        String panelName = "PPM" + switch (mode) {
+            case OSU -> ":O";
+            case MANIA -> ":M";
+            case CATCH -> ":C";
+            case TAIKO -> ":T";
+            default -> ":?";
         };
 
         //绘制卡片A
@@ -120,8 +120,8 @@ public class PPmService implements MessageService {
         //左侧 rank
         ppm.drawRank(ppmPanel::switchRank);
 
-        ppm.drawTotleName(ppmPanel::drawLeftTotleName, ppmPanel::drawRightTotleName);
-        ppm.drawTotleValue(ppmPanel::drawLeftTotal, ppmPanel::drawRightTotal);
+        ppm.drawTitleName(ppmPanel::drawLeftTitleName, ppmPanel::drawRightTitleName);
+        ppm.drawTitleValue(ppmPanel::drawLeftTotal, ppmPanel::drawRightTotal);
 
         ppmPanel.drawLeftCard(card.build());
         ppmPanel.drawPanelName(panelName);
@@ -162,12 +162,12 @@ public class PPmService implements MessageService {
             }
         }
         //生成panel名
-        String panelName = "VS " + switch (mode) {
-            case OSU -> "O";
-            case MANIA -> "M";
-            case CATCH -> "C";
-            case TAIKO -> "T";
-            default -> "?";
+        String panelName = "VS" + switch (mode) {
+            case OSU -> ":O";
+            case MANIA -> ":M";
+            case CATCH -> ":C";
+            case TAIKO -> ":T";
+            default -> ":?";
         };
         if (at != null) {//被对比人的信息
             // 包含有@
@@ -236,12 +236,14 @@ public class PPmService implements MessageService {
         ppmMe.drawValueName(panel::drawLeftNameN);
         ppmMe.drawValue(panel::drawLeftValueN);
         ppmMe.drawRank(panel::switchLeftRank);
-        ppmMe.drawTotleValue(panel::drawLeftTotal, (a,b)-> null);
+        ppmMe.drawTitleValue(panel::drawLeftTotal, (a, b)-> null);
+        ppmMe.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
 
         ppmOther.drawValueName(panel::drawRightNameN);
         ppmOther.drawValue(panel::drawRightValueN);
         ppmOther.drawRank(panel::switchRightRank);
-        ppmOther.drawTotleValue(panel::drawRightTotal, (a,b)-> null);
+        ppmOther.drawTitleValue(panel::drawRightTotal, (a, b)-> null);
+        ppmOther.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
         panel.drawLeftCard(cardMe.build());
         panel.drawRightCard(cardOther.build());
         panel.drawHexagon(HexOther,false);

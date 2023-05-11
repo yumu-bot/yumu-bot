@@ -36,8 +36,8 @@ public class PPMPanelBuilder extends PPPanelBuilder {
         drawLeftNameN(3, "STB",null, p);
         drawLeftNameN(4, "ENG",null, p);
         drawLeftNameN(5, "STH",null, p);
-        drawLeftTotleName("Overall");
-        drawRightTotleName("Sanity");
+        drawLeftTitleName("Overall");
+        drawRightTitleName("Sanity");
         return this;
     }
     public PPMPanelBuilder switchRank(int i, double date){

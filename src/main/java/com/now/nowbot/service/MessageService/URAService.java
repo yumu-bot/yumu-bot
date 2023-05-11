@@ -2,29 +2,29 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.Panel.MatchRatingPanelBuilder;
-import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-@Service("rating")
-public class RatingService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(RatingService.class);
-
-    public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
-    }
+@Service("URA")
+public class URAService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger(URAService.class);
+    @Autowired
+    RestTemplate template;
 
     @Autowired
     OsuGetService osuGetService;
+
+    public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -32,7 +32,7 @@ public class RatingService implements MessageService {
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
-
+        var from = event.getSubject();
 
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
@@ -60,47 +60,7 @@ public class RatingService implements MessageService {
 
         }
 
-
-//        //色彩debug
-//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
-//        var c = s.getCanvas();
-//        finalUsers.forEach(
-//                userMatchData -> {
-//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
-//                    c.translate(0,50);
-//                }
-//        );
-//        try {
-//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        //输出完整用户数据
-//        for(var user:sortedUsers){
-//            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
-//                    .append("TMG: ").append(user.getTMG()).append("\n")
-//                    .append("AMG: ").append(user.getAMG()).append("\n")
-//                    .append("ERA: ").append(user.getERA()).append("\n")
-//                    .append("DRA: ").append(user.getDRA()).append("\n");
-//            //输出完整的分数信息
-////                    .append("Scores And RRAs: ").append("\n");
-////            for(int i=0;i<user.getScores().size();i++){
-////                sb.append(user.getScores().get(i)).append(" ")
-////                        .append(user.getRRAs().get(i)).append("\n");
-////            }
-//        }
-
-
-//        event.getSubject().sendMessage(sb.toString());
-        if (data.isTeamVs()) {
-            var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
-            var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
-            var img = new MatchRatingPanelBuilder(bl.size(), rl.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(rl, bl).build();
-            QQMsgUtil.sendImage(event.getSubject(), img);
-        } else {
-            var img = new MatchRatingPanelBuilder(finalUsers.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(finalUsers).build();
-            QQMsgUtil.sendImage(event.getSubject(), img);
-        }
+        event.getSubject().sendMessage(sb.toString());
     }
 
     public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, OsuGetService osuGetService) {
@@ -187,12 +147,6 @@ public class RatingService implements MessageService {
         matchStatistics.setScoreNum(scoreNum);
 
         //剔除没参赛的用户
-//        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
-//        while (it.hasNext()) {
-//            var user = it.next().getValue();
-//            if (user.getRRAs().size() == 0)
-//                it.remove();
-//        } //22-04-15 尝试缩短代码
         users.values().removeIf(user -> user.getRRAs().size() == 0);
 
         //计算步骤封装
@@ -214,8 +168,8 @@ public class RatingService implements MessageService {
                 .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
                 .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
-                .peek(r -> r.setIndx(tpIndex.getAndIncrement())).collect(Collectors.toList())
-;
+                .peek(r -> r.setIndex(tpIndex.getAndIncrement())).collect(Collectors.toList())
+        ;
 
         var teamPoint = matchStatistics.getTeamPoint();
 
@@ -223,4 +177,3 @@ public class RatingService implements MessageService {
         return new RatingData(matchStatistics.isTeamVs(), teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
     }
 }
-

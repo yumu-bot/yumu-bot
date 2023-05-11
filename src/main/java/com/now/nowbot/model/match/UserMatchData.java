@@ -46,7 +46,7 @@ public class UserMatchData {
     double DRA_index;
     double RWS_index;
 
-    int indx;
+    int index;
 
     public void calculateAMG() {
         TMG = 0d;
@@ -235,12 +235,12 @@ public class UserMatchData {
         this.userData = userData;
     }
 
-    public int getIndx() {
-        return indx;
+    public int getIndex() {
+        return index;
     }
 
-    public void setIndx(int indx) {
-        this.indx = indx;
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public List<Double> getRWSs() {

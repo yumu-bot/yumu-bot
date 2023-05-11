@@ -69,10 +69,10 @@ public enum Instruction {
 
     // i ymi yminfo :0-3 name
     INFO(InfoService.class,
-            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!nfo)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!nfo)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     UUI(UUIService.class,
-            Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
             Pattern.compile("^[!！]\\s*(?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
@@ -96,8 +96,14 @@ public enum Instruction {
 
     // #5 osu! 比赛指令
 
-    RATING(RatingService.class,
-            Pattern.compile("^[!！]ymra\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+    MRALEGACY(MRALegacyService.class,
+            Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+
+    MURATING(MRAService.class,
+            Pattern.compile("^[!！](rav3|ymrav3|ymratingv3)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+
+    URA(URAService.class,
+            Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]map")),

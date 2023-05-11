@@ -276,7 +276,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param name
      * @return
      */
-    public PPPanelBuilder drawLeftTotleName(String name) {
+    public PPPanelBuilder drawLeftTitleName(String name) {
         drawCenterText(name,null, X_L4,860, new Paint().setARGB(255,161,161,161));
         return this;
     }
@@ -287,7 +287,7 @@ public class PPPanelBuilder extends PanelBuilder {
      * @param name
      * @return
      */
-    public PPPanelBuilder drawRightTotleName(String name) {
+    public PPPanelBuilder drawRightTitleName(String name) {
         drawCenterText(name,null, X_R4,860, new Paint().setARGB(255,161,161,161));
         return this;
     }

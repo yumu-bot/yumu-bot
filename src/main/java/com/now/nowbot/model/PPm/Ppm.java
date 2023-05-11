@@ -168,6 +168,6 @@ public abstract class Ppm {
      * @param doAct
      */
     public abstract void drawRank(Func2<Integer, Double, PanelBuilder> doAct);
-    public abstract void drawTotleName(Function<String , PanelBuilder> left, Function<String , PanelBuilder> right);
-    public abstract void drawTotleValue(Func2<String , String, PanelBuilder> left, Func2<String, String , PanelBuilder> right);
+    public abstract void drawTitleName(Function<String , PanelBuilder> left, Function<String , PanelBuilder> right);
+    public abstract void drawTitleValue(Func2<String , String, PanelBuilder> left, Func2<String, String , PanelBuilder> right);
 }

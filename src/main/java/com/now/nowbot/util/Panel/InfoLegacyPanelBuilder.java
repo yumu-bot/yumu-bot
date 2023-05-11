@@ -43,7 +43,7 @@ public class InfoLegacyPanelBuilder extends PanelBuilder{
             canvas.drawImage(j1, 40, 330);
             canvas.drawImage(j2, 510, 330);
             canvas.drawImage(j3, 1450, 330);
-            canvas.drawImage(j4, 40, 705);
+            //canvas.drawImage(j4, 40, 705);
             canvas.drawImage(j5, 510, 705);
             canvas.drawImage(j6, 1450, 705);
         }

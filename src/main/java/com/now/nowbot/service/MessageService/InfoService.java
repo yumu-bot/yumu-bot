@@ -63,19 +63,19 @@ public class InfoService implements MessageService {
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("INFO 数据请求失败", e);
-            from.sendMessage("请求超时。请等会重试。");
+            from.sendMessage("Info 渲染图片超时，请重试。");
         }
     }
 
     //getText 移到了 UUIService
 
-    public byte[] postImage(BinUser user, OsuMode mod) {
-        var userInfo = osuGetService.getPlayerInfo(user, mod);
-        var bps = osuGetService.getBestPerformance(user, mod, 0, 100);
-        var res = osuGetService.getRecentN(user, mod, 0, 3);
+    public byte[] postImage(BinUser user, OsuMode mode) {
+        var userInfo = osuGetService.getPlayerInfo(user, mode);
+        var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
+        var res = osuGetService.getRecentN(user, mode, 0, 3);
 
-        float bonus = 0;
-        if (bps.size() <= 100) {
+        float bonus = 0f;
+        if (bps.size() > 0) {
             var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
             bonus = SkiaUtil.getBonusPP(bppps, userInfo.getPlayCount());
             //我不是吧方法抽到util里了吗
@@ -99,8 +99,8 @@ public class InfoService implements MessageService {
                     "bp-time",bpNum,
                     "bp-list", bps.subList(0,Math.min(bps.size(), 8)),
                     "re-list", res,
-                    "pp-bonus", bonus,
-                    "mode", mod.getName()
+                    "bonus_pp", bonus,
+                    "mode", mode.getName()
                 );
         HttpEntity httpEntity = new HttpEntity(body, headers);
         ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, byte[].class);
