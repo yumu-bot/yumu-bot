@@ -102,7 +102,7 @@ public class InfoService implements MessageService {
                     "bonus_pp", bonus,
                     "mode", mode.getName()
                 );
-        HttpEntity httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, byte[].class);
         return s.getBody();
     }
