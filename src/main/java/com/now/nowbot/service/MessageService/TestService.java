@@ -50,7 +50,7 @@ public class TestService implements MessageService {
 
         if (msg.contentToString().startsWith("!testmd")){
             QQMsgUtil.sendImage(event.getSubject(), markdownService.getImage(removeFirstLine(msg.contentToString()),1080));
-        } else if (msg.contentToString().startsWith("!testmd-web")){
+        } else if (msg.contentToString().startsWith("!testwebmd")){
             var p = Pattern.compile("(?<url>(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])");
             var m = p.matcher(msg.contentToString());
             if (m.find()) {
