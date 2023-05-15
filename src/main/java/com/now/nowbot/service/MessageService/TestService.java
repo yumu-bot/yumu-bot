@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -31,6 +32,8 @@ public class TestService implements MessageService {
     QQMessageDao qqMessageDao;
     @Resource
     MarkdownService markdownService;
+    @Resource
+    RestTemplate restTemplate;
 
     private static Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
     @Autowired
@@ -47,6 +50,13 @@ public class TestService implements MessageService {
 
         if (msg.contentToString().startsWith("!testmd")){
             QQMsgUtil.sendImage(event.getSubject(), markdownService.getImage(removeFirstLine(msg.contentToString()),1080));
+        } else if (msg.contentToString().startsWith("!testmd-web")){
+            var p = Pattern.compile("(?<url>(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])");
+            var m = p.matcher(msg.contentToString());
+            if (m.find()) {
+                var s = restTemplate.getForObject(m.group("url"), String.class);
+                QQMsgUtil.sendImage(event.getSubject(), markdownService.getImage(removeFirstLine(s), 1080));
+            }
         } else if (msg.contentToString().startsWith("!testname")){
            var m = pattern.matcher(msg.contentToString());
            if (m.find()){
