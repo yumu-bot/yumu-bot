@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -120,15 +122,19 @@ public class MRAService implements MessageService {
         var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).collect(Collectors.toList());
 
         try {
-            var img = postImage(redList, blueList, noneList, match.getMatchInfo());
+            //拿到第一张图
+            var sid = match.getEvents().get(0).getGame().getBeatmap().getBeatmapsetId();
+
+            var img = postImage(redList, blueList, noneList, match.getMatchInfo(),sid);
             QQMsgUtil.sendImage(from, img);
+            Files.write(Path.of("/home/spring/mra.png"), img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
             from.sendMessage("MRA 渲染图片超时，请重试。");
         }
     }
 
-    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo) {
+    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -138,7 +144,8 @@ public class MRAService implements MessageService {
                 "redUsers", red,
                 "blueUsers", blue,
                 "noneUsers", none,
-                "matchInfo", matchInfo
+                "matchInfo", matchInfo,
+                "sid", sid
         );
 
         HttpEntity httpEntity = new HttpEntity(body, headers);
