@@ -49,6 +49,7 @@ public class InfoService implements MessageService {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
+                user.setMode(OsuMode.DEFAULT);
             } else {
                 user = bindDao.getUser(event.getSender().getId());
             }

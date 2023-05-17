@@ -203,7 +203,12 @@ public class OsuGetService {
 
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
         if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID(), mode);
-        String url = this.URL + "me" + '/' + mode.getName();
+        String url ;
+        if (mode == OsuMode.DEFAULT){
+            url = this.URL + "me";
+        } else {
+            url = this.URL + "me" + '/' + mode.getName();
+        }
         HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
