@@ -237,18 +237,20 @@ public class PPmService implements MessageService {
         ppmMe.drawValue(panel::drawLeftValueN);
         ppmMe.drawRank(panel::switchLeftRank);
         ppmMe.drawTitleValue(panel::drawLeftTotal, (a, b)-> null);
-        ppmMe.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
+//        ppmMe.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
 
         ppmOther.drawValueName(panel::drawRightNameN);
         ppmOther.drawValue(panel::drawRightValueN);
         ppmOther.drawRank(panel::switchRightRank);
         ppmOther.drawTitleValue(panel::drawRightTotal, (a, b)-> null);
-        ppmOther.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
+//        ppmOther.drawTitleName(panel::drawLeftTitleName, panel::drawRightTitleName);
         panel.drawLeftCard(cardMe.build());
         panel.drawRightCard(cardOther.build());
         panel.drawHexagon(HexOther,false);
         panel.drawHexagon(HexMe,true);
         panel.drawPanelName(panelName);
+        panel.drawLeftTitleName("Overall.L");
+        panel.drawRightTitleName("Overall.R");
         try (uBgMe; uBgOther) {
             cardMe.build().close();
             cardOther.build().close();
