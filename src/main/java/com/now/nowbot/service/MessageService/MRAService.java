@@ -125,7 +125,7 @@ public class MRAService implements MessageService {
             //拿到第一张图
             var sid = match.getEvents().get(0).getGame().getBeatmap().getBeatmapsetId();
 
-            var img = postImage(redList, blueList, noneList, match.getMatchInfo(),sid);
+            var img = postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
             QQMsgUtil.sendImage(from, img);
             Files.write(Path.of("/home/spring/mra.png"), img);
         } catch (Exception e) {
@@ -134,7 +134,7 @@ public class MRAService implements MessageService {
         }
     }
 
-    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid) {
+    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -145,7 +145,10 @@ public class MRAService implements MessageService {
                 "blueUsers", blue,
                 "noneUsers", none,
                 "matchInfo", matchInfo,
-                "sid", sid
+                "sid", sid,
+                "redWins", redwins,
+                "blueWins", bluewins,
+                "isTeamVs", isTeamVs
         );
 
         HttpEntity httpEntity = new HttpEntity(body, headers);
