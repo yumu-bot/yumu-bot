@@ -24,7 +24,7 @@ public enum Instruction {
 
     // #0 调出帮助
     HELP(HelpService.class,
-            Pattern.compile("^[!！](?i)(ym)?((help)|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！](?i)(ym)?((help)|(h))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #1 BOT 内部指令
     PING(PingService.class,
@@ -97,10 +97,10 @@ public enum Instruction {
     // #5 osu! 比赛指令
 
     MRALEGACY(MRALegacyService.class,
-            Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！](rav2|ymrav2|ymratingv2)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING(MRAService.class,
-            Pattern.compile("^[!！](rav3|ymrav3|ymratingv3)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     URA(URAService.class,
             Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
