@@ -123,11 +123,16 @@ public class MRAService implements MessageService {
 
         try {
             //拿到第一张图
-            var sid = match.getEvents().get(0).getGame().getBeatmap().getBeatmapsetId();
+            int sid = 0;
+            for (var e : match.getEvents()){
+                if (e.getGame() != null) {
+                    sid = e.getGame().getId();
+                    break;
+                }
+            }
 
             var img = postImage(redList, blueList, noneList, match.getMatchInfo(),sid);
             QQMsgUtil.sendImage(from, img);
-            Files.write(Path.of("/home/spring/mra.png"), img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
             from.sendMessage("MRA 渲染图片超时，请重试。");
