@@ -13,18 +13,21 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class OsuUser {
-    Long id;
+public class OsuUser extends MicroUser {
     Double pp;
-    String username;
-    @JsonProperty("statistics")
-    Statistics statistics;
 
 
-    public record Country(String  countryCode, String  countryName){}
-    public record Kudosu(Integer total, Integer available){}
-    public record RankHistory(OsuMode mode, List<Integer> history){}
-    public record MonthlyPlayCount(String startDate, Integer count){}
+    public record Country(String countryCode, String countryName) {
+    }
+
+    public record Kudosu(Integer total, Integer available) {
+    }
+
+    public record RankHistory(OsuMode mode, List<Integer> history) {
+    }
+
+    public record MonthlyPlayCount(String startDate, Integer count) {
+    }
 
     @JsonProperty("playmode")
     String playMode;
@@ -37,18 +40,13 @@ public class OsuUser {
     Integer beatmapSetCountRanked;
     @JsonProperty("ranked_and_approved_beatmapset_count")
     Integer beatmapSetCountRankedAndApproved;
-    /** 这是什么我也不知道 */
+
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapSetCountPlaycounts;
     @JsonProperty("mapping_follower_count")
     Integer mappingFollowerCount;
     @JsonProperty("has_supported")
     Boolean hasSupported;
-    @JsonProperty("is_bot")
-    Boolean isBot;
-    @JsonProperty("pm_friends_only")
-    Boolean pmFriendsOnly;
-    Cover cover;
     @JsonProperty("profile_order")
     List<String> profileOrder;
     @JsonProperty("previous_usernames")
@@ -67,15 +65,11 @@ public class OsuUser {
     Integer followerCount;
     @JsonProperty("raw")
     String page;
-    @JsonProperty("avatar_url")
-    String avatarUrl;
-    @JsonProperty("cover_url")
-    String coverUrl;
     @JsonIgnoreProperties
     List<MonthlyPlayCount> monthlyPlaycounts;
 
     @JsonProperty("monthly_playcounts")
-    void setMonthlyPlayCount(List<HashMap<String, Object>> dataList){
+    void setMonthlyPlayCount(List<HashMap<String, Object>> dataList) {
         monthlyPlaycounts = new ArrayList<>(dataList.size());
         for (var d : dataList) {
             var mp = new MonthlyPlayCount((String) d.get("start_date"), (Integer) d.get("count"));
@@ -86,22 +80,27 @@ public class OsuUser {
 
     @JsonIgnore
     Country country;
+
     @JsonProperty("country")
-    void setCountry(Map<String,String> country){
+    void setCountry(Map<String, String> country) {
         if (country != null)
-            this.country = new Country(country.get("code"),country.get("name"));
+            this.country = new Country(country.get("code"), country.get("name"));
     }
+
     @JsonIgnore
     Kudosu kudosu;
+
     @JsonProperty("kudosu")
-    void setKudosu(Map<String,Integer> kudosu){
+    void setKudosu(Map<String, Integer> kudosu) {
         if (kudosu != null)
-            this.kudosu = new Kudosu(kudosu.get("total"),kudosu.get("available"));
+            this.kudosu = new Kudosu(kudosu.get("total"), kudosu.get("available"));
     }
+
     @JsonIgnore
     RankHistory rankHistory;
+
     @JsonProperty("rank_history")
-    void setRankHistory(Map<String,Object> map){
+    void setRankHistory(Map<String, Object> map) {
         if (map != null)
             this.rankHistory = new RankHistory(OsuMode.getMode((String) map.get("mode")), (List<Integer>) map.get("data"));
     }
@@ -115,7 +114,7 @@ public class OsuUser {
     }
 
     public Double getPP() {
-        if (pp == null && statistics != null){
+        if (pp == null && statistics != null) {
             return statistics.getPP();
         }
         return pp;
@@ -205,13 +204,6 @@ public class OsuUser {
         this.hasSupported = hasSupported;
     }
 
-    public Boolean isBot() {
-        return isBot;
-    }
-
-    public void setBot(Boolean bot) {
-        isBot = bot;
-    }
 
     public Boolean getPmFriendsOnly() {
         return pmFriendsOnly;
@@ -283,6 +275,7 @@ public class OsuUser {
 
     /**
      * 论坛发帖数
+     *
      * @param postCount 论坛发帖数
      */
     public void setPostCount(Integer postCount) {
@@ -322,27 +315,27 @@ public class OsuUser {
     }
 
     public String getUsername() {
-        return username;
+        return userName;
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.userName = username;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public Double getPp() {
+        return pp;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
+    public Boolean getHasSupported() {
+        return hasSupported;
     }
 
-    public String getCoverUrl() {
-        return coverUrl;
+    public List<MonthlyPlayCount> getMonthlyPlaycounts() {
+        return monthlyPlaycounts;
     }
 
-    public void setCoverUrl(String coverUrl) {
-        this.coverUrl = coverUrl;
+    public void setMonthlyPlaycounts(List<MonthlyPlayCount> monthlyPlaycounts) {
+        this.monthlyPlaycounts = monthlyPlaycounts;
     }
 
     public Double getAccuracy() {
@@ -420,6 +413,10 @@ public class OsuUser {
         return interests;
     }
 
+    public String getCoverUrl(){
+        return coverUrl;
+    }
+
     public void setInterests(String interests) {
         this.interests = interests;
     }
@@ -429,7 +426,7 @@ public class OsuUser {
         final StringBuilder sb = new StringBuilder("OsuUser{");
         sb.append("id=").append(id);
         sb.append(", pp=").append(pp);
-        sb.append(", username='").append(username).append('\'');
+        sb.append(", username='").append(userName).append('\'');
         sb.append(", statistics=").append(statistics);
         sb.append(", playMode='").append(playMode).append('\'');
         sb.append(", occupation='").append(occupation).append('\'');

@@ -124,12 +124,12 @@ public class FriendService implements MessageService{
                 var cardO = new ACardBuilder(PanelUtil.getBgUrl(null,infoO.getCover().url(),true));
                 cardO.drawA1(infoO.getAvatar())
                         .drawA2(PanelUtil.getFlag(infoO.getCountry().countryCode()))
-                        .drawA3(infoO.getName());
-                if (infoO.getSupporter()){
+                        .drawA3(infoO.getUserName());
+                if (infoO.getIsSupporter()){
                     cardO.drawA2(PanelUtil.OBJECT_CARD_SUPPORTER);
                 }
                 //对bot特殊处理
-                if(infoO.getBot()){
+                if(infoO.getIsBot()){
                     cardO.drawB1("U" + infoO.getId()).drawC1("Bot");
                 } else {
                     cardO.drawB2("#" + infoO.getStatustucs().getGlobalRank())

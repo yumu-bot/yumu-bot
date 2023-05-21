@@ -100,7 +100,7 @@ public class Ymp {
 
     public Ymp(Score date) {
         var user = date.getUser();
-        name = user.getName();
+        name = user.getUserName();
         mode = date.getMode().getName();
         country = user.getCountryCode();
         var modsdate = date.getMods();

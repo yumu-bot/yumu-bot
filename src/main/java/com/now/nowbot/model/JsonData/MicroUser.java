@@ -12,7 +12,10 @@ import java.util.Map;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
 public class MicroUser {
     @JsonProperty("avatar_url")
-    String avatar;
+    String avatarUrl;
+
+    @JsonProperty("cover_url")
+    String coverUrl;
     @JsonProperty("default_group")
     String group;
     Long id;
@@ -20,19 +23,19 @@ public class MicroUser {
     @JsonProperty("is_active")
     Boolean active;
     @JsonProperty("is_bot")
-    Boolean bot;
+    Boolean isBot;
     @JsonProperty("is_deleted")
-    Boolean deleted;
+    Boolean isDeleted;
     @JsonProperty("is_online")
-    Boolean online;
+    Boolean isOnline;
     @JsonProperty("is_supporter")
-    Boolean supporter;
+    Boolean isSupporter;
     @JsonProperty("last_visit")
     String lastTime;
     @JsonProperty("pm_friends_only")
-    Boolean pmOnly;
+    Boolean pmFriendsOnly;
     @JsonProperty("username")
-    String name;
+    String userName;
     @JsonIgnore
     String countryCode;
     @JsonIgnore
@@ -70,11 +73,14 @@ public class MicroUser {
     Statistics statistics;
 
     public String getAvatar() {
-        return avatar;
+        return avatarUrl;
+    }
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
     public void setAvatar(String avatar) {
-        this.avatar = avatar;
+        this.avatarUrl = avatar;
     }
 
     public String getGroup() {
@@ -101,36 +107,36 @@ public class MicroUser {
         this.active = active;
     }
 
-    public Boolean getBot() {
-        return bot;
+    public Boolean getIsBot() {
+        return isBot;
     }
 
-    public void setBot(Boolean bot) {
-        this.bot = bot;
+    public void setIsBot(Boolean isBot) {
+        this.isBot = isBot;
     }
 
-    public Boolean getDeleted() {
-        return deleted;
+    public Boolean getIsDeleted() {
+        return isDeleted;
     }
 
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
-    public Boolean getOnline() {
-        return online;
+    public Boolean getIsOnline() {
+        return isOnline;
     }
 
-    public void setOnline(Boolean online) {
-        this.online = online;
+    public void setIsOnline(Boolean isOnline) {
+        this.isOnline = isOnline;
     }
 
-    public Boolean getSupporter() {
-        return supporter;
+    public Boolean getIsSupporter() {
+        return isSupporter;
     }
 
-    public void setSupporter(Boolean supporter) {
-        this.supporter = supporter;
+    public void setIsSupporter(Boolean isSupporter) {
+        this.isSupporter = isSupporter;
     }
 
     public LocalDateTime getLastTime() {
@@ -143,11 +149,11 @@ public class MicroUser {
     }
 
     public Boolean getPmOnly() {
-        return pmOnly;
+        return pmFriendsOnly;
     }
 
-    public void setPmOnly(Boolean pmOnly) {
-        this.pmOnly = pmOnly;
+    public void setPmOnly(Boolean pmFriendsOnly) {
+        this.pmFriendsOnly = pmFriendsOnly;
     }
 
     public OsuUser.Country getCountry() {
@@ -166,12 +172,12 @@ public class MicroUser {
         this.statistics = statistics;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public Cover getCover() {
@@ -185,17 +191,17 @@ public class MicroUser {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("MicroUser{");
-        sb.append("avatar='").append(avatar).append('\'');
+        sb.append("avatar='").append(avatarUrl).append('\'');
         sb.append(", group='").append(group).append('\'');
         sb.append(", id=").append(id);
         sb.append(", active=").append(active);
-        sb.append(", bot=").append(bot);
-        sb.append(", deleted=").append(deleted);
-        sb.append(", online=").append(online);
-        sb.append(", supporter=").append(supporter);
+        sb.append(", bot=").append(isBot);
+        sb.append(", deleted=").append(isDeleted);
+        sb.append(", online=").append(isOnline);
+        sb.append(", supporter=").append(isSupporter);
         sb.append(", lastTime='").append(lastTime).append('\'');
-        sb.append(", pmOnly=").append(pmOnly);
-        sb.append(", name='").append(name).append('\'');
+        sb.append(", pmOnly=").append(pmFriendsOnly);
+        sb.append(", name='").append(userName).append('\'');
         sb.append(", countryCode='").append(countryCode).append('\'');
         sb.append(", country=").append(country);
         sb.append(", cover=").append(cover);

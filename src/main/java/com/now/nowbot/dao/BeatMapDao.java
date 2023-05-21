@@ -7,6 +7,8 @@ import com.now.nowbot.mapper.MapSetMapper;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.Covers;
+import com.now.nowbot.service.OsuGetService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,83 +16,43 @@ import org.springframework.stereotype.Component;
 public class BeatMapDao {
     MapSetMapper mapSetMapper;
     BeatMapMapper beatMapMapper;
+    OsuGetService osuGetService;
     @Autowired
-    public BeatMapDao(MapSetMapper mapSetMapper, BeatMapMapper beatMapMapper){
+    public BeatMapDao(MapSetMapper mapSetMapper, BeatMapMapper beatMapMapper, OsuGetService osuGetService){
         this.beatMapMapper = beatMapMapper;
         this.mapSetMapper = mapSetMapper;
+        this.osuGetService = osuGetService;
     }
 
-    public void saveMap(BeatMap beatMap){
+    public BeatmapLite saveMap(BeatMap beatMap){
         var mapSet = beatMap.getBeatMapSet();
         if (mapSet != null) {
             mapSetMapper.save(fromMapSetModel(mapSet));
         }
-        beatMapMapper.save(fromBeatmapModel(beatMap));
+        return beatMapMapper.save(fromBeatmapModel(beatMap));
     }
 
-    public BeatMap getBeatMap(int id){
-        return getBeatMap((long) id);
+    public BeatmapLite getBeatMapLite(int id){
+        return getBeatMapLite((long) id);
     }
-    public BeatMap getBeatMap(long id){
+    public BeatmapLite getBeatMapLite(long id){
         var lite = beatMapMapper.findById(id);
-        if (lite.isEmpty()) return null;
-        return fromBeatmapLite(lite.get());
+        if (lite.isEmpty()) {
+            var map = osuGetService.getMapInfo(id);
+            return saveMap(map);
+        }
+        return lite.get();
     }
 
     public static BeatMap fromBeatmapLite(BeatmapLite map){
         var s = new BeatMap();
-        s.setHitLength(map.getHit_length());
-        s.setTotalLength(map.getTotal_length());
-
-        s.setCircles(map.getCount_circles());
-        s.setSliders(map.getCount_sliders());
-        s.setSpinners(map.getCount_spinners());
-
-        s.setBpm(map.getBpm());
-        s.setAR(map.getAr());
-        s.setCS(map.getCs());
-        s.setOD(map.getOd());
-        s.setHP(map.getHp());
-
-        s.setId(map.getBeatmapId());
-        s.setBeatmapsetId(map.getMapsetId());
-        s.setUserId(map.getUserId());
-        s.setVersion(map.getVersion());
-
-        s.setConvert(map.getConvert());
-        s.setDifficultyRating(map.getDifficulty_rating());
-        s.setMaxCombo(map.getMax_combo());
-        s.setModeInt(map.getModeInt());
-        s.setMode(map.getMode().getName());
-        s.setPasscount(map.getPasscount());
+        BeanUtils.copyProperties(map, s);
         return s;
     }
 
     public static BeatmapLite fromBeatmapModel(BeatMap map){
         var s = new BeatmapLite();
-        s.setBpm(map.getBpm());
-        s.setAr(map.getAR());
-        s.setCs(map.getCS());
-        s.setOd(map.getOD());
-        s.setHp(map.getHP());
-
-        s.setBeatmapId(map.getId());
-        s.setMapsetId(map.getBeatmapsetId());
-        s.setUserId(map.getUserId());
-        s.setVersion(map.getVersion());
-
-        s.setCount_circles(map.getCircles());
-        s.setCount_sliders(map.getSliders());
-        s.setCount_spinners(map.getSpinners());
-
-        s.setTotal_length(map.getTotalLength());
-        s.setHit_length(map.getHitLength());
-        s.setConvert(map.getConvert());
-        s.setDifficulty_rating(map.getDifficultyRating());
-        s.setMax_combo(map.getMaxCombo());
-        s.setMode(map.getModeInt());
-        s.setPasscount(map.getPasscount());
-
+        BeanUtils.copyProperties(map, s);
         return s;
     }
 

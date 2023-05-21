@@ -6,18 +6,15 @@ import javax.persistence.*;
 @Entity
 @Table(name = "osu_beatmap",indexes = {
         @Index(name = "map_find", columnList = "map_id"),
-        @Index(name = "find", columnList = "beatmap_id, mode"),
-        @Index(name = "sid", columnList = "map_id, beatmap_id"),
+        @Index(name = "sid", columnList = "map_id, id"),
 })
 public class BeatmapLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "beatmap_id")
-    private Long beatmapId;
 
     @Column(name = "map_id")
-    private Integer mapsetId;
+    private Integer beatmapsetId;
 
     @Column(name = "mapper_id")
     private Integer userId;
@@ -28,9 +25,11 @@ public class BeatmapLite {
     //难度名
     @Column(columnDefinition = "text")
     private String version;
+    @Column(columnDefinition = "text")
+    private String status;
 
-    int playcount;
-    int passcount;
+    Integer playcount;
+    Integer passcount;
 
     //四维
     //accuracy值
@@ -40,37 +39,38 @@ public class BeatmapLite {
     //drain值
     private Float hp;
 
-    private Float difficulty_rating;
+    private Float difficultyRating;
     private Float bpm;
-    private Integer max_combo;
+    private Integer maxCombo;
 
     //物件数
-    private Integer count_circles;
-    private Integer count_sliders;
-    private Integer count_spinners;
+    private Integer circles;
+    private Integer sliders;
+    private Integer spinners;
 
     //秒
-    private Integer total_length;
-    private Integer hit_length;
+    private Integer totalLength;
+    private Integer hitLength;
 
 
     //mode_init 0->osu ...
-    private Integer mode;
+    private Integer modeInt;
+    Integer ranked;
 
-    public Long getBeatmapId() {
-        return beatmapId;
+    public Long getId() {
+        return id;
     }
 
-    public void setBeatmapId(Long bitmapID) {
-        this.beatmapId = bitmapID;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public Integer getMapsetId() {
-        return mapsetId;
+    public Integer getBeatmapsetId() {
+        return beatmapsetId;
     }
 
-    public void setMapsetId(Integer mapset_id) {
-        this.mapsetId = mapset_id;
+    public void setBeatmapsetId(Integer beatmapsetId) {
+        this.beatmapsetId = beatmapsetId;
     }
 
     public Boolean getConvert() {
@@ -137,12 +137,12 @@ public class BeatmapLite {
         this.hp = hp;
     }
 
-    public Float getDifficulty_rating() {
-        return difficulty_rating;
+    public Float getDifficultyRating() {
+        return difficultyRating;
     }
 
-    public void setDifficulty_rating(Float difficulty_rating) {
-        this.difficulty_rating = difficulty_rating;
+    public void setDifficultyRating(Float difficultyRating) {
+        this.difficultyRating = difficultyRating;
     }
 
     public Float getBpm() {
@@ -153,63 +153,68 @@ public class BeatmapLite {
         this.bpm = bpm;
     }
 
-    public Integer getMax_combo() {
-        return max_combo;
+    public Integer getMaxCombo() {
+        return maxCombo;
     }
 
-    public void setMax_combo(Integer max_combo) {
-        this.max_combo = max_combo;
+    public void setMaxCombo(Integer maxCombo) {
+        this.maxCombo = maxCombo;
     }
 
-    public Integer getCount_circles() {
-        return count_circles;
+    public String getStatus() {
+        return status;
     }
 
-    public void setCount_circles(Integer count_circles) {
-        this.count_circles = count_circles;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    public Integer getCount_sliders() {
-        return count_sliders;
+    public Integer getCircles() {
+        return circles;
     }
 
-    public void setCount_sliders(Integer count_sliders) {
-        this.count_sliders = count_sliders;
+    public void setCircles(Integer circles) {
+        this.circles = circles;
     }
 
-    public Integer getCount_spinners() {
-        return count_spinners;
+    public Integer getSliders() {
+        return sliders;
     }
 
-    public void setCount_spinners(Integer count_spinners) {
-        this.count_spinners = count_spinners;
+    public void setSliders(Integer sliders) {
+        this.sliders = sliders;
     }
 
-    public Integer getTotal_length() {
-        return total_length;
+    public Integer getSpinners() {
+        return spinners;
     }
 
-    public void setTotal_length(Integer total_length) {
-        this.total_length = total_length;
+    public void setSpinners(Integer spinners) {
+        this.spinners = spinners;
     }
 
-    public Integer getHit_length() {
-        return hit_length;
+    public Integer getTotalLength() {
+        return totalLength;
     }
 
-    public void setHit_length(Integer hit_length) {
-        this.hit_length = hit_length;
+    public void setTotalLength(Integer totalLength) {
+        this.totalLength = totalLength;
     }
 
-    public OsuMode getMode() {
-        return OsuMode.getMode(mode);
-    }
-    public int getModeInt() {
-        return mode;
+    public Integer getHitLength() {
+        return hitLength;
     }
 
-    public void setMode(Integer mode) {
-        this.mode = mode;
+    public void setHitLength(Integer hitLength) {
+        this.hitLength = hitLength;
+    }
+
+    public OsuMode getModeInt() {
+        return OsuMode.getMode(modeInt);
+    }
+
+    public void setModeInt(Integer modeInt) {
+        this.modeInt = modeInt;
     }
 
     public Integer getUserId() {
