@@ -13,9 +13,8 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class OsuUser extends MicroUser {
+public class OsuUser{
     Double pp;
-
 
     public record Country(String countryCode, String countryName) {
     }
@@ -29,6 +28,33 @@ public class OsuUser extends MicroUser {
     public record MonthlyPlayCount(String startDate, Integer count) {
     }
 
+    Long id;
+    @JsonProperty("avatar_url")
+    String avatarUrl;
+
+    @JsonProperty("cover_url")
+    String coverUrl;
+    @JsonProperty("default_group")
+    String group;
+
+    @JsonProperty("is_active")
+    Boolean active;
+    @JsonProperty("is_bot")
+    Boolean isBot;
+    @JsonProperty("is_deleted")
+    Boolean isDeleted;
+    @JsonProperty("is_online")
+    Boolean isOnline;
+    @JsonProperty("is_supporter")
+    Boolean isSupporter;
+    @JsonProperty("last_visit")
+    String lastTime;
+    @JsonProperty("pm_friends_only")
+    Boolean pmFriendsOnly;
+    @JsonProperty("username")
+    String userName;
+    @JsonIgnore
+    String countryCode;
     @JsonProperty("playmode")
     String playMode;
     String occupation;
@@ -65,6 +91,12 @@ public class OsuUser extends MicroUser {
     Integer followerCount;
     @JsonProperty("raw")
     String page;
+
+    @JsonProperty("statistics")
+    Statistics statistics;
+
+    @JsonProperty("cover")
+    Cover cover;
     @JsonIgnoreProperties
     List<MonthlyPlayCount> monthlyPlaycounts;
 
@@ -119,6 +151,8 @@ public class OsuUser extends MicroUser {
         }
         return pp;
     }
+
+
 
     public Integer getFollowerCount() {
         return followerCount;
