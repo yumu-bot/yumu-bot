@@ -2,6 +2,7 @@ package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.throwable.LogException;
+import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
@@ -52,23 +53,23 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.supperOnly() && !Permission.isSupper(event.getSender().getId())){
-            throw new LogException(servicename + "有人使用最高权限", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+            throw new PermissionException(servicename + "有人使用最高权限 "+ event.getSender().getId()+" -> "+servicename);
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()){
             if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())){
-                throw new LogException(servicename + " 白名单过滤(个人)", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+                throw new PermissionException(servicename + " 白名单过滤(个人)", event.getSender().getId()+" -> "+servicename);
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())){
-                throw new LogException(servicename + " 白名单过滤(群组)", new RuntimeException(g.getGroup().getId()+" -> "+servicename));
+                throw new PermissionException(servicename + " 白名单过滤(群组)", event.getSender().getId()+" -> "+servicename);
             }
         }else {
             if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())){
-                throw new LogException(servicename + " 黑名单过滤(个人)", new RuntimeException(event.getSender().getId()+" -> "+servicename));
+                throw new PermissionException(servicename + " 黑名单过滤(个人)", event.getSender().getId()+" -> "+servicename);
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())){
-                throw new LogException(servicename + " 黑名单过滤(群组)", new RuntimeException(g.getGroup().getId()+" -> "+servicename));
+                throw new PermissionException(servicename + " 黑名单过滤(群组)", event.getSender().getId()+" -> "+servicename);
             }
         }
         return args;
@@ -90,7 +91,7 @@ public class CheckAspect {
             if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())){
                 return args;
             }
-            throw new LogException("权限禁止",new Exception("禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId()));
+            throw new PermissionException("权限禁止","禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId());
         } finally {
 //            workList.add(event);
         }

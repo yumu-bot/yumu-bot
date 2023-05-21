@@ -39,7 +39,7 @@ public class RunTimeService {
     @Resource
     RestTemplate restTemplate;
 
-    //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(周) *(月)")  '/'步进
+    //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
     /*
     @Scheduled(cron = "14 * * * * *")
@@ -98,7 +98,7 @@ public class RunTimeService {
         bot.getGroup(746671531).getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    @Scheduled(cron = "0 0 14 21 * 5")
+    @Scheduled(cron = "0 0 15 21 5 *")
     void testA(){
         sayBp1();
     }

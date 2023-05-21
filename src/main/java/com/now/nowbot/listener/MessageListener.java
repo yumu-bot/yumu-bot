@@ -5,10 +5,7 @@ import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.service.MessageService.JoinGroupService;
 import com.now.nowbot.service.MessageService.MessageService;
-import com.now.nowbot.throwable.LogException;
-import com.now.nowbot.throwable.RequestException;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.Instruction;
@@ -86,6 +83,8 @@ public class MessageListener extends SimpleListenerHost {
                 log.info(e.getMessage(), ((LogException) e).getThrowable());
             } else if (e instanceof IllegalArgumentException) {
                 log.error("正则异常",e);
+            } else if (e instanceof PermissionException) {
+                log.error(e.getMessage());
             } else {
                 if (Permission.isSupper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
                 log.error("捕捉其他异常", e);

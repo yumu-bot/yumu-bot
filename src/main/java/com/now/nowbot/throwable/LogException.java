@@ -1,6 +1,6 @@
 package com.now.nowbot.throwable;
 
-public class LogException extends Exception{
+public class LogException extends RuntimeException{
     Throwable x;
     public LogException(String msg,Throwable throwable){
         super(msg);
