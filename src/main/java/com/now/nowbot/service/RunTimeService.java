@@ -74,17 +74,16 @@ public class RunTimeService {
                 }
                 Thread.sleep(((Double)(Math.random() * 500)).longValue());
             } catch (Exception e) {
-                switch (e){
-                    case BindException ignore-> dataMap.add(new UserLog(qq, "未绑定", 0));
-                    case NumberFormatException ignore -> dataMap.add(new UserLog(qq, "PP读取错误", 0));
-                    case NullPointerException nullerr -> {
-                        dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
-                        log.error("错误日志: query#{}", qq, nullerr);
-                    }
-                    default -> {
-                        dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
-                        log.error("错误日志: query#{}", qq, e);
-                    }
+                if (e instanceof BindException){
+                    dataMap.add(new UserLog(qq, "未绑定", 0));
+                } else if (e instanceof NumberFormatException) {
+                    dataMap.add(new UserLog(qq, "PP读取错误", 0));
+                } else if (e instanceof NullPointerException nullerr) {
+                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
+                    log.error("错误日志: query#{}", qq, nullerr);
+                } else {
+                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
+                    log.error("错误日志: query#{}", qq, e);
                 }
             }
         }
@@ -99,7 +98,7 @@ public class RunTimeService {
         bot.getGroup(746671531).getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    @Scheduled(cron = "0 20 13 21 * 5")
+    @Scheduled(cron = "0 0 14 21 * 5")
     void testA(){
         sayBp1();
     }
