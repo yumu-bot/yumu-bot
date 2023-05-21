@@ -136,7 +136,7 @@ public class MRAService implements MessageService {
 //            Files.write(Path.of("/home/spring/aa.png"), img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
-            from.sendMessage("MRA 渲染图片超时，请重试。");
+            from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rav2 <mpid>。");
         }
     }
 
