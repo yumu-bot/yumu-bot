@@ -14,7 +14,9 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class OsuUser{
+    Long id;
     Double pp;
+    String username;
 
     public record Country(String countryCode, String countryName) {
     }
@@ -28,7 +30,6 @@ public class OsuUser{
     public record MonthlyPlayCount(String startDate, Integer count) {
     }
 
-    Long id;
     @JsonProperty("avatar_url")
     String avatarUrl;
 
@@ -170,9 +171,6 @@ public class OsuUser{
         this.playMode = playMode;
     }
 
-    public void setPp(Double pp) {
-        this.pp = pp;
-    }
 
     public Statistics getStatistics() {
         return statistics;
@@ -360,9 +358,6 @@ public class OsuUser{
         this.userName = username;
     }
 
-    public Double getPp() {
-        return pp;
-    }
 
     public Boolean getHasSupported() {
         return hasSupported;
@@ -457,6 +452,79 @@ public class OsuUser{
 
     public void setInterests(String interests) {
         this.interests = interests;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Boolean getBot() {
+        return isBot;
+    }
+
+    public void setBot(Boolean bot) {
+        isBot = bot;
+    }
+
+    public Boolean getDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public Boolean getOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(Boolean online) {
+        isOnline = online;
+    }
+
+    public Boolean getSupporter() {
+        return isSupporter;
+    }
+
+    public void setSupporter(Boolean supporter) {
+        isSupporter = supporter;
+    }
+
+    public String getLastTime() {
+        return lastTime;
+    }
+
+    public void setLastTime(String lastTime) {
+        this.lastTime = lastTime;
+    }
+
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
     }
 
     @Override
