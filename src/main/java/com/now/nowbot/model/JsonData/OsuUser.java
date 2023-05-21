@@ -222,6 +222,10 @@ public class OsuUser{
         this.beatmapSetCountPlaycounts = beatmapSetCountPlaycounts;
     }
 
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
     public Integer getMappingFollowerCount() {
         return mappingFollowerCount;
     }
