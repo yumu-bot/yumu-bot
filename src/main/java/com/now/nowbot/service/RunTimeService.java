@@ -49,40 +49,45 @@ public class RunTimeService {
 
     */
     @Scheduled(cron = "2 8 4 * * *")
-    public void sayBp1(){
+    public void sayBp1() {
         var group = bot.getGroup(928936255);
+        var devGroup = bot.getGroup(746671531);
         ContactList<NormalMember> users = null;
-        if (group != null) {
+        if (group != null && devGroup != null) {
             users = group.getMembers();
-            group.sendMessage("开始统计进阶群 bp1");
+            devGroup.sendMessage("开始统计进阶群 bp1");
         }
-        if (users == null || users.size() == 0){
+        if (users == null || users.size() == 0) {
+            log.warn("no users");
             return;
         }
         var idList = users.stream().map(NormalMember::getId).toList();
-        record UserLog(long qq, String name, float pp){}
+        record UserLog(long qq, String name, float pp) {
+        }
         var dataMap = new ArrayList<UserLog>();
         var p = Pattern.compile("\"pp\":(?<pp>\\d+(.\\d+)?),");
-        for(var qq : idList){
+        for (var qq : idList) {
+            log.warn("获取qq[{}]信息", qq);
             try {
                 var u = bindDao.getUser(qq);
                 var url = String.format("https://osu.ppy.sh/users/%dl/scores/best?mode=osu&limit=1&offset=0", u.getOsuID());
                 var data = restTemplate.getForObject(url, String.class);
                 var m = p.matcher(data);
-                if (m.find()){
+                if (m.find()) {
                     dataMap.add(new UserLog(qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
                 }
-                Thread.sleep(((Double)(Math.random() * 500)).longValue());
+                log.warn("结束,[{}, {}, {}]", qq, u.getOsuName(), m.group("pp"));
+                Thread.sleep(((Double) (Math.random() * 500)).longValue());
             } catch (Exception e) {
-                if (e instanceof BindException){
+                if (e instanceof BindException) {
                     dataMap.add(new UserLog(qq, "未绑定", 0));
                 } else if (e instanceof NumberFormatException) {
                     dataMap.add(new UserLog(qq, "PP读取错误", 0));
                 } else if (e instanceof NullPointerException nullerr) {
-                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
+                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#" + qq, 0));
                     log.error("错误日志: query#{}", qq, nullerr);
                 } else {
-                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
+                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#" + qq, 0));
                     log.error("错误日志: query#{}", qq, e);
                 }
             }
@@ -90,16 +95,18 @@ public class RunTimeService {
         var n = dataMap.stream().sorted(Comparator.comparing(UserLog::pp).reversed()).toList();
         var dataFormat = DateTimeFormatter.ofPattern("MM-dd");
         var sb = new StringBuilder("qq,name,pp\n");
-        for (var u : n){
+        log.warn("处理结果中");
+        for (var u : n) {
             sb.append(u.qq).append(',')
                     .append(u.name).append(',')
                     .append(u.pp).append('\n');
         }
-        bot.getGroup(746671531).getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+        log.warn("完成: {}", sb);
+        devGroup.getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    @Scheduled(cron = "0 0 15 21 5 *")
-    void testA(){
+    @Scheduled(cron = "0 20 15 21 5 *")
+    void testA() {
         sayBp1();
     }
 
@@ -107,7 +114,7 @@ public class RunTimeService {
      * 每分钟清理未绑定的
      */
     @Scheduled(cron = "0 0/5 * * * *")
-    public void clearBindMsg(){
+    public void clearBindMsg() {
         BindService.BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
         log.info("清理绑定器执行 当前剩余:{}", BindService.BIND_MSG_MAP.size());
     }
@@ -116,28 +123,28 @@ public class RunTimeService {
      * 白天输出内存占用信息
      */
     @Scheduled(cron = "0 0/30 8-18 * * *")
-    public void alive(){
+    public void alive() {
         var m = ManagementFactory.getMemoryMXBean();
         var nm = m.getNonHeapMemoryUsage();
         var t = ManagementFactory.getThreadMXBean();
         var z = ManagementFactory.getMemoryPoolMXBeans();
         log.info("方法区 已申请 {}M 已使用 {}M ",
-                nm.getCommitted()/1024/1024,
-                nm.getUsed()/1024/1024
+                nm.getCommitted() / 1024 / 1024,
+                nm.getUsed() / 1024 / 1024
         );
         log.info("堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
-                m.getHeapMemoryUsage().getMax()/1024/1024,
-                m.getHeapMemoryUsage().getCommitted()/1024/1024,
-                m.getHeapMemoryUsage().getUsed()/1024/1024,
+                m.getHeapMemoryUsage().getMax() / 1024 / 1024,
+                m.getHeapMemoryUsage().getCommitted() / 1024 / 1024,
+                m.getHeapMemoryUsage().getUsed() / 1024 / 1024,
                 t.getThreadCount(),
                 t.getDaemonThreadCount(),
                 t.getPeakThreadCount()
         );
-        for (var pool : z){
+        for (var pool : z) {
             log.info("vm内存 {} 已申请 {}M 已使用 {}M ",
                     pool.getName(),
-                    pool.getUsage().getCommitted()/1024/1024,
-                    pool.getUsage().getUsed()/1024/1024
+                    pool.getUsage().getCommitted() / 1024 / 1024,
+                    pool.getUsage().getUsed() / 1024 / 1024
             );
         }
     }
