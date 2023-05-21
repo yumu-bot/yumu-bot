@@ -77,7 +77,7 @@ public class RunTimeService {
                     dataMap.add(new UserLog(qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
                 }
                 log.warn("结束,[{}, {}, {}]", qq, u.getOsuName(), m.group("pp"));
-                Thread.sleep(((Double) (Math.random() * 500)).longValue());
+                Thread.sleep(((Double) (Math.random() * 10000 + 10000)).longValue());
             } catch (Exception e) {
                 if (e instanceof BindException) {
                     dataMap.add(new UserLog(qq, "未绑定", 0));
@@ -105,7 +105,7 @@ public class RunTimeService {
         devGroup.getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    @Scheduled(cron = "0 20 15 21 5 *")
+    @Scheduled(cron = "0 0 16 21 5 *")
     void testA() {
         sayBp1();
     }
