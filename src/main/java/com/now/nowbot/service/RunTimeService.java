@@ -50,18 +50,18 @@ public class RunTimeService {
     */
     @Scheduled(cron = "2 8 4 * * *")
     public void sayBp1(){
-        var t = bot.getGroup(928936255);
+        var group = bot.getGroup(928936255);
         ContactList<NormalMember> users = null;
-        if (t != null) {
-            users = t.getMembers();
-            t.sendMessage("开始统计进阶群 bp1");
+        if (group != null) {
+            users = group.getMembers();
+            group.sendMessage("开始统计进阶群 bp1");
         }
-        if (users == null){
+        if (users == null || users.size() == 0){
             return;
         }
         var idList = users.stream().map(NormalMember::getId).toList();
-        record User(long qq, String name, float pp){}
-        var dataMap = new ArrayList<User>();
+        record UserLog(long qq, String name, float pp){}
+        var dataMap = new ArrayList<UserLog>();
         var p = Pattern.compile("\"pp\":(?<pp>\\d+(.\\d+)?),");
         for(var qq : idList){
             try {
@@ -70,25 +70,25 @@ public class RunTimeService {
                 var data = restTemplate.getForObject(url, String.class);
                 var m = p.matcher(data);
                 if (m.find()){
-                    dataMap.add(new User(qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
+                    dataMap.add(new UserLog(qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
                 }
                 Thread.sleep(((Double)(Math.random() * 500)).longValue());
             } catch (Exception e) {
                 switch (e){
-                    case BindException ignore-> dataMap.add(new User(qq, "未绑定", 0));
-                    case NumberFormatException ignore -> dataMap.add(new User(qq, "PP读取错误", 0));
+                    case BindException ignore-> dataMap.add(new UserLog(qq, "未绑定", 0));
+                    case NumberFormatException ignore -> dataMap.add(new UserLog(qq, "PP读取错误", 0));
                     case NullPointerException nullerr -> {
-                        dataMap.add(new User(qq, "未知错误,详见日志:query#"+qq, 0));
+                        dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
                         log.error("错误日志: query#{}", qq, nullerr);
                     }
                     default -> {
-                        dataMap.add(new User(qq, "未知错误,详见日志:query#"+qq, 0));
+                        dataMap.add(new UserLog(qq, "未知错误,详见日志:query#"+qq, 0));
                         log.error("错误日志: query#{}", qq, e);
                     }
                 }
             }
         }
-        var n = dataMap.stream().sorted(Comparator.comparing(User::pp).reversed()).toList();
+        var n = dataMap.stream().sorted(Comparator.comparing(UserLog::pp).reversed()).toList();
         var dataFormat = DateTimeFormatter.ofPattern("MM-dd");
         var sb = new StringBuilder("qq,name,pp\n");
         for (var u : n){
@@ -96,10 +96,10 @@ public class RunTimeService {
                     .append(u.name).append(',')
                     .append(u.pp).append('\n');
         }
-        t.getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+        bot.getGroup(746671531).getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    @Scheduled(cron = "0 50 12 21 * 5")
+    @Scheduled(cron = "0 20 13 21 * 5")
     void testA(){
         sayBp1();
     }
