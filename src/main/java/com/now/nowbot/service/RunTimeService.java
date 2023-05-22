@@ -2,6 +2,7 @@ package com.now.nowbot.service;
 
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import net.mamoe.mirai.Bot;
@@ -38,6 +39,8 @@ public class RunTimeService {
     BindDao bindDao;
     @Resource
     RestTemplate restTemplate;
+    @Resource
+    OsuGetService osuGetService;
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
@@ -61,34 +64,49 @@ public class RunTimeService {
             log.warn("no users");
             return;
         }
-        var idList = users.stream().map(NormalMember::getId).toList();
+        record QQUser(long qq, String name){};
+        var qqUserList = users.stream().map(e -> new QQUser(e.getId(),e.getNameCard())).toList();
         record UserLog(long qq, String name, float pp) {
         }
         var dataMap = new ArrayList<UserLog>();
         var p = Pattern.compile("\"pp\":(?<pp>\\d+(.\\d+)?),");
-        for (var qq : idList) {
-            log.warn("获取qq[{}]信息", qq);
+        var name = Pattern.compile("^(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
+        for (var qqUser : qqUserList) {
+            log.warn("获取qq[{}]信息", qqUser);
             try {
-                var u = bindDao.getUser(qq);
+                BinUser u = null;
+                try {
+                    u = bindDao.getUser(qqUser.qq);
+                } catch (BindException e) {
+                    var m = name.matcher(qqUser.name);
+                    if (m.find() && !m.group("name").trim().equals("")){
+                        var nu = osuGetService.getPlayerInfo(m.group("name").trim());
+                        u = new BinUser();
+                        u.setOsuID(nu.getId());
+                        u.setOsuName(nu.getUsername());
+                    } else {
+                        throw e;
+                    }
+                }
                 var url = String.format("https://osu.ppy.sh/users/%dl/scores/best?mode=osu&limit=1&offset=0", u.getOsuID());
                 var data = restTemplate.getForObject(url, String.class);
                 var m = p.matcher(data);
                 if (m.find()) {
-                    dataMap.add(new UserLog(qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
+                    dataMap.add(new UserLog(qqUser.qq, u.getOsuName(), Float.parseFloat(m.group("pp"))));
                 }
-                log.warn("结束,[{}, {}, {}]", qq, u.getOsuName(), m.group("pp"));
+                log.warn("结束,[{}, {}, {}]", qqUser, u.getOsuName(), m.group("pp"));
                 Thread.sleep(((Double) (Math.random() * 10000 + 10000)).longValue());
             } catch (Exception e) {
                 if (e instanceof BindException) {
-                    dataMap.add(new UserLog(qq, "未绑定", 0));
+                    dataMap.add(new UserLog(qqUser.qq, "未绑定", 0));
                 } else if (e instanceof NumberFormatException) {
-                    dataMap.add(new UserLog(qq, "PP读取错误", 0));
+                    dataMap.add(new UserLog(qqUser.qq, "PP读取错误", 0));
                 } else if (e instanceof NullPointerException nullerr) {
-                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#" + qq, 0));
-                    log.error("错误日志: query#{}", qq, nullerr);
+                    dataMap.add(new UserLog(qqUser.qq, "未知错误,详见日志:query#" + qqUser, 0));
+                    log.error("错误日志: query#{}", qqUser, nullerr);
                 } else {
-                    dataMap.add(new UserLog(qq, "未知错误,详见日志:query#" + qq, 0));
-                    log.error("错误日志: query#{}", qq, e);
+                    dataMap.add(new UserLog(qqUser.qq, "未知错误,详见日志:query#" + qqUser, 0));
+                    log.error("错误日志: query#{}", qqUser, e);
                 }
             }
         }
