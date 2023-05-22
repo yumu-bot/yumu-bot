@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
@@ -248,9 +250,10 @@ public class JacksonUtil {
 
     public static <T> List<T> parseObjectList(JsonNode body, Class<T> clazz){
 
-        if (body != null) {
-            return mapper.convertValue(body, new TypeReference<List<T>>() {
-            });
+        if (body != null && body.isArray()) {
+            TypeFactory typeFactory = mapper.getTypeFactory();
+            CollectionType collectionType = typeFactory.constructCollectionType(List.class, clazz);
+            return mapper.convertValue(body, collectionType);
         }
         return null;
     }

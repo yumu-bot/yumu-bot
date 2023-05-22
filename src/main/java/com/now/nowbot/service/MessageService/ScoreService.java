@@ -64,15 +64,15 @@ public class ScoreService implements MessageService {
             if (mods != null && mods.size() > 0) {
                 var scoreall = osuGetService.getScoreAll(bid, user, mode);
                 for (var s : scoreall){
-                    if (s.getScore().getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None){
-                        score = s.getScore();
+                    if (s.getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None){
+                        score = s;
                         break;
                     }
-                    if (mods.size() != s.getScore().getMods().size()){
+                    if (mods.size() != s.getMods().size()){
                         continue;
                     }
-                    if (s.getScore().getMods().containsAll(mods.stream().map(Mod::getAbbreviation).toList())){
-                        score = s.getScore();
+                    if (s.getMods().containsAll(mods.stream().map(Mod::getAbbreviation).toList())){
+                        score = s;
                         break;
                     }
                 }

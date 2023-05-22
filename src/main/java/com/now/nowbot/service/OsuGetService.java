@@ -538,7 +538,7 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public List<BeatmapUserScore> getScoreAll(long bid, BinUser user, OsuMode mode) {
+    public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID() + "/all");
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
@@ -548,7 +548,7 @@ public class OsuGetService {
         return getBeatmapUserScores(uri, httpEntity);
     }
 
-    public List<BeatmapUserScore> getScoreAll(long bid, long uid, OsuMode mode) {
+    public List<Score> getScoreAll(long bid, long uid, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid + "/all");
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
@@ -559,12 +559,12 @@ public class OsuGetService {
     }
 
     @Nullable
-    private List<BeatmapUserScore> getBeatmapUserScores(URI uri, HttpEntity<?> httpEntity) {
+    private List<Score> getBeatmapUserScores(URI uri, HttpEntity<?> httpEntity) {
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity,JsonNode.class);
         if (c.getStatusCode().is4xxClientError()) {
             return new ArrayList<>();
         }
-        var s = JacksonUtil.parseObjectList(c.getBody().get("scores"), BeatmapUserScore.class);
+        var s = JacksonUtil.parseObjectList(c.getBody().get("scores"), Score.class);
         return s;
     }
 
