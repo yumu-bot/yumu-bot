@@ -60,6 +60,10 @@ public enum Mod {
         abbreviation = name;
     }
 
+    public String getAbbreviation() {
+        return abbreviation;
+    }
+
     public static List<Mod> getModsList(String modsStr) {
         var modStrArray = getModsString(modsStr);
         var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).toList();

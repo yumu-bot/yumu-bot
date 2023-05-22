@@ -501,6 +501,29 @@ public class OsuGetService {
         return c.getBody();
     }
 
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode,Mod... mods) throws JsonProcessingException {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid);
+        if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
+        if (mods.length != 0){
+            StringBuilder sb = new StringBuilder("[");
+            for (var mod : mods){
+                sb.append(mod.name()).append(',');
+            }
+            sb.deleteCharAt(sb.length()-1);
+            sb.append(']');
+            data.queryParam("mods", sb.toString());
+        }
+        URI uri = data.build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<BeatmapUserScore> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatmapUserScore.class);
+        if (c.getStatusCode().is4xxClientError()) {
+            return null;
+        }
+        return c.getBody();
+    }
+
     public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID());
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());

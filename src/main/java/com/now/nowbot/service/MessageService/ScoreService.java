@@ -22,12 +22,14 @@ public class ScoreService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
+
     @Autowired
-    public ScoreService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template){
+    public ScoreService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.template = template;
     }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
@@ -52,14 +54,31 @@ public class ScoreService implements MessageService {
 
         // 处理 mods
         var modsStr = matcher.group("mod");
-        List<Mod> mods =null;
+        List<Mod> mods = null;
         if (modsStr != null) {
             mods = Mod.getModsList(matcher.group("mod"));
         }
 
         Score score = null;
         try {
-            score = osuGetService.getScore(bid, user, mode).getScore();
+            if (mods != null && mods.size() > 0) {
+                var scoreall = osuGetService.getScoreAll(bid, user, mode);
+                for (var s : scoreall){
+                    if (s.getScore().getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None){
+                        score = s.getScore();
+                        break;
+                    }
+                    if (mods.size() != s.getScore().getMods().size()){
+                        continue;
+                    }
+                    if (s.getScore().getMods().containsAll(mods.stream().map(Mod::getAbbreviation).toList())){
+                        score = s.getScore();
+                        break;
+                    }
+                }
+            } else {
+                score = osuGetService.getScore(bid, user, mode).getScore();
+            }
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
             //from.sendMessage("你没打过这张图"); return;
