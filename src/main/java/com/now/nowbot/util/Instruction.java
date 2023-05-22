@@ -1,6 +1,7 @@
 package com.now.nowbot.util;
 
 
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.service.MessageService.*;
 
 import java.util.regex.Pattern;
@@ -53,7 +54,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]\\s*((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)")),
+            Pattern.compile("^[!！]\\s*((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNFHTDRSPCLO]*)+))?")),
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
@@ -178,12 +179,12 @@ public enum Instruction {
     }
 
     public static void main(String[] args) {
-        var p = Instruction.BIND.regex;
-        var m = p.matcher("!bi  xx");
+        var p = Instruction.SCORE.regex;
+        var m = p.matcher("!s 114514 + DT NF");
         if (m.matches()) {
             System.out.println("ok************");
-            System.out.println(m.group("un"));
-            System.out.println(m.group("name"));
+            ;
+            System.out.println();
             return;
         } else {
             return;

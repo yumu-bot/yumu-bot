@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("score")
@@ -37,7 +39,6 @@ public class ScoreService implements MessageService {
                 user = bindDao.getUser(at.getTarget());
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoBind);
-                //throw new TipsException("该玩家没有绑定");
             }
         } else {
             user = bindDao.getUser(event.getSender().getId());
@@ -48,6 +49,13 @@ public class ScoreService implements MessageService {
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
         var bid = Long.parseLong(matcher.group("bid"));
+
+        // 处理 mods
+        var modsStr = matcher.group("mod");
+        List<Mod> mods =null;
+        if (modsStr != null) {
+            mods = Mod.getModsList(matcher.group("mod"));
+        }
 
         Score score = null;
         try {

@@ -11,6 +11,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -514,34 +515,34 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
+    public List<BeatmapUserScore> getScoreAll(long bid, BinUser user, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + user.getOsuID() + "/all");
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
-        });
-        if (c.getStatusCode().is4xxClientError()) {
-            return new ArrayList<>();
-        }
-        return c.getBody();
+        return getBeatmapUserScores(uri, httpEntity);
     }
 
-    public List<Score> getScoreAll(long bid, long uid, OsuMode mode) {
+    public List<BeatmapUserScore> getScoreAll(long bid, long uid, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid + "/all");
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<List<Score>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<Score>>() {
-        });
+        return getBeatmapUserScores(uri, httpEntity);
+    }
+
+    @Nullable
+    private List<BeatmapUserScore> getBeatmapUserScores(URI uri, HttpEntity<?> httpEntity) {
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity,JsonNode.class);
         if (c.getStatusCode().is4xxClientError()) {
-            return null;
+            return new ArrayList<>();
         }
-        return c.getBody();
+        var s = JacksonUtil.parseObjectList(c.getBody().get("scores"), BeatmapUserScore.class);
+        return s;
     }
 
     public JsonNode getScoreR(long bid, BinUser user, OsuMode mode) {
