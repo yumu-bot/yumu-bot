@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
@@ -79,6 +80,10 @@ public class ScoreService implements MessageService {
                 }
                 if (score == null) {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
+                } else {
+                    var bm = new BeatMap();
+                    bm.setId(bid);
+                    score.setBeatMap(bm);
                 }
             } else {
                 score = osuGetService.getScore(bid, user, mode).getScore();
