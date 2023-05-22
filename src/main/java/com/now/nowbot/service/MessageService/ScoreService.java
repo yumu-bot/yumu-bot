@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -76,6 +77,9 @@ public class ScoreService implements MessageService {
                         break;
                     }
                 }
+                if (score == null) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
+                }
             } else {
                 score = osuGetService.getScore(bid, user, mode).getScore();
             }
@@ -89,6 +93,7 @@ public class ScoreService implements MessageService {
             var data = YmpService.postImage(userInfo, score, osuGetService, template);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
+            NowbotApplication.log.error("err", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
