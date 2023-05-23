@@ -51,7 +51,7 @@ public class RunTimeService {
     }
 
     */
-    @Scheduled(cron = "2 8 4 * * *")
+//    @Scheduled(cron = "2 8 4 * * *")
     public void sayBp1() {
         var group = bot.getGroup(928936255);
         var devGroup = bot.getGroup(746671531);
@@ -121,11 +121,6 @@ public class RunTimeService {
         }
         log.warn("完成: {}", sb);
         devGroup.getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
-    }
-
-    @Scheduled(cron = "0 0 16 21 5 *")
-    void testA() {
-        sayBp1();
     }
 
     /***
