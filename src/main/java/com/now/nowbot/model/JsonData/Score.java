@@ -82,6 +82,10 @@ public class Score {
         if (createTime != null) return LocalDateTime.parse(createTime, formatter);
         return LocalDateTime.now();
     }
+    @JsonProperty("create_at_str")
+    public String getCreateTimeStr() {
+        return createTime;
+    }
 
     public void setCreateTime(String createTime) {
         this.createTime = createTime;
