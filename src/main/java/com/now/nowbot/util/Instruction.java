@@ -147,6 +147,10 @@ public enum Instruction {
             Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
 
+    DRAW(DrawService.class,
+            Pattern.compile("^抽卡#?(?<d>\\d+)")),
+
+
 //    SETU(SetuService.class,
 //            Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)")),
     ;

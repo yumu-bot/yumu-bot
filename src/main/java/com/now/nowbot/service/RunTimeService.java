@@ -3,11 +3,13 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.contact.ContactList;
 import net.mamoe.mirai.contact.NormalMember;
+import net.mamoe.mirai.message.data.At;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ import javax.annotation.Resource;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,7 +54,21 @@ public class RunTimeService {
     }
 
     */
-//    @Scheduled(cron = "2 8 4 * * *")
+    @Scheduled(cron = "16 0 0 * * *")
+    public void checkBPlist() throws BindException {
+        var qq = 3054_7298_60L;
+        var u = bindDao.getUser(qq);
+        LocalDateTime dayBefore = LocalDateTime.now().plusDays(-1);
+        var bpList = osuGetService.getBestPerformance(u, OsuMode.OSU, 0,100);
+        var dayBpList = bpList.stream().filter(e -> dayBefore.isBefore(e.getCreateTime())).toList();
+        var group = bot.getGroup(9289_3625_5);
+        if (dayBpList.size() > 0) {
+            group.sendMessage(new At(365246692).plus("今天刷到了bp数: " + dayBpList.size()));
+        } else {
+            group.sendMessage(new At(365246692).plus("今天没刷到pp,杀!"));
+        }
+    }
+
     public void sayBp1() {
         var group = bot.getGroup(928936255);
         var devGroup = bot.getGroup(746671531);

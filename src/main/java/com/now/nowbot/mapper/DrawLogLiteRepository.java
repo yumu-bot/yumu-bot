@@ -1,6 +1,7 @@
 package com.now.nowbot.mapper;
 
 import com.now.nowbot.entity.DrawLogLite;
+import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.model.enums.DrawKind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -8,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public interface DrawLogLiteRepository extends JpaRepository<DrawLogLite, Long> , JpaSpecificationExecutor<DrawLogLite> {
@@ -19,7 +22,7 @@ public interface DrawLogLiteRepository extends JpaRepository<DrawLogLite, Long> 
      * @param kinds 出的品级
      * @return 多少抽之内出的选定品级结果总和
      */
-    @Query(value = "select count(*) from (select * from test_draw where uid=:uid order by create_at desc limit :n) where kind in :#{#kinds.![ordinal()]}", nativeQuery = true)
+    @Query(value = "select count(*) from (select * from #{#entityName} where uid=:uid order by create_at desc limit :n) where kind in :#{#kinds.![ordinal()]}", nativeQuery = true)
     Integer getKindCount(long uid, int n, @Param("kinds") DrawKind... kinds);
 
     /***
@@ -58,4 +61,16 @@ public interface DrawLogLiteRepository extends JpaRepository<DrawLogLite, Long> 
         return getBeforId(uid, kinds).map(aLong -> getBeforCountById(uid, aLong) - 1).orElseGet(() -> getAllCount(uid) - 1);
     }
 
+    @Query("select l.kind as kind, l.card as card from DrawLogLite l where l.uid=:uid group by l.card")
+    List<Map<String, Object>> _getAllCard(long uid);
+
+    default List<DrawConfig.CardLog> getAllCard(long uid){
+        return _getAllCard(uid).stream().map(d -> new DrawConfig.CardLog((DrawKind) d.get("kind"), (String) d.get("card"))).toList();
+    }
+    @Query("select l.kind as kind, l.card as card from DrawLogLite l where l.uid=:uid and l.kind in :kinds group by l.card")
+    List<Map<String, Object>> _getAllCardByKind(long uid, DrawKind... kinds);
+
+    default List<DrawConfig.CardLog> getAllCardByKind(long uid, DrawKind... kinds){
+        return _getAllCardByKind(uid, kinds).stream().map(d -> new DrawConfig.CardLog((DrawKind) d.get("kind"), (String) d.get("card"))).toList();
+    }
 }

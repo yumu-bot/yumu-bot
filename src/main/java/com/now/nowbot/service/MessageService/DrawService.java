@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageService;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.entity.DrawLogLite;
 import com.now.nowbot.mapper.DrawLogLiteRepository;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("draw")
@@ -22,41 +25,54 @@ public class DrawService implements MessageService {
     private DrawLogLiteRepository drawLogLiteRepository;
 
     @Override
+    @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var osuUser = bindDao.getUser(event.getSender().getId());
 
-        var kind = drfaultConfig.getRandomKind(osuUser.getOsuID(), drawLogLiteRepository);
-        var card = drfaultConfig.getRandomCard(kind);
-        //保存抽卡记录
-        drawLogLiteRepository.save(new DrawLogLite(card, kind));
+        int times = 10;
+        if (matcher.group("d") != null) {
+            times = Integer.parseInt(matcher.group("d"));
+        }
+
+        int tenTimes = times / 10;
+        times = times % 10;
+        List<DrawConfig.Card> clist = new LinkedList<>();
+        // 10 连
+        for (int i = 0; i < tenTimes; i++) {
+            var kindList = defaultConfig.getRandomKindTenTimes(osuUser.getOsuID(), drawLogLiteRepository);
+            var cards = kindList.stream().map(defaultConfig::getRandomCard).toList();
+            var cardLites = new ArrayList<DrawLogLite>(kindList.size());
+            for (int j = 0; j < kindList.size(); j++) {
+                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i)));
+            }
+            drawLogLiteRepository.saveAll(cardLites);
+            clist.addAll(cards);
+        }
+        // 单抽
+        {
+            for (int i = 0; i < times; i++) {
+                var kind = defaultConfig.getRandomKind(osuUser.getOsuID(), drawLogLiteRepository);
+                var card = defaultConfig.getRandomCard(kind);
+                drawLogLiteRepository.save(new DrawLogLite(card, kind));
+                clist.add(card);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        clist.forEach(c -> sb.append(c.name()).append(", "));
+        event.getSubject().sendMessage(sb.toString());
     }
 
     private static DrawConfig getConfig(String config) {
         var jsonData = JacksonUtil.parseObject(config, JsonNode.class);
         if (jsonData == null) return null;
-        var drawConfig = new DrawConfig();
-        for (var kind : DrawKind.values()) {
-            if (jsonData.has(kind.name())) {
-                var kindData = jsonData.get(kind.name());
-                var conf = new DrawConfig.Config(
-                        kindData.get("name").asText("no name"),
-                        kindData.get("width").asInt(100));
-                drawConfig.kindConfig.put(kind, conf);
-                if (kindData.get("cards").isArray() && kindData.get("cards").size() > 0) {
-                    var cards = new ArrayList<DrawConfig.Card>(kindData.get("cards").size());
-                    for (var cardData : kindData.get("cards")) {
-                        var card = new DrawConfig.Card(
-                                cardData.get("name").asText("no name"),
-                                cardData.get("width").asInt(100),
-                                cardData.get("info").asText("default")
-                        );
-                        cards.add(card);
-                    }
-                    drawConfig.cardList.put(kind, cards);
-                }
-            }
-        }
+        var drawConfig = new DrawConfig(jsonData);
+
         return drawConfig;
+    }
+
+    public static DrawConfig getDefaultConfig() {
+        return defaultConfig;
     }
 
     static String config = """
@@ -138,8 +154,19 @@ public class DrawService implements MessageService {
                     "info": "n"
                   }
                 ]
+              },
+              "SSR": {
+                "name": "传说",
+                "width": 1,
+                "cards":[
+                  {
+                    "name": "ssr1",
+                    "width": 100,
+                    "info": "n"
+                  }
+                ]
               }
             }
             """;
-    private static final DrawConfig drfaultConfig = getConfig(config);
+    private static DrawConfig defaultConfig = getConfig(config);
 }
