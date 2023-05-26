@@ -66,9 +66,9 @@ public class DrawLogLite {
         this.uid = uid;
     }
     public DrawLogLite(){}
-    public DrawLogLite(DrawConfig.Card card, DrawKind kind){
+    public DrawLogLite(DrawConfig.Card card, DrawKind kind, long uid){
         this.card = card.name();
         this.kind = kind;
-
+        this.uid = uid;
     }
 }

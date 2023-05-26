@@ -58,7 +58,7 @@ public interface DrawLogLiteRepository extends JpaRepository<DrawLogLite, Long> 
      * @return 次数
      */
     default int getBeforCount(long uid, DrawKind... kinds){
-        return getBeforId(uid, kinds).map(aLong -> getBeforCountById(uid, aLong) - 1).orElseGet(() -> getAllCount(uid) - 1);
+        return getBeforId(uid, kinds).map(aLong -> getBeforCountById(uid, aLong)).orElseGet(() -> getAllCount(uid));
     }
 
     @Query("select l.kind as kind, l.card as card from DrawLogLite l where l.uid=:uid group by l.card")

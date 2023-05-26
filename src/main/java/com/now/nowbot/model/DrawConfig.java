@@ -106,7 +106,7 @@ public class DrawConfig {
     }
 
     private DrawKind checkKind(int countBefSSR, int countSSR) {
-        double ssrProb = 0.006 + Math.min(0, (countBefSSR - 73) * 0.06D);
+        double ssrProb = 0.006 + Math.max(0, (countBefSSR - 73) * 0.06D);
         // 20抽之内出现两个 ssr, 必定不不会ssr
         if (countSSR >= 20) ssrProb = 0;
         // 十连保底在在十连抽做

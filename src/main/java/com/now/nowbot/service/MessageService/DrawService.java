@@ -43,7 +43,7 @@ public class DrawService implements MessageService {
             var cards = kindList.stream().map(defaultConfig::getRandomCard).toList();
             var cardLites = new ArrayList<DrawLogLite>(kindList.size());
             for (int j = 0; j < kindList.size(); j++) {
-                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i)));
+                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i), osuUser.getOsuID()));
             }
             drawLogLiteRepository.saveAll(cardLites);
             clist.addAll(cards);
@@ -53,7 +53,7 @@ public class DrawService implements MessageService {
             for (int i = 0; i < times; i++) {
                 var kind = defaultConfig.getRandomKind(osuUser.getOsuID(), drawLogLiteRepository);
                 var card = defaultConfig.getRandomCard(kind);
-                drawLogLiteRepository.save(new DrawLogLite(card, kind));
+                drawLogLiteRepository.save(new DrawLogLite(card, kind, osuUser.getOsuID()));
                 clist.add(card);
             }
         }
