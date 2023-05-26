@@ -66,9 +66,8 @@ public class DrawService implements MessageService {
     private static DrawConfig getConfig(String config) {
         var jsonData = JacksonUtil.parseObject(config, JsonNode.class);
         if (jsonData == null) return null;
-        var drawConfig = new DrawConfig(jsonData);
 
-        return drawConfig;
+        return new DrawConfig(jsonData);
     }
 
     public static DrawConfig getDefaultConfig() {
@@ -79,89 +78,89 @@ public class DrawService implements MessageService {
             {
               "N": {
                 "name": "普通",
-                "width": 15,
+                "weight": 15,
                 "cards": [
                   {
                     "name": "n1",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n2",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n3",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n4",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n5",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n6",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n7",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   },
                   {
                     "name": "n8",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   }
                 ]
               },
               "R": {
                 "name": "稀有",
-                "width": 4,
+                "weight": 4,
                 "cards":[
                   {
                     "name": "r1",
-                    "width": 100,
+                    "weight": 100,
                     "info": "r"
                   },
                   {
                     "name": "r2",
-                    "width": 100,
+                    "weight": 100,
                     "info": "r"
                   },
                   {
                     "name": "r3",
-                    "width": 100,
+                    "weight": 100,
                     "info": "r"
                   }
                 ]
               },
               "SR": {
                 "name": "传说",
-                "width": 1,
+                "weight": 1,
                 "cards":[
                   {
                     "name": "sr1",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   }
                 ]
               },
               "SSR": {
                 "name": "传说",
-                "width": 1,
+                "weight": 1,
                 "cards":[
                   {
                     "name": "ssr1",
-                    "width": 100,
+                    "weight": 100,
                     "info": "n"
                   }
                 ]
