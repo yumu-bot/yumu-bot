@@ -8,12 +8,14 @@ import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.PpmException;
+import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
 import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
+import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.jetbrains.skija.Canvas;
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,22 +44,7 @@ public class PPmService implements MessageService {
             doVs(event, matcher);
             return;
         }
-        if (Math.random() < 0.01){
-            var userBin = bindDao.getUser(event.getSender().getId());
-            var user = osuGetService.getPlayerOsuInfo(userBin);
-            var card = CardBuilder.getUserCard(user);
-            var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
-            Surface surface = Surface.makeRasterN32Premul(1920, 1080);
-            try (surface){
-                Canvas canvas = surface.getCanvas();
-                canvas.drawImage(di,0,0);
-                canvas.translate(40, 40);
-                canvas.drawImage(card.build(), 0, 0);
-                card.build().close();
-                QQMsgUtil.sendImage(event.getSubject(), surface.makeImageSnapshot().encodeToData().getBytes());
-            }
-            return;
-        }
+
         var from = event.getSubject();
         // 获得可能的 at
         At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
@@ -87,6 +75,13 @@ public class PPmService implements MessageService {
                 var userBin = bindDao.getUser(event.getSender().getId());//处理默认mode
                 if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
                 user = osuGetService.getPlayerInfo(userBin, mode);
+                // 触发彩蛋
+                if (Math.random() < 0.004){
+                    var subject = event.getSubject();
+                    var card = CardBuilder.getUserCard(user);
+                    egg(card, subject);
+                    return;
+                }
                 bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
                 ppm = Ppm.getInstance(mode, user, bps);
             }
@@ -284,6 +279,19 @@ public class PPmService implements MessageService {
             temp.call(i, "D", PanelUtil.COLOR_D);
         } else {
             temp.call(i, "F", PanelUtil.COLOR_F);
+        }
+    }
+
+    private static void egg(ACardBuilder card, Contact subject) throws IOException {
+        var di = SkiaImageUtil.getImage(NowbotConfig.BG_PATH+"ExportFileV3/panel-ppmodule-special.png");
+        Surface surface = Surface.makeRasterN32Premul(1920, 1080);
+        try (surface){
+            Canvas canvas = surface.getCanvas();
+            canvas.drawImage(di,0,0);
+            canvas.translate(40, 40);
+            canvas.drawImage(card.build(), 0, 0);
+            card.build().close();
+            QQMsgUtil.sendImage(subject, surface.makeImageSnapshot().encodeToData().getBytes());
         }
     }
 }
