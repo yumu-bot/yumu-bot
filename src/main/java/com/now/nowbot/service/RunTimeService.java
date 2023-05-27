@@ -63,9 +63,9 @@ public class RunTimeService {
         var dayBpList = bpList.stream().filter(e -> dayBefore.isBefore(e.getCreateTime())).toList();
         var group = bot.getGroup(9289_3625_5);
         if (dayBpList.size() > 0) {
-            group.sendMessage(new At(365246692).plus("今天刷到了bp数: " + dayBpList.size()));
+            group.sendMessage(new At(365246692).plus(new At(3054729860L)).plus("今天刷到了bp数: " + dayBpList.size()));
         } else {
-            group.sendMessage(new At(365246692).plus("今天没刷到pp,杀!"));
+            group.sendMessage(new At(365246692).plus(new At(3054729860L)).plus("今天没刷到pp,杀!"));
         }
     }
 
