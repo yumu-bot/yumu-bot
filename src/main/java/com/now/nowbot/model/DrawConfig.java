@@ -73,8 +73,9 @@ public class DrawConfig {
      * @return
      */
     public DrawKind getRandomKind(long uid, DrawLogLiteRepository repository) {
-        // 可能需要的数据: 具体是什么看注释
+        // 20抽之内出ssr的次数
         int countSSR = repository.getKindCount(uid, 20, DrawKind.SSR);
+        // 距离上次出ssr,已经抽了多少次
         int countBefSSR = repository.getBeforCount(uid, DrawKind.SSR);
         return checkKind(countBefSSR, countSSR);
     }
@@ -108,7 +109,7 @@ public class DrawConfig {
     private DrawKind checkKind(int countBefSSR, int countSSR) {
         double ssrProb = 0.006 + Math.max(0, (countBefSSR - 73) * 0.06D);
         // 20抽之内出现两个 ssr, 必定不不会ssr
-        if (countSSR >= 20) ssrProb = 0;
+        if (countSSR >= 2) ssrProb = 0;
         // 十连保底在在十连抽做
         double srProb = 0.051;
         double rProb = 0.243;
