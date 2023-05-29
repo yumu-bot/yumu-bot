@@ -6,7 +6,9 @@ import com.now.nowbot.model.beatmap.BeatmapInfo4Match;
 import com.now.nowbot.model.score.MpScoreInfo;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GameInfo {
@@ -105,5 +107,20 @@ public class GameInfo {
 
     public void setScoreInfos(List<MpScoreInfo> scoreInfos) {
         this.scoreInfos = scoreInfos;
+    }
+
+    public String toString() {
+        return new StringJoiner(", ", GameInfo.class.getSimpleName() + "[", "]")
+                .add("id=" + id)
+                .add("startTime=" + startTime)
+                .add("endTime=" + endTime)
+                .add("mode='" + mode + "'")
+                .add("modInt=" + modInt)
+                .add("scoringType='" + scoringType + "'")
+                .add("teamType='" + teamType + "'")
+                .add("mods=" + Arrays.toString(mods))
+                .add("beatmap=" + beatmap)
+                .add("scoreInfos=" + scoreInfos)
+                .toString();
     }
 }

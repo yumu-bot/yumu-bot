@@ -5,6 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -33,6 +34,8 @@ public class InfoService implements MessageService {
     OsuGetService osuGetService;
     @Autowired
     BindDao bindDao;
+    @Autowired
+    ImageService imageService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -60,51 +63,11 @@ public class InfoService implements MessageService {
 
 //        Image img = from.uploadImage(ExternalResource.create());
         try {
-            var img = postImage(user, mode);
+            var img = imageService.getPanelD(user, mode, osuGetService);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("INFO 数据请求失败", e);
             from.sendMessage("Info 渲染图片超时，请重试。");
         }
-    }
-
-    //getText 移到了 UUIService
-
-    public byte[] postImage(BinUser user, OsuMode mode) {
-        var userInfo = osuGetService.getPlayerInfo(user, mode);
-        var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
-        var res = osuGetService.getRecentN(user, mode, 0, 3);
-
-        float bonus = 0f;
-        if (bps.size() > 0) {
-            var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
-            bonus = SkiaUtil.getBonusPP(bppps, userInfo.getPlayCount());
-            //我不是吧方法抽到util里了吗
-            //bonus = Ppm.bonusPP(bppps, userInfo.getPlayCount());
-        }
-        var times = bps.stream().map(Score::getCreateTime).toList();
-        var now = LocalDate.now();
-        var bpNum = new int[90];
-        times.forEach(time -> {
-            var day = (int)(now.toEpochDay() - time.toLocalDate().toEpochDay());
-            if (day > 0 && day <= 90){
-                bpNum[90-day] ++;
-            }
-        });
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        var body = Map.of("user",userInfo,
-                    "bp-time",bpNum,
-                    "bp-list", bps.subList(0,Math.min(bps.size(), 8)),
-                    "re-list", res,
-                    "bonus_pp", bonus,
-                    "mode", mode.getName()
-                );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_D"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
     }
 }

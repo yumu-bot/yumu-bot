@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.MicroUser;
 
+import java.util.HashSet;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -67,5 +68,21 @@ public class Match {
 
     public void setCurrentGameId(Long currentGameId) {
         this.currentGameId = currentGameId;
+    }
+
+    public void addEventList(Match m){
+        if (true){
+            var nList = m.getEvents();
+            nList.addAll(this.getEvents());
+            var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getUserName).toList());
+            for (var mu : m.getUsers()){
+                if (nameSet.contains(mu.getUserName())){
+                    continue;
+                }
+                nameSet.add(mu.getUserName());
+                getUsers().add(mu);
+            }
+            this.setEvents(nList);
+        }
     }
 }

@@ -77,7 +77,6 @@ public class URAService implements MessageService {
             try {
                 users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
             } catch (Exception e) {
-
                 users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
             }
         }
