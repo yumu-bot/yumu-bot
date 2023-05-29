@@ -105,6 +105,8 @@ public enum Instruction {
 
     URA(URAService.class,
             Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+    TESTURA(TestURAService.class,
+            Pattern.compile("^[!！]test(ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]map")),
