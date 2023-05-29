@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 import java.util.regex.Matcher;
 
 @Service("TEST-URA")
-public class TestURAService implements MessageService{
+public class TestMMNService implements MessageService{
     @Resource
     OsuGetService osuGetService;
     @Resource

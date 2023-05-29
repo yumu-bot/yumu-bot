@@ -124,8 +124,8 @@ public class ImageService {
             }
             averageStar += mapInfo.getDifficultyRating() / games.size();
             statistics.put("background", mapInfo.getBeatMapSet().getCovers().getCover());
-            statistics.put("title", mapInfo.getBeatMapSet().getTitleUTF());
-            statistics.put("artist", mapInfo.getBeatMapSet().getArtistUTF());
+            statistics.put("title", mapInfo.getBeatMapSet().getTitle());
+            statistics.put("artist", mapInfo.getBeatMapSet().getArtist());
             statistics.put("mapper", mapInfo.getBeatMapSet().getCreator());
             statistics.put("difficulty", mapInfo.getVersion());
             statistics.put("status", mapInfo.getBeatMapSet().getStatus());

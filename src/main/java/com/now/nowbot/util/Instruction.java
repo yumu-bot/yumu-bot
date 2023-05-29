@@ -1,7 +1,6 @@
 package com.now.nowbot.util;
 
 
-import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.service.MessageService.*;
 
 import java.util.regex.Pattern;
@@ -105,8 +104,8 @@ public enum Instruction {
 
     URA(URAService.class,
             Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
-    TESTURA(TestURAService.class,
-            Pattern.compile("^[!！]test(ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+    TESTURA(TestMMNService.class,
+            Pattern.compile("^[!！]testymmn\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]map")),
