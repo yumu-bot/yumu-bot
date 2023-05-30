@@ -23,9 +23,7 @@ public class MsgLite {
     private Long fromId;
     @Column(name = "target_id")
     private Long targetId;
-    @Column()
-    @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "content",columnDefinition = "json")
     private String content;
 
     public MsgLite(MessageChain msg) {
