@@ -219,9 +219,6 @@ public class ImageService {
         var body = new HashMap<String, Object>();
         body.put("match", info);
         body.put("scores", scores);
-        body.put("index_powered", "自己改");
-        body.put("index_request_time", "自己改");
-        body.put("index_panel_name", "自己改");
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + "panel_F"), HttpMethod.POST, httpEntity, byte[].class);
         return s.getBody();
