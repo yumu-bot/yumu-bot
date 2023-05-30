@@ -16,7 +16,7 @@
     <properties>
         <java.version>17</java.version>
         <skipTests>true</skipTests>
-        <mirai.version>2.15.0-M1</mirai.version>
+        <mirai.version>2.12.3</mirai.version>
         <run.os>linux</run.os>
         <flexmark.version>0.26.4</flexmark.version>
     </properties>
