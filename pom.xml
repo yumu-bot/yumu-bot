@@ -16,7 +16,7 @@
     <properties>
         <java.version>17</java.version>
         <skipTests>true</skipTests>
-        <mirai.version>2.10.1</mirai.version>
+        <mirai.version>2.15.0-M1</mirai.version>
         <run.os>linux</run.os>
         <flexmark.version>0.26.4</flexmark.version>
     </properties>
@@ -92,6 +92,7 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.78</version>
         </dependency>
+
         <dependency>
             <groupId>net.mamoe</groupId>
             <artifactId>mirai-core-jvm</artifactId>
@@ -163,7 +164,12 @@
             <artifactId>flexmark-all</artifactId>
             <version>0.64.0</version>
         </dependency>
-<!--        <dependency>-->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>1.5.10</version>
+        </dependency>
+        <!--        <dependency>-->
 <!--            <groupId>gui.ava</groupId>-->
 <!--            <artifactId>html2image</artifactId>-->
 <!--            <version>0.9</version>-->
