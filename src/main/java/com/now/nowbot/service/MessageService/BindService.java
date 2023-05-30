@@ -111,7 +111,7 @@ public class BindService implements MessageService {
             }
             try {
                 var buser = bindDao.getUserFromOsuid(d);
-                from.sendMessage(name + " 已绑定 (" + buser.getQq() + ")，若绑定错误，请尝试重新绑定！");
+                from.sendMessage(name + " 已绑定 (" + buser.getQq() + ")，若绑定错误，请尝试重新绑定！\n(!ymbind / !ymbi / !bi)");
             } catch (BindException e) {
                 bindDao.saveUser(event.getSender().getId(), name, d);
                 from.sendMessage("正在将 " + event.getSender().getId() + " 绑定到 (" + d + ") " + name + " 上");

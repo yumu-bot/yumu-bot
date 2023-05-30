@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.regex.Matcher;
 
-@Service("TEST-URA")
-public class TestMMNService implements MessageService{
+@Service("MonitorNow")
+public class MonitorNowService implements MessageService{
     @Resource
     OsuGetService osuGetService;
     @Resource

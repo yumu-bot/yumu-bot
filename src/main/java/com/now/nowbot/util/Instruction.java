@@ -28,7 +28,7 @@ public enum Instruction {
 
     // #1 BOT 内部指令
     PING(PingService.class,
-            Pattern.compile("^[!！](?i)ymping")),
+            Pattern.compile("^[!！](?i)(ymping|ping)")),
 
     BIND(BindService.class,
             Pattern.compile("^[!！](?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
@@ -43,7 +43,8 @@ public enum Instruction {
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
     // BOT 加群确认的功能
-    GROUP(JoinGroupService.class,    Pattern.compile("(是|确认|(?i)y)|(否|取消|(?i)n)")),
+    GROUP(JoinGroupService.class,
+            Pattern.compile("(是|确认|(?i)y)|(否|取消|(?i)n)")),
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,
@@ -71,7 +72,7 @@ public enum Instruction {
     INFO(InfoService.class,
             Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!nfo)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
-    UUI(UUIService.class,
+    INFO2(UUIService.class,
             Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
@@ -96,16 +97,17 @@ public enum Instruction {
 
     // #5 osu! 比赛指令
 
-    MRALEGACY(MRALegacyService.class,
+    MURATING0(MRALegacyService.class,
             Pattern.compile("^[!！](rav2|ymrav2|ymratingv2)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING(MRAService.class,
             Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
-    URA(URAService.class,
+    MURATING2(URAService.class,
             Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
-    TESTURA(TestMMNService.class,
-            Pattern.compile("^[!！]testymmn\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+
+    MONOW(MonitorNowService.class,
+            Pattern.compile("^[!！](ymmn|ymmonitornow|ymmonow|mn)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]map")),
