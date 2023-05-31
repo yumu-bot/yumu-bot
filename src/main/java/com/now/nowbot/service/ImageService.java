@@ -123,10 +123,10 @@ public class ImageService {
             var statistics = new HashMap<String, Object>();
             var mapInfo = osuGetService.getMapInfo(gameItem.getBeatmap().getId());
             if (firstBackground == null){
-                firstBackground = mapInfo.getBeatMapSet().getCovers().getCover();
+                firstBackground = mapInfo.getBeatMapSet().getCovers().getList2x();
             }
             averageStar += mapInfo.getDifficultyRating() / games.size();
-            statistics.put("background", mapInfo.getBeatMapSet().getCovers().getCover());
+            statistics.put("background", mapInfo.getBeatMapSet().getCovers().getList2x());
             statistics.put("title", mapInfo.getBeatMapSet().getTitle());
             statistics.put("artist", mapInfo.getBeatMapSet().getArtist());
             statistics.put("mapper", mapInfo.getBeatMapSet().getCreator());
