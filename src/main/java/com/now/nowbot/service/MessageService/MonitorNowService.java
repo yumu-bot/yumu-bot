@@ -22,12 +22,15 @@ public class MonitorNowService implements MessageService{
     //@CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchId = Integer.parseInt(matcher.group("matchid"));
+        int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
+        int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
+        boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var next = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId());
             match.addEventList(next);
         }
-        var f = imageService.getPanelF(match, osuGetService);
+        var f = imageService.getPanelF(match, osuGetService, skipedRounds, deletEndRounds, includingFail);
 
         QQMsgUtil.sendImage(event.getSubject(), f);
     }

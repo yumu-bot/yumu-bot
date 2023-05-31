@@ -87,9 +87,7 @@ public class ImageService {
             }
         });
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of("user",userInfo,
                 "bp-time",bpNum,
@@ -99,13 +97,18 @@ public class ImageService {
                 "mode", mode.getName()
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + "panel_D"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
+        return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelF(Match match, OsuGetService osuGetService) {
+    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail) {
         //scores
-        var games = match.getEvents().stream().map(MatchEvent::getGame).filter(Objects::nonNull).toList();
+        var games = match.getEvents().stream()
+                .map(MatchEvent::getGame)
+                .filter(Objects::nonNull)
+                .filter(m->m.getScoreInfos() != null && m.getScoreInfos().size()!=0)
+                .toList();
+        final int rSise = games.size();
+        games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
         for (var u : match.getUsers()){
             uidMap.put(u.getId(), u);
@@ -130,6 +133,7 @@ public class ImageService {
             statistics.put("difficulty", mapInfo.getVersion());
             statistics.put("status", mapInfo.getBeatMapSet().getStatus());
             statistics.put("bid", gameItem.getBeatmap().getId());
+            var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(gameItem.getTeamType())){
                 statistics.put("is_team_vs", true);
                 var g_scores = gameItem.getScoreInfos().stream().filter(s -> s.getPassed() && s.getScore() >= 10000).toList();
@@ -159,13 +163,13 @@ public class ImageService {
                 statistics.put("wins_team_red_before", r_win);
                 statistics.put("wins_team_blue_before", b_win);
 
-                var r_user_list = r_score.stream().map(s -> {
+                var r_user_list = r_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
-                var b_user_list = b_score.stream().map(s -> {
+                var b_user_list = b_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 scores.add(Map.of(
                         "statistics",statistics,
@@ -184,7 +188,7 @@ public class ImageService {
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
                 var user_list = g_scores.stream().map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 scores.add(Map.of(
                         "statistics",statistics,
@@ -212,16 +216,21 @@ public class ImageService {
         info.put("is_team_vs", n_win != 0);
 
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>();
         body.put("match", info);
         body.put("scores", scores);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + "panel_F"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
+        return doPost("panel_F", httpEntity);
+    }
+
+    public byte[] drawLine(String ...lines){
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("strs", lines);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("drawLine", httpEntity);
     }
 
     private Map<String,Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods,int rank){
@@ -232,5 +241,15 @@ public class ImageService {
                 "player_mods",mods,
                 "player_rank",rank
         );
+    }
+    private HttpHeaders getDefaultHeader(){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        return headers;
+    }
+    private byte[] doPost(String path, HttpEntity entity ){
+        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
+        return s.getBody();
     }
 }
