@@ -102,7 +102,11 @@ public class ImageService {
 
     public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail) {
         //scores
-        var games = match.getEvents().stream().map(MatchEvent::getGame).filter(Objects::nonNull).toList();
+        var games = match.getEvents().stream()
+                .map(MatchEvent::getGame)
+                .filter(Objects::nonNull)
+                .filter(m->m.getScoreInfos() != null && m.getScoreInfos().size()!=0)
+                .toList();
         final int rSise = games.size();
         games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
