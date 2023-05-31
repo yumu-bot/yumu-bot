@@ -177,7 +177,7 @@ public class ImageService {
                         "blue", b_user_list
                 ));
             } else {
-                var g_scores = gameItem.getScoreInfos().stream().filter(s -> s.getPassed() && s.getScore() >= 10000).toList();
+                var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
                 statistics.put("is_team_vs", false);
                 statistics.put("is_team_red_win", false);
                 statistics.put("is_team_blue_win", false);
