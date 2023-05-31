@@ -67,6 +67,7 @@ public class MessageListener extends SimpleListenerHost {
                 event.getSubject().sendMessage("连接超时 (HTTP 408 Request Timeout)\n快捷查询 ppy 土豆状态：https://status.ppy.sh/").recallIn(RECAL_TIME);
             } else if (e instanceof RequestException reser) {
                 log.info("请求错误:",e);
+                /*
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求失败 (HTTP 404 Not Found)\n").recallIn(RECAL_TIME);
                 } else if(reser.status.value() == 400 || reser.status.getReasonPhrase().equals("Bad Request")){
@@ -77,6 +78,15 @@ public class MessageListener extends SimpleListenerHost {
                 } else {
                     event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")");
                 }
+                 */
+                switch (reser.status.value()) {
+                    case 400 -> event.getSubject().sendMessage("请求错误 (HTTP 400 Bad Request)\n请耐心等待 Bug 修复").recallIn(RECAL_TIME);
+                    case 401 -> event.getSubject().sendMessage("验证失败 (HTTP 401 Unauthorized)\n您的令牌可能已失效。\n请尝试重新绑定 (!ymbind / !ymbi / !bi)").recallIn(RECAL_TIME);
+                    case 404 -> event.getSubject().sendMessage("请求失败 (HTTP 404 Not Found)\n请检查请求对象！").recallIn(RECAL_TIME);
+                    case 408 -> event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
+                    default -> event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")\n请及时反馈给维护人员。");
+                }
+
             } else if (e instanceof EventCancelledException) {
                 log.info("取消消息发送 {}", e.getMessage());
             } else if (e instanceof LogException) {

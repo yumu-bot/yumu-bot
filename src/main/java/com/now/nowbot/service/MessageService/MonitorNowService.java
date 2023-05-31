@@ -19,7 +19,7 @@ public class MonitorNowService implements MessageService{
     ImageService imageService;
 
     @Override
-    @CheckPermission(supperOnly = true)
+    //@CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         Match match = osuGetService.getMatchInfo(matchId);
