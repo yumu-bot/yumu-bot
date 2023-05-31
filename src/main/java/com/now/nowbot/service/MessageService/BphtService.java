@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Panel.BphtPanelBuilder;
@@ -28,12 +29,13 @@ public class BphtService implements MessageService {
     private static final int FONT_SIZE = 30;
     OsuGetService osuGetService;
     BindDao bindDao;
-    Font font;
+    ImageService imageService;
 
     @Autowired
-    public BphtService(OsuGetService osuGetService, BindDao bindDao) {
+    public BphtService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+        this.imageService = imageService;
     }
 
     class intValue {
@@ -87,21 +89,21 @@ public class BphtService implements MessageService {
         if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
         Bps = osuGetService.getBestPerformance(nu, mode,0,100);
 
-        Image image;
+        String[] lins;
         if (matcher.group("info") == null){
             if(mode == null || mode == OsuMode.DEFAULT) {
-                image = new BphtPanelBuilder().drowLine(getAllMsg(Bps, nu.getOsuName(), "")).build();
+                lins = getAllMsg(Bps, nu.getOsuName(), "");
             }else {
-                image = new BphtPanelBuilder().drowLine(getAllMsg(Bps, nu.getOsuName(), mode.getName())).build();
+                lins = getAllMsg(Bps, nu.getOsuName(), mode.getName());
             }
         } else {
             if(mode == null || mode == OsuMode.DEFAULT) {
-                image = new BphtPanelBuilder().drowLine(getAllMsg(Bps, nu.getOsuName(), OsuMode.DEFAULT, nu)).build();
+                lins = getAllMsg(Bps, nu.getOsuName(), OsuMode.DEFAULT, nu);
             }else {
-                image = new BphtPanelBuilder().drowLine(getAllMsg(Bps, nu.getOsuName(), mode, nu)).build();
+                lins = getAllMsg(Bps, nu.getOsuName(), mode, nu);
             }
         }
-        QQMsgUtil.sendImage(from, image.encodeToData(EncodedImageFormat.JPEG).getBytes());
+        QQMsgUtil.sendImage(from, imageService.drawLine(lins));
 //        from.sendMessage(dtbf.toString());
     }
 

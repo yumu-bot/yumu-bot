@@ -87,9 +87,7 @@ public class ImageService {
             }
         });
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of("user",userInfo,
                 "bp-time",bpNum,
@@ -99,8 +97,7 @@ public class ImageService {
                 "mode", mode.getName()
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + "panel_D"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
+        return doPost("panel_D", httpEntity);
     }
 
     public byte[] getPanelF(Match match, OsuGetService osuGetService) {
@@ -212,16 +209,21 @@ public class ImageService {
         info.put("is_team_vs", n_win != 0);
 
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>();
         body.put("match", info);
         body.put("scores", scores);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + "panel_F"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
+        return doPost("panel_F", httpEntity);
+    }
+
+    public byte[] drawLine(String ...lines){
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("strs", lines);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_F", httpEntity);
     }
 
     private Map<String,Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods,int rank){
@@ -232,5 +234,15 @@ public class ImageService {
                 "player_mods",mods,
                 "player_rank",rank
         );
+    }
+    private HttpHeaders getDefaultHeader(){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        return headers;
+    }
+    private byte[] doPost(String path, HttpEntity entity ){
+        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
+        return s.getBody();
     }
 }
