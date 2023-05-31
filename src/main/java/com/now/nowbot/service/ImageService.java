@@ -223,7 +223,7 @@ public class ImageService {
         Map<String, Object> body = new HashMap<>();
         body.put("strs", lines);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_F", httpEntity);
+        return doPost("/drawLine", httpEntity);
     }
 
     private Map<String,Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods,int rank){
