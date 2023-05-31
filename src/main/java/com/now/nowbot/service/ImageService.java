@@ -136,7 +136,7 @@ public class ImageService {
             var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(gameItem.getTeamType())){
                 statistics.put("is_team_vs", true);
-                var g_scores = gameItem.getScoreInfos().stream().filter(s -> s.getPassed() && s.getScore() >= 10000).toList();
+                var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
                 // 成绩分类
                 var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();
                 var b_score = g_scores.stream().filter(s -> "blue".equals(s.getMatch().get("team").asText())).toList();
