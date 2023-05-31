@@ -163,11 +163,11 @@ public class ImageService {
                 statistics.put("wins_team_red_before", r_win);
                 statistics.put("wins_team_blue_before", b_win);
 
-                var r_user_list = r_score.stream().map(s -> {
+                var r_user_list = r_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
-                var b_user_list = b_score.stream().map(s -> {
+                var b_user_list = b_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
