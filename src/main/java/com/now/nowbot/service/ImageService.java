@@ -100,9 +100,11 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelF(Match match, OsuGetService osuGetService) {
+    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail) {
         //scores
         var games = match.getEvents().stream().map(MatchEvent::getGame).filter(Objects::nonNull).toList();
+        final int rSise = games.size();
+        games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
         for (var u : match.getUsers()){
             uidMap.put(u.getId(), u);
@@ -127,6 +129,7 @@ public class ImageService {
             statistics.put("difficulty", mapInfo.getVersion());
             statistics.put("status", mapInfo.getBeatMapSet().getStatus());
             statistics.put("bid", gameItem.getBeatmap().getId());
+            var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(gameItem.getTeamType())){
                 statistics.put("is_team_vs", true);
                 var g_scores = gameItem.getScoreInfos().stream().filter(s -> s.getPassed() && s.getScore() >= 10000).toList();
@@ -158,11 +161,11 @@ public class ImageService {
 
                 var r_user_list = r_score.stream().map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 var b_user_list = b_score.stream().map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 scores.add(Map.of(
                         "statistics",statistics,
@@ -181,7 +184,7 @@ public class ImageService {
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
                 var user_list = g_scores.stream().map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), s.getMatch().get("slot").asInt(0));
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 scores.add(Map.of(
                         "statistics",statistics,
