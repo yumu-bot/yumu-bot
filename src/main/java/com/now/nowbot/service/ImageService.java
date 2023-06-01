@@ -134,7 +134,11 @@ public class ImageService {
                 statistics.put("difficulty", mapInfo.getVersion());
                 statistics.put("status", mapInfo.getBeatMapSet().getStatus());
                 statistics.put("bid", gameItem.getBeatmap().getId());
-                statistics.put("mod_int", gameItem.getModInt());
+                if (gameItem.getModInt() != null) {
+                    statistics.put("mod_int", gameItem.getModInt());
+                } else {
+                    statistics.put("mod_int", 0);
+                }
                 statistics.put("mode", gameItem.getMode());
             } else {
                 statistics.put("delete", true);
@@ -191,6 +195,7 @@ public class ImageService {
                 statistics.put("score_team_blue", 0 );
                 statistics.put("wins_team_red_before", 0);
                 statistics.put("wins_team_blue_before", 0);
+
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
                 var user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
