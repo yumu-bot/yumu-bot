@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
@@ -19,7 +18,6 @@ public class MonitorNowService implements MessageService{
     ImageService imageService;
 
     @Override
-    //@CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));

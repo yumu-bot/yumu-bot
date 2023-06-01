@@ -118,21 +118,27 @@ public class ImageService {
         int r_win = 0;
         int b_win = 0;
         int n_win = 0;
-        float averageStar = 0;
         for (var gameItem: games){
             var statistics = new HashMap<String, Object>();
-            var mapInfo = osuGetService.getMapInfo(gameItem.getBeatmap().getId());
-            if (firstBackground == null){
-                firstBackground = mapInfo.getBeatMapSet().getCovers().getList2x();
+
+            if (gameItem.getBeatmap() != null) {
+                var mapInfo = osuGetService.getMapInfo(gameItem.getBeatmap().getId());
+                if (firstBackground == null) {
+                    firstBackground = mapInfo.getBeatMapSet().getCovers().getList2x();
+                }
+                statistics.put("delete", false);
+                statistics.put("background", mapInfo.getBeatMapSet().getCovers().getList2x());
+                statistics.put("title", mapInfo.getBeatMapSet().getTitle());
+                statistics.put("artist", mapInfo.getBeatMapSet().getArtist());
+                statistics.put("mapper", mapInfo.getBeatMapSet().getCreator());
+                statistics.put("difficulty", mapInfo.getVersion());
+                statistics.put("status", mapInfo.getBeatMapSet().getStatus());
+                statistics.put("bid", gameItem.getBeatmap().getId());
+                statistics.put("mod_int", gameItem.getModInt());
+                statistics.put("mode", gameItem.getMode());
+            } else {
+                statistics.put("delete", true);
             }
-            averageStar += mapInfo.getDifficultyRating() / games.size();
-            statistics.put("background", mapInfo.getBeatMapSet().getCovers().getList2x());
-            statistics.put("title", mapInfo.getBeatMapSet().getTitle());
-            statistics.put("artist", mapInfo.getBeatMapSet().getArtist());
-            statistics.put("mapper", mapInfo.getBeatMapSet().getCreator());
-            statistics.put("difficulty", mapInfo.getVersion());
-            statistics.put("status", mapInfo.getBeatMapSet().getStatus());
-            statistics.put("bid", gameItem.getBeatmap().getId());
             var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(gameItem.getTeamType())){
                 statistics.put("is_team_vs", true);
@@ -208,7 +214,6 @@ public class ImageService {
         info.put("match_time", matchInfo.getStartTime().format(format) + '-' + matchInfo.getEndTime().format(format));
         info.put("match_time_start", matchInfo.getStartTime());
         info.put("match_time_end", matchInfo.getEndTime());
-        info.put("average_star_rating", averageStar);
         info.put("mpid", matchInfo.getId());
         info.put("wins_team_red", r_win);
         info.put("wins_team_blue", b_win);
