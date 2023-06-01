@@ -192,7 +192,7 @@ public class ImageService {
                 statistics.put("wins_team_red_before", 0);
                 statistics.put("wins_team_blue_before", 0);
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
-                var user_list = g_scores.stream().map(s -> {
+                var user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
