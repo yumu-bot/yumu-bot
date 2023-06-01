@@ -129,7 +129,7 @@ public class BindService implements MessageService {
                 // do nothing
             }
             if (user != null && user.getAccessToken() != null){
-                from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。是否重新绑定？回复 OK 确认");
+                from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
                 if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){

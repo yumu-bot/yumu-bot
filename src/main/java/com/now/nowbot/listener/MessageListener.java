@@ -64,7 +64,7 @@ public class MessageListener extends SimpleListenerHost {
                 event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
             } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
                 log.info("连接超时:",e);
-                event.getSubject().sendMessage("连接超时 (HTTP 408 Request Timeout)\n快捷查询 ppy 土豆状态：https://status.ppy.sh/").recallIn(RECAL_TIME);
+                event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
             } else if (e instanceof RequestException reser) {
                 log.info("请求错误:",e);
                 /*
