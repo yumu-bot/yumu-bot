@@ -218,7 +218,7 @@ public class ImageService {
         info.put("wins_team_red", r_win);
         info.put("wins_team_blue", b_win);
         info.put("wins_team_none", n_win);
-        info.put("is_team_vs", n_win != 0);
+        info.put("is_team_vs", n_win == 0);
 
 
         HttpHeaders headers = getDefaultHeader();
