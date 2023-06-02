@@ -1,8 +1,10 @@
 package com.now.nowbot.service;
 
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
@@ -65,6 +67,72 @@ public class ImageService {
             log.error("File error", e);
         }
         return new byte[0];
+    }
+
+    public byte[] getPanelB(BinUser user, OsuMode mode, OsuGetService osuGetService, Ppm ppmMe) {
+        var userInfo = osuGetService.getPlayerInfo(user, mode);
+        String STBPRE = "STB";
+
+        if (Objects.equals(mode.getName(), "MANIA")){
+            STBPRE = "PRE";
+        }
+        var Card_A = new ArrayList<Object>(2);
+        Card_A.add(userInfo);
+        Card_A.add(userInfo);
+
+        var Card_B = new ArrayList<Object>(16);
+
+        var ACC = new HashMap<String, Object>();
+        ACC.put("parameter", "ACC");
+        ACC.put("number", ppmMe.getValue1());
+
+        var PTT = new HashMap<String, Object>();
+        PTT.put("parameter", "PTT");
+        PTT.put("number", ppmMe.getValue2());
+
+        var STA = new HashMap<String, Object>();
+        STA.put("parameter", "STA");
+        STA.put("number", ppmMe.getValue3());
+
+        var STB = new HashMap<String, Object>();
+        STB.put("parameter", STBPRE);
+        STB.put("number", ppmMe.getValue4());
+
+        var EFT = new HashMap<String, Object>();
+        EFT.put("parameter", "EFT");
+        EFT.put("number", ppmMe.getValue5());
+
+        var STH = new HashMap<String, Object>();
+        STH.put("parameter", "STH");
+        STH.put("number", ppmMe.getValue6());
+
+        var OVA = new HashMap<String, Object>();
+        OVA.put("parameter", "ACC");
+        OVA.put("number", ppmMe.getValue7());
+
+        var SAN = new HashMap<String, Object>();
+        SAN.put("parameter", "SAN");
+        SAN.put("number", ppmMe.getValue8());
+
+        Card_B.add(ACC);
+        Card_B.add(PTT);
+        Card_B.add(STA);
+        Card_B.add(STB);
+        Card_B.add(EFT);
+        Card_B.add(STH);
+        Card_B.add(OVA);
+        Card_B.add(SAN);
+
+        var statistics = new HashMap<String, Object>();
+
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "card_A1", Card_A,
+                "card_B", Card_B
+        );
+        HttpEntity<Map<String, ArrayList<Object>>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_B", httpEntity);
     }
 
     public byte[] getPanelD(BinUser user, OsuMode mode, OsuGetService osuGetService) {

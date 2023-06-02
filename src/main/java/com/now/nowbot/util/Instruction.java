@@ -84,6 +84,9 @@ public enum Instruction {
     PPM(PPmService.class,
             Pattern.compile("^[!！](?i)(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
+    PPMinus(PPMinusService.class,
+            Pattern.compile("^[!！](?i)(ym)?ppmv3(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+
 //    PPPLUS(PpPlusService.class,
 //            Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 //
