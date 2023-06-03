@@ -78,17 +78,17 @@ public class ImageService {
         } else {
             STBPRE = "STB";
         }
-        var Card_A = List.of(user);
+        var Card_A = List.of(getPanelBUser(user));
 
         var cardB = Map.of(
                 "ACC", ppmMe.getValue1(),
-                "PTT", ppmMe.getValue1(),
-                "STA", ppmMe.getValue1(),
-                STBPRE, ppmMe.getValue1(),
-                "EFT", ppmMe.getValue1(),
-                "STH", ppmMe.getValue1(),
-                "OVA", ppmMe.getValue1(),
-                "SAN", ppmMe.getValue1()
+                "PTT", ppmMe.getValue2(),
+                "STA", ppmMe.getValue3(),
+                STBPRE, ppmMe.getValue4(),
+                "EFT", ppmMe.getValue5(),
+                "STH", ppmMe.getValue6(),
+                "OVA", ppmMe.getValue7(),
+                "SAN", ppmMe.getValue8()
         );
 
         var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
@@ -111,27 +111,27 @@ public class ImageService {
         } else {
             STBPRE = "STB";
         }
-        var Card_A = List.of(userMe, userOther);
+        var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
 
         var cardB1 = Map.of(
                 "ACC", ppmMe.getValue1(),
-                "PTT", ppmMe.getValue1(),
-                "STA", ppmMe.getValue1(),
-                STBPRE, ppmMe.getValue1(),
-                "EFT", ppmMe.getValue1(),
-                "STH", ppmMe.getValue1(),
-                "OVA", ppmMe.getValue1(),
-                "SAN", ppmMe.getValue1()
+                "PTT", ppmMe.getValue2(),
+                "STA", ppmMe.getValue3(),
+                STBPRE, ppmMe.getValue4(),
+                "EFT", ppmMe.getValue5(),
+                "STH", ppmMe.getValue6(),
+                "OVA", ppmMe.getValue7(),
+                "SAN", ppmMe.getValue8()
         );
         var cardB2 = Map.of(
                 "ACC", ppmOther.getValue1(),
-                "PTT", ppmOther.getValue1(),
-                "STA", ppmOther.getValue1(),
-                STBPRE, ppmOther.getValue1(),
-                "EFT", ppmOther.getValue1(),
-                "STH", ppmOther.getValue1(),
-                "OVA", ppmOther.getValue1(),
-                "SAN", ppmOther.getValue1()
+                "PTT", ppmOther.getValue2(),
+                "STA", ppmOther.getValue3(),
+                STBPRE, ppmOther.getValue4(),
+                "EFT", ppmOther.getValue5(),
+                "STH", ppmOther.getValue6(),
+                "OVA", ppmOther.getValue7(),
+                "SAN", ppmOther.getValue8()
         );
 
         var statistics = Map.of("isVS", true, "gameMode", mode.getModeValue());
@@ -341,5 +341,22 @@ public class ImageService {
     private byte[] doPost(String path, HttpEntity entity ){
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
         return s.getBody();
+    }
+
+    private Map<String, Object> getPanelBUser(OsuUser user){
+        var map = new HashMap<String, Object>(12);
+        map.put("background", user.getCoverUrl());
+        map.put("avatar", user.getAvatarUrl());
+        map.put("sub_icon1", user.getCountry().countryCode());
+        map.put("sub_icon2", user.getSupportLeve());
+        map.put("name", user.getUsername());
+        map.put("rank_global", user.getGlobalRank());
+        map.put("rank_country", user.getCountryRank());
+        map.put("country", user.getCountry().countryCode());
+        map.put("acc", user.getAccuracy());
+        map.put("level", user.getLevelCurrent());
+        map.put("progress", user.getLevelProgress());
+        map.put("pp", user.getPP());
+        return map;
     }
 }
