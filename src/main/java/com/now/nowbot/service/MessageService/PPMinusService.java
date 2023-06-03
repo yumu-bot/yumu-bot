@@ -33,7 +33,6 @@ public class PPMinusService implements MessageService {
     ImageService imageService;
 
     @Override
-    @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         if (matcher.group("vs") != null) {
             // 就不写一堆了,整个方法把
