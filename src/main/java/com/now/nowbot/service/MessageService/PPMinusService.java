@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 
 @Service("PPMinus")
 public class PPMinusService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(PPMLegacyService.class);
+    private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
     @Autowired
     OsuGetService osuGetService;
     @Autowired
@@ -77,11 +77,10 @@ public class PPMinusService implements MessageService {
         try {
             long now = System.currentTimeMillis();
             var img = imageService.getPanelB(user, mode, ppm);
-            log.warn("计时: {}" , System.currentTimeMillis() - now);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
-            from.sendMessage("PPM 渲染图片超时，请重试。");
+            from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !ppmv2。");
         }
     }
 

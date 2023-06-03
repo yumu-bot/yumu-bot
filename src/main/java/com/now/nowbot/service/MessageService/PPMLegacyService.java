@@ -126,10 +126,9 @@ public class PPMLegacyService implements MessageService {
         ppmPanel.drawHexagon(HexData, true);
         ppm.drawOverImage(ppmPanel::drawOverImage, null);//第二个作为用户自定义预留
 
-        var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
+        var panelImage = ppmPanel.build("YumuBot v0.2.0 Debug // PPMinus");
         try ( panelImage) {
             card.build().close();
-            log.warn("计时: {}" , System.currentTimeMillis() - now);
             QQMsgUtil.sendImage(from, panelImage);
         }
     }
