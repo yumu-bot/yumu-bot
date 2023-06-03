@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -24,7 +23,7 @@ import java.util.regex.Matcher;
 
 @Service("PPMinus")
 public class PPMinusService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(PPmService.class);
+    private static final Logger log = LoggerFactory.getLogger(PPMLegacyService.class);
     @Autowired
     OsuGetService osuGetService;
     @Autowired

@@ -76,12 +76,16 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
-            Pattern.compile("^[!！]\\s*(?i)ymf(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f)(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
+
     PPMinus(PPMinusService.class,
-            Pattern.compile("^[!！](?i)(ym)?ppm(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！](?i)(ym)?(ppm|minus)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+
+    PPMLEGACY(PPMLegacyService.class,
+            Pattern.compile("^[!！](?i)(ym)?(ppmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
 //    PPPLUS(PpPlusService.class,
 //            Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -163,7 +167,7 @@ public enum Instruction {
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),
 
     //历史指令 存档一下
-//    PPM("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu aClass] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
+//    PPMLEGACY("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu aClass] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
 //    PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu aClass|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
 //    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
 

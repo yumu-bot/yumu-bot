@@ -3,7 +3,7 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.MessageService.PPmService;
+import com.now.nowbot.service.MessageService.PPMLegacyService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
@@ -52,7 +52,7 @@ public class J3CardBuilder extends PanelBuilder{
 
 
     @Autowired
-    PPmService PPmService;
+    PPMLegacyService PPmService;
 
     private void drawPPMText(OsuUser user) {
         //画指标

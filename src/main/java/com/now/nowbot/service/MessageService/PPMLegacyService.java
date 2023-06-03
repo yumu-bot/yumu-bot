@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("ppm")
-public class PPmService implements MessageService {
+public class PPMLegacyService implements MessageService {
     private static final Logger log = LoggerFactory.getLogger("PPmService");
     @Autowired
     OsuGetService osuGetService;
