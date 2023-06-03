@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -32,6 +33,7 @@ public class PPMinusService implements MessageService {
     ImageService imageService;
 
     @Override
+    @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         if (matcher.group("vs") != null) {
             // 就不写一堆了,整个方法把
@@ -75,7 +77,9 @@ public class PPMinusService implements MessageService {
         }
 
         try {
+            long now = System.currentTimeMillis();
             var img = imageService.getPanelB(user, mode, ppm);
+            log.warn("计时: {}" , System.currentTimeMillis() - now);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
@@ -152,6 +156,7 @@ public class PPMinusService implements MessageService {
             }
         }
 
-
+        var data = imageService.getPanelB(userMe, userOther, ppmMe, ppmOther, mode);
+        QQMsgUtil.sendImage(from, data);
     }
 }

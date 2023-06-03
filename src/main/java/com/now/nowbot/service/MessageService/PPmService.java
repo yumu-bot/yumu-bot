@@ -21,6 +21,8 @@ import net.mamoe.mirai.message.data.At;
 import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Surface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import rx.functions.Action3;
@@ -32,6 +34,7 @@ import java.util.regex.Matcher;
 
 @Service("ppm")
 public class PPmService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger("PPmService");
     @Autowired
     OsuGetService osuGetService;
     @Autowired
@@ -94,7 +97,7 @@ public class PPmService implements MessageService {
             case TAIKO -> ":T";
             default -> ":?";
         };
-
+        long now = System.currentTimeMillis();
         //绘制卡片A
         var card = CardBuilder.getUserCard(user);
         //计算六边形数据
@@ -126,6 +129,7 @@ public class PPmService implements MessageService {
         var panelImage = ppmPanel.build("PANEL-PPM dev.0.0.1");
         try ( panelImage) {
             card.build().close();
+            log.warn("计时: {}" , System.currentTimeMillis() - now);
             QQMsgUtil.sendImage(from, panelImage);
         }
     }
