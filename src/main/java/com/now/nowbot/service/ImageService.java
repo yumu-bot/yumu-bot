@@ -3,6 +3,7 @@ package com.now.nowbot.service;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
@@ -69,69 +70,80 @@ public class ImageService {
         return new byte[0];
     }
 
-    public byte[] getPanelB(BinUser user, OsuMode mode, OsuGetService osuGetService, Ppm ppmMe) {
-        var userInfo = osuGetService.getPlayerInfo(user, mode);
-        String STBPRE = "STB";
+    public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
+        String STBPRE;
 
-        if (Objects.equals(mode.getName(), "MANIA")){
+        if (mode == OsuMode.MANIA){
             STBPRE = "PRE";
+        } else {
+            STBPRE = "STB";
         }
-        var Card_A = new ArrayList<Object>(2);
-        Card_A.add(userInfo);
-        Card_A.add(userInfo);
+        var Card_A = List.of(user);
 
-        var Card_B = new ArrayList<Object>(16);
+        var cardB = Map.of(
+                "ACC", ppmMe.getValue1(),
+                "PTT", ppmMe.getValue1(),
+                "STA", ppmMe.getValue1(),
+                STBPRE, ppmMe.getValue1(),
+                "EFT", ppmMe.getValue1(),
+                "STH", ppmMe.getValue1(),
+                "OVA", ppmMe.getValue1(),
+                "SAN", ppmMe.getValue1()
+        );
 
-        var ACC = new HashMap<String, Object>();
-        ACC.put("parameter", "ACC");
-        ACC.put("number", ppmMe.getValue1());
-
-        var PTT = new HashMap<String, Object>();
-        PTT.put("parameter", "PTT");
-        PTT.put("number", ppmMe.getValue2());
-
-        var STA = new HashMap<String, Object>();
-        STA.put("parameter", "STA");
-        STA.put("number", ppmMe.getValue3());
-
-        var STB = new HashMap<String, Object>();
-        STB.put("parameter", STBPRE);
-        STB.put("number", ppmMe.getValue4());
-
-        var EFT = new HashMap<String, Object>();
-        EFT.put("parameter", "EFT");
-        EFT.put("number", ppmMe.getValue5());
-
-        var STH = new HashMap<String, Object>();
-        STH.put("parameter", "STH");
-        STH.put("number", ppmMe.getValue6());
-
-        var OVA = new HashMap<String, Object>();
-        OVA.put("parameter", "ACC");
-        OVA.put("number", ppmMe.getValue7());
-
-        var SAN = new HashMap<String, Object>();
-        SAN.put("parameter", "SAN");
-        SAN.put("number", ppmMe.getValue8());
-
-        Card_B.add(ACC);
-        Card_B.add(PTT);
-        Card_B.add(STA);
-        Card_B.add(STB);
-        Card_B.add(EFT);
-        Card_B.add(STH);
-        Card_B.add(OVA);
-        Card_B.add(SAN);
-
-        var statistics = new HashMap<String, Object>();
+        var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
 
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
                 "card_A1", Card_A,
-                "card_B", Card_B
+                "card_b_1", cardB,
+                "statistics", statistics
         );
-        HttpEntity<Map<String, ArrayList<Object>>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        return doPost("panel_B", httpEntity);
+    }
+    public byte[] getPanelB(OsuUser userMe, OsuUser userOther, Ppm ppmMe, Ppm ppmOther, OsuMode mode) {
+        String STBPRE;
+
+        if (mode == OsuMode.MANIA){
+            STBPRE = "PRE";
+        } else {
+            STBPRE = "STB";
+        }
+        var Card_A = List.of(userMe, userOther);
+
+        var cardB1 = Map.of(
+                "ACC", ppmMe.getValue1(),
+                "PTT", ppmMe.getValue1(),
+                "STA", ppmMe.getValue1(),
+                STBPRE, ppmMe.getValue1(),
+                "EFT", ppmMe.getValue1(),
+                "STH", ppmMe.getValue1(),
+                "OVA", ppmMe.getValue1(),
+                "SAN", ppmMe.getValue1()
+        );
+        var cardB2 = Map.of(
+                "ACC", ppmOther.getValue1(),
+                "PTT", ppmOther.getValue1(),
+                "STA", ppmOther.getValue1(),
+                STBPRE, ppmOther.getValue1(),
+                "EFT", ppmOther.getValue1(),
+                "STH", ppmOther.getValue1(),
+                "OVA", ppmOther.getValue1(),
+                "SAN", ppmOther.getValue1()
+        );
+
+        var statistics = Map.of("isVS", true, "gameMode", mode.getModeValue());
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "card_A1", Card_A,
+                "card_b_1", cardB1,
+                "card_b_2", cardB2,
+                "statistics", statistics
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_B", httpEntity);
     }
 
