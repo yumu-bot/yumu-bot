@@ -44,7 +44,7 @@ public class TestService implements MessageService {
 
 
     @Override
-    @CheckPermission(supperOnly = true)
+    @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
         var msg = event.getMessage();
 

@@ -7,6 +7,8 @@ import com.now.nowbot.mapper.ServiceSwitchMapper;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
+import net.mamoe.mirai.Bot;
+import net.mamoe.mirai.contact.NormalMember;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ import java.util.regex.Matcher;
 public class Permission {
     private static final Logger log = LoggerFactory.getLogger(Permission.class);
     private static Set<Long> supetList;
+    private static Set<Long> testerList;
     private static final String PERMISSION_ALL = "PERMISSION_ALL";
 
     private static PermissionDao permissionDao;
@@ -104,7 +107,9 @@ public class Permission {
             }
         });
         //初始化暗杀名单(
+        Bot bot = applicationContext.getBean(Bot.class);
         supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
+        testerList = new HashSet<>(bot.getGroup(722292097).getMembers().stream().map(NormalMember::getId).toList());
 
         //初始化功能关闭菜单
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
@@ -299,6 +304,10 @@ public class Permission {
      */
     public static List<Instruction> getClouseServices(){
         return OFF_SERVICE.stream().toList();
+    }
+
+    public boolean isTester(long qq){
+        return testerList.contains(qq);
     }
 
 }

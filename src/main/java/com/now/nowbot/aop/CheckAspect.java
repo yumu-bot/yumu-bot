@@ -52,8 +52,12 @@ public class CheckAspect {
             return args;
         }
         //超管权限判断
-        if (CheckPermission.supperOnly() && !Permission.isSupper(event.getSender().getId())){
+        if (CheckPermission.supperOnly()){
             throw new PermissionException(servicename + "有人使用最高权限 "+ event.getSender().getId()+" -> "+servicename);
+        }
+        // test 功能
+        if (CheckPermission.test() && !permission.isTester(event.getSender().getId())) {
+            throw new PermissionException(servicename + "有人使用测试功能 "+ event.getSender().getId()+" -> "+servicename);
         }
         //服务权限判断
         //白/黑名单

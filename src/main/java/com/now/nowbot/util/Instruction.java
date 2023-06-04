@@ -87,11 +87,6 @@ public enum Instruction {
     PPMLEGACY(PPMLegacyService.class,
             Pattern.compile("^[!！](?i)(ym)?(ppmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
-//    PPPLUS(PpPlusService.class,
-//            Pattern.compile("^[!！](?i)(ym)?ppp(?![vV])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
-//
-//    PPPLUSVS(PpPlusVsService.class,
-//            Pattern.compile("^[!！](?i)(ym)?p([pP]*)?vs(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #4 osu! 谱面指令
 
@@ -127,9 +122,6 @@ public enum Instruction {
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！](?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
 
-    CATPANEL(CatpanelService.class,
-            Pattern.compile("[!！]\\s*(testbg)(\\s*(?<r>qc))?(\\s+(?<bk>\\d{1,3}))?(\\s*(?<yl>ylbx))?")),
-
 
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
@@ -154,7 +146,7 @@ public enum Instruction {
 
 
     DRAW(DrawService.class,
-            Pattern.compile("^抽卡#?(?<d>\\d+)")),
+            Pattern.compile("^抽卡#?(?<d>\\d+)?")),
 
 
 //    SETU(SetuService.class,

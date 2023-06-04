@@ -25,11 +25,11 @@ public class DrawService implements MessageService {
     private DrawLogLiteRepository drawLogLiteRepository;
 
     @Override
-    @CheckPermission(supperOnly = true)
+    @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var osuUser = bindDao.getUser(event.getSender().getId());
 
-        int times = 10;
+        int times = 1;
         if (matcher.group("d") != null) {
             times = Integer.parseInt(matcher.group("d"));
         }

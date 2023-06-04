@@ -26,7 +26,7 @@ public class TestPPMService implements MessageService {
     private OsuGetService osuGetService;
 
     @Override
-    @CheckPermission(supperOnly = true)
+    @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         OsuUser user;

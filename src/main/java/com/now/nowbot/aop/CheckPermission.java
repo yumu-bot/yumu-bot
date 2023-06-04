@@ -37,5 +37,6 @@ public @interface CheckPermission {
      * 管理员专用功能
      */
     boolean supperOnly() default false;
+    boolean test() default false;
 
 }
