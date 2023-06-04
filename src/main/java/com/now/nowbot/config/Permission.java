@@ -108,8 +108,16 @@ public class Permission {
         });
         //初始化暗杀名单(
         Bot bot = applicationContext.getBean(Bot.class);
-        supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
-        testerList = new HashSet<>(bot.getGroup(722292097).getMembers().stream().map(NormalMember::getId).toList());
+        var devGroup = bot.getGroup(746671531);
+        if (devGroup != null){
+            supetList = Set.copyOf(devGroup.getMembers().stream().map(NormalMember::getId).toList());
+        } else {
+            supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
+        }
+        var testGroup = bot.getGroup(722292097);
+        if (testGroup != null){
+            testerList = Set.copyOf(testGroup.getMembers().stream().map(NormalMember::getId).toList());
+        }
 
         //初始化功能关闭菜单
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
