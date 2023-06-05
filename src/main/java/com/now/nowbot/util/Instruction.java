@@ -48,7 +48,7 @@ public enum Instruction {
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymsetmode|ymmode|ymsm|sm)\\s*(?<mode>\\w+)")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm)+\\s*(?<mode>\\w+)")),
 
     YMP(YmpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -61,7 +61,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymtodaybp|ymtbp|tbp|ymt(?!est)|t(?!est))(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|test|t(?!est))+(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba)(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -96,16 +96,16 @@ public enum Instruction {
     // #5 osu! 比赛指令
 
     MURATING0(MRALegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(rav2|ymrav2|ymratingv2)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(rav2|ymrav2|ymratingv2)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING(MRAService.class,
-            Pattern.compile("^[!！]\\s*(?i)(mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(mra|ymra|ymrating)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING2(URAService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ura|uura|uurating)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MONOW(MonitorNowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymmn|ymmonitornow|ymmonow|mn)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymmn|ymmonitornow|ymmonow|mn)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]\\s*(?i)map")),
@@ -123,13 +123,13 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
 
     DRAW(DrawService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))?(\\s+(?<d>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?")),
 
     COUNTMSG(CountQQMessageService.class,
             Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
 
     CM(CountQQMessageService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((cm)|(countmessage)|(countmsg))\\s*(?<d>(n)|(a)|(h))")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((cm)|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
 
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
