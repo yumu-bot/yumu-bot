@@ -28,13 +28,12 @@ public class CountQQMessageService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var bot = event.getBot();
         String groupType = matcher.group("d");
-        String test = matcher.group("d1");
-        if (test != null){
+        if (false){
             var end = LocalDateTime.now();
             var start = end.plusDays(-1);
             var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
                     Long.parseLong(groupType),
-                    Long.parseLong(test)
+                    Long.parseLong("0")
             );
             if (res.size() == 0){
                 event.getSubject().sendMessage("无消息");

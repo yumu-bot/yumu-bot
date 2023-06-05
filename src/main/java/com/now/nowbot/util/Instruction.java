@@ -148,7 +148,7 @@ public enum Instruction {
     DRAW(DrawService.class,
             Pattern.compile("^#抽卡#?(?<d>\\d+)?")),
     COUNTMSG(CountQQMessageService.class,
-            Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群")),
+            Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
     TESTCOUNTMSG(CountQQMessageService.class,
             Pattern.compile("^#test统计(?<d>\\d+) (?<d1>\\d+)")),
 
