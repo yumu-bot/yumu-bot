@@ -24,10 +24,6 @@ public class PingService implements MessageService{
         try (Surface surface = Surface.makeRasterN32Premul(240,240)){
             Canvas canvas = surface.getCanvas();
 
-            Font x = new Font(SkiaUtil.getTorusRegular(), 60);
-            canvas.clear(Color.makeRGB(0,169,248));
-            TextLine t = TextLine.make("PONG!",x);
-            canvas.drawTextLine(t,(240 - t.getWidth())/2, t.getHeight(), new Paint().setARGB(255,192,219,288));
             Image BG = null;
             try {
                 BG = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/help-ping.png");
@@ -35,11 +31,17 @@ public class PingService implements MessageService{
                 throw new RuntimeException("ping failed cuz no BG??!");
             }
             canvas.drawImage(BG,0,0);
+
+            Font x = new Font(SkiaUtil.getTorusRegular(), 60);
+            canvas.clear(Color.makeARGB(180,255,255,255));
+            TextLine t = TextLine.make("PONG!",x);
+            canvas.drawTextLine(t,(240 - t.getWidth())/2, t.getHeight(), new Paint().setARGB(255,192,219,288));
+
             x.close();
             t.close();
             x = new Font(SkiaUtil.getTorusRegular(),20);
             t = TextLine.make(System.currentTimeMillis() + "ms", x);
-            canvas.drawTextLine(t,0,t.getCapHeight() + 4, new Paint().setARGB(255,192,219,288));
+            canvas.drawTextLine(t,0,t.getCapHeight() + 4, new Paint().setARGB(200,255,255,255));
             x.close();t.close();
             date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
