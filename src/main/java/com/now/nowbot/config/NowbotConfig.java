@@ -105,7 +105,6 @@ public class NowbotConfig {
         //配置完成，注册bot
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
         //注册监听 messageListener需要继承SimpleListenerHost类
-//        bot.getEventChannel().registerListenerHost(messageListener);
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
     }

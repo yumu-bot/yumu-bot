@@ -6,6 +6,7 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
@@ -28,6 +29,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service("nowbot-image")
 public class ImageService {
@@ -212,6 +214,18 @@ public class ImageService {
         for (var gameItem: games){
             var statistics = new HashMap<String, Object>();
 
+            var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
+            final int allScoreSize = g_scores.size();
+            var allUserModInt = g_scores.stream()
+                    .flatMap(m -> Arrays.stream(m.getMods()))
+                    .collect(Collectors.groupingBy(m -> m, Collectors.counting()))
+                    .entrySet()
+                    .stream().filter(a-> a.getValue()>=allScoreSize)
+                    .map(Map.Entry::getKey)
+                    .map(Mod::fromStr)
+                    .mapToInt(m -> m.value)
+                    .reduce(0, (a, i) -> a | i);
+
             if (gameItem.getBeatmap() != null) {
                 var mapInfo = osuGetService.getMapInfo(gameItem.getBeatmap().getId());
                 if (firstBackground == null) {
@@ -225,19 +239,19 @@ public class ImageService {
                 statistics.put("difficulty", mapInfo.getVersion());
                 statistics.put("status", mapInfo.getBeatMapSet().getStatus());
                 statistics.put("bid", gameItem.getBeatmap().getId());
-                if (gameItem.getModInt() != null) {
-                    statistics.put("mod_int", gameItem.getModInt());
-                } else {
-                    statistics.put("mod_int", 0);
-                }
                 statistics.put("mode", gameItem.getMode());
+//                if (gameItem.getModInt() != null) {
+//                    statistics.put("mod_int", gameItem.getModInt());
+//                } else {
+//                    statistics.put("mod_int", 0);
+//                }
+                statistics.put("mod_int", allUserModInt);
             } else {
                 statistics.put("delete", true);
             }
             var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(gameItem.getTeamType())){
                 statistics.put("is_team_vs", true);
-                var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
                 // 成绩分类
                 var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();
                 var b_score = g_scores.stream().filter(s -> "blue".equals(s.getMatch().get("team").asText())).toList();
@@ -278,7 +292,6 @@ public class ImageService {
                         "blue", b_user_list
                 ));
             } else {
-                var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
                 statistics.put("is_team_vs", false);
                 statistics.put("is_team_red_win", false);
                 statistics.put("is_team_blue_win", false);

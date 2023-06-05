@@ -1,20 +1,23 @@
 package com.now.nowbot.service.MessageService;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.throwable.LogException;
+import com.now.nowbot.util.JacksonUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 @Service("wiki")
 public class WikiService implements MessageService{
-    static JSONObject WIKI;
+    static JsonNode WIKI;
     WikiService(){
         String datestr = null;
         try {
@@ -22,7 +25,7 @@ public class WikiService implements MessageService{
         } catch (IOException e) {
             e.printStackTrace();
         }
-        WIKI = JSONObject.parseObject(datestr);
+        WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -35,24 +38,23 @@ public class WikiService implements MessageService{
         if (null == key || "null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
             if (WIKI == null){
                 String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
-                WIKI = JSONObject.parseObject(datestr);
+                WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
             }
-            var dates = WIKI.getJSONArray("index");
-            for (int i = 0; i < dates.size(); i++) {
-                var jdate = dates.getJSONObject(i);
-                jdate.forEach((name, array)->{
-                    sb.append(name).append(':').append('\n');
-                    JSONArray array1 = (JSONArray) array;
-                    for (int j = 0; j < array1.size(); j++) {
+            var dates = WIKI.get("index");
+            for (Iterator<Map.Entry<String, JsonNode>> it = dates.fields(); it.hasNext(); ) {
+                var m = it.next();
+                sb.append(m.getKey()).append(':').append('\n');
+                if (m.getValue().isArray()){
+                    for (int i = 0; i < m.getValue().size(); i++) {
                         sb.append(" ")
-                                .append(array1.getString(j));
+                                .append(m.getValue().get(i).asText());
                     }
-                    sb.append('\n');
-                });
+                }
+                sb.append('\n');
             }
         }else {
             key = key.toUpperCase();
-            String r = WIKI.getString(key);
+            String r = WIKI.findValue(key).asText();
             if (r == null) throw new LogException("没有找到"+key,null);
             sb.append(key).append(':').append('\n');
             sb.append(r);

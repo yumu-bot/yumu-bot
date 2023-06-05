@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 @Service("MonitorNow")
-public class MonitorNowService implements MessageService{
+public class MonitorNowService implements MessageService {
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -25,14 +25,21 @@ public class MonitorNowService implements MessageService{
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
         Match match = osuGetService.getMatchInfo(matchId);
-        int gameTime = match.getEvents().stream()
+        int gameTime = 0;
+        var m = match.getEvents().stream()
                 .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                .get(Boolean.FALSE).intValue();
+                .get(Boolean.FALSE);
+        if (m != null) {
+            gameTime = m.intValue();
+        }
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId()) && gameTime < 40) {
             var next = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId());
-            gameTime += next.getEvents().stream()
+            m = next.getEvents().stream()
                     .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                    .get(Boolean.FALSE).intValue();
+                    .get(Boolean.FALSE);
+            if (m != null) {
+                gameTime += m.intValue();
+            }
             match.addEventList(next);
         }
         var f = imageService.getPanelF(match, osuGetService, skipedRounds, deletEndRounds, includingFail);

@@ -1,7 +1,5 @@
 package com.now.nowbot.model;
 
-import ch.qos.logback.core.util.TimeUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.JsonData.Score;
 
 import java.text.NumberFormat;
@@ -44,59 +42,6 @@ public class Ymp {
         return url;
     }
 
-    public Ymp(JSONObject date) {
-        var user = date.getJSONObject("user");
-        name = user.getString("username");
-        mode = date.getString("mode");
-        country = user.getString("country_code");
-        var modsdate = date.getJSONArray("mods");
-        mods = new String[modsdate.size()];
-        for (int i = 0; i < mods.length; i++) {
-            mods[i] = modsdate.getString(i);
-        }
-        map_name = date.getJSONObject("beatmapset").getString("title_unicode");
-        artist = date.getJSONObject("beatmapset").getString("artist_unicode");
-        map_hard = date.getJSONObject("beatmap").getString("version");
-        url = date.getJSONObject("beatmapset").getJSONObject("covers").getString("card");
-
-        difficulty = date.getJSONObject("beatmap").getFloatValue("difficulty_rating");
-        map_length = date.getJSONObject("beatmap").getIntValue("total_length");
-        int starmun = (int) Math.floor(difficulty);
-        star = "";
-        for (int i = 0; i < starmun && i < 10; i++) {
-            star += '★';
-        }
-        if (0.5 < (difficulty - starmun) && starmun < 10) {
-            star += '☆';
-        }
-
-        rank = date.getString("rank");
-        score = date.getIntValue("score");
-        acc = (float) (Math.round(date.getFloatValue("accuracy") * 10000) / 100D);
-
-        try {
-            pp = date.getFloat("pp");
-        } catch (Exception e) {
-            pp = 0;
-            e.printStackTrace();
-        }
-
-        combo = date.getIntValue("max_combo");
-        bid = date.getJSONObject("beatmap").getIntValue("id");
-        passed = date.getBoolean("passed");
-        key = date.getJSONObject("beatmap").getIntValue("cs");
-
-        var ndate = date.getJSONObject("statistics");
-        n_300 = ndate.getIntValue("count_300");
-        n_100 = ndate.getIntValue("count_100");
-        n_50 = ndate.getIntValue("count_50");
-        n_0 = ndate.getIntValue("count_miss");
-        n_geki = ndate.getIntValue("count_geki");
-        n_katu = ndate.getIntValue("count_katu");
-        play_time = date.getString("created_at");
-
-        if (!passed) rank = "F";
-    }
 
     public Ymp(Score date) {
         var user = date.getUser();
