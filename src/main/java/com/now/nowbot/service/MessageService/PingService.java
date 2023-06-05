@@ -7,7 +7,6 @@ import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.jetbrains.skija.*;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +32,6 @@ public class PingService implements MessageService{
             canvas.drawImage(BG,0,0);
 
             Font x = new Font(SkiaUtil.getTorusRegular(), 60);
-            canvas.clear(Color.makeARGB(180,255,255,255));
             TextLine t = TextLine.make("PONG!",x);
             canvas.drawTextLine(t,(240 - t.getWidth())/2, t.getHeight(), new Paint().setARGB(255,192,219,288));
 
