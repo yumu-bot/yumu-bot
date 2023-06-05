@@ -277,8 +277,11 @@ public class BphtService implements MessageService {
 
         dtbf.append("bp中mapper统计:\n");
         var mappers = mapperSum.values().stream()
-                .sorted(Comparator.comparing(mapperDate::getSize).reversed())
-                .limit(6).collect(Collectors.toList());
+                .sorted((o1, o2) -> {
+                    if (o1.size != o2.size) return 2*(o2.size - o1.size);
+                    return o1.allPP > o2.allPP ? -1 : 1;
+                })
+                .limit(6).toList();
         mappers.forEach(mapperDate -> {
             try {
                 var user = osuGetService.getPlayerInfo((long) mapperDate.uid, binUser, mode);

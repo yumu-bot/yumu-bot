@@ -70,6 +70,17 @@ public class ImageService {
         return new byte[0];
     }
 
+    public byte[] getPanelJ(OsuUser user, List<Score> bp){
+        HttpHeaders headers = getDefaultHeader();
+        
+        var body = Map.of(
+                "card_A1", user,
+                "bp", bp
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        return doPost("panel_J", httpEntity);
+    }
+
     public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
         String STBPRE;
 
