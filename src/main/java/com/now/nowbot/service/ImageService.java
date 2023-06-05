@@ -72,7 +72,7 @@ public class ImageService {
 
     public byte[] getPanelJ(OsuUser user, List<Score> bp){
         HttpHeaders headers = getDefaultHeader();
-        
+
         var body = Map.of(
                 "card_A1", user,
                 "bp", bp
