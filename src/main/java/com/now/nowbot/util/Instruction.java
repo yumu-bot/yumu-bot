@@ -48,7 +48,7 @@ public enum Instruction {
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,
-            Pattern.compile("^[!！]\\s*(?i)ymmode\\s*(?<mode>\\w+)")),
+            Pattern.compile("^[!！]\\s*(?i)(ymsetmode|ymmode|ymsm|sm)\\s*(?<mode>\\w+)")),
 
     YMP(YmpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -61,10 +61,10 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
-            Pattern.compile("^[!！](?i)tbp(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymtodaybp|ymtbp|tbp|ymt|t)(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
-            Pattern.compile("^[!！](?i)ymbpht(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba)(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #3 osu! 玩家指令
 
@@ -81,11 +81,11 @@ public enum Instruction {
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
 
-    PPMinus(PPMinusService.class,
-            Pattern.compile("^[!！](?i)(ym)?(ppm|minus)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+    PPM(PPMinusService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppm|minus)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
-    PPMLEGACY(PPMLegacyService.class,
-            Pattern.compile("^[!！](?i)(ym)?(ppmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+    PPM0(PPMLegacyService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
 
     // #4 osu! 谱面指令
@@ -96,19 +96,19 @@ public enum Instruction {
     // #5 osu! 比赛指令
 
     MURATING0(MRALegacyService.class,
-            Pattern.compile("^[!！](rav2|ymrav2|ymratingv2)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(rav2|ymrav2|ymratingv2)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING(MRAService.class,
-            Pattern.compile("^[!！](mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(mra|ymra|ymrating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING2(URAService.class,
-            Pattern.compile("^[!！](ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ura|uura|uurating)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MONOW(MonitorNowService.class,
-            Pattern.compile("^[!！](ymmn|ymmonitornow|ymmonow|mn)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymmn|ymmonitornow|ymmonow|mn)\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
-            Pattern.compile("^[!！]map")),
+            Pattern.compile("^[!！]\\s*(?i)map")),
 
 //    START(StartService.class,
 //            Pattern.compile("^[!！]((积分)|(..积分))+.*")),
@@ -117,11 +117,10 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>\\s*))?")),
 
     TRANS(TransService.class,
-            Pattern.compile("^[!！]\\s*(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     OVERSR(OverSRService.class,
-            Pattern.compile("^[!！](?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
-
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
 
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
@@ -129,20 +128,23 @@ public enum Instruction {
     TEST(TestService.class,
             Pattern.compile("^[!！]\\s*test.*")),
 
-    TESTID(TestGetId.class,    Pattern.compile("^[!！]\\s*testid\\s*(?<ids>((\\d)+(,)?)+)")),
+    TESTID(TestGetId.class,
+            Pattern.compile("^[!！]\\s*(?i)testid\\s*(?<ids>((\\d)+(,)?)+)")),
 
-    TESTRA(TestRaService.class,    Pattern.compile("[!！]\\s*testra(\\s+(?<id>\\d+))")),
+    TESTRA(TestRaService.class,
+            Pattern.compile("[!！]\\s*(?i)testra(\\s+(?<id>\\d+))")),
 
-    TESTPPM(TestPPMService.class,    Pattern.compile("[!！]\\s*testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
+    TESTPPM(TestPPMService.class,
+            Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
-    TESTINFO(InfoLegacyService.class,    Pattern.compile("[!！]\\s*(testinfo)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
+    TESTINFO(InfoLegacyService.class,
+            Pattern.compile("[!！]\\s*(?i)(testinfo)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
     TESTMT(TestMt4.class,
-            Pattern.compile("^[!！]testmt\\s*(?<data>[ox ]+)")),
-
+            Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)")),
 
     TESTMAP(TestMapServer.class,
-            Pattern.compile("^[!！]testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
+            Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
 
     DRAW(DrawService.class,
@@ -163,7 +165,7 @@ public enum Instruction {
 //    MPRT("rt", "<未上线> 木斗力 a.k.a MuRating 1.0，可查询比赛中选手们各自的评分！", null),
 
     //历史指令 存档一下
-//    PPMLEGACY("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu aClass] PPMinus-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
+//    PPM0("ppm",      Pattern.compile("^[!！](?i)(ym)?ppm(?![vV])([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?"), "!ymppm[:mode][osu aClass] PPM-娱乐性实力算法，可查询不同人或不同模式（除了mania）。\n   比如：!ymppm:t muziyami"),
 //    PPMVS("ppmvs",  Pattern.compile("^[!！](?i)(ym)?ppmvs([:：](?<mode>[\\w\\d]+))?(\\s+(?<aClass>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*:\\s*(?<name2>[0-9a-zA-Z\\[\\]\\-_ ]+))?"), "!ymppmvs <osu aClass|@某人> PPM对比，需要自己绑定，如果是ppmvs也需要对方绑定"),
 //    KUMO("kumo",    Pattern.compile("^none$"), null), 以后再开
 
