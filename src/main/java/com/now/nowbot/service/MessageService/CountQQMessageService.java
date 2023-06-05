@@ -47,8 +47,14 @@ public class CountQQMessageService implements MessageService{
         long groupId;
         switch (groupType){
             default:
+            case "n" :
+            case "N" :
             case "新人" : groupId = 595985887; break;
+            case "a" :
+            case "A" :
             case "进阶" : groupId = 928936255; break;
+            case "h" :
+            case "H" :
             case "高阶" : groupId = 281624271; break;
         }
         var group = bot.getGroup(groupId);

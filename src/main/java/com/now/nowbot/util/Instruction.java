@@ -24,20 +24,20 @@ public enum Instruction {
 
     // #0 调出帮助
     HELP(HelpService.class,
-            Pattern.compile("^[!！](?i)(ym)?((help)|(h))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((help)|(h))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #1 BOT 内部指令
     PING(PingService.class,
-            Pattern.compile("^[!！](?i)(ymping|ping)")),
+            Pattern.compile("^[!！]\\s*(?i)(ymping|ping)")),
 
     BIND(BindService.class,
-            Pattern.compile("^[!！](?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！]\\s*(?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BAN(BanService.class,
             Pattern.compile("[!！]\\s*(?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
 
     SWITCH(SwitchService.class,
-            Pattern.compile("^[!！](?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
+            Pattern.compile("^[!！]\\s*(?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
 
     // BOT 自己更新的功能，现在因为可以 SSH 远程更新，所以几乎不用了
     UPDATE(UpdateService.class,
@@ -61,7 +61,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymtodaybp|ymtbp|tbp|ymt|t)(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymtodaybp|ymtbp|tbp|ymt(?!est)|t(?!est))(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba)(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -85,7 +85,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ppm|minus)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     PPM0(PPMLegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(pmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
 
     // #4 osu! 谱面指令
@@ -122,6 +122,15 @@ public enum Instruction {
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
 
+    DRAW(DrawService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))?(\\s+(?<d>\\d+))?")),
+
+    COUNTMSG(CountQQMessageService.class,
+            Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
+
+    CM(CountQQMessageService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((cm)|(countmessage)|(countmsg))\\s*(?<d>(n)|(a)|(h))")),
+
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
@@ -146,11 +155,6 @@ public enum Instruction {
     TESTMAP(TestMapServer.class,
             Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?")),
 
-
-    DRAW(DrawService.class,
-            Pattern.compile("^#抽卡#?(?<d>\\d+)?")),
-    COUNTMSG(CountQQMessageService.class,
-            Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
     TESTCOUNTMSG(CountQQMessageService.class,
             Pattern.compile("^#test统计(?<d>\\d+) (?<d1>\\d+)")),
 

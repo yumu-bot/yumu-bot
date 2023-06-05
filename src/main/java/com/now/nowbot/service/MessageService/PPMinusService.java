@@ -80,7 +80,7 @@ public class PPMinusService implements MessageService {
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
-            from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !ppmv2。");
+            from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !pmv2。");
         }
     }
 
