@@ -30,7 +30,7 @@ public class PingService implements MessageService{
             canvas.drawTextLine(t,(500-t.getWidth())/2, t.getHeight(),new Paint().setARGB(255,192,219,288));
             Image BG = null;
             try {
-                BG = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportfileV3/help-ping.png");
+                BG = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/help-ping.png");
             } catch (IOException e) {
                 throw new RuntimeException("ping failed cuz no BG??!");
             }
