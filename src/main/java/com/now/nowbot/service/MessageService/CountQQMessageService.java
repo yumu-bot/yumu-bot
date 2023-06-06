@@ -77,16 +77,15 @@ public class CountQQMessageService implements MessageService{
                 );
         var resList = res.stream().map(l -> new Res(l.get("qq").longValue(), l.get("sum").intValue()))
                 .sorted(Comparator.comparingInt(Res::n).reversed()).toList();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("|qq|群名片|消息数量|\n|--|--|--|\n");
         for (var m: resList){
-            String n = String.format("%04d", m.n()); //消息数量
             long qq = m.qq();
             var u = group.getMembers().get(qq);
             if (u == null) continue;
             String name = u.getNameCard();
-            sb.append(n).append(" - (").append(qq).append(") [").append(name).append("]").append('\n');
+            sb.append('|').append(qq).append('|').append(name).append('|').append(m.n).append('|').append('\n');
         }
-        var b = imageService.drawLine(sb.toString().split("\n")); //要不要考虑用 Markdown?
+        var b = imageService.getMarkdownImage(sb.toString()); //要不要考虑用 Markdown?
 
         QQMsgUtil.sendImage(event.getSubject(), b);
     }

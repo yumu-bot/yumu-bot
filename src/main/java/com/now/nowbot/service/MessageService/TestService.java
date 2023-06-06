@@ -3,10 +3,9 @@ package com.now.nowbot.service.MessageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.QQMessageDao;
-import com.now.nowbot.service.MarkdownService;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +29,7 @@ public class TestService implements MessageService {
     OsuGetService osuGetService;
     QQMessageDao qqMessageDao;
     @Resource
-    MarkdownService markdownService;
+    ImageService imageService;
     @Resource
     RestTemplate restTemplate;
 
@@ -49,13 +47,13 @@ public class TestService implements MessageService {
         var msg = event.getMessage();
 
         if (msg.contentToString().startsWith("!testmd")){
-            QQMsgUtil.sendImage(event.getSubject(), markdownService.getImage(removeFirstLine(msg.contentToString()),1080));
+            QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(msg.contentToString()),1080));
         } else if (msg.contentToString().startsWith("!testwebmd")){
             var p = Pattern.compile("(?<url>(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])");
             var m = p.matcher(msg.contentToString());
             if (m.find()) {
                 var s = restTemplate.getForObject(m.group("url"), String.class);
-                QQMsgUtil.sendImage(event.getSubject(), markdownService.getImage(removeFirstLine(s), 1080));
+                QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(s), 1080));
             }
         } else if (msg.contentToString().startsWith("!testname")){
            var m = pattern.matcher(msg.contentToString());

@@ -42,6 +42,27 @@ public class ImageService {
         this.restTemplate = restTemplate;
     }
 
+    public byte[] getMarkdownImage(String markdown){
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of("md",markdown,"width", 1500);
+        HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("md", httpEntity);
+    }
+
+    /***
+     * 宽度是px,最好600以上
+     * @param width 宽度
+     * @return 图片
+     */
+    public byte[] getMarkdownImage(String markdown, int width){
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of("md",markdown,"width", width);
+        HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("md", httpEntity);
+    }
+
     public byte[] getCardH() {
         try {
             HttpHeaders headers = new HttpHeaders();
