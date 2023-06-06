@@ -70,7 +70,7 @@ public class CountQQMessageService implements MessageService{
             userArr[i] = users.get(i);
         }
         var end = LocalDateTime.now();
-        var start = end.plusDays(-1);
+        var start = end.plusDays(-7);
         var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
                     groupId,
                     userArr
