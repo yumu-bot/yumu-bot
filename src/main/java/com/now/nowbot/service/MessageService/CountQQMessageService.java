@@ -62,7 +62,7 @@ public class CountQQMessageService implements MessageService{
             throw new TipsException("不在群里");
         }
         var users = group.getMembers().stream()
-                .filter(normalMember -> normalMember.getPermission() == MemberPermission.ADMINISTRATOR)
+                .filter(normalMember -> normalMember.getPermission() == MemberPermission.ADMINISTRATOR || normalMember.getPermission() == MemberPermission.OWNER)
                 .map(NormalMember::getId)
                 .toList();
         var userArr = new long[users.size()];
