@@ -83,7 +83,7 @@ public class CountQQMessageService implements MessageService{
             var u = group.getMembers().get(qq);
             if (u == null) continue;
             String name = u.getNameCard();
-            sb.append('|').append(qq).append('|').append(name).append('|').append(m.n).append('|').append('\n');
+            sb.append('|').append(qq).append('|').append(name.replace("|", "\\|")).append('|').append(m.n).append('|').append('\n');
         }
         var b = imageService.getMarkdownImage(sb.toString()); //要不要考虑用 Markdown?
 
