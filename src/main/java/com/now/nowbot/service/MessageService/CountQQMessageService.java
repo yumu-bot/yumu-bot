@@ -85,7 +85,7 @@ public class CountQQMessageService implements MessageService{
             String name = u.getNameCard();
             sb.append('|').append(qq).append('|').append(name.replace("|", "\\|")).append('|').append(m.n).append('|').append('\n');
         }
-        var b = imageService.getMarkdownImage(sb.toString()); //要不要考虑用 Markdown?
+        var b = imageService.getMarkdownImage(sb.toString(), 600); //要不要考虑用 Markdown?
 
         QQMsgUtil.sendImage(event.getSubject(), b);
     }
