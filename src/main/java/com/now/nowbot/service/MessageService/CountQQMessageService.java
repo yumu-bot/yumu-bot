@@ -80,14 +80,13 @@ public class CountQQMessageService implements MessageService{
         StringBuilder sb = new StringBuilder();
         for (var m: resList){
             long qq = m.qq();
-            int n = m.n();
             var u = group.getMembers().get(qq);
             if (u == null) continue;
+            String n = String.format("%03d", m.n()); //消息数量
             String name = u.getNameCard();
-            sb.append('[').append(name).append(']').append(' ')
-                    .append(n).append('\n');
+            sb.append(n).append(" - (").append(u).append(") [").append(name).append("]").append('\n');
         }
-        var b = imageService.drawLine(sb.toString().split("\n"));
+        var b = imageService.drawLine(sb.toString().split("\n")); //要不要考虑用 Markdown?
 
         QQMsgUtil.sendImage(event.getSubject(), b);
     }
