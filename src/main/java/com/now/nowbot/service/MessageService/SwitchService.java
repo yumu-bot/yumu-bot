@@ -44,7 +44,7 @@ public class SwitchService implements MessageService{
             StringBuilder sb = new StringBuilder();
             var list = Permission.getClouseServices();
             for (Instruction value : Instruction.values()) {
-                sb.append(value).append(list.contains(value)?'OFF':'ON').append('\n');
+                sb.append(value).append(list.contains(value)?'X':'O').append('\n');
             }
             from.sendMessage(sb.toString());
             return;
@@ -73,7 +73,7 @@ public class SwitchService implements MessageService{
                 StringBuilder sb = new StringBuilder();
                 var list = Permission.getClouseServices();
                 for (Instruction value : Instruction.values()) {
-                    sb.append(value).append(list.contains(value)?'×':'√').append('\n');
+                    sb.append(value).append(list.contains(value)?'X':'O').append('\n');
                 }
                 from.sendMessage(sb.toString());
                 return;
