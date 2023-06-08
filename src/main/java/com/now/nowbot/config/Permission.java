@@ -31,8 +31,9 @@ public class Permission {
 
     private static PermissionDao permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
+
     @Autowired
-    public Permission(PermissionDao permissionDao){
+    public Permission(PermissionDao permissionDao) {
         Permission.permissionDao = permissionDao;
     }
 
@@ -40,7 +41,7 @@ public class Permission {
     private static PermissionData ALL_W;
     private static PermissionData ALL_B;
     //service名单
-    private static Map<String ,PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
+    private static Map<String, PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
     private static CopyOnWriteArraySet<Instruction> OFF_SERVICE = null;
 
     private static Map<Instruction, String> SERVICE_NAME = new TreeMap<>();
@@ -69,12 +70,12 @@ public class Permission {
                 // 拿到方法上的权限注解
                 $beansCheck = AopUtils.getTargetClass(bean).getMethod("HandleMessage", MessageEvent.class, Matcher.class).getAnnotation(CheckPermission.class);
             } catch (NoSuchMethodException e) {
-                log.error("反射获取service类异常",e);
+                log.error("反射获取service类异常", e);
             }
 
             //如果包含权限注解 则初始化权限列表
             if ($beansCheck != null) {
-                if ($beansCheck.supperOnly()){
+                if ($beansCheck.supperOnly()) {
                     var obj = new PermissionData(true);
                     Permission.PERMISSIONS.put(name, obj);
                 } else {
@@ -84,8 +85,7 @@ public class Permission {
                     if ($beansCheck.friend()) {
                         if ($beansCheck.isWhite()) {
                             friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
-                        }
-                        else {
+                        } else {
                             friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
                         }
                     }
@@ -93,8 +93,7 @@ public class Permission {
                     if ($beansCheck.group()) {
                         if ($beansCheck.isWhite()) {
                             group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_W));
-                        }
-                        else {
+                        } else {
                             group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_B));
                         }
                     }
@@ -109,13 +108,13 @@ public class Permission {
         //初始化暗杀名单(
         Bot bot = applicationContext.getBean(Bot.class);
         var devGroup = bot.getGroup(746671531);
-        if (devGroup != null){
+        if (devGroup != null) {
             supetList = Set.copyOf(devGroup.getMembers().stream().map(NormalMember::getId).toList());
         } else {
-            supetList = Set.of(1340691940L,3145729213L,365246692L,2480557535L,1968035918L,2429299722L,447503971L);
+            supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
         }
         var testGroup = bot.getGroup(722292097);
-        if (testGroup != null){
+        if (testGroup != null) {
             testerList = Set.copyOf(testGroup.getMembers().stream().map(NormalMember::getId).toList());
         }
 
@@ -123,21 +122,21 @@ public class Permission {
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
         OFF_SERVICE = new CopyOnWriteArraySet<>();
 
-        for (var i : Instruction.values()){
+        for (var i : Instruction.values()) {
             var names = applicationContext.getBeanNamesForType(i.getaClass());
             if (names.length > 0) {
                 SERVICE_NAME.put(i, String.join(",", names));
                 var p = serviceSwitchMapper.findById(names[0]);
-                if( p.isPresent() && !p.get().isSwitch() ){
+                if (p.isPresent() && !p.get().isSwitch()) {
                     OFF_SERVICE.add(i);
                 }
             }
         }
 
-        for ( var i : Instruction.values() ){
+        for (var i : Instruction.values()) {
             for (String s : getServiceName(i)) {
                 var p = serviceSwitchMapper.findById(s);
-                if( p.isPresent() && !p.get().isSwitch() ){
+                if (p.isPresent() && !p.get().isSwitch()) {
                     OFF_SERVICE.add(i);
                 }
             }
@@ -145,7 +144,7 @@ public class Permission {
         log.info("名单初始化完成");
     }
 
-    public Set<String> list(){
+    public Set<String> list() {
         Set<String> out = new HashSet<>();
         PERMISSIONS.forEach((name, perm) -> {
             if (perm.isSupper()) {
@@ -155,7 +154,7 @@ public class Permission {
         return out;
     }
 
-    public boolean containsGroup(String sName,Long id){
+    public boolean containsGroup(String sName, Long id) {
         //不存在该名单默认为无限制
         if (!PERMISSIONS.containsKey(sName)) return true;
         var p = PERMISSIONS.get(sName);
@@ -168,7 +167,8 @@ public class Permission {
         * */
         return p.hasGroup(id);
     }
-    public boolean containsFriend(String sName, Long id){
+
+    public boolean containsFriend(String sName, Long id) {
         //不存在该名单默认为无限制
         if (!PERMISSIONS.containsKey(sName)) return true;
         var p = PERMISSIONS.get(sName);
@@ -177,144 +177,177 @@ public class Permission {
 
     public boolean addGroup(String sName, Long id, boolean isSuper) {
         var perm = PERMISSIONS.get(sName);
-        if (perm != null && (!perm.isSupper() || isSuper)) {
-            if (perm.isWhite()) {
-                if (perm.getGroupList().add(id)) {
-                    permissionDao.addGroup(sName, PermissionType.GROUP_W, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            } else {
-                if (perm.getGroupList().add(id)) {
-                    permissionDao.addGroup(sName, PermissionType.GROUP_B, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            }
-        }
-        return false;
+        return addGroup(sName, id, isSuper, perm);
     }
+
+
     public boolean addGroup(Long id, boolean isSuper) {
         var perm = ALL_B;
-        if (!perm.isSupper() || isSuper) {
-            if (perm.isWhite()) {
-                if (perm.getGroupList().add(id)) {
-                    permissionDao.addGroup(PERMISSION_ALL, PermissionType.GROUP_W, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            } else {
-                if (perm.getGroupList().add(id)) {
-                    permissionDao.addGroup(PERMISSION_ALL, PermissionType.GROUP_B, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            }
-        }
-        return false;
+        return addGroup(PERMISSION_ALL, id, isSuper, perm);
     }
 
-    public boolean addFriend(String sName, Long id){
+    private boolean addGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
+        if (perm == null || (!isSuper && perm.isSupper())){
+            return false;
+        }
+        if (perm.isWhite()) {
+            if (perm.getGroupList().add(id)) {
+                permissionDao.addGroup(sName, PermissionType.GROUP_W, id);
+                return true;
+            } else {
+                throw new TipsRuntimeException("已经有了");
+            }
+        } else {
+            if (perm.getGroupList().add(id)) {
+                permissionDao.addGroup(sName, PermissionType.GROUP_B, id);
+                return true;
+            } else {
+                throw new TipsRuntimeException("已经有了");
+            }
+        }
+    }
+
+    public boolean addFriend(String sName, Long id) {
         var perm = PERMISSIONS.get(sName);
-        if (perm != null){
-            if (perm.isWhite()) {
-                if (perm.getFriendList().add(id)) {
-                    permissionDao.addFriend(sName, PermissionType.FRIEND_W, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            } else {
-                if (perm.getFriendList().add(id)) {
-                    permissionDao.addFriend(sName, PermissionType.FRIEND_B, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            }
-        }
-        return false;
+        return addFriend(id, perm, sName);
     }
 
-    public boolean addFriend(Long id){
+    public boolean addFriend(Long id) {
         var perm = ALL_B;
-        if (perm != null){
-            if (perm.isWhite()) {
-                if (perm.getFriendList().add(id)) {
-                    permissionDao.addFriend(PERMISSION_ALL, PermissionType.FRIEND_W, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            } else {
-                if (perm.getFriendList().add(id)) {
-                    permissionDao.addFriend(PERMISSION_ALL, PermissionType.FRIEND_B, id);
-                    return true;
-                } else {
-                    throw new TipsRuntimeException("已经有了");
-                }
-            }
-        }
-        return false;
+        return addFriend(id, perm, PERMISSION_ALL);
     }
 
+    private boolean addFriend(Long id, PermissionData perm, String sName) {
+        if (perm == null) {
+            return false;
+        }
+        PermissionType type;
+        if (perm.isWhite()) {
+            type = PermissionType.FRIEND_W;
+        } else {
+            type = PermissionType.FRIEND_B;
+        }
+
+        if (perm.getFriendList().add(id)) {
+            permissionDao.addFriend(sName, type, id);
+            return true;
+        } else {
+            throw new TipsRuntimeException("本身不存在");
+        }
+    }
+
+    public boolean deleteFriend(String sName, Long id) {
+        var perm = PERMISSIONS.get(sName);
+        return delFriend(id, perm, sName);
+    }
+
+    public boolean deleteFriend(Long id) {
+        var perm = ALL_B;
+        return delFriend(id, perm, PERMISSION_ALL);
+    }
+
+    private boolean delFriend(Long id, PermissionData perm, String sName) {
+        if (perm == null) {
+            return false;
+        }
+        PermissionType type;
+        if (perm.isWhite()) {
+            type = PermissionType.FRIEND_W;
+        } else {
+            type = PermissionType.FRIEND_B;
+        }
+
+        if (perm.getFriendList().remove(id)) {
+            permissionDao.delFriend(sName, type, id);
+            return true;
+        } else {
+            throw new TipsRuntimeException("本身不存在");
+        }
+    }
+
+    public boolean deleteGroup(String sName, Long id, boolean isSuper) {
+        var perm = PERMISSIONS.get(sName);
+        return deletGroup(sName, id, isSuper, perm);
+    }
+
+    public boolean deleteGroup(Long id, boolean isSuper) {
+        var perm = ALL_B;
+        return deletGroup(PERMISSION_ALL, id, isSuper, perm);
+    }
+
+    private boolean deletGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
+        if (perm == null || (!isSuper && perm.isSupper())){
+            return false;
+        }
+        PermissionType type;
+        if (perm.isWhite()) {
+            type = PermissionType.GROUP_W;
+        } else {
+            type = PermissionType.GROUP_B;
+        }
+
+        if (perm.getGroupList().remove(id)) {
+            permissionDao.delGroup(sName, type, id);
+            return true;
+        } else {
+            throw new TipsRuntimeException("本身不存在");
+        }
+    }
 
     /**
      * 仅针对全局黑白名单
      */
-    public boolean containsAll(Long group, Long id){
+    public boolean containsAll(Long group, Long id) {
         //全局黑名单
         return (group == null || !ALL_B.hasGroup(group)) && !ALL_B.hasFriend(id);
     }
 
-    public static boolean isSupper(Long id){
+    public static boolean isSupper(Long id) {
         return supetList.contains(id);
     }
 
     /**
      * 单功能开关
+     *
      * @param i
      * @return
      */
-    public static boolean serviceIsClouse(Instruction i){
+    public static boolean serviceIsClouse(Instruction i) {
         return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
     }
 
-    public static void clouseService(Instruction i){
+    public static void clouseService(Instruction i) {
         OFF_SERVICE.add(i);
         for (String s : getServiceName(i)) {
             serviceSwitchMapper.save(new ServiceSwitchLite(s, false));
         }
     }
 
-    public static void openService(Instruction i){
+    public static void openService(Instruction i) {
         OFF_SERVICE.remove(i);
         for (String s : getServiceName(i)) {
             serviceSwitchMapper.save(new ServiceSwitchLite(s, true));
         }
     }
 
-    public static String[] getServiceName(Instruction i){
+    public static String[] getServiceName(Instruction i) {
         String[] out = new String[0];
-        if (SERVICE_NAME != null){
-            out =  SERVICE_NAME.get(i).split(",");
+        if (SERVICE_NAME != null) {
+            out = SERVICE_NAME.get(i).split(",");
         }
         return out;
     }
 
     /**
      * 功能列表
+     *
      * @return 所有的功能
      */
-    public static List<Instruction> getClouseServices(){
+    public static List<Instruction> getClouseServices() {
         return OFF_SERVICE.stream().toList();
     }
 
-    public boolean isTester(long qq){
+    public boolean isTester(long qq) {
         return testerList.contains(qq);
     }
 

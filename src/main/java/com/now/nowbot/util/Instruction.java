@@ -34,7 +34,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BAN(BanService.class,
-            Pattern.compile("[!！]\\s*(?i)(?<un>un)?ban\\s*(?<serv>\\w+)\\s*(?<gf>[gf])\\s*(?<qq>\\d+)?")),
+            Pattern.compile("^[!！]\\s*(?i)ymsuper")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
