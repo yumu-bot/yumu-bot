@@ -4,6 +4,7 @@ import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.throwable.RequestException;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
+import net.mamoe.mirai.auth.BotAuthorization;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +93,7 @@ public class NowbotConfig {
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.REGISTER);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.IPAD);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.MACOS);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
         File logdir = new File(BOT_PATH+"log");
@@ -103,7 +104,7 @@ public class NowbotConfig {
         botConfiguration.enableContactCache();
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         //配置完成，注册bot
-        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ,NowbotConfig.PASSWORD,botConfiguration);
+        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, BotAuthorization.byQRCode(),botConfiguration);
         //注册监听 messageListener需要继承SimpleListenerHost类
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
