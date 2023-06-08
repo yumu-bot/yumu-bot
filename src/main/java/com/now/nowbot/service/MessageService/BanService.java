@@ -22,7 +22,7 @@ public class BanService implements MessageService{
     }
 
     @Override
-    @CheckPermission(supperOnly = true)
+    @CheckPermission
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         boolean ban = matcher.group("un") == null;
         boolean isGroup = matcher.group("fg").trim().equalsIgnoreCase("g");
