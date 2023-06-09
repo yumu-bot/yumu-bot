@@ -28,7 +28,7 @@ public enum Instruction {
 
     // #1 BOT 内部指令
     PING(PingService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymping|ping)")),
+            Pattern.compile("^[!！]\\s*(?i)(ymping|ping|pi(?!\\w))")),
 
     BIND(BindService.class,
             Pattern.compile("^[!！]\\s*(?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
