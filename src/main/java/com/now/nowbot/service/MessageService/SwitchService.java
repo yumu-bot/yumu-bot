@@ -26,8 +26,6 @@ public class SwitchService implements MessageService{
         var from = event.getSubject();
         String p1 = matcher.group("p1");
         String p2 = matcher.group("p2");
-        String p3 = matcher.group("p3");
-        String p4 = matcher.group("p4");
         if (event instanceof GroupMessageEvent){
             var group = ((GroupMessageEvent) event);
 //            group.getSender().mute(60*60*8); 禁言
@@ -44,14 +42,13 @@ public class SwitchService implements MessageService{
             StringBuilder sb = new StringBuilder();
             var list = Permission.getClouseServices();
             for (Instruction value : Instruction.values()) {
-                sb.append(value).append(list.contains(value)?'X':'O').append('\n');
+                sb.append(list.contains(value)?"Closed":"Open").append(':').append(' ').append(value).append('\n');
             }
             from.sendMessage(sb.toString());
             return;
         }
 
         // sleep awake 功能应该放在其他的地方吧，比如新开一个重启bot的服务，里面附带这个功能
-        // 不对吧，这是禁言别人然后让别人休眠的东西？
         switch (p1.toLowerCase()) {
             case "sleep" -> {
                 if (p2 != null){
@@ -62,8 +59,11 @@ public class SwitchService implements MessageService{
                     } catch (NumberFormatException e){
                         from.sendMessage("请输入正确的休眠参数！");
                     }
+                } else {
+                    from.sendMessage("请输入休眠参数！");
                 }
             }
+
             case "wake" -> {
                 SendmsgUtil.wakeUp(event.getSubject().getId());
                 from.sendMessage("早安！");
@@ -73,7 +73,7 @@ public class SwitchService implements MessageService{
                 StringBuilder sb = new StringBuilder();
                 var list = Permission.getClouseServices();
                 for (Instruction value : Instruction.values()) {
-                    sb.append(value).append(list.contains(value)?'X':'O').append('\n');
+                    sb.append(list.contains(value)?"Closed":"Open").append(':').append(' ').append(value).append('\n');
                 }
                 from.sendMessage(sb.toString());
                 return;
@@ -91,25 +91,21 @@ public class SwitchService implements MessageService{
 
         switch (p2.toLowerCase()){
             case "off" -> {
-                if (p1 != null){
-                    try {
-                        var i = Instruction.valueOf(p1.toUpperCase());
-                        Permission.clouseService(i);
-                        from.sendMessage("已关闭服务");
-                    } catch (IllegalArgumentException e) {
-                        from.sendMessage("没找到这个服务");
-                    }
+                try {
+                    var i = Instruction.valueOf(p1.toUpperCase());
+                    Permission.clouseService(i);
+                    from.sendMessage("已关闭 " + p1 + "服务");
+                } catch (IllegalArgumentException e) {
+                    from.sendMessage("没找到这个服务");
                 }
             }
             case "on" -> {
-                if (p1 != null){
-                    try {
-                        var i = Instruction.valueOf(p1.toUpperCase());
-                        Permission.openService(i);
-                        from.sendMessage("已启动服务");
-                    } catch (IllegalArgumentException e) {
-                        from.sendMessage("没找到这个服务");
-                    }
+                try {
+                    var i = Instruction.valueOf(p1.toUpperCase());
+                    Permission.openService(i);
+                    from.sendMessage("已启动 " + p1 + "服务");
+                } catch (IllegalArgumentException e) {
+                    from.sendMessage("没找到这个服务");
                 }
             }
         }

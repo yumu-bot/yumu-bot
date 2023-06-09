@@ -24,7 +24,7 @@ public enum Instruction {
 
     // #0 调出帮助
     HELP(HelpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((help)|(h))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((help\\s*)|(h(?!\\w)))+((?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #1 BOT 内部指令
     PING(PingService.class,
@@ -34,10 +34,10 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     BAN(BanService.class,
-            Pattern.compile("^[!！]\\s*(?i)ymsuper")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w))")),
 
     SWITCH(SwitchService.class,
-            Pattern.compile("^[!！]\\s*(?i)ymsw(itch)?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))?(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
 
     // BOT 自己更新的功能，现在因为可以 SSH 远程更新，所以几乎不用了
     UPDATE(UpdateService.class,
@@ -48,7 +48,7 @@ public enum Instruction {
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm)+\\s*(?<mode>\\w+)")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?!\\w))+\\s*(?<mode>\\w+)")),
 
     YMP(YmpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
@@ -61,22 +61,22 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!est))+(\\s*[:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba)(?<info>-i)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba(?!\\w))\\s+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
     INFO(InfoService.class,
-            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!nfo)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!\\w)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     INFO2(UUIService.class,
             Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f)(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f(?!\\w))(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
@@ -114,13 +114,13 @@ public enum Instruction {
 //            Pattern.compile("^[!！]((积分)|(..积分))+.*")),
 
     WIKI(WikiService.class,
-            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w)(\\s+(?<key>\\s*))?")),
+            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w(?!\\w))(\\s*(?<key>\\s*))?")),
 
     TRANS(TransService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     OVERSR(OverSRService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or)+(\\s+(?<SR>[0-9.]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?!\\w))+(\\s+(?<SR>[0-9.]*))?")),
 
     DRAW(DrawService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?")),
@@ -129,7 +129,7 @@ public enum Instruction {
             Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
 
     CM(CountQQMessageService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((cm)|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((cm(?!\\w))|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
 
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
