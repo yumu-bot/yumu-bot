@@ -42,7 +42,7 @@ public class SwitchService implements MessageService{
             StringBuilder sb = new StringBuilder();
             var list = Permission.getClouseServices();
             for (Instruction value : Instruction.values()) {
-                sb.append(list.contains(value)?"Closed":"Open").append(':').append(' ').append(value).append('\n');
+                sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             from.sendMessage(sb.toString());
             return;
@@ -73,7 +73,7 @@ public class SwitchService implements MessageService{
                 StringBuilder sb = new StringBuilder();
                 var list = Permission.getClouseServices();
                 for (Instruction value : Instruction.values()) {
-                    sb.append(list.contains(value)?"Closed":"Open").append(':').append(' ').append(value).append('\n');
+                    sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }
                 from.sendMessage(sb.toString());
                 return;
@@ -94,18 +94,18 @@ public class SwitchService implements MessageService{
                 try {
                     var i = Instruction.valueOf(p1.toUpperCase());
                     Permission.clouseService(i);
-                    from.sendMessage("已关闭 " + p1 + "服务");
+                    from.sendMessage("已关闭 " + p1 + " 服务");
                 } catch (IllegalArgumentException e) {
-                    from.sendMessage("没找到这个服务");
+                    from.sendMessage("请输入正确的服务名");
                 }
             }
             case "on" -> {
                 try {
                     var i = Instruction.valueOf(p1.toUpperCase());
                     Permission.openService(i);
-                    from.sendMessage("已启动 " + p1 + "服务");
+                    from.sendMessage("已启动 " + p1 + " 服务");
                 } catch (IllegalArgumentException e) {
-                    from.sendMessage("没找到这个服务");
+                    from.sendMessage("请输入正确的服务名");
                 }
             }
         }

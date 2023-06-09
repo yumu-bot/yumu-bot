@@ -24,8 +24,8 @@ public class BanService implements MessageService{
     @Override
     @CheckPermission
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        boolean ban = matcher.group("un") == null;
-        boolean isGroup = matcher.group("fg").trim().equalsIgnoreCase("g");
+        boolean ban = matcher.group("operate").toLowerCase().equals("ban");
+        boolean isGroup = matcher.group("group").trim().equalsIgnoreCase("g");
         Long qq;
         var at = QQMsgUtil.getType(event.getMessage(), At.class);
         if (!isGroup) {
@@ -44,12 +44,14 @@ public class BanService implements MessageService{
                 throw new TipsException("id呢");
             }
         }
+
         Instruction service;
+
         try {
-            service = Instruction.valueOf(matcher.group("serv").trim().toUpperCase());
+            service = Instruction.valueOf(matcher.group("service").trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            if (matcher.group("serv").trim().equalsIgnoreCase("all")){
-                if (ban) {
+            if (matcher.group("service").trim().equalsIgnoreCase("all")){
+                if (!ban) {
                     if (isGroup){
                         permission.addGroup(qq, true);
                     } else {
@@ -59,7 +61,7 @@ public class BanService implements MessageService{
 
                 }
             } else {
-                throw new TipsException("no service");
+                throw new TipsException("无服务");
             }
             return;
         }
@@ -72,6 +74,6 @@ public class BanService implements MessageService{
                 }
             }
         }
-        event.getSubject().sendMessage(isGroup?"群":"人"+qq+(ban?"ban":"unban")+"完成");
+        event.getSubject().sendMessage(isGroup?"群":"人"+qq+(ban?"封禁":"解封")+"完成");
     }
 }

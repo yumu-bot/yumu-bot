@@ -24,17 +24,18 @@ public enum Instruction {
 
     // #0 调出帮助
     HELP(HelpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((help\\s*)|(h(?!\\w)))+((?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h(?!\\w))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #1 BOT 内部指令
     PING(PingService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymping|ping|pi(?!\\w))")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ping|pi(?!\\w))+")),
 
     BIND(BindService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ymbind)|((ym)?bi)|((ym)?(?<un>un)bind))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
-
+            Pattern.compile("^[!！]\\s*(?i)((ym)+bind|(ym)*(bi)(?!\\w))+")),
+    //(\s+(?<name>[0-9a-zA-Z\[\]\-_ ]+))?
+    //不要 !ymbind name 这种规则了
     BAN(BanService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w))")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ban|bn(?!\\w))+(\\s*(?<operate>(ban|unban)))?(\\s*(?<service>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*(?<qq>\\d*))?(\\s*(?<group>[g,G]))?")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
@@ -51,61 +52,61 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?!\\w))+\\s*(?<mode>\\w+)")),
 
     YMP(YmpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r])\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r](?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]\\s*((ymscore)|((ym)?s(?!core)))([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNFHTDRSPCLO]*)+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNFHTDRSPCLO]*)+))?")),
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ymbp)|((ym)?b(?!p)))\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|b(p?)(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymbpht|ymba|ba(?!\\w))\\s+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ba(?!\\w))+\\s*(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
     INFO(InfoService.class,
-            Pattern.compile("^[!！]\\s*(?i)((yminfo)|((ym)?i(?!\\w)))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?information|(ym)+info(?!\\w)|(ym)?i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     INFO2(UUIService.class,
-            Pattern.compile("^[!！]\\s*(?i)((uuinfo)|(uui))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+            Pattern.compile("^[!！]\\s*(?i)(uu)+(info|i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f(?!\\w))(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f(?!\\w))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
 
     PPM(PPMinusService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppm|minus)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppm|ppminus)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     PPM0(PPMLegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(pmv2|minusv2)(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(p2(?!\\w)|ppminusv2)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
 
     // #4 osu! 谱面指令
 
     SONG(SongService.class,
-            Pattern.compile("^[!！]\\s*(song)\\s+(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))+\\s*(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
 
     // #5 osu! 比赛指令
 
     MURATING0(MRALegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(rav2|ymrav2|ymratingv2)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ratingv2|rav2(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING(MRAService.class,
-            Pattern.compile("^[!！]\\s*(?i)(mra|ymra|ymrating)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?rating|y?m?ra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MURATING2(URAService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ura|uura|uurating)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MONOW(MonitorNowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymmn|ymmonitornow|ymmonow|mn)+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]\\s*(?i)map")),
@@ -114,10 +115,10 @@ public enum Instruction {
 //            Pattern.compile("^[!！]((积分)|(..积分))+.*")),
 
     WIKI(WikiService.class,
-            Pattern.compile("^[!！]\\s*(?i)ym((wiki)|w(?!\\w))(\\s*(?<key>\\s*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?!\\w))+(\\s*(?<key>\\s*))?")),
 
     TRANS(TransService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?trans\\s?(?<a>[A-G#]{1,2})(?<b>\\w)")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(trans)+\\s(?<a>[A-G#]{1,2})(?<b>\\w)")),
 
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?!\\w))+(\\s+(?<SR>[0-9.]*))?")),
