@@ -24,8 +24,12 @@ public class BanService implements MessageService{
     @Override
     @CheckPermission
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        boolean ban = matcher.group("operate").toLowerCase().equals("ban");
-        boolean isGroup = matcher.group("group").trim().equalsIgnoreCase("g");
+        boolean ban = false;
+
+        String ban_matcher = matcher.group("operate").toLowerCase();
+        if (ban_matcher.equals("ban") || ban_matcher.equals("bn")) ban = true;
+        else if (ban_matcher.equals("unban") || ban_matcher.equals("ub")) ban = false;
+        boolean isGroup = matcher.group("group").toLowerCase().equalsIgnoreCase("g");
         Long qq;
         var at = QQMsgUtil.getType(event.getMessage(), At.class);
         if (!isGroup) {
@@ -50,8 +54,8 @@ public class BanService implements MessageService{
         try {
             service = Instruction.valueOf(matcher.group("service").trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            if (matcher.group("service").trim().equalsIgnoreCase("all")){
-                if (!ban) {
+            if (matcher.group("service").toLowerCase().equalsIgnoreCase("all")){
+                if (ban) {
                     if (isGroup){
                         permission.addGroup(qq, true);
                     } else {

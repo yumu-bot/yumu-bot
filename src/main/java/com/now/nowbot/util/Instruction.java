@@ -35,7 +35,7 @@ public enum Instruction {
     //(\s+(?<name>[0-9a-zA-Z\[\]\-_ ]+))?
     //不要 !ymbind name 这种规则了
     BAN(BanService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(ban|bn(?!\\w))+(\\s*(?<operate>(ban|unban)))?(\\s*(?<service>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*(?<qq>\\d*))?(\\s*(?<group>[g,G]))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(?<operate>(ban(?!\\w)|unban(?!\\w)|bn(?!\\w)|ub(?!\\w)))+(\\s*)?(\\s*(?<service>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*(?<qq>\\d*))?(\\s*(?<group>[g,G]))?")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
