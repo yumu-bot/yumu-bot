@@ -341,7 +341,11 @@ public class ImageService {
         info.put("background", firstBackground);
         info.put("match_title", matchInfo.getName());
         info.put("match_round", games.size());
-        info.put("match_time", matchInfo.getStartTime().format(format) + '-' + matchInfo.getEndTime().format(format));
+        if (matchInfo.getEndTime() != null) {
+            info.put("match_time", matchInfo.getStartTime().format(format) + '-' + matchInfo.getEndTime().format(format));
+        } else {
+            info.put("match_time", matchInfo.getStartTime().format(format) + '-' + "now");
+        }
         info.put("match_time_start", matchInfo.getStartTime());
         info.put("match_time_end", matchInfo.getEndTime());
         info.put("mpid", matchInfo.getId());
