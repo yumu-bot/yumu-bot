@@ -33,6 +33,18 @@ public class JacksonUtil {
             return null;
         }
     }
+    public static <T>String objectToJson(T obj){
+        if(obj == null){
+            return null;
+        }
+        try {
+            return obj instanceof String ? (String) obj : mapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.warn("Parse Object to Json error",e);
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static <T>T jsonToObject(String src,Class<T> clazz){
         if(src == null || "".equals(src.trim()) || clazz == null){

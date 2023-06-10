@@ -104,7 +104,7 @@ public class NowbotConfig {
         botConfiguration.enableContactCache();
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         //配置完成，注册bot
-        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, BotAuthorization.byQRCode(),botConfiguration);
+        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, BotAuthorization.byQRCode(), botConfiguration);
         //注册监听 messageListener需要继承SimpleListenerHost类
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
