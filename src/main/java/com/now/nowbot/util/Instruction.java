@@ -65,7 +65,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
     BPHT(BphtService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ba(?!\\w))+\\s*(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ba(?!\\w))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #3 osu! 玩家指令
 
