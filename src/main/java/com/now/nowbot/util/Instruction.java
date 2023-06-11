@@ -31,7 +31,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ping|pi(?!\\w))+")),
 
     BIND(BindService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ym)+bind|(?<un>(un))+(bind|bi)|(ym)*(bi)(?!\\w))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
     //不要 !ymbind name 这种规则了
     BAN(BanService.class,
@@ -192,12 +192,12 @@ public enum Instruction {
     }
 
     public static void main(String[] args) {
-        var p = Instruction.SCORE.regex;
-        var m = p.matcher("!s 114514 + DT NF");
+        var p = Instruction.BIND.regex;
+        var m = p.matcher("!ymbind");
         if (m.matches()) {
             System.out.println("ok************");
             ;
-            System.out.println();
+            System.out.println(m.group("un"));
             return;
         } else {
             return;
