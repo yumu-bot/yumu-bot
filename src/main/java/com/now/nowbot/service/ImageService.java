@@ -322,22 +322,44 @@ public class ImageService {
                 statistics.put("wins_team_blue_before", 0);
 
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
-                var user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUserId().longValue());
-                    if (u == null){
-                        return    getMatchScoreInfo("unknowName",
-                                "https://osu.ppy.sh/images/layout/avatar-guest.png",
-                                0,
-                                new String[0],
-                                -1
-                                );
-                    }
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
-                }).toList();
+
+                //如果只有一两个人，则不排序
+                List user_list;
+
+                if (g_scores.size() > 2) {
+                    user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
+                        var u = uidMap.get(s.getUserId().longValue());
+                        if (u == null){
+                            return    getMatchScoreInfo("Unknown",
+                                    "https://osu.ppy.sh/images/layout/avatar-guest.png",
+                                    0,
+                                    new String[0],
+                                    -1
+                            );
+                        }
+                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
+                    }).toList();
+
+                } else {
+                    user_list = g_scores.stream().map(s -> {
+                        var u = uidMap.get(s.getUserId().longValue());
+                        if (u == null){
+                            return    getMatchScoreInfo("Unknown",
+                                    "https://osu.ppy.sh/images/layout/avatar-guest.png",
+                                    0,
+                                    new String[0],
+                                    -1
+                            );
+                        }
+                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
+                    }).toList();
+                }
+
                 scores.add(Map.of(
                         "statistics",statistics,
                         "none", user_list
                 ));
+
                 n_win ++;
             }
         }
