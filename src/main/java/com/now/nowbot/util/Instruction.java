@@ -31,7 +31,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ping|pi(?!\\w))+")),
 
     BIND(BindService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ym)+bind|(ym)*(bi)(?!\\w))+")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)+bind|(?<un>(un))+(bind|bi)|(ym)*(bi)(?!\\w))+")),
     //(\s+(?<name>[0-9a-zA-Z\[\]\-_ ]+))?
     //不要 !ymbind name 这种规则了
     BAN(BanService.class,
