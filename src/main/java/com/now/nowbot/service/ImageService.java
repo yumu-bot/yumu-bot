@@ -324,6 +324,14 @@ public class ImageService {
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
                 var user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserId().longValue());
+                    if (u == null){
+                        return    getMatchScoreInfo("unknowName",
+                                "https://osu.ppy.sh/images/layout/avatar-guest.png",
+                                0,
+                                new String[0],
+                                -1
+                                );
+                    }
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 scores.add(Map.of(
