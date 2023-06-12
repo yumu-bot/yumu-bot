@@ -182,7 +182,7 @@
         <resources>
             <resource>
                 <directory>lib</directory>
-                <targetPath>/BOOT-INF/lib/</targetPath>
+                <targetPath>${project.basedir}/lib/</targetPath>
                 <includes>
                     <include>**/*.jar</include>
                 </includes>
@@ -192,7 +192,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration><fork>false</fork></configuration>
+                <configuration>
+                    <fork>false</fork>
+                    <includeSystemScope>true</includeSystemScope>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

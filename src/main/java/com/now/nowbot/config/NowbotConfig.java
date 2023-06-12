@@ -90,14 +90,14 @@ public class NowbotConfig {
     @Bean
     public Bot bot(){
         FixProtocolVersion.update();
-        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
+        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_PAD);
         log.info("update version: {}", FixProtocolVersion.info());
         //创建bot配置类
         BotConfiguration botConfiguration = new BotConfiguration();
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.REGISTER);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
         File logdir = new File(BOT_PATH+"log");
