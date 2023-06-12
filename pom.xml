@@ -179,15 +179,6 @@
 
     </dependencies>
     <build>
-        <resources>
-            <resource>
-                <directory>lib</directory>
-                <targetPath>${project.basedir}/lib/</targetPath>
-                <includes>
-                    <include>**/*.jar</include>
-                </includes>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
