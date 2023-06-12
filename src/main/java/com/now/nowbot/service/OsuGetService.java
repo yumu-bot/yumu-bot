@@ -65,7 +65,7 @@ public class OsuGetService {
      * @return
      */
     public String getOauthUrl(String state) {
-        return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize").queryParam("client_id", oauthId).queryParam("redirect_uri", redirectUrl).queryParam("response_type", "code").queryParam("scope", "friends.read identify public").queryParam("state", state).build().encode().toUriString();
+        return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize").queryParam("client_id", oauthId).queryParam("redirect_uri", redirectUrl).queryParam("response_type", "code").queryParam("scope", "friends.read identify public chat.write").queryParam("state", state).build().encode().toUriString();
     }
 
     /***
@@ -824,7 +824,7 @@ public class OsuGetService {
         HashMap body = new HashMap<>();
         body.put("mods", modInt);
         body.put("ruleset_id", osuMode.getModeValue());
-        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJsonPretty(body), headers);
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJson(body), headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.POST, httpEntity, JsonNode.class);
         return JacksonUtil.parseObject(c.getBody().get("attributes"), BeatmapDifficultyAttributes.class);
     }
@@ -884,5 +884,17 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         return headers;
+    }
+
+
+    public JsonNode chatGetChannels(BinUser user) {
+        var header = getHeader(user);
+        HashMap body = new HashMap<>();
+        body.put("target_id", 7003013);
+        body.put("message", "osuMode.getModeValue()");
+        body.put("is_action", false);
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJson(body),header);
+        var res = template.exchange(URL + "/chat/new", HttpMethod.POST, httpEntity, JsonNode.class);
+        return res.getBody();
     }
 }

@@ -169,6 +169,13 @@
             <artifactId>kotlinx-coroutines-core-jvm</artifactId>
             <version>1.7.1</version>
         </dependency>
+        <dependency>
+            <groupId>protocol</groupId>
+            <artifactId>protocol</artifactId>
+            <version>1.7.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/fix-protocol-version-1.7.0.mirai2.jar</systemPath>
+        </dependency>
 
     </dependencies>
     <build>

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import xyz.cssxsh.mirai.tool.FixProtocolVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,12 +89,15 @@ public class NowbotConfig {
     MessageListener messageListener;
     @Bean
     public Bot bot(){
+        FixProtocolVersion.update();
+        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
+        log.info("update version: {}", FixProtocolVersion.info());
         //创建bot配置类
         BotConfiguration botConfiguration = new BotConfiguration();
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.REGISTER);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.MACOS);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
         File logdir = new File(BOT_PATH+"log");
