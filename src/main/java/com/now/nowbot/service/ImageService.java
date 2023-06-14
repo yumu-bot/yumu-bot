@@ -402,6 +402,10 @@ public class ImageService {
         return doPost("drawLine", httpEntity);
     }
 
+    public byte[] drawLine(StringBuilder sb) {
+        return drawLine(sb.toString().split("\n"));
+    }
+
     private Map<String,Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods,int rank){
         return Map.of(
                 "player_name",name,

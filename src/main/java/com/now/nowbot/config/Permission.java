@@ -8,6 +8,9 @@ import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.Bot;
+import net.mamoe.mirai.contact.Group;
+import net.mamoe.mirai.contact.Member;
+import net.mamoe.mirai.contact.MemberPermission;
 import net.mamoe.mirai.contact.NormalMember;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
@@ -32,6 +35,10 @@ public class Permission {
     private static PermissionDao permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
 
+    private static Bot bot;
+
+    private boolean isAllWhite = true;
+
     @Autowired
     public Permission(PermissionDao permissionDao) {
         Permission.permissionDao = permissionDao;
@@ -52,9 +59,11 @@ public class Permission {
         var AllFw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
         var AllGw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
         ALL_W = new PermissionData(Set.copyOf(AllFw), Set.copyOf(AllGw));
+        ALL_W.setWhite(true);
         var AllFb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
         var AllGb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
         ALL_B = new PermissionData(Set.copyOf(AllFb), Set.copyOf(AllGb));
+        ALL_B.setWhite(false);
         //初始化各功能名单
 
         var beans = applicationContext.getBeansOfType(MessageService.class);
@@ -107,6 +116,7 @@ public class Permission {
         });
         //初始化暗杀名单(
         Bot bot = applicationContext.getBean(Bot.class);
+        Permission.bot = bot;
         var devGroup = bot.getGroup(746671531);
         if (devGroup != null) {
             supetList = Set.copyOf(devGroup.getMembers().stream().map(NormalMember::getId).toList());
@@ -181,13 +191,17 @@ public class Permission {
     }
 
 
-    public boolean addGroup(Long id, boolean isSuper) {
-        var perm = ALL_B;
+    public boolean addGroup(Long id, boolean isSuper, boolean isBlack) {
+        var perm = isBlack ? ALL_B : ALL_W;
         return addGroup(PERMISSION_ALL, id, isSuper, perm);
     }
 
+    public static PermissionData getAllW() {
+        return ALL_W;
+    }
+
     private boolean addGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
-        if (perm == null || (!isSuper && perm.isSupper())){
+        if (perm == null || (!isSuper && perm.isSupper())) {
             return false;
         }
         if (perm.isWhite()) {
@@ -276,7 +290,7 @@ public class Permission {
     }
 
     private boolean deletGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
-        if (perm == null || (!isSuper && perm.isSupper())){
+        if (perm == null || (!isSuper && perm.isSupper())) {
             return false;
         }
         PermissionType type;
@@ -294,12 +308,20 @@ public class Permission {
         }
     }
 
+    public boolean allIsWhite() {
+        return isAllWhite;
+    }
+
     /**
      * 仅针对全局黑白名单
      */
     public boolean containsAll(Long group, Long id) {
         //全局黑名单
         return (group == null || !ALL_B.hasGroup(group)) && !ALL_B.hasFriend(id);
+    }
+    public boolean containsAllW(Long group) {
+        //全局白名单
+        return group != null && ALL_W.hasGroup(group);
     }
 
     public static boolean isSupper(Long id) {
@@ -347,8 +369,16 @@ public class Permission {
         return OFF_SERVICE.stream().toList();
     }
 
-    public boolean isTester(long qq) {
+    public static boolean isTester(long qq) {
         return testerList.contains(qq);
     }
 
+    public static boolean isGroupAdmin(long groupId, long qq) {
+        if (bot == null) return false;
+        Group group;
+        if ((group = bot.getGroup(groupId)) == null) return false;
+        NormalMember member;
+        if ((member = group.get(qq)) == null) return false;
+        return member.getPermission() == MemberPermission.ADMINISTRATOR || member.getPermission() == MemberPermission.OWNER;
+    }
 }

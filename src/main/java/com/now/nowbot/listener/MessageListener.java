@@ -110,9 +110,11 @@ public class MessageListener extends SimpleListenerHost {
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
+        /*
         if (!(event instanceof GroupMessageEvent e) || e.getGroup().getId() != 746671531){
             return;
         }
+        */
 
         ContextUtil.setContext("event",event);
         try {

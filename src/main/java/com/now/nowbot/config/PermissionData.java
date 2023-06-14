@@ -2,7 +2,7 @@ package com.now.nowbot.config;
 
 import java.util.Set;
 
-class PermissionData{
+public class PermissionData{
     //是否为白名单
     private boolean isWhite;
     //直接简化 true->仅超级管理员能操作      false->群管也能操作

@@ -2,6 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.config.PermissionData;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
@@ -11,73 +13,51 @@ import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("ban")
 public class BanService implements MessageService{
     Permission permission;
+    ImageService imageService;
     @Autowired
-    public BanService(Permission permission){
+    public BanService(Permission permission, ImageService imageService){
         this.permission = permission;
+        this.imageService = imageService;
     }
 
     @Override
     @CheckPermission
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         boolean ban = false;
-
-        String ban_matcher = matcher.group("operate").toLowerCase();
-        if (ban_matcher.equals("ban") || ban_matcher.equals("bn")) ban = true;
-        else if (ban_matcher.equals("unban") || ban_matcher.equals("ub")) ban = false;
-        boolean isGroup = matcher.group("group").toLowerCase().equalsIgnoreCase("g");
-        Long qq;
+        long sendQQ = event.getSender().getId();
+        String msg = event.getMessage().contentToString();
+        int index;
         var at = QQMsgUtil.getType(event.getMessage(), At.class);
-        if (!isGroup) {
-            if (at != null){
-                qq = at.getTarget();
-            } else {
-                qq = Long.parseLong(matcher.group("qq"));
-            }
-        } else {
-            var qqt = matcher.group("qq");
-            if (qqt != null){
-                qq = Long.parseLong(qqt);
-            } else if (event instanceof GroupMessageEvent group) {
-                qq = group.getGroup().getId();
-            } else {
-                throw new TipsException("id呢");
-            }
-        }
+        if ((index = msg.indexOf("list")) != -1){
+            if (Permission.isSupper(sendQQ)){
+                Set<Long> groups = Permission.getAllW().getGroupList();
+                StringBuilder sb = new StringBuilder("白名单包含:\n");
+                for (Long id : groups){
+                    sb.append(id).append("\n");
+                }
+                QQMsgUtil.sendImage(event.getSubject(), imageService.drawLine(sb));
+            } else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){
 
-        Instruction service;
-
-        try {
-            service = Instruction.valueOf(matcher.group("service").trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            if (matcher.group("service").toLowerCase().equalsIgnoreCase("all")){
-                if (ban) {
-                    if (isGroup){
-                        permission.addGroup(qq, true);
-                    } else {
-                        permission.addFriend(qq);
+            }
+        } else if ((index = msg.indexOf("add")) != -1) {
+            if (Permission.isSupper(sendQQ)){
+                matcher = Pattern.compile("add\\s*(?<id>\\d+)").matcher(msg);
+                if (matcher.find()) {
+                    var add = permission.addGroup(Long.parseLong(matcher.group("id")), true, false);
+                    if (add){
+                        event.getSubject().sendMessage("添加成功");
                     }
-                } else {
+                }
+            } else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){
 
-                }
-            } else {
-                throw new TipsException("无服务");
-            }
-            return;
-        }
-        for (String s : Permission.getServiceName(service)) {
-            if (ban) {
-                if (isGroup){
-                    permission.addGroup(s, qq, true);
-                } else {
-                    permission.addFriend(s, qq);
-                }
             }
         }
-        event.getSubject().sendMessage(isGroup?"群":"人"+qq+(ban?"封禁":"解封")+"完成");
     }
 }

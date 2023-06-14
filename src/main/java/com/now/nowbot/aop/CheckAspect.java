@@ -91,8 +91,11 @@ public class CheckAspect {
                 //超管无视任何限制
                 return args;
             }
+            if (permission.allIsWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)){
+                return args;
+            }
             // 群跟人的id进行全局黑名单校验
-            if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())){
+            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())){
                 return args;
             }
             throw new PermissionException("权限禁止","禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId());
