@@ -54,7 +54,7 @@ public class RunTimeService {
     }
 
     */
-    @Scheduled(cron = "16 0 0 * * *")
+//    @Scheduled(cron = "16 0 0 * * *")
     public void checkBPlist() throws BindException {
         var qq = 3054_7298_60L;
         var u = bindDao.getUser(qq);
