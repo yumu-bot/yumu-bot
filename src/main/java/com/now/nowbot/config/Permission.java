@@ -58,11 +58,11 @@ public class Permission {
         assert permissionDao != null;
         var AllFw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
         var AllGw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
-        ALL_W = new PermissionData(Set.copyOf(AllFw), Set.copyOf(AllGw));
+        ALL_W = new PermissionData(new HashSet<>(AllFw), new HashSet<>(AllGw));
         ALL_W.setWhite(true);
         var AllFb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
         var AllGb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
-        ALL_B = new PermissionData(Set.copyOf(AllFb), Set.copyOf(AllGb));
+        ALL_B = new PermissionData(new HashSet<>(AllFb), new HashSet<>(AllGb));
         ALL_B.setWhite(false);
         //初始化各功能名单
 
