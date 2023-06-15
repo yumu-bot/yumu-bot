@@ -190,6 +190,17 @@ public class JacksonUtil {
         }
         return null;
     }
+    public static <T> T parseObject(byte[] body, Class<T> clazz) {
+        JsonNode node;
+        try {
+            node = mapper.readTree(body);
+            if (clazz == JsonNode.class) return (T)node;
+            return mapper.treeToValue(node, clazz);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
+    }
 
     public static <T> T parseObject(String body, Class<T> clazz) {
         JsonNode node;
