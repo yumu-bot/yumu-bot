@@ -97,7 +97,7 @@ public class NowbotConfig {
         //设置配置
         botConfiguration.setCacheDir(new File(BOT_PATH));
         botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.REGISTER);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_PAD);
+        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
         File logdir = new File(BOT_PATH+"log");
@@ -108,7 +108,7 @@ public class NowbotConfig {
         botConfiguration.enableContactCache();
         botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
         //配置完成，注册bot
-        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, BotAuthorization.Companion.byPassword(PASSWORD), botConfiguration);
+        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, BotAuthorization.Companion.byQRCode(), botConfiguration);
         //注册监听 messageListener需要继承SimpleListenerHost类
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
