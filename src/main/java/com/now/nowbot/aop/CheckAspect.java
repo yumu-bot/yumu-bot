@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.ContextUtil;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -43,6 +44,9 @@ public class CheckAspect {
      */
     @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
     public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) throws Exception {
+        if (ContextUtil.isBreakAop()) {
+            return point.getArgs();
+        }
         var args = point.getArgs();
         var event = (MessageEvent)args[0];
         var servicename = Service.value();
@@ -81,6 +85,9 @@ public class CheckAspect {
 
     @Before("servicePoint() && @target(Service)")
     public Object[] checkRepeat(JoinPoint point, Service Service) throws Exception {
+        if (ContextUtil.isBreakAop()) {
+            return point.getArgs();
+        }
         var args = point.getArgs();
         var event = (MessageEvent) args[0];
 

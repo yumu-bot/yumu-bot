@@ -110,14 +110,7 @@ public class PPMinusService implements MessageService {
                 throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
-        //生成panel名
-        String panelName = "VS" + switch (mode) {
-            case OSU -> ":O";
-            case MANIA -> ":M";
-            case CATCH -> ":C";
-            case TAIKO -> ":T";
-            default -> ":?";
-        };
+
         if (at != null) {//被对比人的信息
             // 包含有@
             var OtherBin = bindDao.getUser(at.getTarget());

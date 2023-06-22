@@ -17,6 +17,14 @@ public class ContextUtil {
         threadLocalService.get().put(name, o);
     }
 
+    public static boolean isBreakAop() {
+        return ContextUtil.getContext("break aop", Object.class) != null;
+    }
+
+    public static void breakAop(){
+        ContextUtil.setContext("break aop", new Object());
+    }
+
     public static void remove(){
         threadLocalService.remove();
     }
