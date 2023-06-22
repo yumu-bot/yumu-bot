@@ -107,7 +107,7 @@ public class BphtService implements MessageService {
 //        from.sendMessage(dtbf.toString());
     }
 
-    private String[] getAllMsg(List<Score> Bps, String name, String mode){
+    public String[] getAllMsg(List<Score> Bps, String name, String mode){
         var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
@@ -164,7 +164,7 @@ public class BphtService implements MessageService {
         return dtbf.toString().split("\n");
     }
 
-    private String[] getAllMsg(List<Score> bps, String name, OsuMode mode, BinUser binUser){
+    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode, BinUser binUser){
         if (bps.size() == 0) return new String[0];
         var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
 

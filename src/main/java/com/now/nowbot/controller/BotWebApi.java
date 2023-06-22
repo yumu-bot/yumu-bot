@@ -1,9 +1,11 @@
 package com.now.nowbot.controller;
 
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
+import com.now.nowbot.service.MessageService.BphtService;
 import com.now.nowbot.service.OsuGetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 public class BotWebApi {
     @Resource
     OsuGetService osuGetService;
+    @Resource
+    BphtService bphtService;
     @Resource
     ImageService  imageService;
 
@@ -71,5 +75,36 @@ public class BotWebApi {
         }
 
         return imageService.getPanelF(match, osuGetService, 0, 0, false);
+    }
+
+    @GetMapping(value = "bpht-i", produces = {MediaType.TEXT_PLAIN_VALUE})
+    public String getBPHTI(@RequestParam("u1")String userName, @Nullable @RequestParam("mode") String playMode){
+        BinUser nu = new BinUser();
+        long id = osuGetService.getOsuId(userName);
+        nu.setOsuID(id);
+        nu.setOsuName(userName);
+        var mode = OsuMode.getMode(playMode);
+        var Bps = osuGetService.getBestPerformance(nu, mode,0,100);
+        var msg = bphtService.getAllMsg(Bps, userName, mode, nu);
+        StringBuilder sb = new StringBuilder();
+        for(var s : msg) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
+    }
+    @GetMapping(value = "bpht", produces = {MediaType.TEXT_PLAIN_VALUE})
+    public String getBPHT(@RequestParam("u1")String userName, @Nullable @RequestParam("mode") String playMode){
+        BinUser nu = new BinUser();
+        long id = osuGetService.getOsuId(userName);
+        nu.setOsuID(id);
+        nu.setOsuName(userName);
+        var mode = OsuMode.getMode(playMode);
+        var Bps = osuGetService.getBestPerformance(nu, mode,0,100);
+        var msg = bphtService.getAllMsg(Bps, userName, mode.getName());
+        StringBuilder sb = new StringBuilder();
+        for(var s : msg) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
     }
 }
