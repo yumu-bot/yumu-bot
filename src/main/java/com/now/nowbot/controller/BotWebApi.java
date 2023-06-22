@@ -2,6 +2,7 @@ package com.now.nowbot.controller;
 
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
@@ -34,6 +36,7 @@ public class BotWebApi {
     }
 
     @GetMapping(value = "ppmvs", produces = {MediaType.IMAGE_PNG_VALUE})
+
     public byte[] getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
         var info1 = osuGetService.getPlayerInfo(user1);
@@ -44,5 +47,29 @@ public class BotWebApi {
         var ppm1 = Ppm.getInstance(mode, info1, bplist1);
         var ppm2 = Ppm.getInstance(mode, info2, bplist2);
         return imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+    }
+
+    @GetMapping(value = "match", produces = {MediaType.IMAGE_PNG_VALUE})
+    public byte[] getMatch(@RequestParam("id")int mid){
+        Match match = osuGetService.getMatchInfo(mid);
+        int gameTime = 0;
+        var m = match.getEvents().stream()
+                .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
+                .get(Boolean.FALSE);
+        if (m != null) {
+            gameTime = m.intValue();
+        }
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId()) && gameTime < 40) {
+            var next = osuGetService.getMatchInfo(mid, match.getEvents().get(0).getId());
+            m = next.getEvents().stream()
+                    .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
+                    .get(Boolean.FALSE);
+            if (m != null) {
+                gameTime += m.intValue();
+            }
+            match.addEventList(next);
+        }
+
+        return imageService.getPanelF(match, osuGetService, 0, 0, false);
     }
 }
