@@ -53,8 +53,14 @@ public class BotWebApi {
         return imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
     }
 
+    /***
+     * @param k skip round
+     * @param d delete end
+     * @param f include failed
+     * @return img
+     */
     @GetMapping(value = "match", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getMatch(@RequestParam("id")int mid){
+    public byte[] getMatch(@RequestParam("id")int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f){
         Match match = osuGetService.getMatchInfo(mid);
         int gameTime = 0;
         var m = match.getEvents().stream()
@@ -73,11 +79,14 @@ public class BotWebApi {
             }
             match.addEventList(next);
         }
+        if (k == null) k = 0;
+        if (d == null) d = 0;
+        if (f == null) f = false;
 
-        return imageService.getPanelF(match, osuGetService, 0, 0, false);
+        return imageService.getPanelF(match, osuGetService, k, d, false);
     }
 
-    @GetMapping(value = "bpht-i", produces = {MediaType.TEXT_PLAIN_VALUE})
+    @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})
     public String getBPHTI(@RequestParam("u1")String userName, @Nullable @RequestParam("mode") String playMode){
         BinUser nu = new BinUser();
         long id = osuGetService.getOsuId(userName);
