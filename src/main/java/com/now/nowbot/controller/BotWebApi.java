@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService.BphtService;
+import com.now.nowbot.service.MessageService.MRAService;
 import com.now.nowbot.service.OsuGetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -22,7 +23,9 @@ public class BotWebApi {
     @Resource
     OsuGetService osuGetService;
     @Resource
-    BphtService bphtService;
+    BphtService   bphtService;
+    @Resource
+    MRAService mraService;
     @Resource
     ImageService  imageService;
 
@@ -60,7 +63,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "match", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getMatch(@RequestParam("id")int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f){
+    public byte[] getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f) {
         Match match = osuGetService.getMatchInfo(mid);
         int gameTime = 0;
         var m = match.getEvents().stream()
@@ -86,32 +89,49 @@ public class BotWebApi {
         return imageService.getPanelF(match, osuGetService, k, d, false);
     }
 
+    /***
+     *
+     * @param matchId
+     * @param k skip round
+     * @param d delete end
+     * @param f include failed
+     * @return img
+     */
+    @GetMapping(value = "rating", produces = {MediaType.IMAGE_PNG_VALUE})
+    public byte[] getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f) {
+        if (k == null) k = 0;
+        if (d == null) d = 0;
+        if (f == null) f = false;
+        return mraService.getDataImage(matchId, k, d, f);
+    }
+
     @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public String getBPHTI(@RequestParam("u1")String userName, @Nullable @RequestParam("mode") String playMode){
+    public String getBPHTI(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
         BinUser nu = new BinUser();
         long id = osuGetService.getOsuId(userName);
         nu.setOsuID(id);
         nu.setOsuName(userName);
         var mode = OsuMode.getMode(playMode);
-        var Bps = osuGetService.getBestPerformance(nu, mode,0,100);
+        var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
         var msg = bphtService.getAllMsg(Bps, userName, mode, nu);
         StringBuilder sb = new StringBuilder();
-        for(var s : msg) {
+        for (var s : msg) {
             sb.append(s).append("\n");
         }
         return sb.toString();
     }
+
     @GetMapping(value = "bpht", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public String getBPHT(@RequestParam("u1")String userName, @Nullable @RequestParam("mode") String playMode){
+    public String getBPHT(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
         BinUser nu = new BinUser();
         long id = osuGetService.getOsuId(userName);
         nu.setOsuID(id);
         nu.setOsuName(userName);
         var mode = OsuMode.getMode(playMode);
-        var Bps = osuGetService.getBestPerformance(nu, mode,0,100);
+        var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
         var msg = bphtService.getAllMsg(Bps, userName, mode.getName());
         StringBuilder sb = new StringBuilder();
-        for(var s : msg) {
+        for (var s : msg) {
             sb.append(s).append("\n");
         }
         return sb.toString();

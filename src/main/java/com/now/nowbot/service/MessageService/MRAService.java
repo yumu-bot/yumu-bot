@@ -42,102 +42,36 @@ public class MRAService implements MessageService {
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
         var from = event.getSubject();
-
-        Match match = osuGetService.getMatchInfo(matchId);
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
-            match.getEvents().addAll(0, events);
-        }
-
-        var data = calculate(match, skipedRounds, deletEndRounds, includingFail, osuGetService);
-        List<UserMatchData> finalUsers = data.allUsers;
-
-        /*
-        //结果数据
-        StringBuilder sb = new StringBuilder();
-        sb.append(match.getMatchInfo().getName()).append("\n")
-                .append(data.red).append(" : ")
-                .append(data.blue).append("\n")
-                .append("mp").append(matchId).append(" ").append(data.type).append("\n");
-
-        for (int i = 0; i < finalUsers.size(); i++) {
-            var user = finalUsers.get(i);
-            sb.append(String.format("#%d [%.2f] %s (%s)", i + 1, user.getMRA(), user.getUsername(), user.getTeam().toUpperCase()))
-                    .append("\n")
-                    .append(String.format("%dW-%dL %d%% (%.2fM) [%s]", user.getWins(), user.getLost(),
-                            Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getPlayerLabelV2()))
-                    .append("\n\n");
-        }
-         */
-
-//        //色彩debug
-//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
-//        var c = s.getCanvas();
-//        finalUsers.forEach(
-//                userMatchData -> {
-//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
-//                    c.translate(0,50);
-//                }
-//        );
-//        try {
-//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //输出完整用户数据
-//        for(var user:sortedUsers){
-//            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
-//                    .append("TMG: ").append(user.getTMG()).append("\n")
-//                    .append("AMG: ").append(user.getAMG()).append("\n")
-//                    .append("ERA: ").append(user.getERA()).append("\n")
-//                    .append("DRA: ").append(user.getDRA()).append("\n");
-//            //输出完整的分数信息
-////                    .append("Scores And RRAs: ").append("\n");
-////            for(int i=0;i<user.getScores().size();i++){
-////                sb.append(user.getScores().get(i)).append(" ")
-////                        .append(user.getRRAs().get(i)).append("\n");
-////            }
-//        }
-//        event.getSubject().sendMessage(sb.toString());
-
-/*
-        //第二版图像渲染
-
-        if (data.isTeamVs()) {
-            var bl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
-            var rl = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
-            var img = new MatchRatingPanelBuilder(bl.size(), rl.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(rl, bl).build();
-            QQMsgUtil.sendImage(event.getSubject(), img);
-        } else {
-            var img = new MatchRatingPanelBuilder(finalUsers.size()).drawBanner(PanelUtil.getBanner(null)).drawUser(finalUsers).build();
-            QQMsgUtil.sendImage(event.getSubject(), img);
-        }
-    }
-
-*/
-        //第三版图像渲染
-        var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).collect(Collectors.toList());
-        var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).collect(Collectors.toList());
-        var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).collect(Collectors.toList());
-
         try {
-            //拿到第一张图
-            int sid = 0;
-            for (var e : match.getEvents()){
-                if (e.getGame() != null) {
-                    sid = e.getGame().getBeatmap().getBeatmapsetId();
-                    break;
-                }
-            }
-
-            var img = postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
+            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail);
             QQMsgUtil.sendImage(from, img);
 //            Files.write(Path.of("/home/spring/aa.png"), img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
             from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rav2 <mpid>。");
         }
+    }
+
+    public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed) {
+        Match match = osuGetService.getMatchInfo(matchId);
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
+            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+            match.getEvents().addAll(0, events);
+        }
+
+        var data = calculate(match, skipRounds, deleteEnd, includeFailed, osuGetService);
+        List<UserMatchData> finalUsers = data.allUsers;
+        var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
+        var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
+        var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).toList();
+        int sid = 0;
+        for (var e : match.getEvents()){
+            if (e.getGame() != null) {
+                sid = e.getGame().getBeatmap().getBeatmapsetId();
+                break;
+            }
+        }
+        return postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
     }
 
     public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
