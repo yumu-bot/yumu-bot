@@ -19,7 +19,6 @@ import javax.annotation.Resource;
 import java.util.stream.Collectors;
 
 @RestController
-@CrossOrigin
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
 public class BotWebApi {
     @Resource
