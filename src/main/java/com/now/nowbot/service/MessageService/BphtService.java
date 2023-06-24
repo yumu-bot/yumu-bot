@@ -18,9 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -281,11 +279,17 @@ public class BphtService implements MessageService {
                     if (o1.size != o2.size) return 2*(o2.size - o1.size);
                     return o1.allPP > o2.allPP ? -1 : 1;
                 })
-                .limit(6).toList();
+                .limit(9).toList();
+        var mappersId = mappers.stream().map(u->u.uid).toList();
+        var mappersInfo = osuGetService.getUsers(mappersId).get("users");
+        var mapperIdToInfo = new HashMap<Long, String>();
+        for(var node: mappersInfo) {
+            mapperIdToInfo.put(node.get("id").asLong(0), node.get("username").asText("unknown"));
+        }
         mappers.forEach(mapperDate -> {
             try {
-                var user = osuGetService.getPlayerInfo((long) mapperDate.uid, binUser, mode);
-                dtbf.append(user.getUsername()).append(' ').append(mapperDate.size).append("个 总计")
+
+                dtbf.append(mapperIdToInfo.get(mapperDate.uid)).append(' ').append(mapperDate.size).append("个 总计")
                         .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
             } catch (Exception e) {
                 dtbf.append("id为").append(mapperDate.uid).append("暂未找到,但是有").append(mapperDate.size).append("个 总计")
@@ -305,7 +309,7 @@ public class BphtService implements MessageService {
     class mapperDate{
         float allPP;
         int size;
-        int uid;
+        long uid;
         mapperDate(float pp, int uid){
             allPP += pp;
             size = 1;

@@ -1,5 +1,6 @@
 package com.now.nowbot.controller;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
@@ -18,6 +19,7 @@ import javax.annotation.Resource;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
 public class BotWebApi {
     @Resource

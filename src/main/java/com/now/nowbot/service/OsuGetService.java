@@ -30,21 +30,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class OsuGetService {
-    public static BinUser botUser = new BinUser();
-    private static final Logger log = LoggerFactory.getLogger(OsuGetService.class);
+    public static        BinUser botUser = new BinUser();
+    private static final Logger  log     = LoggerFactory.getLogger(OsuGetService.class);
 
-    private final int oauthId;
+    private final int    oauthId;
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    BindDao bindDao;
+    BindDao      bindDao;
     RestTemplate template;
 
     @Autowired
@@ -204,8 +201,8 @@ public class OsuGetService {
 
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
         if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID(), mode);
-        String url ;
-        if (mode == OsuMode.DEFAULT){
+        String url;
+        if (mode == OsuMode.DEFAULT) {
             url = this.URL + "me";
         } else {
             url = this.URL + "me" + '/' + mode.getName();
@@ -331,6 +328,16 @@ public class OsuGetService {
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
         return c.getBody().toPrettyString();
+    }
+
+    public JsonNode getUsers(List<Long> users) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users")
+                .queryParam("ids[]", users).build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return c.getBody();
     }
 
     /**
@@ -501,15 +508,15 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode,Mod... mods) throws JsonProcessingException {
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Mod... mods) throws JsonProcessingException {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
-        if (mods.length != 0){
+        if (mods.length != 0) {
             StringBuilder sb = new StringBuilder("[");
-            for (var mod : mods){
+            for (var mod : mods) {
                 sb.append(mod.name()).append(',');
             }
-            sb.deleteCharAt(sb.length()-1);
+            sb.deleteCharAt(sb.length() - 1);
             sb.append(']');
             data.queryParam("mods", sb.toString());
         }
@@ -560,7 +567,7 @@ public class OsuGetService {
 
     @Nullable
     private List<Score> getBeatmapUserScores(URI uri, HttpEntity<?> httpEntity) {
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity,JsonNode.class);
+        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
         if (c.getStatusCode().is4xxClientError()) {
             return new ArrayList<>();
         }
@@ -893,7 +900,7 @@ public class OsuGetService {
         body.put("target_id", 7003013);
         body.put("message", "osuMode.getModeValue()");
         body.put("is_action", false);
-        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJson(body),header);
+        HttpEntity httpEntity = new HttpEntity(JacksonUtil.objectToJson(body), header);
         var res = template.exchange(URL + "/chat/new", HttpMethod.POST, httpEntity, JsonNode.class);
         return res.getBody();
     }
