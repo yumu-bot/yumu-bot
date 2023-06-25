@@ -228,7 +228,7 @@ public class ImageService {
             uidMap.put(u.getId(), u);
         }
         String firstBackground = null;
-        var scores = new ArrayList<Object>(games.size());
+        var scores = new ArrayList<>(games.size());
         int r_win = 0;
         int b_win = 0;
         int n_win = 0;

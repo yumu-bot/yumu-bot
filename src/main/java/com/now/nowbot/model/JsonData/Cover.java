@@ -11,6 +11,13 @@ public class Cover {
     public String custom;
     public String url;
 
+    public Cover(){}
+
+    public Cover(String custom, String url) {
+        this.custom = custom;
+        this.url = url;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Cover{");

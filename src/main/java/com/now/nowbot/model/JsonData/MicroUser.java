@@ -36,6 +36,7 @@ public class MicroUser {
     Boolean pmFriendsOnly;
     @JsonProperty("username")
     String userName;
+    Cover cover;
     @JsonIgnore
     String countryCode;
     @JsonIgnore
@@ -52,22 +53,6 @@ public class MicroUser {
             this.country = new OsuUser.Country(country.get("code"), country.get("name"));
     }
 
-    public record Cover(String customUrl, String url, String id) {
-        public Long getId() {
-            if (id != null) return Long.parseLong(id);
-            return null;
-        }
-    }
-
-    ;
-    @JsonIgnore
-    Cover cover;
-
-    @JsonProperty("cover")
-    void setCover(Map<String, String> cover) {
-        if (cover != null)
-            this.cover = new Cover(cover.get("custom_url"), cover.get("url"), cover.get("id"));
-    }
 
     @JsonProperty("statistics")
     Statistics statistics;

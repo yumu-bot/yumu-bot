@@ -1,8 +1,10 @@
 package com.now.nowbot.model.match;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.MicroUser;
 
 import java.util.HashSet;
@@ -14,7 +16,10 @@ public class Match {
     @JsonProperty("match")
     MatchInfo matchInfo;
     List<MatchEvent> events;
+//    @JsonIgnore
     List<MicroUser> users;
+//    @JsonProperty("users")
+//    public List<JsonNode> jsonNodes;
     @JsonProperty("first_event_id")
     Long firstEventId;
     @JsonProperty("latest_event_id")

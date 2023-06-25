@@ -1,8 +1,12 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.JsonData.Cover;
+import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
@@ -53,12 +57,14 @@ public class MRAService implements MessageService {
     }
 
     public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed) {
+        long time = System.currentTimeMillis();
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
         }
-
+        System.out.println(System.currentTimeMillis() - time);
+        System.out.println("match ok");
         var data = calculate(match, skipRounds, deleteEnd, includeFailed, osuGetService);
         List<UserMatchData> finalUsers = data.allUsers;
         var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
@@ -71,6 +77,8 @@ public class MRAService implements MessageService {
                 break;
             }
         }
+        System.out.println(System.currentTimeMillis() - time);
+        System.out.println("data ok");
         return postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
     }
 
@@ -104,13 +112,27 @@ public class MRAService implements MessageService {
         var JUsers = match.getUsers();
         Map<Integer, UserMatchData> users = new HashMap<>();
         matchStatistics.setUsers(users);
-
+        var uid4cover = new HashMap<Long, Cover>();
+        int indexOfUser = 0;
+        while (true) {
+            var l = JUsers.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
+            indexOfUser++;
+            if (l.size() == 0) break;
+            var us = osuGetService.getUsers(l).get("users");
+            for(var node: us) {
+                uid4cover.put(node.get("id").asLong(0), JacksonUtil.parseObject(node.get("cover"), Cover.class));
+            }
+        }
         //获取所有user
         for (var jUser : JUsers) {
+            var u = new OsuUser();
+            u.setId(jUser.getId());
+            u.setUsername(jUser.getUserName());
+            u.setCover(uid4cover.get(jUser.getId()));
+            u.setAvatarUrl(jUser.getAvatarUrl());
             try {
-                users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
+                users.put(jUser.getId().intValue(), new UserMatchData(u));
             } catch (Exception e) {
-
                 users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
             }
         }

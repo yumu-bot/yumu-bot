@@ -330,6 +330,11 @@ public class OsuGetService {
         return c.getBody().toPrettyString();
     }
 
+    /***
+     * 批量获取玩家信息 小于50
+     * @param users id
+     * @return
+     */
     public JsonNode getUsers(List<Long> users) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users")
                 .queryParam("ids[]", users).build().encode().toUri();
@@ -720,27 +725,8 @@ public class OsuGetService {
         return date;
     }
 
-    /***
-     * 批量获取玩家信息 0-100
-     * @param id
-     * @return
-     */
-    public JsonNode getPlayersInfo(int... id) {
-        if (id.length <= 0 || id.length > 50) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i : id) {
-            sb.append(i).append(',');
-        }
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/").queryParam("ids[]", sb.toString()).build().encode().toUri();
-        HttpHeaders headers = getHeader();
 
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        return c.getBody();
 
-    }
 
     /***
      * 比赛信息
