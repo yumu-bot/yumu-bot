@@ -6,6 +6,9 @@ import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.auth.BotAuthorization;
 import net.mamoe.mirai.utils.BotConfiguration;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -27,6 +30,8 @@ import xyz.cssxsh.mirai.tool.FixProtocolVersion;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,19 +42,20 @@ import java.util.List;
 @Configuration
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
-    public static String RUN_PATH;
-    public static String BOT_PATH;
-    public static String BIN_PATH;
-    public static String FONT_PATH;
-    public static String BG_PATH;
-    public static String IMGBUFFER_PATH;
-    public static String OSU_ID;
+    public static        String RUN_PATH;
+    public static        String BOT_PATH;
+    public static        String BIN_PATH;
+    public static        String FONT_PATH;
+    public static        String BG_PATH;
+    public static        String IMGBUFFER_PATH;
+    public static        String OSU_ID;
 
-    public static long QQ;
-    public static String PASSWORD;
+    public static long    QQ;
+    public static String  PASSWORD;
     public static boolean QQ_LOGIN;
+
     @Autowired
-    public NowbotConfig (FileConfig fileConfig, QQConfig qqConfig){
+    public NowbotConfig(FileConfig fileConfig, QQConfig qqConfig) {
         RUN_PATH = createDir(fileConfig.root);
         BOT_PATH = createDir(fileConfig.mirai);
         BIN_PATH = createDir(fileConfig.bind);
@@ -64,12 +70,21 @@ public class NowbotConfig {
     }
 
     @Bean
+    public OkHttpClient httpClient() {
+        var clientBuilder = new OkHttpClient.Builder()
+                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
+        return clientBuilder.build();
+    }
+
+    @Bean
     public RestTemplate restTemplate() {
-        var tempFactory = new OkHttp3ClientHttpRequestFactory();
-        tempFactory.setConnectTimeout(3*60*1000);
-        tempFactory.setReadTimeout(3*60*1000);
+        var client = httpClient();
+
+        var tempFactory = new OkHttp3ClientHttpRequestFactory(client);
+        tempFactory.setConnectTimeout(3 * 60 * 1000);
+        tempFactory.setReadTimeout(3 * 60 * 1000);
         var template = new RestTemplate(tempFactory);
-        template.setErrorHandler(new DefaultResponseErrorHandler(){
+        template.setErrorHandler(new DefaultResponseErrorHandler() {
             @Override
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
                 throw new RequestException(response, statusCode);
@@ -87,8 +102,9 @@ public class NowbotConfig {
 
     @Autowired
     MessageListener messageListener;
+
     @Bean
-    public Bot bot(){
+    public Bot bot() {
 //        FixProtocolVersion.update();
 //        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
 //        log.info("update version: {}", FixProtocolVersion.info());
@@ -100,13 +116,13 @@ public class NowbotConfig {
         botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
         botConfiguration.setWorkingDir(new File(BOT_PATH));
 
-        File logdir = new File(BOT_PATH+"log");
+        File logdir = new File(BOT_PATH + "log");
         if (!logdir.isDirectory()) logdir.mkdirs();
         botConfiguration.redirectBotLogToDirectory(logdir);
         botConfiguration.redirectNetworkLogToDirectory(logdir);
         botConfiguration.fileBasedDeviceInfo();
         botConfiguration.enableContactCache();
-        botConfiguration.getContactListCache().setSaveIntervalMillis(60000*30);
+        botConfiguration.getContactListCache().setSaveIntervalMillis(60000 * 30);
         //配置完成，注册bot                    BotAuthorization.Companion.byPassword()
         var auth = PASSWORD.equals("") ? BotAuthorization.Companion.byQRCode() : BotAuthorization.byPassword(PASSWORD);
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, auth, botConfiguration);
@@ -114,19 +130,21 @@ public class NowbotConfig {
         bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
         return bot;
     }
+
     public static ApplicationContext applicationContext;
+
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         NowbotConfig.applicationContext = applicationContext;
     }
 
-    public String createDir(String path){
+    public String createDir(String path) {
         Path pt = Path.of(path);
-        if(!Files.isDirectory(pt)) {
+        if (!Files.isDirectory(pt)) {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
-                log.error(BOT_PATH+"创建失败",e);
+                log.error(BOT_PATH + "创建失败", e);
             }
         }
         return path;
@@ -135,5 +153,17 @@ public class NowbotConfig {
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
+    }
+
+    static boolean testProxy(OkHttpClient client) {
+        Request request = new Request.Builder()
+                .url("https://osu.ppy.sh/users/17064371/scores/best?mode=osu&limit=1&offset=0")
+                .build();
+        try (Response response = client.newCall(request).execute()){
+            if (response.isSuccessful()) return true;
+        } catch (IOException e) {
+            log.error("代理不可用", e);
+        }
+        return false;
     }
 }
