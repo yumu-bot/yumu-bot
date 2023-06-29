@@ -307,6 +307,7 @@ public class ImageService {
                     var u = uidMap.get(s.getUserId().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
+                if (r_user_list.size() == 0 || b_user_list.size() == 0) continue;
                 scores.add(Map.of(
                         "statistics",statistics,
                         "red", r_user_list,
