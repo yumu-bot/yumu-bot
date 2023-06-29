@@ -248,17 +248,17 @@ public class ImageService {
                     .reduce(0, (a, i) -> a | i);
 
             if (gameItem.getBeatmap() != null) {
-                var mapInfo = osuGetService.getMapInfo(gameItem.getBeatmap().getId());
+                var mapInfo = osuGetService.getMapInfoLite(gameItem.getBeatmap().getId());
                 if (firstBackground == null) {
-                    firstBackground = mapInfo.getBeatMapSet().getCovers().getList2x();
+                    firstBackground = mapInfo.getMapSet().getList();
                 }
                 statistics.put("delete", false);
-                statistics.put("background", mapInfo.getBeatMapSet().getCovers().getList2x());
-                statistics.put("title", mapInfo.getBeatMapSet().getTitle());
-                statistics.put("artist", mapInfo.getBeatMapSet().getArtist());
-                statistics.put("mapper", mapInfo.getBeatMapSet().getCreator());
+                statistics.put("background", mapInfo.getMapSet().getList());
+                statistics.put("title", mapInfo.getMapSet().getTitle());
+                statistics.put("artist", mapInfo.getMapSet().getArtist());
+                statistics.put("mapper", mapInfo.getMapSet().getCreator());
                 statistics.put("difficulty", mapInfo.getVersion());
-                statistics.put("status", mapInfo.getBeatMapSet().getStatus());
+                statistics.put("status", mapInfo.getMapSet().getStatus());
                 statistics.put("bid", gameItem.getBeatmap().getId());
                 statistics.put("mode", gameItem.getMode());
 //                if (gameItem.getModInt() != null) {

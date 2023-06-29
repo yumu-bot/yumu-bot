@@ -3,7 +3,9 @@ package com.now.nowbot.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.OSUConfig;
+import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.retry.annotation.Backoff;
@@ -43,9 +46,10 @@ public class OsuGetService {
     private final String URL;
     BindDao      bindDao;
     RestTemplate template;
+    BeatMapDao   beatMapDao;
 
     @Autowired
-    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind) {
+    OsuGetService(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind,@Lazy BeatMapDao beatMap) {
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
@@ -53,6 +57,7 @@ public class OsuGetService {
 
         bindDao = bind;
         template = restTemplate;
+        beatMapDao = beatMap;
     }
 
 
@@ -621,13 +626,9 @@ public class OsuGetService {
      * @return
      */
     public BeatMap getMapInfo(int bid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
-        HttpHeaders headers = getHeader();
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
-        return c.getBody();
+        return getMapInfo((long) bid);
     }
+
 
     public BeatMap getMapInfo(long bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
@@ -635,7 +636,17 @@ public class OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
-        return c.getBody();
+        var map = c.getBody();
+        beatMapDao.saveMap(map);
+        return map;
+    }
+
+    public BeatmapLite getMapInfoLite(long bid) {
+        try {
+            return beatMapDao.getBeatMapLite(bid);
+        } catch (NullPointerException ignore) {
+            return BeatMapDao.fromBeatmapModel(getMapInfo(bid));
+        }
     }
 
     public JsonNode getMapInfoR(long bid) {
@@ -644,21 +655,6 @@ public class OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        return c.getBody();
-    }
-
-    /***
-     * 获取map信息
-     * @param bid bid
-     * @param user
-     * @return
-     */
-    public BeatMap getMapInfo(int bid, BinUser user) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
-        HttpHeaders headers = getHeader(user);
-
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<BeatMap> c = template.exchange(uri, HttpMethod.GET, httpEntity, BeatMap.class);
         return c.getBody();
     }
 
@@ -724,8 +720,6 @@ public class OsuGetService {
         }
         return date;
     }
-
-
 
 
     /***

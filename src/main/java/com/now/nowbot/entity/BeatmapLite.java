@@ -10,10 +10,9 @@ import javax.persistence.*;
 })
 public class BeatmapLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "map_id")
+    @Column(name = "map_id", insertable = false, updatable = false)
     private Integer beatmapsetId;
 
     @Column(name = "mapper_id")
@@ -56,6 +55,10 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     private Integer modeInt;
     Integer ranked;
+
+    @ManyToOne()
+    @JoinColumn(name = "map_id")
+    MapSetLite mapSet;
 
     public Long getId() {
         return id;
@@ -223,5 +226,29 @@ public class BeatmapLite {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public void setPlaycount(Integer playcount) {
+        this.playcount = playcount;
+    }
+
+    public void setPasscount(Integer passcount) {
+        this.passcount = passcount;
+    }
+
+    public Integer getRanked() {
+        return ranked;
+    }
+
+    public void setRanked(Integer ranked) {
+        this.ranked = ranked;
+    }
+
+    public MapSetLite getMapSet() {
+        return mapSet;
+    }
+
+    public void setMapSet(MapSetLite mapSet) {
+        this.mapSet = mapSet;
     }
 }

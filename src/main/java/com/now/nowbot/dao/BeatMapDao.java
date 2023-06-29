@@ -16,12 +16,10 @@ import org.springframework.stereotype.Component;
 public class BeatMapDao {
     MapSetMapper mapSetMapper;
     BeatMapMapper beatMapMapper;
-    OsuGetService osuGetService;
     @Autowired
-    public BeatMapDao(MapSetMapper mapSetMapper, BeatMapMapper beatMapMapper, OsuGetService osuGetService){
+    public BeatMapDao(MapSetMapper mapSetMapper, BeatMapMapper beatMapMapper){
         this.beatMapMapper = beatMapMapper;
         this.mapSetMapper = mapSetMapper;
-        this.osuGetService = osuGetService;
     }
 
     public BeatmapLite saveMap(BeatMap beatMap){
@@ -38,8 +36,7 @@ public class BeatMapDao {
     public BeatmapLite getBeatMapLite(long id){
         var lite = beatMapMapper.findById(id);
         if (lite.isEmpty()) {
-            var map = osuGetService.getMapInfo(id);
-            return saveMap(map);
+            throw new NullPointerException("not found");
         }
         return lite.get();
     }
@@ -52,7 +49,9 @@ public class BeatMapDao {
 
     public static BeatmapLite fromBeatmapModel(BeatMap map){
         var s = new BeatmapLite();
+        var mapSet = fromMapSetModel(map.getBeatMapSet());
         BeanUtils.copyProperties(map, s);
+        s.setMapSet(mapSet);
         return s;
     }
 
