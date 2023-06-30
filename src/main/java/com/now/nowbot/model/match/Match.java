@@ -15,10 +15,10 @@ import java.util.List;
 public class Match {
     @JsonProperty("match")
     MatchInfo matchInfo;
-    @JsonIgnore
+    //    @JsonIgnore
     List<MatchEvent> events;
-    @JsonProperty("events")
-    public List<JsonNode> eventsrr;
+    //    @JsonProperty("events")
+//    public List<JsonNode> eventsrr;
 //    @JsonIgnore
     List<MicroUser> users;
 //    @JsonProperty("users")
