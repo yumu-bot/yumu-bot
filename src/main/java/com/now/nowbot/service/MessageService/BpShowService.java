@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
@@ -28,12 +29,14 @@ public class BpShowService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
+    ImageService imageService;
 
     @Autowired
-    public BpShowService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template) {
+    public BpShowService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.template = template;
+        imageService = image;
     }
 
     @Override
@@ -77,7 +80,7 @@ public class BpShowService implements MessageService {
                 return;
             }
             var score = bpList.get(0);
-            var data = YmpService.postImage(u, score, osuGetService, template);
+            var data = imageService.drawScore(u, score,osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception ignored) {
             from.sendMessage("查询异常,请等一会再试");

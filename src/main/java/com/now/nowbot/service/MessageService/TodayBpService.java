@@ -57,7 +57,7 @@ public class TodayBpService implements MessageService{
         var bpList = osuGetService.getBestPerformance(user, mode, 0,100);
 
         if (bpList == null) {
-            throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP); //咋丢
+            throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
         }
 
         var lines = new ArrayList<Image>();

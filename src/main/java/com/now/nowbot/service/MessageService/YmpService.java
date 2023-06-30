@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -32,13 +33,15 @@ public class YmpService implements MessageService {
 
     RestTemplate template;
     OsuGetService osuGetService;
-    BindDao bindDao;
+    BindDao      bindDao;
+    ImageService imageService;
 
     @Autowired
-    public YmpService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao) {
+    public YmpService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+        imageService = image;
     }
 
     @Override
@@ -73,7 +76,7 @@ public class YmpService implements MessageService {
         }
         try {
             var osuUser = osuGetService.getPlayerInfo(user, mode);
-            var data = postImage(osuUser, dates.get(0), osuGetService, template);
+            var data = imageService.drawScore(osuUser, dates.get(0),osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("???", e);
@@ -102,22 +105,5 @@ public class YmpService implements MessageService {
             return osuGetService.getAllRecentN(id, mode, 0, 1);
         else
             return osuGetService.getRecentN(id, mode, 0, 1);
-    }
-
-    public static byte[] postImage(OsuUser user, Score score, OsuGetService osuGetService, RestTemplate template) {
-        var map = osuGetService.getMapInfo(score.getBeatMap().getId());
-        score.setBeatMap(map);
-        score.setBeatMapSet(map.getBeatMapSet());
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        var body = Map.of("user", user,
-                "score", score
-        );
-        HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_E"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
     }
 }

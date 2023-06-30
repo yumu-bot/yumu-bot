@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -24,12 +25,14 @@ public class ScoreService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
+    ImageService imageService;
 
     @Autowired
-    public ScoreService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template) {
+    public ScoreService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.template = template;
+        imageService = image;
     }
 
     @Override
@@ -95,7 +98,7 @@ public class ScoreService implements MessageService {
         var userInfo = osuGetService.getPlayerInfo(user, mode);
 
         try {
-            var data = YmpService.postImage(userInfo, score, osuGetService, template);
+            var data = imageService.drawScore(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("err", e);

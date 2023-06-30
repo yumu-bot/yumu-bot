@@ -42,10 +42,10 @@ public class ImageService {
         this.restTemplate = restTemplate;
     }
 
-    public byte[] getMarkdownImage(String markdown){
+    public byte[] getMarkdownImage(String markdown) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of("md",markdown,"width", 1500);
+        var body = Map.of("md", markdown, "width", 1500);
         HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
     }
@@ -55,10 +55,10 @@ public class ImageService {
      * @param width 宽度
      * @return 图片
      */
-    public byte[] getMarkdownImage(String markdown, int width){
+    public byte[] getMarkdownImage(String markdown, int width) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of("md",markdown,"width", width);
+        var body = Map.of("md", markdown, "width", width);
         HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
     }
@@ -93,7 +93,7 @@ public class ImageService {
         return new byte[0];
     }
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bp){
+    public byte[] getPanelJ(OsuUser user, List<Score> bp) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -107,7 +107,7 @@ public class ImageService {
     public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
         String STBPRE;
 
-        if (mode == OsuMode.MANIA){
+        if (mode == OsuMode.MANIA) {
             STBPRE = "PRE";
         } else {
             STBPRE = "STB";
@@ -137,10 +137,11 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_B", httpEntity);
     }
+
     public byte[] getPanelB(OsuUser userMe, OsuUser userOther, Ppm ppmMe, Ppm ppmOther, OsuMode mode) {
         String STBPRE;
 
-        if (mode == OsuMode.MANIA){
+        if (mode == OsuMode.MANIA) {
             STBPRE = "PRE";
         } else {
             STBPRE = "STB";
@@ -195,17 +196,17 @@ public class ImageService {
         var now = LocalDate.now();
         var bpNum = new int[90];
         times.forEach(time -> {
-            var day = (int)(now.toEpochDay() - time.toLocalDate().toEpochDay());
-            if (day > 0 && day <= 90){
-                bpNum[90-day] ++;
+            var day = (int) (now.toEpochDay() - time.toLocalDate().toEpochDay());
+            if (day > 0 && day <= 90) {
+                bpNum[90 - day]++;
             }
         });
 
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of("user",userInfo,
-                "bp-time",bpNum,
-                "bp-list", bps.subList(0,Math.min(bps.size(), 8)),
+        var body = Map.of("user", userInfo,
+                "bp-time", bpNum,
+                "bp-list", bps.subList(0, Math.min(bps.size(), 8)),
                 "re-list", res,
                 "bonus_pp", bonus,
                 "mode", mode.getName()
@@ -219,12 +220,12 @@ public class ImageService {
         var games = match.getEvents().stream()
                 .map(MatchEvent::getGame)
                 .filter(Objects::nonNull)
-                .filter(m->m.getScoreInfos() != null && m.getScoreInfos().size()!=0)
+                .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
                 .toList();
         final int rSise = games.size();
         games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
-        for (var u : match.getUsers()){
+        for (var u : match.getUsers()) {
             uidMap.put(u.getId(), u);
         }
         String firstBackground = null;
@@ -232,7 +233,7 @@ public class ImageService {
         int r_win = 0;
         int b_win = 0;
         int n_win = 0;
-        for (var gameItem: games){
+        for (var gameItem : games) {
             var statistics = new HashMap<String, Object>();
 
             var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
@@ -241,7 +242,7 @@ public class ImageService {
                     .flatMap(m -> Arrays.stream(m.getMods()))
                     .collect(Collectors.groupingBy(m -> m, Collectors.counting()))
                     .entrySet()
-                    .stream().filter(a-> a.getValue()>=allScoreSize)
+                    .stream().filter(a -> a.getValue() >= allScoreSize)
                     .map(Map.Entry::getKey)
                     .map(Mod::fromStr)
                     .mapToInt(m -> m.value)
@@ -271,7 +272,7 @@ public class ImageService {
                 statistics.put("delete", true);
             }
             var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
-            if ("team-vs".equals(gameItem.getTeamType())){
+            if ("team-vs".equals(gameItem.getTeamType())) {
                 statistics.put("is_team_vs", true);
                 // 成绩分类
                 var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();
@@ -279,18 +280,18 @@ public class ImageService {
                 // 计算胜利(仅分数和
                 var b_score_sum = b_score.stream().mapToInt(MpScoreInfo::getScore).sum();
                 var r_score_sum = r_score.stream().mapToInt(MpScoreInfo::getScore).sum();
-                statistics.put("score_team_red", r_score_sum );
-                statistics.put("score_team_blue", b_score_sum );
-                statistics.put("score_total", r_score_sum + b_score_sum );
+                statistics.put("score_team_red", r_score_sum);
+                statistics.put("score_team_blue", b_score_sum);
+                statistics.put("score_total", r_score_sum + b_score_sum);
 
                 if (r_score_sum > b_score_sum) {
                     statistics.put("is_team_red_win", true);
                     statistics.put("is_team_blue_win", false);
-                    r_win ++;
+                    r_win++;
                 } else if (r_score_sum < b_score_sum) {
                     statistics.put("is_team_red_win", false);
                     statistics.put("is_team_blue_win", true);
-                    b_win ++;
+                    b_win++;
                 } else {
                     statistics.put("is_team_red_win", false);
                     statistics.put("is_team_blue_win", false);
@@ -309,7 +310,7 @@ public class ImageService {
                 }).toList();
                 if (r_user_list.size() == 0 || b_user_list.size() == 0) continue;
                 scores.add(Map.of(
-                        "statistics",statistics,
+                        "statistics", statistics,
                         "red", r_user_list,
                         "blue", b_user_list
                 ));
@@ -317,8 +318,8 @@ public class ImageService {
                 statistics.put("is_team_vs", false);
                 statistics.put("is_team_red_win", false);
                 statistics.put("is_team_blue_win", false);
-                statistics.put("score_team_red", 0 );
-                statistics.put("score_team_blue", 0 );
+                statistics.put("score_team_red", 0);
+                statistics.put("score_team_blue", 0);
                 statistics.put("wins_team_red_before", 0);
                 statistics.put("wins_team_blue_before", 0);
 
@@ -330,8 +331,8 @@ public class ImageService {
                 if (g_scores.size() > 2) {
                     user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
                         var u = uidMap.get(s.getUserId().longValue());
-                        if (u == null){
-                            return    getMatchScoreInfo("Unknown",
+                        if (u == null) {
+                            return getMatchScoreInfo("Unknown",
                                     "https://osu.ppy.sh/images/layout/avatar-guest.png",
                                     0,
                                     new String[0],
@@ -344,8 +345,8 @@ public class ImageService {
                 } else {
                     user_list = g_scores.stream().map(s -> {
                         var u = uidMap.get(s.getUserId().longValue());
-                        if (u == null){
-                            return    getMatchScoreInfo("Unknown",
+                        if (u == null) {
+                            return getMatchScoreInfo("Unknown",
                                     "https://osu.ppy.sh/images/layout/avatar-guest.png",
                                     0,
                                     new String[0],
@@ -357,11 +358,11 @@ public class ImageService {
                 }
 
                 scores.add(Map.of(
-                        "statistics",statistics,
+                        "statistics", statistics,
                         "none", user_list
                 ));
 
-                n_win ++;
+                n_win++;
             }
         }
 
@@ -395,7 +396,7 @@ public class ImageService {
         return doPost("panel_F", httpEntity);
     }
 
-    public byte[] drawLine(String ...lines){
+    public byte[] drawLine(String... lines) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("strs", lines);
@@ -407,27 +408,42 @@ public class ImageService {
         return drawLine(sb.toString().split("\n"));
     }
 
-    private Map<String,Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods,int rank){
+    public byte[] drawScore(OsuUser user, Score score, OsuGetService osuGetService) {
+        var map = osuGetService.getMapInfo(score.getBeatMap().getId());
+        score.setBeatMap(map);
+        score.setBeatMapSet(map.getBeatMapSet());
+
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of("user", user,
+                "score", score
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E", httpEntity);
+    }
+
+    private Map<String, Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods, int rank) {
         return Map.of(
-                "player_name",name,
-                "player_avatar",avatar,
-                "player_score",score,
-                "player_mods",mods,
-                "player_rank",rank
+                "player_name", name,
+                "player_avatar", avatar,
+                "player_score", score,
+                "player_mods", mods,
+                "player_rank", rank
         );
     }
-    private HttpHeaders getDefaultHeader(){
+
+    private HttpHeaders getDefaultHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         return headers;
     }
-    private byte[] doPost(String path, HttpEntity entity ){
+
+    private byte[] doPost(String path, HttpEntity entity) {
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
         return s.getBody();
     }
 
-    private Map<String, Object> getPanelBUser(OsuUser user){
+    private Map<String, Object> getPanelBUser(OsuUser user) {
         var map = new HashMap<String, Object>(12);
         map.put("background", user.getCoverUrl());
         map.put("avatar", user.getAvatarUrl());

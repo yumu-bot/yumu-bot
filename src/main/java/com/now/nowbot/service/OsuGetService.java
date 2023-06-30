@@ -411,15 +411,15 @@ public class OsuGetService {
     /***
      * 获得score(最近游玩列表
      * @param user
-     * @param s
-     * @param e
+     * @param offset
+     * @param limit
      * @return
      */
-    public List<Score> getRecentN(BinUser user, OsuMode mode, int s, int e) {
-        if (user.getAccessToken() == null) return getRecentN(user.getOsuID(), mode, s, e);
+    public List<Score> getRecentN(BinUser user, OsuMode mode, int offset, int limit) {
+        if (user.getAccessToken() == null) return getRecentN(user.getOsuID(), mode, offset, limit);
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+                .queryParam("limit", limit)
+                .queryParam("offset", offset);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
@@ -434,14 +434,14 @@ public class OsuGetService {
      * 获得成绩 不包含fail
      * @param userId
      * @param mode 模式
-     * @param s 从开始
-     * @param e 不包含本身
+     * @param offset 从开始
+     * @param limit 不包含本身
      * @return
      */
-    public List<Score> getRecentN(long userId, OsuMode mode, int s, int e) {
+    public List<Score> getRecentN(long userId, OsuMode mode, int offset, int limit) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+                .queryParam("limit", limit)
+                .queryParam("offset", offset);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
