@@ -155,18 +155,25 @@ public class BotWebApi {
     public byte[] getPR(@RequestParam("u1") String userName,
                         @Nullable @RequestParam("mode") String playMode,
                         @Nullable @RequestParam("days") Integer days,
-                        @Nullable @RequestParam("limit") Integer limit
+                        @Nullable @RequestParam("limit") Integer limit,
+                        @Nullable @RequestParam("re") Boolean re,
+                        @Nullable @RequestParam("pr") Boolean pr
     ) {
         var mode = OsuMode.getMode(playMode);
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(userName);
         List<Score> bps;
-        if (limit != null) {
+        if (pr != null && pr) {
+            bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, 100);
+        } else if (re != null && re) {
+            bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, 100);
+        } else  if (limit != null) {
+            limit = Math.max(5, Math.min(100, limit + 1));
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,limit);
         } else if (days != null) {
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,100);
             // 时间计算
-            int dat = -days;
+            int dat = -Math.max(1, Math.min(999, days));
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
             bps = bps.stream().filter(s->dayBefore.isBefore(s.getCreateTime())).toList();
         } else {
