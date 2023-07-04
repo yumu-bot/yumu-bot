@@ -3,7 +3,10 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.imag.MapAttr;
+import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -26,8 +29,8 @@ import java.util.stream.Collectors;
 public class BphtService implements MessageService {
     private static final int FONT_SIZE = 30;
     OsuGetService osuGetService;
-    BindDao bindDao;
-    ImageService imageService;
+    BindDao       bindDao;
+    ImageService  imageService;
 
     @Autowired
     public BphtService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
@@ -68,7 +71,7 @@ public class BphtService implements MessageService {
             } catch (BindException e) {
                 //do nothing
             }
-            if (nu == null){
+            if (nu == null) {
                 //构建只有 name + id 的对象
                 nu = new BinUser();
                 nu.setOsuID(id);
@@ -85,19 +88,19 @@ public class BphtService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
-        Bps = osuGetService.getBestPerformance(nu, mode,0,100);
+        Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
 
         String[] lins;
-        if (matcher.group("info") == null){
-            if(mode == null || mode == OsuMode.DEFAULT) {
+        if (matcher.group("info") == null) {
+            if (mode == null || mode == OsuMode.DEFAULT) {
                 lins = getAllMsg(Bps, nu.getOsuName(), "");
-            }else {
+            } else {
                 lins = getAllMsg(Bps, nu.getOsuName(), mode.getName());
             }
         } else {
-            if(mode == null || mode == OsuMode.DEFAULT) {
+            if (mode == null || mode == OsuMode.DEFAULT) {
                 lins = getAllMsg(Bps, nu.getOsuName(), OsuMode.DEFAULT, nu);
-            }else {
+            } else {
                 lins = getAllMsg(Bps, nu.getOsuName(), mode, nu);
             }
         }
@@ -105,7 +108,7 @@ public class BphtService implements MessageService {
 //        from.sendMessage(dtbf.toString());
     }
 
-    public String[] getAllMsg(List<Score> Bps, String name, String mode){
+    public String[] getAllMsg(List<Score> Bps, String name, String mode) {
         var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
@@ -162,31 +165,39 @@ public class BphtService implements MessageService {
         return dtbf.toString().split("\n");
     }
 
-    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode, BinUser binUser){
+    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode, BinUser binUser) {
         if (bps.size() == 0) return new String[0];
         var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
 
-        var  t1 = bps.get(0);
+        var t1 = bps.get(0);
         var t1Bpm = t1.getBeatMap().getBpm();
         float t1BLength = t1.getBeatMap().getTotalLength();
-        if (t1.getMods().contains("DT") || t1.getMods().contains("NC")){
+        if (t1.getMods().contains("DT") || t1.getMods().contains("NC")) {
             t1BLength /= 1.5f;
             t1Bpm *= 1.5f;
-        } else if (t1.getMods().stream().anyMatch(r->r.equals("HT"))){
+        } else if (t1.getMods().stream().anyMatch(r -> r.equals("HT"))) {
             t1BLength /= 0.75f;
             t1Bpm *= 0.75f;
         }
-        int maxBpm = 0; float maxBpmValue = t1Bpm;
-        int maxCommbo = 0; int maxComboValue = t1.getMaxCombo();
-        int maxLength = 0; float maxLengthValue = t1BLength;
+        float star = 0;
+        int maxBpm = 0;
+        float maxBpmValue = t1Bpm;
+        int maxCommbo = 0;
+        int maxComboValue = t1.getMaxCombo();
+        int maxLength = 0;
+        float maxLengthValue = t1BLength;
 
-        int minBpm = 0; float minBpmValue = maxBpmValue;
-        int minCommbo = 0;int minComboValue = maxComboValue;
-        int minLength = 0;float minLengthValue = maxLengthValue;
+        int minBpm = 0;
+        float minBpmValue = maxBpmValue;
+        int minCommbo = 0;
+        int minComboValue = maxComboValue;
+        int minLength = 0;
+        float minLengthValue = maxLengthValue;
 
         int avgLength = 0;
         int avgCombo = 0;
-        int maxTimeToPp = 0; float maxTimeToPpValue = 0;
+        int maxTimeToPp = 0;
+        float maxTimeToPpValue = 0;
         float allPP = 0;
         float nowPP = 0;
 
@@ -195,30 +206,48 @@ public class BphtService implements MessageService {
         TreeMap<Integer, mapperDate> mapperSum = new TreeMap<>();
         DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
 
-        float debugx = 0;
+        var mapAttrGet = new MapAttrGet(mode);
+        bps.stream()
+                .peek(s -> {
+                    if (s.getMods().size() == 0) s.setScore(0);
+                    int f = s.getMods().stream().map(Mod::fromStr).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
+                    s.setScore(f);
+                })
+                .filter(s -> Mod.hasChangeRating(s.getScore()))
+                .forEach(s -> {
+                    mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore());
+                });
+        var changedStarMapAttrs = imageService.getMapAttr(mapAttrGet);
+        var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s->s));
         for (int i = 0; i < bps.size(); i++) {
             var jsb = bps.get(i);
             var map = jsb.getBeatMap();
             int length = map.getTotalLength();
             float bpm = map.getBpm();
-            jsb.getMods().forEach(r->{
-                if (modSum.containsKey(r)){
+            jsb.getMods().forEach(r -> {
+                if (modSum.containsKey(r)) {
                     modSum.get(r).add(jsb.getWeight().getPP());
                 } else {
                     modSum.put(r, new modDate(jsb.getWeight().getPP()));
                 }
             });
-            if (jsb.getMods().contains("DT") || jsb.getMods().contains("NC")){
+            if (jsb.getMods().contains("DT") || jsb.getMods().contains("NC")) {
                 length /= 1.5f;
                 bpm *= 1.5;
-            } else if (jsb.getMods().stream().anyMatch(r->r.equals("HT"))){
+            } else if (jsb.getMods().stream().anyMatch(r -> r.equals("HT"))) {
                 length /= 0.75f;
                 bpm *= 0.75f;
             }
 
             avgLength += length;
 
-            if (bpm < minBpmValue){
+            if (Mod.hasChangeRating(jsb.getScore())) {
+               star += changedStarMap.get(jsb.getBeatMap().getId()).getStars();
+            } else {
+                star += jsb.getBeatMap().getDifficultyRating();
+            }
+
+            if (bpm < minBpmValue) {
                 minBpm = i;
                 minBpmValue = bpm;
             } else if (bpm > maxBpmValue) {
@@ -226,25 +255,25 @@ public class BphtService implements MessageService {
                 maxBpmValue = bpm;
             }
 
-            if (length < minLengthValue){
+            if (length < minLengthValue) {
                 minLength = i;
                 minLengthValue = length;
-            } else if (length > maxLengthValue){
+            } else if (length > maxLengthValue) {
                 maxLength = i;
                 maxLengthValue = length;
             }
 
-            if (jsb.getMaxCombo() < minComboValue){
+            if (jsb.getMaxCombo() < minComboValue) {
                 minCommbo = i;
                 minComboValue = jsb.getMaxCombo();
-            } else if (jsb.getMaxCombo() > maxComboValue){
+            } else if (jsb.getMaxCombo() > maxComboValue) {
                 maxCommbo = i;
                 maxComboValue = jsb.getMaxCombo();
             }
             avgCombo += jsb.getMaxCombo();
 
             float tthToPp = (jsb.getPP()) / (map.getSliders() + map.getSpinners() + map.getCircles());
-            if (maxTimeToPpValue < tthToPp){
+            if (maxTimeToPpValue < tthToPp) {
                 maxTimeToPp = i;
                 maxTimeToPpValue = tthToPp;
             }
@@ -259,16 +288,18 @@ public class BphtService implements MessageService {
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();
+        star /= bps.size();
 
         dtbf.append("bp平均长度: ").append(getTimeStr(avgLength)).append('\n');
-        dtbf.append("最长是bp").append(maxLength+1).append(' ').append(getTimeStr((int) maxLengthValue)).append('\n');
-        dtbf.append("最短是bp").append(minLength+1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
+        dtbf.append("最长是bp").append(maxLength + 1).append(' ').append(getTimeStr((int) maxLengthValue)).append('\n');
+        dtbf.append("最短是bp").append(minLength + 1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
 
         dtbf.append("bp平均combo: ").append(avgCombo).append('\n');
-        dtbf.append("最长是bp").append(maxCommbo+1).append(' ').append(maxComboValue).append('\n');
-        dtbf.append("最短是bp").append(minCommbo+1).append(' ').append(minComboValue).append('\n');
+        dtbf.append("bp平均星级: ").append(star).append('\n');
+        dtbf.append("最长是bp").append(maxCommbo + 1).append(' ').append(maxComboValue).append('\n');
+        dtbf.append("最短是bp").append(minCommbo + 1).append(' ').append(minComboValue).append('\n');
 
-        dtbf.append("单图pp/tth收益最大的是bp").append(maxTimeToPp+1)
+        dtbf.append("单图pp/tth收益最大的是bp").append(maxTimeToPp + 1)
                 .append(" 斩获").append(decimalFormat.format(maxTimeToPpValue)).append("pp/tth").append('\n');
 
         dtbf.append("bpm统计:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
@@ -276,14 +307,14 @@ public class BphtService implements MessageService {
         dtbf.append("bp中mapper统计:\n");
         var mappers = mapperSum.values().stream()
                 .sorted((o1, o2) -> {
-                    if (o1.size != o2.size) return 2*(o2.size - o1.size);
+                    if (o1.size != o2.size) return 2 * (o2.size - o1.size);
                     return o1.allPP > o2.allPP ? -1 : 1;
                 })
                 .limit(9).toList();
-        var mappersId = mappers.stream().map(u->u.uid).toList();
+        var mappersId = mappers.stream().map(u -> u.uid).toList();
         var mappersInfo = osuGetService.getUsers(mappersId).get("users");
         var mapperIdToInfo = new HashMap<Long, String>();
-        for(var node: mappersInfo) {
+        for (var node : mappersInfo) {
             mapperIdToInfo.put(node.get("id").asLong(0), node.get("username").asText("unknown"));
         }
         mappers.forEach(mapperDate -> {
@@ -300,22 +331,25 @@ public class BphtService implements MessageService {
         float finalAllPP = nowPP;
         modSum.forEach((mod, sum) -> dtbf.append(mod).append('*').append(sum.size).append(' ').append("总计")
                 .append(sum.getAllPP())
-                .append('[').append(decimalFormat.format(100*sum.getAllPP()/ finalAllPP)).append('%').append(']')
+                .append('[').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(']')
                 .append('\n'));
 
 
         return dtbf.toString().split("\n");
     }
-    class mapperDate{
+
+    class mapperDate {
         float allPP;
-        int size;
-        long uid;
-        mapperDate(float pp, int uid){
+        int   size;
+        long  uid;
+
+        mapperDate(float pp, int uid) {
             allPP += pp;
             size = 1;
             this.uid = uid;
         }
-        mapperDate add(float pp){
+
+        mapperDate add(float pp) {
             allPP += pp;
             size++;
             return this;
@@ -329,14 +363,17 @@ public class BphtService implements MessageService {
             return size;
         }
     }
-    class modDate{
+
+    class modDate {
         float allPP;
-        int size;
-        modDate(float pp){
+        int   size;
+
+        modDate(float pp) {
             allPP += pp;
             size = 1;
         }
-        modDate add(float pp){
+
+        modDate add(float pp) {
             allPP += pp;
             size++;
             return this;
@@ -350,11 +387,12 @@ public class BphtService implements MessageService {
             return size;
         }
     }
-    String getTimeStr(int l){
-        if (l<60){
-            return l+"秒";
+
+    String getTimeStr(int l) {
+        if (l < 60) {
+            return l + "秒";
         } else {
-            return l/60+"分"+l%60+"秒";
+            return l / 60 + "分" + l % 60 + "秒";
         }
     }
 }

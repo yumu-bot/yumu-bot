@@ -177,6 +177,11 @@ public enum Mod {
         return Easy.check(i);
     }
 
+    public static boolean hasChangeRating(int i) {
+        return Easy.check(i) || HalfTime.check(i) ||
+                HardRock.check(i) || DoubleTime.check(i) || Nightcore.check(i) || Flashlight.check(i);
+    }
+
     public static int add(int old, Mod mod) {
         return old | mod.value;
     }

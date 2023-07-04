@@ -8,6 +8,8 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.imag.MapAttr;
+import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.score.MpScoreInfo;
@@ -15,6 +17,7 @@ import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -61,6 +64,14 @@ public class ImageService {
         var body = Map.of("md", markdown, "width", width);
         HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
+    }
+    public List<MapAttr> getMapAttr(MapAttrGet p) {
+        HttpHeaders headers = getDefaultHeader();
+
+        HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
+        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<List<MapAttr>>() {
+        });
+        return s.getBody();
     }
 
     public byte[] getCardH() {
