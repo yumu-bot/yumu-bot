@@ -155,7 +155,7 @@ public class BotWebApi {
     public byte[] getPR(@RequestParam("u1") String userName,
                         @Nullable @RequestParam("mode") String playMode,
                         @Nullable @RequestParam("days") Integer days,
-                        @Nullable @RequestParam("limit") Integer limit,
+                        @Nullable @RequestParam("range") Integer range,
                         @Nullable @RequestParam("re") Boolean re,
                         @Nullable @RequestParam("pr") Boolean pr
     ) {
@@ -167,9 +167,9 @@ public class BotWebApi {
             bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, 100);
         } else if (re != null && re) {
             bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, 100);
-        } else  if (limit != null) {
-            limit = Math.max(5, Math.min(100, limit + 1));
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,limit);
+        } else  if (range != null) {
+            range = Math.max(5, Math.min(100, range + 1));
+            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, range);
         } else if (days != null) {
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,100);
             // 时间计算
