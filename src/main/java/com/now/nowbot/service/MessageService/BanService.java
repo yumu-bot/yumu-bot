@@ -2,10 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.config.PermissionData;
 import com.now.nowbot.service.ImageService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;

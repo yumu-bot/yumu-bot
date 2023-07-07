@@ -31,8 +31,8 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.regex.Matcher;
 
-@Component
-public class MessageListener extends SimpleListenerHost {
+@Component("MiraiListener")
+public class MessageListener extends SimpleListenerHost implements MiraiListener {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
@@ -45,6 +45,7 @@ public class MessageListener extends SimpleListenerHost {
 
     private static Map<Class<? extends MessageService>, MessageService> messageServiceMap = null;
 
+    @Override
     public void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException {
         messageServiceMap = beanMap;
     }
@@ -107,6 +108,7 @@ public class MessageListener extends SimpleListenerHost {
      * @param event
      * @throws Throwable
      */
+    @Override
     @Async
     @EventHandler
     public void msg(MessageEvent event) throws Throwable {
@@ -149,6 +151,7 @@ public class MessageListener extends SimpleListenerHost {
      * @param event
      * @throws Exception
      */
+    @Override
     @Async
     @EventHandler
     public void msg(BotInvitedJoinGroupRequestEvent event) throws Exception {
@@ -157,6 +160,7 @@ public class MessageListener extends SimpleListenerHost {
         event.ignore();
 //        JoinGroupService.GROUPS.put(event.getGroupId(), event);
     }
+    @Override
     @Async
     @EventHandler
     public void msg(BotJoinGroupEvent event){
@@ -172,6 +176,7 @@ public class MessageListener extends SimpleListenerHost {
      * @param event
      * @throws Exception
      */
+    @Override
     @Async
     @EventHandler
     public void msg(NewFriendRequestEvent event) throws Exception {
@@ -183,6 +188,7 @@ public class MessageListener extends SimpleListenerHost {
      * @param event
      * @throws Exception
      */
+    @Override
     @Async
     @EventHandler
     public void msg(MessagePreSendEvent event) throws Exception {
@@ -196,6 +202,7 @@ public class MessageListener extends SimpleListenerHost {
      * 输出发送的消息
      * @param event
      */
+    @Override
     @Async
     @EventHandler
     public void msg(MessagePostSendEvent event) {
@@ -208,6 +215,7 @@ public class MessageListener extends SimpleListenerHost {
     /***
      * ImageUploadEvent 图片上传事件
      */
+    @Override
     @Async
     @EventHandler
     public void msg(ImageUploadEvent event) {

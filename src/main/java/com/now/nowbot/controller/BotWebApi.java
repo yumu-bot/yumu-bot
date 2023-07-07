@@ -1,7 +1,6 @@
 package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;

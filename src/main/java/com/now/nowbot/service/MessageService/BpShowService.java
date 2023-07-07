@@ -12,6 +12,7 @@ import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.Contact;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Image;

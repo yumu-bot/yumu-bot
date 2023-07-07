@@ -7,12 +7,15 @@ import com.now.nowbot.qq.contact.Stranger;
 import java.util.List;
 
 public interface Bot {
-    List<Friend> getFriends();
+    List<? extends Friend> getFriends();
+
     Friend getFriend(Long id);
 
-    List<Group> getGroups();
+    List<? extends Group> getGroups();
+
     Group getGroup(Long id);
 
-    List<Stranger> getStrangers();
+    List<? extends Stranger> getStrangers();
+
     Stranger getStranger(Long id);
 }

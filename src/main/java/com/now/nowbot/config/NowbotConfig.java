@@ -1,10 +1,13 @@
 package com.now.nowbot.config;
 
 import com.now.nowbot.listener.MessageListener;
+import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.throwable.RequestException;
+import kotlinx.coroutines.CoroutineScope;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.auth.BotAuthorization;
+import net.mamoe.mirai.event.ListenerHost;
 import net.mamoe.mirai.utils.BotConfiguration;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -101,7 +104,7 @@ public class NowbotConfig {
     }
 
     @Autowired
-    MessageListener messageListener;
+    MiraiListener messageListener;
 
     @Bean
     public Bot bot() {
@@ -127,7 +130,7 @@ public class NowbotConfig {
         var auth = PASSWORD.equals("") ? BotAuthorization.Companion.byQRCode() : BotAuthorization.byPassword(PASSWORD);
         Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, auth, botConfiguration);
         //注册监听 messageListener需要继承SimpleListenerHost类
-        bot.getEventChannel().parentScope(messageListener).registerListenerHost(messageListener);
+        bot.getEventChannel().parentScope((CoroutineScope) messageListener).registerListenerHost((ListenerHost) messageListener);
         return bot;
     }
 
