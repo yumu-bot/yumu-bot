@@ -1,6 +1,7 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.dao.QQMessageDao;
+import com.now.nowbot.qq.contact.User;
 import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.*;
@@ -24,7 +25,24 @@ public class QQMsgUtil {
     public static String byte2str(byte[] data) {
         return base64Util.encodeToString(data);
     }
+    @Nullable
+    public static <T> T getType(String msg, Class<T> T) {
+        return null;
+    }
 
+
+    public static void sendImage(User from, Image img) {
+        befor(from);
+        from.sendImage(img.encodeToData(EncodedImageFormat.JPEG, 60).getBytes());
+    }
+    public static void sendImage(User from, byte[] img) {
+        befor(from);
+        from.sendImage(img);
+    }
+    private static void befor(User from) {
+//        from.sendMessage("正在处理图片请稍候...");
+    }
+/*******************************************************************************************/
     public static void recall(MessageChain msg) {
         MessageSource.recall(msg);
     }

@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import net.mamoe.mirai.event.events.MessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 
 import java.util.regex.Matcher;
 

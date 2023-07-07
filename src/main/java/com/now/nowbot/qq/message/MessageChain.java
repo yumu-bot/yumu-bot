@@ -26,6 +26,16 @@ public class MessageChain {
             msgChain.addMessage(new TextMessage(msg));
             return this;
         }
+        public MessageChainBuilder addAt(long qq) {
+            msgChain.addMessage(new AtMessage(qq));
+            return this;
+        }
+        public MessageChainBuilder addAtAll() {
+            msgChain.addMessage(new AtMessage());
+            return this;
+        }
+
+
 
         public MessageChain build() {
             return msgChain;
