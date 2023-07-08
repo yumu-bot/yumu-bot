@@ -25,7 +25,7 @@ public class TestRaService implements MessageService {
     }
 
     @Override
-    //@CheckPermission(supperOnly = true)
+    @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
