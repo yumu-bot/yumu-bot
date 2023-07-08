@@ -44,7 +44,6 @@ public class OneBotListener {
     public void test(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         ASyncMessageUtil.put(event);
-        if (event.getGroup().getId() != 746671531) return;
         for(var ins : Instruction.values()){
             //功能关闭 优先级高于aop拦截
             if (Permission.serviceIsClouse(ins) && !Permission.isSupper(event.getSender().getId())) continue;
