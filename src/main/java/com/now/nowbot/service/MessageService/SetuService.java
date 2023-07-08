@@ -2,9 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.qq.event.MessageEvent;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.Image;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ public class SetuService implements MessageService{
     @Override
     @CheckPermission(isWhite = true, userSet = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        Contact from = event.getSubject();
+        var from = event.getSubject();
         long qq = event.getSender().getId();
 
         synchronized (lock){
@@ -45,7 +44,7 @@ public class SetuService implements MessageService{
                 try {
                     byte[] img;
                     img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH,"xxoo.jpg"));
-                    from.sendMessage(ExternalResource.uploadAsImage(ExternalResource.create(img),from));
+                    from.sendImage(img);
                 } catch (IOException e) {
                     log.error("图片读取异常",e);
                 }
@@ -56,7 +55,7 @@ public class SetuService implements MessageService{
 
 
 
-        Image img = null;
+        byte[] img = null;
         try {
             byte[] date;
             int random = Math.toIntExact((System.currentTimeMillis() % 5));
@@ -71,12 +70,12 @@ public class SetuService implements MessageService{
                     date = api1();
                 }
             }
-            img = from.uploadImage(ExternalResource.create(date));
+            img = date;
         } catch (IOException e) {
             log.info("文件下载异常", e);
         }
         if (img != null) {
-            from.sendMessage(img).recallIn(110*1000);
+            from.sendImage(img);
         }
     }
     public byte[] api3()throws Exception{

@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.match.Match;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

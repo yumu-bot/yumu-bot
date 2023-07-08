@@ -5,12 +5,13 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PpmException;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class PPMinusService implements MessageService {
 
         var from = event.getSubject();
         // 获得可能的 at
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         Ppm ppm;
         OsuUser user;
         List<Score> bps;
@@ -87,7 +88,7 @@ public class PPMinusService implements MessageService {
     private void doVs(MessageEvent event, Matcher matcher) throws BindException, PpmException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
         var from = event.getSubject();
         // 获得可能的 at
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         OsuUser userMe;
         var userBin = bindDao.getUser(event.getSender().getId());

@@ -10,7 +10,7 @@ public class Event implements com.now.nowbot.qq.event.Event {
         this.bot = new com.now.nowbot.qq.onebot.Bot(bot);
     }
 
-    public Bot getBot() {
+    public com.now.nowbot.qq.onebot.Bot getBot() {
         return bot;
     }
 }

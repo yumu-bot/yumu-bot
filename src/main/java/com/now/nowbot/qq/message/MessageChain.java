@@ -52,6 +52,7 @@ public class MessageChain {
     }
 
     MessageChain addMessage(Message msg) {
+        this.messageList.add(msg);
         return this;
     }
 

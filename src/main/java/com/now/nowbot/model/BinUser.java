@@ -129,7 +129,7 @@ public class BinUser {
     @Override
     public String toString() {
         return "BinUser{" +
-                "qq=" + qq +
+                "QQ=" + qq +
                 ", osuName='" + osuName + '\'' +
                 ", osuID='" + osuID + '\'' +
                 ", refresh_token='" + refreshToken + '\'' +

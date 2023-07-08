@@ -6,6 +6,9 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.PpmException;
 import com.now.nowbot.util.Panel.ACardBuilder;
@@ -15,9 +18,6 @@ import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.At;
 import org.jetbrains.skija.Canvas;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Surface;
@@ -50,7 +50,7 @@ public class PPMLegacyService implements MessageService {
 
         var from = event.getSubject();
         // 获得可能的 at
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         Ppm ppm;
         OsuUser user;
         List<Score> bps;
@@ -136,7 +136,7 @@ public class PPMLegacyService implements MessageService {
     private void doVs(MessageEvent event, Matcher matcher) throws Exception {
         var from = event.getSubject();
         // 获得可能的 at
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         OsuUser userMe;
         var userBin = bindDao.getUser(event.getSender().getId());

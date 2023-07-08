@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.throwable.LogException;
-import net.mamoe.mirai.event.events.MessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;

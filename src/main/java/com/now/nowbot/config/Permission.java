@@ -4,15 +4,16 @@ import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
 import com.now.nowbot.mapper.ServiceSwitchMapper;
+import com.now.nowbot.qq.Bot;
+import com.now.nowbot.qq.contact.Group;
+import com.now.nowbot.qq.contact.GroupContact;
+import com.now.nowbot.qq.enums.Role;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
-import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.contact.Group;
-import net.mamoe.mirai.contact.Member;
 import net.mamoe.mirai.contact.MemberPermission;
 import net.mamoe.mirai.contact.NormalMember;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -27,12 +28,12 @@ import java.util.regex.Matcher;
 
 @Component()
 public class Permission {
-    private static final Logger log = LoggerFactory.getLogger(Permission.class);
-    private static Set<Long> supetList;
-    private static Set<Long> testerList;
-    private static final String PERMISSION_ALL = "PERMISSION_ALL";
+    private static final Logger    log            = LoggerFactory.getLogger(Permission.class);
+    private static       Set<Long> supetList;
+    private static       Set<Long> testerList;
+    private static final String    PERMISSION_ALL = "PERMISSION_ALL";
 
-    private static PermissionDao permissionDao;
+    private static PermissionDao       permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
 
     private static Bot bot;
@@ -45,10 +46,10 @@ public class Permission {
     }
 
     //全局名单
-    private static PermissionData ALL_W;
-    private static PermissionData ALL_B;
+    private static PermissionData                   ALL_W;
+    private static PermissionData                   ALL_B;
     //service名单
-    private static Map<String, PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
+    private static Map<String, PermissionData>      PERMISSIONS = new ConcurrentHashMap<>();
     private static CopyOnWriteArraySet<Instruction> OFF_SERVICE = null;
 
     private static Map<Instruction, String> SERVICE_NAME = new TreeMap<>();
@@ -115,17 +116,24 @@ public class Permission {
             }
         });
         //初始化暗杀名单(
-        Bot bot = applicationContext.getBean(Bot.class);
-        Permission.bot = bot;
-        var devGroup = bot.getGroup(746671531);
-        if (devGroup != null) {
-            supetList = Set.copyOf(devGroup.getMembers().stream().map(NormalMember::getId).toList());
+//        Bot bot = applicationContext.getBean(Bot.class);
+        Bot bot = null;
+        if (bot != null) {
+
+            Permission.bot = bot;
+            var devGroup = bot.getGroup(746671531L);
+            if (devGroup != null) {
+                supetList = Set.copyOf(devGroup.getAllUser().stream().map(GroupContact::getId).toList());
+            } else {
+                supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+            }
+            var testGroup = bot.getGroup(722292097L);
+            if (testGroup != null) {
+                testerList = Set.copyOf(testGroup.getAllUser().stream().map(GroupContact::getId).toList());
+            }
         } else {
             supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
-        }
-        var testGroup = bot.getGroup(722292097);
-        if (testGroup != null) {
-            testerList = Set.copyOf(testGroup.getMembers().stream().map(NormalMember::getId).toList());
+            testerList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
         }
 
         //初始化功能关闭菜单
@@ -319,6 +327,7 @@ public class Permission {
         //全局黑名单
         return (group == null || !ALL_B.hasGroup(group)) && !ALL_B.hasFriend(id);
     }
+
     public boolean containsAllW(Long group) {
         //全局白名单
         return group != null && ALL_W.hasGroup(group);
@@ -377,8 +386,8 @@ public class Permission {
         if (bot == null) return false;
         Group group;
         if ((group = bot.getGroup(groupId)) == null) return false;
-        NormalMember member;
-        if ((member = group.get(qq)) == null) return false;
-        return member.getPermission() == MemberPermission.ADMINISTRATOR || member.getPermission() == MemberPermission.OWNER;
+        GroupContact member;
+        if ((member = group.getUser(qq)) == null) return false;
+        return member.getRoll() == Role.ADMIN || member.getRoll() == Role.OWNER;
     }
 }

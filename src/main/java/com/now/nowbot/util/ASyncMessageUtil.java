@@ -1,7 +1,8 @@
 package com.now.nowbot.util;
 
-import net.mamoe.mirai.event.events.GroupMessageEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
+
+import com.now.nowbot.qq.event.GroupMessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ public class ASyncMessageUtil{
         Long group;
         Long send;
         long time = System.currentTimeMillis();
-        long off = 0;
+        long         off = 0;
         MessageEvent msg;
         // 线程同步锁
         private final ReentrantLock reentrantLock = new ReentrantLock();

@@ -5,10 +5,11 @@ import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.util.QQMsgUtil;
 
-public class User implements com.now.nowbot.qq.contact.User {
+public class Contact implements com.now.nowbot.qq.contact.Contact {
+    String name;
     final Bot bot;
     final long id;
-    protected User(Bot bot, long id) {
+    public Contact(Bot bot, long id) {
         this.id = id;
         this.bot = bot;
     }
@@ -20,7 +21,11 @@ public class User implements com.now.nowbot.qq.contact.User {
 
     @Override
     public String getName() {
-        return null;
+        return name;
+    }
+
+    protected void setName(String name) {
+        this.name = name;
     }
 
     @Override
@@ -36,7 +41,7 @@ public class User implements com.now.nowbot.qq.contact.User {
                     else builder.img(img.getPath());
                 }
                 case AtMessage at -> {
-                    if (at.isAll()) builder.at(at.getQQ());
+                    if (!at.isAll()) builder.at(at.getQQ());
                     else builder.atAll();
                 }
                 case TextMessage text -> {

@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;

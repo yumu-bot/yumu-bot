@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.UpdateUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;

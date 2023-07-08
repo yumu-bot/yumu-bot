@@ -129,7 +129,7 @@ public class RunTimeService {
         }
         var n = dataMap.stream().sorted(Comparator.comparing(UserLog::pp).reversed()).toList();
         var dataFormat = DateTimeFormatter.ofPattern("MM-dd");
-        var sb = new StringBuilder("qq,name,pp\n");
+        var sb = new StringBuilder("QQ,name,pp\n");
         log.warn("处理结果中");
         for (var u : n) {
             sb.append(u.qq).append(',')

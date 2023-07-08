@@ -2,8 +2,8 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -11,7 +11,7 @@ public class AtMessage extends Message {
      * 创建 &#064;全体成员 消息,但是只能 bot 为管理员使用
      */
     public AtMessage() {
-        this.qq = -1;
+        this.qq = -1L;
     }
 
     public boolean isAll() {
@@ -20,6 +20,9 @@ public class AtMessage extends Message {
 
     public long getQQ() {
         return qq;
+    }
+    public long getTarget() {
+        return getQQ();
     }
 
     @Override

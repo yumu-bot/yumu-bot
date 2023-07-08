@@ -13,6 +13,11 @@ public class Bot implements com.now.nowbot.qq.Bot {
     }
 
     @Override
+    public long getSelfId() {
+        return bot.getSelfId();
+    }
+
+    @Override
     public List<com.now.nowbot.qq.onebot.contact.Friend> getFriends() {
         var data = bot.getFriendList().getData();
         return data.stream()
@@ -56,5 +61,8 @@ public class Bot implements com.now.nowbot.qq.Bot {
     @Override
     public Stranger getStranger(Long id) {
         return null;
+    }
+    public com.mikuac.shiro.core.Bot getTrueBot(){
+        return bot;
     }
 }

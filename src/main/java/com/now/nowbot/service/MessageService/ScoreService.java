@@ -7,11 +7,12 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class ScoreService implements MessageService {
         var from = event.getSubject();
         BinUser user = null;
 
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if (at != null) {
             try {
                 user = bindDao.getUser(at.getTarget());

@@ -2,7 +2,7 @@ package com.now.nowbot.qq.onebot.contact;
 
 import com.mikuac.shiro.core.Bot;
 
-public class Friend extends User implements com.now.nowbot.qq.contact.Friend {
+public class Friend extends Contact implements com.now.nowbot.qq.contact.Friend {
     final String name;
 
     public Friend(Bot bot, long id, String name) {

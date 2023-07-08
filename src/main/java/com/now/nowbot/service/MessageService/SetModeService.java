@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
-import net.mamoe.mirai.event.events.MessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

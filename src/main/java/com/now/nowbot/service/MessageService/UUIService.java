@@ -3,14 +3,15 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.OsuGetService;
-import net.mamoe.mirai.event.events.MessageEvent;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
 
@@ -28,7 +29,7 @@ public class UUIService implements MessageService {
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
-        At at = (At) event.getMessage().stream().filter(it -> it instanceof At).findFirst().orElse(null);
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser user = null;
         if (at != null) {
             user = bindDao.getUser(at.getTarget());

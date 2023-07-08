@@ -1,13 +1,13 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.event.GroupMessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class CheckAspect {
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现MessageService的HandMessage方法切入点
-    @Pointcut("execution(public void com.now.nowbot.service.MessageService..HandleMessage(net.mamoe.mirai.event.events.MessageEvent,java.util.regex.Matcher))")
+    @Pointcut("execution(public void com.now.nowbot.service.MessageService..HandleMessage(com.now.nowbot.qq.event.MessageEvent,java.util.regex.Matcher))")
     public void servicePoint(){
     }
 
@@ -126,7 +126,7 @@ public class CheckAspect {
                 StringBuilder sb = new StringBuilder();
                 sb.append("work").append('\n');
                 workList.forEach((event) -> {
-                    sb.append(event.getSenderName()).append("(->)").append(event.getMessage().contentToString()).append('\n');
+                    sb.append(event.getSender().getName()).append("(->)").append(event.getMessage()).append('\n');
                 });
                 s.sendMessage(sb.toString());
             }

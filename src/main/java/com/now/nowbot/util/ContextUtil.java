@@ -7,6 +7,7 @@ public class ContextUtil {
     static ThreadLocal<Map<String, Object>> threadLocalService = new ThreadLocal<>();
 
     public static <T> T getContext(String name, Class<T> tClass){
+        if (threadLocalService.get() == null) return null;
         return tClass.cast( threadLocalService.get().get(name) );
     }
 

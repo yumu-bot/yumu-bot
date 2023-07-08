@@ -7,6 +7,7 @@ import com.now.nowbot.qq.contact.Stranger;
 import java.util.List;
 
 public interface Bot {
+    long getSelfId();
     List<? extends Friend> getFriends();
 
     Friend getFriend(Long id);

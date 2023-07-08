@@ -3,9 +3,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.util.JacksonUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class WikiService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String key = matcher.group("key");
         var msg = event.getSubject().sendMessage(getWiki(key));
-        msg.recallIn(60*1000);
+        event.getSubject().recallIn(msg, 60*1000);
     }
     String getWiki(String key) throws IOException, LogException {
         StringBuffer sb = new StringBuffer();

@@ -119,6 +119,7 @@ public class MessageListener extends SimpleListenerHost implements MiraiListener
         */
 
         ContextUtil.setContext("event",event);
+        /*
         try {
             if (event.getMessage() instanceof FileMessage fileMessage){
                 log.info("收到文件");
@@ -138,6 +139,8 @@ public class MessageListener extends SimpleListenerHost implements MiraiListener
         } finally {
             ContextUtil.remove();
         }
+
+         */
 //        if (!(event instanceof GroupMessageEvent)){
 //            var s = MoliUtil.getMsg(MoliUtil.getFriend(event));
 //            for (var s1 : s){

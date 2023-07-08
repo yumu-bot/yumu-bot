@@ -7,16 +7,12 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Panel.BphtPanelBuilder;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import org.jetbrains.skija.EncodedImageFormat;
-import org.jetbrains.skija.Font;
-import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

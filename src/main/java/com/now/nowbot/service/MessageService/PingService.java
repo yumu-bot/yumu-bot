@@ -2,11 +2,11 @@ package com.now.nowbot.service.MessageService;
 
 
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.jetbrains.skija.*;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,7 @@ public class PingService implements MessageService{
     @Override
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        Contact from = event.getSubject();
+        var from = event.getSubject();
         byte[] date = null;
         try (Surface surface = Surface.makeRasterN32Premul(240,240)){
             Canvas canvas = surface.getCanvas();
@@ -43,7 +43,10 @@ public class PingService implements MessageService{
             x.close();t.close();
             date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (date != null) QQMsgUtil.sendImage(from, date).recallIn(5000);
+        if (date != null) {
+            int mid = from.sendImage(date);
+            from.recallIn(mid, 5000);
+        }
 
     }
 }

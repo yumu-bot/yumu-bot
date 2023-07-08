@@ -1,13 +1,13 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.message.data.MessageChainBuilder;
-import net.mamoe.mirai.message.data.PlainText;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,17 +25,17 @@ public class MutualFriendService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
-        var atList = QQMsgUtil.getTypeAll(event.getMessage(), At.class);
+        var atList = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
         if (atList.size() > 0){
-            var data = new MessageChainBuilder();
+            var data = new MessageChain.MessageChainBuilder();
             atList.forEach(at->{
-                data.append(at);
+                data.addAt(at.getTarget());
 
                     try {
                         var u = bindDao.getUser(at.getTarget());
-                        data.append(new PlainText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n'));
+                        data.addText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n');
                     } catch (BindException e) {
-                        data.append(new PlainText(" 未绑定\n"));
+                        data.addText(" 未绑定\n");
                     }
             });
             event.getSubject().sendMessage(data.build());

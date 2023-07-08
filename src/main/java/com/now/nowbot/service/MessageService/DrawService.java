@@ -6,9 +6,8 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.entity.DrawLogLite;
 import com.now.nowbot.mapper.DrawLogLiteRepository;
 import com.now.nowbot.model.DrawConfig;
-import com.now.nowbot.model.enums.DrawKind;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.JacksonUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

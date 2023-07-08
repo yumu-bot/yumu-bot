@@ -5,9 +5,9 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.SkiaUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

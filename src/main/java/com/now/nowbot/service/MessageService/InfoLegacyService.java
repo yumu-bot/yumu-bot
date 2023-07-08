@@ -4,11 +4,11 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.InfoLegacyPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

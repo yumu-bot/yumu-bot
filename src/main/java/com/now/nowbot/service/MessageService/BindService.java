@@ -3,14 +3,13 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.qq.event.GroupMessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.contact.Contact;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.MessageReceipt;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +22,8 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class BindService implements MessageService {
-    public static final Map<Long, bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static Logger log = LoggerFactory.getLogger(BindService.class);
+    public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
+    private static Logger               log          = LoggerFactory.getLogger(BindService.class);
     OsuGetService osuGetService;
     BindDao bindDao;
     @Autowired
@@ -48,7 +47,7 @@ public class BindService implements MessageService {
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
-                    String Oname = s.getMessage().contentToString();
+                    String Oname = s.getMessage();
                     Long id;
                     try {
                         id = osuGetService.getOsuId(Oname);
@@ -66,7 +65,7 @@ public class BindService implements MessageService {
                         } else {
                             from.sendMessage(buser.getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
                             s = ASyncMessageUtil.getEvent(lock);
-                            if (s != null && s.getMessage().contentToString().startsWith("OK")) {
+                            if (s != null && s.getMessage().startsWith("OK")) {
                                 buser.setQq(at.getTarget());
                                 bindDao.update(buser);
                                 throw new BindException(BindException.Type.BIND_Me_Success);
@@ -132,7 +131,7 @@ public class BindService implements MessageService {
                 from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
-                if(s !=null && s.getMessage().contentToString().trim().equalsIgnoreCase("OK")){
+                if(s !=null && s.getMessage().trim().equalsIgnoreCase("OK")){
                 }else {
                     return;
                 }
@@ -141,20 +140,26 @@ public class BindService implements MessageService {
             String state = event.getSender().getId() + "+" + timeMillis;
             //将消息回执作为 value
             state = osuGetService.getOauthUrl(state);
-            var send = new At(event.getSender().getId()).plus(state);
+            var send = new MessageChain.MessageChainBuilder()
+                    .addAt(event.getSender().getId())
+                    .addText("\n")
+                    .addText(state)
+                    .build();
             var receipt = from.sendMessage(send);
             //默认110秒后撤回
-            receipt.recallIn(110 * 1000);
+            from.recallIn(receipt, 110 * 1000);
+
+
             //此处在 controller.msgController 处理
-            BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
+            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId(), event.getSubject().getId(), event.getBot().getSelfId()));
             //---------------
 //            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }else {
             //私聊不验证是否绑定
             String state = event.getSender().getId() + "+" + timeMillis;
             var receipt = from.sendMessage(osuGetService.getOauthUrl(state));
-            receipt.recallIn(110 * 1000);
-            BIND_MSG_MAP.put(timeMillis, new bind(timeMillis, receipt, event.getSender().getId()));
+            from.recallIn(receipt, 110 * 1000);
+            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId(), event.getSubject().getId(), event.getBot().getSelfId()));
         }
     }
 
@@ -172,7 +177,7 @@ public class BindService implements MessageService {
         }
     }
 
-    public record bind(Long key, MessageReceipt<Contact> receipt, Long qq) {
+    public record Bind(Long key, Integer receipt, Long QQ, Long groupQQ, Long botQQ) {
     }
 
 }

@@ -1,4 +1,4 @@
 package com.now.nowbot.qq.contact;
 
-public interface Stranger extends User{
+public interface Stranger extends Contact {
 }

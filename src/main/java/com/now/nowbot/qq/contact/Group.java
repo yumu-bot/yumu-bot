@@ -2,12 +2,12 @@ package com.now.nowbot.qq.contact;
 
 import java.util.List;
 
-public interface Group extends User {
+public interface Group extends Contact {
     String getName();
 
     boolean isAdmin();
 
-    Friend getUser(long qq);
+    GroupContact getUser(long qq);
 
-    List<? extends Friend> getAllUser();
+    List<? extends GroupContact> getAllUser();
 }

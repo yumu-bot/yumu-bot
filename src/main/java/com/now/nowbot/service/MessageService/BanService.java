@@ -11,7 +11,7 @@ import com.now.nowbot.util.QQMsgUtil;
 //import net.mamoe.mirai.event.events.GroupMessageEvent;
 //import net.mamoe.mirai.event.events.MessageEvent;
 //import net.mamoe.mirai.message.data.At;
-//************************************  com.now.nowbot.qq.下面的, 其中At 改成AtMessage
+//************************************  com.now.nowbot.QQ.下面的, 其中At 改成AtMessage
 import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,9 +51,9 @@ public class BanService implements MessageService{
                 }
                 QQMsgUtil.sendImage(event.getSubject(), imageService.drawLine(sb));
 
-            } else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){
-
             }
+//            我都忘了这个分支是做什么的
+//            else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){}
         } else if ((index = msg.indexOf("add")) != -1) {
             if (Permission.isSupper(sendQQ)){
                 matcher = Pattern.compile("add\\s*(?<id>\\d+)").matcher(msg);
@@ -62,7 +62,8 @@ public class BanService implements MessageService{
                     if (add){
                         /***********************************  消息改成相应的类  ************************************************/
                         event.getSubject().sendText("添加成功");
-//                        如果是 复杂的消息 使用 com.now.nowbot.qq.message.MessageChain 构造
+//                        如果是 复杂的消息 使用 com.now.nowbot.QQ.message.MessageChain 构造
+                        /*
                         var aaa = new MessageChain.MessageChainBuilder()
                                 .addText("第1句话")
                                 .addImage("图图连接")
@@ -71,12 +72,13 @@ public class BanService implements MessageService{
                                 .addAtAll()
                                 .build();
                         event.getSender().sendMessage(aaa);
+
+                         */
                         /*******************************************************************************************/
                     }
                 }
-            } else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){
-
             }
+//            else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){}
         }
     }
 }

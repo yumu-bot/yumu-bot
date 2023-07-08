@@ -88,7 +88,7 @@ public class PermissionData{
             }
         }
         if (FriendList != null) {
-            sb.append("\nqq: ");
+            sb.append("\nQQ: ");
             for (Long id : getFriendList()) {
                 sb.append(id).append(' ');
             }

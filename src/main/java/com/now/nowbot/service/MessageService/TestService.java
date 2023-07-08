@@ -3,11 +3,11 @@ package com.now.nowbot.service.MessageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.QQMessageDao;
+import com.now.nowbot.qq.event.GroupMessageEvent;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,17 +46,17 @@ public class TestService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
         var msg = event.getMessage();
 
-        if (msg.contentToString().startsWith("!testmd")){
-            QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(msg.contentToString()),1080));
-        } else if (msg.contentToString().startsWith("!testwebmd")){
+        if (msg.startsWith("!testmd")){
+            QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(msg),1080));
+        } else if (msg.startsWith("!testwebmd")){
             var p = Pattern.compile("(?<url>(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])");
-            var m = p.matcher(msg.contentToString());
+            var m = p.matcher(msg);
             if (m.find()) {
                 var s = restTemplate.getForObject(m.group("url"), String.class);
                 QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(s), 1080));
             }
-        } else if (msg.contentToString().startsWith("!testname")){
-           var m = pattern.matcher(msg.contentToString());
+        } else if (msg.startsWith("!testname")){
+           var m = pattern.matcher(msg);
            if (m.find()){
                var names = m.group("ids").split(",");
                var nameList = new ArrayList<String>();
@@ -101,9 +101,9 @@ public class TestService implements MessageService {
 //            }
 //        }
 
-        var ppmMch = ppmPat.matcher(msg.contentToString());
+        var ppmMch = ppmPat.matcher(msg);
         ppmPat = Pattern.compile("^[!！]roll(\\s+(?<num>[0-9]{1,5}))?");
-        ppmMch = ppmPat.matcher(msg.contentToString());
+        ppmMch = ppmPat.matcher(msg);
         if (ppmMch.find()) {
             if (ppmMch.group("num") != null) {
                 event.getSubject().sendMessage(String.valueOf(1 + (int) (Math.random() * Integer.parseInt(ppmMch.group("num")))));

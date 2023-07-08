@@ -1,10 +1,9 @@
 package com.now.nowbot.qq.event;
 
-import com.now.nowbot.qq.Bot;
-import com.now.nowbot.qq.contact.User;
+import com.now.nowbot.qq.contact.Contact;
 
 public interface MessageEvent extends Event{
-    User getSubject();
-    User getSender();
+    Contact getSubject();
+    Contact getSender();
     String getMessage();
 }

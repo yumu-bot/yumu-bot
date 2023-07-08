@@ -1,12 +1,13 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.mapper.MessageMapper;
+import com.now.nowbot.qq.contact.GroupContact;
+import com.now.nowbot.qq.enums.Role;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.MemberPermission;
-import net.mamoe.mirai.contact.NormalMember;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -40,7 +41,7 @@ public class CountQQMessageService implements MessageService{
             }
             var data = res.get(0);
             int n = data.get("sum").intValue();
-            long i = data.get("qq").longValue();
+            long i = data.get("QQ").longValue();
             event.getSubject().sendMessage(i + " -> " + n);
             return;
         }
@@ -61,9 +62,9 @@ public class CountQQMessageService implements MessageService{
         if (group == null){
             throw new TipsException("不在群里");
         }
-        var users = group.getMembers().stream()
-                .filter(normalMember -> normalMember.getPermission() == MemberPermission.ADMINISTRATOR || normalMember.getPermission() == MemberPermission.OWNER)
-                .map(NormalMember::getId)
+        var users = group.getAllUser().stream()
+                .filter(normalMember -> normalMember.getRoll() == Role.ADMIN || normalMember.getRoll() == Role.OWNER)
+                .map(GroupContact::getId)
                 .toList();
         var userArr = new long[users.size()];
         for (int i = 0; i < users.size(); i++) {
@@ -75,14 +76,14 @@ public class CountQQMessageService implements MessageService{
                     groupId,
                     userArr
                 );
-        var resList = res.stream().map(l -> new Res(l.get("qq").longValue(), l.get("sum").intValue()))
+        var resList = res.stream().map(l -> new Res(l.get("QQ").longValue(), l.get("sum").intValue()))
                 .sorted(Comparator.comparingInt(Res::n).reversed()).toList();
-        StringBuilder sb = new StringBuilder("|消息数量|qq|群名片|\n|--:|:--:|:--|\n");
+        StringBuilder sb = new StringBuilder("|消息数量|QQ|群名片|\n|--:|:--:|:--|\n");
         for (var m: resList){
             long qq = m.qq();
-            var u = group.getMembers().get(qq);
+            var u = group.getUser(qq);
             if (u == null) continue;
-            String name = u.getNameCard();
+            String name = u.getName();
             sb.append('|').append(m.n).append('|').append(qq).append('|').append(name.replace("|", "\\|")).append('|').append('\n');
         }
         var b = imageService.getMarkdownImage(sb.toString(), 600); //要不要考虑用 Markdown?

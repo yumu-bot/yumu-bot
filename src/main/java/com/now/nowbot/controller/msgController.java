@@ -1,12 +1,13 @@
 package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.mikuac.shiro.core.BotContainer;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.service.MessageService.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.UpdateUtil;
-import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +26,14 @@ public class msgController {
     static final Logger log = LoggerFactory.getLogger(msgController.class);
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
     OsuGetService osuGetService;
-    Bot bot;
+    private BotContainer botContainer;
     BindDao bindDao;
 
     @Autowired
-    public msgController(Bot bot, OsuGetService osuGetService, BindDao dao) {
-        this.bot = bot;
+    public msgController(OsuGetService osuGetService, BindDao dao, BotContainer botContainer) {
         this.osuGetService = osuGetService;
         bindDao = dao;
+        this.botContainer = botContainer;
 //        WsController.getInstance(bot).setMsgController(this);
     }
 
@@ -57,21 +58,22 @@ public class msgController {
         }
 
         var msg = BindService.BIND_MSG_MAP.get(key);
+        var bot = botContainer.robots.get(msg.botQQ());
         if (debug || msg != null) {
             try {
                 if (!debug) {
                     try {
-                        msg.receipt().recall();
+                        bot.deleteMsg(msg.receipt());
                     } catch (Exception e) {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
                         sb.append("绑定连接已超时\n请重新绑定");
                         return sb.toString();
                     }
                 }
-                BinUser bd = new BinUser(msg.qq(), code);
+                BinUser bd = new BinUser(msg.QQ(), code);
                 osuGetService.getToken(bd);
                 if (!debug) {
-                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
+//                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                 }
                 BindService.BIND_MSG_MAP.remove(key);
                 sb.append("成功绑定:\n")
@@ -114,7 +116,7 @@ public class msgController {
         log.info("收到一条推送\n{}", body.toString());
         String name = body.findValue("user_name").asText("unknown user");
         String msg = body.findValue("title").asText("nothing");
-        var gp = bot.getGroup(746671531L);
+        Group gp = null;
         if (gp != null) {
             var sb = new StringBuilder();
             sb.append("git收到").append(name).append("推送\n").append(msg);

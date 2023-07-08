@@ -63,7 +63,7 @@ public class OsuGetService {
 
     /***
      * 拼合授权链接
-     * @param state qq[+群号]
+     * @param state QQ[+群号]
      * @return
      */
     public String getOauthUrl(String state) {

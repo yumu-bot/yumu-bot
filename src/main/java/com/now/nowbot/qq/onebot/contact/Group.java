@@ -2,11 +2,12 @@ package com.now.nowbot.qq.onebot.contact;
 
 import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.contact.Friend;
+import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.message.MessageChain;
 
 import java.util.List;
 
-public class Group extends User implements com.now.nowbot.qq.contact.Group {
+public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     String name = null;
 
     public Group(Bot bot, long id) {
@@ -37,14 +38,14 @@ public class Group extends User implements com.now.nowbot.qq.contact.Group {
     }
 
     @Override
-    public Friend getUser(long qq) {
+    public GroupContact getUser(long qq) {
         var data = bot.getGroupMemberInfo(getId(), qq, false).getData();
-        return new com.now.nowbot.qq.onebot.contact.Friend(bot, data.getUserId(), data.getNickname());
+        return new com.now.nowbot.qq.onebot.contact.GroupContact(bot, data.getUserId(), data.getNickname(), data.getRole());
     }
 
     @Override
-    public List<? extends Friend> getAllUser() {
+    public List<? extends GroupContact> getAllUser() {
         var data = bot.getGroupMemberList(getId()).getData();
-        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.Friend(bot, f.getUserId(), f.getNickname())).toList();
+        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole())).toList();
     }
 }

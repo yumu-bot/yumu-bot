@@ -2,11 +2,11 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
 import net.mamoe.mirai.contact.AudioSupported;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.Audio;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
@@ -30,8 +30,10 @@ public class SongService implements MessageService{
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        
+
         var from = event.getSubject();
+        from.sendMessage("暂时不支持发送语音");
+        if (event != null) return;
         BinUser user = bindDao.getUser(event.getSender().getId());
         int id = 0;
         boolean isBid = true;
@@ -62,7 +64,7 @@ public class SongService implements MessageService{
             if (from instanceof AudioSupported){
                 try {
                     Audio audio = ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate));
-                    from.sendMessage(audio);
+//                    from.sendMessage(audio);
                 } catch (Exception e) {
                     log.error("语音上传失败",e);
                     throw new TipsException("语音上传失败,请稍后再试");

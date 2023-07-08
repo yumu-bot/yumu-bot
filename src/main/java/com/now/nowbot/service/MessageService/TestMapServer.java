@@ -1,9 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.DataUtil;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.event.events.BotInvitedJoinGroupRequestEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.QuoteReply;
 import org.springframework.stereotype.Service;
 
