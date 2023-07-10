@@ -22,7 +22,7 @@ public class ScoreLite {
 
     private Float accuracy;
     //','分割的字符串
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String mods;
     private Integer score;

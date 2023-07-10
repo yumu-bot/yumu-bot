@@ -13,48 +13,48 @@ public class MapSetLite {
     @Column(name = "map_id")
     private Integer mapset_id;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String artist;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String artist_unicode;
     //四种 covers:{}
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String cover;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String card;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String list;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String slimcover;
 
     //属性
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String creator;
     private Integer favourite_count;
     private Boolean nsfw;
     private Long play_count;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String preview_url;
     //状态
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String status;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String source;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String title;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String title_unicode;
 

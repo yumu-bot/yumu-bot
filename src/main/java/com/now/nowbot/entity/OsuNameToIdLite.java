@@ -14,7 +14,7 @@ public class OsuNameToIdLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String name;
     private Long uid;

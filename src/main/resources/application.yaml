@@ -34,6 +34,15 @@ spring:
 #    hikari:
 #      maximum-pool-size: 10
 #      minimum-idle: 1
+  #jpa配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
 shiro:
   ws-config:
     # 反向 Websocket 连接地址，无需该配置字段可删除，将使用默认值 "/ws/shiro"
@@ -47,15 +56,7 @@ shiro:
     max-session-idle-timeout: 900000
     # 最大文本消息缓冲区
     max-text-message-buffer-size: 512000
-  #jpa配置
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    properties:
-      hibernate:
-        format_sql: true
+
 #log配置,可有可无,只是位置,详细设定请写在 logback.xml
 logging:
   file:

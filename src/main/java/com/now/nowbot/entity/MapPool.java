@@ -15,7 +15,7 @@ public class MapPool {
     @Column()
     Integer fatherId;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String info;
 

@@ -22,7 +22,7 @@ public class OsuUserModeScoreLite {
     private LocalDateTime time;
 
     // ',' 分割
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String rank_history;
     //等级

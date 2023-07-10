@@ -16,19 +16,19 @@ public class OsuUserLite {
     private Long id;
     @Column(name = "osu_id")
     private Integer osuID;
-    @Lob
+    //@Lob
     @Column(name = "username", columnDefinition = "TEXT")
     private String userName;
     // "country": {"code": "CN","name": "China"},            country_code
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String countryCode;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String countryName;
 
     // "cover": {custom_url}
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String customUrl;
     private Integer beatmapPlaycountsCount;
@@ -42,7 +42,7 @@ public class OsuUserLite {
     private Integer supportLevel;
     private Integer mappingFollowerCount;
     // 以','分隔的列表
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String previousUsernames;
     private Integer commentsCount; //评论数
@@ -51,7 +51,7 @@ public class OsuUserLite {
     private Boolean isSupporter;
     private Integer followerCount;
     private Integer favouriteBeatmapsetCount;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String playmode;
     //上次登录时间

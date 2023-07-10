@@ -12,27 +12,27 @@ public class BeatMapSetInfoLite {
     @Column(name = "id", nullable = false)
     private Integer sid;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String artistUnicode;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String artist;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String titleUnicode;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String title;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String mapper;
 
     Integer mapperId;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String status;
 
@@ -40,19 +40,19 @@ public class BeatMapSetInfoLite {
 
     Boolean nsfw;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String cover;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     String card;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     String list;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     String slimcover;
 

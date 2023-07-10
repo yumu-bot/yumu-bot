@@ -18,7 +18,7 @@ public class OsuBpListLite {
     private Integer OsuId;
 
     // ','分割的
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String bpList;
 

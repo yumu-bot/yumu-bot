@@ -22,11 +22,11 @@ public class BeatMap4Pool {
 
     Integer poolId;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     String info;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     String data;
 

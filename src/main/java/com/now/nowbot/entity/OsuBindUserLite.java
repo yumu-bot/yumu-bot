@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_bind_user", indexes = {
-        @Index(name = "bind_qid", columnList = "QQ"),
+        @Index(name = "bind_qid", columnList = "qq"),
         @Index(name = "bind_oid", columnList = "osu_id"),
 })
 public class OsuBindUserLite {
@@ -20,15 +20,15 @@ public class OsuBindUserLite {
     @Column(name = "osu_id")
     private Long osuId;
 
-    @Lob
+//    @Lob
     @Column(name = "osu_name", columnDefinition = "TEXT")
     private String osuName;
     private Long qq;
-    @Lob
+//    @Lob
     @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
 
-    @Lob
+//    @Lob
     @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
     private Long time;

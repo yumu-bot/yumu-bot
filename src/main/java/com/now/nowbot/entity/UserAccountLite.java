@@ -10,20 +10,20 @@ import java.util.Objects;
 public class UserAccountLite {
     @Id
     private Long uid;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String username;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String akV1;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String akV2;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String password;
 
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String session;
     private Integer timeZone;

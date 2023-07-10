@@ -13,7 +13,7 @@ public class OsuUserNameHisLite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long uid;
-    @Lob
+    //@Lob
     @Column(columnDefinition = "TEXT")
     private String name;
 
