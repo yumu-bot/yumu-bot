@@ -3,7 +3,7 @@ package com.now.nowbot.entity;
 import com.now.nowbot.model.enums.OsuMode;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +23,7 @@ public class OsuUserModeScoreLite {
 
     // ',' 分割
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String rank_history;
     //等级
     private Integer level_current;

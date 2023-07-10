@@ -3,7 +3,7 @@ package com.now.nowbot.entity;
 import com.now.nowbot.util.MapPoolUtil;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.lang.reflect.InvocationTargetException;
 
 @Entity
@@ -23,11 +23,11 @@ public class BeatMap4Pool {
     Integer poolId;
 
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     String info;
 
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     String data;
 
     public Integer getId() {

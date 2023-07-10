@@ -10,7 +10,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

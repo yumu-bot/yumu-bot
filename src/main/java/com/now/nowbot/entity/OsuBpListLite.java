@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,9 +18,8 @@ public class OsuBpListLite {
     private Integer OsuId;
 
     // ','分割的
-    @Column(length = 1000)
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String bpList;
 
     private LocalDateTime time;

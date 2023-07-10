@@ -43,17 +43,28 @@ public class MessageChain {
     }
 
     MessageChain() {
+        messageList = new LinkedList<>();
     }
 
-    protected LinkedList<Message> messageList = new LinkedList<>();
+    public MessageChain(List<Message> messages) {
+        messageList = new LinkedList<>(messages);
+    }
+
+    protected LinkedList<Message> messageList;
 
     MessageChain(String msg) {
-        messageList.add(new TextMessage(msg));
+        messageList = new LinkedList<>();
+        addMessage(new TextMessage(msg));
     }
 
     MessageChain addMessage(Message msg) {
         this.messageList.add(msg);
         return this;
+    }
+
+    public String getRawMessage() {
+        // todo
+        return "";
     }
 
     public LinkedList<Message> getMessageList() {

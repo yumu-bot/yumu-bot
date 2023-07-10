@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,21 +16,20 @@ public class OsuUserLite {
     private Long id;
     @Column(name = "osu_id")
     private Integer osuID;
-    @Column(name = "username")
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "username", columnDefinition = "TEXT")
     private String userName;
     // "country": {"code": "CN","name": "China"},            country_code
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String countryCode;
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String countryName;
 
     // "cover": {custom_url}
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String customUrl;
     private Integer beatmapPlaycountsCount;
     // "kudosu": {"total": 0, "available": 0}
@@ -44,7 +43,7 @@ public class OsuUserLite {
     private Integer mappingFollowerCount;
     // 以','分隔的列表
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String previousUsernames;
     private Integer commentsCount; //评论数
 
@@ -53,7 +52,7 @@ public class OsuUserLite {
     private Integer followerCount;
     private Integer favouriteBeatmapsetCount;
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String playmode;
     //上次登录时间
     LocalDateTime lastVisit;

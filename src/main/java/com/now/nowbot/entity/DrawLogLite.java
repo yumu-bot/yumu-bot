@@ -3,7 +3,7 @@ package com.now.nowbot.entity;
 import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.model.enums.DrawKind;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity

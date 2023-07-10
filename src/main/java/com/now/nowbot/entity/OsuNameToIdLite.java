@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "osu_name_id", indexes = {
@@ -15,7 +15,7 @@ public class OsuNameToIdLite {
     private Long id;
 
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT")
     private String name;
     private Long uid;
     @Column(name = "idx")

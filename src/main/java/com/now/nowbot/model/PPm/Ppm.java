@@ -2,6 +2,9 @@ package com.now.nowbot.model.PPm;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.PPm.action.Func2;
+import com.now.nowbot.model.PPm.action.Func3;
+import com.now.nowbot.model.PPm.action.Func4;
 import com.now.nowbot.model.PPm.impl.PpmCatch;
 import com.now.nowbot.model.PPm.impl.PpmMania;
 import com.now.nowbot.model.PPm.impl.PpmOsu;
@@ -11,9 +14,6 @@ import com.now.nowbot.util.Panel.PanelBuilder;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.springframework.lang.Nullable;
-import rx.functions.Func2;
-import rx.functions.Func3;
-import rx.functions.Func4;
 
 import java.util.List;
 import java.util.function.Function;

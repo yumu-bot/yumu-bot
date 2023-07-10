@@ -38,7 +38,7 @@ public class BanService implements MessageService{
         /*******************************************************************************************/
 //        消息改成 event.getMessage()
 //        String msg = event.getMessage().contentToString(); //原来
-        String msg = event.getMessage(); // 对
+        String msg = event.getRawMessage(); // 对
         /*******************************************************************************************/
         int index;
         var at = QQMsgUtil.getType(event.getMessage(), At.class);

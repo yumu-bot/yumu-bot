@@ -1,11 +1,14 @@
 package com.now.nowbot.listener;
 
 import com.mikuac.shiro.annotation.GroupMessageHandler;
+import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
 import com.mikuac.shiro.common.utils.MsgUtils;
+import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.core.BotPlugin;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
+import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.*;
@@ -25,8 +28,8 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 
 
@@ -40,8 +43,19 @@ public class OneBotListener {
         messageServiceMap = beanMap;
     }
 
+    private static final Set<Integer> KEY_SET = new CopyOnWriteArraySet<>();
+
+    @PrivateMessageHandler()
+    public void tt(Bot bot, PrivateMessageEvent onebotEvent){
+    }
+
     @GroupMessageHandler()
-    public void test(Bot bot, GroupMessageEvent onebotEvent) {
+    public void handle(Bot bot, GroupMessageEvent onebotEvent) {
+        synchronized (KEY_SET) {
+            if (!KEY_SET.add(onebotEvent.getMessageId())) {
+                return;
+            }
+        }
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
@@ -49,7 +63,7 @@ public class OneBotListener {
             if (Permission.serviceIsClouse(ins) && !Permission.isSupper(event.getSender().getId())) continue;
 
             try {
-                Matcher matcher = ins.getRegex().matcher(event.getMessage());
+                Matcher matcher = ins.getRegex().matcher(event.getRawMessage());
                 if (matcher.find()) {
                     var service = messageServiceMap.get(ins.getaClass());
                     service.HandleMessage(event, matcher);
@@ -57,6 +71,9 @@ public class OneBotListener {
             } catch (Throwable e) {
                 errorHandle(event, e);
             }
+        }
+        synchronized (KEY_SET) {
+            KEY_SET.remove(onebotEvent.getMessageId());
         }
     }
 

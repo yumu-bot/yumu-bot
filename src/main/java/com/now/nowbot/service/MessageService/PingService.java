@@ -44,8 +44,7 @@ public class PingService implements MessageService{
             date = surface.makeImageSnapshot().encodeToData().getBytes();
         }
         if (date != null) {
-            int mid = from.sendImage(date);
-            from.recallIn(mid, 5000);
+            from.sendImage(date).recallIn(5000);
         }
 
     }

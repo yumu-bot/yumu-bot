@@ -1,6 +1,7 @@
 package com.now.nowbot.qq.contact;
 
 import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.message.MessageReceipt;
 
 import java.net.URL;
 
@@ -10,29 +11,33 @@ public interface Contact {
     String getName();
 
 
-    int sendMessage(MessageChain msg);
+    MessageReceipt sendMessage(MessageChain msg);
 
-    default int sendMessage(String msg) {
+    default MessageReceipt sendMessage(String msg) {
         var m = new MessageChain.MessageChainBuilder().addText(msg).build();
         return sendMessage(m);
     }
 
-    default int sendText(String msg) {
+    default MessageReceipt sendText(String msg) {
         return sendMessage(new MessageChain.MessageChainBuilder().addText(msg).build());
     }
 
-    default int sendImage(String path) {
+    default MessageReceipt sendImage(String path) {
         return sendMessage(new MessageChain.MessageChainBuilder().addImage(path).build());
     }
 
-    default int sendImage(URL url) {
+    default MessageReceipt sendImage(URL url) {
         return sendMessage(new MessageChain.MessageChainBuilder().addImage(url).build());
     }
 
-    default int sendImage(byte[] data) {
+    default MessageReceipt sendImage(byte[] data) {
         return sendMessage(new MessageChain.MessageChainBuilder().addImage(data).build());
     }
 
-    default void recall(int mid){}
-    default void recallIn(int mid , long time){}
+    default void recall(MessageReceipt msg){
+        msg.recall();
+    }
+    default void recallIn(MessageReceipt msg , long time){
+        msg.recallIn(time);
+    }
 }

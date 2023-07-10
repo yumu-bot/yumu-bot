@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class TestService implements MessageService {
     @Override
     @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
-        var msg = event.getMessage();
+        var msg = event.getRawMessage();
 
         if (msg.startsWith("!testmd")){
             QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(msg),1080));

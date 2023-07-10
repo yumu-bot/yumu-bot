@@ -4,6 +4,7 @@ import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.contact.Friend;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
 
 import java.util.List;
 
@@ -27,8 +28,9 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     }
 
     @Override
-    public int sendMessage(MessageChain msg) {
-        return bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData().getMessageId();
+    public OneBotMessageReceipt sendMessage(MessageChain msg) {
+        int id = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData().getMessageId();
+        return OneBotMessageReceipt.create(bot, id, this);
     }
 
     @Override
@@ -40,12 +42,12 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     @Override
     public GroupContact getUser(long qq) {
         var data = bot.getGroupMemberInfo(getId(), qq, false).getData();
-        return new com.now.nowbot.qq.onebot.contact.GroupContact(bot, data.getUserId(), data.getNickname(), data.getRole());
+        return new com.now.nowbot.qq.onebot.contact.GroupContact(bot, data.getUserId(), data.getNickname(), data.getRole(), this.getId());
     }
 
     @Override
     public List<? extends GroupContact> getAllUser() {
         var data = bot.getGroupMemberList(getId()).getData();
-        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole())).toList();
+        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole(), this.getId())).toList();
     }
 }

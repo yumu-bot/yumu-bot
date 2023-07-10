@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.PPm.action.Func3;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import rx.functions.Action3;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -261,7 +261,7 @@ public class PPMLegacyService implements MessageService {
         return v1>v2 ? "+"+(int)(v1-v2) : "-"+(int)(v2-v1);
     }
 
-    private void switchRank(int i, double date, Action3<Integer, String, Integer> temp) {
+    private void switchRank(int i, double date, Func3<Integer, String, Integer, Object> temp) {
         if (date == 1.2D){
             temp.call(i, "X+", PanelUtil.COLOR_X_PLUS);
         } else if (date >= 1){

@@ -4,15 +4,15 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.PPm.action.Func2;
+import com.now.nowbot.model.PPm.action.Func3;
+import com.now.nowbot.model.PPm.action.Func4;
 import com.now.nowbot.util.Panel.PanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import org.jetbrains.skija.Image;
 import org.jetbrains.skija.Paint;
 import org.springframework.lang.Nullable;
-import rx.functions.Func2;
-import rx.functions.Func3;
-import rx.functions.Func4;
 
 import java.io.IOException;
 import java.util.List;

@@ -10,7 +10,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.contact.MemberPermission;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;

@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import com.now.nowbot.config.PermissionType;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "permission")

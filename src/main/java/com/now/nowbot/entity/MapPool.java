@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "map_pool")
@@ -15,9 +15,8 @@ public class MapPool {
     @Column()
     Integer fatherId;
 
-    @Column(nullable = false)
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String info;
 
     public Integer getId() {

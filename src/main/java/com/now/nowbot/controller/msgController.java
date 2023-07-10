@@ -58,12 +58,11 @@ public class msgController {
         }
 
         var msg = BindService.BIND_MSG_MAP.get(key);
-        var bot = botContainer.robots.get(msg.botQQ());
         if (debug || msg != null) {
             try {
                 if (!debug) {
                     try {
-                        bot.deleteMsg(msg.receipt());
+                        msg.receipt().recall();
                     } catch (Exception e) {
                         log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
                         sb.append("绑定连接已超时\n请重新绑定");

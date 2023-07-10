@@ -2,7 +2,7 @@ package com.now.nowbot.entity;
 
 import com.now.nowbot.model.enums.OsuMode;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 @Entity
 @Table(name = "osu_beatmap",indexes = {
         @Index(name = "map_find", columnList = "map_id"),

@@ -17,14 +17,14 @@ spring:
       QQ,OSU
 #使用SQLite小型数据库
   datasource:
-    driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:${botfile.root}db/nowbot.db
+    driver-class-name: org.postgresql.Driver
+    url:
     username:
     password:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 1
-
+      connection-test-query: SELECT version()
 #使用MySql数据库
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
@@ -34,13 +34,25 @@ spring:
 #    hikari:
 #      maximum-pool-size: 10
 #      minimum-idle: 1
-
-#jpa配置
+shiro:
+  ws-config:
+    # 反向 Websocket 连接地址，无需该配置字段可删除，将使用默认值 "/ws/shiro"
+    ws-url: "/websocket-1"
+    # 访问密钥，强烈推荐在公网的服务器设置
+    # 超时回收，默认10秒
+    timeout: 10
+    # 二进制消息的最大长度
+    max-binary-message-buffer-size: 512000
+    # 最大空闲时间，超过这个时间将关闭会话
+    max-session-idle-timeout: 900000
+    # 最大文本消息缓冲区
+    max-text-message-buffer-size: 512000
+  #jpa配置
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
-    database-platform: org.sqlite.hibernate.dialect.SQLiteDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: true

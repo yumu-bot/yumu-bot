@@ -26,7 +26,7 @@ public class QQMsgUtil {
         return base64Util.encodeToString(data);
     }
     @Nullable
-    public static <T> T getType(String msg, Class<T> T) {
+    public static <T> T getType(com.now.nowbot.qq.message.MessageChain msg, Class<T> T) {
         return null;
     }
 

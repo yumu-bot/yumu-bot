@@ -6,6 +6,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
@@ -47,7 +48,7 @@ public class BindService implements MessageService {
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
                 if (s != null) {
-                    String Oname = s.getMessage();
+                    String Oname = s.getRawMessage();
                     Long id;
                     try {
                         id = osuGetService.getOsuId(Oname);
@@ -65,7 +66,7 @@ public class BindService implements MessageService {
                         } else {
                             from.sendMessage(buser.getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
                             s = ASyncMessageUtil.getEvent(lock);
-                            if (s != null && s.getMessage().startsWith("OK")) {
+                            if (s != null && s.getRawMessage().startsWith("OK")) {
                                 buser.setQq(at.getTarget());
                                 bindDao.update(buser);
                                 throw new BindException(BindException.Type.BIND_Me_Success);
@@ -131,7 +132,7 @@ public class BindService implements MessageService {
                 from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
-                if(s !=null && s.getMessage().trim().equalsIgnoreCase("OK")){
+                if(s !=null && s.getRawMessage().trim().equalsIgnoreCase("OK")){
                 }else {
                     return;
                 }
@@ -151,7 +152,7 @@ public class BindService implements MessageService {
 
 
             //此处在 controller.msgController 处理
-            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId(), event.getSubject().getId(), event.getBot().getSelfId()));
+            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
             //---------------
 //            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         }else {
@@ -159,7 +160,7 @@ public class BindService implements MessageService {
             String state = event.getSender().getId() + "+" + timeMillis;
             var receipt = from.sendMessage(osuGetService.getOauthUrl(state));
             from.recallIn(receipt, 110 * 1000);
-            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId(), event.getSubject().getId(), event.getBot().getSelfId()));
+            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
         }
     }
 
@@ -177,7 +178,7 @@ public class BindService implements MessageService {
         }
     }
 
-    public record Bind(Long key, Integer receipt, Long QQ, Long groupQQ, Long botQQ) {
+    public record Bind(Long key, MessageReceipt receipt, Long QQ) {
     }
 
 }

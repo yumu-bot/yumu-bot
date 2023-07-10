@@ -4,7 +4,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,18 +19,17 @@ public class OsuBindUserLite {
 
     @Column(name = "osu_id")
     private Long osuId;
-    @Column(name = "osu_name")
+
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "osu_name", columnDefinition = "TEXT")
     private String osuName;
     private Long qq;
-    @Column(name = "access_token")
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
-    @Column(name = "refresh_token")
+
     @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
     private Long time;
 

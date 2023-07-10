@@ -22,7 +22,7 @@ public class PermissionDao {
         if(perm == null){
             perm = permMapper.save(new PermissionLite(service, type));
         }
-        return qqMapper.getByPermissionId(perm.getId());
+        return qqMapper.getByPermissionId(perm.getId()).stream().map(QQID::getQQ).toList();
     }
     public void addGroup(String service, PermissionType type, Long id){
         Long pid = permMapper.getId(service, type);

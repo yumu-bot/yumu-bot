@@ -88,7 +88,6 @@ public class NowbotConfig {
         tempFactory.setReadTimeout(3 * 60 * 1000);
         var template = new RestTemplate(tempFactory);
         template.setErrorHandler(new DefaultResponseErrorHandler() {
-            @Override
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
                 throw new RequestException(response, statusCode);
             }
