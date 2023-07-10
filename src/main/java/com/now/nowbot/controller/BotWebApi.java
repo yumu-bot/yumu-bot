@@ -47,7 +47,7 @@ public class BotWebApi {
             return getPPMVS(user1, user2, playMode);
         }
         var mode = OsuMode.getMode(playMode);
-        var info = osuGetService.getPlayerInfo(user1);
+        var info = osuGetService.getPlayerInfo(user1.trim());
         if (mode == OsuMode.DEFAULT) mode = info.getPlayMode();
         var bplist = osuGetService.getBestPerformance(info.getId(), mode, 0, 100);
         var ppm = Ppm.getInstance(mode, info, bplist);
@@ -57,8 +57,8 @@ public class BotWebApi {
     @GetMapping(value = "ppmvs", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
-        var info1 = osuGetService.getPlayerInfo(user1);
-        var info2 = osuGetService.getPlayerInfo(user2);
+        var info1 = osuGetService.getPlayerInfo(user1.trim());
+        var info2 = osuGetService.getPlayerInfo(user2.trim());
         if (mode == OsuMode.DEFAULT) mode = info1.getPlayMode();
         var bplist1 = osuGetService.getBestPerformance(info1.getId(), mode, 0, 100);
         var bplist2 = osuGetService.getBestPerformance(info2.getId(), mode, 0, 100);
@@ -121,6 +121,7 @@ public class BotWebApi {
     @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})
     public String getBPHTI(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
         BinUser nu = new BinUser();
+        userName = userName.trim();
         long id = osuGetService.getOsuId(userName);
         nu.setOsuID(id);
         nu.setOsuName(userName);
@@ -137,6 +138,7 @@ public class BotWebApi {
     @GetMapping(value = "bpht", produces = {MediaType.TEXT_PLAIN_VALUE})
     public String getBPHT(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
         BinUser nu = new BinUser();
+        userName = userName.trim();
         long id = osuGetService.getOsuId(userName);
         nu.setOsuID(id);
         nu.setOsuName(userName);
@@ -159,6 +161,7 @@ public class BotWebApi {
                         @Nullable @RequestParam("pr") Boolean pr
     ) {
         var mode = OsuMode.getMode(playMode);
+        userName = userName.trim();
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(userName);
         List<Score> bps;
@@ -204,6 +207,7 @@ public class BotWebApi {
                         @Nullable @RequestParam("f") Boolean includeF
     ) {
         Score score;
+        userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
