@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.OsuGetService;
@@ -24,9 +25,10 @@ import java.util.regex.Matcher;
 @Service("bind")
 public class BindService implements MessageService {
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static Logger               log          = LoggerFactory.getLogger(BindService.class);
+    private static      Logger          log          = LoggerFactory.getLogger(BindService.class);
     OsuGetService osuGetService;
-    BindDao bindDao;
+    BindDao       bindDao;
+
     @Autowired
     public BindService(OsuGetService osuGetService, BindDao bindDao) {
         this.osuGetService = osuGetService;
@@ -37,7 +39,7 @@ public class BindService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         if (Permission.isSupper(event.getSender().getId())) {
-            At at = QQMsgUtil.getType(event.getMessage(), At.class);
+            var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
             if (matcher.group("un") != null && at != null) {
                 unbind(at.getTarget());
             }
@@ -87,15 +89,15 @@ public class BindService implements MessageService {
                     //from.sendMessage("超时或错误,结束接受"); return;
                 }
             }
-        }else if (matcher.group("un") != null){
+        } else if (matcher.group("un") != null) {
             from.sendMessage("解绑请联系管理员");
             return;
         }
         var name = matcher.group("name");
-        if (name != null){
+        if (name != null) {
             long d;
             try {
-                 d = osuGetService.getOsuId(name);
+                d = osuGetService.getOsuId(name);
             } catch (Exception e) {
                 throw new BindException(BindException.Type.BIND_Player_NotFound);
                 //from.sendMessage("未找到osu用户"+name); return;
@@ -106,7 +108,7 @@ public class BindService implements MessageService {
             } catch (BindException e) {
                 //未绑定
             }
-            if (nuser != null){
+            if (nuser != null) {
                 throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
             }
             try {
@@ -128,12 +130,12 @@ public class BindService implements MessageService {
             } catch (BindException ignore) {
                 // do nothing
             }
-            if (user != null && user.getAccessToken() != null){
-                from.sendMessage("您已绑定 ("+user.getOsuID()+") "+user.getOsuName()+"。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
+            if (user != null && user.getAccessToken() != null) {
+                from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
                 var s = ASyncMessageUtil.getEvent(lock);
-                if(s !=null && s.getRawMessage().trim().equalsIgnoreCase("OK")){
-                }else {
+                if (s != null && s.getRawMessage().trim().equalsIgnoreCase("OK")) {
+                } else {
                     return;
                 }
             }
@@ -155,7 +157,7 @@ public class BindService implements MessageService {
             BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
             //---------------
 //            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
-        }else {
+        } else {
             //私聊不验证是否绑定
             String state = event.getSender().getId() + "+" + timeMillis;
             var receipt = from.sendMessage(osuGetService.getOauthUrl(state));

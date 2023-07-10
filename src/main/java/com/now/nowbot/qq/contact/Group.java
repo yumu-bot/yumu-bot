@@ -10,4 +10,6 @@ public interface Group extends Contact {
     GroupContact getUser(long qq);
 
     List<? extends GroupContact> getAllUser();
+
+    void sendFile(byte[] data, String mame);
 }

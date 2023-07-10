@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -52,7 +53,7 @@ public class BphtService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         BinUser nu = null;
-        At at = QQMsgUtil.getType(event.getMessage(), At.class);
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 是否为绑定用户
         boolean isBind = true;
         if (at != null) {
@@ -214,7 +215,7 @@ public class BphtService implements MessageService {
                     mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore());
                 });
         var changedStarMapAttrs = imageService.getMapAttr(mapAttrGet);
-        var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s->s));
+        var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
         for (int i = 0; i < bps.size(); i++) {
             var jsb = bps.get(i);
             var map = jsb.getBeatMap();
@@ -238,7 +239,7 @@ public class BphtService implements MessageService {
             avgLength += length;
 
             if (Mod.hasChangeRating(jsb.getScore())) {
-               star += changedStarMap.get(jsb.getBeatMap().getId()).getStars();
+                star += changedStarMap.get(jsb.getBeatMap().getId()).getStars();
             } else {
                 star += jsb.getBeatMap().getDifficultyRating();
             }

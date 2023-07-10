@@ -14,16 +14,18 @@ import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Image;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
+
 import java.io.IOException;
+import java.nio.channels.Channels;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,7 @@ public class BotWebApi {
     @Resource
     BphtService   bphtService;
     @Resource
-    MRAService mraService;
+    MRAService    mraService;
     @Resource
     ImageService  imageService;
 
@@ -169,42 +171,43 @@ public class BotWebApi {
             bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, 100);
         } else if (re != null && re) {
             bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, 100);
-        } else  if (range != null) {
+        } else if (range != null) {
             range = Math.max(5, Math.min(100, range + 1));
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, range);
         } else if (days != null) {
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,100);
+            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
             // 时间计算
             int dat = -Math.max(1, Math.min(999, days));
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
-            bps = bps.stream().filter(s->dayBefore.isBefore(s.getCreateTime())).toList();
+            bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
         } else {
             int dat = -1;
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0,100);
-            bps = bps.stream().filter(s->dayBefore.isBefore(s.getCreateTime())).toList();
+            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
+            bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
         }
         var lines = new ArrayList<Image>(bps.size());
         try {
             var card = CardBuilder.getUserCard(infoMe);
             for (int i = 0; i < bps.size(); i++) {
-                lines.add(new HCardBuilder(bps.get(i), i+1).build());
+                lines.add(new HCardBuilder(bps.get(i), i + 1).build());
             }
             var panel = new TBPPanelBuilder(lines.size());
             panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            return panel.build(mode==OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
+            return panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
                     .encodeToData(EncodedImageFormat.JPEG, 80)
                     .getBytes();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
     @GetMapping(value = "score", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getScore(@RequestParam("u1") String userName,
-                        @Nullable @RequestParam("mode") String playMode,
-                        @Nullable @RequestParam("bp") Integer bps,
-                        @Nullable @RequestParam("bid") Integer bid,
-                        @Nullable @RequestParam("f") Boolean includeF
+                           @Nullable @RequestParam("mode") String playMode,
+                           @Nullable @RequestParam("bp") Integer bps,
+                           @Nullable @RequestParam("bid") Integer bid,
+                           @Nullable @RequestParam("f") Boolean includeF
     ) {
         Score score;
         userName = userName.trim();
@@ -212,9 +215,9 @@ public class BotWebApi {
         long uid = osuGetService.getOsuId(userName);
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
         if (bps != null) {
-            bps = Math.min(99, bps-1);
+            bps = Math.min(99, bps - 1);
             bps = Math.max(0, bps);
-            var scores = osuGetService.getBestPerformance(uid, mode, bps,1);
+            var scores = osuGetService.getBestPerformance(uid, mode, bps, 1);
             if (scores.size() == 0) throw new RuntimeException("bp不够");
             score = scores.get(0);
         } else if (bid != null) {
@@ -223,16 +226,27 @@ public class BotWebApi {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("没打过");
             }
-        } else if (Boolean.TRUE.equals(includeF)){
-            var scores =osuGetService.getAllRecentN(uid, mode, 0,1);
+        } else if (Boolean.TRUE.equals(includeF)) {
+            var scores = osuGetService.getAllRecentN(uid, mode, 0, 1);
             if (scores.size() == 0) throw new RuntimeException("最近没玩过");
             score = scores.get(0);
         } else {
-            var scores = osuGetService.getRecentN(uid, mode, 0,1);
+            var scores = osuGetService.getRecentN(uid, mode, 0, 1);
             if (scores.size() == 0) throw new RuntimeException("最近没玩过");
             score = scores.get(0);
         }
 
         return imageService.drawScore(userInfo, score, osuGetService);
+    }
+
+    @GetMapping("file/{key}")
+    public void downloadFile(@PathVariable("key") String key, HttpServletResponse response) throws IOException {
+        var data = QQMsgUtil.getFileData(key);
+        if (data == null) throw new RuntimeException("文件不存在");
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment;filename=file");
+        var w = Channels.newChannel(response.getOutputStream());
+        w.write(data);
+        w.close();
     }
 }

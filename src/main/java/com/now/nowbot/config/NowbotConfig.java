@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,10 +53,12 @@ public class NowbotConfig {
     public static        String BG_PATH;
     public static        String IMGBUFFER_PATH;
     public static        String OSU_ID;
+    public static        int    PORT;
 
     public static long    QQ;
     public static String  PASSWORD;
     public static boolean QQ_LOGIN;
+
 
     @Autowired
     public NowbotConfig(FileConfig fileConfig, QQConfig qqConfig) {
@@ -161,11 +164,17 @@ public class NowbotConfig {
         Request request = new Request.Builder()
                 .url("https://osu.ppy.sh/users/17064371/scores/best?mode=osu&limit=1&offset=0")
                 .build();
-        try (Response response = client.newCall(request).execute()){
+        try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) return true;
         } catch (IOException e) {
             log.error("代理不可用", e);
         }
         return false;
+    }
+
+
+    @Value("${server.port}")
+    public void setPORT(Integer port) {
+        PORT = port;
     }
 }

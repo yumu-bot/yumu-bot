@@ -1,10 +1,11 @@
 package com.now.nowbot.qq.onebot.contact;
 
 import com.mikuac.shiro.core.Bot;
-import com.now.nowbot.qq.contact.Friend;
+import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
+import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
 
@@ -49,5 +50,19 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     public List<? extends GroupContact> getAllUser() {
         var data = bot.getGroupMemberList(getId()).getData();
         return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole(), this.getId())).toList();
+    }
+
+    @Override
+    public void sendFile(byte[] data, String name) {
+        var url = QQMsgUtil.getFilePubUrl(data);
+        try {
+            DownloadFileResp rep;
+            do {
+                rep = bot.downloadFile(url).getData();
+            } while (rep.getFile() != null);
+            bot.uploadGroupFile(getId(), rep.getFile(), name);
+        } finally {
+            QQMsgUtil.removeFileUrl(url);
+        }
     }
 }

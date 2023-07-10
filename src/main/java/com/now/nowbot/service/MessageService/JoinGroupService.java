@@ -17,6 +17,8 @@ public class JoinGroupService implements MessageService{
     public static Map<Long, BotInvitedJoinGroupRequestEvent> GROUPS = new HashMap<>();
 
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        // todo 可能不再需要了
+        /*
         if (Permission.isSupper(event.getSender().getId())){
             var r = QQMsgUtil.getType(event.getMessage(), QuoteReply.class);
             if (r != null && r.getSource().getBotId() == r.getSource().getFromId()){
@@ -33,5 +35,7 @@ public class JoinGroupService implements MessageService{
                 }
             }
         }
+
+         */
     }
 }

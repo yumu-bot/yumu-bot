@@ -19,8 +19,9 @@ public class TestRaService implements MessageService {
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
     OsuGetService osuGetService;
+
     @Autowired
-    TestRaService(OsuGetService osuGetService){
+    TestRaService(OsuGetService osuGetService) {
         this.osuGetService = osuGetService;
     }
 
@@ -30,13 +31,12 @@ public class TestRaService implements MessageService {
         var from = event.getSubject();
 
         StringBuffer sb = new StringBuffer();
-        from.sendMessage("正在处理"+matcher.group("id"));
+        from.sendMessage("正在处理" + matcher.group("id"));
         mo(Integer.parseInt(matcher.group("id")), -1, sb);
 
-        if (from instanceof Group group){
+        if (from instanceof Group group) {
             try {
-                // todo 实现文件上传
-//                var f = group.getFiles().uploadNewFile(matcher.group("id")+".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
             }
@@ -47,7 +47,7 @@ public class TestRaService implements MessageService {
     }
 
     void mo(int id, long eventid, StringBuffer strData) {
-        Match match =osuGetService.getMatchInfo(id);
+        Match match = osuGetService.getMatchInfo(id);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
@@ -65,7 +65,7 @@ public class TestRaService implements MessageService {
                             .append(game.getTeamType()).append(',')
                             .append((game.getBeatmap().getDifficultyRating())).append(',')
                             .append(game.getBeatmap().getTotalLength()).append(',')
-                            .append(Arrays.toString(game.getMods()).replaceAll(", ","|")).append(',')
+                            .append(Arrays.toString(game.getMods()).replaceAll(", ", "|")).append(',')
                             .append(game.getBeatmap().getId()).append(',')
                             .append(osuGetService.getMapInfo(game.getBeatmap().getId()).getMaxCombo())
                             .append('\n');
@@ -75,7 +75,7 @@ public class TestRaService implements MessageService {
                 for (var score : game.getScoreInfos()) {
                     try {
                         strData.append(score.getUserId()).append(',')
-                                .append(String.format("%4.4f",score.getAccuracy())).append(',')
+                                .append(String.format("%4.4f", score.getAccuracy())).append(',')
                                 .append('[').append(String.join("|", score.getMods())).append("],")
                                 .append(score.getScore()).append(',')
                                 .append(score.getMaxCombo()).append(',')

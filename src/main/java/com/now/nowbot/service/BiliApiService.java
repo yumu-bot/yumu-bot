@@ -3,9 +3,9 @@ package com.now.nowbot.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.live.LiveRoom;
 import com.now.nowbot.model.live.LiveStatus;
+import com.now.nowbot.qq.Bot;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import net.mamoe.mirai.Bot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,20 +21,20 @@ import java.util.*;
 @Service
 public class BiliApiService {
     Logger log = LoggerFactory.getLogger(BiliApiService.class);
-    private static final String ROOM_API = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
-    private static final String USER_API = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
+    private static final String ROOM_API         = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
+    private static final String USER_API         = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
     private static final String USER_ALLINFO_API = "https://api.bilibili.com/x/space/acc/info?mid=";
-    private static final String ALL_ROOM_API = "http://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids";
+    private static final String ALL_ROOM_API     = "http://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids";
     RestTemplate restTemplate;
-    Bot bot;
+    Bot          bot;
 
     private static final HashMap<Long, Long> sendGroupMap = new HashMap<>();
-    private static final Set<Long> lastList = new HashSet<>();
+    private static final Set<Long>           lastList     = new HashSet<>();
 
     @Autowired
-    public BiliApiService(RestTemplate restTemplate, Bot bot) {
+    public BiliApiService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.bot = bot;
+//        this.bot = bot;
 //        sendGroupMap.put(545149341L, 733244168L);
 //        sendGroupMap.put(73769122L, 733244168L);
 //        sendGroupMap.put(14172231L, 135214594L);
