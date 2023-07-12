@@ -259,6 +259,22 @@ public class OsuGetService {
         var data = c.getBody();
         return data;
     }
+    public OsuUser getPlayerInfo(String userName, OsuMode mode) {
+        String url = this.URL + "users/" + userName;
+        String modeStr;
+        if (mode == OsuMode.DEFAULT) {
+            modeStr = "";
+        } else {
+            modeStr = "/" + mode.getName();
+        }
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userName + modeStr).queryParam("key", "username").build().encode().toUri();
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
+        var data = c.getBody();
+        return data;
+    }
 
 
     /***

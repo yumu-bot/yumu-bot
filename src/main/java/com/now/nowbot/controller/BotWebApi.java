@@ -49,8 +49,7 @@ public class BotWebApi {
             return getPPMVS(user1, user2, playMode);
         }
         var mode = OsuMode.getMode(playMode);
-        var info = osuGetService.getPlayerInfo(user1.trim());
-        if (mode == OsuMode.DEFAULT) mode = info.getPlayMode();
+        var info = osuGetService.getPlayerInfo(user1.trim(), mode);
         var bplist = osuGetService.getBestPerformance(info.getId(), mode, 0, 100);
         var ppm = Ppm.getInstance(mode, info, bplist);
         return imageService.getPanelB(info, mode, ppm);
