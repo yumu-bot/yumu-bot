@@ -487,8 +487,8 @@ public class SkiaUtil {
      * 算法通过 正态分布 "估算"超过bp100的 pp，此方法不严谨
      */
 
-    public static float getBonusPP(double[] pp, Long pc){
-        double bonus = 0;
+    public static float getOverBP100PP(double[] pp, Long pc){
+        double over100 = 0;
         double sumOxy = 0;
         double sumOx2 = 0;
         double avgX = 0;
@@ -513,9 +513,9 @@ public class SkiaUtil {
             if(val <= 0.0D){
                 break;
             }
-            bonus += val;
+            over100 += val;
         }
-        return (float) bonus;
+        return (float) over100;
     }
 
     public static int[] getRandomColors() {
