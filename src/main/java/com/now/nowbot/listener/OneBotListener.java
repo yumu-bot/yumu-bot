@@ -20,6 +20,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.core.annotation.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
@@ -50,6 +51,7 @@ public class OneBotListener {
     }
 
     @GroupMessageHandler()
+    @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         synchronized (KEY_SET) {
             if (!KEY_SET.add(onebotEvent.getMessageId())) {
