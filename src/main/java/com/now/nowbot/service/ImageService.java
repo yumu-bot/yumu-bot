@@ -1,7 +1,6 @@
 package com.now.nowbot.service;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -198,10 +197,17 @@ public class ImageService {
         var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
         var res = osuGetService.getRecentN(user, mode, 0, 3);
 
-        float bonus = 0f;
+        double bpp = 0;
+
+        for (int i = 0; i < bps.size(); i++) {
+            var bp = bps.get(i);
+            bpp += bp.getWeight().getPP();
+        }
+
+        double bonus = 0f;
         if (bps.size() > 0) {
             var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
-            bonus = SkiaUtil.getBonusPP(bppps, userInfo.getPlayCount());
+            bonus = Math.max(userInfo.getPP() - bpp - SkiaUtil.getOverBP100PP(bppps, userInfo.getPlayCount()), 0f);
         }
         var times = bps.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();

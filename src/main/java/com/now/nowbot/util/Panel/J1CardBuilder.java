@@ -124,7 +124,7 @@ public class J1CardBuilder extends PanelBuilder {
             var bp = bps.get(i);
             allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
         }
-            float bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());
+            float bonus = SkiaUtil.getOverBP100PP(allBpPP, user.getStatistics().getPlayCount());
             double rawPP = user.getPP() - bonus;
 
         if (user.getPlayMode() == OsuMode.MANIA) {

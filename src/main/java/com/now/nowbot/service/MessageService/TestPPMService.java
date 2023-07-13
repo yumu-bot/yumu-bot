@@ -130,7 +130,7 @@ public class TestPPMService implements MessageService {
                     lengv90 += bp.getBeatMap().getTotalLength();
                 }
             }
-            bonus = SkiaUtil.getBonusPP(allBpPP, user.getStatistics().getPlayCount());
+            bonus = SkiaUtil.getOverBP100PP(allBpPP, user.getStatistics().getPlayCount());
             rawpp = bpp + bonus;
 
             ppv0 /= 10;
