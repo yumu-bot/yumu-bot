@@ -30,7 +30,10 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
 
     @Override
     public OneBotMessageReceipt sendMessage(MessageChain msg) {
-        int id = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData().getMessageId();
+        int id = 0;
+        if (bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData() != null) {
+            id = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData().getMessageId();
+        }
         return OneBotMessageReceipt.create(bot, id, this);
     }
 
