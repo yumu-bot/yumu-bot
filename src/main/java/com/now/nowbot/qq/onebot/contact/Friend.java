@@ -15,8 +15,9 @@ public class Friend extends Contact implements com.now.nowbot.qq.contact.Friend 
     @Override
     public OneBotMessageReceipt sendMessage(MessageChain msg) {
         int id = 0;
-        if (bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData() != null) {
-            id = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData().getMessageId();
+        var d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData();
+        if (d != null) {
+            id = d.getMessageId();
         }
         return OneBotMessageReceipt.create(bot, id, this);
     }
