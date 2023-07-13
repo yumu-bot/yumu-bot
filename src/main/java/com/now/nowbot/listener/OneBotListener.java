@@ -72,6 +72,11 @@ public class OneBotListener {
                 errorHandle(event, e);
             }
         }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            // do nothing
+        }
         synchronized (KEY_SET) {
             KEY_SET.remove(onebotEvent.getMessageId());
         }
