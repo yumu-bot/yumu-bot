@@ -514,6 +514,7 @@ public class ImageService {
         mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
         var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
+        mapStatistics[1] = new ArrayList<>(3);
         mapStatistics[1].add(bpListSortedByCombo.get(0));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
@@ -527,7 +528,6 @@ public class ImageService {
         mapStatistics[3].add(bpListSortedByBpm.get(0));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
-        mapStatistics[1] = new ArrayList<>(3);
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
