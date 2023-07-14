@@ -476,7 +476,7 @@ public class ImageService {
                 });
         var changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
 
-        record map(int index, int length, int combo, float bpm, float star, String rank, String cover, String[] mods) {
+        record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover, String[] mods) {
         }
 
         List<map> mapList = new ArrayList<>(bpSize);
@@ -513,21 +513,21 @@ public class ImageService {
         mapStatistics[0].add(bpListSortedByLength.get(0));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
-        mapStatistics[1] = new ArrayList<>(3);
-        var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
-        mapStatistics[1].add(bpListSortedByBpm.get(0));
-        mapStatistics[1].add(bpListSortedByBpm.get(bpSize / 2));
-        mapStatistics[1].add(bpListSortedByBpm.get(bpSize - 1));
-        mapStatistics[2] = new ArrayList<>(3);
         var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
-        mapStatistics[2].add(bpListSortedByCombo.get(0));
-        mapStatistics[2].add(bpListSortedByCombo.get(bpSize / 2));
-        mapStatistics[2].add(bpListSortedByCombo.get(bpSize - 1));
-        mapStatistics[3] = new ArrayList<>(3);
+        mapStatistics[1].add(bpListSortedByCombo.get(0));
+        mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
+        mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
+        mapStatistics[2] = new ArrayList<>(3);
         var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
-        mapStatistics[3].add(bpListSortedByStar.get(0));
-        mapStatistics[3].add(bpListSortedByStar.get(bpSize / 2));
-        mapStatistics[3].add(bpListSortedByStar.get(bpSize - 1));
+        mapStatistics[2].add(bpListSortedByStar.get(0));
+        mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
+        mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
+        mapStatistics[3] = new ArrayList<>(3);
+        var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
+        mapStatistics[3].add(bpListSortedByBpm.get(0));
+        mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
+        mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
+        mapStatistics[1] = new ArrayList<>(3);
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
@@ -535,9 +535,9 @@ public class ImageService {
         body.put("bpTop5", t5);
         body.put("bpLast5", b5);
         body.put("bpLength", mapStatistics[0]);
-        body.put("bpBpm", mapStatistics[1]);
-        body.put("bpCombo", mapStatistics[2]);
-        body.put("bpSR", mapStatistics[3]);
+        body.put("bpCombo", mapStatistics[1]);
+        body.put("bpSR", mapStatistics[2]);
+        // body.put("bpBpm", mapStatistics[3]);
         body.put("favorite_mappers", mapperList);
         body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
