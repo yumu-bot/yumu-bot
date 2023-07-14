@@ -128,7 +128,7 @@ public class BotWebApi {
         nu.setOsuName(userName);
         var mode = OsuMode.getMode(playMode);
         var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
-        var msg = bphtService.getAllMsg(Bps, userName, mode, nu);
+        var msg = bphtService.getAllMsg(Bps, userName, mode);
         StringBuilder sb = new StringBuilder();
         for (var s : msg) {
             sb.append(s).append("\n");
@@ -236,6 +236,19 @@ public class BotWebApi {
         }
 
         return imageService.drawScore(userInfo, score, osuGetService);
+    }
+
+    @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
+    public byte[] getBpa(@RequestParam("u1") String userName,
+                           @Nullable @RequestParam("mode") String playMode
+    ) {
+        userName = userName.trim();
+        var mode = OsuMode.getMode(playMode);
+        long uid = osuGetService.getOsuId(userName);
+        var userInfo = osuGetService.getPlayerInfo(uid, mode);
+        var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
+
+        return imageService.drawBpa(userInfo, scores, osuGetService);
     }
 
     @GetMapping("file/{key}")

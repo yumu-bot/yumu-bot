@@ -356,7 +356,7 @@ public class OsuGetService {
      * @param users id
      * @return
      */
-    public JsonNode getUsers(List<Long> users) {
+    public <T extends Number> JsonNode getUsers(Collection<T> users) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users")
                 .queryParam("ids[]", users).build().encode().toUri();
         HttpHeaders headers = getHeader();

@@ -5,6 +5,7 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ScoreOsu;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -64,6 +65,7 @@ public class ImageService {
         HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
     }
+
     public List<MapAttr> getMapAttr(MapAttrGet p) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -419,6 +421,131 @@ public class ImageService {
         body.put("strs", lines);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("drawLine", httpEntity);
+    }
+
+    public byte[] drawBpa(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
+        var bpSize = bps.size();
+        // top
+        var t5 = bps.subList(0, 5);
+        // bottom
+        var b5 = bps.subList(bpSize - 6, bpSize - 1);
+
+        var ppList = bps.stream().map(s -> s.getWeight().getPP());
+        var ppRawList = bps.stream().map(Score::getPP);
+        var rankCount = bps.stream()
+                .map(Score::getRank)
+                .toList();
+        record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
+        }
+        List<mapper> mappers = new ArrayList<>(Math.min(8, bpSize));
+        var mapperCount = bps.stream()
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(8)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> o, LinkedHashMap::new));
+        var mapperInfo = osuGetService.getUsers(mapperCount.keySet()).get("users");
+        var mapperList = bps.stream()
+                .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
+//                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
+                .entrySet()
+                .stream()
+                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(e -> e.getValue(), Comparator.reverseOrder()))
+                .map(e -> {
+                    String name = "";
+                    String avatar = "";
+                    for (var node : mapperInfo) {
+                        if (e.getKey().equals(node.get("id").asInt(0))) {
+                            name = node.get("username").asText("unknown");
+                            avatar = node.get("avatar_url").asText("unknown");
+                            break;
+                        }
+                    }
+                    return new mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
+                })
+                .toList();
+
+        // 提取星级变化的谱面 DT/HT 等
+        var mapAttrGet = new MapAttrGet(user.getPlayMode());
+        bps.stream()
+                .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
+                .forEach(s -> {
+                    mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods()));
+                });
+        var changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+
+        record map(int index, int length, int combo, float bpm, float star, String rank, String cover, String[] mods) {
+        }
+
+        List<map> mapList = new ArrayList<>(bpSize);
+        for (int i = 0; i < bpSize; i++) {
+            var s = bps.get(i);
+            var minfo = s.getBeatMap();
+            if (changedAttrsMap.containsKey(s.getBeatMap().getId())) {
+                var attr = changedAttrsMap.get(s.getBeatMap().getId());
+                minfo.setDifficultyRating(attr.getStars());
+                if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
+                    minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
+                    minfo.setBpm(minfo.getBpm() * 1.5f);
+                } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
+                    minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
+                    minfo.setBpm(minfo.getBpm() * 0.75f);
+                }
+            }
+            var m = new map(
+                    i,
+                    minfo.getTotalLength(),
+                    s.getMaxCombo(),
+                    minfo.getBpm(),
+                    minfo.getDifficultyRating(),
+                    s.getRank(),
+                    s.getBeatMapSet().getCovers().getList2x(),
+                    s.getMods().toArray(new String[0])
+            );
+            mapList.add(m);
+        }
+        // 0 length; 1 bpm; 2 combo; 3 star
+        ArrayList<map>[] mapStatistics = new ArrayList[4];
+        mapStatistics[0] = new ArrayList<>(3);
+        var bpListSortedByLength = mapList.stream().sorted(Comparator.comparingInt(map::length).reversed()).toList();
+        mapStatistics[0].add(bpListSortedByLength.get(0));
+        mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
+        mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
+        mapStatistics[1] = new ArrayList<>(3);
+        var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
+        mapStatistics[1].add(bpListSortedByBpm.get(0));
+        mapStatistics[1].add(bpListSortedByBpm.get(bpSize / 2));
+        mapStatistics[1].add(bpListSortedByBpm.get(bpSize - 1));
+        mapStatistics[2] = new ArrayList<>(3);
+        var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
+        mapStatistics[2].add(bpListSortedByCombo.get(0));
+        mapStatistics[2].add(bpListSortedByCombo.get(bpSize / 2));
+        mapStatistics[2].add(bpListSortedByCombo.get(bpSize - 1));
+        mapStatistics[3] = new ArrayList<>(3);
+        var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
+        mapStatistics[3].add(bpListSortedByStar.get(0));
+        mapStatistics[3].add(bpListSortedByStar.get(bpSize / 2));
+        mapStatistics[3].add(bpListSortedByStar.get(bpSize - 1));
+
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("card_A1", user);
+        body.put("bpTop5", t5);
+        body.put("bpLast5", b5);
+        body.put("bpLength", mapStatistics[0]);
+        body.put("bpBpm", mapStatistics[1]);
+        body.put("bpCombo", mapStatistics[2]);
+        body.put("bpSR", mapStatistics[3]);
+        body.put("favorite_mappers", mapperList);
+        body.put("pp_raw_arr", ppRawList);
+        body.put("rank_arr", rankCount);
+        body.put("pp_length_arr", mapList.stream().map(map::length).toList());
+        body.put("mods_attr", null);
+        body.put("rank_attr", null);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_J", httpEntity);
     }
 
     public byte[] drawLine(StringBuilder sb) {

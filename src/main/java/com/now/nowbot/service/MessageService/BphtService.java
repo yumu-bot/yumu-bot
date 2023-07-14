@@ -96,9 +96,9 @@ public class BphtService implements MessageService {
             }
         } else {
             if (mode == null || mode == OsuMode.DEFAULT) {
-                lins = getAllMsg(Bps, nu.getOsuName(), OsuMode.DEFAULT, nu);
+                lins = getAllMsg(Bps, nu.getOsuName(), OsuMode.DEFAULT);
             } else {
-                lins = getAllMsg(Bps, nu.getOsuName(), mode, nu);
+                lins = getAllMsg(Bps, nu.getOsuName(), mode);
             }
         }
         QQMsgUtil.sendImage(from, imageService.drawLine(lins));
@@ -162,7 +162,7 @@ public class BphtService implements MessageService {
         return dtbf.toString().split("\n");
     }
 
-    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode, BinUser binUser) {
+    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode) {
         if (bps.size() == 0) return new String[0];
         var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
 

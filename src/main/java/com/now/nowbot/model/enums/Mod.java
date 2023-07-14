@@ -100,6 +100,10 @@ public enum Mod {
         }
     }
 
+    public static int getModsValueFromStr(List<String> mList) {
+        return getModsValue(mList.stream().map(Mod::fromStr).toList());
+    }
+
     public static int getModsValue(List<Mod> mList) {
         check(mList);
         return mList.stream().map(m -> m.value).reduce(0, (i, s) -> s | i);
