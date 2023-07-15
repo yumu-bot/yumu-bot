@@ -607,6 +607,15 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
+    public byte[] drawFriends(OsuUser userMe, List<MicroUser> friendList) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("me_card_A1", userMe);
+        body.put("friend_card_A1", friendList);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A1", httpEntity);
+    }
+
     public byte[] drawLine(StringBuilder sb) {
         return drawLine(sb.toString().split("\n"));
     }
