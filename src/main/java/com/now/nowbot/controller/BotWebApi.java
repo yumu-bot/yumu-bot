@@ -274,13 +274,13 @@ public class BotWebApi {
 
         boolean doRandom = false;
 
-        if (range2 == null) {
-            m = range1 - 1;
-            doRandom = true;
-        }
-        else if (range1 == null) {
+        if (range1 == null) {
             m = 11;
             doRandom = true; //12个人
+        }
+        else if (range2 == null) {
+            m = range1 - 1;
+            doRandom = true;
         }
         else {
             n = Math.min(range1 - 1, range2 - 1);
@@ -322,7 +322,7 @@ public class BotWebApi {
             }
         }
 
-        return imageService.getPanelA1(me, allFriends);
+        return imageService.getPanelA1(me, friend);
     }
 
     @GetMapping("file/{key}")
