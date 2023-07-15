@@ -12,6 +12,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +23,13 @@ public class BPAnalysisService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
+
+    @Autowired
+    public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
+        this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
+        this.imageService = imageService;
+    }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
@@ -39,8 +47,8 @@ public class BPAnalysisService implements MessageService {
             try {
                 nu = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
-                //do nothing
                 throw new BPAException(BPAException.Type.BP_Other_NotFound);
+                //do nothing ....?
             }
             if (nu == null) {
                 //构建只有 name + id 的对象
