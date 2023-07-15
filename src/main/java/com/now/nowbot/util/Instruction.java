@@ -64,8 +64,11 @@ public enum Instruction {
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
 
+    BPA(BPAnalysisService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpanalysis|bpa(?!\\w)|ba(?!\\w))+(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+
     BPHT(BphtService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ba(?!\\w))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ht(?!\\w))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #3 osu! 玩家指令
 
