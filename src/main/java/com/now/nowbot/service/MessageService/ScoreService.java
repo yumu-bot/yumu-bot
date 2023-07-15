@@ -13,7 +13,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -99,7 +98,7 @@ public class ScoreService implements MessageService {
         var userInfo = osuGetService.getPlayerInfo(user, mode);
 
         try {
-            var data = imageService.drawScore(userInfo, score, osuGetService);
+            var data = imageService.getPanelE(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("err", e);

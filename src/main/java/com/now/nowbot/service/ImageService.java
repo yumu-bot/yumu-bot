@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
-import com.now.nowbot.model.ScoreOsu;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileInputStream;
@@ -417,15 +415,8 @@ public class ImageService {
         return doPost("panel_F", httpEntity);
     }
 
-    public byte[] drawLine(String... lines) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("strs", lines);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("drawLine", httpEntity);
-    }
 
-    public byte[] drawBpa(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, 5);
@@ -593,7 +584,7 @@ public class ImageService {
         body.put("bpLength", mapStatistics[0]);
         body.put("bpCombo", mapStatistics[1]);
         body.put("bpSR", mapStatistics[2]);
-        // body.put("bpBpm", mapStatistics[3]);
+        body.put("bpBpm", mapStatistics[3]);
         body.put("favorite_mappers", mapperList);
         body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
@@ -607,7 +598,7 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
-    public byte[] drawFriends(OsuUser userMe, List<MicroUser> friendList) {
+    public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("me_card_A1", userMe);
@@ -616,11 +607,8 @@ public class ImageService {
         return doPost("panel_A1", httpEntity);
     }
 
-    public byte[] drawLine(StringBuilder sb) {
-        return drawLine(sb.toString().split("\n"));
-    }
 
-    public byte[] drawScore(OsuUser user, Score score, OsuGetService osuGetService) {
+    public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
         var map = osuGetService.getMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
@@ -631,6 +619,18 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E", httpEntity);
+    }
+
+    public byte[] drawLine(String... lines) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("strs", lines);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("drawLine", httpEntity);
+    }
+
+    public byte[] drawLine(StringBuilder sb) {
+        return drawLine(sb.toString().split("\n"));
     }
 
     private Map<String, Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods, int rank) {

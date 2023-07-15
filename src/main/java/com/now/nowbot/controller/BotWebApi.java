@@ -2,6 +2,7 @@ package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.OsuMode;
@@ -29,6 +30,7 @@ import java.nio.channels.Channels;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
@@ -235,7 +237,7 @@ public class BotWebApi {
             score = scores.get(0);
         }
 
-        return imageService.drawScore(userInfo, score, osuGetService);
+        return imageService.getPanelE(userInfo, score, osuGetService);
     }
 
     @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
@@ -248,7 +250,79 @@ public class BotWebApi {
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
         var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
 
-        return imageService.drawBpa(userInfo, scores, osuGetService);
+        return imageService.getPanelJ(userInfo, scores, osuGetService);
+    }
+
+    @GetMapping(value = "friend", produces = {MediaType.IMAGE_PNG_VALUE})
+    public byte[] getFriend(@RequestParam("u1") String userName,
+                            @Nullable @RequestParam("r1") Integer range1,
+                            @Nullable @RequestParam("r2") Integer range2
+    ) {
+        BinUser nu = new BinUser();
+        userName = userName.trim();
+        long id = osuGetService.getOsuId(userName);
+        nu.setOsuID(id);
+        nu.setOsuName(userName);
+
+        var me = osuGetService.getPlayerInfo(id);
+        var allFriends = osuGetService.getFriendList(nu);
+        List<MicroUser> friend = null;
+
+        // 计算范围
+        var n = 0;
+        var m = 0;
+
+        boolean doRandom = false;
+
+        if (range2 == null) {
+            m = range1 - 1;
+            doRandom = true;
+        }
+        else if (range1 == null) {
+            m = 11;
+            doRandom = true; //12个人
+        }
+        else {
+            n = Math.min(range1 - 1, range2 - 1);
+            m = Math.max(range1 - 1, range2 - 1);
+        }
+
+        if (m - n < 0 || m - n > 100) throw new RuntimeException("输入范围错误！");
+
+        //构造随机数组
+        int[] index = null;
+        if (doRandom) {
+            index = new int[allFriends.size()];
+            for (int i = 0; i < index.length; i++) {
+                index[i] = i;
+            }
+            for (int i = 0; i < index.length; i++) {
+                int rand = rand(i, index.length);
+                if (rand != 1) {
+                    int temp = index[rand];
+                    index[rand] = index[i];
+                    index[i] = temp;
+                }
+            }
+        }
+
+        //好友数据打包
+        for (int i = n; i <= m && i < allFriends.size(); i++) {
+            try {
+                MicroUser infoO;
+                if (doRandom) {
+                    infoO = allFriends.get(index[i]);
+                } else {
+                    infoO = allFriends.get(i);
+                }
+
+                friend.add(infoO);
+            } catch (Exception e) {
+                throw new RuntimeException("卡片加载失败，报错信息为：\n{}", e);
+            }
+        }
+
+        return imageService.getPanelA1(me, allFriends);
     }
 
     @GetMapping("file/{key}")
@@ -261,4 +335,12 @@ public class BotWebApi {
         w.write(data);
         w.close();
     }
+
+
+    static final Random random = new Random();
+
+    static int rand(int min, int max) {
+        return min + random.nextInt(max - min);
+    }
 }
+
