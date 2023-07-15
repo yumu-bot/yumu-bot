@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
-import com.now.nowbot.model.ScoreOsu;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileInputStream;
@@ -418,7 +416,7 @@ public class ImageService {
     }
 
 
-    public byte[] drawBpa(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, 5);
@@ -603,7 +601,7 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
-    public byte[] drawFriends(OsuUser userMe, List<MicroUser> friendList) {
+    public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("me_card_A1", userMe);
@@ -612,7 +610,7 @@ public class ImageService {
         return doPost("panel_A1", httpEntity);
     }
 
-    public byte[] drawScore(OsuUser user, Score score, OsuGetService osuGetService) {
+    public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
         var map = osuGetService.getMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
