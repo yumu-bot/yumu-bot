@@ -12,10 +12,12 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
 
+@Service("BPA")
 public class BPAnalysisService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
