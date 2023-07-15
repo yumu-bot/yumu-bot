@@ -72,7 +72,7 @@ public class YmpService implements MessageService {
         }
         try {
             var osuUser = osuGetService.getPlayerInfo(user, mode);
-            var data = imageService.drawScore(osuUser, dates.get(0),osuGetService);
+            var data = imageService.getPanelE(osuUser, dates.get(0),osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("???", e);

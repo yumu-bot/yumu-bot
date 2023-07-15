@@ -80,7 +80,7 @@ public class BpShowService implements MessageService {
                 return;
             }
             var score = bpList.get(0);
-            var data = imageService.drawScore(u, score,osuGetService);
+            var data = imageService.getPanelE(u, score,osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception ignored) {
             from.sendMessage("查询异常,请等一会再试");

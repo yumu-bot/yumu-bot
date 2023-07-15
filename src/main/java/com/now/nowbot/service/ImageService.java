@@ -417,13 +417,6 @@ public class ImageService {
         return doPost("panel_F", httpEntity);
     }
 
-    public byte[] drawLine(String... lines) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("strs", lines);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("drawLine", httpEntity);
-    }
 
     public byte[] drawBpa(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
         var bpSize = bps.size();
@@ -619,10 +612,6 @@ public class ImageService {
         return doPost("panel_A1", httpEntity);
     }
 
-    public byte[] drawLine(StringBuilder sb) {
-        return drawLine(sb.toString().split("\n"));
-    }
-
     public byte[] drawScore(OsuUser user, Score score, OsuGetService osuGetService) {
         var map = osuGetService.getMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
@@ -634,6 +623,18 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E", httpEntity);
+    }
+
+    public byte[] drawLine(String... lines) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("strs", lines);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("drawLine", httpEntity);
+    }
+
+    public byte[] drawLine(StringBuilder sb) {
+        return drawLine(sb.toString().split("\n"));
     }
 
     private Map<String, Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods, int rank) {
