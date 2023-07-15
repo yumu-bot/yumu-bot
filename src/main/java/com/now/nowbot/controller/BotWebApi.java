@@ -246,6 +246,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
+        if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
         var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
 
         return imageService.drawBpa(userInfo, scores, osuGetService);

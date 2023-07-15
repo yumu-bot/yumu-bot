@@ -432,16 +432,17 @@ public class ImageService {
         // bottom
         var b5 = bps.subList(bpSize - 6, bpSize - 1);
 
-        var ppList = bps.stream().map(s -> s.getWeight().getPP());
+//        var ppList = bps.stream().map(s -> s.getWeight().getPP());
         var ppRawList = bps.stream().map(Score::getPP);
         var rankCount = bps.stream()
                 .map(Score::getRank)
                 .toList();
         record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
         }
-        List<mapper> mappers = new ArrayList<>(Math.min(8, bpSize));
-        var mapperCount = bps.stream()
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()))
+        var bpMapperMap = bps.stream()
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()));
+        int mappers = bpMapperMap.size();
+        var mapperCount = bpMapperMap
                 .entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -522,7 +523,8 @@ public class ImageService {
                     s.getMods().forEach(m -> modsPPSum.add(m, s.getWeight().getPP()));
                     modsSum += s.getMods().size();
                 } else {
-//                modsPPSum.add("NM", s.getWeight().getPP());
+//                    modsPPSum.add("NM", s.getWeight().getPP());
+                    modsSum += 1;
                 }
                 if (s.isPerfect()) {
                     rankSum.add("FC", s.getWeight().getPP());
@@ -593,7 +595,8 @@ public class ImageService {
         body.put("bpLength", mapStatistics[0]);
         body.put("bpCombo", mapStatistics[1]);
         body.put("bpSR", mapStatistics[2]);
-        // body.put("bpBpm", mapStatistics[3]);
+        body.put("bpBpm", mapStatistics[3]);
+        body.put("favorite_mappers_countD", mappers);
         body.put("favorite_mappers", mapperList);
         body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
