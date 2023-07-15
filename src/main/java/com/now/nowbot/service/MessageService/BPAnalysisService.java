@@ -47,7 +47,7 @@ public class BPAnalysisService implements MessageService {
             try {
                 nu = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
-                throw new BPAException(BPAException.Type.BP_Other_NotFound);
+                throw new BPAException(BPAException.Type.BPA_Other_NotFound);
                 //do nothing ....?
             }
             if (nu == null) {
@@ -59,7 +59,11 @@ public class BPAnalysisService implements MessageService {
             }
         } else {
             //处理没有参数的情况 查询自身
-            nu = bindDao.getUser(event.getSender().getId());
+            try {
+                nu = bindDao.getUser(event.getSender().getId());
+            } catch (BindException e) {
+                throw new BPAException(BPAException.Type.BPA_Me_NoBind);
+            }
         }
         //bp列表
         List<Score> Bps;
@@ -76,7 +80,7 @@ public class BPAnalysisService implements MessageService {
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("err", e);
-            throw new BPAException(BPAException.Type.BP_Send_Error);
+            throw new BPAException(BPAException.Type.BPA_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
     }
