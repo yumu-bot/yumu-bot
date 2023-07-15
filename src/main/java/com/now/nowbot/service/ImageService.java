@@ -21,8 +21,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileInputStream;
@@ -476,59 +478,113 @@ public class ImageService {
                 });
         var changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
 
-        record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover, String[] mods) {
+        record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
+                   String[] mods) {
+        }
+
+        record attr(String index, int map_count, float pp_count, float percent) {
         }
 
         List<map> mapList = new ArrayList<>(bpSize);
+        MultiValueMap<String, Float> modsPPSum = new LinkedMultiValueMap<>();
+        MultiValueMap<String, Float> rankSum = new LinkedMultiValueMap<>();
+        int modsSum = 0;
         for (int i = 0; i < bpSize; i++) {
             var s = bps.get(i);
-            var minfo = s.getBeatMap();
-            if (changedAttrsMap.containsKey(s.getBeatMap().getId())) {
-                var attr = changedAttrsMap.get(s.getBeatMap().getId());
-                minfo.setDifficultyRating(attr.getStars());
-                if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
-                    minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
-                    minfo.setBpm(minfo.getBpm() * 1.5f);
-                } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-                    minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
-                    minfo.setBpm(minfo.getBpm() * 0.75f);
+            {// 处理 mapList
+                var minfo = s.getBeatMap();
+                if (changedAttrsMap.containsKey(s.getBeatMap().getId())) {
+                    var attr = changedAttrsMap.get(s.getBeatMap().getId());
+                    minfo.setDifficultyRating(attr.getStars());
+                    if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
+                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
+                        minfo.setBpm(minfo.getBpm() * 1.5f);
+                    } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
+                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
+                        minfo.setBpm(minfo.getBpm() * 0.75f);
+                    }
                 }
+                var m = new map(
+                        i,
+                        minfo.getTotalLength(),
+                        s.getMaxCombo(),
+                        minfo.getBpm(),
+                        minfo.getDifficultyRating(),
+                        s.getRank(),
+                        s.getBeatMapSet().getCovers().getList2x(),
+                        s.getMods().toArray(new String[0])
+                );
+                mapList.add(m);
             }
-            var m = new map(
-                    i,
-                    minfo.getTotalLength(),
-                    s.getMaxCombo(),
-                    minfo.getBpm(),
-                    minfo.getDifficultyRating(),
-                    s.getRank(),
-                    s.getBeatMapSet().getCovers().getList2x(),
-                    s.getMods().toArray(new String[0])
-            );
-            mapList.add(m);
+
+            { // 统计 mods / rank
+                if (!CollectionUtils.isEmpty(s.getMods())) {
+                    s.getMods().forEach(m -> modsPPSum.add(m, s.getWeight().getPP()));
+                    modsSum += s.getMods().size();
+                } else {
+//                modsPPSum.add("NM", s.getWeight().getPP());
+                }
+                if (s.isPerfect()) {
+                    rankSum.add("FC", s.getWeight().getPP());
+                }
+                rankSum.add(s.getRank(), s.getWeight().getPP());
+            }
         }
-        // 0 length; 1 bpm; 2 combo; 3 star
+        // 0 length; 1 combo; 2 star; 3 bpm
         ArrayList<map>[] mapStatistics = new ArrayList[4];
-        mapStatistics[0] = new ArrayList<>(3);
         var bpListSortedByLength = mapList.stream().sorted(Comparator.comparingInt(map::length).reversed()).toList();
+        mapStatistics[0] = new ArrayList<>(3);
         mapStatistics[0].add(bpListSortedByLength.get(0));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
+
         var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
         mapStatistics[1] = new ArrayList<>(3);
         mapStatistics[1].add(bpListSortedByCombo.get(0));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
-        mapStatistics[2] = new ArrayList<>(3);
+
         var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
+        mapStatistics[2] = new ArrayList<>(3);
         mapStatistics[2].add(bpListSortedByStar.get(0));
         mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
         mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
-        mapStatistics[3] = new ArrayList<>(3);
+
         var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
+        mapStatistics[3] = new ArrayList<>(3);
         mapStatistics[3].add(bpListSortedByBpm.get(0));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
 
+        float rawPP = bps.stream().map(s -> s.getWeight().getPP()).reduce(Float::sum).orElse(0F);
+
+        List<attr> modsAttr = new ArrayList<>(modsPPSum.size());
+        {
+            final int m = modsSum;
+            modsPPSum.forEach((mod, value) -> {
+                attr attr = new attr(mod, value.size(), value.stream().reduce(Float::sum).orElse(0F), (1F * value.size() / m));
+                modsAttr.add(attr);
+            });
+        }
+
+        List<attr> rankAttr = new ArrayList<>(rankSum.size());
+        {
+            final float rpp = rawPP;
+            var fcList = rankSum.remove("FC");
+            attr fc;
+            if (CollectionUtils.isEmpty(fcList)) {
+                fc = new attr("FC", 0, 0, 0);
+            } else {
+                float ppSum = fcList.stream().reduce(Float::sum).orElse(0F);
+                fc = new attr("FC", fcList.size(), ppSum, (ppSum / rpp));
+            }
+            rankAttr.add(fc);
+            rankSum.forEach((rank, value) -> {
+                float ppSum = value.stream().reduce(Float::sum).orElse(0F);
+                attr attr = new attr(rank, value.size(), ppSum, (ppSum / rpp));
+                rankAttr.add(attr);
+            });
+        }
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("card_A1", user);
@@ -542,8 +598,8 @@ public class ImageService {
         body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
         body.put("pp_length_arr", mapList.stream().map(map::length).toList());
-        body.put("mods_attr", null);
-        body.put("rank_attr", null);
+        body.put("mods_attr", modsAttr);
+        body.put("rank_attr", rankAttr);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_J", httpEntity);
     }
