@@ -423,14 +423,10 @@ public class ImageService {
     public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws Throwable {
     var bpSize = bps.size();
         // top
-        List<Score> t5;
-        List<Score> b5;
-        try {
-            t5 = bps.subList(0, 5);
-            b5 = bps.subList(bpSize - 6, bpSize - 1);
-        } catch (Exception e) {
-            throw new BPAException(BPAException.Type.BPA_Other_NotEnoughBP);
-        }
+        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Other_NotEnoughBP);
+        var t5 = bps.subList(0, 5);
+        var b5 = bps.subList(bpSize - 6, bpSize - 1);
+
         // bottom
 
 
