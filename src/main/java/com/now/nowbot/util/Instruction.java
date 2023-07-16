@@ -51,7 +51,7 @@ public enum Instruction {
     SETMODE(SetModeService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?!\\w))+\\s*(?<mode>\\w+)")),
 
-    YMP(YmpService.class,
+    SCOREPR(YmpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r](?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
@@ -76,7 +76,7 @@ public enum Instruction {
     INFO(InfoService.class,
             Pattern.compile("^[!！]\\s*(?i)((ym)?information|(ym)+info(?!\\w)|(ym)?i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
-    INFO2(UUIService.class,
+    UUINFO(UUIService.class,
             Pattern.compile("^[!！]\\s*(?i)(uu)+(info|i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     FRIEND(FriendService.class,
@@ -88,7 +88,7 @@ public enum Instruction {
     PPM(PPMinusService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ppm|ppminus)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
-    PPM0(PPMLegacyService.class,
+    PPMLEGACY(PPMLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(p2(?!\\w)|ppminusv2)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
 
@@ -99,13 +99,13 @@ public enum Instruction {
 
     // #5 osu! 比赛指令
 
-    MURATING0(MRALegacyService.class,
+    MRALEGACY(MRALegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ratingv2|rav2(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
-    MURATING(MRAService.class,
+    MRA(MRAService.class,
             Pattern.compile("^[!！]\\s*(?i)((ym)?rating|y?m?ra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
-    MURATING2(URAService.class,
+    URA(URAService.class,
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MONOW(MonitorNowService.class,
@@ -129,10 +129,10 @@ public enum Instruction {
     DRAW(DrawService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?")),
 
-    COUNTMSG(CountQQMessageService.class,
+    COUNTMSGLEGACY(CountQQMessageService.class,
             Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$")),
 
-    CM(CountQQMessageService.class,
+    COUNTMSG(CountQQMessageService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((cm(?!\\w))|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
 
     /*
@@ -153,7 +153,7 @@ public enum Instruction {
     TESTINFO(InfoLegacyService.class,
             Pattern.compile("[!！]\\s*(?i)(testinfo)([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),
 
-    TESTMT(TestMt4.class,
+    TESTTAIKOSTARCALCULATE(TestMt4.class,
             Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)")),
 
     TESTMAP(TestMapServer.class,
