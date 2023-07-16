@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Service("nowbot-image")
 public class ImageService {
     private static final Logger log        = LoggerFactory.getLogger(ImageService.class);
-    private static final String[] RANK_ARRAY = new String[]{"SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
+    private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
