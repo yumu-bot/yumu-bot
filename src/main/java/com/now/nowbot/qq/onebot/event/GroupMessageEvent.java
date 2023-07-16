@@ -18,7 +18,7 @@ public class GroupMessageEvent extends MessageEvent implements com.now.nowbot.qq
     }
 
     public GroupContact getSender() {
-        return new GroupContact(getBot().getTrueBot(), Long.parseLong(event.getSender().getUserId()), event.getSender().getNickname(), event.getSender().getRole(), event.getGroupId());
+        return new GroupContact(getBot().getTrueBot(), event.getSender().getUserId(), event.getSender().getNickname(), event.getSender().getRole(), event.getGroupId());
     }
 
     @Override

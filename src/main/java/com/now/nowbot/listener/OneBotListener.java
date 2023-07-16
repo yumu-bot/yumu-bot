@@ -44,7 +44,6 @@ public class OneBotListener {
         messageServiceMap = beanMap;
     }
 
-    private static final Set<Integer> KEY_SET = new CopyOnWriteArraySet<>();
 
     @PrivateMessageHandler()
     public void tt(Bot bot, PrivateMessageEvent onebotEvent){
@@ -53,11 +52,6 @@ public class OneBotListener {
     @GroupMessageHandler()
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
-        synchronized (KEY_SET) {
-            if (!KEY_SET.add(onebotEvent.getMessageId())) {
-                return;
-            }
-        }
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
@@ -73,14 +67,6 @@ public class OneBotListener {
             } catch (Throwable e) {
                 errorHandle(event, e);
             }
-        }
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            // do nothing
-        }
-        synchronized (KEY_SET) {
-            KEY_SET.remove(onebotEvent.getMessageId());
         }
     }
 

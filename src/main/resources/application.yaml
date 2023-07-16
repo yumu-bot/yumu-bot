@@ -56,6 +56,8 @@ shiro:
     max-session-idle-timeout: 900000
     # 最大文本消息缓冲区
     max-text-message-buffer-size: 512000
+  group-event-filter: true
+  group-event-filter-time: 1000
 
 #log配置,可有可无,只是位置,详细设定请写在 logback.xml
 logging:

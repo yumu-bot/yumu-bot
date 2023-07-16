@@ -31,7 +31,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
     @Override
     public Contact getSender() {
         if (event instanceof com.mikuac.shiro.dto.event.message.GroupMessageEvent e) {
-            return new Group(getBot().getTrueBot(), Long.parseLong(e.getSender().getUserId()));
+            return new Group(getBot().getTrueBot(), e.getSender().getUserId());
         }
         return new Contact(getBot().getTrueBot(), event.getUserId());
     }
