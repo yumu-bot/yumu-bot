@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -21,8 +22,8 @@ import java.util.regex.Matcher;
 @Service("BPA")
 public class BPAnalysisService implements MessageService {
     OsuGetService osuGetService;
-    BindDao bindDao;
-    ImageService imageService;
+    BindDao       bindDao;
+    ImageService  imageService;
 
     @Autowired
     public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
@@ -30,53 +31,47 @@ public class BPAnalysisService implements MessageService {
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        BinUser nu = null;
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        // 是否为绑定用户
-        boolean isBind = true;
-        if (at != null) {
-            nu = bindDao.getUser(at.getTarget());
-        }
-        if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        //bp列表
+        List<Score> bps;
+        OsuUser user;
+        var name = matcher.group("name");
+        if (name != null && !name.trim().equals("")) {
             //查询其他人 bpht [name]
-            String name = matcher.group("name").trim();
+            name = name.trim();
             long id = osuGetService.getOsuId(name);
-            try {
-                nu = bindDao.getUserFromOsuid(id);
-            } catch (BindException e) {
-                throw new BPAException(BPAException.Type.BPA_Other_NotFound);
-                //do nothing ....?
-            }
-            if (nu == null) {
-                //构建只有 name + id 的对象
-                nu = new BinUser();
-                nu.setOsuID(id);
-                nu.setOsuName(name);
-                isBind = false;
+            if (mode != OsuMode.DEFAULT) {
+                bps = osuGetService.getBestPerformance(id, mode, 0, 100);
+                user = osuGetService.getPlayerInfo(id, mode);
+            } else {
+                user = osuGetService.getPlayerInfo(id);
+                bps = osuGetService.getBestPerformance(id, user.getPlayMode(), 0, 100);
             }
         } else {
-            //处理没有参数的情况 查询自身
-            try {
-                nu = bindDao.getUser(event.getSender().getId());
-            } catch (BindException e) {
-                throw new BPAException(BPAException.Type.BPA_Me_NoBind);
+            var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+            BinUser b;
+            if (at != null) {
+                b = bindDao.getUser(at.getTarget());
+
+            } else {
+                b = bindDao.getUser(event.getSender().getId());
+            }
+            if (mode != OsuMode.DEFAULT) {
+                user = osuGetService.getPlayerInfo(b, mode);
+                bps = osuGetService.getBestPerformance(b, mode, 0, 100);
+            } else {
+                user = osuGetService.getPlayerInfo(b);
+                bps = osuGetService.getBestPerformance(b, user.getPlayMode(), 0, 100);
             }
         }
-        //bp列表
-        List<Score> Bps;
-        //分别处理mode
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        //处理默认mode
-        if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
-        Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
 
-        var user = osuGetService.getPlayerInfo(nu, mode);
 
         try {
-            var data = imageService.getPanelJ(user, Bps, osuGetService);
+            var data = imageService.getPanelJ(user, bps, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("err", e);

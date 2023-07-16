@@ -227,7 +227,7 @@ public class OsuGetService {
     public OsuUser getPlayerInfo(BinUser user) {
         if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID());
         String url;
-        if (user.getMode() == null) {
+        if (user.getMode() == null || user.getMode() == OsuMode.DEFAULT) {
             url = this.URL + "me";
         } else {
             url = this.URL + "me" + '/' + user.getMode().getName();

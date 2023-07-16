@@ -468,7 +468,12 @@ public class ImageService {
                 .forEach(s -> {
                     mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods()));
                 });
-        var changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+        Map<Long, MapAttr> changedAttrsMap;
+        if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
+            changedAttrsMap = null;
+        } else {
+             changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+        }
 
         record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                    String[] mods) {
@@ -485,7 +490,7 @@ public class ImageService {
             var s = bps.get(i);
             {// 处理 mapList
                 var minfo = s.getBeatMap();
-                if (changedAttrsMap.containsKey(s.getBeatMap().getId())) {
+                if (changedAttrsMap != null && changedAttrsMap.containsKey(s.getBeatMap().getId())) {
                     var attr = changedAttrsMap.get(s.getBeatMap().getId());
                     minfo.setDifficultyRating(attr.getStars());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
