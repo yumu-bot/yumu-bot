@@ -37,7 +37,8 @@ import java.util.stream.Collectors;
 
 @Service("nowbot-image")
 public class ImageService {
-    private static final Logger log = LoggerFactory.getLogger(ImageService.class);
+    private static final Logger log        = LoggerFactory.getLogger(ImageService.class);
+    private static final String[] RANK_ARRAY = new String[]{"SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
@@ -480,7 +481,7 @@ public class ImageService {
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
         } else {
-             changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+            changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
         }
 
         record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
@@ -585,11 +586,14 @@ public class ImageService {
                 fc = new attr("FC", fcList.size(), ppSum, (ppSum / rpp));
             }
             rankAttr.add(fc);
-            rankSum.forEach((rank, value) -> {
-                float ppSum = value.stream().reduce(Float::sum).orElse(0F);
-                attr attr = new attr(rank, value.size(), ppSum, (ppSum / rpp));
-                rankAttr.add(attr);
-            });
+            for (var rank : RANK_ARRAY) {
+                if (rankSum.containsKey(rank)) {
+                    var value = rankSum.get(rank);
+                    float ppSum = value.stream().reduce(Float::sum).orElse(0F);
+                    attr attr = new attr(rank, value.size(), ppSum, (ppSum / rpp));
+                    rankAttr.add(attr);
+                }
+            }
         }
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();

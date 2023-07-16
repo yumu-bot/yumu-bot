@@ -36,16 +36,16 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             return g.sendMessage(msg);
         } else if (this instanceof GroupContact g) {
             int id = 0;
-            var d = bot.sendPrivateMsg(g.groupId, g.getId(), getMsg4Chain(msg), false).getData();
-            if (d != null) {
-                id = d.getMessageId();
+            var d = bot.sendPrivateMsg(g.groupId, g.getId(), getMsg4Chain(msg), false);
+            if (d != null && d.getData() != null) {
+                id = d.getData().getMessageId();
             }
             return OneBotMessageReceipt.create(bot, id, this);
         } else {
             int id = 0;
-            var d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false).getData();
-            if (d != null) {
-                id = d.getMessageId();
+            var d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
+            if (d != null && d.getData() != null) {
+                id = d.getData().getMessageId();
             }
             return OneBotMessageReceipt.create(bot, id, this);
         }
