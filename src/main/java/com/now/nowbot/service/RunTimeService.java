@@ -34,8 +34,7 @@ import java.util.regex.Pattern;
 @Service
 public class RunTimeService {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
-    @Autowired
-    Bot bot;
+
     @Autowired
     BiliApiService biliApiService;
     @Autowired
@@ -54,22 +53,10 @@ public class RunTimeService {
     }
 
     */
-//    @Scheduled(cron = "16 0 0 * * *")
-    public void checkBPlist() throws BindException {
-        var qq = 3054_7298_60L;
-        var u = bindDao.getUser(qq);
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(-1);
-        var bpList = osuGetService.getBestPerformance(u, OsuMode.OSU, 0,100);
-        var dayBpList = bpList.stream().filter(e -> dayBefore.isBefore(e.getCreateTime())).toList();
-        var group = bot.getGroup(9289_3625_5);
-        if (dayBpList.size() > 0) {
-            group.sendMessage(new At(365246692).plus(new At(3054729860L)).plus("今天刷到了bp数: " + dayBpList.size()));
-        } else {
-            group.sendMessage(new At(365246692).plus(new At(3054729860L)).plus("今天没刷到pp,杀!"));
-        }
-    }
+
 
     public void sayBp1() {
+        /*
         var group = bot.getGroup(928936255);
         var devGroup = bot.getGroup(746671531);
         ContactList<NormalMember> users = null;
@@ -138,6 +125,8 @@ public class RunTimeService {
         }
         log.warn("完成: {}", sb);
         devGroup.getFiles().uploadNewFile(LocalDate.now().format(dataFormat) + ".csv", ExternalResource.create(sb.toString().getBytes(StandardCharsets.UTF_8)));
+
+         */
     }
 
     /***
