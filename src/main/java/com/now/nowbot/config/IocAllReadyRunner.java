@@ -25,14 +25,12 @@ import java.util.HashMap;
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
     Logger log = LoggerFactory.getLogger("IocAllReadyRunner");
-    Bot bot;
     ApplicationContext applicationContext;
     CheckAspect check;
     Permission permission;
 
     @Autowired
-    public IocAllReadyRunner(Bot bot, MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
-        this.bot = bot;
+    public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
         var serviceMap = new HashMap<Class<? extends MessageService>, MessageService>();
         for (var i : Instruction.values()){
@@ -55,6 +53,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         permission.init(applicationContext);
         initFountWidth();
 
+        /*
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
             if (bot != null && bot.getGroup(746671531L) != null) {
@@ -69,6 +68,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
                 bot.getGroup(746671531L).sendMessage("启动完成");
             }
         }
+
+         */
 
     }
 

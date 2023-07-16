@@ -23,7 +23,7 @@ public class MsgLite {
     private Long fromId;
     @Column(name = "target_id")
     private Long targetId;
-    @Column(name = "content",columnDefinition = "test")
+    @Column(name = "content",columnDefinition = "TEXT")
     private String content;
 
     public MsgLite(MessageChain msg) {
