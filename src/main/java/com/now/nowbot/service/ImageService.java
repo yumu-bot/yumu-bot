@@ -602,10 +602,10 @@ public class ImageService {
         body.put("bpBpm", mapStatistics[3]);
         body.put("favorite_mappers_countD", mappers);
         body.put("favorite_mappers", mapperList);
-        body.put("bp_raw_arr", ppRawList);
+        body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
         body.put("rank_elect_arr", rankSort);
-        body.put("pp_length_arr", mapList.stream().map(map::length).toList());
+        body.put("bp_length_arr", mapList.stream().map(map::length).toList());
         body.put("mods_attr", modsAttr);
         body.put("rank_attr", rankAttr);
         body.put("pp_raw", rawPP);
