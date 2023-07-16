@@ -604,7 +604,7 @@ public class ImageService {
         body.put("bpCombo", mapStatistics[1]);
         body.put("bpSR", mapStatistics[2]);
         body.put("bpBpm", mapStatistics[3]);
-        body.put("favorite_mappers_countD", mappers);
+        body.put("favorite_mappers_count", mappers);
         body.put("favorite_mappers", mapperList);
         body.put("pp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
