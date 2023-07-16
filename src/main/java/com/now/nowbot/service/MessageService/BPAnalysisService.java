@@ -11,7 +11,6 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAException;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,7 +67,6 @@ public class BPAnalysisService implements MessageService {
                 bps = osuGetService.getBestPerformance(b, user.getPlayMode(), 0, 100);
             }
         }
-
 
         try {
             var data = imageService.getPanelJ(user, bps, osuGetService);

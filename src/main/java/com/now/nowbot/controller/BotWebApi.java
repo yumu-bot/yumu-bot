@@ -243,7 +243,7 @@ public class BotWebApi {
     @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getBpa(@RequestParam("u1") String userName,
                            @Nullable @RequestParam("mode") String playMode
-    ) {
+    ) throws Throwable {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);

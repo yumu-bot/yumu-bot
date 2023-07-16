@@ -1,5 +1,6 @@
 package com.now.nowbot.service;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -12,6 +13,7 @@ import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.score.MpScoreInfo;
+import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -418,12 +420,19 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
-        var bpSize = bps.size();
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws Throwable {
+    var bpSize = bps.size();
         // top
-        var t5 = bps.subList(0, 5);
+        List<Score> t5;
+        List<Score> b5;
+        try {
+            t5 = bps.subList(0, 5);
+            b5 = bps.subList(bpSize - 6, bpSize - 1);
+        } catch (Exception e) {
+            throw new BPAException(BPAException.Type.BPA_Other_NotEnoughBP);
+        }
         // bottom
-        var b5 = bps.subList(bpSize - 6, bpSize - 1);
+
 
 //        var ppList = bps.stream().map(s -> s.getWeight().getPP());
         var ppRawList = bps.stream().map(Score::getPP);
