@@ -73,7 +73,7 @@ public class BPAnalysisService implements MessageService {
         if (mode == OsuMode.DEFAULT && nu.getMode() != null) mode = nu.getMode();
         Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
 
-        var user = osuGetService.getPlayerInfo(nu);
+        var user = osuGetService.getPlayerInfo(nu, mode);
 
         try {
             var data = imageService.getPanelJ(user, Bps, osuGetService);
