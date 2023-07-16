@@ -32,6 +32,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("nowbot-image")
@@ -428,6 +429,13 @@ public class ImageService {
         var rankCount = bps.stream()
                 .map(Score::getRank)
                 .toList();
+        var rankSort = rankCount.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
         record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
         }
         var bpMapperMap = bps.stream()
@@ -594,8 +602,9 @@ public class ImageService {
         body.put("bpBpm", mapStatistics[3]);
         body.put("favorite_mappers_countD", mappers);
         body.put("favorite_mappers", mapperList);
-        body.put("pp_raw_arr", ppRawList);
+        body.put("bp_raw_arr", ppRawList);
         body.put("rank_arr", rankCount);
+        body.put("rank_elect_arr", rankSort);
         body.put("pp_length_arr", mapList.stream().map(map::length).toList());
         body.put("mods_attr", modsAttr);
         body.put("rank_attr", rankAttr);
