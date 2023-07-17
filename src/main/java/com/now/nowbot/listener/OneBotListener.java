@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 @Order(5)
 @Component("OneBotListener")
 public class OneBotListener {
+    static int RECAL_TIME = 1000*100;
     Logger log = LoggerFactory.getLogger(OneBotListener.class);
     private static Map<Class<? extends MessageService>, MessageService> messageServiceMap = null;
     public void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException {
@@ -72,7 +73,7 @@ public class OneBotListener {
 
     public void errorHandle(com.now.nowbot.qq.onebot.event.GroupMessageEvent event, Throwable e) {
         if (e instanceof TipsException || e instanceof TipsRuntimeException) {
-//            event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
+            event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
             event.getSubject().sendMessage(e.getMessage());
         } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
             log.info("连接超时:",e);
@@ -80,7 +81,7 @@ public class OneBotListener {
             event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。");
         } else if (e instanceof RequestException reser) {
             log.info("请求错误:",e);
-                /*
+
                 if (reser.status.value() == 404 || reser.status.getReasonPhrase().equals("Not Found")) {
                     event.getSubject().sendMessage("请求失败 (HTTP 404 Not Found)\n").recallIn(RECAL_TIME);
                 } else if(reser.status.value() == 400 || reser.status.getReasonPhrase().equals("Bad Request")){
@@ -91,7 +92,6 @@ public class OneBotListener {
                 } else {
                     event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")");
                 }
-                 */
             switch (reser.status.value()) {
                 case 400 -> event.getSubject().sendMessage("请求错误 (HTTP 400 Bad Request)\n请耐心等待 Bug 修复");
                 case 401 -> event.getSubject().sendMessage("验证失败 (HTTP 401 Unauthorized)\n您的令牌可能已失效。\n请尝试重新绑定 (!ymbind / !ymbi / !bi)\n请不要使用[!ymbind + 你的名字]这种方法。\n绑定方法可以使用 !h b 查询。");
