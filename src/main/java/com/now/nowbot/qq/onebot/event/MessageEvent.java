@@ -1,5 +1,6 @@
 package com.now.nowbot.qq.onebot.event;
 
+import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.contact.Contact;
@@ -42,7 +43,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
     }
 
     public String getRawMessage() {
-        return event.getRawMessage();
+        return decode(event.getRawMessage());
     }
 
     public static MessageChain getMessageChain(List<ArrayMsg> msgs) {
@@ -50,9 +51,9 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
             Message m;
             switch (arrayMsg.getType()) {
                 case at -> m = new AtMessage(Long.parseLong(arrayMsg.getData().getOrDefault("qq", "0")));
-                case text -> m = new TextMessage(arrayMsg.getData().getOrDefault("text", ""));
+                case text -> m = new TextMessage(decodeArr(arrayMsg.getData().getOrDefault("text", "")));
                 case reply -> m = new ReplayMessage(Integer.parseInt(arrayMsg.getData().getOrDefault("id", "0")),
-                        arrayMsg.getData().getOrDefault("text", ""));
+                        decodeArr(arrayMsg.getData().getOrDefault("text", "")));
                 case image -> {
                     try {
                         m = new ImageMessage(new URL(arrayMsg.getData().getOrDefault("url", "")));
@@ -65,5 +66,12 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
             return m;
         }).toList();
         return new MessageChain(msg);
+    }
+
+    private static String decode(String m) {
+        return ShiroUtils.unescape(m);
+    }
+    private static String decodeArr(String m) {
+        return ShiroUtils.unescape(m);
     }
 }
