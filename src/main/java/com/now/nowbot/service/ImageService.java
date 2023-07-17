@@ -14,6 +14,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.throwable.ServiceException.BPAException;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -420,60 +422,13 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws Throwable {
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws BPAException {
     var bpSize = bps.size();
         // top
         if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Other_NotEnoughBP);
         var t5 = bps.subList(0, 5);
         var b5 = bps.subList(bpSize - 6, bpSize - 1);
 
-        // bottom
-
-
-//        var ppList = bps.stream().map(s -> s.getWeight().getPP());
-        var ppRawList = bps.stream().map(Score::getPP);
-        var rankCount = bps.stream()
-                .map(Score::getRank)
-                .toList();
-        var rankSort = rankCount.stream()
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                .entrySet()
-                .stream()
-                .sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
-                .map(Map.Entry::getKey)
-                .toList();
-        record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
-        }
-        var bpMapperMap = bps.stream()
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()));
-        int mappers = bpMapperMap.size();
-        var mapperCount = bpMapperMap
-                .entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(8)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> o, LinkedHashMap::new));
-        var mapperInfo = osuGetService.getUsers(mapperCount.keySet()).get("users");
-        var mapperList = bps.stream()
-                .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
-//                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
-                .entrySet()
-                .stream()
-                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(e -> e.getValue(), Comparator.reverseOrder()))
-                .map(e -> {
-                    String name = "";
-                    String avatar = "";
-                    for (var node : mapperInfo) {
-                        if (e.getKey().equals(node.get("id").asInt(0))) {
-                            name = node.get("username").asText("unknown");
-                            avatar = node.get("avatar_url").asText("unknown");
-                            break;
-                        }
-                    }
-                    return new mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
-                })
-                .toList();
 
         // 提取星级变化的谱面 DT/HT 等
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
@@ -516,7 +471,7 @@ public class ImageService {
                     }
                 }
                 var m = new map(
-                        i,
+                        i + 1,
                         minfo.getTotalLength(),
                         s.getMaxCombo(),
                         minfo.getBpm(),
@@ -568,7 +523,52 @@ public class ImageService {
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
 
-        float rawPP = bps.stream().map(s -> s.getWeight().getPP()).reduce(Float::sum).orElse(0F);
+        //        var ppList = bps.stream().map(s -> s.getWeight().getPP());
+        var ppRawList = bps.stream().map(Score::getPP).toList();
+        var rankCount = bps.stream()
+                .map(Score::getRank)
+                .toList();
+        var rankSort = rankCount.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+        record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
+        }
+        var bpMapperMap = bps.stream()
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()));
+        int mappers = bpMapperMap.size();
+        var mapperCount = bpMapperMap
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(8)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> o, LinkedHashMap::new));
+        var mapperInfo = osuGetService.getUsers(mapperCount.keySet()).get("users");
+        var mapperList = bps.stream()
+                .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
+//                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
+                .entrySet()
+                .stream()
+                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(e -> e.getValue(), Comparator.reverseOrder()))
+                .map(e -> {
+                    String name = "";
+                    String avatar = "";
+                    for (var node : mapperInfo) {
+                        if (e.getKey().equals(node.get("id").asInt(0))) {
+                            name = node.get("username").asText("unknown");
+                            avatar = node.get("avatar_url").asText("unknown");
+                            break;
+                        }
+                    }
+                    return new mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
+                })
+                .toList();
+
+        Float rawPP = bps.stream().map(s -> s.getWeight().getPP()).reduce(Float::sum).orElse(0F);
 
         List<attr> modsAttr = new ArrayList<>(modsPPSum.size());
         {
@@ -599,6 +599,23 @@ public class ImageService {
                     rankAttr.add(attr);
                 }
             }
+        }
+        if (changedAttrsMap != null) {
+            java.util.function.Consumer<Score> f = (s)-> {
+                long id = s.getBeatMap().getId();
+                if (changedAttrsMap.containsKey(id)) {
+                    var attr = changedAttrsMap.get(id);
+                    s.getBeatMap().setDifficultyRating(attr.getStars());
+                    s.getBeatMap().setBpm(attr.getBpm());
+                    if (Mod.hasDt(attr.getMods())) {
+                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 1.5f));
+                    } else if (Mod.hasHt(attr.getMods())) {
+                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 0.75f));
+                    }
+                }
+            };
+            b5.forEach(f);
+            t5.forEach(f);
         }
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();

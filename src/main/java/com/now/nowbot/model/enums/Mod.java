@@ -18,7 +18,7 @@ public enum Mod {
     Relax(1 << 7, "RL"),
     HalfTime(1 << 8, "HT"),
     //总是和 DT 一起使用 : 512 + 64 = 576
-    Nightcore(1 << 9, "NC"),
+    Nightcore((1 << 9) + (DoubleTime.value), "NC"),
     Flashlight(1 << 10, "FL"),
     Autoplay(1 << 11, "AT"),
     SpunOut(1 << 12, "SO"),
@@ -166,7 +166,7 @@ public enum Mod {
     }
 
     public static boolean hasDt(int i) {
-        return DoubleTime.check(i);
+        return DoubleTime.check(i) || Nightcore.check(i);
     }
 
     public static boolean hasHt(int i) {
