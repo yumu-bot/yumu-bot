@@ -24,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("ymp")
+@Service("ScorePr")
 public class PassRecentService implements MessageService {
     private static final Logger log = LoggerFactory.getLogger(PassRecentService.class);
 
