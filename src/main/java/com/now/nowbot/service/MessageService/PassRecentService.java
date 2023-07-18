@@ -11,6 +11,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -24,8 +25,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("ymp")
-public class YmpService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(YmpService.class);
+public class PassRecentService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger(PassRecentService.class);
 
     RestTemplate template;
     OsuGetService osuGetService;
@@ -33,7 +34,7 @@ public class YmpService implements MessageService {
     ImageService imageService;
 
     @Autowired
-    public YmpService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public PassRecentService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
@@ -43,7 +44,12 @@ public class YmpService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        boolean isAll = matcher.group("isAll").toLowerCase().charAt(0) == 'r';
+        boolean isRecent;
+
+        if (matcher.group("recent") != null) isRecent = true;
+        else if (matcher.group("pass") != null) isRecent = false;
+        else throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
+
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         String name = matcher.group("name");
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -63,9 +69,9 @@ public class YmpService implements MessageService {
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
         List<Score> dates;
         if (user.getAccessToken() != null) {
-            dates = getDates(user, mode, isAll);
+            dates = getDates(user, mode, isRecent);
         } else {
-            dates = getDates(user.getOsuID(), mode, isAll);
+            dates = getDates(user.getOsuID(), mode, isRecent);
         }
         if (dates.size() == 0) {
             throw new TipsException("24h内无记录");
@@ -76,7 +82,7 @@ public class YmpService implements MessageService {
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("???", e);
-            handleText(dates.get(0), isAll, from);
+            handleText(dates.get(0), isRecent, from);
         }
 
     }

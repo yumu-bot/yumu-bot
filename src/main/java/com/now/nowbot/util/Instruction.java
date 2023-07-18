@@ -51,8 +51,8 @@ public enum Instruction {
     SETMODE(SetModeService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?!\\w))+\\s*(?<mode>\\w+)")),
 
-    SCOREPR(YmpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(?<isAll>[p,r](?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+    SCOREPR(PassRecentService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((?<pass>(pass|p(?!\\w)))|(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
