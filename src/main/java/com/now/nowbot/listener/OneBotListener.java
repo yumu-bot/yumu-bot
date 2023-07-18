@@ -92,13 +92,14 @@ public class OneBotListener {
                 } else {
                     event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")");
                 }
-            switch (reser.status.value()) {
-                case 400 -> event.getSubject().sendMessage("请求错误 (HTTP 400 Bad Request)\n请耐心等待 Bug 修复");
-                case 401 -> event.getSubject().sendMessage("验证失败 (HTTP 401 Unauthorized)\n您的令牌可能已失效。\n请尝试重新绑定 (!ymbind / !ymbi / !bi)\n请不要使用[!ymbind + 你的名字]这种方法。\n绑定方法可以使用 !h b 查询。");
-                case 404 -> event.getSubject().sendMessage("请求失败 (HTTP 404 Not Found)\n请检查输入的内容。");
-                case 408 -> event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。");
-                default -> event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")\n请及时反馈给维护人员。");
-            }
+                return;
+//            switch (reser.status.value()) {
+//                case 400 -> event.getSubject().sendMessage("请求错误 (HTTP 400 Bad Request)\n请耐心等待 Bug 修复");
+//                case 401 -> event.getSubject().sendMessage("验证失败 (HTTP 401 Unauthorized)\n您的令牌可能已失效。\n请尝试重新绑定 (!ymbind / !ymbi / !bi)\n请不要使用[!ymbind + 你的名字]这种方法。\n绑定方法可以使用 !h b 查询。");
+//                case 404 -> event.getSubject().sendMessage("请求失败 (HTTP 404 Not Found)\n请检查输入的内容。");
+//                case 408 -> event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。");
+//                default -> event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")\n请及时反馈给维护人员。");
+//            }
 
         } else if (e instanceof EventCancelledException) {
             log.info("取消消息发送 {}", e.getMessage());
