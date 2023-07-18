@@ -419,10 +419,9 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws BPAException {
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService){
         var bpSize = bps.size();
         // top
-//        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Player_NotEnoughBP);
         var t5 = bps.subList(0, Math.min(bpSize, 5));
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 

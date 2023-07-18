@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService.BphtService;
 import com.now.nowbot.service.MessageService.MRAService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
@@ -243,14 +244,13 @@ public class BotWebApi {
     @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getBpa(@RequestParam("u1") String userName,
                            @Nullable @RequestParam("mode") String playMode
-    ) throws Throwable {
+    ){
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
         if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
         var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
-
         return imageService.getPanelJ(userInfo, scores, osuGetService);
     }
 
