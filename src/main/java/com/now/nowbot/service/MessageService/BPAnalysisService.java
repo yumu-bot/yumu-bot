@@ -42,7 +42,12 @@ public class BPAnalysisService implements MessageService {
         if (name != null && !name.trim().equals("")) {
             //查询其他人 bpht [name]
             name = name.trim();
-            long id = osuGetService.getOsuId(name);
+            long id;
+            try {
+                id = osuGetService.getOsuId(name);
+            } catch (Exception e) {
+                throw new BPAException(BPAException.Type.BPA_Player_NotFound);
+            }
             if (mode != OsuMode.DEFAULT) {
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
                 user = osuGetService.getPlayerInfo(id, mode);
@@ -54,8 +59,11 @@ public class BPAnalysisService implements MessageService {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
             BinUser b;
             if (at != null) {
-                b = bindDao.getUser(at.getTarget());
-
+                try {
+                    b = bindDao.getUser(at.getTarget());
+                } catch (Exception e) {
+                    throw new BPAException(BPAException.Type.BPA_Player_FetchFailed);
+                }
             } else {
                 b = bindDao.getUser(event.getSender().getId());
             }
@@ -72,7 +80,7 @@ public class BPAnalysisService implements MessageService {
             var data = imageService.getPanelJ(user, bps, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("err", e);
+            NowbotApplication.log.error("BPA Error: ", e);
             throw new BPAException(BPAException.Type.BPA_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }

@@ -1,6 +1,5 @@
 package com.now.nowbot.service;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -14,7 +13,6 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.throwable.ServiceException.BPAException;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -425,10 +422,9 @@ public class ImageService {
     public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws BPAException {
     var bpSize = bps.size();
         // top
-        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Other_NotEnoughBP);
+        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Player_NotEnoughBP);
         var t5 = bps.subList(0, 5);
-        var b5 = bps.subList(bpSize - 6, bpSize - 1);
-
+        var b5 = bps.subList(bpSize - 5, bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
