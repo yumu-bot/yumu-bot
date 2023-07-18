@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 @Service("nowbot-image")
 public class ImageService {
-    private static final Logger log        = LoggerFactory.getLogger(ImageService.class);
+    private static final Logger   log        = LoggerFactory.getLogger(ImageService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
@@ -420,11 +420,11 @@ public class ImageService {
 
 
     public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) throws BPAException {
-    var bpSize = bps.size();
+        var bpSize = bps.size();
         // top
-        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Player_NotEnoughBP);
-        var t5 = bps.subList(0, 5);
-        var b5 = bps.subList(bpSize - 5, bpSize);
+//        if (bpSize < 6) throw new BPAException(BPAException.Type.BPA_Player_NotEnoughBP);
+        var t5 = bps.subList(0, Math.min(bpSize, 5));
+        var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
@@ -566,13 +566,15 @@ public class ImageService {
 
         Float rawPP = bps.stream().map(s -> s.getWeight().getPP()).reduce(Float::sum).orElse(0F);
 
-        List<attr> modsAttr = new ArrayList<>(modsPPSum.size());
+        List<attr> modsAttr;
         {
             final int m = modsSum;
+            List<attr> modsAttrTmp = new ArrayList<>(modsPPSum.size());
             modsPPSum.forEach((mod, value) -> {
                 attr attr = new attr(mod, value.size(), value.stream().reduce(Float::sum).orElse(0F), (1F * value.size() / m));
-                modsAttr.add(attr);
+                modsAttrTmp.add(attr);
             });
+            modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(attr::pp_count).reversed()).toList();
         }
 
         List<attr> rankAttr = new ArrayList<>(rankSum.size());
@@ -597,7 +599,7 @@ public class ImageService {
             }
         }
         if (changedAttrsMap != null) {
-            java.util.function.Consumer<Score> f = (s)-> {
+            java.util.function.Consumer<Score> f = (s) -> {
                 long id = s.getBeatMap().getId();
                 if (changedAttrsMap.containsKey(id)) {
                     var attr = changedAttrsMap.get(id);
