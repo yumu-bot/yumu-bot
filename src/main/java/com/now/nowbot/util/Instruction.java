@@ -59,7 +59,7 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|b(p?)(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|b(p?)(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*((#?)?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\w{0,3}))?")),
