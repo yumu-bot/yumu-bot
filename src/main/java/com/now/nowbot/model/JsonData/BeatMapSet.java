@@ -51,6 +51,13 @@ public class BeatMapSet {
     @JsonProperty("ratings")
     List<Integer> ratings;
 
+    @JsonProperty("spotlight")
+    Boolean spotlight;
+
+    // 目前只存在于 search 里
+    @JsonProperty("beatmaps")
+    List<BeatMap> beatmaps;
+
     @JsonIgnoreProperties
     Boolean availabilityDownloadDisable;
     @JsonIgnoreProperties
@@ -236,6 +243,38 @@ public class BeatMapSet {
 
     public void setVideo(Boolean video) {
         this.video = video;
+    }
+
+    public List<Integer> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(List<Integer> ratings) {
+        this.ratings = ratings;
+    }
+
+    public Boolean getSpotlight() {
+        return spotlight;
+    }
+
+    public void setSpotlight(Boolean spotlight) {
+        this.spotlight = spotlight;
+    }
+
+    public List<BeatMap> getBeatmaps() {
+        return beatmaps;
+    }
+
+    public void setBeatmaps(List<BeatMap> beatmaps) {
+        this.beatmaps = beatmaps;
+    }
+
+    public void setAvailabilityInformation(@Nullable String availabilityInformation) {
+        this.availabilityInformation = availabilityInformation;
+    }
+
+    public void setFromDatabases(boolean fromDatabases) {
+        this.fromDatabases = fromDatabases;
     }
 
     public String toString() {
