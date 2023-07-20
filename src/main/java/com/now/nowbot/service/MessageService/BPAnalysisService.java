@@ -10,7 +10,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
