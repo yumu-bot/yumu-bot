@@ -1,8 +1,11 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Panel.CardBuilder;
@@ -17,11 +20,13 @@ import org.jetbrains.skija.Font;
 import org.jetbrains.skija.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -49,13 +54,27 @@ public class TodayBpService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         var from = event.getSubject();
-        var user = bindDao.getUser(event.getSender().getId());
 
         var mode = OsuMode.getMode(matcher.group("mode"));
+        List<Score> bpList = null;
 
-        var bpList = osuGetService.getBestPerformance(user, mode, 0,100);
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        OsuUser user = null;
+        String name = null;
+        if (at != null) {
+            var bUser = bindDao.getUser(at.getTarget());
+            user = osuGetService.getPlayerInfo(bUser, mode);
+            bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
+        } else if ((name = matcher.group("name")) != null) {
+            user = osuGetService.getPlayerInfo(name, mode);
+            bpList = osuGetService.getBestPerformance(user.getId(), mode, 0, 100);
+        } else {
+            var bUser = bindDao.getUser(event.getSender().getId());
+            user = osuGetService.getPlayerInfo(bUser, mode);
+            bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
+        }
 
-        if (bpList == null) {
+        if (CollectionUtils.isEmpty(bpList)) {
             throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
         }
 
@@ -71,7 +90,7 @@ public class TodayBpService implements MessageService{
         //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
-            if (dayBefore.isBefore(bp.getCreateTime()) || user.getOsuID() == 17064371L){
+            if (dayBefore.isBefore(bp.getCreateTime()) || user.getId().equals(17064371L)){
                 lines.add(new HCardBuilder(bp, i+1).build());
             }
         }
@@ -85,14 +104,13 @@ public class TodayBpService implements MessageService{
             //from.sendMessage("多打打");
             //return;//此处结束
         }
-        //绘制自己的卡片
-        var infoMe = osuGetService.getPlayerInfo(user, mode);
-        var card = CardBuilder.getUserCard(infoMe);
+        //绘制自己的卡片;
+        var card = CardBuilder.getUserCard(user);
 
         var panel = new TBPPanelBuilder(lines.size());
-        panel.drawBanner(PanelUtil.getBanner(user)).mainCrawCard(card.build()).drawBp(lines);
+        panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
         try {
-            QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT ? user.getMode() : mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
+            QQMsgUtil.sendImage(from, panel.build(mode==OsuMode.DEFAULT ? user.getPlayMode() : mode).encodeToData(EncodedImageFormat.JPEG, 80).getBytes());
         } catch (Exception e) {
             throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
         }
