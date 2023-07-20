@@ -11,20 +11,18 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService.BphtService;
 import com.now.nowbot.service.MessageService.MRAService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.BPAException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Image;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.annotation.Resource;
 
 import java.io.IOException;
 import java.nio.channels.Channels;

@@ -12,7 +12,7 @@ import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.score.MpScoreInfo;
-import com.now.nowbot.throwable.ServiceException.BPAException;
+import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
