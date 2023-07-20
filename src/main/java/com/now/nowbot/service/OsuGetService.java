@@ -873,6 +873,42 @@ public class OsuGetService {
         return x.getBody();
     }
 
+    public JsonNode lookupBeatmap(String checksum, String filename, Long id) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmapsets/lookup");
+        if (checksum != null) {
+            data.queryParam("checksum", checksum);
+        }
+        if (filename != null) {
+            data.queryParam("filename", filename);
+        }
+        if (id != null) {
+            data.queryParam("id", id);
+        }
+        var uri = data.build().toUri();
+        var headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        var x = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return x.getBody();
+    }
+
+    public Search serchBeatmap(Map<String, Object> query) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmapsets/search/");
+        for (var e : query.entrySet()) {
+            if (e.getValue() != null) {
+                data.queryParam(e.getKey(), e.getValue());
+            } else {
+                data.queryParam(e.getKey());
+            }
+        }
+        var uri = data.build().toUri();
+        var headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        var x = template.exchange(uri, HttpMethod.GET, httpEntity, Search.class);
+        return x.getBody();
+    }
+
     private HttpHeaders getHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
