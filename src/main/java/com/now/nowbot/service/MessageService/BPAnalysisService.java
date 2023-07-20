@@ -51,6 +51,7 @@ public class BPAnalysisService implements MessageService {
             if (mode != OsuMode.DEFAULT) {
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
                 user = osuGetService.getPlayerInfo(id, mode);
+                user.setPlayMode(mode.getName());
             } else {
                 user = osuGetService.getPlayerInfo(id);
                 bps = osuGetService.getBestPerformance(id, user.getPlayMode(), 0, 100);
@@ -69,6 +70,7 @@ public class BPAnalysisService implements MessageService {
             }
             if (mode != OsuMode.DEFAULT) {
                 user = osuGetService.getPlayerInfo(b, mode);
+                user.setPlayMode(mode.getName());
                 bps = osuGetService.getBestPerformance(b, mode, 0, 100);
             } else {
                 user = osuGetService.getPlayerInfo(b);
