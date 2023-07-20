@@ -49,6 +49,13 @@ public class OneBotListener {
     @PrivateMessageHandler()
     public void tt(Bot bot, PrivateMessageEvent onebotEvent){
     }
+    @PrivateMessageHandler
+    public void handle(Bot bot, PrivateMessageEvent event) {
+        if (event != null) {
+            log.warn("-> \n`{}`\n`{}`\nend", event.getArrayMsg(), event.getRawMessage());
+
+        }
+    }
 
     @GroupMessageHandler()
     @Async
@@ -74,7 +81,6 @@ public class OneBotListener {
     public void errorHandle(com.now.nowbot.qq.onebot.event.GroupMessageEvent event, Throwable e) {
         if (e instanceof TipsException || e instanceof TipsRuntimeException) {
             event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
-            event.getSubject().sendMessage(e.getMessage());
         } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
             log.info("连接超时:",e);
 //            event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
