@@ -83,7 +83,7 @@ public class TodayBpService implements MessageService{
         // 时间计算
         int dat = -1;
         if (matcher.group("day") != null){
-            dat = -Integer.parseInt(matcher.group("day"));
+            dat = - Integer.parseInt(matcher.group("day"));
         }
         LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
 

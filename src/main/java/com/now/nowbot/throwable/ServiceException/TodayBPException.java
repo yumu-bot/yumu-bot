@@ -10,6 +10,7 @@ public class TodayBPException extends TipsException {
         TBP_BP_NoBP ("无法获取该玩家的 BP..."), //榜单_没有榜单
         TBP_BP_No24H ("今天之内没有新增的 BP 呢...\n尝试扩大搜索天数吧"), //榜单_今天没有
         TBP_BP_NoPeriod ("这段时间之内都没有新增的 BP 呢...\n尝试扩大搜索天数吧"), //榜单_一段时间没有
+        TBP_BP_ParameterError("你倒是输入正确的天数啊？"),//榜单_时间错误
         TBP_Send_Error ("图片发送失败，请重试") //发送_发送失败
 
         ;//逗号分隔

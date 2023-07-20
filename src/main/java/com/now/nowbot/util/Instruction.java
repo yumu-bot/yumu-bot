@@ -35,7 +35,7 @@ public enum Instruction {
 
     //不要 !ymbind name 这种规则了
     BAN(BanService.class,
-            Pattern.compile("^[!！]\\s*(?i)ymsuper")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w))+")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
