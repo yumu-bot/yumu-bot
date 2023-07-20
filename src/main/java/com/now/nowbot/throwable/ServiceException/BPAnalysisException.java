@@ -2,7 +2,7 @@ package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
 
-public class BPAException extends TipsException {
+public class BPAnalysisException extends TipsException {
     public static enum Type {
         BPA_Me_NoBind("您还没有绑定呢，请输入 !ymbind 点击链接登录，完成绑定吧"),//查询自己_玩家未绑定
         BPA_Player_NotFound("这是谁呀，小沐找不到他哦"),//查询他人_未搜到玩家
@@ -16,7 +16,7 @@ public class BPAException extends TipsException {
             this.message = message;
         }
     }
-    public BPAException(BPAException.Type type){
+    public BPAnalysisException(BPAnalysisException.Type type){
         super(type.message);
     }
 }

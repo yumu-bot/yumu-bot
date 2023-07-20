@@ -11,6 +11,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAException;
+import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class BPAnalysisService implements MessageService {
             try {
                 id = osuGetService.getOsuId(name);
             } catch (Exception e) {
-                throw new BPAException(BPAException.Type.BPA_Player_NotFound);
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
             if (mode != OsuMode.DEFAULT) {
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
@@ -62,7 +63,7 @@ public class BPAnalysisService implements MessageService {
                 try {
                     b = bindDao.getUser(at.getTarget());
                 } catch (Exception e) {
-                    throw new BPAException(BPAException.Type.BPA_Player_FetchFailed);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
                 }
             } else {
                 b = bindDao.getUser(event.getSender().getId());
@@ -81,7 +82,7 @@ public class BPAnalysisService implements MessageService {
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("BPA Error: ", e);
-            throw new BPAException(BPAException.Type.BPA_Send_Error);
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
     }
