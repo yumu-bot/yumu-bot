@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Comparator;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,6 +24,10 @@ public class Search {
 
     public List<BeatMapSet> getBeatmapsets() {
         return beatmapsets;
+    }
+
+    public void sortBeatmapDiff() {
+        beatmapsets.forEach(set -> set.getBeatmaps().sort(Comparator.comparing(BeatMap::getDifficultyRating)));
     }
 
     public void setBeatmapsets(List<BeatMapSet> beatmapsets) {
