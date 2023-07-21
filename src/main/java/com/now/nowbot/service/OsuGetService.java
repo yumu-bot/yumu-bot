@@ -906,7 +906,11 @@ public class OsuGetService {
 
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
         var x = template.exchange(uri, HttpMethod.GET, httpEntity, Search.class);
-        return x.getBody();
+        var resolute = x.getBody();
+        if (resolute != null) {
+            resolute.setRule(query.toString());
+        }
+        return resolute;
     }
 
     private HttpHeaders getHeader() {
