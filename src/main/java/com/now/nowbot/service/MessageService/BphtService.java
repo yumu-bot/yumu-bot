@@ -106,8 +106,7 @@ public class BphtService implements MessageService {
     }
 
     public String[] getAllMsg(List<Score> Bps, String name, String mode) {
-        var dtbf = new StringBuffer().append("--- 所以为什么不使用 !bpa 呢 ---").append('\n')
-                .append(name).append('[').append(mode).append(']').append('\n');
+        var dtbf = new StringBuffer().append(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
         int xSum = 0;
@@ -159,6 +158,7 @@ public class BphtService implements MessageService {
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPP() - Bps.get(Bps.size() - 1).getPP()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
+        dtbf.append("--- 所以为什么不使用 !bpa 呢 ---").append('\n');
 
         return dtbf.toString().split("\n");
     }
