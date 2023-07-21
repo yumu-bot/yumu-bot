@@ -173,9 +173,9 @@ public class QualifiedMapService implements MessageService {
 
         try {
             var d = osuGetService.searchBeatmap(query);
-            if (d == null) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_FetchFailed);
+            // if (d == null) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_FetchFailed);
 
-            d.setRule(status); // rule
+            d.setRule("rule"); // rule是 status
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
