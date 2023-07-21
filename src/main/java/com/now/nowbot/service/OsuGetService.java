@@ -892,7 +892,7 @@ public class OsuGetService {
         return x.getBody();
     }
 
-    public Search serchBeatmap(Map<String, Object> query) {
+    public Search searchBeatmap(Map<String, Object> query) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmapsets/search/");
         for (var e : query.entrySet()) {
             if (e.getValue() != null) {

@@ -97,6 +97,9 @@ public enum Instruction {
     SONG(SongService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))+\\s*(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
 
+    QUAMAP(QualifiedMapService.class,
+            Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?!\\w)|q(?!\\w))+\\s*([:：](?<status>[-\\w\\d]+))?\\s*(#+(?<sort>[-_ \\w\\d]+))?\\s*(?<range>\\d+)?")),
+
     // #5 osu! 比赛指令
 
     MRALEGACY(MRALegacyService.class,
