@@ -106,7 +106,8 @@ public class BphtService implements MessageService {
     }
 
     public String[] getAllMsg(List<Score> Bps, String name, String mode) {
-        var dtbf = new StringBuffer(name).append('[').append(mode).append(']').append('\n');
+        var dtbf = new StringBuffer().append("--- 所以为什么不使用 !bpa 呢 ---").append('\n')
+                .append(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
         int xSum = 0;
@@ -164,7 +165,8 @@ public class BphtService implements MessageService {
 
     public String[] getAllMsg(List<Score> bps, String name, OsuMode mode) {
         if (bps.size() == 0) return new String[0];
-        var dtbf = new StringBuffer(name).append('[').append(mode.getName()).append(']').append('\n');
+        var dtbf = new StringBuffer().append("--- 所以为什么不使用 !bpa 呢 ---").append('\n')
+                .append(name).append('[').append(mode).append(']').append('\n');
 
         var t1 = bps.get(0);
         var t1Bpm = t1.getBeatMap().getBpm();

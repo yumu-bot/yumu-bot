@@ -62,10 +62,10 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|b(p?)(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*((#?)?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))+(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),
 
     BPA(BPAnalysisService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?!\\w)|ba(?!\\w))(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?!\\w)|ba(?!\\w))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     BPHT(BphtService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ht(?!\\w))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
