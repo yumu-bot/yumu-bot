@@ -272,11 +272,11 @@ public class BeatMapSet {
     public void setBeatmaps(List<BeatMap> beatmaps) {
         this.beatmaps = beatmaps;
     }
-    public String getRankedDame() {
+    public String getRankedDate() {
         return rankedDate;
     }
 
-    public void setBeatmaps(String rankedDate) {
+    public void setRankedDate(String rankedDate) {
         this.rankedDate = rankedDate;
     }
 
