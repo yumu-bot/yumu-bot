@@ -40,33 +40,59 @@ public class QualifiedMapService implements MessageService {
 
         if (range <= 0 || range > 200) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
 
+
+
+        int page = (int) (Math.floor(range / 50f) + 1);// 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
+
+        var query = new HashMap<String, Object>();
+        status = getStatus(status);
+        query.put("s", status);
+        query.put("sort", getSort(sort));
+        query.put("page", page);
+
+        try {
+            var d = osuGetService.searchBeatmap(query);
+
+            d.setRule(status); // rule是 status
+            d.sortBeatmapDiff();
+            var img = imageService.getPanelA2(d);
+            event.getSubject().sendImage(img);
+        } catch (Exception e) {
+            throw new LogException("Q: ", e);
+            //throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+        }
+    }
+
+    private static String getStatus(String status) {
         switch (status.toLowerCase()) {
             case "0":
             case "p":
-                status = "pending"; break;
+                return  "pending";
             case "1":
             case "r":
-                status = "ranked"; break;
+                return "ranked";
             case "2":
             case "a":
-                status = "approved"; break;
+                return "approved";
             case "3":
             case "q":
-                status = "qualified"; break;
+                return "qualified";
             case "4":
             case "l":
-                status = "loved"; break;
+                return "loved";
             case "-1":
             case "5":
             case "w":
-                status = "wip"; break;
+                return "wip";
             case "-2":
             case "6":
             case "g":
             default:
-                status = "graveyard"; break;
+                return "graveyard";
         }
+    }
 
+    private static String getSort(String sort) {
         switch (sort.toLowerCase()) {
             case "t":
             case "t1":
@@ -74,12 +100,12 @@ public class QualifiedMapService implements MessageService {
             case "title":
             case "title asc":
             case "title_asc":
-                sort = "title_asc"; break;
+                return "title_asc";
             case "t0":
             case "td":
             case "title desc":
             case "title_desc":
-                sort = "title_desc"; break;
+                return "title_desc";
 
             case "a":
             case "a1":
@@ -87,12 +113,12 @@ public class QualifiedMapService implements MessageService {
             case "artist":
             case "artist asc":
             case "artist_asc":
-                sort = "artist_asc"; break;
+                return "artist_asc";
             case "a0":
             case "ad":
             case "artist desc":
             case "artist_desc":
-                sort = "artist_desc"; break;
+                return "artist_desc";
 
             case "d":
             case "d1":
@@ -106,7 +132,7 @@ public class QualifiedMapService implements MessageService {
             case "star":
             case "star asc":
             case "star_asc":
-                sort = "difficulty_asc"; break;
+                return "difficulty_asc";
             case "d0":
             case "dd":
             case "difficulty desc":
@@ -115,7 +141,7 @@ public class QualifiedMapService implements MessageService {
             case "sd":
             case "star desc":
             case "star_desc":
-                sort = "difficulty_desc"; break;
+                return "difficulty_desc";
 
             case "m":
             case "m1":
@@ -124,13 +150,13 @@ public class QualifiedMapService implements MessageService {
             case "rating":
             case "rating asc":
             case "rating_asc":
-                sort = "rating_asc"; break;
+                return "rating_asc";
             case "m0":
             case "md":
             case "map desc":
             case "rating desc":
             case "rating_desc":
-                sort = "rating_desc"; break;
+                return "rating_desc";
 
             case "p":
             case "p1":
@@ -139,13 +165,13 @@ public class QualifiedMapService implements MessageService {
             case "pc asc":
             case "plays asc":
             case "plays_asc":
-                sort = "plays_asc"; break;
+                return "plays_asc";
             case "p0":
             case "pd":
             case "pc desc":
             case "plays desc":
             case "plays_desc":
-                sort = "plays_desc"; break;
+                return "plays_desc";
 
             case "r":
             case "r1":
@@ -154,36 +180,15 @@ public class QualifiedMapService implements MessageService {
             case "time asc":
             case "ranked asc":
             case "ranked_asc":
-                sort = "ranked_asc"; break;
+                return "ranked_asc";
             case "r0":
             case "rd":
             case "time desc":
             case "ranked desc":
             case "ranked_desc":
-                sort = "ranked_desc"; break;
+                return "ranked_desc";
 
-            default: sort = "relevance_desc"; break;
-        }
-
-        int page = (int) (Math.floor(range / 50f) + 1);// 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
-
-        var query = new HashMap<String, Object>();
-        query.put("s", status);
-        query.put("sort", sort);
-        query.put("page", page);
-
-        try {
-            var d = osuGetService.searchBeatmap(query);
-            if (d == null) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_FetchFailed);
-
-            d.setRule(status); // rule是 status
-            d.setResultCount(range);
-
-            var img = imageService.getPanelA2(d);
-            event.getSubject().sendImage(img);
-        } catch (Exception e) {
-            //throw new LogException("Q: ", e);
-            throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+            default: return "relevance_desc";
         }
     }
 }

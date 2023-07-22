@@ -158,14 +158,14 @@ public class BphtService implements MessageService {
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPP() - Bps.get(Bps.size() - 1).getPP()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
-        dtbf.append("--- 所以为什么不使用 !bpa 呢 ---").append('\n');
+        dtbf.append("!bpa").append('\n');
 
         return dtbf.toString().split("\n");
     }
 
     public String[] getAllMsg(List<Score> bps, String name, OsuMode mode) {
         if (bps.size() == 0) return new String[0];
-        var dtbf = new StringBuffer().append("--- 所以为什么不使用 !bpa 呢 ---").append('\n')
+        var dtbf = new StringBuffer()
                 .append(name).append('[').append(mode).append(']').append('\n');
 
         var t1 = bps.get(0);
@@ -333,7 +333,7 @@ public class BphtService implements MessageService {
                 .append('[').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(']')
                 .append('\n'));
 
-
+        dtbf.append("!bpa").append('\n');
         return dtbf.toString().split("\n");
     }
 
