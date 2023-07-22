@@ -96,63 +96,63 @@ public class QualifiedMapService implements MessageService {
     private static String getSort(String sort) {
         switch (sort.toLowerCase()) {
             case "t":
-            case "t1":
+            case "t+":
             case "ta":
             case "title":
             case "title asc":
             case "title_asc":
                 return "title_asc";
-            case "t0":
+            case "t-":
             case "td":
             case "title desc":
             case "title_desc":
                 return "title_desc";
 
             case "a":
-            case "a1":
+            case "a+":
             case "aa":
             case "artist":
             case "artist asc":
             case "artist_asc":
                 return "artist_asc";
-            case "a0":
+            case "a-":
             case "ad":
             case "artist desc":
             case "artist_desc":
                 return "artist_desc";
 
             case "d":
-            case "d1":
+            case "d+":
             case "da":
             case "difficulty":
             case "difficulty asc":
             case "difficulty_asc":
             case "s":
-            case "s1":
+            case "s+":
             case "sa":
             case "star":
             case "star asc":
             case "star_asc":
                 return "difficulty_asc";
-            case "d0":
+            case "d-":
             case "dd":
             case "difficulty desc":
             case "difficulty_desc":
-            case "s0":
+            case "s-":
             case "sd":
             case "star desc":
             case "star_desc":
                 return "difficulty_desc";
 
             case "m":
-            case "m1":
+            case "m+":
             case "ma":
             case "map":
             case "rating":
             case "rating asc":
             case "rating_asc":
                 return "rating_asc";
-            case "m0":
+            case "m-":
             case "md":
             case "map desc":
             case "rating desc":
@@ -160,14 +160,14 @@ public class QualifiedMapService implements MessageService {
                 return "rating_desc";
 
             case "p":
-            case "p1":
+            case "p+":
             case "pa":
             case "plays":
             case "pc asc":
             case "plays asc":
             case "plays_asc":
                 return "plays_asc";
-            case "p0":
+            case "p-":
             case "pd":
             case "pc desc":
             case "plays desc":
@@ -175,14 +175,14 @@ public class QualifiedMapService implements MessageService {
                 return "plays_desc";
 
             case "r":
-            case "r1":
+            case "r+":
             case "ra":
             case "ranked":
             case "time asc":
             case "ranked asc":
             case "ranked_asc":
                 return "ranked_asc";
-            case "r0":
+            case "r-":
             case "rd":
             case "time desc":
             case "ranked desc":
