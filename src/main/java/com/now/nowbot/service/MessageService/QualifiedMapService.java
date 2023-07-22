@@ -59,8 +59,8 @@ public class QualifiedMapService implements MessageService {
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            //throw new LogException("Q: ", e);
-            throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+            throw new LogException("Q: ", e);
+            //throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }
 
