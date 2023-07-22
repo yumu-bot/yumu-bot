@@ -58,6 +58,10 @@ public class BeatMapSet {
     @JsonProperty("beatmaps")
     List<BeatMap> beatmaps;
 
+    @JsonProperty("ranked_date")
+    @Nullable
+    String rankedDate;
+
     @JsonIgnoreProperties
     Boolean availabilityDownloadDisable;
     @JsonIgnoreProperties
@@ -267,6 +271,13 @@ public class BeatMapSet {
 
     public void setBeatmaps(List<BeatMap> beatmaps) {
         this.beatmaps = beatmaps;
+    }
+    public String getRankedDame() {
+        return rankedDate;
+    }
+
+    public void setBeatmaps(String rankedDate) {
+        this.rankedDate = rankedDate;
     }
 
     public void setAvailabilityInformation(@Nullable String availabilityInformation) {
