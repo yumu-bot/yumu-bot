@@ -75,9 +75,6 @@ public class QualifiedMapService implements MessageService {
             case "2":
             case "a":
                 return "approved";
-            case "3":
-            case "q":
-                return "qualified";
             case "4":
             case "l":
                 return "loved";
@@ -88,8 +85,11 @@ public class QualifiedMapService implements MessageService {
             case "-2":
             case "6":
             case "g":
-            default:
                 return "graveyard";
+            case "3":
+            case "q":
+            default:
+                return "qualified";
         }
     }
 
