@@ -29,10 +29,10 @@ public class QualifiedMapService implements MessageService {
         if (sort == null) sort = "ranked_asc";
 
         if (range_str == null) {
-            range = 12;
+            range = 12 - 1; //从0开始
         } else {
             try {
-                range = Integer.parseInt(range_str);
+                range = Integer.parseInt(range_str) - 1;
             } catch (Exception e) {
                 throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_Error);
             }
@@ -174,14 +174,16 @@ public class QualifiedMapService implements MessageService {
 
         try {
             var d = osuGetService.searchBeatmap(query);
-            // if (d == null) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_FetchFailed);
+            if (d == null) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_FetchFailed);
 
-            d.setRule("rule"); // rule是 status
+            d.setRule(status); // rule是 status
+            d.setResultCount(range);
+
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            throw new LogException("Q: ", e);
-            //throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+            //throw new LogException("Q: ", e);
+            throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }
 }

@@ -11,7 +11,8 @@ import java.util.List;
 public class Search {
     @JsonProperty("rule")
     String rule;
-
+    @JsonProperty("result_count")
+    int result_count;
     @JsonProperty("beatmapsets")
     List<BeatMapSet> beatmapsets;
     @JsonProperty("total")
@@ -51,6 +52,13 @@ public class Search {
 
     public void setRule(String rule) {
         this.rule = rule;
+    }
+    public int getResultCount() {
+        return result_count;
+    }
+
+    public void setResultCount(int result_count) {
+        this.result_count = result_count;
     }
 
     public SearchCursor getCursor() {
