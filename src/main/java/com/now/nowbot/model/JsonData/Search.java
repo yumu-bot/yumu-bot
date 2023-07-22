@@ -3,6 +3,7 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.lang.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,6 +23,8 @@ public class Search {
     String           cursorString;
     @JsonProperty("cursor")
     SearchCursor cursor;
+    @JsonProperty("search")
+    SearchInfo searchInfo;
 
     public List<BeatMapSet> getBeatmapsets() {
         return beatmapsets;
@@ -72,5 +75,13 @@ public class Search {
 
     public void setCursor(SearchCursor cursor) {
         this.cursor = cursor;
+    }
+    @Nullable
+    public SearchInfo getSearchInfo() {
+        return searchInfo;
+    }
+
+    public void setSearchInfo(SearchInfo searchInfo) {
+        this.searchInfo = searchInfo;
     }
 }
