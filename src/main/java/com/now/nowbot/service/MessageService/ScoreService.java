@@ -82,14 +82,20 @@ public class ScoreService implements MessageService {
                     }
                 }
                 if (score == null) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
+                    throw new ScoreException(ScoreException.Type.SCORE_Mod_NotFound);
                 } else {
                     var bm = new BeatMap();
                     bm.setId(bid);
                     score.setBeatMap(bm);
                 }
             } else {
-                score = osuGetService.getScore(bid, user, mode).getScore();
+                try {
+                    score = osuGetService.getScore(bid, user, mode).getScore();
+                } catch (Exception e) {
+                    //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
+                    var mapMode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
+                    score = osuGetService.getScore(bid, user, mapMode).getScore();
+                }
             }
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
@@ -101,7 +107,7 @@ public class ScoreService implements MessageService {
             var data = imageService.getPanelE(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("err", e);
+            //NowbotApplication.log.error("err", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
