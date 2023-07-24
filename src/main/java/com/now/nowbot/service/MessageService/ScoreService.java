@@ -93,8 +93,8 @@ public class ScoreService implements MessageService {
                     score = osuGetService.getScore(bid, user, mode).getScore();
                 } catch (Exception e) {
                     //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-                    var mapMode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
-                    score = osuGetService.getScore(bid, user, mapMode).getScore();
+                    //var mapMode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
+                    score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
                 }
             }
         } catch (Exception e) {
