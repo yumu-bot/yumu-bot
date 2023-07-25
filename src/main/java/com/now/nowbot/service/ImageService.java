@@ -641,7 +641,7 @@ public class ImageService {
         body.put("rank_attr", rankAttr);
         body.put("pp_raw", rawPP);
         body.put("pp", user.getPP());
-        body.put("game_mode", user.getPlayMode().getName());
+        body.put("game_mode", bps.get(0).getMode());
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_J", httpEntity);
     }
