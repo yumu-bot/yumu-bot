@@ -138,6 +138,8 @@ public enum Instruction {
     COUNTMSG(CountQQMessageService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((cm(?!\\w))|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
 
+    SETU(SetuService.class,
+            Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)")),
     /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
@@ -166,8 +168,6 @@ public enum Instruction {
             Pattern.compile("^#test统计(?<d>\\d+) (?<d1>\\d+)")),
 
 
-//    SETU(SetuService.class,
-//            Pattern.compile("^[!！](?i)(?<code>(setu))|(ymse)|(ymsetu)")),
     ;
 
 
