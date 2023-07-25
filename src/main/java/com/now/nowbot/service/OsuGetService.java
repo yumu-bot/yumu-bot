@@ -11,6 +11,7 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.jetbrains.annotations.Nullable;
@@ -173,10 +174,7 @@ public class OsuGetService {
     public List<MicroUser> getFriendList(BinUser user) {
         if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<List<MicroUser>> c = template.exchange(url, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<MicroUser>>() {
         });
@@ -925,7 +923,13 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
+        try {
+            headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
+        } catch (BindException e) {
+            log.error("绑定丢失: [{}], 移除绑定信息", user.getOsuName());
+            bindDao.removeBind(user.getOsuID());
+            throw new RuntimeException(e);
+        }
         return headers;
     }
 

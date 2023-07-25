@@ -2,6 +2,7 @@ package com.now.nowbot.model;
 
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 
 public class BinUser {
     /**
@@ -83,11 +84,19 @@ public class BinUser {
         return accessToken;
     }
 
-    public String getAccessToken(OsuGetService service) {
+    public String getAccessToken(OsuGetService service) throws BindException {
         if (accessToken == null) {
             return service.getToken();
         } else if (isPassed()) {
-            accessToken = service.refreshToken(this).findValue("access_token").asText();
+
+            try {
+                accessToken = service
+                        .refreshToken(this)
+                        .findValue("access_token")
+                        .asText();
+            } catch (Exception e) {
+                throw new BindException(BindException.Type.BIND_Me_NoAuthorization);
+            }
         }
 
         return accessToken;
