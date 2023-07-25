@@ -45,7 +45,7 @@ public class SetuService implements MessageService {
         }
 
         synchronized (lock) {
-            if (time + (5 * 1000) > System.currentTimeMillis()){
+            if (time + (10 * 1000) > System.currentTimeMillis()){
                 try {
                     byte[] img;
                     img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH, "xxoo.jpg"));
