@@ -95,12 +95,13 @@ public class ScoreService implements MessageService {
                 if (isDefault) {
                     score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
+                    throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
                 }
             }
         }
 
-        var userInfo = osuGetService.getPlayerInfo(user, mode);
+        //这里的mode必须用谱面传过来的
+        var userInfo = osuGetService.getPlayerInfo(user, score.getMode());
 
         try {
             var data = imageService.getPanelE(userInfo, score, osuGetService);
