@@ -101,6 +101,10 @@ public class BindDao {
         }
     }
 
+    public void removeBind(long uid){
+        bindMapper.deleteAllByOsuId(uid);
+    }
+
     public Long getQQ(Long uid) {
         return bindMapper.getqq(uid);
     }

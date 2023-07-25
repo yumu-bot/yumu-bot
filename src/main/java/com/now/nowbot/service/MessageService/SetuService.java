@@ -20,14 +20,15 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("setu")
-public class SetuService implements MessageService{
+public class SetuService implements MessageService {
     static final Logger log = LoggerFactory.getLogger(SetuService.class);
     Long time = 0L;
     final Object lock = new Object();
-    @Autowired
+
     RestTemplate template;
+
     @Autowired
-    SetuService(RestTemplate template){
+    SetuService(RestTemplate template) {
         this.template = template;
     }
 
@@ -47,7 +48,7 @@ public class SetuService implements MessageService{
             if (time + (5 * 1000) > System.currentTimeMillis()){
                 try {
                     byte[] img;
-                    img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH,"xxoo.jpg"));
+                    img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH, "xxoo.jpg"));
                     from.sendImage(img);
                     throw new SetuException(SetuException.Type.SETU_Send_TooManyRequests);
                 } catch (IOException e) {
@@ -70,10 +71,10 @@ public class SetuService implements MessageService{
                 }
             } else {
                 int random = Math.toIntExact((System.currentTimeMillis() % 5));
-                switch (random){
-                    case 3: data = api2(); break;
-                    case 1: data = api3(); break;
-                    default: data = api1();
+                if (random % 2 == 0) {
+                    data = api3();
+                } else {
+                    data = api2();
                 }
             }
             img = data;
@@ -87,8 +88,8 @@ public class SetuService implements MessageService{
             throw new SetuException(SetuException.Type.SETU_Send_Error);
         }
     }
-    public byte[] api3()throws Exception{
-        //todo 检查下载失败原因
+
+    public byte[] api3() throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
@@ -100,7 +101,8 @@ public class SetuService implements MessageService{
         }
         return data.getBody();
     }
-    public byte[] api2() throws Exception{
+
+    public byte[] api2() throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
@@ -112,7 +114,8 @@ public class SetuService implements MessageService{
         }
         return date.getBody();
     }
-    public byte[] api1() throws Exception{
+
+    public byte[] api1() throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
