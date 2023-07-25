@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 @Service("bpht")
 public class BphtService implements MessageService {
     private static final int FONT_SIZE = 30;
+
+    private static final String TIPS = "新命令 !bpa \n\n";
     OsuGetService osuGetService;
     BindDao       bindDao;
     ImageService  imageService;
@@ -106,7 +108,8 @@ public class BphtService implements MessageService {
     }
 
     public String[] getAllMsg(List<Score> Bps, String name, String mode) {
-        var dtbf = new StringBuffer().append(name).append('[').append(mode).append(']').append('\n');
+        var dtbf = new StringBuffer(TIPS)
+                .append(name).append('[').append(mode).append(']').append('\n');
         double allPp = 0;
         int sSum = 0;
         int xSum = 0;
@@ -158,14 +161,13 @@ public class BphtService implements MessageService {
         if (xSum != 0) dtbf.append("\n其中SS数量有").append(xSum).append('个');
         dtbf.append("\n您的BP1与BP100的差为").append(decimalFormat.format(Bps.get(0).getPP() - Bps.get(Bps.size() - 1).getPP()));
         dtbf.append("\n您的平均BP为").append(decimalFormat.format(allPp / Bps.size()));
-        dtbf.append("!bpa").append('\n');
 
         return dtbf.toString().split("\n");
     }
 
     public String[] getAllMsg(List<Score> bps, String name, OsuMode mode) {
         if (bps.size() == 0) return new String[0];
-        var dtbf = new StringBuffer()
+        var dtbf = new StringBuffer(TIPS)
                 .append(name).append('[').append(mode).append(']').append('\n');
 
         var t1 = bps.get(0);
@@ -332,8 +334,6 @@ public class BphtService implements MessageService {
                 .append(sum.getAllPP())
                 .append('[').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(']')
                 .append('\n'));
-
-        dtbf.append("!bpa").append('\n');
         return dtbf.toString().split("\n");
     }
 

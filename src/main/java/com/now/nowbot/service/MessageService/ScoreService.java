@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 
@@ -51,8 +53,7 @@ public class ScoreService implements MessageService {
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
-        //处理默认mode
-        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
+        boolean isDefault = (mode == OsuMode.DEFAULT && user != null && user.getMode() != null);
 
         var bid = Long.parseLong(matcher.group("bid"));
 
@@ -64,54 +65,48 @@ public class ScoreService implements MessageService {
         }
 
         Score score = null;
-        try {
-            if (mods != null && mods.size() > 0) {
-                var scoreall = osuGetService.getScoreAll(bid, user, mode);
-                for (var s : scoreall){
-                    if (s.getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None){
-                        score = s;
-                        break;
-                    }
-                    if (mods.size() != s.getMods().size()){
-                        continue;
-                    }
-                    if (s.getMods().containsAll(mods.stream().map(Mod::getAbbreviation).toList())){
-                        score = s;
-                        break;
-                    }
+        if (mods != null && mods.size() > 0) {
+            var scoreall = osuGetService.getScoreAll(bid, user, isDefault ? user.getMode() : mode);
+            for (var s : scoreall) {
+                if (s.getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None) {
+                    score = s;
+                    break;
                 }
-                if (score == null) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Mod_NotFound);
-                } else {
-                    var bm = new BeatMap();
-                    bm.setId(bid);
-                    score.setBeatMap(bm);
+                if (mods.size() != s.getMods().size()) {
+                    continue;
                 }
-            } else {
-                try {
-                    score = osuGetService.getScore(bid, user, mode).getScore();
-                } catch (Exception e) {
-                    //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-                    if (OsuMode.getMode(matcher.group("mode")) != null) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
-                    }
-
-                    //这里必须获取一次，并且给mode赋新值，不然，用OsuMode.Default的A1卡会出问题（对不上）
-                    mode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
-                    score = osuGetService.getScore(bid, user, mode).getScore();
+                if (new HashSet<>(s.getMods()).containsAll(mods.stream().map(Mod::getAbbreviation).toList())) {
+                    score = s;
+                    break;
                 }
             }
-        } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
-            //from.sendMessage("你没打过这张图"); return;
+            if (score == null) {
+                throw new ScoreException(ScoreException.Type.SCORE_Mod_NotFound);
+            } else {
+                var bm = new BeatMap();
+                bm.setId(bid);
+                score.setBeatMap(bm);
+            }
+        } else {
+            try {
+                score = osuGetService.getScore(bid, user, isDefault ? user.getMode() : mode).getScore();
+            } catch (Exception e) {
+                //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
+                if (isDefault) {
+                    score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
+                }
+            }
         }
+
         var userInfo = osuGetService.getPlayerInfo(user, mode);
 
         try {
             var data = imageService.getPanelE(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            //NowbotApplication.log.error("err", e);
+            NowbotApplication.log.error("err", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
