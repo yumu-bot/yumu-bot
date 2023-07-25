@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
@@ -93,8 +92,13 @@ public class ScoreService implements MessageService {
                     score = osuGetService.getScore(bid, user, mode).getScore();
                 } catch (Exception e) {
                     //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-                    //var mapMode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
-                    score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
+                    if (OsuMode.getMode(matcher.group("mode")) != null) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
+                    }
+
+                    //这里必须获取一次，并且给mode赋新值，不然，用OsuMode.Default的A1卡会出问题（对不上）
+                    mode = OsuMode.getMode(osuGetService.getMapInfo(bid).getMode());
+                    score = osuGetService.getScore(bid, user, mode).getScore();
                 }
             }
         } catch (Exception e) {
