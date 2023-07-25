@@ -4,12 +4,14 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -22,16 +24,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Aspect
 @Component
 public class CheckAspect {
+    private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
     Permission permission;
+
     @Autowired
-    public CheckAspect(Permission permission){
+    public CheckAspect(Permission permission) {
         this.permission = permission;
     }
+
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现MessageService的HandMessage方法切入点
     @Pointcut("execution(public void com.now.nowbot.service.MessageService..HandleMessage(com.now.nowbot.qq.event.MessageEvent,java.util.regex.Matcher))")
-    public void servicePoint(){
+    public void servicePoint() {
     }
 
     /***
@@ -48,36 +53,36 @@ public class CheckAspect {
             return point.getArgs();
         }
         var args = point.getArgs();
-        var event = (MessageEvent)args[0];
+        var event = (MessageEvent) args[0];
         var servicename = Service.value();
 
-        if (Permission.isSupper(event.getSender().getId())){
+        if (Permission.isSupper(event.getSender().getId())) {
             //超管无视任何限制
             return args;
         }
         //超管权限判断
-        if (CheckPermission.supperOnly()){
-            throw new PermissionException(servicename + "有人使用最高权限 "+ event.getSender().getId()+" -> "+servicename);
+        if (CheckPermission.supperOnly()) {
+            throw new PermissionException(servicename + "有人使用最高权限 " + event.getSender().getId() + " -> " + servicename);
         }
         // test 功能
         if (CheckPermission.test() && !permission.isTester(event.getSender().getId())) {
-            throw new PermissionException(servicename + "有人使用测试功能 "+ event.getSender().getId()+" -> "+servicename);
+            throw new PermissionException(servicename + "有人使用测试功能 " + event.getSender().getId() + " -> " + servicename);
         }
         //服务权限判断
         //白/黑名单
-        if (CheckPermission.isWhite()){
-            if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())){
-                throw new PermissionException(servicename + " 白名单过滤(个人)", event.getSender().getId()+" -> "+servicename);
+        if (CheckPermission.isWhite()) {
+            if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())) {
+                throw new PermissionException(servicename + " 白名单过滤(个人)", event.getSender().getId() + " -> " + servicename);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())){
-                throw new PermissionException(servicename + " 白名单过滤(群组)", event.getSender().getId()+" -> "+servicename);
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())) {
+                throw new PermissionException(servicename + " 白名单过滤(群组)", event.getSender().getId() + " -> " + servicename);
             }
-        }else {
-            if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())){
-                throw new PermissionException(servicename + " 黑名单过滤(个人)", event.getSender().getId()+" -> "+servicename);
+        } else {
+            if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())) {
+                throw new PermissionException(servicename + " 黑名单过滤(个人)", event.getSender().getId() + " -> " + servicename);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())){
-                throw new PermissionException(servicename + " 黑名单过滤(群组)", event.getSender().getId()+" -> "+servicename);
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())) {
+                throw new PermissionException(servicename + " 黑名单过滤(群组)", event.getSender().getId() + " -> " + servicename);
             }
         }
         return args;
@@ -94,18 +99,18 @@ public class CheckAspect {
         var servicename = Service.value();
 //        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
         try {
-            if (Permission.isSupper(event.getSender().getId())){
+            if (Permission.isSupper(event.getSender().getId())) {
                 //超管无视任何限制
                 return args;
             }
-            if (permission.allIsWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)){
+            if (permission.allIsWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
                 return args;
             }
             // 群跟人的id进行全局黑名单校验
-            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())){
+            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())) {
                 return args;
             }
-            throw new PermissionException("权限禁止","禁止的权限,请求功能: "+servicename+" ,请求人: "+event.getSender().getId());
+            throw new PermissionException("权限禁止", "禁止的权限,请求功能: " + servicename + " ,请求人: " + event.getSender().getId());
         } finally {
 //            workList.add(event);
         }
@@ -118,11 +123,12 @@ public class CheckAspect {
 //    }
 
     Set<Contact> sended;
-    public void doEnd(){
+
+    public void doEnd() {
         sended = new HashSet<>();
-        if (workList.size()>0) {
+        if (workList.size() > 0) {
             var s = workList.get(0).getBot().getFriend(2480557535L);
-            if (s != null){
+            if (s != null) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("work").append('\n');
                 workList.forEach((event) -> {
@@ -133,15 +139,22 @@ public class CheckAspect {
         }
         workList.forEach(this::sendWorn);
     }
-    public void sendWorn(MessageEvent event){
+
+    public void sendWorn(MessageEvent event) {
         var s = event.getSubject();
-        if (sended.add(s)){
+        if (sended.add(s)) {
             s.sendMessage("bot即将重启,放弃所有未完成任务,请稍后重试(具体时间请联系管理员)");
         }
     }
-//    @Around("execution (public * com.now.nowbot..*(..))")
-//        public Object setConttext(JoinPoint point){
-//        point.getSignature();
-//        return null;
-//    }
+
+    //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
+    @Around(value = "servicePoint()", argNames = "pjp")
+    public void setContext(ProceedingJoinPoint pjp) throws Throwable {
+        long now = System.currentTimeMillis();
+        pjp.proceed(pjp.getArgs());
+        long end = System.currentTimeMillis();
+        if (end - now > 3000) {
+            log.debug("[{}] 执行结束,用时:{}", pjp.getTarget().getClass().getName(), end-now);
+        }
+    }
 }
