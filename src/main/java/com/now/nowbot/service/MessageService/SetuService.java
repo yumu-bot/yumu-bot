@@ -37,29 +37,44 @@ public class SetuService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         long qq = event.getSender().getId();
+        int source = 0;
 
-        synchronized (lock){
-            if (time + (15 * 1000) > System.currentTimeMillis()){
+        if (matcher.group("source") != null) {
+            source = Integer.parseInt(matcher.group("source"));
+        }
+
+        synchronized (lock) {
+            if (time + (5 * 1000) > System.currentTimeMillis()){
                 try {
                     byte[] img;
                     img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH,"xxoo.jpg"));
                     from.sendImage(img);
-                    from.sendMessage("休息一下好不好");
+                    throw new SetuException(SetuException.Type.SETU_Send_TooManyRequests);
                 } catch (IOException e) {
                     throw new SetuException(SetuException.Type.SETU_Send_Error);
                 }
-                return;
-            } else time = System.currentTimeMillis();
+            } else {
+                time = System.currentTimeMillis();
+            }
         }
 
         byte[] img = null;
         try {
-            byte[] data;
-            int random = Math.toIntExact((System.currentTimeMillis() % 5));
-            switch (random){
-                case 3: data = api2(); break;
-                case 1: data = api3(); break;
-                default: data = api1();
+            byte[] data = new byte[0];
+
+            if (source >= 1 && source <= 3) {
+                switch (source) {
+                    case 1: data = api1(); break;
+                    case 2: data = api2(); break;
+                    case 3: data = api3(); break;
+                }
+            } else {
+                int random = Math.toIntExact((System.currentTimeMillis() % 5));
+                switch (random){
+                    case 3: data = api2(); break;
+                    case 1: data = api3(); break;
+                    default: data = api1();
+                }
             }
             img = data;
         } catch (IOException e) {
