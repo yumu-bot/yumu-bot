@@ -39,6 +39,8 @@ public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpe
     @Query("update OsuBindUserLite o set o.qq = null where o.osuId = :uid ")
     void unBind(Long uid);
 
+    void deleteAllByOsuId(Long osuId);
+
     @Query("select o.qq from OsuBindUserLite o where o.osuId = :uid")
     Long getqq(Long uid);
 }
