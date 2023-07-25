@@ -1,20 +1,14 @@
 package com.now.nowbot.listener;
 
 import com.mikuac.shiro.annotation.GroupMessageHandler;
-import com.mikuac.shiro.annotation.PrivateMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
-import com.mikuac.shiro.common.utils.MsgUtils;
-import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
-import com.mikuac.shiro.core.BotPlugin;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
-import com.mikuac.shiro.dto.event.message.PrivateMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
-import net.mamoe.mirai.event.SimpleListenerHost;
 import net.mamoe.mirai.event.events.EventCancelledException;
 import org.springframework.beans.BeansException;
 import org.springframework.core.annotation.Order;
@@ -24,13 +18,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
-import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 
 
@@ -45,17 +35,6 @@ public class OneBotListener {
         messageServiceMap = beanMap;
     }
 
-
-    @PrivateMessageHandler()
-    public void tt(Bot bot, PrivateMessageEvent onebotEvent){
-    }
-    @PrivateMessageHandler
-    public void handle(Bot bot, PrivateMessageEvent event) {
-        if (event != null) {
-            log.warn("-> \n`{}`\n`{}`\nend", event.getArrayMsg(), event.getRawMessage());
-
-        }
-    }
 
     @GroupMessageHandler()
     @Async
