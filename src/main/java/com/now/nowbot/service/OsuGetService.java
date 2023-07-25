@@ -925,7 +925,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.set("Authorization", "Bearer " + user.getAccessToken(this));
+        headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
         return headers;
     }
 
