@@ -26,9 +26,11 @@ public class MapScoreListService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         long bid = 0L;
+
+        if (matcher.group("bid") == null) throw new MapScoreListException(MapScoreListException.Type.LIST_Map_BidError);
         try {
             bid = Long.parseLong(matcher.group("bid"));
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_BidError);
         }
 
