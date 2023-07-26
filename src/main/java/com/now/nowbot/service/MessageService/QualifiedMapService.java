@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
@@ -20,47 +21,49 @@ public class QualifiedMapService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         // 获取参数
+        var mode_str = matcher.group("mode");
         var status = matcher.group("status");
         var sort = matcher.group("sort");
         var range_str = matcher.group("range");
-        int range;
+        short range;
+        short mode = OsuMode.DEFAULT.getModeValue();
 
+        if (mode_str != null) mode = OsuMode.getMode(mode_str).getModeValue();
         if (status == null) status = "q";
         if (sort == null) sort = "ranked_asc";
 
         if (range_str == null) {
-            range = 12 - 1; //从0开始
+            range = 12; //从0开始
         } else {
             try {
-                range = Integer.parseInt(range_str) - 1;
+                range = Short.parseShort(range_str);
             } catch (Exception e) {
                 throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_Error);
             }
         }
 
-        if (range <= 0 || range > 200) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
-
-
+        if (range < 1 || range > 200) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
 
         int page = (int) (Math.floor(range / 50f) + 1);// 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
 
         var query = new HashMap<String, Object>();
         status = getStatus(status);
+        query.put("m", mode);
         query.put("s", status);
         query.put("sort", getSort(sort));
         query.put("page", page);
 
+
         try {
             var d = osuGetService.searchBeatmap(query);
-
-            d.setRule(status); // rule是 status
-            d.setResultCount(range + 1);
+            d.setRule(status);
+            d.setResultCount(range);
             d.sortBeatmapDiff();
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            throw new LogException("Q: ", e);
-            //throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+            //throw new LogException("Q: ", e);
+            throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }
 

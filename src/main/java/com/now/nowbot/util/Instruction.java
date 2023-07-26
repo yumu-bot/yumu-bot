@@ -96,7 +96,10 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))+\\s*(((sid[:=](?<sid>\\d+))|(bid[:=](?<bid>\\d+)))|(?<id>\\d+))")),
 
     QUAMAP(QualifiedMapService.class,
-            Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?!\\w)|q(?!\\w))+\\s*([:：](?<status>[-\\w\\d]+))?\\s*(#?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")),
+            Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?!\\w)|q(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")),
+
+    MSLIST(MapScoreListService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|list|msl(?!\\w)|l(?!\\w))+\\s*((?<bid>\\d))?")),
 
     // #5 osu! 比赛指令
 
