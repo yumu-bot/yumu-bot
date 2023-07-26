@@ -1,5 +1,7 @@
 package com.now.nowbot.controller;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
@@ -20,6 +22,8 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.skija.EncodedImageFormat;
 import org.jetbrains.skija.Image;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
@@ -35,14 +39,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
 public class BotWebApi {
+    private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
     OsuGetService osuGetService;
     @Resource
-    BphtService   bphtService;
+    BphtService bphtService;
     @Resource
-    MRAService    mraService;
+    MRAService mraService;
     @Resource
-    ImageService  imageService;
+    ImageService imageService;
 
     @GetMapping(value = "ppm", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
@@ -249,8 +254,8 @@ public class BotWebApi {
 
     @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getBpa(@RequestParam("u1") String userName,
-                           @Nullable @RequestParam("mode") String playMode
-    ){
+                         @Nullable @RequestParam("mode") String playMode
+    ) {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
@@ -284,12 +289,10 @@ public class BotWebApi {
         if (range1 == null) {
             m = 11;
             doRandom = true; //12个人
-        }
-        else if (range2 == null) {
+        } else if (range2 == null) {
             m = range1 - 1;
             doRandom = true;
-        }
-        else {
+        } else {
             n = Math.min(range1 - 1, range2 - 1);
             m = Math.max(range1 - 1, range2 - 1);
         }
@@ -341,6 +344,19 @@ public class BotWebApi {
         var w = Channels.newChannel(response.getOutputStream());
         w.write(data);
         w.close();
+    }
+
+    @GetMapping("log-lever")
+    public String setLoggerLever(@RequestParam("l") String lever) {
+        var l = Level.toLevel(lever, Level.INFO);
+        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
+        log.trace("trace");
+        log.debug("debug");
+        log.info("info");
+        log.warn("warn");
+        log.error("error");
+
+        return "ok - " + l.levelStr;
     }
 
 
