@@ -151,6 +151,14 @@ public class CheckAspect {
     @Around(value = "servicePoint()", argNames = "pjp")
     public void setContext(ProceedingJoinPoint pjp) throws Throwable {
         long now = System.currentTimeMillis();
+        if (pjp.getArgs()[0] instanceof MessageEvent e) {
+            var ser = pjp.getTarget().getClass().getAnnotation(Service.class);
+            String name = "unknown";
+            if (ser != null) {
+                name = ser.value();
+            }
+            log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
+        }
         pjp.proceed(pjp.getArgs());
         long end = System.currentTimeMillis();
         if (end - now > 3000) {
