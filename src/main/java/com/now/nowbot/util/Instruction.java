@@ -43,9 +43,7 @@ public enum Instruction {
     // BOT 自己更新的功能，现在因为可以 SSH 远程更新，所以几乎不用了
     UPDATE(UpdateService.class,
             Pattern.compile("^&!update$")),
-    // BOT 加群确认的功能
-    GROUP(JoinGroupService.class,
-            Pattern.compile("(是|确认|(?i)y)|(否|取消|(?i)n)")),
+
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,
