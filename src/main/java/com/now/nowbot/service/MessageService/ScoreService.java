@@ -88,16 +88,22 @@ public class ScoreService implements MessageService {
                 score.setBeatMap(bm);
             }
         } else {
+            ScoreException.Type err = null;
             try {
                 score = osuGetService.getScore(bid, user, isDefault ? user.getMode() : mode).getScore();
             } catch (Exception e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
-                    score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
+                    try {
+                        score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
+                    } catch (Exception ex) {
+                        err = ScoreException.Type.SCORE_Mode_NotFound;
+                    }
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
+                    err = ScoreException.Type.SCORE_Mode_NotFound;
                 }
             }
+            if (err != null) throw new ScoreException(err);
         }
 
         //这里的mode必须用谱面传过来的
