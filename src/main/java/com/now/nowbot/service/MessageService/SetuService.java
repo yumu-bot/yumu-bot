@@ -38,29 +38,44 @@ public class SetuService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         long qq = event.getSender().getId();
+        int source = 0;
+
+        if (matcher.group("source") != null) {
+            source = Integer.parseInt(matcher.group("source"));
+        }
 
         synchronized (lock) {
-            if (time + (15 * 1000) > System.currentTimeMillis()) {
+            if (time + (10 * 1000) > System.currentTimeMillis()){
                 try {
                     byte[] img;
                     img = Files.readAllBytes(Path.of(NowbotConfig.BG_PATH, "xxoo.jpg"));
                     from.sendImage(img);
-                    from.sendMessage("休息一下好不好");
+                    throw new SetuException(SetuException.Type.SETU_Send_TooManyRequests);
                 } catch (IOException e) {
                     throw new SetuException(SetuException.Type.SETU_Send_Error);
                 }
-                return;
-            } else time = System.currentTimeMillis();
+            } else {
+                time = System.currentTimeMillis();
+            }
         }
 
         byte[] img = null;
         try {
-            byte[] data;
-            int random = Math.toIntExact((System.currentTimeMillis() % 5));
-            if (random % 2 == 0) {
-                data = api3();
+            byte[] data = new byte[0];
+
+            if (source >= 1 && source <= 3) {
+                switch (source) {
+                    case 1: data = api1(); break;
+                    case 2: data = api2(); break;
+                    case 3: data = api3(); break;
+                }
             } else {
-                data = api2();
+                int random = Math.toIntExact((System.currentTimeMillis() % 5));
+                if (random % 2 == 0) {
+                    data = api3();
+                } else {
+                    data = api2();
+                }
             }
             img = data;
         } catch (IOException e) {
@@ -93,7 +108,7 @@ public class SetuService implements MessageService {
         HttpEntity<Byte[]> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> date = null;
         try {
-            date = template.exchange("https://api.vvhan.com/api/acgim", HttpMethod.GET, httpEntity, byte[].class);
+            date = template.exchange("https://api.vvhan.com/api/acgimg?type=json", HttpMethod.GET, httpEntity, byte[].class);
         } catch (Exception e) {
             throw new Exception(e);
         }

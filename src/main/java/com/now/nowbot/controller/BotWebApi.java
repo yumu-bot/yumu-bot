@@ -53,7 +53,11 @@ public class BotWebApi {
         var info = osuGetService.getPlayerInfo(user1.trim(), mode);
         var bplist = osuGetService.getBestPerformance(info.getId(), mode, 0, 100);
         var ppm = Ppm.getInstance(mode, info, bplist);
-        return imageService.getPanelB(info, mode, ppm);
+        if (ppm == null) {
+            throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
+        } else {
+            return imageService.getPanelB(info, mode, ppm);
+        }
     }
 
     @GetMapping(value = "ppmvs", produces = {MediaType.IMAGE_PNG_VALUE})
@@ -66,7 +70,11 @@ public class BotWebApi {
         var bplist2 = osuGetService.getBestPerformance(info2.getId(), mode, 0, 100);
         var ppm1 = Ppm.getInstance(mode, info1, bplist1);
         var ppm2 = Ppm.getInstance(mode, info2, bplist2);
-        return imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+        if (ppm1 == null || ppm2 == null) {
+            throw new RuntimeException("ppm 请求失败：ppmMe/Other 不存在");
+        } else {
+            return imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+        }
     }
 
     /***
