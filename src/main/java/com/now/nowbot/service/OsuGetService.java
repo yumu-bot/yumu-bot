@@ -926,9 +926,9 @@ public class OsuGetService {
         try {
             headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
         } catch (BindException e) {
-            log.error("绑定丢失: [{}], 移除绑定信息", user.getOsuName());
+            log.error("绑定丢失: [{}], 移除绑定信息", user.getOsuID());
             bindDao.removeBind(user.getOsuID());
-            throw new RuntimeException(e);
+            throw e;
         }
         return headers;
     }

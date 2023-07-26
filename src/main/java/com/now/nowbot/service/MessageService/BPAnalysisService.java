@@ -11,6 +11,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,8 @@ import java.util.regex.Matcher;
 @Service("BPA")
 public class BPAnalysisService implements MessageService {
     OsuGetService osuGetService;
-    BindDao       bindDao;
-    ImageService  imageService;
+    BindDao bindDao;
+    ImageService imageService;
 
     @Autowired
     public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
@@ -62,15 +63,11 @@ public class BPAnalysisService implements MessageService {
             if (at != null) {
                 try {
                     b = bindDao.getUser(at.getTarget());
-                } catch (Exception e) {
+                } catch (BindException e) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
                 }
             } else {
-                try {
-                    b = bindDao.getUser(event.getSender().getId());
-                } catch (Exception e) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_LoseBind);
-                }
+                b = bindDao.getUser(event.getSender().getId());
             }
             if (mode != OsuMode.DEFAULT) {
                 user = osuGetService.getPlayerInfo(b, mode);

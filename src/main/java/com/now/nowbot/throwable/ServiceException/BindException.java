@@ -1,8 +1,9 @@
 package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.TipsRuntimeException;
 
-public class BindException extends TipsException {
+public class BindException extends TipsRuntimeException{
     public static enum Type {
         BIND_Client_RelieveBindSuccess("您已成功解绑。TuT"),//解绑_成功
         BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
