@@ -2,6 +2,7 @@ package com.now.nowbot.listener;
 
 import com.mikuac.shiro.annotation.GroupMessageHandler;
 import com.mikuac.shiro.annotation.common.Shiro;
+import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
@@ -10,17 +11,17 @@ import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.event.events.EventCancelledException;
-import org.springframework.beans.BeansException;
-import org.springframework.core.annotation.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 
@@ -40,6 +41,7 @@ public class OneBotListener {
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
+        log.debug("收到消息[{}] -> {}", event.getSubject().getName(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
             //功能关闭 优先级高于aop拦截
