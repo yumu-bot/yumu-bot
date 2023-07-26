@@ -88,7 +88,7 @@ public class ScoreService implements MessageService {
                 score.setBeatMap(bm);
             }
         } else {
-            ScoreException.Type err = null;
+            ScoreException.Type error = null;
             try {
                 score = osuGetService.getScore(bid, user, isDefault ? user.getMode() : mode).getScore();
             } catch (Exception e) {
@@ -96,14 +96,14 @@ public class ScoreService implements MessageService {
                 if (isDefault) {
                     try {
                         score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
-                    } catch (Exception ex) {
-                        err = ScoreException.Type.SCORE_Mode_NotFound;
+                    } catch (Exception e2) {
+                        error = ScoreException.Type.SCORE_Mode_MainNotFound;
                     }
                 } else {
-                    err = ScoreException.Type.SCORE_Mode_NotFound;
+                    error = ScoreException.Type.SCORE_Mode_NotFound;
                 }
             }
-            if (err != null) throw new ScoreException(err);
+            if (error != null) throw new ScoreException(error);
         }
 
         //这里的mode必须用谱面传过来的
