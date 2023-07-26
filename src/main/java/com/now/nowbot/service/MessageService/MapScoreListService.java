@@ -5,10 +5,12 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.MapScoreListException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
 
+@Service("MSList")
 public class MapScoreListService implements MessageService {
     OsuGetService osuGetService;
     RestTemplate template;
