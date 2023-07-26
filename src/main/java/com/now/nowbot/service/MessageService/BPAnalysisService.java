@@ -66,7 +66,11 @@ public class BPAnalysisService implements MessageService {
                     throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
                 }
             } else {
-                b = bindDao.getUser(event.getSender().getId());
+                try {
+                    b = bindDao.getUser(event.getSender().getId());
+                } catch (Exception e) {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_LoseBind);
+                }
             }
             if (mode != OsuMode.DEFAULT) {
                 user = osuGetService.getPlayerInfo(b, mode);
