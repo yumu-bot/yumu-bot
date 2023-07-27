@@ -2,25 +2,26 @@ package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
-import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.util.*;
 import com.now.nowbot.util.Panel.HCardBuilder;
-import com.now.nowbot.util.Panel.J1CardBuilder;
-import net.mamoe.mirai.Bot;
+import jakarta.annotation.Resource;
 import org.jetbrains.skija.Font;
 import org.jetbrains.skija.TextLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.web.context.WebServerApplicationContext;
+import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.concurrent.Executor;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
@@ -28,6 +29,10 @@ public class IocAllReadyRunner implements CommandLineRunner {
     ApplicationContext applicationContext;
     CheckAspect check;
     Permission permission;
+    @Resource
+    WebServerApplicationContext webServerApplicationContext;
+    @Resource(name = "mainExecutor")
+    Executor executor;
 
     @Autowired
     public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
@@ -52,6 +57,12 @@ public class IocAllReadyRunner implements CommandLineRunner {
         MoliUtil.init(applicationContext.getBean(RestTemplate.class));
         permission.init(applicationContext);
         initFountWidth();
+
+        ((TomcatWebServer) webServerApplicationContext.getWebServer())
+                .getTomcat()
+                .getConnector()
+                .getProtocolHandler()
+                .setExecutor(executor);
 
         /*
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子

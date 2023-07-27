@@ -39,3 +39,4 @@ logs/
 data/
 config/
 .jpb
+log*.xml

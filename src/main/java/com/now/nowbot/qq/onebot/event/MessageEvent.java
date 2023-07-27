@@ -72,6 +72,6 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
         return ShiroUtils.unescape(m);
     }
     private static String decodeArr(String m) {
-        return ShiroUtils.unescape(m);
+        return m;
     }
 }
