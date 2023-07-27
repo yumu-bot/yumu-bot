@@ -1,10 +1,7 @@
 package com.now.nowbot.service;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.JsonData.Search;
+import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
@@ -119,11 +116,23 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
+
     public byte[] getPanelA2(Search search) {
         HttpHeaders headers = getDefaultHeader();
         var body = search;
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_A2", httpEntity);
+    }
+
+    public byte[] getPanelA3(BeatMap beatMap, List<Score> scores) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "beatmap", beatMap,
+                "scores", scores
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        return doPost("panel_A3", httpEntity);
     }
 
     public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
