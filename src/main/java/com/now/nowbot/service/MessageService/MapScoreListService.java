@@ -49,17 +49,15 @@ public class MapScoreListService implements MessageService {
 
         try {
             beatMap = osuGetService.getMapInfo(bid);
+            status = beatMap.getStatus();
         } catch (Exception e) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
         }
 
         try {
-            status = beatMap.getStatus();
-
-            if (mode == OsuMode.DEFAULT) mode = OsuMode.getMode(beatMap.getMode());
+            if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
             scores = osuGetService.getBeatmapScores(bid, mode);
-
-        } catch (NullPointerException e) {
+        } catch (Exception e) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
         }
 
@@ -67,7 +65,7 @@ public class MapScoreListService implements MessageService {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotRanked);
         }
 
-        if (scores == null) throw new MapScoreListException(MapScoreListException.Type.LIST_Score_NotFound);
+        if (scores.size() == 0) throw new MapScoreListException(MapScoreListException.Type.LIST_Score_NotFound);
 
         try {
             var data = imageService.getPanelA3(beatMap, scores);
