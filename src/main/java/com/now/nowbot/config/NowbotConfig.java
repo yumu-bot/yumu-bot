@@ -1,6 +1,5 @@
 package com.now.nowbot.config;
 
-import com.now.nowbot.listener.MessageListener;
 import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.throwable.RequestException;
 import kotlinx.coroutines.CoroutineScope;
@@ -21,16 +20,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
-import xyz.cssxsh.mirai.tool.FixProtocolVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +33,6 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Component
 @Configuration

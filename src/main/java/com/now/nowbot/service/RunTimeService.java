@@ -2,47 +2,42 @@ package com.now.nowbot.service;
 
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.MessageService.BindService;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.contact.ContactList;
-import net.mamoe.mirai.contact.NormalMember;
-import net.mamoe.mirai.message.data.At;
-import net.mamoe.mirai.utils.ExternalResource;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import jakarta.annotation.Resource;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.regex.Pattern;
+
+interface Run {
+    void alive();
+}
 
 /***
  * 统一设置定时任务
  */
 @Service
-public class RunTimeService {
+public class RunTimeService implements SchedulingConfigurer,Run {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
 
-    @Autowired
+    @Resource
     BiliApiService biliApiService;
-    @Autowired
+    @Resource
     BindDao bindDao;
     @Resource
     RestTemplate restTemplate;
     @Resource
     OsuGetService osuGetService;
+    @Resource
+    TaskExecutor taskExecutor;
+
+    ScheduledTaskRegistrar scheduledTaskRegistrar;
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
@@ -53,6 +48,7 @@ public class RunTimeService {
     }
 
     */
+
 
 
     public void sayBp1() {
@@ -129,29 +125,22 @@ public class RunTimeService {
          */
     }
 
-    /***
-     * 每分钟清理未绑定的
-     */
-    @Scheduled(cron = "0 0/5 * * * *")
-    public void clearBindMsg() {
-        BindService.BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
-        log.info("清理绑定器执行 当前剩余:{}", BindService.BIND_MSG_MAP.size());
-    }
 
     /***
      * 白天输出内存占用信息
      */
+    @Async
     @Scheduled(cron = "0 0/30 8-18 * * *")
     public void alive() {
         var m = ManagementFactory.getMemoryMXBean();
         var nm = m.getNonHeapMemoryUsage();
         var t = ManagementFactory.getThreadMXBean();
         var z = ManagementFactory.getMemoryPoolMXBeans();
-        log.info("方法区 已申请 {}M 已使用 {}M ",
+        log.debug("方法区 已申请 {}M 已使用 {}M ",
                 nm.getCommitted() / 1024 / 1024,
                 nm.getUsed() / 1024 / 1024
         );
-        log.info("堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
+        log.debug("堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
                 m.getHeapMemoryUsage().getMax() / 1024 / 1024,
                 m.getHeapMemoryUsage().getCommitted() / 1024 / 1024,
                 m.getHeapMemoryUsage().getUsed() / 1024 / 1024,
@@ -160,11 +149,17 @@ public class RunTimeService {
                 t.getPeakThreadCount()
         );
         for (var pool : z) {
-            log.info("vm内存 {} 已申请 {}M 已使用 {}M ",
+            log.debug("vm内存 {} 已申请 {}M 已使用 {}M ",
                     pool.getName(),
                     pool.getUsage().getCommitted() / 1024 / 1024,
                     pool.getUsage().getUsed() / 1024 / 1024
             );
         }
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        this.scheduledTaskRegistrar = taskRegistrar;
+        taskRegistrar.addCronTask(() -> taskExecutor.execute(()->log.info("task - ccc")), "0 0/1 8-18 * * *");
     }
 }

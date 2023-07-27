@@ -59,7 +59,7 @@ public class WsController extends WebSocketListener {
             var echo = data.get("echo").asText();
             try {
                 var l = Long.parseLong(state[1]);
-                if (state.length != 2 || !BindService.BIND_MSG_MAP.containsKey(l)) {
+                if (state.length != 2 || !BindService.contains(l)) {
                     // 不响应任何
                     log.error("no find key");
                     return;

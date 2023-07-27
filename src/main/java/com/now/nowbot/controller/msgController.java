@@ -57,7 +57,7 @@ public class msgController {
                     .append(e.getMessage());
         }
 
-        var msg = BindService.BIND_MSG_MAP.get(key);
+        var msg = BindService.getBind(key);
         if (debug || msg != null) {
             try {
                 if (!debug) {
@@ -74,7 +74,7 @@ public class msgController {
                 if (!debug) {
 //                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
                 }
-                BindService.BIND_MSG_MAP.remove(key);
+                BindService.removeBind(key);
                 sb.append("成功绑定:\n")
                         .append(bd.getQq())
                         .append('>')

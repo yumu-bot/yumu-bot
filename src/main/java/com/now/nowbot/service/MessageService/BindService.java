@@ -12,10 +12,10 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -24,15 +24,23 @@ import java.util.regex.Matcher;
 
 @Service("bind")
 public class BindService implements MessageService {
+
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static      Logger          log          = LoggerFactory.getLogger(BindService.class);
+    private static boolean CLAER = false;
+
+    private static final Logger log = LoggerFactory.getLogger(BindService.class);
+
     OsuGetService osuGetService;
-    BindDao       bindDao;
+
+    BindDao bindDao;
+
+    TaskExecutor taskExecutor;
 
     @Autowired
-    public BindService(OsuGetService osuGetService, BindDao bindDao) {
+    public BindService(OsuGetService osuGetService, BindDao bindDao, TaskExecutor taskExecutor) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+        this.taskExecutor = taskExecutor;
     }
 
     @Override
@@ -154,7 +162,7 @@ public class BindService implements MessageService {
 
 
             //此处在 controller.msgController 处理
-            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
+            putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
             //---------------
 //            throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
         } else {
@@ -162,7 +170,7 @@ public class BindService implements MessageService {
             String state = event.getSender().getId() + "+" + timeMillis;
             var receipt = from.sendMessage(osuGetService.getOauthUrl(state));
             from.recallIn(receipt, 110 * 1000);
-            BIND_MSG_MAP.put(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
+            putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
         }
     }
 
@@ -183,4 +191,37 @@ public class BindService implements MessageService {
     public record Bind(Long key, MessageReceipt receipt, Long QQ) {
     }
 
+    private void putBind(Long t, Bind b) {
+        removeOldBind();
+        if (BIND_MSG_MAP.size() > 20 && !CLAER) {
+            CLAER = true;
+            taskExecutor.execute(() -> {
+                try {
+                    Thread.sleep(1000*5);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                removeOldBind();
+                CLAER = false;
+            });
+        }
+        BIND_MSG_MAP.put(t, b);
+    }
+
+    public static boolean contains(Long t) {
+        return BIND_MSG_MAP.containsKey(t);
+    }
+
+    public static Bind getBind(Long t) {
+        removeOldBind();
+        return BIND_MSG_MAP.get(t);
+    }
+
+    public static void removeBind(Long t) {
+        BIND_MSG_MAP.remove(t);
+    }
+
+    private static void removeOldBind(){
+        BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
+    }
 }
