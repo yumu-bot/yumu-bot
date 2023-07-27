@@ -3,8 +3,12 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.dao.BindDao;
 import jakarta.annotation.Resource;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.janino.ScriptEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 interface Run {
     void alive();
@@ -23,7 +31,7 @@ interface Run {
  * 统一设置定时任务
  */
 @Service
-public class RunTimeService implements SchedulingConfigurer,Run {
+public class RunTimeService implements SchedulingConfigurer, Run {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
 
     @Resource
@@ -37,6 +45,9 @@ public class RunTimeService implements SchedulingConfigurer,Run {
     @Resource
     TaskExecutor taskExecutor;
 
+    @Resource
+    ApplicationContext applicationContext;
+
     ScheduledTaskRegistrar scheduledTaskRegistrar;
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
@@ -48,7 +59,6 @@ public class RunTimeService implements SchedulingConfigurer,Run {
     }
 
     */
-
 
 
     public void sayBp1() {
@@ -157,9 +167,50 @@ public class RunTimeService implements SchedulingConfigurer,Run {
         }
     }
 
+    public void example() {
+        try {
+            var code = """
+                    jakarta.persistence.Query q = manager.createNativeQuery("$sql");
+                    Object r = q.getResultList();
+                    String data = com.now.nowbot.util.JacksonUtil.objectToJsonPretty(r);
+                    System.out.println(data);
+                    System.out.println(r.getClass().getSimpleName());
+                    """.replace("$sql", "select version();");
+            Map<Class, String> arg = Map.of(Class.forName("jakarta.persistence.EntityManager"), "manager");
+            executeCode(code, arg);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         this.scheduledTaskRegistrar = taskRegistrar;
-        taskRegistrar.addCronTask(() -> taskExecutor.execute(()->log.info("task - ccc")), "0 0/1 8-18 * * *");
+    }
+
+    public void addTask(Runnable task, String cron) {
+        scheduledTaskRegistrar.addCronTask(() -> taskExecutor.execute(task), cron);
+    }
+
+    public void executeCode(String code, Map<Class, String> autowrite) {
+        var sc = new ScriptEvaluator();
+        List<Object> args = new ArrayList<>(autowrite.size());
+        for (var entry : autowrite.entrySet()) {
+            try {
+                var bean = applicationContext.getBean(entry.getKey());
+                args.add(bean);
+            } catch (BeansException e) {
+                log.error("获取 [{}] 类型的bean出错", entry.getKey().getSimpleName());
+                args.add(null);
+            }
+        }
+        sc.setParameters(autowrite.values().toArray(new String[0]), autowrite.keySet().toArray(new Class[0]));
+        try {
+            sc.cook(code);
+            sc.evaluate(args.toArray(new Object[0]));
+        } catch (CompileException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

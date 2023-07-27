@@ -346,9 +346,9 @@ public class BotWebApi {
         w.close();
     }
 
-    @GetMapping("log-lever")
-    public String setLoggerLever(@RequestParam("l") String lever) {
-        var l = Level.toLevel(lever, Level.INFO);
+    @GetMapping("log-level")
+    public String setLoggerLever(@RequestParam("l") String level) {
+        var l = Level.toLevel(level, Level.INFO);
         ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
         log.trace("trace");
         log.debug("debug");

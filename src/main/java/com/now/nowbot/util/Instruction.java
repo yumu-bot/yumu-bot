@@ -129,6 +129,8 @@ public enum Instruction {
 
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?!\\w))+(\\s+(?<SR>[0-9.]*))?")),
+    SQL(SqlService.class,
+            Pattern.compile("^[!！]sql\\s")),
 
     DRAW(DrawService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?")),
