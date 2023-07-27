@@ -590,7 +590,7 @@ public class OsuGetService {
     }
 
     public List<Score> getBeatmapScores(long bid, OsuMode mode) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/");
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores");
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
