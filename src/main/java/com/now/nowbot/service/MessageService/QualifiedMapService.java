@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageService;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -62,8 +62,8 @@ public class QualifiedMapService implements MessageService {
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            throw new LogException("QuaMap:", e);
-            //throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
+            NowbotApplication.log.error("QuaMap", e);
+            throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }
 

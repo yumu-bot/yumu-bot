@@ -55,6 +55,8 @@ public class MapScoreListService implements MessageService {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
         }
 
+        if (beatMap == null) throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
+
         if (!(status.equals("ranked") || status.equals("qualified") || status.equals("loved"))) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotRanked);
         }
