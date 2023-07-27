@@ -32,7 +32,7 @@ public class MapScoreListService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        long bid = 0L;
+        long bid;
 
         if (matcher.group("bid") == null) throw new MapScoreListException(MapScoreListException.Type.LIST_Map_BidError);
         try {
@@ -43,19 +43,25 @@ public class MapScoreListService implements MessageService {
 
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        List<Score> scores = null;
-        BeatMap beatMap = null;
-        String status = "";
+        List<Score> scores;
+        BeatMap beatMap;
+        String status;
 
         try {
             beatMap = osuGetService.getMapInfo(bid);
-            status = beatMap.getStatus();
-            scores = osuGetService.getBeatmapScores(bid, mode);
         } catch (Exception e) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
         }
 
-        if (beatMap == null) throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
+        try {
+            status = beatMap.getStatus();
+
+            if (mode == OsuMode.DEFAULT) mode = OsuMode.getMode(beatMap.getMode());
+            scores = osuGetService.getBeatmapScores(bid, mode);
+
+        } catch (NullPointerException e) {
+            throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
+        }
 
         if (!(status.equals("ranked") || status.equals("qualified") || status.equals("loved"))) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotRanked);
