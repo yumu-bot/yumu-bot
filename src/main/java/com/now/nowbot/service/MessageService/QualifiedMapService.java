@@ -1,12 +1,13 @@
 package com.now.nowbot.service.MessageService;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.regex.Matcher;
 
 @Service("Q")
 public class QualifiedMapService implements MessageService {
+    private static final Logger log = LoggerFactory.getLogger(QualifiedMapService.class);
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -62,7 +64,8 @@ public class QualifiedMapService implements MessageService {
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            NowbotApplication.log.error("QuaMap", e);
+            // 这里要打印日志,自己创建log
+            log.error("QuaMap: ", e);
             throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }

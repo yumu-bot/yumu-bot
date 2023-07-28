@@ -11,6 +11,7 @@ import com.now.nowbot.throwable.ServiceException.MapScoreListException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class MapScoreListService implements MessageService {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_BidError);
         }
 
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        OsuMode mode;
 
         List<Score> scores;
         BeatMap beatMap;
@@ -55,7 +56,9 @@ public class MapScoreListService implements MessageService {
         }
 
         try {
-            if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
+            // Mode 新增一个默认处理,以后用这个
+//            if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
+            mode = OsuMode.getMode(matcher.group("mode"), beatMap.getMode());
             scores = osuGetService.getBeatmapScores(bid, mode);
         } catch (Exception e) {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotFound);
@@ -65,7 +68,8 @@ public class MapScoreListService implements MessageService {
             throw new MapScoreListException(MapScoreListException.Type.LIST_Map_NotRanked);
         }
 
-        if (scores.size() == 0) throw new MapScoreListException(MapScoreListException.Type.LIST_Score_NotFound);
+        // 对 可能null 以及 enmptu 的用这玩意判断
+        if (CollectionUtils.isEmpty(scores)) throw new MapScoreListException(MapScoreListException.Type.LIST_Score_NotFound);
 
         try {
             var data = imageService.getPanelA3(beatMap, scores);

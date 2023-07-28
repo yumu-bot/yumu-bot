@@ -15,6 +15,17 @@ public enum OsuMode {
         modeValue = (short) i;
     }
 
+    public static OsuMode getMode(String mode, String defaultMode) {
+        var m = getMode(defaultMode);
+        if (!DEFAULT.equals(m)) return getMode(mode, m);
+        return getMode(mode);
+    }
+    public static OsuMode getMode(String mode, OsuMode defaultMode) {
+        var m = getMode(mode);
+        if (DEFAULT.equals(m)) return defaultMode;
+        return m;
+    }
+
     public static OsuMode getMode(String desc){
         if (desc == null) return DEFAULT;
         switch (desc.toLowerCase()){
