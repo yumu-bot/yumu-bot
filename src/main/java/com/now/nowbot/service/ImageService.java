@@ -116,6 +116,14 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
+    public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("me_card_A1", userMe);
+        body.put("friend_card_A1", friendList);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A1", httpEntity);
+    }
 
     public byte[] getPanelA2(Search search) {
         HttpHeaders headers = getDefaultHeader();
@@ -652,15 +660,6 @@ public class ImageService {
         body.put("game_mode", bps.get(0).getMode());
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_J", httpEntity);
-    }
-
-    public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("me_card_A1", userMe);
-        body.put("friend_card_A1", friendList);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A1", httpEntity);
     }
 
     public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {

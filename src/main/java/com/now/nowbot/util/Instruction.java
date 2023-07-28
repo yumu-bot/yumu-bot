@@ -77,8 +77,11 @@ public enum Instruction {
     UUINFO(UUIService.class,
             Pattern.compile("^[!！]\\s*(?i)(uu)+(info|i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
+    FRIENDLEGACY(FriendLegacyService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?!\\w))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+
     FRIEND(FriendService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend|f(?!\\w))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?!\\w))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
 
     MUTUAL(MutualFriendService.class,
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
