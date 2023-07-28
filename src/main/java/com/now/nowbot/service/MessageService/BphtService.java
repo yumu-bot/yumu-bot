@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class BphtService implements MessageService {
     private static final int FONT_SIZE = 30;
 
-    private static final String TIPS = "新命令 !bpa \n\n";
+    private static final String TIPS = "请使用本功能的新设计面板 -> !bpa \n\n";
     OsuGetService osuGetService;
     BindDao       bindDao;
     ImageService  imageService;
