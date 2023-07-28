@@ -10,7 +10,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.ServiceException.PpmException;
+import com.now.nowbot.throwable.ServiceException.PPMException;
 import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
@@ -61,6 +61,8 @@ public class PPMinusService implements MessageService {
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
+                if (id == null) throw new PPMException(PPMException.Type.PPM_Player_NotFound);
+
                 user = osuGetService.getPlayerInfo(id, mode);
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
                 //默认无主模式
@@ -85,7 +87,7 @@ public class PPMinusService implements MessageService {
         }
     }
 
-    private void doVs(MessageEvent event, Matcher matcher) throws BindException, PpmException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
+    private void doVs(MessageEvent event, Matcher matcher) throws BindException, PPMException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -108,7 +110,7 @@ public class PPMinusService implements MessageService {
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
             if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
-                throw new PpmException(PpmException.Type.PPM_Me_PlayTimeTooShort);
+                throw new PPMException(PPMException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
 
@@ -124,10 +126,10 @@ public class PPMinusService implements MessageService {
             bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else {
-            throw new PpmException(PpmException.Type.PPM_Player_VSNotFound);
+            throw new PPMException(PPMException.Type.PPM_Player_VSNotFound);
         }
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
-            throw new PpmException(PpmException.Type.PPM_Player_PlayTimeTooShort);
+            throw new PPMException(PPMException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
             Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
