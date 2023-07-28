@@ -25,9 +25,10 @@ public class FriendService implements MessageService {
     ImageService imageService;
 
     @Autowired
-    public FriendService(OsuGetService osuGetService, BindDao bindDao) {
+    public FriendService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+        this.imageService = imageService;
     }
 
 
