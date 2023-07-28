@@ -70,7 +70,7 @@ public class NowbotConfig {
     @Bean
     public OkHttpClient httpClient() {
         var clientBuilder = new OkHttpClient.Builder()
-                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 19543)));
+                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
         return clientBuilder.build();
     }
 
