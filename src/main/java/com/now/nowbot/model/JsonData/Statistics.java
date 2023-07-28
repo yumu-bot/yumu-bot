@@ -256,6 +256,7 @@ public class Statistics {
         isRanked = ranked;
     }
 
+    @JsonProperty("global_rank")
     public Long getGlobalRank() {
         return globalRank;
     }
@@ -264,6 +265,7 @@ public class Statistics {
         this.globalRank = globalRank;
     }
 
+    @JsonProperty("country_rank")
     public Long getCountryRank() {
         return countryRank;
     }
