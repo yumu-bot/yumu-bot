@@ -149,7 +149,7 @@ public class MicroUser {
         this.country = country;
     }
 
-    public Statistics getStatustucs() {
+    public Statistics getStatistics() {
         return statistics;
     }
 

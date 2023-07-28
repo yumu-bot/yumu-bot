@@ -138,12 +138,12 @@ public class FriendLegacyService implements MessageService {
                 if (infoO.getIsBot()) {
                     cardO.drawB1("U" + infoO.getId()).drawC1("Bot");
                 } else {
-                    cardO.drawB2("#" + infoO.getStatustucs().getGlobalRank())
+                    cardO.drawB2("#" + infoO.getStatistics().getGlobalRank())
                             .drawB1("U" + infoO.getId())
-                            .drawC2(infoO.getStatustucs().getAccuracy(4) + "% Lv." +
-                                    infoO.getStatustucs().getLevelCurrent() +
-                                    "(" + infoO.getStatustucs().getLevelProgress() + "%)")
-                            .drawC1(Math.round(infoO.getStatustucs().getPP()) + "PP");
+                            .drawC2(infoO.getStatistics().getAccuracy(4) + "% Lv." +
+                                    infoO.getStatistics().getLevelCurrent() +
+                                    "(" + infoO.getStatistics().getLevelProgress() + "%)")
+                            .drawC1(Math.round(infoO.getStatistics().getPP()) + "PP");
                 }
                 p.addFriendCard(cardO.build());
             } catch (Exception e) {
