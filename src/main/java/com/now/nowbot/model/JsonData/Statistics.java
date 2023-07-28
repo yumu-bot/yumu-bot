@@ -272,6 +272,7 @@ public class Statistics {
         this.countryRank = countryRank;
     }
 
+    @JsonProperty("level_current")
     public Integer getLevelCurrent() {
         return levelCurrent;
     }
@@ -280,6 +281,7 @@ public class Statistics {
         this.levelCurrent = levelCurrent;
     }
 
+    @JsonProperty("level_progress")
     public Integer getLevelProgress() {
         return levelProgress;
     }
@@ -356,26 +358,32 @@ public class Statistics {
         return replaysWatchedByOthers;
     }
 
+    @JsonProperty("country_rank_7k")
     public Integer getCountryRank7K() {
         return countryRank7K;
     }
 
+    @JsonProperty("country_rank_4k")
     public Integer getCountryRank4K() {
         return countryRank4K;
     }
 
+    @JsonProperty("rank_7k")
     public Integer getRank7K() {
         return rank7K;
     }
 
+    @JsonProperty("rank_4k")
     public Integer getRank4K() {
         return rank4K;
     }
 
+    @JsonProperty("pp_7k")
     public Double getPP7K() {
         return PP7K;
     }
 
+    @JsonProperty("pp_4k")
     public Double getPP4K() {
         return PP4K;
     }
