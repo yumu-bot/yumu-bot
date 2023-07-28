@@ -70,7 +70,7 @@ public class NowbotConfig {
     @Bean
     public OkHttpClient httpClient() {
         var clientBuilder = new OkHttpClient.Builder()
-                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
+                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 19543)));
         return clientBuilder.build();
     }
 
@@ -79,8 +79,8 @@ public class NowbotConfig {
         var client = httpClient();
 
         var tempFactory = new OkHttp3ClientHttpRequestFactory(client);
-        tempFactory.setConnectTimeout(3 * 60 * 1000);
-        tempFactory.setReadTimeout(3 * 60 * 1000);
+        tempFactory.setConnectTimeout( 60 * 1000);
+        tempFactory.setReadTimeout( 60 * 1000);
         var template = new RestTemplate(tempFactory);
         template.setErrorHandler(new DefaultResponseErrorHandler() {
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
