@@ -88,7 +88,7 @@ public class BPService implements MessageService {
             var ouMe = osuGetService.getPlayerInfo(user, mode);
 
             if (m > 1) {
-                for (int i = n; i <= m; i++) rankList.add(i + 1);
+                for (int i = n; i <= (m + n); i++) rankList.add(i + 1);
                 var data = imageService.getPanelA4(ouMe, bpList, rankList);
                 QQMsgUtil.sendImage(from, data);
             } else {
