@@ -42,7 +42,7 @@ public class OneBotListener {
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
-        log.trace("收到消息[{}] -> {}", event.getSubject().getName(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
+        log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
             //功能关闭 优先级高于aop拦截

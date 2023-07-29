@@ -24,8 +24,13 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     @Override
     public String getName() {
         if (name != null) return name;
-        var data = bot.getGroupInfo(getId(), false).getData();
-        return data.getGroupName();
+        try {
+            var data = bot.getGroupInfo(getId(), false).getData();
+            return data.getGroupName();
+        } catch (Exception e) {
+            log.error("获取群名[{}]失败", getId());
+            return "unknown group";
+        }
     }
 
     @Override
