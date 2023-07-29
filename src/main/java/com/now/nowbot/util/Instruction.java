@@ -56,8 +56,11 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
 
     // b ymb ymbp :0-3 name 1-100
-    BP(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|b(p?)(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+    BP(BPService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+
+    BPLEGACY(BpShowService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bplegacy|bpl(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     TODAYBP(TodayBpService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))+(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),

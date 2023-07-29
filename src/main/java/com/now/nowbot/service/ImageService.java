@@ -142,6 +142,17 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_A3", httpEntity);
     }
+    public byte[] getPanelA4(OsuUser osuUser, List<Score> bpList, ArrayList<Integer> bpRank) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "me", osuUser,
+                "bps", bpList,
+                "rank", bpRank
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        return doPost("panel_A4", httpEntity);
+    }
 
     public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
         String STBPRE;
