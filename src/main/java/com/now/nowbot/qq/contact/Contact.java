@@ -2,10 +2,13 @@ package com.now.nowbot.qq.contact;
 
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 
 public interface Contact {
+    Logger log = LoggerFactory.getLogger(Contact.class);
     long getId();
 
     String getName();

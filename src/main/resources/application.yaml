@@ -56,6 +56,8 @@ shiro:
     max-session-idle-timeout: 900000
     # 最大文本消息缓冲区
     max-text-message-buffer-size: 512000
+  task-pool:
+    enable-task-pool: false
   group-event-filter: true
   group-event-filter-time: 1000
 
