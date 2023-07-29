@@ -49,9 +49,9 @@ public class BPService implements MessageService {
 
         if (mStr != null) {
             m = Integer.parseInt(mStr);
-            if (m <= n) m = 1;
-            else if (m > 99) m = 99 - n;
-            else m = m - n;
+            if (m <= n) throw new BPException(BPException.Type.BP_Map_RankError); //!bp 55-45
+            else if (m > 100) m = 100 - n; //!bp 45-101
+            else m = m - n;//正常
         }
 
         var from = event.getSubject();
