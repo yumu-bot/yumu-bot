@@ -57,7 +57,7 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*((?<name>[0-9a-zA-Z\\[\\]\\-_]+(?!\\w)))?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
     BPLEGACY(BpShowService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bplegacy|bpl(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
