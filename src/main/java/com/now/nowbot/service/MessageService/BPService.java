@@ -83,12 +83,12 @@ public class BPService implements MessageService {
 
         //我的构想是 tBP 也可以这么传数据，唉，那个还是交给 tBP 处理吧
         ArrayList<Integer> rankList = new ArrayList<>();
-        for (int i = n; i <= m; i++) rankList.add(i);
 
         try {
             var ouMe = osuGetService.getPlayerInfo(user, mode);
 
             if (m > 1) {
+                for (int i = n; i <= m; i++) rankList.add(i + 1);
                 var data = imageService.getPanelA4(ouMe, bpList, rankList);
                 QQMsgUtil.sendImage(from, data);
             } else {
