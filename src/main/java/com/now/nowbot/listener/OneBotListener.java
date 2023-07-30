@@ -49,7 +49,7 @@ public class OneBotListener {
             if (Permission.serviceIsClouse(ins) && !Permission.isSupper(event.getSender().getId())) continue;
 
             try {
-                Matcher matcher = ins.getRegex().matcher(event.getRawMessage());
+                Matcher matcher = ins.getRegex().matcher(event.getRawMessage().trim());
                 if (matcher.find()) {
                     var service = messageServiceMap.get(ins.getaClass());
                     service.HandleMessage(event, matcher);
