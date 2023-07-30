@@ -71,7 +71,7 @@ public class PassRecentService implements MessageService {
                         log.error("s: ", e);
                         throw new TipsException("24h内无记录");
                     }
-                    event.getSender().sendImage(img);
+                    event.getSubject().sendImage(img);
                     return;
                 }
                 user = bindDao.getUser(event.getSender().getId());
