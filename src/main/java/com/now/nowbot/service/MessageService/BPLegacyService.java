@@ -25,14 +25,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("bp-show")
-public class BpShowService implements MessageService {
+public class BPLegacyService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public BpShowService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
+    public BPLegacyService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.template = template;
