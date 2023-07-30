@@ -33,8 +33,14 @@ public class BPService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var nStr = matcher.group("n");
+        var mStr = matcher.group("m");
+        var uStr = matcher.group("name");
+
         int n;
-        if (matcher.group("n") == null) throw new BPException(BPException.Type.BP_Map_NoRank);
+        int m = 1;
+
+        if (nStr.isEmpty()) throw new BPException(BPException.Type.BP_Map_NoRank);
         try {
             n = Integer.parseInt(matcher.group("n")) - 1;
         } catch (NumberFormatException e) {
@@ -43,11 +49,8 @@ public class BPService implements MessageService {
 
         if (n < 0) n = 0;
         else if (n > 99) n = 99;
-        int m = 1;
-        var mStr = matcher.group("m");
-        var uStr = matcher.group("name");
 
-        if (mStr != null) {
+        if (!mStr.isEmpty()) {
             m = Integer.parseInt(mStr);
             if (m <= n) throw new BPException(BPException.Type.BP_Map_RankError); //!bp 55-45
             else if (m > 100) m = 100 - n; //!bp 45-101
@@ -58,7 +61,7 @@ public class BPService implements MessageService {
 
         BinUser user;
 
-        if (uStr != null) {
+        if (!uStr.isEmpty()) {
             // 这里不能用bindDao，只能从uStr获取玩家的名字
 
             try {

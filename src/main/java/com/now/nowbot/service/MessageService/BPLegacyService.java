@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("bp-show")
+@Service("BPLegacy")
 public class BPLegacyService implements MessageService {
     OsuGetService osuGetService;
     BindDao bindDao;
@@ -41,22 +41,24 @@ public class BPLegacyService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var n = Integer.parseInt(matcher.group("n")) - 1;
-        if (n < 0) n = 0; else if (n > 99) n = 99;
-        int m = 1;
+        var nStr = matcher.group("n");
         var mStr = matcher.group("m");
         var uStr = matcher.group("name");
 
-        if (mStr != null) {
+        var n = Integer.parseInt(nStr) - 1;
+        if (n < 0) n = 0; else if (n > 99) n = 99;
+        int m = 1;
+
+        if (!mStr.isEmpty()) {
             m = Integer.parseInt(mStr);
-            if (m <= n) m = 1; else if (m > 99) m = 99-n; else m = m - n;
+            if (m <= n) m = 1; else if (m > 100) m = 100 - n; else m = m - n;
         }
 
         var from = event.getSubject();
 
         BinUser user ;
 
-        if (uStr != null) {
+        if (!uStr.isEmpty()) {
             // 这里不能用bindDao，只能从uStr获取玩家的名字
             long uid = osuGetService.getOsuId(uStr);
             user = new BinUser();
@@ -75,7 +77,7 @@ public class BPLegacyService implements MessageService {
                 return;
             }
             var u = osuGetService.getPlayerInfo(user, mode);
-            if (bpList.size() == 0) {
+            if (bpList.isEmpty()) {
 
                 return;
             }
