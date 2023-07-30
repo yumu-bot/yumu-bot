@@ -38,6 +38,7 @@ public class TodayBPService implements MessageService{
         var from = event.getSubject();
         var mode = OsuMode.getMode(matcher.group("mode"));
         var name = matcher.group("name");
+        var day = matcher.group("day");
 
         List<Score> bpAllList;
         List<Score> bpList = new ArrayList<>();
@@ -73,13 +74,13 @@ public class TodayBPService implements MessageService{
         if (CollectionUtils.isEmpty(bpAllList)) throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
 
         // 时间计算
-        int day = -1;
-        if (matcher.group("day") != null){
-            day = - Integer.parseInt(matcher.group("day"));
+        int _day = -1;
+        if (day.isEmpty()){
+            _day = - Integer.parseInt(day);
         }
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(day);
+        LocalDateTime dayBefore = LocalDateTime.now().plusDays(_day);
 
-        if (day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
+        if (_day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
 
         //挑出来符合要求的
         for (int i = 0; i < bpAllList.size(); i++) {
@@ -93,7 +94,7 @@ public class TodayBPService implements MessageService{
         }
         //没有的话
         if (bpList.isEmpty()){
-            if (matcher.group("day") == null || Objects.equals(matcher.group("day"), "1")) {
+            if (day.isEmpty() || Objects.equals(day, "1")) {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H);
             } else {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod);

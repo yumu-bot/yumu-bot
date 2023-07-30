@@ -55,6 +55,8 @@ public class TBPLegacyService implements MessageService{
         var from = event.getSubject();
         var name = matcher.group("name");
         var mode = OsuMode.getMode(matcher.group("mode"));
+        var day = matcher.group("day");
+
         List<Score> bpList = null;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -79,11 +81,11 @@ public class TBPLegacyService implements MessageService{
         var lines = new ArrayList<Image>();
 
         // 时间计算
-        int dat = -1;
-        if (matcher.group("day") != null){
-            dat = - Integer.parseInt(matcher.group("day"));
+        int _day = -1;
+        if (day.isEmpty()){
+            _day = - Integer.parseInt(day);
         }
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
+        LocalDateTime dayBefore = LocalDateTime.now().plusDays(_day);
 
         //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
@@ -94,7 +96,7 @@ public class TBPLegacyService implements MessageService{
         }
         //没有的话
         if (lines.size() < 1){
-            if (matcher.group("day") == null || Objects.equals(matcher.group("day"), "1")) {
+            if (day.isEmpty() || Objects.equals(day, "1")) {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H);
             } else {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod);
