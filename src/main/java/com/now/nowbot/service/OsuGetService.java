@@ -518,7 +518,7 @@ public class OsuGetService {
         return getAllRecentN((long) userId, mode, s, e);
     }
 
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) throws JsonProcessingException {
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode){
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
