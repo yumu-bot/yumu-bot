@@ -64,10 +64,11 @@ public class PassRecentService implements MessageService {
             } else {
                 if (event.getSender().getId() == 365246692L) {
                     var mode = OsuMode.getMode(matcher.group("mode"));
-                    byte[] img = new byte[0];
+                    byte[] img;
                     try {
                         img = getSPanel(mode, isRecent);
                     } catch (RuntimeException e) {
+                        log.error("s: ", e);
                         throw new TipsException("24h内无记录");
                     }
                     event.getSender().sendImage(img);
