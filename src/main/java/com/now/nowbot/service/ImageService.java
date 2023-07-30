@@ -694,6 +694,12 @@ public class ImageService {
         return doPost("drawLine", httpEntity);
     }
 
+    public byte[] spInfo(Score s) {
+        var headers = getDefaultHeader();
+        HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
+        return doPost("spinfo", httpEntity);
+    }
+
     public byte[] drawLine(StringBuilder sb) {
         return drawLine(sb.toString().split("\n"));
     }

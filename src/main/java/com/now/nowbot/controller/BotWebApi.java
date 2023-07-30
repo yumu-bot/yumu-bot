@@ -236,7 +236,7 @@ public class BotWebApi {
         } else if (bid != null) {
             try {
                 score = osuGetService.getScore(bid, uid, mode).getScore();
-            } catch (JsonProcessingException e) {
+            } catch (Exception e) {
                 throw new RuntimeException("没打过");
             }
         } else if (Boolean.TRUE.equals(includeF)) {

@@ -4,9 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  * 线程池配置
  */
 @Component
+@EnableAsync
+@Configuration
 public class AsyncSetting implements AsyncConfigurer {
     private static final Logger log = LoggerFactory.getLogger(AsyncSetting.class);
     static private final ThreadPoolTaskExecutor threadPool;
@@ -39,7 +43,7 @@ public class AsyncSetting implements AsyncConfigurer {
         return threadPool;
     }
 
-    @Bean("mainExecutor")
+    @Bean(name = {"mainExecutor", "shiroTaskExecutor"})
     public Executor getAsyncExecutor() {
         return AsyncSetting.threadPool;
     }
