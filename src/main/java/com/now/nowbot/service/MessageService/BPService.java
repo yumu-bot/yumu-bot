@@ -82,6 +82,7 @@ public class BPService implements MessageService {
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
+        if (mode == OsuMode.DEFAULT) mode = user.getMode();
 
         var bpList = osuGetService.getBestPerformance(user, mode, n, m);
         if (bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);

@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
@@ -40,6 +41,9 @@ public class TodayBPService implements MessageService{
         var name = matcher.group("name");
         var day = matcher.group("day");
 
+        if (day == null) day = "1";
+        if (name == null) name = "";
+
         List<Score> bpAllList;
         List<Score> bpList = new ArrayList<>();
         OsuUser ouMe;
@@ -49,6 +53,7 @@ public class TodayBPService implements MessageService{
         if (at != null) {
             try {
                 var bUser = bindDao.getUser(at.getTarget());
+                if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
                 ouMe = osuGetService.getPlayerInfo(bUser, mode);
                 bpAllList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
             } catch (Exception e) {
@@ -63,9 +68,10 @@ public class TodayBPService implements MessageService{
             }
         } else {
             try {
-                var bUser = bindDao.getUser(event.getSender().getId());
-                ouMe = osuGetService.getPlayerInfo(bUser, mode);
-                bpAllList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
+                var buMe = bindDao.getUser(event.getSender().getId());
+                if (mode == OsuMode.DEFAULT) mode = buMe.getMode();
+                ouMe = osuGetService.getPlayerInfo(buMe, mode);
+                bpAllList = osuGetService.getBestPerformance(buMe, mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Me_LoseBind);
             }
@@ -75,8 +81,6 @@ public class TodayBPService implements MessageService{
 
         // 时间计算
         int _day = -1;
-
-        if (day == null) day = "1";
 
         if (!day.isEmpty()){
             _day = - Integer.parseInt(day);

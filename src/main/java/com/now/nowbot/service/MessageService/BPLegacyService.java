@@ -72,6 +72,7 @@ public class BPLegacyService implements MessageService {
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
+        if (mode == OsuMode.DEFAULT) mode = user.getMode();
 
         var bpList = osuGetService.getBestPerformance(user, mode, n, m);
 

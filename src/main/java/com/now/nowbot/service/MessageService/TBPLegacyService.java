@@ -63,6 +63,7 @@ public class TBPLegacyService implements MessageService{
         OsuUser user = null;
         if (at != null) {
             var bUser = bindDao.getUser(at.getTarget());
+            if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
             user = osuGetService.getPlayerInfo(bUser, mode);
             bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
         } else if (!name.isEmpty()) {
@@ -70,6 +71,7 @@ public class TBPLegacyService implements MessageService{
             bpList = osuGetService.getBestPerformance(user.getId(), mode, 0, 100);
         } else {
             var bUser = bindDao.getUser(event.getSender().getId());
+            if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
             user = osuGetService.getPlayerInfo(bUser, mode);
             bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
         }
