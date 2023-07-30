@@ -53,7 +53,7 @@ public class TodayBPService implements MessageService{
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_FetchFailed);
             }
-        } else if (name != null) {
+        } else if (!name.isEmpty()) {
             try {
                 ouMe = osuGetService.getPlayerInfo(name, mode);
                 bpAllList = osuGetService.getBestPerformance(ouMe.getId(), mode, 0, 100);

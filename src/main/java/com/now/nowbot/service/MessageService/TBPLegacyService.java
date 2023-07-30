@@ -60,12 +60,12 @@ public class TBPLegacyService implements MessageService{
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         OsuUser user = null;
-        String name = null;
+        String name = matcher.group("name");
         if (at != null) {
             var bUser = bindDao.getUser(at.getTarget());
             user = osuGetService.getPlayerInfo(bUser, mode);
             bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
-        } else if ((name = matcher.group("name")) != null) {
+        } else if (!name.isEmpty()) {
             user = osuGetService.getPlayerInfo(name, mode);
             bpList = osuGetService.getBestPerformance(user.getId(), mode, 0, 100);
         } else {
