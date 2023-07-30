@@ -52,15 +52,13 @@ public class TBPLegacyService implements MessageService{
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-
         var from = event.getSubject();
-
+        var name = matcher.group("name");
         var mode = OsuMode.getMode(matcher.group("mode"));
         List<Score> bpList = null;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         OsuUser user = null;
-        String name = matcher.group("name");
         if (at != null) {
             var bUser = bindDao.getUser(at.getTarget());
             user = osuGetService.getPlayerInfo(bUser, mode);
