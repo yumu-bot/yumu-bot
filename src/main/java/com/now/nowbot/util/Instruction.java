@@ -57,7 +57,7 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*((?<n>\\d+)(-(?<m>\\d+))?)?$")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$")),
 
 /*
     BP(BPService.class,
@@ -65,11 +65,11 @@ public enum Instruction {
 
  */
     BPLEGACY(BPLegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformancelegacy|bpl(?!\\w)|bl(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*((?<n>\\d+)(-(?<m>\\d+))?)?$")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformancelegacy|bpl(?!\\w)|bl(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$")),
     TODAYBP(TodayBPService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp(?!\\w)|t(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$")),
     TODAYBPLEGACY(TBPLegacyService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybplegacy|tbpl(?!\\w)|tl(?!\\w))+(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybplegacy|tbpl(?!\\w)|tl(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?(\\s*#(?<day>\\d{1,3}))?")),
 
     BPA(BPAnalysisService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?!\\w)|ba(?!\\w))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
