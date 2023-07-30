@@ -31,8 +31,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
 
-@Service("T-BP")
-public class TodayBpService implements MessageService{
+@Service("TBPLegacy")
+public class TBPLegacyService implements MessageService{
     private static final int FONT_SIZE = 30;
     private Font font;
     DecimalFormat decimalFormat = new DecimalFormat("0.00");
@@ -46,7 +46,7 @@ public class TodayBpService implements MessageService{
     BindDao bindDao;
     DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
     @Autowired
-    public TodayBpService(OsuGetService osuGetService, BindDao bindDao){
+    public TBPLegacyService(OsuGetService osuGetService, BindDao bindDao){
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
     }

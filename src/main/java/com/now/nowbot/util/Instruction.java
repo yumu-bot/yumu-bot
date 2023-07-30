@@ -57,13 +57,14 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*((?<name>[0-9a-zA-Z\\[\\]\\-_]+(?!\\w)))?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_]+(?!\\w))?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
 
-    BPLEGACY(BpShowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bplegacy|bpl(?!\\w))+\\s*([:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)\\s*#?)?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
-
-    TODAYBP(TodayBpService.class,
+    BPLEGACY(BPLegacyService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bplegacy|bpl(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_]+(?!\\w))?\\s*(?<n>\\d+)(-(?<m>\\d+))?")),
+    TODAYBP(TodayBPService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp|t(?!\\w))+(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),
+    TODAYBPLEGACY(TBPLegacyService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybplegacy|tbpl|tl(?!\\w))+(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*#(?<day>\\d{1,3}))?")),
 
     BPA(BPAnalysisService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?!\\w)|ba(?!\\w))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
