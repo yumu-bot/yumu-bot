@@ -41,6 +41,8 @@ public class BPService implements MessageService {
         int m = 1;
 
         if (nStr == null) nStr = "1";
+        if (mStr == null) mStr = "";
+        if (uStr == null) uStr = "";
 
         if (nStr.isEmpty()) throw new BPException(BPException.Type.BP_Map_NoRank);
         try {
@@ -64,8 +66,6 @@ public class BPService implements MessageService {
         BinUser user;
 
         if (!uStr.isEmpty()) {
-            // 这里不能用bindDao，只能从uStr获取玩家的名字
-
             try {
                 long uid = osuGetService.getOsuId(uStr);
                 user = new BinUser();
