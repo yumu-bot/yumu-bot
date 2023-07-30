@@ -45,6 +45,8 @@ public class BPLegacyService implements MessageService {
         var mStr = matcher.group("m");
         var uStr = matcher.group("name");
 
+        if (nStr == null) nStr = "1";
+
         var n = Integer.parseInt(nStr) - 1;
         if (n < 0) n = 0; else if (n > 99) n = 99;
         int m = 1;

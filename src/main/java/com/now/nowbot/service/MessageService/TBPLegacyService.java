@@ -82,6 +82,8 @@ public class TBPLegacyService implements MessageService{
 
         // 时间计算
         int _day = -1;
+        if (day == null) day = "1";
+
         if (!day.isEmpty()){
             _day = - Integer.parseInt(day);
         }

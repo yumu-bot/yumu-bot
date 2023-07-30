@@ -40,9 +40,11 @@ public class BPService implements MessageService {
         int n;
         int m = 1;
 
+        if (nStr == null) nStr = "1";
+
         if (nStr.isEmpty()) throw new BPException(BPException.Type.BP_Map_NoRank);
         try {
-            n = Integer.parseInt(matcher.group("n")) - 1;
+            n = Integer.parseInt(nStr) - 1;
         } catch (NumberFormatException e) {
             throw new BPException(BPException.Type.BP_Map_RankError);
         }
