@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -61,6 +62,18 @@ public class PassRecentService implements MessageService {
                 user = new BinUser();
                 user.setOsuID(osuGetService.getOsuId(matcher.group("name").trim()));
             } else {
+                if (event.getSender().getId() == 365246692L) {
+                    var mode = OsuMode.getMode(matcher.group("mode"));
+                    byte[] img;
+                    try {
+                        img = getSPanel(mode, isRecent);
+                    } catch (RuntimeException e) {
+                        log.error("s: ", e);
+                        throw new TipsException("24h内无记录");
+                    }
+                    event.getSubject().sendImage(img);
+                    return;
+                }
                 user = bindDao.getUser(event.getSender().getId());
             }
         }
@@ -85,6 +98,14 @@ public class PassRecentService implements MessageService {
             handleText(dates.get(0), isRecent, from);
         }
 
+    }
+
+    private byte[] getSPanel(OsuMode m, boolean all) {
+        var s = getDates(bindDao.getUser(365246692L), m, all);
+        if (CollectionUtils.isEmpty(s)) {
+            throw new RuntimeException("没打");
+        }
+        return imageService.spInfo(s.get(0));
     }
 
     private void handleText(Score score, boolean isAll, Contact from) throws TipsException {
