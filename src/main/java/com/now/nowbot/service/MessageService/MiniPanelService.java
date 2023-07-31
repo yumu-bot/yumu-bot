@@ -52,6 +52,9 @@ public class MiniPanelService implements MessageService {
             Score score;
             try {
                 score = osuGetService.getAllRecentN(id, mode, 0, 1).get(0);
+                var map = osuGetService.getMapInfo(score.getBeatMap().getId());
+                score.setBeatMap(map);
+                score.setBeatMapSet(map.getBeatMapSet());
             } catch (NullPointerException e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Recent_NotFound);
             }
