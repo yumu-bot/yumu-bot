@@ -11,6 +11,7 @@ import com.now.nowbot.util.SendmsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.util.Random;
 import java.util.regex.Matcher;
 
@@ -19,8 +20,9 @@ public class SwitchService implements MessageService{
     Permission permission;
     ImageService imageService;
     @Autowired
-    public SwitchService(Permission permission){
+    public SwitchService(Permission permission, ImageService imageService){
         this.permission = permission;
+        this.imageService = imageService;
     }
     @Override
     @CheckPermission(supperOnly = true)
@@ -79,7 +81,8 @@ public class SwitchService implements MessageService{
                 for (Instruction value : Instruction.values()) {
                     sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }
-                from.sendMessage(sb.toString());
+                //from.sendMessage(sb.toString());
+                QQMsgUtil.sendImage(from, imageService.drawLine(sb));
                 return;
             }
 
