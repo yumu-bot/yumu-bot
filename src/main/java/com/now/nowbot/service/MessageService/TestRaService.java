@@ -31,14 +31,14 @@ public class TestRaService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         from.sendMessage("正在处理" + matcher.group("id"));
         mo(Integer.parseInt(matcher.group("id")), -1, sb);
 
         if (from instanceof Group group) {
             try {
-                group.sendMessage(QQMsgUtil.getFilePubUrl(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv"));
-//                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
+//                group.sendMessage(QQMsgUtil.getFilePubUrl(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv"));
+                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
             }
@@ -48,7 +48,7 @@ public class TestRaService implements MessageService {
 //        AbsoluteFileFolder
     }
 
-    void mo(int id, long eventid, StringBuffer strData) {
+    public void mo(int id, long eventid, StringBuilder strData) {
         Match match = osuGetService.getMatchInfo(id);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getId()).getEvents();
