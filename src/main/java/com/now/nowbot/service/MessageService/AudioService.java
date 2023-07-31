@@ -53,39 +53,39 @@ public class AudioService implements MessageService{
         if (Objects.equals(type, "s") || Objects.equals(type, "sid")) isBid = false;
 
         URL url;
-        try {
-            if (isBid) {
-                BeatMap mapinfo;
-                try {
-                    mapinfo = osuGetService.getMapInfo(id);
-                } catch (Exception e) {
-                    throw new AudioException(AudioException.Type.SONG_Map_NotFound);
-                }
-                url = new URL("http:" + mapinfo.getBeatMapSet().getMusicUrl());
-            } else {
-                url = new URL("http://b.ppy.sh/preview/" + id + ".mp3");
-            }
-
-            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-
+        if (isBid) {
+            BeatMap mapinfo;
             try {
-                httpConn.connect();
-            } catch (ConnectException e) {
-                throw new AudioException(AudioException.Type.SONG_Connect_TimeOut);
-                //log.error("connection timed out", e);
-                //throw new TipsException("连接超时!");
+                mapinfo = osuGetService.getMapInfo(id);
+            } catch (Exception e) {
+                throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }
+            url = new URL("http:" + mapinfo.getBeatMapSet().getMusicUrl());
+        } else {
+            url = new URL("http://b.ppy.sh/preview/" + id + ".mp3");
+        }
 
-            try (InputStream cin = httpConn.getInputStream()) {
-                byte[] voicedate = cin.readAllBytes();
-                from.sendVoice(voicedate);
-            } catch (IOException e) {
-                throw new AudioException(AudioException.Type.SONG_Download_Error);
-                //log.error("voice download failed", e);
-                //throw new TipsException("下载失败!");
-            }
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
 
-            /*
+        try {
+            httpConn.connect();
+        } catch (ConnectException e) {
+            throw new AudioException(AudioException.Type.SONG_Connect_TimeOut);
+            //log.error("connection timed out", e);
+            //throw new TipsException("连接超时!");
+        }
+
+        byte[] voiceData;
+
+        try (InputStream cin = httpConn.getInputStream()) {
+            voiceData = cin.readAllBytes();
+        } catch (IOException e) {
+            throw new AudioException(AudioException.Type.SONG_Download_Error);
+            //log.error("voice download failed", e);
+            //throw new TipsException("下载失败!");
+        }
+
+        /*
             if (from instanceof AudioSupported){
                 try {
                     Audio audio = ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate));
@@ -97,10 +97,11 @@ public class AudioService implements MessageService{
             }
              */
 
+        try {
+            from.sendVoice(voiceData);
         } catch (Exception e) {
             log.error("Audio:", e);
             throw new AudioException(AudioException.Type.SONG_Send_Error);
-            //throw new LogException("song",e);
         }
     }
 }
