@@ -12,8 +12,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
-import net.mamoe.mirai.contact.MemberPermission;
-import net.mamoe.mirai.contact.NormalMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -347,7 +345,7 @@ public class Permission {
         return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
     }
 
-    public static void clouseService(Instruction i) {
+    public static void closeService(Instruction i) {
         OFF_SERVICE.add(i);
         for (String s : getServiceName(i)) {
             serviceSwitchMapper.save(new ServiceSwitchLite(s, false));

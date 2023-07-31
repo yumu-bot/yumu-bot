@@ -691,13 +691,13 @@ public class ImageService {
         Map<String, Object> body = new HashMap<>();
         body.put("strs", lines);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("drawLine", httpEntity);
+        return doPost("panel_Alpha", httpEntity);
     }
 
     public byte[] spInfo(Score s) {
         var headers = getDefaultHeader();
         HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
-        return doPost("spinfo", httpEntity);
+        return doPost("panel_Beta", httpEntity);
     }
 
     public byte[] drawLine(StringBuilder sb) {
