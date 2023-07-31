@@ -127,6 +127,9 @@ public enum Instruction {
     MONOW(MonitorNowService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
+    MINI(MiniPanelService.class,
+            Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?!\\w))|(?<ymy>y(?!\\w)))+")),
+
     MAPPOOL(MapPoolService.class,
             Pattern.compile("^[!！]\\s*(?i)map")),
 

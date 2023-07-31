@@ -694,6 +694,24 @@ public class ImageService {
         return doPost("panel_Alpha", httpEntity);
     }
 
+    public byte[] getPanelGamma(Score score) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("score", score);
+        body.put("panel", "score");
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_Gamma", httpEntity);
+    }
+
+    public byte[] getPanelGamma(OsuUser osuUser) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("user", osuUser);
+        body.put("panel", "info");
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_Gamma", httpEntity);
+    }
+
     public byte[] spInfo(Score s) {
         var headers = getDefaultHeader();
         HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
