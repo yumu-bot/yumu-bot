@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("BP")
@@ -64,6 +66,8 @@ public class BPService implements MessageService {
         var from = event.getSubject();
 
         BinUser user;
+        List<Score> bpList;
+        ArrayList<Integer> rankList = new ArrayList<>();
 
         if (!uStr.isEmpty()) {
             try {
@@ -84,11 +88,12 @@ public class BPService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT) mode = user.getMode();
 
-        var bpList = osuGetService.getBestPerformance(user, mode, n, m);
-        if (bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
-
-        //我的构想是 tBP 也可以这么传数据，唉，那个还是交给 tBP 处理吧
-        ArrayList<Integer> rankList = new ArrayList<>();
+        try {
+            bpList = osuGetService.getBestPerformance(user, mode, n, m);
+        } catch (NullPointerException e) {
+            throw new BPException(BPException.Type.BP_Player_FetchFailed);
+        }
+        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
 
         try {
             var ouMe = osuGetService.getPlayerInfo(user, mode);

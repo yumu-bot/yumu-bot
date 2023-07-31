@@ -9,7 +9,7 @@ public class BPException extends TipsException {
         BP_Map_NoRank ("请输入 BP 编号！"),
         BP_Map_RankError ("请输入正确的 BP 编号！"),
         BP_Player_NotFound("这是谁呀，小沐找不到他哦"),//查询他人_未搜到玩家
-        BP_Player_FetchFailed("获取对方的 BP 失败，请重试。\n"), //玩家_获取失败
+        BP_Player_FetchFailed("获取 BP 失败，请重试。\n"), //玩家_获取失败
         BP_Player_NoBP("该玩家根本没玩过，云玩家？"), //玩家_没有最好成绩
         BP_Send_Error("BP 发送失败。\n或者可以使用 !BPL (BP Legacy)。") //发送_发送失败
         ;//逗号分隔
