@@ -11,7 +11,6 @@ import com.now.nowbot.util.QQMsgUtil;
 //import net.mamoe.mirai.event.events.MessageEvent;
 //import net.mamoe.mirai.message.data.At;
 //************************************  com.now.nowbot.QQ.下面的, 其中At 改成AtMessage
-import net.mamoe.mirai.message.data.At;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +42,7 @@ public class BanService implements MessageService {
         int index;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if ((index = msg.indexOf("list")) != -1) {
-            if (Permission.isSupper(sendQQ)) {
+            if (Permission.isSuper(sendQQ)) {
                 Set<Long> groups = Permission.getAllW().getGroupList();
                 StringBuilder sb = new StringBuilder("白名单包含:\n");
                 for (Long id : groups) {
@@ -55,7 +54,7 @@ public class BanService implements MessageService {
 //            我都忘了这个分支是做什么的
 //            else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){}
         } else if ((index = msg.indexOf("add")) != -1) {
-            if (Permission.isSupper(sendQQ)) {
+            if (Permission.isSuper(sendQQ)) {
                 matcher = Pattern.compile("add\\s*(?<id>\\d+)").matcher(msg);
                 if (matcher.find()) {
                     var add = permission.addGroup(Long.parseLong(matcher.group("id")), true, false);

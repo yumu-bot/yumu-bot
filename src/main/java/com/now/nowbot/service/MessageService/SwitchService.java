@@ -11,7 +11,6 @@ import com.now.nowbot.util.SendmsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.util.Random;
 import java.util.regex.Matcher;
 
@@ -36,18 +35,20 @@ public class SwitchService implements MessageService{
 //            group.getSender().mute(60*60*8); 禁言
         }
         if (p1 == null) {
-            from.sendMessage("""
+            var tips = """
                     [sleep] wake/sleep <time>
                     [list] export all available service: <servicename> on/off
                     [banlist] export all operational name: ban/unban <name/"ALL"> <qq/group>
-                    
-                    """);
+                    """;
+
+            //from.sendMessage(tips);
+            QQMsgUtil.sendImage(from, imageService.drawLine(tips));
             // 等同于 case list
 
             StringBuilder sb = new StringBuilder();
-            var list = Permission.getClouseServices();
+            var list = Permission.getCloseServices();
             for (Instruction value : Instruction.values()) {
-                sb.append(list.contains(value)?"**OFF**":"**ON**").append(':').append(' ').append(value).append('\n');
+                sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             //from.sendMessage(sb.toString());
             QQMsgUtil.sendImage(from, imageService.drawLine(sb));
@@ -77,7 +78,7 @@ public class SwitchService implements MessageService{
 
             case "list" -> {
                 StringBuilder sb = new StringBuilder();
-                var list = Permission.getClouseServices();
+                var list = Permission.getCloseServices();
                 for (Instruction value : Instruction.values()) {
                     sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }

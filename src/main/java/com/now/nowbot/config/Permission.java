@@ -331,7 +331,7 @@ public class Permission {
         return group != null && ALL_W.hasGroup(group);
     }
 
-    public static boolean isSupper(Long id) {
+    public static boolean isSuper(Long id) {
         return supetList.contains(id);
     }
 
@@ -341,7 +341,7 @@ public class Permission {
      * @param i
      * @return
      */
-    public static boolean serviceIsClouse(Instruction i) {
+    public static boolean isServiceClose(Instruction i) {
         return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
     }
 
@@ -372,7 +372,7 @@ public class Permission {
      *
      * @return 所有的功能
      */
-    public static List<Instruction> getClouseServices() {
+    public static List<Instruction> getCloseServices() {
         return OFF_SERVICE.stream().toList();
     }
 

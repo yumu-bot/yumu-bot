@@ -22,7 +22,6 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 
 
@@ -46,7 +45,7 @@ public class OneBotListener {
         ASyncMessageUtil.put(event);
         for(var ins : Instruction.values()){
             //功能关闭 优先级高于aop拦截
-            if (Permission.serviceIsClouse(ins) && !Permission.isSupper(event.getSender().getId())) continue;
+            if (Permission.isServiceClose(ins) && !Permission.isSuper(event.getSender().getId())) continue;
 
             try {
                 Matcher matcher = ins.getRegex().matcher(event.getRawMessage().trim());
@@ -98,7 +97,7 @@ public class OneBotListener {
         } else if (e instanceof PermissionException) {
             log.error(e.getMessage());
         } else {
-            if (Permission.isSupper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
+            if (Permission.isSuper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
             log.error("捕捉其他异常", e);
         }
     }
