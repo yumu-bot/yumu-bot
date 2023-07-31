@@ -1,6 +1,7 @@
 package com.now.nowbot.qq.onebot.contact;
 
 import com.mikuac.shiro.core.Bot;
+import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.message.MessageChain;
@@ -65,11 +66,15 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     public void sendFile(byte[] data, String name) {
         var url = QQMsgUtil.getFileUrl(data, name);
         try {
-            DownloadFileResp rep;
-            do {
-                rep = bot.downloadFile(url).getData();
-            } while (rep.getFile() != null);
-            bot.uploadGroupFile(getId(), rep.getFile(), name);
+            ActionData<DownloadFileResp> rep = null;
+            log.info("下载文件: [{}]", url);
+            for (int i = 0; i < 5; i++) {
+                rep = bot.downloadFile(url);
+                log.info("get f[{}]", i);
+                if (rep != null) break;
+            }
+            log.info("f: {}", rep.getData().getFile());
+            bot.uploadGroupFile(getId(), rep.getData().getFile(), name);
         } catch (Exception e) {
             log.error("文件上传错误", e);
         } finally {
