@@ -35,11 +35,9 @@ public class SwitchService implements MessageService{
 //            group.getSender().mute(60*60*8); 禁言
         }
         if (p1 == null) {
-            var tips = """
-                    [sleep] wake/sleep <time>
-                    [list] export all available service: <servicename> on/off
-                    [banlist] export all operational name: ban/unban <name/"ALL"> <qq/group>
-                    """;
+            var tips = "[sleep] wake/sleep <time>" + "\n" +
+                    "[list] export all available service: <servicename> on/off" + "\n" +
+                    "[banlist] export all operational name: ban/unban <name/ALL> <qq/group>";
 
             //from.sendMessage(tips);
             QQMsgUtil.sendImage(from, imageService.drawLine(tips));
