@@ -22,6 +22,11 @@ public class MessageChain {
             msgChain.addMessage(new ImageMessage(data));
             return this;
         }
+
+        public MessageChainBuilder addVoice(byte[] data) {
+            msgChain.addMessage(new VoiceMessage(data));
+            return this;
+        }
         public MessageChainBuilder addText(String msg) {
             msgChain.addMessage(new TextMessage(msg));
             return this;

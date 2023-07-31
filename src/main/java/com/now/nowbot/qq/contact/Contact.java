@@ -37,6 +37,10 @@ public interface Contact {
         return sendMessage(new MessageChain.MessageChainBuilder().addImage(data).build());
     }
 
+    default MessageReceipt sendVoice(byte[] data) {
+        return sendMessage(new MessageChain.MessageChainBuilder().addVoice(data).build());
+    }
+
     default void recall(MessageReceipt msg){
         msg.recall();
     }
