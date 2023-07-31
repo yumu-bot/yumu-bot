@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -54,7 +55,12 @@ public class SongService implements MessageService{
                 url = new URL("http://b.ppy.sh/preview/"+id+".mp3");
             }
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.connect();
+            try {
+                httpConn.connect();
+            } catch (ConnectException e) {
+                log.error("connect err", e);
+                throw new TipsException("连接失败!");
+            }
             InputStream cin = httpConn.getInputStream();
             try {
                 byte[] voicedate = cin.readAllBytes();
