@@ -5,6 +5,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class TestRaService implements MessageService {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         from.sendMessage("正在处理" + matcher.group("id"));
         mo(Integer.parseInt(matcher.group("id")), -1, sb);
 
@@ -46,7 +47,7 @@ public class TestRaService implements MessageService {
 //        AbsoluteFileFolder
     }
 
-    void mo(int id, long eventid, StringBuffer strData) {
+    public void mo(int id, long eventid, StringBuilder strData) {
         Match match = osuGetService.getMatchInfo(id);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getId()).getEvents();
