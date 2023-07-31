@@ -1,10 +1,9 @@
 package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.LogException;
+import com.now.nowbot.throwable.ServiceException.AudioException;
 import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +15,12 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("song")
-public class SongService implements MessageService{
-    private static final Logger log = LoggerFactory.getLogger(SongService.class);
+@Service("Audio")
+public class AudioService implements MessageService{
+    private static final Logger log = LoggerFactory.getLogger(AudioService.class);
 
     @Autowired
     OsuGetService osuGetService;
@@ -31,51 +31,55 @@ public class SongService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         var from = event.getSubject();
-        BinUser user = bindDao.getUser(event.getSender().getId());
-        int id = 0;
+        //BinUser user = bindDao.getUser(event.getSender().getId());
         boolean isBid = true;
-        if (matcher.group("id") != null) {
-            id = Integer.parseInt(matcher.group("id"));
-        }else
-        if (matcher.group("bid") != null) {
-            id = Integer.parseInt(matcher.group("bid"));
-        }else
-        if (matcher.group("sid") != null) {
-            id = Integer.parseInt(matcher.group("sid"));
-            isBid = false;
+
+        var id_str = matcher.group("id");
+        var type = matcher.group("type");
+        int id;
+
+        if (id_str != null) {
+            id = Integer.parseInt(id_str);
+        } else {
+            throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+            //if (id == 0) from.sendMessage("参数为<bid>或者指定sid/bid查询bid:<bid>/sid:<sid>");
         }
-        if(id == 0) from.sendMessage("参数为<bid>或者指定sid/bid查询bid:<bid>/sid:<sid>");
+
+        if (Objects.equals(type, "s") || Objects.equals(type, "sid")) isBid = false;
 
         URL url;
         try {
-            if(isBid){
+            if (isBid) {
                 var mapinfo = osuGetService.getMapInfo(id);
                 url = new URL("http:"+mapinfo.getBeatMapSet().getMusicUrl());
-            }else {
+            } else {
                 url = new URL("http://b.ppy.sh/preview/"+id+".mp3");
             }
+
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+
             try {
                 httpConn.connect();
             } catch (ConnectException e) {
-                log.error("connect err", e);
-                throw new TipsException("连接失败!");
+                throw new AudioException(AudioException.Type.SONG_Connect_TimeOut);
+                //log.error("connection timed out", e);
+                //throw new TipsException("连接超时!");
             }
-            InputStream cin = httpConn.getInputStream();
-            try {
+
+            try (InputStream cin = httpConn.getInputStream()) {
                 byte[] voicedate = cin.readAllBytes();
                 from.sendVoice(voicedate);
             } catch (IOException e) {
-                log.error("voice download err", e);
-                throw new TipsException("下载失败!");
-            } finally {
-                cin.close();
+                throw new AudioException(AudioException.Type.SONG_Download_Error);
+                //log.error("voice download failed", e);
+                //throw new TipsException("下载失败!");
             }
+
             /*
             if (from instanceof AudioSupported){
                 try {
                     Audio audio = ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate));
-//                    from.sendMessage(audio);
+                    from.sendMessage(audio);
                 } catch (Exception e) {
                     log.error("语音上传失败",e);
                     throw new TipsException("语音上传失败,请稍后再试");
@@ -83,9 +87,10 @@ public class SongService implements MessageService{
             }
              */
 
-
         } catch (Exception e) {
-            throw new LogException("song",e);
+            log.error("Audio:", e);
+            throw new AudioException(AudioException.Type.SONG_Send_Error);
+            //throw new LogException("song",e);
         }
     }
 }
