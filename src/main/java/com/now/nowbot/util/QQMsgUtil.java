@@ -19,8 +19,10 @@ import java.util.stream.Collectors;
 
 public class QQMsgUtil {
     private static final Base64.Encoder base64Util = Base64.getEncoder();
-    private static final Map<String, ByteBuffer> FILE_DATA = new HashMap<>();
+    private static final Map<String, FileData> FILE_DATA = new HashMap<>();
     private static       QQMessageDao   qqMessageDao;
+
+    public record FileData(String name, ByteBuffer bytes) {}
 
     public static void init(QQMessageDao qqMessageDao) {
         QQMsgUtil.qqMessageDao = qqMessageDao;
@@ -63,17 +65,17 @@ public class QQMsgUtil {
         group.sendFile(data, name);
     }
 
-    public static String getFileUrl(byte[] data) {
+    public static String getFileUrl(byte[] data, String name) {
         var key = UUID.randomUUID().toString();
-        FILE_DATA.put(key, ByteBuffer.wrap(data));
+        FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
         return String.format("http://127.0.0.1:%d/pub/file/%s",NowbotConfig.PORT,key);
     }
-    public static String getFilePubUrl(byte[] data) {
+    public static String getFilePubUrl(byte[] data, String name) {
         var key = UUID.randomUUID().toString();
-        FILE_DATA.put(key, ByteBuffer.wrap(data));
+        FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
         return "https://bot.365246692.xyz/pub/file/" + key;
     }
-    public static ByteBuffer getFileData(String key) {
+    public static FileData getFileData(String key) {
         return FILE_DATA.get(key);
     }
     public static void  removeFileUrl(String url) {

@@ -5,6 +5,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.util.QQMsgUtil;
 import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,8 @@ public class TestRaService implements MessageService {
 
         if (from instanceof Group group) {
             try {
-                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
+                group.sendMessage(QQMsgUtil.getFilePubUrl(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv"));
+//                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
             }
