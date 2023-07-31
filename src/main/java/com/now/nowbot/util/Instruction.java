@@ -104,7 +104,7 @@ public enum Instruction {
 
     // #4 osu! 谱面指令
 
-    Audio(AudioService.class,
+    AUDIO(AudioService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?")),
 
     QUAMAP(QualifiedMapService.class,
