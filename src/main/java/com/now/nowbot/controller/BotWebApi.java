@@ -339,7 +339,9 @@ public class BotWebApi {
     public void downloadFile(@PathVariable("key") String key, HttpServletResponse response) throws IOException {
         var data = QQMsgUtil.getFileData(key);
         if (data == null) throw new RuntimeException("文件不存在");
+        response.reset();
         response.setContentType("application/octet-stream");
+        response.setContentLength(data.bytes().capacity());
         response.setHeader("Content-Disposition", "attachment;filename=" + data.name());
         var w = Channels.newChannel(response.getOutputStream());
         w.write(data.bytes());
