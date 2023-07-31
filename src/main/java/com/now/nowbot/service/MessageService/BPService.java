@@ -74,6 +74,7 @@ public class BPService implements MessageService {
                 long uid = osuGetService.getOsuId(uStr);
                 user = new BinUser();
                 user.setOsuID(uid);
+                user.setMode(OsuMode.DEFAULT);
             } catch (Exception e) {
                 throw new BPException(BPException.Type.BP_Player_NotFound);
             }

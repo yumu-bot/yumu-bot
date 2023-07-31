@@ -67,6 +67,7 @@ public class BPLegacyService implements MessageService {
             long uid = osuGetService.getOsuId(uStr);
             user = new BinUser();
             user.setOsuID(uid);
+            user.setMode(OsuMode.DEFAULT);
         } else {
             user = bindDao.getUser(event.getSender().getId());
         }
