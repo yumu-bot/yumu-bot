@@ -46,7 +46,7 @@ public class BindService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        if (Permission.isSupper(event.getSender().getId())) {
+        if (Permission.isSuper(event.getSender().getId())) {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
             if (matcher.group("un") != null && at != null) {
                 unbind(at.getTarget());

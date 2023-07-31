@@ -19,7 +19,7 @@ public class TestGetId implements MessageService{
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        if (Permission.isSupper(event.getSender().getId())){
+        if (Permission.isSuper(event.getSender().getId())){
             var idsStr = matcher.group("ids").split(",");
             StringBuilder sb = new StringBuilder();
             for(var idStr : idsStr){

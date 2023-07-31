@@ -92,7 +92,7 @@ public class MessageListener extends SimpleListenerHost implements MiraiListener
             } else if (e instanceof PermissionException) {
                 log.error(e.getMessage());
             } else {
-                if (Permission.isSupper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
+                if (Permission.isSuper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
                 log.error("捕捉其他异常", e);
             }
         }

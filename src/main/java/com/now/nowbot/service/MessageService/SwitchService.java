@@ -4,7 +4,9 @@ import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.util.Instruction;
+import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SendmsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,9 +17,11 @@ import java.util.regex.Matcher;
 @Service("switch")
 public class SwitchService implements MessageService{
     Permission permission;
+    ImageService imageService;
     @Autowired
-    public SwitchService(Permission permission){
+    public SwitchService(Permission permission, ImageService imageService){
         this.permission = permission;
+        this.imageService = imageService;
     }
     @Override
     @CheckPermission(supperOnly = true)
@@ -31,20 +35,21 @@ public class SwitchService implements MessageService{
 //            group.getSender().mute(60*60*8); 禁言
         }
         if (p1 == null) {
-            from.sendMessage("""
-                    [sleep] wake/sleep <time>
-                    [list] export all available service: <servicename> on/off
-                    [banlist] export all operational name: ban/unban <name/"ALL"> <qq/group>
-                    
-                    """);
+            var tips = "[sleep] wake/sleep <time>" + "\n" +
+                    "[list] export all available service: <servicename> on/off" + "\n" +
+                    "[banlist] export all operational name: ban/unban <name/ALL> <qq/group>";
+
+            //from.sendMessage(tips);
+            QQMsgUtil.sendImage(from, imageService.drawLine(tips));
             // 等同于 case list
 
             StringBuilder sb = new StringBuilder();
-            var list = Permission.getClouseServices();
+            var list = Permission.getCloseServices();
             for (Instruction value : Instruction.values()) {
                 sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
-            from.sendMessage(sb.toString());
+            //from.sendMessage(sb.toString());
+            QQMsgUtil.sendImage(from, imageService.drawLine(sb));
             return;
         }
 
@@ -71,11 +76,12 @@ public class SwitchService implements MessageService{
 
             case "list" -> {
                 StringBuilder sb = new StringBuilder();
-                var list = Permission.getClouseServices();
+                var list = Permission.getCloseServices();
                 for (Instruction value : Instruction.values()) {
                     sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }
-                from.sendMessage(sb.toString());
+                //from.sendMessage(sb.toString());
+                QQMsgUtil.sendImage(from, imageService.drawLine(sb));
                 return;
             }
 
@@ -89,23 +95,25 @@ public class SwitchService implements MessageService{
             }
         }
 
-        switch (p2.toLowerCase()){
-            case "off" -> {
-                try {
-                    var i = Instruction.valueOf(p1.toUpperCase());
-                    Permission.clouseService(i);
-                    from.sendMessage("已关闭 " + p1 + " 服务");
-                } catch (IllegalArgumentException e) {
-                    from.sendMessage("请输入正确的服务名");
+        if (p2 != null) {
+            switch (p2.toLowerCase()){
+                case "off" -> {
+                    try {
+                        var i = Instruction.valueOf(p1.toUpperCase());
+                        Permission.closeService(i);
+                        from.sendMessage("已关闭 " + p1 + " 服务");
+                    } catch (IllegalArgumentException e) {
+                        from.sendMessage("请输入正确的服务名");
+                    }
                 }
-            }
-            case "on" -> {
-                try {
-                    var i = Instruction.valueOf(p1.toUpperCase());
-                    Permission.openService(i);
-                    from.sendMessage("已启动 " + p1 + " 服务");
-                } catch (IllegalArgumentException e) {
-                    from.sendMessage("请输入正确的服务名");
+                case "on" -> {
+                    try {
+                        var i = Instruction.valueOf(p1.toUpperCase());
+                        Permission.openService(i);
+                        from.sendMessage("已启动 " + p1 + " 服务");
+                    } catch (IllegalArgumentException e) {
+                        from.sendMessage("请输入正确的服务名");
+                    }
                 }
             }
         }

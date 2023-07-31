@@ -12,8 +12,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
-import net.mamoe.mirai.contact.MemberPermission;
-import net.mamoe.mirai.contact.NormalMember;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -333,7 +331,7 @@ public class Permission {
         return group != null && ALL_W.hasGroup(group);
     }
 
-    public static boolean isSupper(Long id) {
+    public static boolean isSuper(Long id) {
         return supetList.contains(id);
     }
 
@@ -343,11 +341,11 @@ public class Permission {
      * @param i
      * @return
      */
-    public static boolean serviceIsClouse(Instruction i) {
+    public static boolean isServiceClose(Instruction i) {
         return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
     }
 
-    public static void clouseService(Instruction i) {
+    public static void closeService(Instruction i) {
         OFF_SERVICE.add(i);
         for (String s : getServiceName(i)) {
             serviceSwitchMapper.save(new ServiceSwitchLite(s, false));
@@ -374,7 +372,7 @@ public class Permission {
      *
      * @return 所有的功能
      */
-    public static List<Instruction> getClouseServices() {
+    public static List<Instruction> getCloseServices() {
         return OFF_SERVICE.stream().toList();
     }
 
