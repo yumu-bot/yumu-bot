@@ -52,15 +52,21 @@ public class PassRecentService implements MessageService {
         else throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
 
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
-        String name = matcher.group("name");
+        var name = matcher.group("name");
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        BinUser user = null;
+        BinUser user;
         if (at != null) {
             user = bindDao.getUser(at.getTarget());
         } else {
-            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+            if (name != null && !name.trim().isEmpty()) {
                 user = new BinUser();
-                user.setOsuID(osuGetService.getOsuId(matcher.group("name").trim()));
+                try {
+                    Long id;
+                    id = osuGetService.getOsuId(matcher.group("name").trim());
+                    user.setOsuID(id);
+                } catch (IllegalArgumentException e) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+                }
             } else {
                 if (event.getSender().getId() == 365246692L) {
                     var mode = OsuMode.getMode(matcher.group("mode"));
@@ -68,8 +74,9 @@ public class PassRecentService implements MessageService {
                     try {
                         img = getSPanel(mode, isRecent);
                     } catch (RuntimeException e) {
-                        log.error("s: ", e);
-                        throw new TipsException("24h内无记录");
+                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+                        //log.error("s: ", e);
+                        //throw new TipsException("24h内无记录");
                     }
                     event.getSubject().sendImage(img);
                     return;
@@ -80,35 +87,37 @@ public class PassRecentService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
-        List<Score> dates;
-        if (user.getAccessToken() != null) {
-            dates = getDates(user, mode, isRecent);
-        } else {
-            dates = getDates(user.getOsuID(), mode, isRecent);
+        List<Score> scoreList = null;
+        if (user != null && user.getAccessToken() != null) {
+            scoreList = getData(user, mode, isRecent);
+        } else if (user != null) {
+            scoreList = getData(user.getOsuID(), mode, isRecent);
         }
-        if (dates.size() == 0) {
-            throw new TipsException("24h内无记录");
+        if (scoreList != null && scoreList.isEmpty()) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
+
         try {
             var osuUser = osuGetService.getPlayerInfo(user, mode);
-            var data = imageService.getPanelE(osuUser, dates.get(0),osuGetService);
+            var data = imageService.getPanelE(osuUser, scoreList.get(0),osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            log.error("???", e);
-            handleText(dates.get(0), isRecent, from);
+            log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
+            handleText(scoreList.get(0), isRecent, from);
         }
 
     }
 
-    private byte[] getSPanel(OsuMode m, boolean all) {
-        var s = getDates(bindDao.getUser(365246692L), m, all);
+    private byte[] getSPanel(OsuMode m, boolean all) throws ScoreException {
+        var s = getData(bindDao.getUser(365246692L), m, all);
         if (CollectionUtils.isEmpty(s)) {
-            throw new RuntimeException("没打");
+            //throw new RuntimeException("没打");
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
         return imageService.spInfo(s.get(0));
     }
 
-    private void handleText(Score score, boolean isAll, Contact from) throws TipsException {
+    private void handleText(Score score, boolean isAll, Contact from) {
 
         var d = Ymp.getInstance(score);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
@@ -116,14 +125,14 @@ public class PassRecentService implements MessageService {
         from.sendMessage(new MessageChain.MessageChainBuilder().addImage(bytes).addText(d.getOut()).build());
     }
 
-    private List<Score> getDates(BinUser user, OsuMode mode, boolean isAll) {
+    private List<Score> getData(BinUser user, OsuMode mode, boolean isAll) {
         if (isAll)
             return osuGetService.getAllRecentN(user, mode, 0, 1);
         else
             return osuGetService.getRecentN(user, mode, 0, 1);
     }
 
-    private List<Score> getDates(Long id, OsuMode mode, boolean isAll) {
+    private List<Score> getData(Long id, OsuMode mode, boolean isAll) {
         if (isAll)
             return osuGetService.getAllRecentN(id, mode, 0, 1);
         else
