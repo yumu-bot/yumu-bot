@@ -6,14 +6,12 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.TipsException;
-import net.mamoe.mirai.contact.AudioSupported;
-import net.mamoe.mirai.message.data.Audio;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,8 +30,6 @@ public class SongService implements MessageService{
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         var from = event.getSubject();
-        from.sendMessage("暂时不支持发送语音");
-        if (event != null) return;
         BinUser user = bindDao.getUser(event.getSender().getId());
         int id = 0;
         boolean isBid = true;
@@ -60,7 +56,16 @@ public class SongService implements MessageService{
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
             httpConn.connect();
             InputStream cin = httpConn.getInputStream();
-            byte[] voicedate = cin.readAllBytes();
+            try {
+                byte[] voicedate = cin.readAllBytes();
+                from.sendVoice(voicedate);
+            } catch (IOException e) {
+                log.error("voice download err", e);
+                throw new TipsException("下载失败!");
+            } finally {
+                cin.close();
+            }
+            /*
             if (from instanceof AudioSupported){
                 try {
                     Audio audio = ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate));
@@ -70,7 +75,9 @@ public class SongService implements MessageService{
                     throw new TipsException("语音上传失败,请稍后再试");
                 }
             }
-            cin.close();
+             */
+
+
         } catch (Exception e) {
             throw new LogException("song",e);
         }
