@@ -67,13 +67,10 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
         var url = QQMsgUtil.getFileUrl(data, name);
         try {
             ActionData<DownloadFileResp> rep = null;
-            log.info("下载文件: [{}]", url);
             for (int i = 0; i < 5; i++) {
                 rep = bot.downloadFile(url);
-                log.info("get f[{}]", i);
                 if (rep != null) break;
             }
-            log.info("f: {}", rep.getData().getFile());
             bot.uploadGroupFile(getId(), rep.getData().getFile(), name);
         } catch (Exception e) {
             log.error("文件上传错误", e);

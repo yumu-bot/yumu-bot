@@ -37,7 +37,6 @@ public class TestRaService implements MessageService {
 
         if (from instanceof Group group) {
             try {
-                group.sendMessage(QQMsgUtil.getFilePubUrl(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv"));
                 group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
             } catch (Exception e) {
                 from.sendMessage(e.getMessage());
