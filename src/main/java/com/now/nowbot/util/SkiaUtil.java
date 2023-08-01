@@ -512,7 +512,7 @@ public class SkiaUtil {
         bpPP = y;//前 100 的bp上的 pp
 
         if (length < 100) { //如果bp没满100，那么bns直接可算得，remaining = 0
-            return (float) Math.max((playerPP - bpPP), 416.6667f);
+            return (float) Math.min((playerPP - bpPP), 416.6667f);
         } else {
 
             x /= length;
@@ -541,7 +541,7 @@ public class SkiaUtil {
             }
             int expectedX = (int) Math.floor(( - b - Math.sqrt(delta)) / (2 * a)); //找左边的零点，而且要向下取整
             if (expectedX <= 100) {
-                return (float) Math.max((playerPP - bpPP), 416.6667f); //这个预估的零点应该在很后面
+                return (float) Math.min((playerPP - bpPP), 416.6667f); //这个预估的零点应该在很后面
             }
 
             //对离散数据求和
@@ -551,7 +551,7 @@ public class SkiaUtil {
 
             bonusPP = playerPP - bpPP - remainPP;
 
-            return (float) Math.max(bonusPP, 416.6667f);
+            return (float) Math.min(bonusPP, 416.6667f);
         }
     }
 
