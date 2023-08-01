@@ -249,7 +249,7 @@ public class ImageService {
 
         double bonus = 0f;
         if (!bps.isEmpty()) {
-            var bpPPs = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
+            var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
             bonus = SkiaUtil.getBonusPP(userInfo.getPP(), bpPPs);
             // bonus = Math.max(userInfo.getPP() - bpp - SkiaUtil.getOverBP100PP(bpPPs, userInfo.getPlayCount()), 0f);
         }
@@ -674,7 +674,7 @@ public class ImageService {
         body.put("mods_attr", modsAttr);
         body.put("rank_attr", rankAttr);
         body.put("pp_raw", rawPP);
-        body.put("pp", user.getPP());
+        body.put("pp", userPP);
         body.put("game_mode", bps.get(0).getMode());
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_J", httpEntity);
