@@ -56,7 +56,7 @@ public class MiniPanelService implements MessageService {
                 var map = osuGetService.getMapInfo(score.getBeatMap().getId());
                 score.setBeatMap(map);
                 score.setBeatMapSet(map.getBeatMapSet());
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Recent_NotFound);
             }
 
@@ -70,7 +70,7 @@ public class MiniPanelService implements MessageService {
             OsuUser osuUser;
             try {
                 osuUser = osuGetService.getPlayerInfo(id, mode);
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Me_NotFound);
             }
 
