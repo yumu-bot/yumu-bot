@@ -286,6 +286,8 @@ public class BeatMapSet {
         this.availabilityInformation = availabilityInformation;
     }
 
+
+
     public void setFromDatabases(boolean fromDatabases) {
         this.fromDatabases = fromDatabases;
     }

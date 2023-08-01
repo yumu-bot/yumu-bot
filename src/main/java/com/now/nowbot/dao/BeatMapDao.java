@@ -7,7 +7,6 @@ import com.now.nowbot.mapper.MapSetMapper;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.Covers;
-import com.now.nowbot.service.OsuGetService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,6 +42,8 @@ public class BeatMapDao {
 
     public static BeatMap fromBeatmapLite(BeatmapLite map){
         var s = new BeatMap();
+        var mapSet = fromMapsetLite(map.getMapSet());
+        s.setBeatMapSet(mapSet);
         BeanUtils.copyProperties(map, s);
         return s;
     }
@@ -59,8 +60,8 @@ public class BeatMapDao {
 
     public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
         var s = new BeatMapSet();
-        s.setId(mapSet.getMapset_id());
-        s.setMapperId(mapSet.getUser_id());
+        s.setId(mapSet.getId());
+        s.setMapperId(mapSet.getMapperId());
         var cover = new Covers();
         cover.setCover(mapSet.getCover());
         cover.setCover2x(mapSet.getCover());
@@ -73,19 +74,21 @@ public class BeatMapDao {
         s.setCovers(cover);
 
         s.setNsfw(mapSet.getNsfw());
-        s.setAvailabilityDownloadDisable(mapSet.getDownload_disabled());
+        s.setAvailabilityDownloadDisable(mapSet.getAvailabilityDownloadDisable());
         s.setStoryboard(mapSet.getStoryboard());
 
-        s.setMapperId(mapSet.getUser_id());
+        s.setMapperId(mapSet.getMapperId());
         s.setCreator(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
         s.setPlayCount(mapSet.getPlayCount());
-        s.setFavourite(mapSet.getFavourite_count());
+        s.setFavourite(mapSet.getFavourite());
         s.setTitle(mapSet.getTitle());
-        s.setTitleUTF(mapSet.getTitle_unicode());
+        s.setTitleUTF(mapSet.getTitleUTF());
         s.setArtist(mapSet.getArtist());
-        s.setArtistUTF(mapSet.getArtist_unicode());
+        s.setArtistUTF(mapSet.getArtistUTF());
+        s.setLegacyUrl(mapSet.getLegacyUrl());
+        s.setMusicUrl(mapSet.getMusicUrl());
 
         s.FromDatabases();
         return s;
@@ -93,26 +96,28 @@ public class BeatMapDao {
 
     public static MapSetLite fromMapSetModel(BeatMapSet mapSet){
         var s = new MapSetLite();
-        s.setMapset_id(mapSet.getId());
+        s.setId(mapSet.getId());
         s.setCard(mapSet.getCovers().getCard2x());
         s.setCover(mapSet.getCovers().getCover2x());
         s.setList(mapSet.getCovers().getList2x());
         s.setSlimcover(mapSet.getCovers().getSlimcover2x());
 
-        s.setDownload_disabled(mapSet.getAvailabilityDownloadDisable());
+        s.setAvailabilityDownloadDisable(mapSet.getAvailabilityDownloadDisable());
         s.setNsfw(mapSet.getNsfw());
         s.setStoryboard(mapSet.getStoryboard());
+        s.setLegacyUrl(mapSet.getLegacyUrl());
+        s.setMusicUrl(mapSet.getMusicUrl());
 
-        s.setUser_id(mapSet.getMapperId());
+        s.setMapperId(mapSet.getMapperId());
         s.setCreator(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
-        s.setPlay_count(mapSet.getPlayCount());
-        s.setFavourite_count(mapSet.getFavourite());
+        s.setPlayCount(mapSet.getPlayCount());
+        s.setFavourite(mapSet.getFavourite());
         s.setTitle(mapSet.getTitle());
-        s.setTitle_unicode(mapSet.getTitleUTF());
+        s.setTitleUTF(mapSet.getTitleUTF());
         s.setArtist(mapSet.getArtist());
-        s.setArtist_unicode(mapSet.getArtistUTF());
+        s.setArtistUTF(mapSet.getArtistUTF());
 
         return s;
     }

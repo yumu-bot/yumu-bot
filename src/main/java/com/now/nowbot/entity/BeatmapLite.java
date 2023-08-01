@@ -1,5 +1,6 @@
 package com.now.nowbot.entity;
 
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.OsuMode;
 
 import jakarta.persistence.*;
@@ -32,28 +33,28 @@ public class BeatmapLite {
 
     //四维
     //accuracy值
-    private Float od;
-    private Float cs;
-    private Float ar;
+    Float od;
+    Float cs;
+    Float ar;
     //drain值
-    private Float hp;
+    Float hp;
 
-    private Float difficultyRating;
-    private Float bpm;
-    private Integer maxCombo;
+    Float difficultyRating;
+    Float bpm;
+    Integer maxCombo;
 
     //物件数
-    private Integer circles;
-    private Integer sliders;
-    private Integer spinners;
+    Integer circles;
+    Integer sliders;
+    Integer spinners;
 
     //秒
-    private Integer totalLength;
-    private Integer hitLength;
+    Integer totalLength;
+    Integer hitLength;
 
 
     //mode_init 0->osu ...
-    private Integer modeInt;
+    Integer modeInt;
     Integer ranked;
 
     @ManyToOne()
@@ -108,35 +109,35 @@ public class BeatmapLite {
         this.passcount = passcount;
     }
 
-    public Float getOd() {
+    public Float getOD() {
         return od;
     }
 
-    public void setOd(Float od) {
+    public void setOD(Float od) {
         this.od = od;
     }
 
-    public Float getCs() {
+    public Float getCS() {
         return cs;
     }
 
-    public void setCs(Float cs) {
+    public void setCS(Float cs) {
         this.cs = cs;
     }
 
-    public Float getAr() {
+    public Float getAR() {
         return ar;
     }
 
-    public void setAr(Float ar) {
+    public void setAR(Float ar) {
         this.ar = ar;
     }
 
-    public Float getHp() {
+    public Float getHP() {
         return hp;
     }
 
-    public void setHp(Float hp) {
+    public void setHP(Float hp) {
         this.hp = hp;
     }
 
@@ -212,7 +213,10 @@ public class BeatmapLite {
         this.hitLength = hitLength;
     }
 
-    public OsuMode getModeInt() {
+    public Integer getModeInt() {
+        return modeInt;
+    }
+    public OsuMode getMode() {
         return OsuMode.getMode(modeInt);
     }
 
@@ -250,5 +254,32 @@ public class BeatmapLite {
 
     public void setMapSet(MapSetLite mapSet) {
         this.mapSet = mapSet;
+    }
+
+    public BeatMap toBeatMap(){
+        var b = new BeatMap();
+        b.setId(getId());
+        b.setBeatmapsetId(getBeatmapsetId());
+        b.setConvert(getConvert());
+        b.setVersion(getVersion());
+        b.setPlaycount(getPlaycount());
+        b.setPasscount(getPasscount());
+        b.setOD(getOD());
+        b.setCS(getCS());
+        b.setAR(getAR());
+        b.setHP(getHP());
+        b.setDifficultyRating(getDifficultyRating());
+        b.setBpm(getBpm());
+        b.setMaxCombo(getMaxCombo());
+        b.setStatus(getStatus());
+        b.setCircles(getCircles());
+        b.setSliders(getSliders());
+        b.setSpinners(getSpinners());
+        b.setTotalLength(getTotalLength());
+        b.setHitLength(getHitLength());
+        b.setModeInt(getModeInt());
+        b.setUserId(getUserId());
+        b.setPlaycount(getPlaycount());
+        return b;
     }
 }

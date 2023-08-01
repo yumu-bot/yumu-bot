@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -107,6 +108,9 @@ public class BeatMap {
     }
 
     public String getMode() {
+        if (mode == null) {
+            mode = OsuMode.getMode(modeInt).getName();
+        }
         return mode;
     }
 
@@ -296,6 +300,14 @@ public class BeatMap {
 
     public void setBeatMapSet(BeatMapSet beatMapSet) {
         this.beatMapSet = beatMapSet;
+    }
+
+    public Integer getRanked() {
+        return ranked;
+    }
+
+    public void setRanked(Integer ranked) {
+        this.ranked = ranked;
     }
 
     public List<Integer> getBeatMapRatingList() {return null;}
