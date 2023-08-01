@@ -6,6 +6,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +18,43 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("Audio")
-public class AudioService implements MessageService{
+public class AudioService implements MessageService<Matcher>{
     private static final Logger log = LoggerFactory.getLogger(AudioService.class);
 
     @Autowired
     OsuGetService osuGetService;
     @Autowired
     BindDao bindDao;
+
+    Pattern reg = Instructions
+            .getRegexBuilder("[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))")
+
+            .groupStart()
+            .addDelimitColon()
+                .groupStart("type")
+                .addRegex("\\w+")
+                .groupEnd()
+            .nullable()
+            .groupEnd()
+
+            .addSplit()
+                .groupStart("id")
+                .addRegex("\\d+")
+                .groupEnd()
+            .nullable()
+
+            .build();
+    Pattern p1 = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))+\\s*([:：](?<type>\\w+))?\\s*(?<id>\\d+)?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue data) {
+        return false;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
