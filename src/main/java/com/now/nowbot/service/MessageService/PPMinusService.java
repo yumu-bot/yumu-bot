@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -60,8 +61,12 @@ public class PPMinusService implements MessageService {
             // 不包含@ 分为查自身/查他人
             if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
                 // 查他人
-                var id = osuGetService.getOsuId(matcher.group("name").trim());
-                if (id == null) throw new PPMException(PPMException.Type.PPM_Player_NotFound);
+                long id;
+                try {
+                    id = osuGetService.getOsuId(matcher.group("name").trim());
+                } catch (HttpClientErrorException e) {
+                    throw new PPMException(PPMException.Type.PPM_Player_NotFound);
+                }
 
                 user = osuGetService.getPlayerInfo(id, mode);
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
