@@ -55,7 +55,7 @@ public class PpmTaiko extends Ppm {
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
         bonus = getBonusPP(user.getPP(), bpPPs);
-        rawpp = bpPP + bonus;
+        rawpp = user.getPP() - bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;
