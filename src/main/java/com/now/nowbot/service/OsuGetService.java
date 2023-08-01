@@ -665,6 +665,15 @@ public class OsuGetService {
         return map;
     }
 
+    public BeatMap getMapInfoFromDB(long bid) {
+        try {
+            var lite = beatMapDao.getBeatMapLite(bid);
+            return BeatMapDao.fromBeatmapLite(lite);
+        } catch (Exception e) {
+            return getMapInfo(bid);
+        }
+    }
+
     public BeatmapLite getMapInfoLite(long bid) {
         try {
             return beatMapDao.getBeatMapLite(bid);

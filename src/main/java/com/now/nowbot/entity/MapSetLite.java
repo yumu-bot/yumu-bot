@@ -1,7 +1,5 @@
 package com.now.nowbot.entity;
 
-import org.hibernate.annotations.Type;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -11,14 +9,14 @@ import jakarta.persistence.*;
 public class MapSetLite {
     @Id
     @Column(name = "map_id")
-    private Integer mapset_id;
+    private Integer id;
 
     //@Lob
     @Column(columnDefinition = "TEXT")
     private String artist;
     //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String artist_unicode;
+    @Column(name = "artist_unicode", columnDefinition = "TEXT")
+    private String artistUTF;
     //四种 covers:{}
     //@Lob
     @Column(columnDefinition = "TEXT")
@@ -37,12 +35,16 @@ public class MapSetLite {
     //@Lob
     @Column(columnDefinition = "TEXT")
     private String creator;
-    private Integer favourite_count;
+    @Column(name = "favourite_count")
+    private Integer favourite;
     private Boolean nsfw;
-    private Long play_count;
+    @Column(name = "play_count")
+    private Long playCount;
     //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String preview_url;
+    @Column(name = "preview_url",columnDefinition = "TEXT")
+    private String musicUrl;
+    @Column(name = "legacy_thread_url",columnDefinition = "TEXT")
+    private String legacyUrl;
     //状态
     //@Lob
     @Column(columnDefinition = "TEXT")
@@ -51,29 +53,31 @@ public class MapSetLite {
     //@Lob
     @Column(columnDefinition = "TEXT")
     private String source;
+    @Column(columnDefinition = "TEXT")
+    private String tags;
     //@Lob
     @Column(columnDefinition = "TEXT")
     private String title;
     //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String title_unicode;
+    @Column(name = "title_unicode", columnDefinition = "TEXT")
+    private String titleUTF;
 
     //    麻婆id?
-    private Integer user_id;
+    @Column(name = "user_id")
+    private Integer mapperId;
     //有没有视频
     private Boolean storyboard;
     //是否关闭下载 一般为false true一般是版权原因下架
-    private Boolean download_disabled;
-    //是否有排名?
-    private Boolean is_scoreable;
+    @Column(name = "download_disabled")
+    private Boolean availabilityDownloadDisable;
 
 
-    public Integer getMapset_id() {
-        return mapset_id;
+    public Integer getId() {
+        return id;
     }
 
-    public void setMapset_id(Integer id) {
-        this.mapset_id = id;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getArtist() {
@@ -84,12 +88,12 @@ public class MapSetLite {
         this.artist = artist;
     }
 
-    public String getArtist_unicode() {
-        return artist_unicode;
+    public String getArtistUTF() {
+        return artistUTF;
     }
 
-    public void setArtist_unicode(String artist_unicode) {
-        this.artist_unicode = artist_unicode;
+    public void setArtistUTF(String artist_unicode) {
+        this.artistUTF = artist_unicode;
     }
 
     public String getCover() {
@@ -132,12 +136,12 @@ public class MapSetLite {
         this.creator = creator;
     }
 
-    public Integer getFavourite_count() {
-        return favourite_count;
+    public Integer getFavourite() {
+        return favourite;
     }
 
-    public void setFavourite_count(Integer favourite_count) {
-        this.favourite_count = favourite_count;
+    public void setFavourite(Integer favourite_count) {
+        this.favourite = favourite_count;
     }
 
     public Boolean getNsfw() {
@@ -149,19 +153,19 @@ public class MapSetLite {
     }
 
     public Long getPlayCount() {
-        return play_count;
+        return playCount;
     }
 
-    public void setPlay_count(Long play_count) {
-        this.play_count = play_count;
+    public void setPlayCount(Long play_count) {
+        this.playCount = play_count;
     }
 
-    public String getPreview_url() {
-        return preview_url;
+    public String getMusicUrl() {
+        return musicUrl;
     }
 
-    public void setPreview_url(String preview_url) {
-        this.preview_url = preview_url;
+    public void setMusicUrl(String musicUrl) {
+        this.musicUrl = musicUrl;
     }
 
     public String getStatus() {
@@ -188,20 +192,20 @@ public class MapSetLite {
         this.title = title;
     }
 
-    public String getTitle_unicode() {
-        return title_unicode;
+    public String getTitleUTF() {
+        return titleUTF;
     }
 
-    public void setTitle_unicode(String title_unicode) {
-        this.title_unicode = title_unicode;
+    public void setTitleUTF(String title_unicode) {
+        this.titleUTF = title_unicode;
     }
 
-    public Integer getUser_id() {
-        return user_id;
+    public Integer getMapperId() {
+        return mapperId;
     }
 
-    public void setUser_id(Integer user_id) {
-        this.user_id = user_id;
+    public void setMapperId(Integer user_id) {
+        this.mapperId = user_id;
     }
 
     public Boolean getStoryboard() {
@@ -212,11 +216,27 @@ public class MapSetLite {
         this.storyboard = video;
     }
 
-    public Boolean getDownload_disabled() {
-        return download_disabled;
+    public Boolean getAvailabilityDownloadDisable() {
+        return availabilityDownloadDisable;
     }
 
-    public void setDownload_disabled(Boolean download_disabled) {
-        this.download_disabled = download_disabled;
+    public void setAvailabilityDownloadDisable(Boolean download_disabled) {
+        this.availabilityDownloadDisable = download_disabled;
+    }
+
+    public String getLegacyUrl() {
+        return legacyUrl;
+    }
+
+    public void setLegacyUrl(String legacyUrl) {
+        this.legacyUrl = legacyUrl;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 }
