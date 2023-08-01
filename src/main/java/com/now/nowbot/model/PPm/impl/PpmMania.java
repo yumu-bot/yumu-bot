@@ -19,13 +19,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.now.nowbot.util.SkiaUtil.getBonusPP;
+
 public class PpmMania extends Ppm {
     public PpmMania(OsuUser user, List<Score> bps){
-        double [] allBpPP = new double[bps.size()];
+        double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            bpp += bp.getWeight().getPP();
-            allBpPP[i] += Math.log10(bp.getWeight().getPP())/2;
+            var bpiPP = bp.getWeight().getPP();
+            bpPP += bpiPP;
+            bpPPs[i] = bpiPP;
 
             switch (bp.getRank()){
                 case "XH", "X" -> xx++;
@@ -40,21 +43,22 @@ public class PpmMania extends Ppm {
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
-                pgr0 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
+                pgr0 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
-                pgr45 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
+                pgr45 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
-                pgr90 += 1.0*bp.getStatistics().getCountGeki()/bp.getStatistics().getCount300();
+                pgr90 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
             }
         }
-        bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-        rawpp = bpp + bonus;user.getStatistics().getPP();
+        //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
+        bonus = getBonusPP(user.getPP(), bpPPs);
+        rawpp = bpPP + bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;

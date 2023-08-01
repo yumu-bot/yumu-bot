@@ -119,13 +119,18 @@ public class J1CardBuilder extends PanelBuilder {
         String J5t = "0";
 
         //double rawPP = user.getPp() - (1000f / 2.4f * (1f - Math.pow(0.9994, user.getBeatmapSetCountPlaycounts()))); //416.6667 // 这里把ppm的 rawPP算法写个公共方法然后拿过来
-        double[] allBpPP = new double[bps.size()];
+        double[] bpPPs = new double[bps.size()];
+        double bpPP = 0f;
+
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
+            var bpiPP = bp.getWeight().getPP();
+            bpPP += bpiPP;
+            bpPPs[i] = bpiPP;
         }
-            float bonus = SkiaUtil.getOverBP100PP(allBpPP, user.getStatistics().getPlayCount());
-            double rawPP = user.getPP() - bonus;
+        //float bonus = SkiaUtil.getOverBP100PP(bpPPs, user.getStatistics().getPlayCount());
+        float bonus = SkiaUtil.getBonusPP(user.getPP(), bpPPs);
+        double rawPP = bpPP + bonus;
 
         if (user.getPlayMode() == OsuMode.MANIA) {
             J1t = String.valueOf(Math.round(user.getStatistics().getPP4K()));

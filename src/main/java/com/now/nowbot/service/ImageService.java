@@ -237,6 +237,7 @@ public class ImageService {
         var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
         var res = osuGetService.getRecentN(user, mode, 0, 3);
 
+        /*
         double bpp = 0;
 
         for (int i = 0; i < bps.size(); i++) {
@@ -244,10 +245,13 @@ public class ImageService {
             bpp += bp.getWeight().getPP();
         }
 
+         */
+
         double bonus = 0f;
-        if (bps.size() > 0) {
-            var bppps = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
-            bonus = Math.max(userInfo.getPP() - bpp - SkiaUtil.getOverBP100PP(bppps, userInfo.getPlayCount()), 0f);
+        if (!bps.isEmpty()) {
+            var bpPPs = bps.stream().map((bpInfo) -> bpInfo.getWeight().getPP()).mapToDouble(Float::doubleValue).toArray();
+            bonus = SkiaUtil.getBonusPP(userInfo.getPP(), bpPPs);
+            // bonus = Math.max(userInfo.getPP() - bpp - SkiaUtil.getOverBP100PP(bpPPs, userInfo.getPlayCount()), 0f);
         }
         var times = bps.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();

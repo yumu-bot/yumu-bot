@@ -18,13 +18,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.now.nowbot.util.SkiaUtil.getBonusPP;
+
 public class PpmCatch extends Ppm {
     public PpmCatch(OsuUser user, List<Score> bps){
-        double [] allBpPP = new double[bps.size()];
+        double [] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            bpp += bp.getWeight().getPP();
-            allBpPP[i] += Math.log10(bp.getWeight().getPP())/2;
+            var bpiPP = bp.getWeight().getPP();
+            bpPP += bpiPP;
+            bpPPs[i] = bpiPP;
 
             switch (bp.getRank()){
                 case "XH", "X" -> xx++;
@@ -49,8 +52,9 @@ public class PpmCatch extends Ppm {
                 lengv90 += bp.getBeatMap().getTotalLength();
             }
         }
-        bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-        rawpp = bpp + bonus;
+        //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
+        bonus = getBonusPP(user.getPP(), bpPPs);
+        rawpp = bpPP + bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;

@@ -31,7 +31,7 @@ public abstract class Ppm {
     protected long lengv0 = 0;
     protected long lengv45 = 0;
     protected long lengv90 = 0;
-    protected double bpp = 0;
+    protected double bpPP = 0;
     protected double rawpp = 0;
     protected double bonus = 0;
     protected int xd = 0;
@@ -125,12 +125,13 @@ public abstract class Ppm {
         out[5] = doAct.apply(value1);
         return out;
     }
+
     /**
      * 计算bonusPP
      * 算法类似于通过 正态分布 "估算"超过bp100的pp数 此方法不严谨
      */
     public static float bonusPP(double[] pp, Long pc){
-        double  bonus = 0;
+        double bonus = 0;
         double sumOxy = 0;
         double sumOx2 = 0;
         double avgX = 0;

@@ -7,12 +7,13 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.SkiaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
 @Service("t-ppm")
 public class TestPPMService implements MessageService {
@@ -90,7 +91,7 @@ public class TestPPMService implements MessageService {
         protected long lengv0 = 0;
         protected long lengv45 = 0;
         protected long lengv90 = 0;
-        protected double bpp = 0;
+        protected double bpPP = 0;
         protected double rawpp = 0;
         protected double bonus = 0;
         protected int xd = 0;
@@ -101,11 +102,12 @@ public class TestPPMService implements MessageService {
         protected int xx = 0;
         protected int notfc = 0;
         private void act(OsuUser user, List<Score> bps){
-            double[] allBpPP = new double[bps.size()];
+            double[] bpPPs = new double[bps.size()];
             for (int i = 0; i < bps.size(); i++) {
                 var bp = bps.get(i);
-                bpp += bp.getWeight().getPP();
-                allBpPP[i] += Math.log10(bp.getWeight().getPP()) / 2;
+                var bpiPP = bp.getWeight().getPP();
+                bpPP += bpiPP;
+                bpPPs[i] = bpiPP;
 
                 switch (bp.getRank()) {
                     case "XH", "X" -> xx++;
@@ -130,8 +132,9 @@ public class TestPPMService implements MessageService {
                     lengv90 += bp.getBeatMap().getTotalLength();
                 }
             }
-            bonus = SkiaUtil.getOverBP100PP(allBpPP, user.getStatistics().getPlayCount());
-            rawpp = bpp + bonus;
+            //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
+            bonus = getBonusPP(user.getPP(), bpPPs);
+            rawpp = bpPP + bonus;
 
             ppv0 /= 10;
             ppv45 /= 10;

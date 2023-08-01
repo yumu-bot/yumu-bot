@@ -482,6 +482,79 @@ public class SkiaUtil {
         return colors_int;
     }
 
+
+
+    /**
+     * 计算bonusPP
+     * 算法是二次拟合 y = ax2 + bx + c，和旧版算法差的非常远。
+     * 输入的PP数组应该是加权之前的数组。
+     */
+    public static float getBonusPP (double playerPP, double[] rawPP){
+        double bonusPP, remainPP = 0, a, b, c, bpPP, x = 0, x2 = 0, x3 = 0, x4 = 0, xy = 0, x2y = 0, y = 0;
+
+        if (rawPP == null || rawPP.length == 0d) return 0f;
+
+        int length = rawPP.length;
+
+        for (int i = 0; i < length; i++) {
+            double weight = Math.pow(0.95f, i);
+            double PP = rawPP[i] * weight;
+
+            x += i;
+            x2 += Math.pow(i, 2f);
+            x3 += Math.pow(i, 3f);
+            x4 += Math.pow(i, 4f);
+            xy += i * PP;
+            x2y += Math.pow(i, 2f) * PP;
+            y += PP;
+        }
+
+        bpPP = y;//前 100 的bp上的 pp
+
+        if (length < 100) { //如果bp没满100，那么bns直接可算得，remaining = 0
+            return (float) Math.max((playerPP - bpPP), 416.6667f);
+        } else {
+
+            x /= length;
+            x2 /= length;
+            x3 /= length;
+            x4 /= length;
+            xy /= length;
+            x2y /= length;
+            y /= length;
+
+            double a1 = xy - x * y;
+            double a2 = x3 - x * x2;
+            double a3 = x2y - x2 * y;
+            double a4 = x2 - Math.pow(x, 2f);
+            double a5 = x4 - Math.pow(x2, 2f) * x2;
+
+            //得到 y = ax2 + bx + c
+            a = ((a1 * a2) - (a3 * a4)) / (Math.pow(a2, 2f) - (a5 * a4));
+            b = (xy - (x * y) - (a * a2)) / (x2 - Math.pow(x, 2f));
+            c = y - a * x2 - b * x;
+
+            //好像不需要求导，直接找零点
+            double delta = Math.pow(b, 2f) - (4 * a * c);
+            if (delta < 0) {
+                return 0f; //不相交
+            }
+            int expectedX = (int) Math.floor(( - b - Math.sqrt(delta)) / (2 * a)); //找左边的零点，而且要向下取整
+            if (expectedX <= 100) {
+                return (float) Math.max((playerPP - bpPP), 416.6667f); //这个预估的零点应该在很后面
+            }
+
+            //对离散数据求和
+            for (int i = 100; i <= expectedX; i++) {
+                remainPP += a * Math.pow(i, 2f) + b * i + c;
+            }
+
+            bonusPP = playerPP - bpPP - remainPP;
+
+            return (float) Math.max(bonusPP, 416.6667f);
+        }
+    }
+
     /**
      * 计算bonusPP
      * 算法通过 正态分布 "估算"超过bp100的 pp，此方法不严谨
