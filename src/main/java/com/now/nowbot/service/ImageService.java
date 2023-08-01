@@ -602,7 +602,10 @@ public class ImageService {
                 })
                 .toList();
 
-        Float rawPP = bps.stream().map(s -> s.getWeight().getPP()).reduce(Float::sum).orElse(0F);
+        var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
+        var userPP = user.getPP();
+        var bonusPP = SkiaUtil.getBonusPP(userPP, bpPPs);
+        Float rawPP = (float) (userPP - bonusPP);
 
         List<attr> modsAttr;
         {
