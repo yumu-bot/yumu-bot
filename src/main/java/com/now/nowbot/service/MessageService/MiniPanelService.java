@@ -37,12 +37,13 @@ public class MiniPanelService implements MessageService {
         boolean isInfo = (matcher.group("ymy") != null);
 
         BinUser user;
-        long qqId = event.getSender().getId();
+        long qqId;
 
         try {
+            qqId = event.getSender().getId();
             user = bindDao.getUser(qqId);
-        } catch (IllegalArgumentException e) {
-            throw new MiniPanelException(MiniPanelException.Type.MINI_Me_NoBind);
+        } catch (Exception e) {
+            throw new MiniPanelException(MiniPanelException.Type.MINI_Me_LoseBind);
         }
 
         var mode = user.getMode();
