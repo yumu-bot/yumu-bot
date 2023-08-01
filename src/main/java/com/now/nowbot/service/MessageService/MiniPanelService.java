@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MiniPanelException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class MiniPanelService implements MessageService {
         try {
             qqId = event.getSender().getId();
             user = bindDao.getUser(qqId);
-        } catch (Exception e) {
+        } catch (BindException e) {
             throw new MiniPanelException(MiniPanelException.Type.MINI_Me_LoseBind);
         }
 
