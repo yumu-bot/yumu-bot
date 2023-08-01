@@ -27,8 +27,9 @@ public class PpmMania extends Ppm {
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = bp.getWeight().getPP();
+            var bprPP = bp.getPP();
             bpPP += bpiPP;
-            bpPPs[i] = bpiPP;
+            bpPPs[i] = bprPP;
 
             switch (bp.getRank()){
                 case "XH", "X" -> xx++;

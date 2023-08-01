@@ -26,8 +26,9 @@ public class PpmOsu extends Ppm {
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = bp.getWeight().getPP();
+            var bprPP = bp.getPP();
             bpPP += bpiPP;
-            bpPPs[i] = bpiPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？
+            bpPPs[i] = bprPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？
 
             switch (bp.getRank()) {
                 case "XH", "X" -> xx++;
