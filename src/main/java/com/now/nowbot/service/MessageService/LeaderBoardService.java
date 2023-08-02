@@ -87,7 +87,7 @@ public class LeaderBoardService implements MessageService {
 
         List<Score> subScores;
         if (range > scores.size()) range = scores.size();
-        subScores = scores.subList(0, range - 1);
+        subScores = scores.subList(0, range);
 
         try {
             var data = imageService.getPanelA3(beatMap, subScores);
