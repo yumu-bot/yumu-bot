@@ -111,7 +111,7 @@ public enum Instruction {
             Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?!\\w)|q(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")),
 
     LEADER(LeaderBoardService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?!\\w)|list(?!\\w)|l(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?!\\w)|list(?!\\w)|l(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?")),
 
     // #5 osu! 比赛指令
 

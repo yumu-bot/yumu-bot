@@ -34,16 +34,30 @@ public class LeaderBoardService implements MessageService {
         var from = event.getSubject();
 
         long bid;
+        int range;
 
-        if (matcher.group("bid") == null) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_BidError);
+        if (matcher.group("bid") == null) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_BidError);
         try {
             bid = Long.parseLong(matcher.group("bid"));
         } catch (NumberFormatException e) {
-            throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_BidError);
+            throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_BidError);
         }
 
-        OsuMode mode;
+        if (matcher.group("range") == null) {
+            range = 20;
+        } else {
+            try {
+                range = Integer.parseInt(matcher.group("range"));
+            } catch (NumberFormatException e) {
+                throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_RangeError);
+            }
 
+            if (range < 1) range = 1;
+            else if (range > 50) range = 50;
+        }
+
+
+        OsuMode mode;
         List<Score> scores;
         BeatMap beatMap;
         String status;
@@ -71,8 +85,12 @@ public class LeaderBoardService implements MessageService {
         // 对 可能null 以及 enmptu 的用这玩意判断
         if (CollectionUtils.isEmpty(scores)) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_NotFound);
 
+        List<Score> subScores;
+        if (range > scores.size()) range = scores.size();
+        subScores = scores.subList(0, range - 1);
+
         try {
-            var data = imageService.getPanelA3(beatMap, scores);
+            var data = imageService.getPanelA3(beatMap, subScores);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("Leader", e);
