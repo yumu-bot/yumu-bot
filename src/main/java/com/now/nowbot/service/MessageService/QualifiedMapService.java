@@ -44,9 +44,9 @@ public class QualifiedMapService implements MessageService {
             }
         }
 
-        if (range < 1 || range > 200) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
+        if (range < 1 || range > 50) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
 
-        int page = (int) (Math.floor(range / 50f) + 1);// 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
+        int page = 1; //(int) (Math.floor(range / 50f) + 1); 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
 
         var query = new HashMap<String, Object>();
         status = getStatus(status);
@@ -58,8 +58,8 @@ public class QualifiedMapService implements MessageService {
 
         try {
             var d = osuGetService.searchBeatmap(query);
+            d.setResultCount(Math.min(d.getTotal(), range));
             d.setRule(status);
-            d.setResultCount(range);
             d.sortBeatmapDiff();
             var img = imageService.getPanelA2(d);
             event.getSubject().sendImage(img);
