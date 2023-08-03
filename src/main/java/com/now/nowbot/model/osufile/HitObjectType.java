@@ -1,4 +1,4 @@
-package com.now.nowbot.model.beatmap;
+package com.now.nowbot.model.osufile;
 
 public enum HitObjectType{
     CIRCLE("circle",1),

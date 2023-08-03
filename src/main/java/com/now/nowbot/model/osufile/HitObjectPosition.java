@@ -1,13 +1,13 @@
-package com.now.nowbot.model.beatmap;
+package com.now.nowbot.model.osufile;
 
 public class HitObjectPosition extends HitObject{
-    double x;
-    double y;
+    int x;
+    int y;
     public HitObjectPosition(){
         x = 0;
         y = 0;
     }
-    public HitObjectPosition(double x,double y){
+    public HitObjectPosition(int x, int y){
         this.x = x;
         this.y = y;
     }
@@ -21,29 +21,43 @@ public class HitObjectPosition extends HitObject{
         return this.divide(this.distance());
     }
 
-    public HitObjectPosition plus(double x, double y){
+    public HitObjectPosition plus(int x, int y){
         return new HitObjectPosition(this.x + x, this.y + y);
     }
 
-    public HitObjectPosition minus(double x, double y){
+    public HitObjectPosition minus(int x, int y){
         return new HitObjectPosition(this.x - x, this.y - y);
     }
 
     public HitObjectPosition multiply(double multiplier){
-        return new HitObjectPosition(x * multiplier, y * multiplier);
+        return new HitObjectPosition((int) Math.round(x * multiplier), (int) Math.round(y * multiplier));
     }
 
     public HitObjectPosition divide(double divisor){
         if (divisor != 0) {
-            return new HitObjectPosition(x / divisor, y / divisor);
+            return new HitObjectPosition((int) Math.round(x / divisor), (int) Math.round(y / divisor));
         }
         else {
             throw new RuntimeException("除数为0");
         }
     }
-    public int getKeyColumn (double x, int key) {
-        int column = (int) Math.floor(x * key / 512f);
-        column = Math.max(Math.min(0, column), key);
-        return column;
+
+
+    public double getX() {
+        return x;
     }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+
 }
