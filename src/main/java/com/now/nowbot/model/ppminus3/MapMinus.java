@@ -8,12 +8,9 @@ public abstract class MapMinus {
 
     public static MapMinus getInstance(OsuFile file){
         MapMinus mm = null;
-        switch (file) {
-            case OsuFileMania maniaFile: mm = new MapMinusMania(maniaFile); break;
-            // ...
-            default:
-                throw new IllegalStateException("Unexpected value: " + file);
-        };
+        if (file instanceof OsuFileMania) {
+            mm = new MapMinusMania(file);
+        }
         return mm;
     }
 }
