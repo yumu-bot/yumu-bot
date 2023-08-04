@@ -54,8 +54,8 @@ public class MapMinusMania extends MapMinus{
     int map_start_time;
     int map_end_time;
 
-    public MapMinusMania(OsuMode mode, OsuFile file){
-        var data = OsuFile.getInstance(mode, file);
+    public MapMinusMania(OsuFile file){
+        var data = file;
         var hitObjects = data.getHitObjects();
 
         int key = (int) Math.floor(data.getCS());

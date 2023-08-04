@@ -1,10 +1,13 @@
 package com.now.nowbot.model.osufile;
 
+import java.io.IOException;
+
 public class OsuFileMania extends OsuFile {
 
-    public OsuFileMania(OsuFile osuFile){
+    public OsuFileMania(String file) throws IOException {
+        super(file);
         for (HitObject line : hitObjects) {
-            var column = getColumn(line.position.x, (int) Math.floor(osuFile.CS));
+            var column = getColumn(line.position.getX(), (int) Math.floor(CS));
             line.setColumn(column);
         }
     }

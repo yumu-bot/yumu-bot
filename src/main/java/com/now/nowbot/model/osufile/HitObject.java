@@ -1,5 +1,10 @@
 package com.now.nowbot.model.osufile;
 
+import com.now.nowbot.model.osufile.hitObject.HitObjectPosition;
+import com.now.nowbot.model.osufile.hitObject.HitObjectSound;
+import com.now.nowbot.model.osufile.hitObject.HitObjectType;
+import com.now.nowbot.model.osufile.hitObject.SliderAttr;
+
 public class HitObject {
     HitObjectPosition position;
     HitObjectType type;
@@ -8,6 +13,13 @@ public class HitObject {
     int end_time;
 
     int column;
+
+    /**
+     * 仅 type == Slider 时存在
+     */
+    SliderAttr sliderAttr;
+
+
 
     public HitObjectPosition getPosition() {
         return position;

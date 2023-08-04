@@ -1,4 +1,4 @@
-package com.now.nowbot.model.osufile;
+package com.now.nowbot.model.osufile.hitObject;
 
 import javax.annotation.Nullable;
 
