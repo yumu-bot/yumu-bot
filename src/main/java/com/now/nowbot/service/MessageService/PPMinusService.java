@@ -152,6 +152,22 @@ public class PPMinusService implements MessageService {
                 i.setAccessible(true);
                 i.set(ppmOther,999.99);
             }
+        } else if (userOther.getId().equals(19673275L)) {
+            Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
+            Field[] valueFiled = {
+                    clz.getDeclaredField("value1"),
+                    clz.getDeclaredField("value2"),
+                    clz.getDeclaredField("value3"),
+                    clz.getDeclaredField("value4"),
+                    clz.getDeclaredField("value5"),
+                    clz.getDeclaredField("value6"),
+                    clz.getDeclaredField("value7"),
+                    clz.getDeclaredField("value8"),
+            };
+            for (var i:valueFiled){
+                i.setAccessible(true);
+                i.set(ppmOther,0);
+            }
         }
 
         var data = imageService.getPanelB(userMe, userOther, ppmMe, ppmOther, mode);
