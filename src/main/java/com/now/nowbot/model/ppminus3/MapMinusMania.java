@@ -3,6 +3,7 @@ package com.now.nowbot.model.ppminus3;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.osufile.HitObject;
 import com.now.nowbot.model.osufile.OsuFile;
+import com.now.nowbot.model.osufile.hitObject.HitObjectType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,24 +55,34 @@ public class MapMinusMania extends MapMinus{
     int map_start_time;
     int map_end_time;
 
+    int frac_16 = 21;
+    int frac_8 = 42;
+    int frac_6 = 55;
+    int frac_4 = 83;
+    int frac_3 = 111;
+    int frac_2 = 166;
+    int calculate_unit = 5000; //一个计算元的区域（毫秒）。这其中的数据会统计到一个计算元中。
+
     public MapMinusMania(OsuFile file){
         var data = file;
         var hitObjects = data.getHitObjects();
-
         int key = (int) Math.floor(data.getCS());
+
+        //index，指示一些东西
 
         //cache
         int now_time = 0; //指示目前算到了什么地方（毫秒）
-        int calculate_unit = 5000; //一个计算元的区域（毫秒）。这其中的数据会统计到一个计算元中。
         int calculate_max = calculate_unit;
         int mid_column = -1; //指示中键的位置。4K就没中键，7K有
         int chord_count = 1;//指示此时多押的数量，1是没多押
-        double str = 0; double jac = 0; double svs = 0; double coo = 0; double spd = 0; double sta = 0; double pre;
+        double str = 0; double jak = 0; double svs = 0; double coo = 0; double spd = 0; double sta = 0; double pre = 0;
 
         double ss = 0; double js = 0; double hs = 0; double cs = 0;
         double sj = 0; double jj = 0; double hj = 0; double cj = 0;
         double bm = 0; double fa = 0; double sa = 0; double st = 0; double tp = 0; double ne = 0;
-        double hl = 0; double tr = 0; double br = 0;
+        double hl = 0; double ol = 0; double rl = 0; double sh = 0;
+        double jp = 0; double tr = 0; double br = 0;
+
         double gr = 0; double dr = 0; double sp = 0;
 
         if (key % 2 == 1) mid_column = (key - 1) / 2; //假设是7K，那么中键是3号位，左右是012和456
@@ -94,7 +105,7 @@ public class MapMinusMania extends MapMinus{
             var column = line.getColumn();
             var type = line.getType();
             var hit_time = line.getStartTime();
-            var release_time = line.getEndTime();
+            var release_time = (type == HitObjectType.LONGNOTE) ? line.getEndTime() : 0;
             int flow_direction;
 
             //导入缓存
@@ -134,7 +145,7 @@ public class MapMinusMania extends MapMinus{
 
             //多押机制，
             {
-                if (Math.abs(hit_time - now_time) > 20 || now_time == 0) { //180bpm 1/16
+                if (Math.abs(hit_time - now_time) > frac_16 || now_time == 0) {
                     var stream = calcStream(hit_time, left_hit_time, right_hit_time, left_flow_direction, right_flow_direction);
                     var jack = calcJack(hit_time, prev_hit_time);
 
@@ -174,6 +185,8 @@ public class MapMinusMania extends MapMinus{
 
                 }
             }
+            //普通结算
+
 
 
             //刷新缓存
@@ -187,17 +200,17 @@ public class MapMinusMania extends MapMinus{
     private double calcStream(int hit, int left_hit, int right_hit, int left_to, int right_to){
         double p = 0f;
         if (left_hit != 0 && left_to >= 0) {
-            p += calcFunctionNormal(hit - left_hit, 20, 1111); // 180bpm 1/3
+            p += calcFunctionNormal(hit - left_hit, frac_16, frac_3); // 180bpm 1/3
         }
         if (right_hit != 0 && right_to <= 0) {
-            p += calcFunctionNormal(hit - right_hit, 20, 1111); // 180bpm 1/3
+            p += calcFunctionNormal(hit - right_hit, frac_16, frac_3); // 180bpm 1/3
         }
 
         return p;
     }
     private double calcJack(int hit, int prev_hit){
         double p = 0f;
-        p += calcFunction1_X(hit - prev_hit, 20, 5000, 833); // 180bpm 1/4
+        p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_4); // 180bpm 1/4
         return p;
     }
 
