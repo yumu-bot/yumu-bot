@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
 import java.util.List;
 
 public class OsuFile {
@@ -50,6 +51,7 @@ public class OsuFile {
 
     /**
      * 逐行读取
+     *
      * @param read osu file
      * @throws IOException
      */
@@ -68,22 +70,20 @@ public class OsuFile {
             if (line.startsWith("[General]")) {
                 // 读取 General 块
                 parseGeneral(read);
-            }
+            } else
             if (line.startsWith("[Difficulty]")) {
                 // 读取 Difficulty 块
                 parseDifficulty(read);
-            }
+            } else
             if (line.startsWith("[TimingPoints]")) {
                 // todo
-            }
+            } else
             if (line.startsWith("[HitObjects]")) {
-                // todo
+                parseHitObject(read);
             }
 
         }
     }
-
-
 
 
     private boolean parseGeneral(BufferedReader reader) throws IOException {
@@ -142,6 +142,23 @@ public class OsuFile {
                     empty = false;
                 }
             }
+        }
+        return empty;
+    }
+
+    private boolean parseHitObject(BufferedReader reader) throws IOException {
+        boolean empty = true;
+        String line;
+        hitObjects = new LinkedList<>();
+        while ((line = reader.readLine()) != null && !line.equals("")) {
+            var entity = line.split(",");
+            if (entity.length < 3) throw new IOException("解析 [HitObjects] 错误");
+            int x = Integer.parseInt(entity[0]);
+            int y = Integer.parseInt(entity[1]);
+            int time = Integer.parseInt(entity[2]);
+
+            var obj = new HitObject(x, y, time);
+            hitObjects.add(obj);
         }
         return empty;
     }

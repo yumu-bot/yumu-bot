@@ -9,17 +9,22 @@ public class HitObject {
     HitObjectPosition position;
     HitObjectType type;
     HitObjectSound sound;
-    int start_time;
-    int end_time;
+    Integer startTime;
+    Integer endTime;
 
-    int column;
+    Integer column;
 
     /**
      * 仅 type == Slider 时存在
      */
     SliderAttr sliderAttr;
 
+    public HitObject(){}
 
+    public HitObject(int x, int y, int time){
+        position = new HitObjectPosition(x, y);
+        startTime = time;
+    }
 
     public HitObjectPosition getPosition() {
         return position;
@@ -40,16 +45,16 @@ public class HitObject {
         return sound;
     }
     public int getStartTime() {
-        return start_time;
+        return startTime;
     }
     public void setStartTime(int time) {
-        this.start_time = time;
+        this.startTime = time;
     }
     public int getEndTime() {
-        return end_time;
+        return endTime;
     }
     public void setEndTime(int time) {
-        this.end_time = time;
+        this.endTime = time;
     }
 
     public int getColumn() {
