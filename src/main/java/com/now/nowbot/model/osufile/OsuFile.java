@@ -31,6 +31,8 @@ public class OsuFile {
 
     List<HitObject> hitObjects;
 
+    List<Timing> timings;
+
     public static OsuFile getInstance() {
 //        不应该直接新建, 而是通过解析谱面创建这个对象
 //        而且 mode 由谱面文件内容 [General] Mode 确定
@@ -77,6 +79,7 @@ public class OsuFile {
             } else
             if (line.startsWith("[TimingPoints]")) {
                 // todo
+                // 用timing类
             } else
             if (line.startsWith("[HitObjects]")) {
                 parseHitObject(read);

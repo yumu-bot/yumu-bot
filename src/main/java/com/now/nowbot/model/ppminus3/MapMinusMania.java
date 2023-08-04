@@ -1,12 +1,10 @@
 package com.now.nowbot.model.ppminus3;
 
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.osufile.HitObject;
 import com.now.nowbot.model.osufile.OsuFile;
 import com.now.nowbot.model.osufile.hitObject.HitObjectType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -65,9 +63,8 @@ public class MapMinusMania extends MapMinus{
     int calculate_unit = 2500; //一个计算元的区域（毫秒）。这其中的数据会统计到一个计算元中。
 
     public MapMinusMania(OsuFile file){
-        var data = file;
-        var hitObjects = data.getHitObjects();
-        int key = (int) Math.floor(data.getCS());
+        var hitObjects = file.getHitObjects();
+        int key = (int) Math.floor(file.getCS());
 
         //index，指示一些东西
 
@@ -239,9 +236,9 @@ public class MapMinusMania extends MapMinus{
                 case LONGNOTE -> {
                     ol += calcOverlap(hit_time, release_time, left_hit_time, left_release_time, right_hit_time, right_release_time);
                     rl += calcStream(release_time, left_release_time, right_release_time); //直接使用stream算法
+                    dt += calcSpeedStream(release_time, left_release_time, right_release_time);//直接使用speed stream算法
                 }
             }
-
 
 
             //刷新现在的缓存
