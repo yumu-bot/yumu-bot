@@ -15,13 +15,17 @@ public class Timing {
 
 
     double bpm;
-
     double slider_velocity;
 
-    public Timing(int start_time, double bpm, boolean isRedLine){
+    public Timing(int start_time, Double beat_length, int meter, TimingSampleSet sample_set, int sample_parameter, int volume, boolean isRedLine, TimingEffect effect){
         this.start_time = start_time;
-        this.bpm = bpm;
+        this.beat_length = beat_length;
+        this.meter = meter;
+        this.sample_set = sample_set;
+        this.sample_parameter = sample_parameter;
+        this.volume = volume;
         this.isRedLine = isRedLine;
+        this.effect = effect;
     }
 
     public int getStartTime() {

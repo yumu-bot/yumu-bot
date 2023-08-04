@@ -1,6 +1,8 @@
 package com.now.nowbot.model.osufile;
 
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.osufile.timing.TimingEffect;
+import com.now.nowbot.model.osufile.timing.TimingSampleSet;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -78,8 +80,8 @@ public class OsuFile {
                 parseDifficulty(read);
             } else
             if (line.startsWith("[TimingPoints]")) {
-                // todo
-                // 用timing类
+                // 读取 TimingPoints 块
+                parseTiming(read);
             } else
             if (line.startsWith("[HitObjects]")) {
                 parseHitObject(read);
@@ -148,6 +150,30 @@ public class OsuFile {
         }
         return empty;
     }
+
+    private boolean parseTiming(BufferedReader reader) throws IOException {
+        boolean empty = true;
+        String line;
+        timings = new LinkedList<>();
+        while ((line = reader.readLine()) != null && !line.equals("")) {
+            var entity = line.split(",");
+            if (entity.length < 8) throw new IOException("解析 [TimingPoints] 错误");
+
+            int start_time = Integer.parseInt(entity[0]);
+            Double beat_length = Double.parseDouble(entity[1]);
+            int meter = Integer.parseInt(entity[2]); //节拍
+            TimingSampleSet sample_set = TimingSampleSet.getType(Integer.parseInt(entity[3]));
+            int sample_parameter = Integer.parseInt(entity[4]);
+            int volume = Integer.parseInt(entity[5]);
+            boolean isRedLine = Boolean.parseBoolean(entity[6]);
+            TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
+
+            var obj = new Timing(start_time, beat_length, meter, sample_set, sample_parameter, volume, isRedLine, effect);
+            timings.add(obj);
+        }
+        return empty;
+    }
+
 
     private boolean parseHitObject(BufferedReader reader) throws IOException {
         boolean empty = true;
@@ -268,6 +294,14 @@ public class OsuFile {
 
     public void setHitObjects(List<HitObject> hitObjects) {
         this.hitObjects = hitObjects;
+    }
+
+    public List<Timing> getTimings() {
+        return timings;
+    }
+
+    public void setTimings(List<Timing> hitObjects) {
+        this.timings = timings;
     }
 }
 

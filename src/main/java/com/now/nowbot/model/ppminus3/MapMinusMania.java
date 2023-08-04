@@ -64,6 +64,7 @@ public class MapMinusMania extends MapMinus{
 
     public MapMinusMania(OsuFile file){
         var hitObjects = file.getHitObjects();
+        var timings = file.getTimings();
         int key = (int) Math.floor(file.getCS());
 
         //index，指示一些东西
