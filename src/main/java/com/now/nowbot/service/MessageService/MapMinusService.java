@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -50,8 +51,30 @@ public class MapMinusService implements MessageService{
         OsuFile file = new OsuFile(fileStr);
         var mapMinus = MapMinus.getInstance(file);
 
-        List<Map<String, List<Double>>> req = null;
 
+        Map<String, Object> requestBody = new HashMap<>();
+        // 谱面信息
+        requestBody.put("beatmap", osuGetService.getMapInfoFromDB(bid));
+        // 你的其他列表
+        List<Double> stream = null; // 替换成数据,比如 xxx.toList()
+        // 如果是数组也一样,但是把 `List<Double>` 声明改成数组,list与 数组 转换成的json是一样的
+        // double[] stream = xxx;
+        requestBody.put("stream", stream);
+
+        // 其他的一样,这里用 字符串数组 举例
+        String[] huhuhu = new String[]{"huhuhu1", "huhuhu2", "huhuhu3"};
+        requestBody.put("hu", huhuhu);
+
+        /**
+         这里的requestBody 转成json就是
+         {
+         "beatmap" :{
+            //beatmap结构
+         },
+         "stream": [],
+         "hu": ["huhuhu1","huhuhu2","huhuhu3"]
+         }
+         */
 
         try {
             //var data = imageService.getPanelA3(beatMap, subScores);
