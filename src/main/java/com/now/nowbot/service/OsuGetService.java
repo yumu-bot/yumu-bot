@@ -623,8 +623,8 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public String getBitmapFile(int mapId) throws IOException {
-        return getBitmapFile(mapId, "osu");
+    public String getBeatMapFile(int mapId) throws IOException {
+        return getBeatMapFile(mapId, "osu");
     }
 
     /***
@@ -634,7 +634,7 @@ public class OsuGetService {
      * @return
      * @throws IOException
      */
-    public String getBitmapFile(int mapId, String mode) throws IOException {
+    public String getBeatMapFile(int mapId, String mode) throws IOException {
         //osu taiko mania catch
         URL url = new URL("https://osu.ppy.sh/" + mode + '/' + mapId);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -649,12 +649,12 @@ public class OsuGetService {
      * @param bid bid
      * @return
      */
-    public BeatMap getMapInfo(int bid) {
-        return getMapInfo((long) bid);
+    public BeatMap getBeatMapInfo(int bid) {
+        return getBeatMapInfo((long) bid);
     }
 
 
-    public BeatMap getMapInfo(long bid) {
+    public BeatMap getBeatMapInfo(long bid) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
@@ -670,7 +670,7 @@ public class OsuGetService {
             var lite = beatMapDao.getBeatMapLite(bid);
             return BeatMapDao.fromBeatmapLite(lite);
         } catch (Exception e) {
-            return getMapInfo(bid);
+            return getBeatMapInfo(bid);
         }
     }
 
@@ -678,7 +678,7 @@ public class OsuGetService {
         try {
             return beatMapDao.getBeatMapLite(bid);
         } catch (NullPointerException ignore) {
-            return BeatMapDao.fromBeatmapModel(getMapInfo(bid));
+            return BeatMapDao.fromBeatmapModel(getBeatMapInfo(bid));
         }
     }
 

@@ -72,6 +72,8 @@ public class MapMinusMania extends MapMinus{
         //cache
         int now_time = 0; //指示目前算到了什么地方（毫秒）
         int calculate_max = calculate_unit;
+        boolean isLeft = false; //指示左手是否有物件
+        boolean isRight = false; //指示右手是否有物件
         double str; double jak; double var; double coo; double spd; double sta; double cao; double pre = 0;
 
         double ss = 0; double js = 0; double hs = 0; double cs = 0;
@@ -151,29 +153,33 @@ public class MapMinusMania extends MapMinus{
                 }
             }
 
+            //判断当前物件在哪只手
+            if (column <= side_key - 1) isLeft = true;
+            else if (column >= key - side_key) isRight = true;
 
             //如果是新行，
             if (Math.abs(hit_time - now_time) > frac_16 || now_time == 0) {
                 //普通结算
                 var stream = calcStream(hit_time, left_hit_time, right_hit_time);
                 var jack = calcJack(hit_time, prev_hit_time);
+                boolean isTwoHand = isLeft && isRight;
 
                 switch (prev_chord) {
                     case 1 -> {
-                        ss += stream;
-                        sj += jack;
+                        ss += isTwoHand ? stream : 0.5f * stream;
+                        sj += isTwoHand ? jack : 0.5f * jack;
                     }
                     case 2 -> {
-                        js += stream;
-                        jj += jack;
+                        js += isTwoHand ? stream : 0.5f * stream;
+                        jj += isTwoHand ? jack : 0.5f * jack;
                     }
                     case 3 -> {
-                        hs += stream;
-                        hj += jack;
+                        hs += isTwoHand ? stream : 0.5f * stream;
+                        hj += isTwoHand ? jack : 0.5f * jack;
                     }
                     case 4 -> {
-                        cs += stream;
-                        cj += jack;
+                        cs += isTwoHand ? stream : 0.5f * stream;
+                        cj += isTwoHand ? jack : 0.5f * jack;
                     }
                 }
 
@@ -193,13 +199,15 @@ public class MapMinusMania extends MapMinus{
                     if (w <= frac_3) right_chord += (i + 1);
                 }
 
-                if (left_chord == 0 && right_chord == right_hand) tr += side_key;
-                else if (left_chord == left_hand && right_chord == 0) tr += side_key;
-                else tr += 0;
-
+                if ((left_chord == 0 && right_chord == right_hand)
+                        || (left_chord == left_hand && right_chord == 0)) tr += side_key;
 
                 //重置多押
                 prev_chord = 1;
+
+                //重置左右手
+                isLeft = false;
+                isRight = false;
 
                 //哈希表内容更新
                 for (int i = 0; i < key; i++) {
@@ -392,6 +400,21 @@ public class MapMinusMania extends MapMinus{
     }
 
 
+    public List<double[]> getData() {
+        List<double[]> data = new ArrayList<>();
+
+        data.add(getStream().stream().mapToDouble(v -> v).toArray());
+        data.add(getJack().stream().mapToDouble(v -> v).toArray());
+        data.add(getVariation().stream().mapToDouble(v -> v).toArray());
+        data.add(getCoordinate().stream().mapToDouble(v -> v).toArray());
+        data.add(getSpeed().stream().mapToDouble(v -> v).toArray());
+        data.add(getStamina().stream().mapToDouble(v -> v).toArray());
+        data.add(getChaotic().stream().mapToDouble(v -> v).toArray());
+        data.add(getPrecision().stream().mapToDouble(v -> v).toArray());
+
+        return data;
+    }
+
     public List<Double> getStream() {
         return stream;
     }
@@ -454,5 +477,61 @@ public class MapMinusMania extends MapMinus{
 
     public void setPrecision(List<Double> precision) {
         this.precision = precision;
+    }
+
+    public List<Double> getSingleStream() {
+        return single_stream;
+    }
+
+    public void setSingleStream(List<Double> single_stream) {
+        this.single_stream = single_stream;
+    }
+
+    public List<Double> getJumpStream() {
+        return jump_stream;
+    }
+
+    public void setJumpStream(List<Double> jump_stream) {
+        this.jump_stream = jump_stream;
+    }
+
+    public List<Double> getHandStream() {
+        return hand_stream;
+    }
+
+    public void setHandStream(List<Double> hand_stream) {
+        this.hand_stream = hand_stream;
+    }
+
+    public List<Double> getChordStream() {
+        return chord_stream;
+    }
+
+    public void setChordStream(List<Double> chord_stream) {
+        this.chord_stream = chord_stream;
+    }
+
+    public List<Double> getSingleJack() {
+        return single_jack;
+    }
+
+    public void setSingleJack(List<Double> single_jack) {
+        this.single_jack = single_jack;
+    }
+
+    public List<Double> getJumpJack() {
+        return jump_jack;
+    }
+
+    public void setHandJack(List<Double> hand_jack) {
+        this.hand_jack = hand_jack;
+    }
+
+    public List<Double> getChordJack() {
+        return chord_jack;
+    }
+
+    public void setChordJack(List<Double> chord_jack) {
+        this.chord_jack = chord_jack;
     }
 }

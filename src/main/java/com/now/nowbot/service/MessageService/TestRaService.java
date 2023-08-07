@@ -5,8 +5,6 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.utils.ExternalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -68,7 +66,7 @@ public class TestRaService implements MessageService {
                             .append(game.getBeatmap().getTotalLength()).append(',')
                             .append(Arrays.toString(game.getMods()).replaceAll(", ", "|")).append(',')
                             .append(game.getBeatmap().getId()).append(',')
-                            .append(osuGetService.getMapInfo(game.getBeatmap().getId()).getMaxCombo())
+                            .append(osuGetService.getBeatMapInfo(game.getBeatmap().getId()).getMaxCombo())
                             .append('\n');
                 } catch (Exception e) {
                     strData.append(e.getMessage()).append('\n');//.append("  error---->")

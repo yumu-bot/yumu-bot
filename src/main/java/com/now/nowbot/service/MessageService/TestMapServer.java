@@ -20,7 +20,7 @@ public class TestMapServer implements MessageService{
         String mod = matcher.group("mode");
 
 
-        var info = osuGetService.getMapInfo(bid);
+        var info = osuGetService.getBeatMapInfo(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');

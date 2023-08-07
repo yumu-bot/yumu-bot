@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,7 +82,7 @@ public class AudioService implements MessageService<Matcher>{
         if (isBid) {
             BeatMap mapinfo;
             try {
-                mapinfo = osuGetService.getMapInfo(id);
+                mapinfo = osuGetService.getBeatMapInfo(id);
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }

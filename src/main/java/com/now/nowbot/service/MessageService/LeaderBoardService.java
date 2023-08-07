@@ -63,7 +63,7 @@ public class LeaderBoardService implements MessageService {
         String status;
 
         try {
-            beatMap = osuGetService.getMapInfo(bid);
+            beatMap = osuGetService.getBeatMapInfo(bid);
             status = beatMap.getStatus();
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);

@@ -681,7 +681,7 @@ public class ImageService {
     }
 
     public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
-        var map = osuGetService.getMapInfo(score.getBeatMap().getId());
+        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
 

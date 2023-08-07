@@ -54,7 +54,7 @@ public class MiniPanelService implements MessageService {
             Score score;
             try {
                 score = osuGetService.getAllRecentN(id, mode, 0, 1).get(0);
-                var map = osuGetService.getMapInfo(score.getBeatMap().getId());
+                var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
                 score.setBeatMap(map);
                 score.setBeatMapSet(map.getBeatMapSet());
             } catch (Exception e) {
