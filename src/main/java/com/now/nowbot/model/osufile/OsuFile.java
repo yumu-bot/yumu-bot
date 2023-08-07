@@ -91,7 +91,7 @@ public class OsuFile {
     }
 
 
-    private boolean parseGeneral(BufferedReader reader) throws IOException {
+    boolean parseGeneral(BufferedReader reader) throws IOException {
         boolean empty = true;
         String line = "";
         while ((line = reader.readLine()) != null && !line.equals("")) {
@@ -113,7 +113,7 @@ public class OsuFile {
         return empty;
     }
 
-    private boolean parseDifficulty(BufferedReader reader) throws IOException {
+    boolean parseDifficulty(BufferedReader reader) throws IOException {
         boolean empty = true;
         String line = "";
         while ((line = reader.readLine()) != null && !line.equals("")) {
@@ -151,7 +151,7 @@ public class OsuFile {
         return empty;
     }
 
-    private boolean parseTiming(BufferedReader reader) throws IOException {
+    boolean parseTiming(BufferedReader reader) throws IOException {
         boolean empty = true;
         String line;
         timings = new LinkedList<>();
@@ -175,7 +175,7 @@ public class OsuFile {
     }
 
 
-    private boolean parseHitObject(BufferedReader reader) throws IOException {
+    boolean parseHitObject(BufferedReader reader) throws IOException {
         boolean empty = true;
         String line;
         hitObjects = new LinkedList<>();

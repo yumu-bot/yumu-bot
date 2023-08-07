@@ -1,5 +1,9 @@
 package com.now.nowbot.model.ppminus3;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.collect.ArrayListMultimap;
 import com.now.nowbot.model.osufile.HitObject;
 import com.now.nowbot.model.osufile.OsuFile;
 import com.now.nowbot.model.osufile.hitObject.HitObjectType;
@@ -8,47 +12,50 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true, allowGetters = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY)
 public class MapMinusMania extends MapMinus{
     // 谱面六维 + 额外二维
-    List<Double> stream = new ArrayList<>();
-    List<Double> jack = new ArrayList<>();
-    List<Double> variation = new ArrayList<>();
-    List<Double> coordinate = new ArrayList<>();
-    List<Double> speed = new ArrayList<>();
-    List<Double> stamina = new ArrayList<>();
-    List<Double> chaotic = new ArrayList<>();
-    List<Double> precision = new ArrayList<>();
+    private List<Double> stream = new ArrayList<>();
+    private List<Double> jack = new ArrayList<>();
+    private List<Double> variation = new ArrayList<>();
+    private List<Double> coordinate = new ArrayList<>();
+    private List<Double> speed = new ArrayList<>();
+    private List<Double> stamina = new ArrayList<>();
+    private List<Double> chaotic = new ArrayList<>();
+    private List<Double> precision = new ArrayList<>();
 
     //细化二十多维
-    List<Double> single_stream = new ArrayList<>();
-    List<Double> jump_stream = new ArrayList<>();
-    List<Double> hand_stream = new ArrayList<>();
-    List<Double> chord_stream = new ArrayList<>();
+    private List<Double> single_stream = new ArrayList<>();
+    private List<Double> jump_stream = new ArrayList<>();
+    private List<Double> hand_stream = new ArrayList<>();
+    private List<Double> chord_stream = new ArrayList<>();
 
-    List<Double> single_jack = new ArrayList<>();
-    List<Double> jump_jack = new ArrayList<>();
-    List<Double> hand_jack = new ArrayList<>();
-    List<Double> chord_jack = new ArrayList<>();
+    private List<Double> single_jack = new ArrayList<>();
+    private List<Double> jump_jack = new ArrayList<>();
+    private List<Double> hand_jack = new ArrayList<>();
+    private List<Double> chord_jack = new ArrayList<>();
 
-    List<Double> bump = new ArrayList<>();
-    List<Double> fast_jam = new ArrayList<>();
-    List<Double> slow_jam = new ArrayList<>();
-    List<Double> stop = new ArrayList<>();
-    List<Double> teleport = new ArrayList<>();
-    List<Double> negative = new ArrayList<>();
+    private List<Double> bump = new ArrayList<>();
+    private List<Double> fast_jam = new ArrayList<>();
+    private List<Double> slow_jam = new ArrayList<>();
+    private List<Double> stop = new ArrayList<>();
+    private List<Double> teleport = new ArrayList<>();
+    private List<Double> negative = new ArrayList<>();
 
-    List<Double> hand_lock = new ArrayList<>();
-    List<Double> overlap = new ArrayList<>();
-    List<Double> release = new ArrayList<>();
-    List<Double> shield = new ArrayList<>();
+    private List<Double> hand_lock = new ArrayList<>();
+    private List<Double> overlap = new ArrayList<>();
+    private List<Double> release = new ArrayList<>();
+    private List<Double> shield = new ArrayList<>();
 
-    List<Double> jack_speed = new ArrayList<>();
-    List<Double> trill = new ArrayList<>();
-    List<Double> burst = new ArrayList<>();
+    private List<Double> jack_speed = new ArrayList<>();
+    private List<Double> trill = new ArrayList<>();
+    private List<Double> burst = new ArrayList<>();
 
-    List<Double> grace = new ArrayList<>();
-    List<Double> delay_tail = new ArrayList<>();
-    List<Double> stream_speed = new ArrayList<>();
+    private List<Double> grace = new ArrayList<>();
+    private List<Double> delay_tail = new ArrayList<>();
+    private List<Double> stream_speed = new ArrayList<>();
 
     int map_start_time;
     int map_end_time;
@@ -98,20 +105,20 @@ public class MapMinusMania extends MapMinus{
         int prev_density = 0;//指示之前的密度（其实是累加过的
 
         //我不会用哈希表
-        HashMap<Integer, Integer> prev_hit_times = new HashMap<>(key);
-        HashMap<Integer, Integer> prev_release_times = new HashMap<>(key);
+        int[] prev_hit_times = new int[key];
+        int[] prev_release_times = new int[key];
 
         //这个哈希表是用来存一行的物件信息的
         //为什么要搞两个表呢？是因为一行可能有多个物件，这样在计算行内物件时，不会互相干扰
-        HashMap<Integer, Integer> now_hit_times = new HashMap<>(key);
-        HashMap<Integer, Integer> now_release_times = new HashMap<>(key);
+        int[] now_hit_times = new int[key];
+        int[] now_release_times = new int[key];
 
         //初始化哈希表
         for (int i = 0; i < key; i++) {
-            prev_hit_times.put(i, 0);
-            prev_release_times.put(i, 0);
-            now_hit_times.put(i, 0);
-            now_release_times.put(i, 0);
+            prev_hit_times[i] = 0;
+            prev_release_times[i] = 0;
+            now_hit_times[i] = 0;
+            now_release_times[i] = 0;
         }
 
         //hit是长条和单点头，release是滑条尾，flow是上一个最近的物件的方向，0是中间，1是左，-1是左，
@@ -123,8 +130,8 @@ public class MapMinusMania extends MapMinus{
             var release_time = (type == HitObjectType.LONGNOTE) ? line.getEndTime() : 0;
 
             //导入缓存
-            int prev_hit_time = prev_hit_times.get(column);
-            int prev_release_time = prev_release_times.get(column);
+            int prev_hit_time = prev_hit_times[column];
+            int prev_release_time = prev_release_times[column];
 
             //计算元初始化
             if (now_time == 0) calculate_max += hit_time;
@@ -138,18 +145,18 @@ public class MapMinusMania extends MapMinus{
                 if (column == 0) { //最左边
                     left_hit_time = 0;
                     left_release_time = 0;
-                    right_hit_time = prev_hit_times.get(column + 1);
-                    right_release_time = prev_release_times.get(column + 1);
-                } else if (column == key - 1) { //最右边
-                    left_hit_time = prev_hit_times.get(column - 1);
-                    left_release_time = prev_release_times.get(column - 1);
+                    right_hit_time = prev_hit_times[column + 1];
+                    right_release_time = prev_release_times[column + 1];
+                } else if (column >= key - 1) { //最右边
+                    left_hit_time = prev_hit_times[column];
+                    left_release_time = prev_release_times[column];
                     right_hit_time = 0;
                     right_release_time = 0;
                 } else {
-                    left_hit_time = prev_hit_times.get(column - 1);
-                    left_release_time = prev_release_times.get(column - 1);
-                    right_hit_time = prev_hit_times.get(column + 1);
-                    right_release_time = prev_release_times.get(column + 1);
+                    left_hit_time = prev_hit_times[column + 1];
+                    left_release_time = prev_release_times[column + 1];
+                    right_hit_time = prev_hit_times[column + 1];
+                    right_release_time = prev_release_times[column + 1];
                 }
             }
 
@@ -191,11 +198,11 @@ public class MapMinusMania extends MapMinus{
                 int right_chord = 0;
                 for (int i = 0; i < side_key; i++) {
                     left_hand += (i + 1);
-                    var v = prev_hit_times.get(i);
+                    var v = prev_hit_times[i];
                     if (v <= frac_3) left_chord += (i + 1);
 
                     right_hand += (i + 1);
-                    var w = prev_hit_times.get(i + key - side_key);
+                    var w = prev_hit_times[i + key - side_key];
                     if (w <= frac_3) right_chord += (i + 1);
                 }
 
@@ -211,17 +218,17 @@ public class MapMinusMania extends MapMinus{
 
                 //哈希表内容更新
                 for (int i = 0; i < key; i++) {
-                    var hit = now_hit_times.get(i);
-                    var release = now_release_times.get(i);
+                    var hit = now_hit_times[i];
+                    var release = now_release_times[i];
 
                     if (hit != 0) {
-                        prev_hit_times.replace(i, hit); //置换
-                        now_hit_times.replace(i, 0); //清零
+                        prev_hit_times[i] = hit; //置换
+                        now_hit_times[i] = 0; //清零
                     }
 
                     if (release != 0) {
-                        prev_release_times.replace(i, release); //置换
-                        now_release_times.replace(i, 0); //清零
+                        prev_release_times[i] = release; //置换
+                        now_release_times[i] = 0; //清零
                     }
                 }
 
@@ -252,8 +259,8 @@ public class MapMinusMania extends MapMinus{
 
             //刷新现在的缓存
             now_time = hit_time;
-            now_hit_times.replace(column, hit_time);
-            now_release_times.replace(column, release_time);
+            now_hit_times[column] = hit_time;
+            now_release_times[column] =release_time;
             
             // 如果超过了计算元，那么计算元的值清零
             if (now_time > calculate_max) {
