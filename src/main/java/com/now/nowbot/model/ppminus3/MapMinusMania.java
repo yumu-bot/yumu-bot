@@ -406,139 +406,99 @@ public class MapMinusMania extends MapMinus{
         }
     }
 
-
-    public List<double[]> getData() {
-        List<double[]> data = new ArrayList<>();
-
-        data.add(getStream().stream().mapToDouble(v -> v).toArray());
-        data.add(getJack().stream().mapToDouble(v -> v).toArray());
-        data.add(getVariation().stream().mapToDouble(v -> v).toArray());
-        data.add(getCoordinate().stream().mapToDouble(v -> v).toArray());
-        data.add(getSpeed().stream().mapToDouble(v -> v).toArray());
-        data.add(getStamina().stream().mapToDouble(v -> v).toArray());
-        data.add(getChaotic().stream().mapToDouble(v -> v).toArray());
-        data.add(getPrecision().stream().mapToDouble(v -> v).toArray());
-
-        return data;
-    }
-
-    public List<Double> getStream() {
-        return stream;
-    }
-
-    public void setStream(List<Double> stream) {
-        this.stream = stream;
-    }
-
-    public List<Double> getJack() {
-        return jack;
-    }
-
-    public void setJack(List<Double> jack) {
-        this.jack = jack;
-    }
-
-    public List<Double> getVariation() {
-        return variation;
-    }
-
-    public void setVariation(List<Double> variation) {
-        this.variation = variation;
-    }
-
-    public List<Double> getCoordinate() {
-        return coordinate;
-    }
-
-    public void setCoordinate(List<Double> coordinate) {
-        this.coordinate = coordinate;
-    }
-
-    public List<Double> getSpeed() {
-        return speed;
-    }
-
-    public void setSpeed(List<Double> speed) {
-        this.speed = speed;
-    }
-
-    public List<Double> getStamina() {
-        return stamina;
-    }
-
-    public void setStamina(List<Double> stamina) {
-        this.stamina = stamina;
-    }
-
-    public List<Double> getChaotic() {
-        return chaotic;
-    }
-
-    public void setChaotic(List<Double> chaotic) {
-        this.chaotic = chaotic;
-    }
-
-    public List<Double> getPrecision() {
-        return precision;
-    }
-
-    public void setPrecision(List<Double> precision) {
-        this.precision = precision;
-    }
-
-    public List<Double> getSingleStream() {
+    public List<Double> getSingle_stream() {
         return single_stream;
     }
 
-    public void setSingleStream(List<Double> single_stream) {
-        this.single_stream = single_stream;
-    }
-
-    public List<Double> getJumpStream() {
+    public List<Double> getJump_stream() {
         return jump_stream;
     }
 
-    public void setJumpStream(List<Double> jump_stream) {
-        this.jump_stream = jump_stream;
-    }
-
-    public List<Double> getHandStream() {
+    public List<Double> getHand_stream() {
         return hand_stream;
     }
 
-    public void setHandStream(List<Double> hand_stream) {
-        this.hand_stream = hand_stream;
-    }
-
-    public List<Double> getChordStream() {
+    public List<Double> getChord_stream() {
         return chord_stream;
     }
 
-    public void setChordStream(List<Double> chord_stream) {
-        this.chord_stream = chord_stream;
-    }
-
-    public List<Double> getSingleJack() {
+    public List<Double> getSingle_jack() {
         return single_jack;
     }
 
-    public void setSingleJack(List<Double> single_jack) {
-        this.single_jack = single_jack;
-    }
-
-    public List<Double> getJumpJack() {
+    public List<Double> getJump_jack() {
         return jump_jack;
     }
 
-    public void setHandJack(List<Double> hand_jack) {
-        this.hand_jack = hand_jack;
+    public List<Double> getHand_jack() {
+        return hand_jack;
     }
 
-    public List<Double> getChordJack() {
+    public List<Double> getChord_jack() {
         return chord_jack;
     }
 
-    public void setChordJack(List<Double> chord_jack) {
-        this.chord_jack = chord_jack;
+    public List<Double> getBump() {
+        return bump;
+    }
+
+    public List<Double> getFast_jam() {
+        return fast_jam;
+    }
+
+    public List<Double> getSlow_jam() {
+        return slow_jam;
+    }
+
+    public List<Double> getStop() {
+        return stop;
+    }
+
+    public List<Double> getTeleport() {
+        return teleport;
+    }
+
+    public List<Double> getNegative() {
+        return negative;
+    }
+
+    public List<Double> getHand_lock() {
+        return hand_lock;
+    }
+
+    public List<Double> getOverlap() {
+        return overlap;
+    }
+
+    public List<Double> getRelease() {
+        return release;
+    }
+
+    public List<Double> getShield() {
+        return shield;
+    }
+
+    public List<Double> getJack_speed() {
+        return jack_speed;
+    }
+
+    public List<Double> getTrill() {
+        return trill;
+    }
+
+    public List<Double> getBurst() {
+        return burst;
+    }
+
+    public List<Double> getGrace() {
+        return grace;
+    }
+
+    public List<Double> getDelay_tail() {
+        return delay_tail;
+    }
+
+    public List<Double> getStream_speed() {
+        return stream_speed;
     }
 }
