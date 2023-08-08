@@ -3,8 +3,8 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
 
 import java.io.IOException;
 

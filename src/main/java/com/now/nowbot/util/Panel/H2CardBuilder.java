@@ -4,7 +4,8 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.model.match.UserMatchData;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.RRect;
 
 import java.io.IOException;
 import java.util.Objects;

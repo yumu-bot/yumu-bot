@@ -1,9 +1,9 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.match.UserMatchData;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
-import org.jetbrains.skija.RRect;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
+import io.github.humbleui.types.RRect;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,8 +1,9 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
-import org.jetbrains.skija.*;
-import org.jetbrains.skija.svg.SVGDOM;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.svg.SVGDOM;
+import io.github.humbleui.types.RRect;
 
 import java.io.IOException;
 import java.io.InputStream;

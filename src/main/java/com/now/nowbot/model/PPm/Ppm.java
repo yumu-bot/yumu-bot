@@ -11,8 +11,8 @@ import com.now.nowbot.model.PPm.impl.PpmOsu;
 import com.now.nowbot.model.PPm.impl.PpmTaiko;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.Panel.PanelBuilder;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
 import org.springframework.lang.Nullable;
 
 import java.util.List;

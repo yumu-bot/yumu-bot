@@ -8,14 +8,12 @@ import com.now.nowbot.qq.message.Message;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.qq.message.ReplayMessage;
-import net.mamoe.mirai.utils.ExternalResource;
+import io.github.humbleui.skija.EncodedImageFormat;
+import io.github.humbleui.skija.Image;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.skija.EncodedImageFormat;
-import org.jetbrains.skija.Image;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class QQMsgUtil {
     private static final Base64.Encoder base64Util = Base64.getEncoder();

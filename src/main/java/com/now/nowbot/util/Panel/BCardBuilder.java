@@ -4,7 +4,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -13,7 +13,7 @@ import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.FriendPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import org.jetbrains.skija.EncodedImageFormat;
+import io.github.humbleui.skija.EncodedImageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

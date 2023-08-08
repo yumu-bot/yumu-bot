@@ -3,11 +3,9 @@ package com.now.nowbot.service.MessageService;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
-import net.mamoe.mirai.contact.Contact;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

@@ -2,7 +2,8 @@ package com.now.nowbot.skiademo;
 
 import com.now.nowbot.util.SkiaCanvasUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.*;
 
 import java.io.IOException;
 import java.nio.file.Files;

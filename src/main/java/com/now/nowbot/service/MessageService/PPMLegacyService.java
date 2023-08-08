@@ -19,9 +19,9 @@ import com.now.nowbot.util.Panel.PPMVSPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import org.jetbrains.skija.Canvas;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Surface;
+import io.github.humbleui.skija.Canvas;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Surface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,21 +185,7 @@ public class PPMLegacyService implements MessageService {
             throw new PPMException(PPMException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
-            Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
-            Field[] valueFiled = {
-                    clz.getDeclaredField("value1"),
-                    clz.getDeclaredField("value2"),
-                    clz.getDeclaredField("value3"),
-                    clz.getDeclaredField("value4"),
-                    clz.getDeclaredField("value5"),
-                    clz.getDeclaredField("value6"),
-                    clz.getDeclaredField("value7"),
-                    clz.getDeclaredField("value8"),
-            };
-            for (var i:valueFiled){
-                i.setAccessible(true);
-                i.set(ppmOther,999.99);
-            }
+            PPMinusService.setUser(ppmOther, 999.99f);
         }
 
         //背景绘制

@@ -22,15 +22,6 @@
     </properties>
     <repositories>
         <repository>
-            <id>space-maven</id>
-            <name>skija</name>
-            <url>https://packages.jetbrains.team/maven/p/skija/maven/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
             <id>yoava</id>
             <name>AOL yoava</name>
             <url>https://yoava.artifactoryonline.com/yoava/repo</url>
@@ -104,9 +95,9 @@
             <version>${mirai.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains.skija</groupId>
-            <artifactId>skija-${run.os}</artifactId>
-            <version>0.93.1</version>
+            <groupId>io.github.humbleui</groupId>
+            <artifactId>skija-${run.os}-x64</artifactId>
+            <version>0.109.2</version>
         </dependency>
         <!--
         <dependency>

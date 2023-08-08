@@ -1,18 +1,8 @@
 package com.now.nowbot.util.Panel;
 
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.SkiaUtil;
+import io.github.humbleui.skija.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.skija.*;
-
-import java.text.DecimalFormat;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class BphtPanelBuilder{
     private static final int FONT_SIZE = 30;

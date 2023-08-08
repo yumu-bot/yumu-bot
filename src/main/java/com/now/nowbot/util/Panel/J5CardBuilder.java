@@ -3,7 +3,7 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
 
 public class J5CardBuilder extends PanelBuilder {
     

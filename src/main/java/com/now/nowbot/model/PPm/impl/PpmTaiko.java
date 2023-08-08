@@ -10,8 +10,8 @@ import com.now.nowbot.model.PPm.action.Func4;
 import com.now.nowbot.util.Panel.PanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;

@@ -6,7 +6,8 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.RRect;
 
 import java.io.IOException;
 import java.nio.file.Path;

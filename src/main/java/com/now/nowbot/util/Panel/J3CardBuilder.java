@@ -7,7 +7,7 @@ import com.now.nowbot.service.MessageService.PPMLegacyService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
@@ -51,8 +51,6 @@ public class J3CardBuilder extends PanelBuilder{
     }
 
 
-    @Autowired
-    PPMLegacyService PPmService;
 
     private void drawPPMText(OsuUser user) {
         //画指标

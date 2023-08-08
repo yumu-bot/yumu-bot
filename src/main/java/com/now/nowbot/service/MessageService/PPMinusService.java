@@ -137,40 +137,30 @@ public class PPMinusService implements MessageService {
             throw new PPMException(PPMException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
-            Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
-            Field[] valueFiled = {
-                    clz.getDeclaredField("value1"),
-                    clz.getDeclaredField("value2"),
-                    clz.getDeclaredField("value3"),
-                    clz.getDeclaredField("value4"),
-                    clz.getDeclaredField("value5"),
-                    clz.getDeclaredField("value6"),
-                    clz.getDeclaredField("value7"),
-                    clz.getDeclaredField("value8"),
-            };
-            for (var i:valueFiled){
-                i.setAccessible(true);
-                i.set(ppmOther,999.99);
-            }
+            setUser(ppmOther, 999.99f);
         } else if (userOther.getId().equals(19673275L)) {
-            Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
-            Field[] valueFiled = {
-                    clz.getDeclaredField("value1"),
-                    clz.getDeclaredField("value2"),
-                    clz.getDeclaredField("value3"),
-                    clz.getDeclaredField("value4"),
-                    clz.getDeclaredField("value5"),
-                    clz.getDeclaredField("value6"),
-                    clz.getDeclaredField("value7"),
-                    clz.getDeclaredField("value8"),
-            };
-            for (var i:valueFiled){
-                i.setAccessible(true);
-                i.set(ppmOther,0);
-            }
+            setUser(ppmOther, 0);
         }
 
         var data = imageService.getPanelB(userMe, userOther, ppmMe, ppmOther, mode);
         QQMsgUtil.sendImage(from, data);
+    }
+
+    static void setUser(Ppm ppmOther, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
+        Field[] valueFiled = {
+                clz.getDeclaredField("value1"),
+                clz.getDeclaredField("value2"),
+                clz.getDeclaredField("value3"),
+                clz.getDeclaredField("value4"),
+                clz.getDeclaredField("value5"),
+                clz.getDeclaredField("value6"),
+                clz.getDeclaredField("value7"),
+                clz.getDeclaredField("value8"),
+        };
+        for (var i:valueFiled){
+            i.setAccessible(true);
+            i.set(ppmOther,value);
+        }
     }
 }

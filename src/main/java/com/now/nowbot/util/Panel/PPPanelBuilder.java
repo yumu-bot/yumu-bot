@@ -4,7 +4,7 @@ import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

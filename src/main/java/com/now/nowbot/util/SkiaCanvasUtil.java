@@ -1,7 +1,8 @@
 package com.now.nowbot.util;
 
-import org.jetbrains.skija.*;
-import org.jetbrains.skija.paragraph.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.*;
+import io.github.humbleui.skija.paragraph.*;
 
 public class SkiaCanvasUtil {
 

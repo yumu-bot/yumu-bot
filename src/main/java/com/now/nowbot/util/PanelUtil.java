@@ -5,9 +5,10 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.BCardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
+import io.github.humbleui.types.Rect;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.skija.*;
-import org.jetbrains.skija.svg.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

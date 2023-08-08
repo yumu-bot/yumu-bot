@@ -1,6 +1,8 @@
 package com.now.nowbot.util.Panel;
 
-import org.jetbrains.skija.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.types.RRect;
+import io.github.humbleui.types.Rect;
 
 import java.util.LinkedList;
 

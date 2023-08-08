@@ -3,8 +3,10 @@ package com.now.nowbot.util;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
-import org.jetbrains.skija.*;
-import org.jetbrains.skija.svg.*;
+import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.Typeface;
+import io.github.humbleui.skija.svg.*;
+import io.github.humbleui.types.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -276,7 +278,7 @@ public class SkiaUtil {
      */
     public static Path[] creat6(float size, float circle_width, float... point) {
         if (point.length != 6) return null;
-        var path = new org.jetbrains.skija.Path();
+        var path = new io.github.humbleui.skija.Path();
         for (int i = 0; i < 6; i++) {
             if (point[i] < 0) point[i] = 0;
             if (point[i] > 1) point[i] = 1;

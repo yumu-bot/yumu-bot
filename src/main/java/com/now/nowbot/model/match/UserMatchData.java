@@ -2,7 +2,7 @@ package com.now.nowbot.model.match;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
-import org.jetbrains.skija.Color;
+import io.github.humbleui.skija.Color;
 
 import java.util.ArrayList;
 import java.util.List;

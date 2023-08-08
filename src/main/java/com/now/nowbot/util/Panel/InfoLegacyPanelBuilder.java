@@ -2,9 +2,9 @@ package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import org.jetbrains.skija.Color;
-import org.jetbrains.skija.Image;
-import org.jetbrains.skija.Paint;
+import io.github.humbleui.skija.Color;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
 
 import java.io.IOException;
 import java.util.List;
