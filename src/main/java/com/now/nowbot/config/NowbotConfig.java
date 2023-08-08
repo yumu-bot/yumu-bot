@@ -1,5 +1,10 @@
 package com.now.nowbot.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.throwable.RequestException;
 import kotlinx.coroutines.CoroutineScope;
@@ -19,9 +24,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
@@ -72,6 +79,18 @@ public class NowbotConfig {
         var clientBuilder = new OkHttpClient.Builder()
                 .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
         return clientBuilder.build();
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+//        ObjectMapper mapper = builder.createXmlMapper(false).build();
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper
+                .registerModule(new Jdk8Module())
+                .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        return mapper;
     }
 
     @Bean
