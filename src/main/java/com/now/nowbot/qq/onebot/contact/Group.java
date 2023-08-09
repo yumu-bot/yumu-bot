@@ -64,7 +64,12 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
 
     @Override
     public void sendFile(byte[] data, String name) {
-        var url = QQMsgUtil.getFileUrl(data, name);
+        String url;
+        if (QQMsgUtil.botInLocal(bot.getSelfId())) {
+            url = QQMsgUtil.getFileUrl(data, name);
+        } else {
+            url = QQMsgUtil.getFilePubUrl(data, name);
+        }
         try {
             ActionData<DownloadFileResp> rep = null;
             for (int i = 0; i < 5; i++) {

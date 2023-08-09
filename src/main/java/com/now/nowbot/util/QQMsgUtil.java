@@ -82,4 +82,12 @@ public class QQMsgUtil {
         System.out.println(key);
         FILE_DATA.remove(key);
     }
+
+    public static boolean botInLocal(Long botQQ){
+        boolean f = false;
+        if (botQQ != null && botQQ == 1563653406L) {
+            return true;
+        }
+        return false;
+    }
 }
