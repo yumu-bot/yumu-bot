@@ -84,8 +84,8 @@ public class NowbotConfig {
     @Bean
     @Primary
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
-//        ObjectMapper mapper = builder.createXmlMapper(false).build();
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        ObjectMapper mapper = builder.createXmlMapper(false).build();
+//        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper
                 .registerModule(new Jdk8Module())
                 .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
