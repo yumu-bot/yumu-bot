@@ -119,7 +119,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(ratinglegacy|rav2(?!\\w)|ral(?!\\w)|rl(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
 
     MRA(MRAService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?!\\w)|mra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?!\\w)|mra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingrepeat>[01]))?(\\s+(?<includingfail>\\d))?")),
 
     URA(URAService.class,
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?!\\w))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),

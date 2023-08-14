@@ -123,14 +123,16 @@ public class BotWebApi {
      * @param k skip round
      * @param d delete end
      * @param f include failed
+     * @param r include repeat
      * @return img
      */
     @GetMapping(value = "rating", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f) {
+    public byte[] getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = false;
-        return mraService.getDataImage(matchId, k, d, f);
+        if (r == null) r = false;
+        return mraService.getDataImage(matchId, k, d, f, r);
     }
 
     @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})

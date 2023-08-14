@@ -42,10 +42,11 @@ public class MRAService implements MessageService {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
+        int includingRepeat = matcher.group("includingrepeat") == null ? 0 : Integer.parseInt(matcher.group("includingrepeat"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
         var from = event.getSubject();
         try {
-            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail);
+            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRepeat != 0);
             QQMsgUtil.sendImage(from, img);
 //            Files.write(Path.of("/home/spring/aa.png"), img);
         } catch (Exception e) {
@@ -54,7 +55,7 @@ public class MRAService implements MessageService {
         }
     }
 
-    public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed) {
+    public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed, boolean includingRepeat) {
         long time = System.currentTimeMillis();
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
@@ -63,7 +64,7 @@ public class MRAService implements MessageService {
         }
         System.out.println(System.currentTimeMillis() - time);
         System.out.println("match ok");
-        var data = calculate(match, skipRounds, deleteEnd, includeFailed, osuGetService);
+        var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
         List<UserMatchData> finalUsers = data.allUsers;
         var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
         var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
@@ -102,7 +103,7 @@ public class MRAService implements MessageService {
         return s.getBody();
     }
     //主计算方法
-    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, OsuGetService osuGetService) {
+    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRepeat, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
@@ -144,7 +145,23 @@ public class MRAService implements MessageService {
         //跳过前几轮
 
         int s = games.size();
-        games = games.stream().limit(s - deleteLastRounds).skip(skipFirstRounds).filter(gameInfo -> gameInfo.getEndTime() != null).toList();
+
+        {
+            var streamTemp = games.stream()
+                    .limit(s - deleteLastRounds)
+                    .skip(skipFirstRounds)
+                    .filter(gameInfo -> gameInfo.getEndTime() != null);
+            if (includingRepeat) {
+                games = streamTemp.toList();
+            } else {
+                games = streamTemp.collect(Collectors.toMap(
+                                e -> e.getBeatmap().getId(),
+                                v -> v,
+                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
+                        ))
+                        .values().stream().toList();
+            }
+        }
 
         int scoreNum = 0;
         //每一局单独计算
