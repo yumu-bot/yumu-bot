@@ -12,7 +12,6 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPMException;
 import com.now.nowbot.util.QQMsgUtil;
-import net.mamoe.mirai.message.data.At;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +87,8 @@ public class PPMinusService implements MessageService {
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
-            from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !p2。");
+            throw new PPMException(PPMException.Type.PPM_Default_Error);
+            //from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !p2。");
         }
     }
 
