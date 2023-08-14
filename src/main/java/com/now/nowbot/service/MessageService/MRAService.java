@@ -56,14 +56,12 @@ public class MRAService implements MessageService {
     }
 
     public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed, boolean includingRepeat) {
-        long time = System.currentTimeMillis();
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
         }
-        System.out.println(System.currentTimeMillis() - time);
-        System.out.println("match ok");
+
         var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
         List<UserMatchData> finalUsers = data.allUsers;
         var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
@@ -76,8 +74,6 @@ public class MRAService implements MessageService {
                 break;
             }
         }
-        System.out.println(System.currentTimeMillis() - time);
-        System.out.println("data ok");
         return postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
     }
 
@@ -142,11 +138,9 @@ public class MRAService implements MessageService {
                 games.add(matchEvent.getGame());
         }
 
-        //跳过前几轮
-
         int s = games.size();
-
         {
+            //跳过前几轮 && 去除重复
             var streamTemp = games.stream()
                     .limit(s - deleteLastRounds)
                     .skip(skipFirstRounds)
