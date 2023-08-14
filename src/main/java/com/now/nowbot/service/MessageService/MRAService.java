@@ -42,8 +42,8 @@ public class MRAService implements MessageService {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
-        boolean includingRematch = !matcher.group("excludingrematch").equalsIgnoreCase("r");
-        boolean includingFail = !matcher.group("excludingfail").equalsIgnoreCase("f");
+        boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
+        boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
         var from = event.getSubject();
         try {
             var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRematch);
