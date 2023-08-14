@@ -11,7 +11,7 @@ public class PPMException extends TipsException {
         PPM_Default_ManiaComingSoon("等哪天 mania 社区风气变好了，或许就有 PPM-mania 了吧...\n要不你给我出出主意（色眯眯的笑容）"),//Mania模式查询未开放
         PPM_Default_PictureRenderFailed("我...我画笔坏了画不出图呃"),//图片渲染失败，或者绘图出错
         PPM_Default_PictureSendFailed("图片被麻花疼拿去祭天了"),//图片发送失败
-        PPM_Default_DefaultException("我好像生病了，需要休息一会..."),//默认报错
+        PPM_Default_Error("PM 渲染图片超时，请重试。\n或尝试旧版渲染 !p2。"),//默认报错
         ;//逗号分隔
         String message;
         Type(String message) {
