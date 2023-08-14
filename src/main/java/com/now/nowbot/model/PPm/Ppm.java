@@ -53,12 +53,13 @@ public abstract class Ppm {
 
     public static Ppm getInstance(OsuMode mode, OsuUser user, List<Score> bps){
         Ppm ppm = null;
+        if (OsuMode.isDefault(mode)) mode = user.getPlayMode();
         switch (mode) {
-            case OSU : ppm = new PpmOsu(user, bps);break;
-            case TAIKO : ppm = new PpmTaiko(user, bps);break;
-            case CATCH : ppm = new PpmCatch(user, bps);break;
-            case MANIA : ppm = new PpmMania(user, bps);break;
-        };
+            case OSU -> ppm = new PpmOsu(user, bps);
+            case TAIKO -> ppm = new PpmTaiko(user, bps);
+            case CATCH -> ppm = new PpmCatch(user, bps);
+            case MANIA -> ppm = new PpmMania(user, bps);
+        }
         return ppm;
     }
 

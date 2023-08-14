@@ -80,4 +80,7 @@ public enum OsuMode {
     public void setModeValue(short modeValue) {
         this.modeValue = modeValue;
     }
+    public static boolean isDefault (OsuMode mode) {
+        return mode == null || mode == DEFAULT;
+    }
 }
