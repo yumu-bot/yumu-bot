@@ -70,7 +70,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         var info1 = osuGetService.getPlayerInfo(user1.trim());
         var info2 = osuGetService.getPlayerInfo(user2.trim());
-        if (mode == OsuMode.DEFAULT) mode = info1.getPlayMode();
+        if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
         var bplist1 = osuGetService.getBestPerformance(info1.getId(), mode, 0, 100);
         var bplist2 = osuGetService.getBestPerformance(info2.getId(), mode, 0, 100);
         var ppm1 = Ppm.getInstance(mode, info1, bplist1);
