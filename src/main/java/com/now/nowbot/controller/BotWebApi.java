@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
+@CrossOrigin
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
