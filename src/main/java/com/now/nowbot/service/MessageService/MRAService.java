@@ -42,11 +42,11 @@ public class MRAService implements MessageService {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
-        int includingRepeat = matcher.group("includingrepeat") == null ? 0 : Integer.parseInt(matcher.group("includingrepeat"));
-        boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
+        boolean includingRematch = !matcher.group("excludingrematch").equalsIgnoreCase("r");
+        boolean includingFail = !matcher.group("excludingfail").equalsIgnoreCase("f");
         var from = event.getSubject();
         try {
-            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRepeat != 0);
+            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRematch);
             QQMsgUtil.sendImage(from, img);
 //            Files.write(Path.of("/home/spring/aa.png"), img);
         } catch (Exception e) {
@@ -103,7 +103,7 @@ public class MRAService implements MessageService {
         return s.getBody();
     }
     //主计算方法
-    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRepeat, OsuGetService osuGetService) {
+    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRematch, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
@@ -151,15 +151,16 @@ public class MRAService implements MessageService {
                     .limit(s - deleteLastRounds)
                     .skip(skipFirstRounds)
                     .filter(gameInfo -> gameInfo.getEndTime() != null);
-            if (includingRepeat) {
+            if (includingRematch) {
                 games = streamTemp.toList();
             } else {
-                games = streamTemp.collect(Collectors.toMap(
+                games = streamTemp.collect(
+                        Collectors.toMap(
                                 e -> e.getBeatmap().getId(),
                                 v -> v,
                                 (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
-                        ))
-                        .values().stream().toList();
+                        )
+                ).values().stream().toList();
             }
         }
 

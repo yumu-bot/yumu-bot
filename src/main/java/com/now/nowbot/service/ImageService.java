@@ -276,7 +276,7 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail) {
+    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
         //scores
         var games = match.getEvents().stream()
                 .map(MatchEvent::getGame)
@@ -284,7 +284,23 @@ public class ImageService {
                 .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
                 .toList();
         final int rSise = games.size();
-        games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
+        {
+
+            var streamTemp = games.stream().limit(rSise - deleteEnd).skip(skipRounds);
+
+            if (includingRematch) {
+                games = streamTemp.toList();
+            } else {
+                games = streamTemp.collect(
+                        Collectors.toMap(
+                                e -> e.getBeatmap().getId(),
+                                v -> v,
+                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
+                        )
+                ).values().stream().toList();
+            }
+        }
+
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
         for (var u : match.getUsers()) {
             uidMap.put(u.getId(), u);

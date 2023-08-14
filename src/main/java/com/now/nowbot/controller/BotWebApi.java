@@ -2,7 +2,6 @@ package com.now.nowbot.controller;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -18,10 +17,10 @@ import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletResponse;
 import io.github.humbleui.skija.EncodedImageFormat;
 import io.github.humbleui.skija.Image;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -86,10 +85,11 @@ public class BotWebApi {
      * @param k skip round
      * @param d delete end
      * @param f include failed
+     * @param r include rematch
      * @return img
      */
     @GetMapping(value = "match", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f) {
+    public byte[] getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         Match match = osuGetService.getMatchInfo(mid);
         int gameTime = 0;
         var m = match.getEvents().stream()
@@ -110,9 +110,10 @@ public class BotWebApi {
         }
         if (k == null) k = 0;
         if (d == null) d = 0;
-        if (f == null) f = false;
+        f = f != null;
+        r = r != null;
         long t = System.currentTimeMillis();
-        var b = imageService.getPanelF(match, osuGetService, k, d, false);
+        var b = imageService.getPanelF(match, osuGetService, k, d, f, r);
         System.out.println(System.currentTimeMillis() - t);
         return b;
     }
@@ -123,15 +124,15 @@ public class BotWebApi {
      * @param k skip round
      * @param d delete end
      * @param f include failed
-     * @param r include repeat
+     * @param r include rematch
      * @return img
      */
     @GetMapping(value = "rating", produces = {MediaType.IMAGE_PNG_VALUE})
     public byte[] getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
-        if (f == null) f = false;
-        if (r == null) r = false;
+        f = f != null;
+        r = r != null;
         return mraService.getDataImage(matchId, k, d, f, r);
     }
 
