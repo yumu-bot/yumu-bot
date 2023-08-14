@@ -125,7 +125,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
     MONOW(MonitorNowService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
     MINI(MiniPanelService.class,
             Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?!\\w))|(?<ymy>y(?!\\w)))+")),
