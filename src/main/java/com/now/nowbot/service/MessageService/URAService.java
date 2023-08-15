@@ -31,7 +31,8 @@ public class URAService implements MessageService {
         int matchId = Integer.parseInt(matcher.group("matchid"));
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
-        boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
+        boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
+        boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
         var from = event.getSubject();
 
         Match match = osuGetService.getMatchInfo(matchId);
@@ -40,7 +41,7 @@ public class URAService implements MessageService {
             match.getEvents().addAll(0, events);
         }
 
-        var data = calculate(match, skipedRounds, deletEndRounds, includingFail, osuGetService);
+        var data = calculate(match, skipedRounds, deletEndRounds, includingFail, includingRematch, osuGetService);
         List<UserMatchData> finalUsers = data.allUsers;
 
         //结果数据
@@ -60,10 +61,15 @@ public class URAService implements MessageService {
 
         }
 
-        event.getSubject().sendMessage(sb.toString());
+        try {
+            from.sendMessage(sb.toString());
+        } catch (Exception e) {
+            log.error("URA 数据请求失败", e);
+            from.sendMessage("URA 输出失败，请重试。\n或尝试最新版渲染 !ra <mpid>。");
+        }
     }
 
-    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, OsuGetService osuGetService) {
+    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRematch, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
@@ -90,7 +96,24 @@ public class URAService implements MessageService {
         //跳过前几轮
 
         int s = games.size();
-        games = games.stream().limit(s - deleteLastRounds).skip(skipFirstRounds).filter(gameInfo -> gameInfo.getEndTime() != null).toList();
+
+        {
+            var streamTemp = games.stream()
+                    .limit(s - deleteLastRounds)
+                    .skip(skipFirstRounds)
+                    .filter(gameInfo -> gameInfo.getEndTime() != null);
+            if (includingRematch) {
+                games = streamTemp.toList();
+            } else {
+                games = streamTemp.collect(
+                        Collectors.toMap(
+                                e -> e.getBeatmap().getId(),
+                                v -> v,
+                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
+                        )
+                ).values().stream().toList();
+            }
+        }
 
         int scoreNum = 0;
         //每一局单独计算

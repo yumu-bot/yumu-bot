@@ -9,6 +9,8 @@ import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
+import com.now.nowbot.model.match.MatchInfo;
+import com.now.nowbot.model.match.UserMatchData;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
@@ -70,7 +72,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
-        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<List<MapAttr>>() {
+        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
         });
         return s.getBody();
     }
@@ -232,6 +234,28 @@ public class ImageService {
         return doPost("panel_B", httpEntity);
     }
 
+    public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, double averageStar, int rounds, int redwins, int bluewins, boolean isTeamVs) {
+
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "redUsers", red,
+                "blueUsers", blue,
+                "noneUsers", none,
+                "matchInfo", matchInfo,
+                "sid", sid,
+                "rounds", rounds,
+                "averageStar", averageStar,
+                "redWins", redwins,
+                "blueWins", bluewins,
+                "isTeamVs", isTeamVs
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_C", httpEntity);
+    }
+
+
     public byte[] getPanelD(BinUser user, OsuMode mode, OsuGetService osuGetService) {
         var userInfo = osuGetService.getPlayerInfo(user, mode);
         var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
@@ -276,7 +300,7 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail) {
+    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
         //scores
         var games = match.getEvents().stream()
                 .map(MatchEvent::getGame)
@@ -284,7 +308,23 @@ public class ImageService {
                 .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
                 .toList();
         final int rSise = games.size();
-        games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).toList();
+        {
+
+            var streamTemp = games.stream().limit(rSise - deleteEnd).skip(skipRounds);
+
+            if (includingRematch) {
+                games = streamTemp.toList();
+            } else {
+                games = streamTemp.collect(
+                        Collectors.toMap(
+                                e -> e.getBeatmap().getId(),
+                                v -> v,
+                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
+                        )
+                ).values().stream().toList();
+            }
+        }
+
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
         for (var u : match.getUsers()) {
             uidMap.put(u.getId(), u);
