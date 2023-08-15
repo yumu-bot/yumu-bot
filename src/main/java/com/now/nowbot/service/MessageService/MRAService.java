@@ -73,7 +73,7 @@ public class MRAService implements MessageService {
         double averageStar = 0f;
 
         for (var e : match.getEvents()){
-            if (e.getGame() != null) {
+            if (e.getGame().getEndTime() != null) {
                 averageStar += e.getGame().getBeatmap().getDifficultyRating();
                 rounds ++;
 
@@ -83,7 +83,9 @@ public class MRAService implements MessageService {
             }
         }
 
-        if (rounds == 0) {
+        rounds -= (skipRounds + deleteEnd);
+
+        if (rounds <= 0) {
             averageStar = 0f;
         } else {
             averageStar /= rounds;
