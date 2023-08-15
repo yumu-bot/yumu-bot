@@ -6,17 +6,16 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -31,11 +30,10 @@ public class MRAService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
     @Autowired
-    BindDao bindDao;
+    ImageService imageService;
 
     public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
-
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -48,39 +46,38 @@ public class MRAService implements MessageService {
         try {
             var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRematch);
             QQMsgUtil.sendImage(from, img);
-//            Files.write(Path.of("/home/spring/aa.png"), img);
         } catch (Exception e) {
             log.error("MRA 数据请求失败", e);
             from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rl <mpid>。");
         }
     }
 
-    public byte[] getDataImage (int matchId, int skipRounds,int deleteEnd, boolean includeFailed, boolean includingRepeat) {
-        long time = System.currentTimeMillis();
+    public byte[] getDataImage (int matchId, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
         Match match = osuGetService.getMatchInfo(matchId);
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
             var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
         }
-        System.out.println(System.currentTimeMillis() - time);
-        System.out.println("match ok");
         var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
+
         List<UserMatchData> finalUsers = data.allUsers;
         var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
         var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
         var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).toList();
+
         int sid = 0;
+
         for (var e : match.getEvents()){
             if (e.getGame() != null) {
                 sid = e.getGame().getBeatmap().getBeatmapsetId();
                 break;
             }
         }
-        System.out.println(System.currentTimeMillis() - time);
-        System.out.println("data ok");
-        return postImage(redList, blueList, noneList, match.getMatchInfo(),sid, data.red, data.blue, data.isTeamVs);
+
+        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, data.red, data.blue, data.isTeamVs);
     }
 
+    /*
     public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
 
         HttpHeaders headers = new HttpHeaders();
@@ -102,6 +99,9 @@ public class MRAService implements MessageService {
         ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_C"), HttpMethod.POST, httpEntity, byte[].class);
         return s.getBody();
     }
+
+     */
+
     //主计算方法
     public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRematch, OsuGetService osuGetService) {
         //存储计算信息
@@ -218,12 +218,15 @@ public class MRAService implements MessageService {
         matchStatistics.setScoreNum(scoreNum);
 
         //剔除没参赛的用户
-//        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
-//        while (it.hasNext()) {
-//            var user = it.next().getValue();
-//            if (user.getRRAs().size() == 0)
-//                it.remove();
-//        } //22-04-15 尝试缩短代码
+        /*
+        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
+        while (it.hasNext()) {
+            var user = it.next().getValue();
+           if (user.getRRAs().size() == 0)
+                it.remove();
+       }
+         */
+        //22-04-15 尝试缩短代码
         users.values().removeIf(user -> user.getRRAs().size() == 0);
 
         //计算步骤封装
@@ -231,25 +234,27 @@ public class MRAService implements MessageService {
 
         //从大到小排序
         List<UserMatchData> finalUsers = new ArrayList<>(users.values());
-//        sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
-        AtomicInteger tp1 = new AtomicInteger(1);
-        AtomicInteger tp2 = new AtomicInteger(1);
+        //sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
         AtomicInteger tp3 = new AtomicInteger(1);
         AtomicInteger tpIndex = new AtomicInteger(1);
         final int alluserssize = finalUsers.size();
-        finalUsers = finalUsers.stream()
+
+        /*
+        AtomicInteger tp1 = new AtomicInteger(1);
+        AtomicInteger tp2 = new AtomicInteger(1);
                 .sorted(Comparator.comparing(UserMatchData::getERA).reversed())
                 .peek(r -> r.setERA_index(1.0 * tp1.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
                 .peek(r -> r.setDRA_index(1.0 * tp2.getAndIncrement() / alluserssize))
+
+         */
+        finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
                 .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
-                .peek(r -> r.setIndex(tpIndex.getAndIncrement())).collect(Collectors.toList())
-;
+                .peek(r -> r.setIndex(tpIndex.getAndIncrement())).collect(Collectors.toList());
 
         var teamPoint = matchStatistics.getTeamPoint();
-
 
         return new RatingData(matchStatistics.isTeamVs(), teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
     }

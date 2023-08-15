@@ -9,6 +9,8 @@ import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
+import com.now.nowbot.model.match.MatchInfo;
+import com.now.nowbot.model.match.UserMatchData;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
@@ -70,7 +72,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
-        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<List<MapAttr>>() {
+        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
         });
         return s.getBody();
     }
@@ -231,6 +233,26 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_B", httpEntity);
     }
+
+    public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
+
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "redUsers", red,
+                "blueUsers", blue,
+                "noneUsers", none,
+                "matchInfo", matchInfo,
+                "sid", sid,
+                "redWins", redwins,
+                "blueWins", bluewins,
+                "isTeamVs", isTeamVs
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_C", httpEntity);
+    }
+
 
     public byte[] getPanelD(BinUser user, OsuMode mode, OsuGetService osuGetService) {
         var userInfo = osuGetService.getPlayerInfo(user, mode);
