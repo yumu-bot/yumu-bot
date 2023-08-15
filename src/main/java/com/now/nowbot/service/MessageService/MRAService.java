@@ -69,11 +69,13 @@ public class MRAService implements MessageService {
 
         //平均星数和第一个sid
         int sid = 0;
+        int rounds = 0;
         double averageStar = 0f;
 
         for (var e : match.getEvents()){
             if (e.getGame() != null) {
                 averageStar += e.getGame().getBeatmap().getDifficultyRating();
+                rounds ++;
 
                 if (sid == 0) {
                     sid = e.getGame().getBeatmap().getBeatmapsetId();
@@ -81,13 +83,13 @@ public class MRAService implements MessageService {
             }
         }
 
-        if (match.getEvents().isEmpty()) {
+        if (rounds == 0) {
             averageStar = 0f;
         } else {
-            averageStar /= match.getEvents().size();
+            averageStar /= rounds;
         }
 
-        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, data.red, data.blue, data.isTeamVs);
+        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
     }
 
     /*
