@@ -246,20 +246,17 @@ public class MRAService implements MessageService {
         //从大到小排序
         List<UserMatchData> finalUsers = new ArrayList<>(users.values());
         //sortedUsers.sort((o1, o2) -> (int) ((o2.getMRA() - o1.getMRA()) * 10000)); //排序采用stream
+        AtomicInteger tp1 = new AtomicInteger(1);
+        AtomicInteger tp2 = new AtomicInteger(1);
         AtomicInteger tp3 = new AtomicInteger(1);
         AtomicInteger tpIndex = new AtomicInteger(1);
         final int alluserssize = finalUsers.size();
 
-        /*
-        AtomicInteger tp1 = new AtomicInteger(1);
-        AtomicInteger tp2 = new AtomicInteger(1);
+        finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getERA).reversed())
                 .peek(r -> r.setERA_index(1.0 * tp1.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getDRA).reversed())
                 .peek(r -> r.setDRA_index(1.0 * tp2.getAndIncrement() / alluserssize))
-
-         */
-        finalUsers = finalUsers.stream()
                 .sorted(Comparator.comparing(UserMatchData::getRWS).reversed())
                 .peek(r -> r.setRWS_index(1.0 * tp3.getAndIncrement() / alluserssize))
                 .sorted(Comparator.comparing(UserMatchData::getMRA).reversed())
