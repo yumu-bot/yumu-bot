@@ -78,17 +78,15 @@ public class MRAService implements MessageService {
         ).toList();
 
         for (int i = 0; i < events.size(); i++) {
-            var event = match.getEvents().get(i);
+            var beatmap = events.get(i).getGame().getBeatmap();
 
-            if (event.getGame() != null && event.getGame().getEndTime() != null) {
-                if (i > (skipRounds - 1) && i < (events.size() - deleteEnd)) {
-                    averageStar += event.getGame().getBeatmap().getDifficultyRating();
-                    rounds ++;
-                }
+            if ((i > skipRounds - 1) && (i < events.size() - deleteEnd)) {
+                averageStar += beatmap.getDifficultyRating();
+                rounds ++;
+            }
 
-                if (sid == 0) {
-                    sid = event.getGame().getBeatmap().getBeatmapsetId();
-                }
+            if (sid == 0) {
+                sid = beatmap.getBeatmapsetId();
             }
         }
 
