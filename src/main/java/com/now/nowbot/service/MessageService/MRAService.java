@@ -4,6 +4,8 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.Cover;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -60,7 +62,32 @@ public class MRAService implements MessageService {
             match.getEvents().addAll(0, events);
         }
 
-        var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
+        //获取所有轮的游戏
+        List<GameInfo> games = match.getEvents().stream().map(MatchEvent::getGame).filter(Objects::nonNull).toList();
+
+        //跳过前几轮
+
+        int s = games.size();
+
+        {
+            var streamTemp = games.stream()
+                    .limit(s - deleteEnd)
+                    .skip(skipRounds)
+                    .filter(gameInfo -> gameInfo.getEndTime() != null);
+            if (includingRepeat) {
+                games = streamTemp.toList();
+            } else {
+                games = streamTemp.collect(
+                        Collectors.toMap(
+                                e -> e.getBeatmap().getId(),
+                                v -> v,
+                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
+                        )
+                ).values().stream().toList();
+            }
+        }
+
+        var data = calculate(match.getUsers(), games, includeFailed, osuGetService);
 
         List<UserMatchData> finalUsers = data.allUsers;
         var blueList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
@@ -69,31 +96,17 @@ public class MRAService implements MessageService {
 
         //平均星数和第一个sid
         int sid = 0;
-        int rounds = 0;
-        double averageStar = 0f;
-
-        //过滤未完成的对局和其他活动
-        var events = match.getEvents().stream().filter(
-                e -> (e.getGame() != null && e.getGame().getEndTime() != null)
-        ).toList();
-
-        for (int i = 0; i < events.size(); i++) {
-            var beatmap = events.get(i).getGame().getBeatmap();
-
-            if ((i > skipRounds - 1) && (i < events.size() - deleteEnd)) {
-                averageStar += beatmap.getDifficultyRating();
-                rounds ++;
-            }
-
+        float averageStar = 0f;
+        int rounds = games.size();
+        for(var g : games) {
             if (sid == 0) {
-                sid = beatmap.getBeatmapsetId();
+                sid = g.getBeatmap().getBeatmapsetId();
             }
-        }
 
-        if (rounds <= 0) {
-            averageStar = 0f;
-        } else {
-            averageStar /= rounds;
+            if (Mod.hasChangeRating(Mod.getModsValue(g.getMods()))) {
+                // todo 在绘图模块实现
+            }
+            averageStar += g.getBeatmap().getDifficultyRating() / rounds;
         }
 
         return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
@@ -125,18 +138,17 @@ public class MRAService implements MessageService {
      */
 
     //主计算方法
-    public static RatingData calculate(Match match, int skipFirstRounds, int deleteLastRounds, boolean includingFail, boolean includingRematch, OsuGetService osuGetService) {
+    public static RatingData calculate(List<MicroUser> userAll, List<GameInfo> games, boolean includingFail, OsuGetService osuGetService) {
         //存储计算信息
         MatchStatistics matchStatistics = new MatchStatistics();
 
-        List<GameInfo> games = new ArrayList<>();
-        var JUsers = match.getUsers();
+
         Map<Integer, UserMatchData> users = new HashMap<>();
         matchStatistics.setUsers(users);
         var uid4cover = new HashMap<Long, Cover>();
         int indexOfUser = 0;
         while (true) {
-            var l = JUsers.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
+            var l = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
             if (l.isEmpty()) break;
             var us = osuGetService.getUsers(l).get("users");
@@ -145,7 +157,7 @@ public class MRAService implements MessageService {
             }
         }
         //获取所有user
-        for (var jUser : JUsers) {
+        for (var jUser : userAll) {
             var u = new OsuUser();
             u.setId(jUser.getId());
             u.setUsername(jUser.getUserName());
@@ -158,33 +170,7 @@ public class MRAService implements MessageService {
             }
         }
 
-        //获取所有轮的游戏
-        for (var matchEvent : match.getEvents()) {
-            if (matchEvent.getGame() != null)
-                games.add(matchEvent.getGame());
-        }
 
-        //跳过前几轮
-
-        int s = games.size();
-
-        {
-            var streamTemp = games.stream()
-                    .limit(s - deleteLastRounds)
-                    .skip(skipFirstRounds)
-                    .filter(gameInfo -> gameInfo.getEndTime() != null);
-            if (includingRematch) {
-                games = streamTemp.toList();
-            } else {
-                games = streamTemp.collect(
-                        Collectors.toMap(
-                                e -> e.getBeatmap().getId(),
-                                v -> v,
-                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
-                        )
-                ).values().stream().toList();
-            }
-        }
 
         int scoreNum = 0;
         //每一局单独计算

@@ -76,6 +76,10 @@ public enum Mod {
         var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).toList();
         return getModsValue(mList);
     }
+    public static int getModsValue(String[] modsStr) {
+        var mList = Arrays.stream(modsStr).map(Mod::fromStr).filter(e -> e != Other).toList();
+        return getModsValue(mList);
+    }
 
     private static String[] getModsString(String modsStr) {
         var newStr = modsStr.replaceAll("\\s+", "");
