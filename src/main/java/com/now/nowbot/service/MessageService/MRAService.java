@@ -54,10 +54,21 @@ public class MRAService implements MessageService {
 
     public byte[] getDataImage (int matchId, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
         Match match = osuGetService.getMatchInfo(matchId);
+        double averageStar = 0f;
+        List<MatchEvent> events = null;
+
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+            events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
         }
+
+        if (events != null) {
+            for (MatchEvent e : events) {
+                averageStar += e.getGame().getBeatmap().getDifficultyRating();
+            }
+            averageStar /= match.getEvents().size();
+        }
+
         var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
 
         List<UserMatchData> finalUsers = data.allUsers;
@@ -74,7 +85,7 @@ public class MRAService implements MessageService {
             }
         }
 
-        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, data.red, data.blue, data.isTeamVs);
+        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, data.red, data.blue, data.isTeamVs);
     }
 
     /*

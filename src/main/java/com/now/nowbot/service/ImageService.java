@@ -234,7 +234,7 @@ public class ImageService {
         return doPost("panel_B", httpEntity);
     }
 
-    public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
+    public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, double averageStar, int redwins, int bluewins, boolean isTeamVs) {
 
         HttpHeaders headers = getDefaultHeader();
 
@@ -244,6 +244,7 @@ public class ImageService {
                 "noneUsers", none,
                 "matchInfo", matchInfo,
                 "sid", sid,
+                "averageStar", averageStar,
                 "redWins", redwins,
                 "blueWins", bluewins,
                 "isTeamVs", isTeamVs
