@@ -72,11 +72,16 @@ public class MRAService implements MessageService {
         int rounds = 0;
         double averageStar = 0f;
 
-        for (int i = 0; i < match.getEvents().size(); i++) {
+        //过滤未完成的对局和其他活动
+        var events = match.getEvents().stream().filter(
+                e -> (e.getGame() != null && e.getGame().getEndTime() != null)
+        ).toList();
+
+        for (int i = 0; i < events.size(); i++) {
             var event = match.getEvents().get(i);
 
             if (event.getGame() != null && event.getGame().getEndTime() != null) {
-                if (i > (skipRounds - 1) && i < (match.getEvents().size() - deleteEnd)) {
+                if (i > (skipRounds - 1) && i < (events.size() - deleteEnd)) {
                     averageStar += event.getGame().getBeatmap().getDifficultyRating();
                     rounds ++;
                 }
