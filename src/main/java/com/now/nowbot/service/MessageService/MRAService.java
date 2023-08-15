@@ -54,19 +54,10 @@ public class MRAService implements MessageService {
 
     public byte[] getDataImage (int matchId, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
         Match match = osuGetService.getMatchInfo(matchId);
-        double averageStar = 0f;
-        List<MatchEvent> events = null;
 
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
             match.getEvents().addAll(0, events);
-        }
-
-        if (events != null) {
-            for (MatchEvent e : events) {
-                averageStar += e.getGame().getBeatmap().getDifficultyRating();
-            }
-            averageStar /= match.getEvents().size();
         }
 
         var data = calculate(match, skipRounds, deleteEnd, includeFailed, includingRepeat, osuGetService);
@@ -76,13 +67,24 @@ public class MRAService implements MessageService {
         var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
         var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).toList();
 
+        //平均星数和第一个sid
         int sid = 0;
+        double averageStar = 0f;
 
         for (var e : match.getEvents()){
             if (e.getGame() != null) {
-                sid = e.getGame().getBeatmap().getBeatmapsetId();
-                break;
+                averageStar += e.getGame().getBeatmap().getDifficultyRating();
+
+                if (sid == 0) {
+                    sid = e.getGame().getBeatmap().getBeatmapsetId();
+                }
             }
+        }
+
+        if (match.getEvents().isEmpty()) {
+            averageStar = 0f;
+        } else {
+            averageStar /= match.getEvents().size();
         }
 
         return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, data.red, data.blue, data.isTeamVs);
@@ -127,7 +129,7 @@ public class MRAService implements MessageService {
         while (true) {
             var l = JUsers.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
-            if (l.size() == 0) break;
+            if (l.isEmpty()) break;
             var us = osuGetService.getUsers(l).get("users");
             for(var node: us) {
                 uid4cover.put(node.get("id").asLong(0), JacksonUtil.parseObject(node.get("cover"), Cover.class));
