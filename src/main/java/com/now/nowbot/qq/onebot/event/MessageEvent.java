@@ -1,19 +1,22 @@
 package com.now.nowbot.qq.onebot.event;
 
 import com.mikuac.shiro.common.utils.ShiroUtils;
+import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.contact.Contact;
 import com.mikuac.shiro.core.Bot;
-import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.onebot.contact.Group;
 import com.now.nowbot.qq.onebot.contact.GroupContact;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
 public class MessageEvent extends Event implements com.now.nowbot.qq.event.MessageEvent {
+    private static final Logger l = LoggerFactory.getLogger("msg");
     com.mikuac.shiro.dto.event.message.MessageEvent event;
 
     public MessageEvent(com.mikuac.shiro.dto.event.message.MessageEvent event, Bot bot) {
@@ -39,6 +42,13 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
 
     @Override
     public MessageChain getMessage() {
+        if (event instanceof com.mikuac.shiro.dto.event.message.GroupMessageEvent c && c.getSender().getUserId().equals(365246692L)) {
+            l.error("---------------event-----------------");
+            event.getArrayMsg().forEach(e -> {
+                l.error(e.toString());
+            });
+            l.error("---------------event-end-----------------");
+        }
         return getMessageChain(event.getArrayMsg());
     }
 
@@ -75,3 +85,4 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
         return m;
     }
 }
+-
