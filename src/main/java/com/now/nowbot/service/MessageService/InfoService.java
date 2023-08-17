@@ -27,28 +27,33 @@ public class InfoService implements MessageService {
     @Autowired
     OsuGetService osuGetService;
     @Autowired
-    BindDao bindDao;
+    BindDao       bindDao;
     @Autowired
-    ImageService imageService;
+    ImageService  imageService;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
-        OsuUser userdata;
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        BinUser user = null;
+        log.error("-------------------ymi--------------------");
+        log.error("from: {}", event.getSender().getName());
+        log.error("at is null ? [{}]", at == null);
+        BinUser user;
         if (at != null) {
             user = bindDao.getUser(at.getTarget());
+            log.error("at: {}", user.getOsuName());
         } else {
             if (name != null && !name.trim().equals("")) {
+                log.error("not at, name: {}", matcher.group("name").trim());
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
                 user.setMode(OsuMode.DEFAULT);
             } else {
                 user = bindDao.getUser(event.getSender().getId());
+                log.error("not at, is me: {}", user.getOsuName());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
