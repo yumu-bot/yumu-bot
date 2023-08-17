@@ -69,7 +69,13 @@ public class BPService implements MessageService {
         List<Score> bpList;
         ArrayList<Integer> rankList = new ArrayList<>();
 
-        if (!uStr.isEmpty()) {
+        if (uStr.isEmpty()) {
+            try {
+                user = bindDao.getUser(event.getSender().getId());
+            } catch (Exception e) {
+                throw new BPException(BPException.Type.BP_Me_LoseBind);
+            }
+        } else {
             try {
                 long uid = osuGetService.getOsuId(uStr);
                 user = new BinUser();
@@ -78,12 +84,6 @@ public class BPService implements MessageService {
             } catch (Exception e) {
                 throw new BPException(BPException.Type.BP_Player_NotFound);
             }
-        } else {
-            try {
-                user = bindDao.getUser(event.getSender().getId());
-            } catch (NullPointerException e) {
-                throw new BPException(BPException.Type.BP_Me_LoseBind);
-            }
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
@@ -91,7 +91,7 @@ public class BPService implements MessageService {
 
         try {
             bpList = osuGetService.getBestPerformance(user, mode, n, m);
-        } catch (NullPointerException e) {
+        } catch (Exception e) {
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
