@@ -11,6 +11,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.match.MatchInfo;
 import com.now.nowbot.model.match.UserMatchData;
+import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
@@ -232,6 +233,19 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_B", httpEntity);
+    }
+
+    public byte[] getPanelB2(BeatMap beatMap, MapMinus mapMinus) {
+
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "beatMap", beatMap,
+                "mapMinus", mapMinus
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_B2", httpEntity);
     }
 
     public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, float averageStar, int rounds, int redwins, int bluewins, boolean isTeamVs) {

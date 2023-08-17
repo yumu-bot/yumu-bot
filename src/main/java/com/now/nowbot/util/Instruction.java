@@ -113,6 +113,9 @@ public enum Instruction {
     LEADER(LeaderBoardService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![a-zA-Z_])|list(?![a-zA-Z_])|l(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?")),
 
+    MM(MapMinusService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![a-zA-Z_]))+\\s*(?<id>\\d+)?")),
+
     // #5 osu! 比赛指令
 
     MRALEGACY(MRALegacyService.class,

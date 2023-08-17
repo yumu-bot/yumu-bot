@@ -3,13 +3,10 @@ package com.now.nowbot.model.ppminus3;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.collect.ArrayListMultimap;
 import com.now.nowbot.model.osufile.HitObject;
 import com.now.nowbot.model.osufile.OsuFile;
-import com.now.nowbot.model.osufile.hitObject.HitObjectType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -17,48 +14,42 @@ import java.util.List;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY)
 public class MapMinusMania extends MapMinus{
     // 谱面六维 + 额外二维
-    private List<Double> stream = new ArrayList<>();
-    private List<Double> jack = new ArrayList<>();
-    private List<Double> variation = new ArrayList<>();
-    private List<Double> coordinate = new ArrayList<>();
-    private List<Double> speed = new ArrayList<>();
-    private List<Double> stamina = new ArrayList<>();
-    private List<Double> chaotic = new ArrayList<>();
-    private List<Double> precision = new ArrayList<>();
+    private final List<Double> rice = new ArrayList<>();
+    private final List<Double> longNote = new ArrayList<>();
+    private final List<Double> speedVariation = new ArrayList<>();
+    private final List<Double> stamina = new ArrayList<>();
+    private final List<Double> speed = new ArrayList<>();
+    private final List<Double> precision = new ArrayList<>();
 
     //细化二十多维
-    private List<Double> single_stream = new ArrayList<>();
-    private List<Double> jump_stream = new ArrayList<>();
-    private List<Double> hand_stream = new ArrayList<>();
-    private List<Double> chord_stream = new ArrayList<>();
+    private final List<Double> stream = new ArrayList<>();
+    private final List<Double> jack = new ArrayList<>();
+    private final List<Double> bracket = new ArrayList<>();
 
-    private List<Double> single_jack = new ArrayList<>();
-    private List<Double> jump_jack = new ArrayList<>();
-    private List<Double> hand_jack = new ArrayList<>();
-    private List<Double> chord_jack = new ArrayList<>();
+    private final List<Double> handLock = new ArrayList<>();
+    private final List<Double> overlap = new ArrayList<>();
+    private final List<Double> release = new ArrayList<>();
+    private final List<Double> shield = new ArrayList<>();
 
-    private List<Double> bump = new ArrayList<>();
-    private List<Double> fast_jam = new ArrayList<>();
-    private List<Double> slow_jam = new ArrayList<>();
-    private List<Double> stop = new ArrayList<>();
-    private List<Double> teleport = new ArrayList<>();
-    private List<Double> negative = new ArrayList<>();
+    private final List<Double> bump = new ArrayList<>();
+    private final List<Double> fastJam = new ArrayList<>();
+    private final List<Double> slowJam = new ArrayList<>();
+    private final List<Double> stop = new ArrayList<>();
+    private final List<Double> teleport = new ArrayList<>();
+    private final List<Double> negative = new ArrayList<>();
 
-    private List<Double> hand_lock = new ArrayList<>();
-    private List<Double> overlap = new ArrayList<>();
-    private List<Double> release = new ArrayList<>();
-    private List<Double> shield = new ArrayList<>();
+    private final List<Double> riceDensity = new ArrayList<>();
+    private final List<Double> longNoteDensity = new ArrayList<>();
 
-    private List<Double> jack_speed = new ArrayList<>();
-    private List<Double> trill = new ArrayList<>();
-    private List<Double> burst = new ArrayList<>();
+    private final List<Double> speedJack = new ArrayList<>();
+    private final List<Double> trill = new ArrayList<>();
+    private final List<Double> burst = new ArrayList<>();
 
-    private List<Double> grace = new ArrayList<>();
-    private List<Double> delay_tail = new ArrayList<>();
-    private List<Double> stream_speed = new ArrayList<>();
+    private final List<Double> grace = new ArrayList<>();
+    private final List<Double> delayedTail = new ArrayList<>();
 
-    int map_start_time;
-    int map_end_time;
+    int map_start_time = 0;
+    int map_end_time = 0;
 
     int frac_16 = 21;
     int frac_8 = 42;
@@ -69,259 +60,237 @@ public class MapMinusMania extends MapMinus{
     int frac_1 = 333;
     int calculate_unit = 2500; //一个计算元的区域（毫秒）。这其中的数据会统计到一个计算元中。
 
-    public MapMinusMania(OsuFile file){
+    public MapMinusMania(OsuFile file) {
+        //data 数据，不变。
         var hitObjects = file.getHitObjects();
         var timings = file.getTimings();
-        int key = (int) Math.floor(file.getCS());
+        int key = (int) Math.floor(file.getCS()); // 4 - 7
+        boolean hasMidColumn = (key % 2) == 1;
+        int midColumn = hasMidColumn ? (key - 1) / 2 : 0; //7K下，它是0123456的3
 
-        //index，指示一些东西
-
-        //cache
-        int now_time = 0; //指示目前算到了什么地方（毫秒）
-        int calculate_max = calculate_unit;
-        boolean isLeft = false; //指示左手是否有物件
-        boolean isRight = false; //指示右手是否有物件
-        double str; double jak; double var; double coo; double spd; double sta; double cao; double pre = 0;
-
-        double ss = 0; double js = 0; double hs = 0; double cs = 0;
-        double sj = 0; double jj = 0; double hj = 0; double cj = 0;
-        double bm = 0; double fa = 0; double sa = 0; double st = 0; double tp = 0; double ne = 0;
-        double hl = 0; double ol = 0; double rl = 0; double sh = 0;
-        double jp = 0; double tr = 0; double br = 0;
-
-        double gr = 0; double dt = 0; double sp = 0;
-
-        int mid_column = -1; //指示中键的位置。4K就没中键，7K有
-        int side_key = 0; //指示边键的数量
-        if (key % 2 == 1) {
-            mid_column = (key - 1) / 2; //假设是7K，那么中键是3号位，左右是012和456
-            side_key = mid_column;
-        } else {
-            side_key = key / 2;
+        if (!hitObjects.isEmpty()) {
+            map_start_time = hitObjects.get(0).getStartTime();
+            map_end_time = hitObjects.get(hitObjects.size() - 1).getEndTime();
         }
 
-        int prev_chord = 1;//指示之前多押的数量，1是没多押
+        double RC; double LN; double SV; double ST; double SP; double PR;
 
-        int prev_density = 0;//指示之前的密度（其实是累加过的
+        double S = 0; double J = 0; double B = 0;
+        double H = 0; double O = 0; double R = 0; double E = 0;
+        double M = 0; double F = 0; double W = 0; double P = 0; double T = 0; double N = 0;
+        double C = 0; double D = 0;
+        double K = 0; double I = 0; double U = 0;
+        double G = 0; double Y = 0;
 
-        //我不会用哈希表
-        int[] prev_hit_times = new int[key];
-        int[] prev_release_times = new int[key];
+        //index 指示当前算到哪里了
+        int calculate_time = map_start_time + calculate_unit; //指示计算元的位置，根据 calculate_unit 不断刷新。
+        int now_time = map_start_time; //指示目前算到了什么地方（毫秒）
 
-        //这个哈希表是用来存一行的物件信息的
-        //为什么要搞两个表呢？是因为一行可能有多个物件，这样在计算行内物件时，不会互相干扰
-        int[] now_hit_times = new int[key];
-        int[] now_release_times = new int[key];
+        boolean now_hasLeft = false; //指示左手是否有物件
+        boolean now_hasRight = false; //指示右手是否有物件
 
-        //初始化哈希表
+        int[] now_hit_arr = new int[key];
+        int[] now_release_arr = new int[key];
+        int[] now_flow_arr = new int[key];
+        int now_chord = 0;
+
+        //cache 缓存前一个块和当前的块。
+        //int prev_time = map_start_time; //指示之前算到了什么地方（毫秒
+
+        boolean prev_hasLeft = false; //指示左手是否有物件
+        boolean prev_hasRight = false; //指示右手是否有物件
+
+        int[] prev_hit_arr = new int[key];
+        int[] prev_release_arr = new int[key];
+        int[] prev_flow_arr = new int[key]; //描述前一个物件的流向。这个流向会根据这个物件再往前的物件决定。-2是踢墙，-1是左，0是无，1是右，2是双向。
+        int prev_chord = 0;
+
+        //初始化缓存
         for (int i = 0; i < key; i++) {
-            prev_hit_times[i] = 0;
-            prev_release_times[i] = 0;
-            now_hit_times[i] = 0;
-            now_release_times[i] = 0;
+            prev_hit_arr[i] = 0;
+            prev_release_arr[i] = 0;
+            prev_flow_arr[i] = 0;
+            now_hit_arr[i] = 0;
+            now_release_arr[i] = 0;
+            now_flow_arr[i] = 0;
         }
 
-        //hit是长条和单点头，release是滑条尾，flow是上一个最近的物件的方向，0是中间，1是左，-1是左，
+        //主计算
+        for (HitObject h: hitObjects) {
+            var type = h.getType();
+            var now_hit = h.getStartTime();
+            var now_release = h.getEndTime();
+            var column = h.getColumn();
 
-        for (HitObject line : hitObjects) {
-            var column = line.getColumn();
-            var type = line.getType();
-            var hit_time = line.getStartTime();
-            var release_time = (type == HitObjectType.LONGNOTE) ? line.getEndTime() : 0;
-
-            //导入缓存
-            int prev_hit_time = prev_hit_times[column];
-            int prev_release_time = prev_release_times[column];
-
-            //计算元初始化
-            if (now_time == 0) calculate_max += hit_time;
-
-            //衩机制
-            int left_hit_time;
-            int left_release_time;
-            int right_hit_time;
-            int right_release_time;
-            {
-                if (column == 0) { //最左边
-                    left_hit_time = 0;
-                    left_release_time = 0;
-                    right_hit_time = prev_hit_times[column + 1];
-                    right_release_time = prev_release_times[column + 1];
-                } else if (column >= key - 1) { //最右边
-                    left_hit_time = prev_hit_times[column];
-                    left_release_time = prev_release_times[column];
-                    right_hit_time = 0;
-                    right_release_time = 0;
-                } else {
-                    left_hit_time = prev_hit_times[column + 1];
-                    left_release_time = prev_release_times[column + 1];
-                    right_hit_time = prev_hit_times[column + 1];
-                    right_release_time = prev_release_times[column + 1];
+            //确定物件在哪只手
+            if (hasMidColumn) {
+                if (column < midColumn) {
+                    now_hasLeft = true;
+                } else if (column > midColumn) {
+                    now_hasRight = true;
                 }
-            }
-
-            //判断当前物件在哪只手
-            if (column <= side_key - 1) isLeft = true;
-            else if (column >= key - side_key) isRight = true;
-
-            //如果是新行，
-            if (Math.abs(hit_time - now_time) > frac_16 || now_time == 0) {
-                //普通结算
-                var stream = calcStream(hit_time, left_hit_time, right_hit_time);
-                var jack = calcJack(hit_time, prev_hit_time);
-                boolean isTwoHand = isLeft && isRight;
-
-                switch (prev_chord) {
-                    case 1 -> {
-                        ss += isTwoHand ? stream : 0.5f * stream;
-                        sj += isTwoHand ? jack : 0.5f * jack;
-                    }
-                    case 2 -> {
-                        js += isTwoHand ? stream : 0.5f * stream;
-                        jj += isTwoHand ? jack : 0.5f * jack;
-                    }
-                    case 3 -> {
-                        hs += isTwoHand ? stream : 0.5f * stream;
-                        hj += isTwoHand ? jack : 0.5f * jack;
-                    }
-                    case 4 -> {
-                        cs += isTwoHand ? stream : 0.5f * stream;
-                        cj += isTwoHand ? jack : 0.5f * jack;
-                    }
-                }
-
-
-                //重置多押之前，计算交互
-                int left_hand = 0;
-                int left_chord = 0;
-                int right_hand = 0;
-                int right_chord = 0;
-                for (int i = 0; i < side_key; i++) {
-                    left_hand += (i + 1);
-                    var v = prev_hit_times[i];
-                    if (v <= frac_3) left_chord += (i + 1);
-
-                    right_hand += (i + 1);
-                    var w = prev_hit_times[i + key - side_key];
-                    if (w <= frac_3) right_chord += (i + 1);
-                }
-
-                if ((left_chord == 0 && right_chord == right_hand)
-                        || (left_chord == left_hand && right_chord == 0)) tr += side_key;
-
-                //重置多押
-                prev_chord = 1;
-
-                //重置左右手
-                isLeft = false;
-                isRight = false;
-
-                //哈希表内容更新
-                for (int i = 0; i < key; i++) {
-                    var hit = now_hit_times[i];
-                    var release = now_release_times[i];
-
-                    if (hit != 0) {
-                        prev_hit_times[i] = hit; //置换
-                        now_hit_times[i] = 0; //清零
-                    }
-
-                    if (release != 0) {
-                        prev_release_times[i] = release; //置换
-                        now_release_times[i] = 0; //清零
-                    }
-                }
-
-                //如果不是新行，
             } else {
-                //正常添加多押
-                prev_chord = Math.min(key, prev_chord + 1);
+                if (column < key / 2) {
+                    now_hasLeft = true;
+                } else {
+                    now_hasRight = true;
+                }
             }
 
-            //与以上无关的正常计算
-            jp += calcSpeedJack(hit_time, prev_hit_time);
-            sp += calcSpeedStream(hit_time, left_hit_time, right_hit_time);
+            //给边界的物件的左右赋值
+            int prev_hit = prev_hit_arr[column];
+            int prev_release = prev_release_arr[column];
+            int prev_flow = prev_flow_arr[column];
+
+            int prev_left_hit = 0;
+            int prev_left_release = 0;
+            int prev_right_hit = 0;
+            int prev_right_release = 0;
+            int prev_left_flow = -2;
+            int prev_right_flow = -2;
+
+            if (column == 0) {
+                //最左
+                prev_right_hit = prev_hit_arr[1];
+                prev_right_release = prev_release_arr[1];
+                prev_right_flow = prev_flow_arr[1];
+            } else if (column == key - 1) {
+                //最右
+                prev_left_hit = prev_hit_arr[key - 2];
+                prev_left_release = prev_release_arr[key - 2];
+                prev_left_flow = prev_flow_arr[key - 2];
+            } else {
+                prev_left_hit = prev_hit_arr[column - 1];
+                prev_right_hit = prev_hit_arr[column + 1];
+                prev_left_release = prev_release_arr[column - 1];
+                prev_right_release = prev_release_arr[column + 1];
+                prev_left_flow = prev_flow_arr[column - 1];
+                prev_right_flow = prev_flow_arr[column + 1];
+            }
 
 
+            //存储物件信息
+            now_hit_arr[column] = now_hit;
+            now_release_arr[column] = now_release;
+            now_flow_arr[column] = calcFlow(prev_left_hit, prev_right_hit, prev_left_flow, prev_right_flow);
+            now_chord ++;
+
+            //真正的主计算
             switch (type) {
                 case CIRCLE -> {
-                    gr += calcGrace(hit_time, left_hit_time, right_hit_time);
-                    hl += calcHandLock(hit_time, left_hit_time, left_release_time, right_hit_time, right_release_time);
-                    if (prev_release_time != 0) sh += calcShield(hit_time, prev_release_time);
+                    //计算S，J，B
+                    S += calcStream(now_hit, prev_left_hit, prev_right_hit);
+                    J += calcJack(now_hit, prev_hit);
+                    B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
+
+                    C++;
+                    K += calcSpeedJack(now_hit, prev_hit);
+                    G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
                 }
                 case LONGNOTE -> {
-                    ol += calcOverlap(hit_time, release_time, left_hit_time, left_release_time, right_hit_time, right_release_time);
-                    rl += calcStream(release_time, left_release_time, right_release_time); //直接使用stream算法
-                    dt += calcSpeedStream(release_time, left_release_time, right_release_time);//直接使用speed stream算法
+                    //计算H，O，R，E，还有Y
+                    S += calcStream(now_hit, prev_left_hit, prev_right_hit);
+                    J += calcJack(now_hit, prev_hit);
+                    B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
+
+                    H += calcHandLock(now_hit, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
+                    O += calcOverlap(now_hit, now_release, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
+                    R += calcStream(now_release, prev_left_release, prev_right_release);
+                    E += calcShield(now_hit, prev_release);
+
+                    D += calcSliderDensity(now_hit, now_release);
+                    K += calcSpeedJack(now_hit, prev_hit);
+                    G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
+                    Y += calcGrace(now_release, prev_left_release, prev_right_release);
                 }
             }
 
+            //如果和上一个物件差距太远，则刷新prev和now数组
+            if (Math.abs(now_hit - now_time) < frac_6) {
+                now_time = now_hit;
+            } else {
 
-            //刷新现在的缓存
-            now_time = hit_time;
-            now_hit_times[column] = hit_time;
-            now_release_times[column] =release_time;
-            
-            // 如果超过了计算元，那么计算元的值清零
-            if (now_time > calculate_max) {
-                calculate_max = now_time + calculate_unit;
+                //计算Trill
+                I += calcTrill(now_hit, prev_left_hit, prev_right_hit, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
 
-                //计算最大值，结算
-                sta = Math.floor(prev_density * 0.2 + br);
+                //继承
+                for (int i = 0; i < key; i++) {
+                    if (now_hit_arr[i] != 0) {
+                        prev_hit_arr[i] = now_hit_arr[i];
+                        now_hit_arr[i] = 0;
+                    }
 
-                prev_density = (int) sta;
+                    if (now_release_arr[i] != 0) {
+                        prev_release_arr[i] = now_release_arr[i];
+                        now_release_arr[i] = 0;
+                    }
 
-                str = ss + 2 * js + 3 * hs + 4 * cs;
-                jak = sj + 2 * jj + 3 * hj + 4 * cj;
-                var = bm + fa + sa + st + tp + ne;
-                coo = hl + ol + rl + sh;
-                spd = jp + tr + br;
-                cao = gr + dt + sp;
+                    if (now_flow_arr[i] != 0) {
+                        prev_flow_arr[i] = now_flow_arr[i];
+                        now_flow_arr[i] = 0;
+                    }
+                }
+                prev_chord = now_chord;
+                prev_hasLeft = now_hasLeft;
+                prev_hasRight = now_hasRight;
 
-                stream.add(str); single_stream.add(ss); jump_stream.add(js); hand_stream.add(hs); chord_stream.add(cs);
-                jack.add(jak); single_jack.add(sj); jump_jack.add(jj); hand_jack.add(hj); chord_jack.add(cj);
-                variation.add(var); bump.add(bm); fast_jam.add(fa); slow_jam.add(sa); stop.add(st); teleport.add(tp); negative.add(ne);
-                coordinate.add(coo); hand_lock.add(hl); overlap.add(ol); release.add(rl); shield.add(sh);
-                speed.add(spd); jack_speed.add(jp); trill.add(tr); burst.add(br);
-                stamina.add(sta);
-                chaotic.add(cao); grace.add(gr); delay_tail.add(dt); stream_speed.add(sp);
-                precision.add(pre);
+                //清空now系列
+                now_time = now_hit;
+                now_hasLeft = false; //指示左手是否有物件
+                now_hasRight = false; //指示右手是否有物件
+                now_chord = 0;
+            }
 
-                //初始化
+            //如果超出了计算元（或者结尾了），则刷新计算元，并且给MM赋值
+            if (now_time >= calculate_time || now_time >= hitObjects.get(hitObjects.size() - 1).getStartTime()) {
+                calculate_time += calculate_unit;
 
-                ss = 0; js = 0; hs = 0; cs = 0;
-                sj = 0; jj = 0; hj = 0; cj = 0;
-                bm = 0; fa = 0; sa = 0; st = 0; tp = 0; ne = 0;
-                hl = 0; ol = 0; rl = 0; sh = 0;
-                jp = 0; tr = 0; br = 0;
+                U = Math.max(C + D, U);
 
-                gr = 0; dt = 0; sp = 0;
-            
+                RC = Math.sqrt(now_chord) * (S + J + B);
+                LN = H + O + R + E;
+                SV = M + F + W + P + T + N;
+                ST = C + D;
+                SP = K + I + U;
+                PR = G + Y;
+
+                stream.add(S); jack.add(J); bracket.add(B);
+                handLock.add(H); overlap.add(O); release.add(R); shield.add(E);
+                bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
+                riceDensity.add(C); longNoteDensity.add(D);
+                speedJack.add(K); trill.add(T); burst.add(U);
+                grace.add(G); delayedTail.add(Y);
+
+                rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
+
+                S = 0;  J = 0;  B = 0;
+                H = 0;  O = 0;  R = 0;  E = 0;
+                M = 0;  F = 0;  W = 0;  P = 0;  T = 0;  N = 0;
+                C = 0;  D = 0;
+                K = 0;  I = 0;  // U = 0; 这个不需要初始化
+                G = 0;  Y = 0;
+                
             }
         }
     }
 
     private double calcStream(int hit, int left_hit, int right_hit) {
         double p = 0f;
-        if (left_hit != 0) {
+        if (Math.abs(hit - left_hit) < frac_1) {
             p += calcFunctionNormal(hit - left_hit, frac_16, frac_1);
         }
-        if (right_hit != 0) {
+        if (Math.abs(hit - right_hit) < frac_1) {
             p += calcFunctionNormal(hit - right_hit, frac_16, frac_1);
         }
-
         return p;
     }
 
-    private double calcSpeedStream(int hit, int left_hit, int right_hit) {
+    private double calcBracket(int hit, int left_hit, int right_hit) {
         double p = 0f;
-        if (left_hit != 0) {
-            p += calcFunctionNormal(hit - left_hit, frac_16, frac_3); // 180bpm 1/4
+        if (Math.abs(hit - left_hit) < frac_3 && Math.abs(hit - right_hit) < frac_3) {
+            p += (calcFunctionNormal(hit - left_hit, frac_16, frac_3)
+            + calcFunctionNormal(hit - right_hit, frac_16, frac_3)); // 180bpm 1/4
         }
-        if (right_hit != 0) {
-            p += calcFunctionNormal(hit - right_hit, frac_16, frac_3); // 180bpm 1/4
-        }
-
         return p;
     }
 
@@ -385,6 +354,27 @@ public class MapMinusMania extends MapMinus{
         return p;
     }
 
+    private double calcSliderDensity(int hit, int release) {
+        int delta = release - hit;
+        if (delta > 0) {
+            return 6f / (5f + Math.exp(- delta / 1000f));
+        } else {
+            return 0f;
+        }
+    }
+
+    private double calcTrill(int hit, int left_hit, int right_hit, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
+        double chord_index = Math.sqrt(now_chord + prev_chord);
+
+        if (now_hasLeft && prev_hasRight && !prev_hasLeft) {
+            return chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
+        } else if (now_hasRight && prev_hasLeft && !prev_hasRight) {
+            return chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
+        } else {
+            return 0f;
+        }
+    }
+
     //根据和之前物件的差值，获取正态分布函数后的难度，默认0-1 min是限制区域，小于这个区域都会是 1，max是 3 sigma
     private double calcFunctionNormal(int delta_time, int min_time, int max_time) {
         double sigma = max_time / 3f + min_time;
@@ -406,64 +396,59 @@ public class MapMinusMania extends MapMinus{
         }
     }
 
-    public List<Double> getSingle_stream() {
-        return single_stream;
+    /*
+    真值表
+    L/R -2  -1  0   1   2
+    -2  0   1   1   1   1
+    -1  -1  -1  -1  2   -1
+    0   -1  -1  0   1   -1
+    1   -1  2   1   1   -1
+    2   -1  1   1   1   2
+
+     */
+    private int calcFlow(int prev_left, int prev_right, int prev_left_flow, int prev_right_flow) {
+        int flow = 0;
+
+        if (prev_left + prev_right == 0){
+            return 0;
+        } else if (prev_left == 0){
+            flow = 1;
+        } else if (prev_right == 0){
+            flow = -1;
+        } else if (Math.abs(prev_left - prev_right) < frac_6) {
+            var line1 = new int[]{0, 1, 1, 1, 1};
+            var line2 = new int[]{-1, -1, -1, 2, -1};
+            var line3 = new int[]{-1, -1, 0, 1, -1};
+            var line4 = new int[]{-1, 2, 1, 1, -1};
+            var line5 = new int[]{-1, 1, 1, 1, 2};
+            var matrix = new int[][]{line1, line2, line3, line4, line5};
+
+            flow = matrix[prev_left_flow + 2][prev_right_flow + 2];
+        } else {
+            if (prev_left - prev_right > frac_6) {
+                flow = prev_left_flow;
+            } else if (prev_right - prev_left > frac_6) {
+                flow = prev_right_flow;
+            }
+        }
+
+        return flow;
     }
 
-    public List<Double> getJump_stream() {
-        return jump_stream;
+    public List<Double> getStream() {
+        return stream;
     }
 
-    public List<Double> getHand_stream() {
-        return hand_stream;
+    public List<Double> getJack() {
+        return jack;
     }
 
-    public List<Double> getChord_stream() {
-        return chord_stream;
+    public List<Double> getBracket() {
+        return bracket;
     }
 
-    public List<Double> getSingle_jack() {
-        return single_jack;
-    }
-
-    public List<Double> getJump_jack() {
-        return jump_jack;
-    }
-
-    public List<Double> getHand_jack() {
-        return hand_jack;
-    }
-
-    public List<Double> getChord_jack() {
-        return chord_jack;
-    }
-
-    public List<Double> getBump() {
-        return bump;
-    }
-
-    public List<Double> getFast_jam() {
-        return fast_jam;
-    }
-
-    public List<Double> getSlow_jam() {
-        return slow_jam;
-    }
-
-    public List<Double> getStop() {
-        return stop;
-    }
-
-    public List<Double> getTeleport() {
-        return teleport;
-    }
-
-    public List<Double> getNegative() {
-        return negative;
-    }
-
-    public List<Double> getHand_lock() {
-        return hand_lock;
+    public List<Double> getHandLock() {
+        return handLock;
     }
 
     public List<Double> getOverlap() {
@@ -478,8 +463,40 @@ public class MapMinusMania extends MapMinus{
         return shield;
     }
 
-    public List<Double> getJack_speed() {
-        return jack_speed;
+    public List<Double> getBump() {
+        return bump;
+    }
+
+    public List<Double> getFastJam() {
+        return fastJam;
+    }
+
+    public List<Double> getSlowJam() {
+        return slowJam;
+    }
+
+    public List<Double> getStop() {
+        return stop;
+    }
+
+    public List<Double> getTeleport() {
+        return teleport;
+    }
+
+    public List<Double> getNegative() {
+        return negative;
+    }
+
+    public List<Double> getRiceDensity() {
+        return riceDensity;
+    }
+
+    public List<Double> getLongNoteDensity() {
+        return longNoteDensity;
+    }
+
+    public List<Double> getSpeedJack() {
+        return speedJack;
     }
 
     public List<Double> getTrill() {
@@ -494,11 +511,8 @@ public class MapMinusMania extends MapMinus{
         return grace;
     }
 
-    public List<Double> getDelay_tail() {
-        return delay_tail;
+    public List<Double> getDelayedTail() {
+        return delayedTail;
     }
 
-    public List<Double> getStream_speed() {
-        return stream_speed;
-    }
 }
