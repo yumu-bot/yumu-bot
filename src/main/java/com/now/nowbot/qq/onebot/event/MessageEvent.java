@@ -85,4 +85,3 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
         return m;
     }
 }
--
