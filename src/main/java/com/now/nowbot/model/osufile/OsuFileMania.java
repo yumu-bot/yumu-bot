@@ -40,7 +40,7 @@ public class OsuFileMania extends OsuFile {
             int y = Integer.parseInt(entity[1]);
             int startTime = Integer.parseInt(entity[2]);
             int type = Integer.parseInt(entity[3]);
-            int endTime = (type == 128) ? Integer.parseInt(entity[5]) : startTime;
+            int endTime = (type == 128) ? Integer.parseInt(entity[5].split(":")[0]) : startTime;
 
             var obj = new HitObject(x, y, startTime);
             obj.setType(HitObjectType.getType(type));
