@@ -35,15 +35,15 @@ public class MapMinusService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        int bid = 0;
+        long bid = 0;
         OsuMode mode = null;
         String fileStr = null;
 
         try {
-            bid = Integer.parseInt(matcher.group("id"));
+            bid = Long.parseLong(matcher.group("id"));
             mode = OsuMode.getMode(osuGetService.getBeatMapInfo(bid).getModeInt());
-            fileStr = osuGetService.getBeatMapFile(bid, mode.getName());
-//            fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
+            fileStr = osuGetService.getBeatMapFile(bid);
+            //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
         } catch (Exception e) {
 
         }

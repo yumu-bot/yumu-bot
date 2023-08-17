@@ -623,25 +623,21 @@ public class OsuGetService {
         return c.getBody();
     }
 
-    public String getBeatMapFile(int mapId) throws IOException {
-        return getBeatMapFile(mapId, "osu");
-    }
 
     /***
-     * 下载bitmap(.osu)文件
-     * @param mapId
-     * @param mode
-     * @return
+     * 下载beatmap(.osu)文件
+     * @param bid 谱面id
+     * @return osu文件字符串流
      * @throws IOException
      */
-    public String getBeatMapFile(int mapId, String mode) throws IOException {
+    public String getBeatMapFile(long bid) throws IOException {
         //osu taiko mania catch
-        URL url = new URL("https://osu.ppy.sh/" + mode + '/' + mapId);
+        URL url = new URL("https://osu.ppy.sh/osu/" + bid);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         httpConn.connect();
         InputStream cin = httpConn.getInputStream();
-        byte[] datebyte = cin.readAllBytes();
-        return new String(datebyte);
+        byte[] byteData = cin.readAllBytes();
+        return new String(byteData);
     }
 
     /***
