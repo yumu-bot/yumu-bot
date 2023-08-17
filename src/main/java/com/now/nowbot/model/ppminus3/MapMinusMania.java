@@ -288,18 +288,17 @@ public class MapMinusMania extends MapMinus{
     private double calcBracket(int hit, int left_hit, int right_hit) {
         double p = 0f;
         if (Math.abs(hit - left_hit) < frac_3 && Math.abs(hit - right_hit) < frac_3) {
-            p += (calcFunctionNormal(hit - left_hit, frac_16, frac_3)
-            + calcFunctionNormal(hit - right_hit, frac_16, frac_3)); // 180bpm 1/4
+            p += (calcFunctionNormal(hit - left_hit, frac_16, frac_3) + calcFunctionNormal(hit - right_hit, frac_16, frac_3)); // 180bpm 1/4
         }
         return p;
     }
 
     private double calcGrace(int hit, int left_hit, int right_hit) {
         double p = 0f;
-        if (left_hit != 0) {
+        if (hit - left_hit <= frac_6) {
             p += calcFunctionNormal(hit - left_hit, frac_16, frac_6); // 180bpm 1/4
         }
-        if (right_hit != 0) {
+        if (hit - right_hit <= frac_6) {
             p += calcFunctionNormal(hit - right_hit, frac_16, frac_6); // 180bpm 1/4
         }
 
@@ -308,7 +307,9 @@ public class MapMinusMania extends MapMinus{
 
     private double calcJack(int hit, int prev_hit) {
         double p = 0f;
-        p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_2); // 180bpm 1/2
+        if (hit - prev_hit < frac_2) {
+            p += calcFunction1_X(hit - prev_hit, frac_8, calculate_unit, frac_4); // 180bpm 1/2
+        }
         return p;
     }
 
@@ -320,7 +321,9 @@ public class MapMinusMania extends MapMinus{
 
     private double calcSpeedJack(int hit, int prev_hit) {
         double p = 0f;
-        p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_4); // 180bpm 1/4
+        if (hit - prev_hit <= frac_6) {
+            p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_6); // 180bpm 1/4
+        }
         return p;
     }
 
@@ -341,14 +344,17 @@ public class MapMinusMania extends MapMinus{
 
     private double calcOverlap(int hit, int release, int left_hit, int left_release, int right_hit, int right_release){
         double p = 0f;
+        double delta;
         var isLeftLN = (left_release + frac_16 > hit && left_hit - frac_16 < hit);
         var isRightLN = (right_release + frac_16 > hit && right_hit - frac_16 < hit);
 
         if (left_hit != 0 && left_release != 0 && isLeftLN) {
-            p += (Math.min(left_release, release) - Math.max(left_release, release));
+            delta = (Math.max(left_release, release) - Math.min(left_release, release));
+            p += 6f / (5f + Math.exp(- delta / 1000f));
         }
         if (right_hit != 0 && right_release != 0 && isRightLN) {
-            p += (Math.min(right_release, release) - Math.max(right_release, release));
+            delta = (Math.max(right_release, release) - Math.min(right_release, release));
+            p += 6f / (5f + Math.exp(- delta / 1000f));
         }
 
         return p;
@@ -364,22 +370,22 @@ public class MapMinusMania extends MapMinus{
     }
 
     private double calcTrill(int hit, int left_hit, int right_hit, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
+        double trill = 0f;
         double chord_index = Math.sqrt(now_chord + prev_chord);
 
-        if (now_hasLeft && prev_hasRight && !prev_hasLeft) {
-            return chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
-        } else if (now_hasRight && prev_hasLeft && !prev_hasRight) {
-            return chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
-        } else {
-            return 0f;
+        if (now_hasLeft && prev_hasRight) {
+            trill += chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
+        } else if (now_hasRight && prev_hasLeft) {
+            trill += chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
         }
+        return trill;
     }
 
     //根据和之前物件的差值，获取正态分布函数后的难度，默认0-1 min是限制区域，小于这个区域都会是 1，max是 3 sigma
     private double calcFunctionNormal(int delta_time, int min_time, int max_time) {
         double sigma = max_time / 3f + min_time;
         if (delta_time > min_time) {
-            return Math.exp(- Math.pow(delta_time - min_time, 2f) / 2 * Math.pow(sigma, 2f)) / (Math.sqrt(2f * Math.PI) * sigma);
+            return Math.exp(( - Math.pow(delta_time - min_time, 2f)) / (2 * Math.pow(sigma, 2f))) / ((Math.sqrt(2f * Math.PI) * sigma));
         } else {
             return 1f;
         }
@@ -433,6 +439,30 @@ public class MapMinusMania extends MapMinus{
         }
 
         return flow;
+    }
+
+    public List<Double> getRice() {
+        return rice;
+    }
+
+    public List<Double> getLongNote() {
+        return longNote;
+    }
+
+    public List<Double> getSpeedVariation() {
+        return speedVariation;
+    }
+
+    public List<Double> getStamina() {
+        return stamina;
+    }
+
+    public List<Double> getSpeed() {
+        return speed;
+    }
+
+    public List<Double> getPrecision() {
+        return precision;
     }
 
     public List<Double> getStream() {
