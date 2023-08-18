@@ -173,7 +173,7 @@ public class MapMinusMania extends MapMinus{
             now_hit_arr[column] = now_hit;
             now_release_arr[column] = now_release;
             now_flow_arr[column] = calcFlow(prev_left_hit, prev_right_hit, prev_left_flow, prev_right_flow);
-            now_chord ++;
+            now_chord++;
 
             //真正的主计算
             switch (type) {
@@ -203,6 +203,38 @@ public class MapMinusMania extends MapMinus{
                     G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
                     Y += calcGrace(now_release, prev_left_release, prev_right_release);
                 }
+            }
+
+
+            //如果超出了计算元（或者结尾了），则刷新计算元，并且给MM赋值
+            if (now_time >= calculate_time || now_time >= hitObjects.get(hitObjects.size() - 1).getStartTime()) {
+                calculate_time += calculate_unit;
+
+                U = Math.max(C + D, U);
+
+                RC = Math.sqrt(now_chord) * (S + J + B);
+                LN = Math.sqrt(now_chord) * (H + O + R + E);
+                SV = M + F + W + P + T + N;
+                ST = C + D;
+                SP = K + I; // + U;
+                PR = G + Y;
+
+                stream.add(S); jack.add(J); bracket.add(B);
+                handLock.add(H); overlap.add(O); release.add(R); shield.add(E);
+                bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
+                riceDensity.add(C); longNoteDensity.add(D);
+                speedJack.add(K); trill.add(T); burst.add(U);
+                grace.add(G); delayedTail.add(Y);
+
+                rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
+
+                S = 0;  J = 0;  B = 0;
+                H = 0;  O = 0;  R = 0;  E = 0;
+                M = 0;  F = 0;  W = 0;  P = 0;  T = 0;  N = 0;
+                C = 0;  D = 0;
+                K = 0;  I = 0;  // U = 0; 这个不需要初始化
+                G = 0;  Y = 0;
+
             }
 
             //如果和上一个物件差距太远，则刷新prev和now数组
@@ -241,36 +273,6 @@ public class MapMinusMania extends MapMinus{
                 now_chord = 0;
             }
 
-            //如果超出了计算元（或者结尾了），则刷新计算元，并且给MM赋值
-            if (now_time >= calculate_time || now_time >= hitObjects.get(hitObjects.size() - 1).getStartTime()) {
-                calculate_time += calculate_unit;
-
-                U = Math.max(C + D, U);
-
-                RC = Math.sqrt(now_chord) * (S + J + B);
-                LN = H + O + R + E;
-                SV = M + F + W + P + T + N;
-                ST = C + D;
-                SP = K + I + U;
-                PR = G + Y;
-
-                stream.add(S); jack.add(J); bracket.add(B);
-                handLock.add(H); overlap.add(O); release.add(R); shield.add(E);
-                bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
-                riceDensity.add(C); longNoteDensity.add(D);
-                speedJack.add(K); trill.add(T); burst.add(U);
-                grace.add(G); delayedTail.add(Y);
-
-                rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
-
-                S = 0;  J = 0;  B = 0;
-                H = 0;  O = 0;  R = 0;  E = 0;
-                M = 0;  F = 0;  W = 0;  P = 0;  T = 0;  N = 0;
-                C = 0;  D = 0;
-                K = 0;  I = 0;  // U = 0; 这个不需要初始化
-                G = 0;  Y = 0;
-                
-            }
         }
     }
 
@@ -307,7 +309,7 @@ public class MapMinusMania extends MapMinus{
 
     private double calcJack(int hit, int prev_hit) {
         double p = 0f;
-        if (hit - prev_hit < frac_2) {
+        if (hit - prev_hit < frac_2 && hit - prev_hit > frac_4) {
             p += calcFunction1_X(hit - prev_hit, frac_8, calculate_unit, frac_4); // 180bpm 1/2
         }
         return p;
@@ -321,8 +323,8 @@ public class MapMinusMania extends MapMinus{
 
     private double calcSpeedJack(int hit, int prev_hit) {
         double p = 0f;
-        if (hit - prev_hit <= frac_6) {
-            p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_6); // 180bpm 1/4
+        if (hit - prev_hit <= frac_4) {
+            p += calcFunction1_X(hit - prev_hit, frac_16, calculate_unit, frac_4); // 180bpm 1/4
         }
         return p;
     }
@@ -370,15 +372,15 @@ public class MapMinusMania extends MapMinus{
     }
 
     private double calcTrill(int hit, int left_hit, int right_hit, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
-        double trill = 0f;
         double chord_index = Math.sqrt(now_chord + prev_chord);
 
         if (now_hasLeft && prev_hasRight) {
-            trill += chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
+            return chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
         } else if (now_hasRight && prev_hasLeft) {
-            trill += chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
+            return chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
+        } else {
+            return 0f;
         }
-        return trill;
     }
 
     //根据和之前物件的差值，获取正态分布函数后的难度，默认0-1 min是限制区域，小于这个区域都会是 1，max是 3 sigma
