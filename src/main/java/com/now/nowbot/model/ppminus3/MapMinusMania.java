@@ -5,8 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.now.nowbot.model.osufile.HitObject;
 import com.now.nowbot.model.osufile.OsuFile;
+import com.now.nowbot.model.osufile.hitObject.HitObjectType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -93,6 +95,7 @@ public class MapMinusMania extends MapMinus{
         int[] now_release_arr = new int[key];
         int[] now_flow_arr = new int[key];
         int now_chord = 0;
+        var now_type_arr = new HitObjectType[key];
 
         //cache 缓存前一个块和当前的块。
         //int prev_time = map_start_time; //指示之前算到了什么地方（毫秒
@@ -106,14 +109,13 @@ public class MapMinusMania extends MapMinus{
         int prev_chord = 0;
 
         //初始化缓存
-        for (int i = 0; i < key; i++) {
-            prev_hit_arr[i] = 0;
-            prev_release_arr[i] = 0;
-            prev_flow_arr[i] = 0;
-            now_hit_arr[i] = 0;
-            now_release_arr[i] = 0;
-            now_flow_arr[i] = 0;
-        }
+        Arrays.fill(prev_hit_arr, 0);
+        Arrays.fill(prev_release_arr, 0);
+        Arrays.fill(prev_flow_arr, 0);
+        Arrays.fill(now_hit_arr, 0);
+        Arrays.fill(now_release_arr, 0);
+        Arrays.fill(now_flow_arr, 0);
+        Arrays.fill(now_type_arr, HitObjectType.DEFAULT);
 
         //主计算
         for (HitObject h: hitObjects) {
@@ -138,9 +140,9 @@ public class MapMinusMania extends MapMinus{
             }
 
             //给边界的物件的左右赋值
-            int prev_hit = prev_hit_arr[column];
-            int prev_release = prev_release_arr[column];
-            int prev_flow = prev_flow_arr[column];
+            int prev_hit;
+            int prev_release;
+            //int prev_flow = prev_flow_arr[column];
 
             int prev_left_hit = 0;
             int prev_left_release = 0;
@@ -173,36 +175,94 @@ public class MapMinusMania extends MapMinus{
             now_hit_arr[column] = now_hit;
             now_release_arr[column] = now_release;
             now_flow_arr[column] = calcFlow(prev_left_hit, prev_right_hit, prev_left_flow, prev_right_flow);
+            now_type_arr[column] = type;
             now_chord++;
 
-            //真正的主计算
-            switch (type) {
-                case CIRCLE -> {
-                    //计算S，J，B
-                    S += calcStream(now_hit, prev_left_hit, prev_right_hit);
-                    J += calcJack(now_hit, prev_hit);
-                    B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
 
-                    C++;
-                    K += calcSpeedJack(now_hit, prev_hit);
-                    G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
+            //如果和上一个物件差距太远，则刷新prev和now数组，并且计算。
+            if (Math.abs(now_hit - now_time) < frac_6) {
+                now_time = now_hit;
+            } else {
+
+                //真正的主计算
+                for (int i = 0; i < key; i++) {
+
+                    if (now_hit_arr[i] != 0) {
+                        now_hit = now_hit_arr[i];
+                        now_release = now_release_arr[i];
+                        prev_hit = prev_hit_arr[i];
+                        prev_release = prev_release_arr[i];
+                        type = now_type_arr[i];
+
+                        if (i == 0) {
+                            //最左
+                            prev_right_hit = (now_hit_arr[1] == 0) ? prev_hit_arr[1] : now_hit_arr[1];
+                            prev_right_release = (now_release_arr[1] == 0) ? prev_release_arr[1] : now_release_arr[1];
+                        } else if (i == key - 1) {
+                            //最右
+                            prev_left_hit = (now_hit_arr[key - 2] == 0) ? prev_hit_arr[key - 2] : now_hit_arr[key - 2];
+                            prev_left_release = (now_release_arr[key - 2] == 0) ? prev_release_arr[key - 2] : now_release_arr[key - 2];
+                        } else {
+                            prev_left_hit = (now_hit_arr[column - 1] == 0) ? prev_hit_arr[column - 1] : now_hit_arr[column - 1];
+                            prev_left_release = (now_release_arr[column - 1] == 0) ? prev_release_arr[column - 1] : now_release_arr[column - 1];
+                            prev_right_hit = (now_hit_arr[column + 1] == 0) ? prev_hit_arr[column + 1] : now_hit_arr[column + 1];
+                            prev_right_release = (now_release_arr[column + 1] == 0) ? prev_release_arr[column + 1] : now_release_arr[column + 1];
+                        }
+
+                        switch (type) {
+                            case CIRCLE -> C++;
+                            case LONGNOTE -> {
+                                //计算H，O，R，E，还有D、Y
+                                H += calcHandLock(now_hit, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
+                                O += calcOverlap(now_hit, now_release, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
+                                R += calcStream(now_release, prev_left_release, prev_right_release);
+                                E += calcShield(now_hit, prev_release);
+
+                                D += calcSliderDensity(now_hit, now_release);
+                                Y += calcDelayedTail(now_release, prev_left_release, prev_right_release);
+                            }
+                        }
+
+                        //公用计算
+                        S += calcStream(now_hit, prev_left_hit, prev_right_hit);
+                        J += calcJack(now_hit, prev_hit);
+                        B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
+                        K += calcSpeedJack(now_hit, prev_hit);
+                        G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
+                        I += calcTrill(now_hit, prev_left_hit, prev_right_hit, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
+                    }
                 }
-                case LONGNOTE -> {
-                    //计算H，O，R，E，还有Y
-                    S += calcStream(now_hit, prev_left_hit, prev_right_hit);
-                    J += calcJack(now_hit, prev_hit);
-                    B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
 
-                    H += calcHandLock(now_hit, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
-                    O += calcOverlap(now_hit, now_release, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
-                    R += calcStream(now_release, prev_left_release, prev_right_release);
-                    E += calcShield(now_hit, prev_release);
 
-                    D += calcSliderDensity(now_hit, now_release);
-                    K += calcSpeedJack(now_hit, prev_hit);
-                    G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
-                    Y += calcDelayedTail(now_release, prev_left_release, prev_right_release);
+                //继承
+                for (int i = 0; i < key; i++) {
+                    if (now_hit_arr[i] != 0) {
+                        prev_hit_arr[i] = now_hit_arr[i];
+                    }
+
+                    if (now_release_arr[i] != 0) {
+                        prev_release_arr[i] = now_release_arr[i];
+                    }
+
+                    if (now_flow_arr[i] != 0) {
+                        prev_flow_arr[i] = now_flow_arr[i];
+                    }
                 }
+                prev_chord = now_chord;
+                prev_hasLeft = now_hasLeft;
+                prev_hasRight = now_hasRight;
+
+                //清空now系列和now缓存
+                now_time = now_hit;
+                now_hasLeft = false; //指示左手是否有物件
+                now_hasRight = false; //指示右手是否有物件
+                now_chord = 0;
+
+                Arrays.fill(now_hit_arr, 0);
+                Arrays.fill(now_release_arr, 0);
+                Arrays.fill(now_flow_arr, 0);
+
+                Arrays.fill(now_type_arr, HitObjectType.DEFAULT);
             }
 
 
@@ -235,42 +295,6 @@ public class MapMinusMania extends MapMinus{
                 K = 0;  I = 0;  // U = 0; 这个不需要初始化
                 G = 0;  Y = 0;
 
-            }
-
-            //如果和上一个物件差距太远，则刷新prev和now数组
-            if (Math.abs(now_hit - now_time) < frac_6) {
-                now_time = now_hit;
-            } else {
-
-                //计算Trill
-                I += calcTrill(now_hit, prev_left_hit, prev_right_hit, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
-
-                //继承
-                for (int i = 0; i < key; i++) {
-                    if (now_hit_arr[i] != 0) {
-                        prev_hit_arr[i] = now_hit_arr[i];
-                        now_hit_arr[i] = 0;
-                    }
-
-                    if (now_release_arr[i] != 0) {
-                        prev_release_arr[i] = now_release_arr[i];
-                        now_release_arr[i] = 0;
-                    }
-
-                    if (now_flow_arr[i] != 0) {
-                        prev_flow_arr[i] = now_flow_arr[i];
-                        now_flow_arr[i] = 0;
-                    }
-                }
-                prev_chord = now_chord;
-                prev_hasLeft = now_hasLeft;
-                prev_hasRight = now_hasRight;
-
-                //清空now系列
-                now_time = now_hit;
-                now_hasLeft = false; //指示左手是否有物件
-                now_hasRight = false; //指示右手是否有物件
-                now_chord = 0;
             }
 
         }
@@ -384,9 +408,9 @@ public class MapMinusMania extends MapMinus{
     private double calcTrill(int hit, int left_hit, int right_hit, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
         double chord_index = Math.sqrt(now_chord + prev_chord);
 
-        if (now_hasLeft && prev_hasRight) {
+        if (now_hasLeft && prev_hasRight && hit - right_hit > frac_16) {
             return chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
-        } else if (now_hasRight && prev_hasLeft) {
+        } else if (now_hasRight && prev_hasLeft && hit - left_hit > frac_16) {
             return chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
         } else {
             return 0f;

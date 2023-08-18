@@ -1,6 +1,7 @@
 package com.now.nowbot.model.osufile.hitObject;
 
 public enum HitObjectType{
+    DEFAULT("default",0),
     CIRCLE("circle",1),
     SLIDER("slider",2),
     SPINNER("spinner",8),
@@ -18,7 +19,7 @@ public enum HitObjectType{
         else if ((value >> 1 & 0b1) == 1) return SLIDER;
         else if ((value >> 3 & 0b1) == 1) return SPINNER;
         else if ((value >> 7 & 0b1) == 1) return LONGNOTE;
-        else return CIRCLE;
+        else return DEFAULT;
     }
 
     @Override
