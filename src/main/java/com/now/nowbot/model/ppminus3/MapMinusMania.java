@@ -321,7 +321,7 @@ public class MapMinusMania extends MapMinus{
 
     private double calcJack(int hit, int prev_hit) {
         double p = 0f;
-        if (hit - prev_hit < frac_2 && hit - prev_hit > frac_4) {
+        if (hit - prev_hit <= frac_2) {
             p += calcFunction1_X(hit - prev_hit, frac_8, calculate_unit, frac_4); // 180bpm 1/2
         }
         return p;
