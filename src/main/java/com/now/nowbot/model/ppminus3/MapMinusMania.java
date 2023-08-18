@@ -229,11 +229,12 @@ public class MapMinusMania extends MapMinus{
                         K += calcSpeedJack(now_hit, prev_hit);
                         G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
 
-                        if (hasMidColumn && (inner_column == midColumn - 1 || inner_column == midColumn + 1) ||
-                                !hasMidColumn && (inner_column == key / 2 - 1 || inner_column == key / 2)) {
-                            I += calcTrill(now_time, prev_time, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
+                        //分左右手
+                        if ((hasMidColumn && inner_column == midColumn - 1) || (!hasMidColumn && inner_column == key / 2 - 1)) {
+                            I += calcTrill(now_time, prev_time, true, prev_hasLeft, prev_hasRight);
+                        } else if ((hasMidColumn && inner_column == midColumn + 1) || (!hasMidColumn && inner_column == key / 2)) {
+                            I += calcTrill(now_time, prev_time, false, prev_hasLeft, prev_hasRight);
                         }
-
                     }
                 }
             }
@@ -256,7 +257,7 @@ public class MapMinusMania extends MapMinus{
                 handLock.add(H); overlap.add(O); release.add(R); shield.add(E * 100f);
                 bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
                 riceDensity.add(C); longNoteDensity.add(D);
-                speedJack.add(K); trill.add(T); burst.add(U);
+                speedJack.add(K * 5f); trill.add(T); burst.add(U);
                 grace.add(G); delayedTail.add(Y * 5f);
 
                 rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
@@ -414,13 +415,12 @@ public class MapMinusMania extends MapMinus{
         }
     }
 
-    private double calcTrill(int now_time, int prev_time, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
-        double chord_index = Math.sqrt(now_chord + prev_chord);
+    private double calcTrill(int now_time, int prev_time, boolean isNowLeft, boolean prev_hasLeft, boolean prev_hasRight) {
 
-        if (now_hasLeft && prev_hasRight && (now_time - prev_time) > frac_8) {
-            return chord_index * calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
-        } else if (now_hasRight && prev_hasLeft && (now_time - prev_time) > frac_8) {
-            return chord_index * calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
+        if (isNowLeft && prev_hasRight && (now_time - prev_time) > frac_8) {
+            return calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
+        } else if (!isNowLeft && prev_hasLeft && (now_time - prev_time) > frac_8) {
+            return calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
         } else {
             return 0f;
         }
