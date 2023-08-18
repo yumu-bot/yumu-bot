@@ -260,14 +260,14 @@ public class MapMinusMania extends MapMinus{
                 SV = M + F + W + P + T + N;
                 ST = C + D;
                 SP = K * 5f + I * 1000f; // + U;
-                PR = G + Y * 5f;
+                PR = G * 5f + Y * 2f;
 
                 stream.add(S); jack.add(J); bracket.add(B);
                 handLock.add(H); overlap.add(O); release.add(R); shield.add(E * 100f);
                 bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
                 riceDensity.add(C); longNoteDensity.add(D);
                 speedJack.add(K * 5f); trill.add(I * 1000f); burst.add(U);
-                grace.add(G); delayedTail.add(Y * 5f);
+                grace.add(G * 5f); delayedTail.add(Y * 2f);
 
                 rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
 
