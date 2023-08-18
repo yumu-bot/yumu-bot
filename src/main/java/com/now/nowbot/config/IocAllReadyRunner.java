@@ -59,7 +59,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         MoliUtil.init(applicationContext.getBean(RestTemplate.class));
         permission.init(applicationContext);
         initFountWidth();
-        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);
+//        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);
 
         ((TomcatWebServer) webServerApplicationContext.getWebServer())
                 .getTomcat()

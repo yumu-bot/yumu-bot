@@ -43,16 +43,16 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
     @Override
     public MessageChain getMessage() {
         if (event instanceof com.mikuac.shiro.dto.event.message.GroupMessageEvent c && c.getSender().getUserId().equals(365246692L)) {
-            l.error("---------------event-----------------");
+            l.debug("---------------event-----------------");
             event.getArrayMsg().forEach(e -> {
-                l.error(e.toString());
+                l.debug(e.toString());
             });
 
 
-            l.error("raw: [{}]", event.getRawMessage());
-            l.error("---------------event-end-----------------");
+            l.debug("raw: [{}]", event.getRawMessage());
+            l.debug("---------------event-end-----------------");
         }
-        return getMessageChain(event.getArrayMsg());
+        return getMessageChain(ShiroUtils.rawToArrayMsg(event.getRawMessage()));
     }
 
     public String getRawMessage() {
