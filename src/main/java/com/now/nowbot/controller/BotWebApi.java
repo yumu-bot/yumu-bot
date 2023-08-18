@@ -23,7 +23,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,8 +49,8 @@ public class BotWebApi {
     @Resource
     ImageService imageService;
 
-    @GetMapping(value = "ppm", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
+    @GetMapping(value = "ppm")
+    public ResponseEntity<byte[]> getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         if (user2 != null) {
             return getPPMVS(user1, user2, playMode);
         }
@@ -61,12 +61,13 @@ public class BotWebApi {
         if (ppm == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
         } else {
-            return imageService.getPanelB(info, mode, ppm);
+            var data = imageService.getPanelB(info, mode, ppm);
+            return new ResponseEntity<>(data, getImageHeader(user1.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
         }
     }
 
-    @GetMapping(value = "ppmvs", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
+    @GetMapping(value = "ppmvs")
+    public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
         var info1 = osuGetService.getPlayerInfo(user1.trim());
         var info2 = osuGetService.getPlayerInfo(user2.trim());
@@ -78,7 +79,8 @@ public class BotWebApi {
         if (ppm1 == null || ppm2 == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe/Other 不存在");
         } else {
-            return imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+            var data = imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+            return new ResponseEntity<>(data, getImageHeader(user1.trim() + " vs " + user2.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
         }
     }
 
@@ -89,8 +91,8 @@ public class BotWebApi {
      * @param r include rematch
      * @return img
      */
-    @GetMapping(value = "match", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
+    @GetMapping(value = "match")
+    public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         Match match = osuGetService.getMatchInfo(mid);
         int gameTime = 0;
         var m = match.getEvents().stream()
@@ -113,10 +115,8 @@ public class BotWebApi {
         if (d == null) d = 0;
         f = f != null;
         r = r != null;
-        long t = System.currentTimeMillis();
-        var b = imageService.getPanelF(match, osuGetService, k, d, f, r);
-        System.out.println(System.currentTimeMillis() - t);
-        return b;
+        var data = imageService.getPanelF(match, osuGetService, k, d, f, r);
+        return new ResponseEntity<>(data, getImageHeader(mid + "-mra.jpg", data.length), HttpStatus.OK);
     }
 
     /***
@@ -128,13 +128,14 @@ public class BotWebApi {
      * @param r include rematch
      * @return img
      */
-    @GetMapping(value = "rating", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
+    @GetMapping(value = "rating")
+    public ResponseEntity<byte[]> getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
         f = f != null;
         r = r != null;
-        return mraService.getDataImage(matchId, k, d, f, r);
+        var data = mraService.getDataImage(matchId, k, d, f, r);
+        return new ResponseEntity<>(data, getImageHeader(matchId + "-mra.jpg", data.length), HttpStatus.OK);
     }
 
     @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})
@@ -171,13 +172,13 @@ public class BotWebApi {
         return sb.toString();
     }
 
-    @GetMapping(value = "bp", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getPR(@RequestParam("u1") String userName,
-                        @Nullable @RequestParam("mode") String playMode,
-                        @Nullable @RequestParam("days") Integer days,
-                        @Nullable @RequestParam("range") Integer range,
-                        @Nullable @RequestParam("re") Boolean re,
-                        @Nullable @RequestParam("pr") Boolean pr
+    @GetMapping(value = "bp")
+    public ResponseEntity<byte[]> getPR(@RequestParam("u1") String userName,
+                                        @Nullable @RequestParam("mode") String playMode,
+                                        @Nullable @RequestParam("days") Integer days,
+                                        @Nullable @RequestParam("range") Integer range,
+                                        @Nullable @RequestParam("re") Boolean re,
+                                        @Nullable @RequestParam("pr") Boolean pr
     ) {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
@@ -211,20 +212,21 @@ public class BotWebApi {
             }
             var panel = new TBPPanelBuilder(lines.size());
             panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            return panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
+            var data = panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
                     .encodeToData(EncodedImageFormat.JPEG, 80)
                     .getBytes();
+            return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @GetMapping(value = "score", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getScore(@RequestParam("u1") String userName,
-                           @Nullable @RequestParam("mode") String playMode,
-                           @Nullable @RequestParam("bp") Integer bps,
-                           @Nullable @RequestParam("bid") Integer bid,
-                           @Nullable @RequestParam("f") Boolean includeF
+    @GetMapping(value = "score")
+    public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
+                                           @Nullable @RequestParam("mode") String playMode,
+                                           @Nullable @RequestParam("bp") Integer bps,
+                                           @Nullable @RequestParam("bid") Integer bid,
+                                           @Nullable @RequestParam("f") Boolean includeF
     ) {
         Score score;
         userName = userName.trim();
@@ -253,12 +255,13 @@ public class BotWebApi {
             score = scores.get(0);
         }
 
-        return imageService.getPanelE(userInfo, score, osuGetService);
+        var data = imageService.getPanelE(userInfo, score, osuGetService);
+        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
-    @GetMapping(value = "bpa", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getBpa(@RequestParam("u1") String userName,
-                         @Nullable @RequestParam("mode") String playMode
+    @GetMapping(value = "bpa")
+    public ResponseEntity<byte[]> getBpa(@RequestParam("u1") String userName,
+                                         @Nullable @RequestParam("mode") String playMode
     ) {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
@@ -266,11 +269,12 @@ public class BotWebApi {
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
         if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
         var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
-        return imageService.getPanelJ(userInfo, scores, osuGetService);
+        var data = imageService.getPanelJ(userInfo, scores, osuGetService);
+        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
     @GetMapping(value = "friend", produces = {MediaType.IMAGE_PNG_VALUE})
-    public byte[] getFriend(@RequestParam("u1") String userName,
+    public ResponseEntity<byte[]> getFriend(@RequestParam("u1") String userName,
                             @Nullable @RequestParam("r1") Integer range1,
                             @Nullable @RequestParam("r2") Integer range2
     ) {
@@ -336,26 +340,26 @@ public class BotWebApi {
             }
         }
 
-        return imageService.getPanelA1(me, friend);
+        var data = imageService.getPanelA1(me, friend);
+        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
     @GetMapping("file/{key}")
-    public void downloadFile(@PathVariable("key") String key, HttpServletResponse response) throws IOException {
+    public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) throws IOException {
         var data = QQMsgUtil.getFileData(key);
         if (data == null) throw new RuntimeException("文件不存在");
-        response.reset();
-        response.setContentType("application/octet-stream");
-        response.setContentLength(data.bytes().capacity());
-        response.setHeader("Content-Disposition", "attachment;filename=" + data.name());
-        var w = Channels.newChannel(response.getOutputStream());
-        w.write(data.bytes());
-        w.close();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.inline().filename(data.name()).build());
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentLength(data.bytes().capacity());
+        return new ResponseEntity<>(data.bytes().array(), headers, HttpStatus.OK);
     }
 
     @GetMapping("log-level")
     public String setLoggerLever(@RequestParam("l") String level) {
         var l = Level.toLevel(level, Level.INFO);
-        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
+        ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
         log.trace("trace");
         log.debug("debug");
         log.info("info");
@@ -370,6 +374,14 @@ public class BotWebApi {
 
     static int rand(int min, int max) {
         return min + random.nextInt(max - min);
+    }
+
+    HttpHeaders getImageHeader(String name, long length) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
+        headers.setContentLength(length);
+        headers.setContentType(MediaType.IMAGE_JPEG);
+        return headers;
     }
 }
 
