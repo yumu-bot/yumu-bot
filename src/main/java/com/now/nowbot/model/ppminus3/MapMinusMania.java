@@ -201,7 +201,7 @@ public class MapMinusMania extends MapMinus{
                     D += calcSliderDensity(now_hit, now_release);
                     K += calcSpeedJack(now_hit, prev_hit);
                     G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
-                    Y += calcGrace(now_release, prev_left_release, prev_right_release);
+                    Y += calcDelayedTail(now_release, prev_left_release, prev_right_release);
                 }
             }
 
@@ -307,6 +307,18 @@ public class MapMinusMania extends MapMinus{
         return p;
     }
 
+    private double calcDelayedTail(int release, int left_release, int right_release) {
+        double p = 0f;
+        if (release - left_release <= frac_3) {
+            p += calcFunctionNormal(release - left_release, frac_16, frac_3); // 180bpm 1/4
+        }
+        if (release - right_release <= frac_3) {
+            p += calcFunctionNormal(release - right_release, frac_16, frac_3); // 180bpm 1/4
+        }
+
+        return p;
+    }
+
     private double calcJack(int hit, int prev_hit) {
         double p = 0f;
         if (hit - prev_hit < frac_2 && hit - prev_hit > frac_4) {
@@ -316,9 +328,7 @@ public class MapMinusMania extends MapMinus{
     }
 
     private double calcShield(int hit, int prev_release) {
-        double p = 0f;
-        p += calcFunctionNormal(hit - prev_release, frac_16, frac_2); // 180bpm 1/2
-        return p;
+        return calcFunctionNormal(hit - prev_release, frac_16, frac_1); // 180bpm 1/2
     }
 
     private double calcSpeedJack(int hit, int prev_hit) {
