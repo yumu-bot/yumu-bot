@@ -47,6 +47,9 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
             event.getArrayMsg().forEach(e -> {
                 l.error(e.toString());
             });
+
+
+            l.error("raw: [{}]", event.getRawMessage());
             l.error("---------------event-end-----------------");
         }
         return getMessageChain(event.getArrayMsg());
