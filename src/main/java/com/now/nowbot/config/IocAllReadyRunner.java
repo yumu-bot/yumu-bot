@@ -1,5 +1,7 @@
 package com.now.nowbot.config;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.MiraiListener;
@@ -57,6 +59,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         MoliUtil.init(applicationContext.getBean(RestTemplate.class));
         permission.init(applicationContext);
         initFountWidth();
+        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);
 
         ((TomcatWebServer) webServerApplicationContext.getWebServer())
                 .getTomcat()
