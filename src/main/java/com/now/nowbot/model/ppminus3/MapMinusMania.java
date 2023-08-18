@@ -185,28 +185,28 @@ public class MapMinusMania extends MapMinus{
             } else {
 
                 //真正的主计算
-                for (int i = 0; i < key; i++) {
+                for (int inner_column = 0; inner_column < key; inner_column++) {
 
-                    if (now_hit_arr[i] != 0) {
-                        now_hit = now_hit_arr[i];
-                        now_release = now_release_arr[i];
-                        prev_hit = prev_hit_arr[i];
-                        prev_release = prev_release_arr[i];
-                        type = now_type_arr[i];
+                    if (now_hit_arr[inner_column] != 0) {
+                        now_hit = now_hit_arr[inner_column];
+                        now_release = now_release_arr[inner_column];
+                        prev_hit = prev_hit_arr[inner_column];
+                        prev_release = prev_release_arr[inner_column];
+                        type = now_type_arr[inner_column];
 
-                        if (i == 0) {
+                        if (inner_column == 0) {
                             //最左
                             prev_right_hit = (now_hit_arr[1] == 0) ? prev_hit_arr[1] : now_hit_arr[1];
                             prev_right_release = (now_release_arr[1] == 0) ? prev_release_arr[1] : now_release_arr[1];
-                        } else if (i == key - 1) {
+                        } else if (inner_column == key - 1) {
                             //最右
                             prev_left_hit = (now_hit_arr[key - 2] == 0) ? prev_hit_arr[key - 2] : now_hit_arr[key - 2];
                             prev_left_release = (now_release_arr[key - 2] == 0) ? prev_release_arr[key - 2] : now_release_arr[key - 2];
                         } else {
-                            prev_left_hit = (now_hit_arr[column - 1] == 0) ? prev_hit_arr[column - 1] : now_hit_arr[column - 1];
-                            prev_left_release = (now_release_arr[column - 1] == 0) ? prev_release_arr[column - 1] : now_release_arr[column - 1];
-                            prev_right_hit = (now_hit_arr[column + 1] == 0) ? prev_hit_arr[column + 1] : now_hit_arr[column + 1];
-                            prev_right_release = (now_release_arr[column + 1] == 0) ? prev_release_arr[column + 1] : now_release_arr[column + 1];
+                            prev_left_hit = (now_hit_arr[inner_column - 1] == 0) ? prev_hit_arr[inner_column - 1] : now_hit_arr[inner_column - 1];
+                            prev_left_release = (now_release_arr[inner_column - 1] == 0) ? prev_release_arr[inner_column - 1] : now_release_arr[inner_column - 1];
+                            prev_right_hit = (now_hit_arr[inner_column + 1] == 0) ? prev_hit_arr[inner_column + 1] : now_hit_arr[inner_column + 1];
+                            prev_right_release = (now_release_arr[inner_column + 1] == 0) ? prev_release_arr[inner_column + 1] : now_release_arr[inner_column + 1];
                         }
 
                         switch (type) {
