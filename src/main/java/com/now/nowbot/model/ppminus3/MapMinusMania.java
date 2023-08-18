@@ -331,8 +331,8 @@ public class MapMinusMania extends MapMinus{
 
     private double calcHandLock(int hit, int left_hit, int left_release, int right_hit, int right_release){
         double p = 0f;
-        var isLeftLN = (left_release + frac_16 > hit && left_hit - frac_16 < hit);
-        var isRightLN = (right_release + frac_16 > hit && right_hit - frac_16 < hit);
+        var isLeftLN = (left_release - frac_16 > hit && left_hit < hit - frac_16);
+        var isRightLN = (right_release - frac_16 > hit && right_hit < hit - frac_16);
 
         if (left_hit != 0 && left_release != 0 && isLeftLN) {
             p++;
@@ -347,15 +347,15 @@ public class MapMinusMania extends MapMinus{
     private double calcOverlap(int hit, int release, int left_hit, int left_release, int right_hit, int right_release){
         double p = 0f;
         double delta;
-        var isLeftLN = (left_release + frac_16 > hit && left_hit - frac_16 < hit);
-        var isRightLN = (right_release + frac_16 > hit && right_hit - frac_16 < hit);
+        var isLeftLN = (left_release - frac_16 > hit && left_hit < hit - frac_16);
+        var isRightLN = (right_release - frac_16 > hit && right_hit < hit - frac_16);
 
         if (left_hit != 0 && left_release != 0 && isLeftLN) {
-            delta = (Math.max(left_release, release) - Math.min(left_release, release));
+            delta = (Math.min(left_release, release) - Math.max(left_hit, hit));
             p += 6f / (5f + Math.exp(- delta / 1000f));
         }
         if (right_hit != 0 && right_release != 0 && isRightLN) {
-            delta = (Math.max(right_release, release) - Math.min(right_release, release));
+            delta = (Math.min(right_release, release) - Math.max(right_hit, hit));
             p += 6f / (5f + Math.exp(- delta / 1000f));
         }
 
