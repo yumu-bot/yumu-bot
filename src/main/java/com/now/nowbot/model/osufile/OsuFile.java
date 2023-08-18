@@ -159,7 +159,7 @@ public class OsuFile {
             var entity = line.split(",");
             if (entity.length < 8) throw new IOException("解析 [TimingPoints] 错误");
 
-            int start_time = Integer.parseInt(entity[0]);
+            int start_time = (int) Math.floor(Double.parseDouble(entity[0]));
             Double beat_length = Double.parseDouble(entity[1]);
             int meter = Integer.parseInt(entity[2]); //节拍
             TimingSampleSet sample_set = TimingSampleSet.getType(Integer.parseInt(entity[3]));
