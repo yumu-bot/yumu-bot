@@ -180,9 +180,7 @@ public class MapMinusMania extends MapMinus{
 
 
             //如果和上一个物件差距太远，则刷新prev和now数组，并且计算。
-            if (Math.abs(now_hit - now_time) < frac_6) {
-                now_time = now_hit;
-            } else {
+            if (Math.abs(now_hit - now_time) >= frac_6) {
 
                 //真正的主计算
                 for (int inner_column = 0; inner_column < key; inner_column++) {
@@ -232,37 +230,6 @@ public class MapMinusMania extends MapMinus{
                         I += calcTrill(now_hit, prev_left_hit, prev_right_hit, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
                     }
                 }
-
-
-                //继承
-                for (int i = 0; i < key; i++) {
-                    if (now_hit_arr[i] != 0) {
-                        prev_hit_arr[i] = now_hit_arr[i];
-                    }
-
-                    if (now_release_arr[i] != 0) {
-                        prev_release_arr[i] = now_release_arr[i];
-                    }
-
-                    if (now_flow_arr[i] != 0) {
-                        prev_flow_arr[i] = now_flow_arr[i];
-                    }
-                }
-                prev_chord = now_chord;
-                prev_hasLeft = now_hasLeft;
-                prev_hasRight = now_hasRight;
-
-                //清空now系列和now缓存
-                now_time = now_hit;
-                now_hasLeft = false; //指示左手是否有物件
-                now_hasRight = false; //指示右手是否有物件
-                now_chord = 0;
-
-                Arrays.fill(now_hit_arr, 0);
-                Arrays.fill(now_release_arr, 0);
-                Arrays.fill(now_flow_arr, 0);
-
-                Arrays.fill(now_type_arr, HitObjectType.DEFAULT);
             }
 
 
@@ -297,6 +264,41 @@ public class MapMinusMania extends MapMinus{
 
             }
 
+            //这里原本是上面那一块的清除。如果在上面就清除了，那么最近上面的东西结算不到
+            //清空缓存
+            if (Math.abs(now_hit - now_time) < frac_6) {
+                now_time = now_hit;
+            } else {
+                //继承
+                for (int i = 0; i < key; i++) {
+                    if (now_hit_arr[i] != 0) {
+                        prev_hit_arr[i] = now_hit_arr[i];
+                    }
+
+                    if (now_release_arr[i] != 0) {
+                        prev_release_arr[i] = now_release_arr[i];
+                    }
+
+                    if (now_flow_arr[i] != 0) {
+                        prev_flow_arr[i] = now_flow_arr[i];
+                    }
+                }
+                prev_chord = now_chord;
+                prev_hasLeft = now_hasLeft;
+                prev_hasRight = now_hasRight;
+
+                //清空now系列和now缓存
+                now_time = now_hit;
+                now_hasLeft = false; //指示左手是否有物件
+                now_hasRight = false; //指示右手是否有物件
+                now_chord = 0;
+
+                Arrays.fill(now_hit_arr, 0);
+                Arrays.fill(now_release_arr, 0);
+                Arrays.fill(now_flow_arr, 0);
+
+                Arrays.fill(now_type_arr, HitObjectType.DEFAULT);
+            }
         }
     }
 
