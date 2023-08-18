@@ -246,18 +246,18 @@ public class MapMinusMania extends MapMinus{
                 U = Math.max(C + D, U);
 
                 RC = Math.sqrt(now_chord) * (S + J + B);
-                LN = Math.sqrt(now_chord) * (H + O + R + E);
+                LN = Math.sqrt(now_chord) * (H + O + R + E * 100f);
                 SV = M + F + W + P + T + N;
                 ST = C + D;
                 SP = K + I; // + U;
                 PR = G + Y;
 
                 stream.add(S); jack.add(J); bracket.add(B);
-                handLock.add(H); overlap.add(O); release.add(R); shield.add(E);
+                handLock.add(H); overlap.add(O); release.add(R); shield.add(E * 100f);
                 bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
                 riceDensity.add(C); longNoteDensity.add(D);
                 speedJack.add(K); trill.add(T); burst.add(U);
-                grace.add(G); delayedTail.add(Y);
+                grace.add(G); delayedTail.add(Y * 5f);
 
                 rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
 
@@ -330,10 +330,10 @@ public class MapMinusMania extends MapMinus{
 
     private double calcGrace(int hit, int left_hit, int right_hit) {
         double p = 0f;
-        if (hit - left_hit <= frac_6) {
+        if (hit - left_hit <= frac_6 && hit - left_hit >= frac_16) {
             p += calcFunctionNormal(hit - left_hit, frac_16, frac_6); // 180bpm 1/4
         }
-        if (hit - right_hit <= frac_6) {
+        if (hit - right_hit <= frac_6 && hit - left_hit >= frac_16) {
             p += calcFunctionNormal(hit - right_hit, frac_16, frac_6); // 180bpm 1/4
         }
 
