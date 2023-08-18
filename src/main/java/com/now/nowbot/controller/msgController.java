@@ -5,7 +5,7 @@ import com.mikuac.shiro.core.BotContainer;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.service.MessageService.BindService;
+import com.now.nowbot.service.MessageServiceImpl.BindService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.UpdateUtil;
 import org.slf4j.Logger;

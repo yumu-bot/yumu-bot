@@ -3,7 +3,7 @@ package com.now.nowbot.listener;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.MsgLite;
 import com.now.nowbot.mapper.MessageMapper;
-import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.SendmsgUtil;

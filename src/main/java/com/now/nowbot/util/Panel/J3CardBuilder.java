@@ -3,12 +3,10 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.MessageService.PPMLegacyService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -1,6 +1,6 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.service.MessageService;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
 import net.mamoe.mirai.event.events.*;

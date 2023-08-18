@@ -2,7 +2,7 @@ package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.now.nowbot.service.MessageService.BindService;
+import com.now.nowbot.service.MessageServiceImpl.BindService;
 import net.mamoe.mirai.Bot;
 import okhttp3.*;
 import org.slf4j.Logger;

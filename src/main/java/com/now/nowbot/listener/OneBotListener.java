@@ -6,7 +6,7 @@ import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.service.MessageService.MessageService;
+import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
@@ -49,9 +49,12 @@ public class OneBotListener {
 
             try {
                 Matcher matcher = ins.getRegex().matcher(event.getRawMessage().trim());
+                var service = messageServiceMap.get(ins.getaClass());
+                var d = new MessageService.DataValue();
                 if (matcher.find()) {
-                    var service = messageServiceMap.get(ins.getaClass());
                     service.HandleMessage(event, matcher);
+                } else if (service.isHandle(event, d)) {
+                    service.HandleMessage(event, d.getValue());
                 }
             } catch (Throwable e) {
                 errorHandle(event, e);

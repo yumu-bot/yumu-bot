@@ -20,13 +20,6 @@
         <run.os>linux</run.os>
         <flexmark.version>0.26.4</flexmark.version>
     </properties>
-    <repositories>
-        <repository>
-            <id>yoava</id>
-            <name>AOL yoava</name>
-            <url>https://yoava.artifactoryonline.com/yoava/repo</url>
-        </repository>
-    </repositories>
 
     <dependencies>
 

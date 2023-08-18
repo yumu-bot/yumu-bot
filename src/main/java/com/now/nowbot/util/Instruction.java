@@ -1,7 +1,8 @@
 package com.now.nowbot.util;
 
 
-import com.now.nowbot.service.MessageService.*;
+import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.MessageServiceImpl.*;
 
 import java.util.regex.Pattern;
 
@@ -33,9 +34,6 @@ public enum Instruction {
     BIND(BindService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
 
-    //不要 !ymbind name 这种规则了
-    BAN(BanService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w))+")),
 
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
@@ -103,9 +101,6 @@ public enum Instruction {
 
 
     // #4 osu! 谱面指令
-
-    AUDIO(AudioService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![a-zA-Z_]))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?")),
 
     QUAMAP(QualifiedMapService.class,
             Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![a-zA-Z_])|q(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")),

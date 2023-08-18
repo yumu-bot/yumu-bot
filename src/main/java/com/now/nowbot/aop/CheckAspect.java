@@ -35,7 +35,7 @@ public class CheckAspect {
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现MessageService的HandMessage方法切入点
-    @Pointcut("execution(public void com.now.nowbot.service.MessageService..HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
+    @Pointcut("execution(public void com.now.nowbot.service.MessageServiceImpl..HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
     public void servicePoint() {
     }
 
