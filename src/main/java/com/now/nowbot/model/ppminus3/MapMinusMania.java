@@ -67,8 +67,8 @@ public class MapMinusMania extends MapMinus{
         var hitObjects = file.getHitObjects();
         var timings = file.getTimings();
         int key = (int) Math.floor(file.getCS()); // 4 - 7
-        boolean hasMidColumn = (key % 2) == 1;
-        int midColumn = hasMidColumn ? (key - 1) / 2 : 0; //7K下，它是0123456的3
+        boolean hasMidColumn = (key % 2) != 0;
+        int midColumn = hasMidColumn ? ((key - 1) / 2) : 0; //7K下，它是0123456的3
 
         if (!hitObjects.isEmpty()) {
             map_start_time = hitObjects.get(0).getStartTime();
@@ -87,6 +87,7 @@ public class MapMinusMania extends MapMinus{
         //index 指示当前算到哪里了
         int calculate_time = map_start_time + calculate_unit; //指示计算元的位置，根据 calculate_unit 不断刷新。
         int now_time = map_start_time; //指示目前算到了什么地方（毫秒）
+        int prev_time = map_start_time; //指示上一次更替算到了什么地方（毫秒）
 
         boolean now_hasLeft = false; //指示左手是否有物件
         boolean now_hasRight = false; //指示右手是否有物件
@@ -227,7 +228,12 @@ public class MapMinusMania extends MapMinus{
                         B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
                         K += calcSpeedJack(now_hit, prev_hit);
                         G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
-                        I += calcTrill(now_hit, prev_left_hit, prev_right_hit, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
+
+                        if (hasMidColumn && (inner_column == midColumn - 1 || inner_column == midColumn + 1) ||
+                                !hasMidColumn && (inner_column == key / 2 - 1 || inner_column == key / 2)) {
+                            I += calcTrill(now_time, prev_time, now_hasLeft, now_hasRight, prev_hasLeft, prev_hasRight, now_chord, prev_chord);
+                        }
+
                     }
                 }
             }
@@ -286,6 +292,7 @@ public class MapMinusMania extends MapMinus{
                 prev_chord = now_chord;
                 prev_hasLeft = now_hasLeft;
                 prev_hasRight = now_hasRight;
+                prev_time = now_time;
 
                 //清空now系列和now缓存
                 now_time = now_hit;
@@ -407,13 +414,13 @@ public class MapMinusMania extends MapMinus{
         }
     }
 
-    private double calcTrill(int hit, int left_hit, int right_hit, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
+    private double calcTrill(int now_time, int prev_time, boolean now_hasLeft, boolean now_hasRight, boolean prev_hasLeft, boolean prev_hasRight, int now_chord, int prev_chord) {
         double chord_index = Math.sqrt(now_chord + prev_chord);
 
-        if (now_hasLeft && prev_hasRight && hit - right_hit > frac_16) {
-            return chord_index * calcFunctionNormal(hit - right_hit, frac_16, frac_2);
-        } else if (now_hasRight && prev_hasLeft && hit - left_hit > frac_16) {
-            return chord_index * calcFunctionNormal(hit - left_hit, frac_16, frac_2);
+        if (now_hasLeft && prev_hasRight && (now_time - prev_time) > frac_8) {
+            return chord_index * calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
+        } else if (now_hasRight && prev_hasLeft && (now_time - prev_time) > frac_8) {
+            return chord_index * calcFunctionNormal(now_time - prev_time, frac_8, frac_2);
         } else {
             return 0f;
         }
