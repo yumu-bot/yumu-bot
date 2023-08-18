@@ -105,12 +105,14 @@ public class MapMinusMania extends MapMinus{
         boolean prev_hasRight = false; //指示右手是否有物件
 
         int[] prev_hit_arr = new int[key];
+        int[] prev_instant_hit_arr = new int[key]; //这组数据立马更新，不受编组限制
         int[] prev_release_arr = new int[key];
         int[] prev_flow_arr = new int[key]; //描述前一个物件的流向。这个流向会根据这个物件再往前的物件决定。-2是踢墙，-1是左，0是无，1是右，2是双向。
-        int prev_chord = 0;
+        //int prev_chord = 0;
 
         //初始化缓存
         Arrays.fill(prev_hit_arr, 0);
+        Arrays.fill(prev_instant_hit_arr, 0);
         Arrays.fill(prev_release_arr, 0);
         Arrays.fill(prev_flow_arr, 0);
         Arrays.fill(now_hit_arr, 0);
@@ -141,30 +143,36 @@ public class MapMinusMania extends MapMinus{
             }
 
             //给边界的物件的左右赋值
-            int prev_hit;
+            int prev_instant_hit = prev_instant_hit_arr[column];
             int prev_release;
             //int prev_flow = prev_flow_arr[column];
 
             int prev_left_hit = 0;
             int prev_left_release = 0;
+            int prev_left_instant_hit = 0;
             int prev_right_hit = 0;
             int prev_right_release = 0;
+            int prev_right_instant_hit = 0;
             int prev_left_flow = -2;
             int prev_right_flow = -2;
 
             if (column == 0) {
                 //最左
                 prev_right_hit = prev_hit_arr[1];
+                prev_right_instant_hit = prev_instant_hit_arr[1];
                 prev_right_release = prev_release_arr[1];
                 prev_right_flow = prev_flow_arr[1];
             } else if (column == key - 1) {
                 //最右
                 prev_left_hit = prev_hit_arr[key - 2];
+                prev_left_instant_hit = prev_instant_hit_arr[key - 2];
                 prev_left_release = prev_release_arr[key - 2];
                 prev_left_flow = prev_flow_arr[key - 2];
             } else {
                 prev_left_hit = prev_hit_arr[column - 1];
                 prev_right_hit = prev_hit_arr[column + 1];
+                prev_left_instant_hit = prev_instant_hit_arr[column - 1];
+                prev_right_instant_hit = prev_instant_hit_arr[column + 1];
                 prev_left_release = prev_release_arr[column - 1];
                 prev_right_release = prev_release_arr[column + 1];
                 prev_left_flow = prev_flow_arr[column - 1];
@@ -180,16 +188,20 @@ public class MapMinusMania extends MapMinus{
             now_chord++;
 
 
+            //这一类计算不需要放下面去
+            J += calcJack(now_hit, prev_instant_hit);
+            K += calcSpeedJack(now_hit, prev_instant_hit);
+            G += calcGrace(now_hit, prev_left_instant_hit, prev_right_instant_hit);
+
             //如果和上一个物件差距太远，则刷新prev和now数组，并且计算。
             if (Math.abs(now_hit - now_time) >= frac_6) {
 
-                //真正的主计算
+                //按组计算（需要考虑左右的物件的计算）
                 for (int inner_column = 0; inner_column < key; inner_column++) {
 
                     if (now_hit_arr[inner_column] != 0) {
                         now_hit = now_hit_arr[inner_column];
                         now_release = now_release_arr[inner_column];
-                        prev_hit = prev_hit_arr[inner_column];
                         prev_release = prev_release_arr[inner_column];
                         type = now_type_arr[inner_column];
 
@@ -222,12 +234,9 @@ public class MapMinusMania extends MapMinus{
                             }
                         }
 
-                        //公用计算
+                        //主计算
                         S += calcStream(now_hit, prev_left_hit, prev_right_hit);
-                        J += calcJack(now_hit, prev_hit);
                         B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
-                        K += calcSpeedJack(now_hit, prev_hit);
-                        G += calcGrace(now_hit, prev_left_hit, prev_right_hit);
 
                         //分左右手
                         if ((hasMidColumn && inner_column == midColumn - 1) || (!hasMidColumn && inner_column == key / 2 - 1)) {
@@ -290,7 +299,7 @@ public class MapMinusMania extends MapMinus{
                         prev_flow_arr[i] = now_flow_arr[i];
                     }
                 }
-                prev_chord = now_chord;
+                //prev_chord = now_chord;
                 prev_hasLeft = now_hasLeft;
                 prev_hasRight = now_hasRight;
                 prev_time = now_time;
@@ -307,6 +316,9 @@ public class MapMinusMania extends MapMinus{
 
                 Arrays.fill(now_type_arr, HitObjectType.DEFAULT);
             }
+
+            //更新这个立即系列
+            prev_instant_hit_arr[column] = now_hit;
         }
     }
 
