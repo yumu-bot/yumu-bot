@@ -8,8 +8,7 @@ import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.ServiceException.MapMinusException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,24 +34,35 @@ public class MapMinusService implements MessageService{
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        long bid = 0;
-        OsuMode mode = null;
-        String fileStr = null;
+        long bid;
+        OsuMode mode;
+        String fileStr;
 
         try {
             bid = Long.parseLong(matcher.group("id"));
+        } catch (NullPointerException e) {
+            throw new MapMinusException(MapMinusException.Type.MM_Bid_Error);
+        }
+
+        try {
             mode = OsuMode.getMode(osuGetService.getBeatMapInfo(bid).getModeInt());
             fileStr = osuGetService.getBeatMapFile(bid);
             //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
         } catch (Exception e) {
-
+            throw new MapMinusException(MapMinusException.Type.MM_Map_NotFound);
         }
 
         OsuFile file = null;
         if (mode != null) {
-            switch (mode) {
-                case MANIA -> file = new OsuFileMania(fileStr);
-                default -> throw new TipsException("抱歉，本功能暂不支持除Mania模式以外的谱面！");//file = new OsuFile(fileStr);
+            try {
+                switch (mode) {
+                    case MANIA -> file = new OsuFileMania(fileStr);
+                    default -> throw new MapMinusException(MapMinusException.Type.MM_Function_NotSupported);
+                    //throw new TipsException("抱歉，本功能暂不支持除Mania模式以外的谱面！");//file = new OsuFile(fileStr);
+                }
+
+            } catch (NullPointerException e) {
+                throw new MapMinusException(MapMinusException.Type.MM_Map_FetchFailed);
             }
         }
 
@@ -64,7 +74,7 @@ public class MapMinusService implements MessageService{
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("MapMinus", e);
-            throw new LeaderBoardException(LeaderBoardException.Type.LIST_Send_Error);
+            throw new MapMinusException(MapMinusException.Type.MM_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }
     }

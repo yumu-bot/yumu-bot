@@ -53,6 +53,7 @@ public class MapMinusMania extends MapMinus{
     int map_start_time = 0;
     int map_end_time = 0;
 
+    int frac_MIN = 5;
     int frac_16 = 21;
     int frac_8 = 42;
     int frac_6 = 55;
@@ -221,22 +222,30 @@ public class MapMinusMania extends MapMinus{
                         }
 
                         switch (type) {
-                            case CIRCLE -> C++;
+                            case CIRCLE -> {
+                                //主计算
+                                S += calcStream(now_hit, prev_left_hit, prev_right_hit);
+                                B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
+                                C++;
+                            }
                             case LONGNOTE -> {
+                                //如果滑条特别短，也可以看成一个单点
+                                if (now_release - now_hit < frac_4) {
+                                    S += calcStream(now_hit, prev_left_hit, prev_right_hit);
+                                    B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
+                                } else {
+                                    //以上情况下，盾键型特征体现不明显
+                                    E += calcShield(now_hit, prev_release);
+                                }
+
                                 //计算H，O，R，E，还有D、Y
                                 H += calcHandLock(now_hit, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
                                 O += calcOverlap(now_hit, now_release, prev_left_hit, prev_left_release, prev_right_hit, prev_right_release);
                                 R += calcStream(now_release, prev_left_release, prev_right_release);
-                                E += calcShield(now_hit, prev_release);
-
                                 D += calcSliderDensity(now_hit, now_release);
                                 Y += calcDelayedTail(now_release, prev_left_release, prev_right_release);
                             }
                         }
-
-                        //主计算
-                        S += calcStream(now_hit, prev_left_hit, prev_right_hit);
-                        B += calcBracket(now_hit, prev_left_hit, prev_right_hit);
 
                         //分左右手
                         if ((hasMidColumn && inner_column == midColumn - 1) || (!hasMidColumn && inner_column == key / 2 - 1)) {
@@ -260,14 +269,14 @@ public class MapMinusMania extends MapMinus{
                 SV = M + F + W + P + T + N;
                 ST = C + D;
                 SP = K * 5f + I * 1000f; // + U;
-                PR = G * 5f + Y * 2f;
+                PR = G * 5f + Y;
 
                 stream.add(S); jack.add(J); bracket.add(B);
                 handLock.add(H); overlap.add(O); release.add(R); shield.add(E * 100f);
                 bump.add(M); fastJam.add(F); slowJam.add(W); stop.add(P); teleport.add(T); negative.add(N);
                 riceDensity.add(C); longNoteDensity.add(D);
                 speedJack.add(K * 5f); trill.add(I * 1000f); burst.add(U);
-                grace.add(G * 5f); delayedTail.add(Y * 2f);
+                grace.add(G * 5f); delayedTail.add(Y);
 
                 rice.add(RC); longNote.add(LN); speedVariation.add(SV); stamina.add(ST); speed.add(SP); precision.add(PR);
 
@@ -343,10 +352,10 @@ public class MapMinusMania extends MapMinus{
 
     private double calcGrace(int hit, int left_hit, int right_hit) {
         double p = 0f;
-        if (hit - left_hit <= frac_6 && hit - left_hit >= frac_16) {
+        if (hit - left_hit <= frac_6 && hit - left_hit >= frac_MIN) {
             p += calcFunctionNormal(hit - left_hit, frac_16, frac_6); // 180bpm 1/4
         }
-        if (hit - right_hit <= frac_6 && hit - left_hit >= frac_16) {
+        if (hit - right_hit <= frac_6 && hit - left_hit >= frac_MIN) {
             p += calcFunctionNormal(hit - right_hit, frac_16, frac_6); // 180bpm 1/4
         }
 

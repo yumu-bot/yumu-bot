@@ -2,6 +2,7 @@ package com.now.nowbot.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.dao.BindDao;
@@ -628,15 +629,19 @@ public class OsuGetService {
      * 下载beatmap(.osu)文件
      * @param bid 谱面id
      * @return osu文件字符串流
-     * @throws IOException
      */
     public String getBeatMapFile(long bid) throws IOException {
-        //osu taiko mania catch
         URL url = new URL("https://osu.ppy.sh/osu/" + bid);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.connect();
-        InputStream cin = httpConn.getInputStream();
-        byte[] byteData = cin.readAllBytes();
+        byte[] byteData;
+        try {
+            httpConn.connect();
+            InputStream cin = httpConn.getInputStream();
+            byteData = cin.readAllBytes();
+        } catch (IOException e) {
+            NowbotApplication.log.error("getBeatMapFile Error: ", e);
+            return null;
+        }
         return new String(byteData);
     }
 
