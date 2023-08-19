@@ -88,7 +88,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         if (param.err != null) {
             throw param.err;
         }
-        boolean isBid = param.isBid;
+        boolean isBid = Boolean.TRUE.equals(param.isBid);
         int id = param.id;
 
         URL url;
