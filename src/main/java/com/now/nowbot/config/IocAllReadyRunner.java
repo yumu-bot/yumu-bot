@@ -39,13 +39,18 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
         var serviceMap = new HashMap<Class<? extends MessageService>, MessageService>();
-        ;
-        serviceMap.putAll(applicationContext
-                .getBeansOfType(MessageService.class)
-                .values()
-                .stream()
-                .collect(Collectors.toMap(s -> s.getClass(), s->s, (s1,s2) -> s2))
-        );
+
+//        serviceMap.putAll(applicationContext
+//                .getBeansOfType(MessageService.class)
+//                .values()
+//                .stream()
+//                .collect(Collectors.toMap(s -> s.getClass(), s->s, (s1,s2) -> s2))
+//        );
+
+        for (var i : Instruction.values()){
+            var iClass = i.getaClass();
+            serviceMap.put(iClass, applicationContext.getBean(iClass));
+        }
 
         messageListener.init(serviceMap);
         oneBotListener.init(serviceMap);
