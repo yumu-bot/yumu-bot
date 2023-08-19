@@ -41,11 +41,17 @@ public class BotWebApi {
     @Resource
     OsuGetService osuGetService;
     @Resource
-    BphtService bphtService;
+    BphtService   bphtService;
     @Resource
-    MRAService mraService;
+    MRAService    mraService;
     @Resource
-    ImageService imageService;
+    ImageService  imageService;
+
+    /**
+     * 如果包含 u2 则响应为 ppmvs
+     *
+     * @return
+     */
 
     @GetMapping(value = "ppm")
     public ResponseEntity<byte[]> getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
@@ -170,37 +176,48 @@ public class BotWebApi {
         return sb.toString();
     }
 
-    @GetMapping(value = "bp")
+    /**
+     * 多组成绩接口
+     *
+     * @param userName 用户
+     * @param playMode 模式,可为空
+     * @param type     不传 或 0: 近N天的bp,此时 value 参数为天数,且范围是0-999
+     *                 1: 前N个bp
+     *                 2: 最近N次游玩,不包含fail
+     *                 3: 最近N次游玩,包含fail
+     * @param value    不传默认为 1,具体含义取决于 type,范围在 1-100 之间
+     * @return
+     */
+    @GetMapping(value = "scores")
     public ResponseEntity<byte[]> getPR(@RequestParam("u1") String userName,
                                         @Nullable @RequestParam("mode") String playMode,
-                                        @Nullable @RequestParam("days") Integer days,
-                                        @Nullable @RequestParam("range") Integer range,
-                                        @Nullable @RequestParam("re") Boolean re,
-                                        @Nullable @RequestParam("pr") Boolean pr
+                                        @Nullable @RequestParam("type") Integer type,
+                                        @Nullable @RequestParam("value") Integer value
     ) {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(userName);
         List<Score> bps;
-        if (pr != null && pr) {
-            bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, 100);
-        } else if (re != null && re) {
-            bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, 100);
-        } else if (range != null) {
-            range = Math.max(5, Math.min(100, range + 1));
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, range);
-        } else if (days != null) {
+        if (value == null) value = 1;
+        value = Math.max(1, value);
+        if (type == null || type == 0) {
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
             // 时间计算
-            int dat = -Math.max(1, Math.min(999, days));
+            int dat = -Math.min(999, value);
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
             bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
+        } else if (type == 1) {
+            if (value > 100) value = 100;
+            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, value);
+        } else if (type == 2) {
+            if (value > 100) value = 100;
+            bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, value);
+        } else if (type == 3) {
+            if (value > 100) value = 100;
+            bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, value);
         } else {
-            int dat = -1;
-            LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
-            bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
+            throw new RuntimeException("type 参数错误");
         }
         var lines = new ArrayList<Image>(bps.size());
         try {
@@ -219,38 +236,60 @@ public class BotWebApi {
         }
     }
 
+
+    /**
+     * 单个成绩接口
+     *
+     * @param userName 用户
+     * @param playMode 模式,可为空
+     * @param type     请求类型,使用整数; 不传或者 0: 查询pr; 1: 查询bp; 2:查询谱面成绩;
+     * @param value    查询pr: 前第N个成绩, 不传默认为最近一次,从 0 开始
+     *                 查询bp: bp,从0开始, 不传默认为bp1(value == 0)
+     *                 查询谱面成绩: 谱面id, 不传报错
+     * @param param    查询pr: 0为不包含失败,1为包含失败,不传默认为0
+     *                 查询bp: 无需此值
+     *                 查询谱面成绩: 指定 mod_int, 不传默认谱面最高成绩
+     */
     @GetMapping(value = "score")
     public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
                                            @Nullable @RequestParam("mode") String playMode,
-                                           @Nullable @RequestParam("bp") Integer bps,
-                                           @Nullable @RequestParam("bid") Integer bid,
-                                           @Nullable @RequestParam("f") Boolean includeF
-    ) {
+                                           @Nullable @RequestParam("type") Integer type,
+                                           @Nullable @RequestParam("value") Integer value,
+                                           @Nullable @RequestParam("param") Integer param
+                                           ) {
         Score score;
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
         var userInfo = osuGetService.getPlayerInfo(uid, mode);
-        if (bps != null) {
-            bps = Math.min(99, bps - 1);
-            bps = Math.max(0, bps);
-            var scores = osuGetService.getBestPerformance(uid, mode, bps, 1);
+        if (type == null || type == 0) {
+            if (value == null) value = 0;
+            value = Math.min(99, Math.max(0, value));
+            List<Score> scores;
+            if (param == null || param == 0) {
+                scores = osuGetService.getRecentN(uid, mode, value, 1);
+            } else {
+                scores = osuGetService.getAllRecentN(uid, mode, value, 1);
+            }
+            if (scores.size() == 0) throw new RuntimeException("最近没玩过");
+            score = scores.get(0);
+
+        } else if (type == 1) {
+            if (value == null) value = 0;
+            value = Math.min(99, value - 1);
+            value = Math.max(0, value);
+            var scores = osuGetService.getBestPerformance(uid, mode, value, 1);
             if (scores.size() == 0) throw new RuntimeException("bp不够");
             score = scores.get(0);
-        } else if (bid != null) {
+        } else if (type == 2) {
+            if (value == null) throw new RuntimeException("value 参数错误");
             try {
-                score = osuGetService.getScore(bid, uid, mode).getScore();
+                score = osuGetService.getScore(value, uid, mode).getScore();
             } catch (Exception e) {
                 throw new RuntimeException("没打过");
             }
-        } else if (Boolean.TRUE.equals(includeF)) {
-            var scores = osuGetService.getAllRecentN(uid, mode, 0, 1);
-            if (scores.size() == 0) throw new RuntimeException("最近没玩过");
-            score = scores.get(0);
         } else {
-            var scores = osuGetService.getRecentN(uid, mode, 0, 1);
-            if (scores.size() == 0) throw new RuntimeException("最近没玩过");
-            score = scores.get(0);
+            throw new RuntimeException("type 参数错误");
         }
 
         var data = imageService.getPanelE(userInfo, score, osuGetService);
@@ -271,76 +310,6 @@ public class BotWebApi {
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
-    @GetMapping(value = "friend", produces = {MediaType.IMAGE_PNG_VALUE})
-    public ResponseEntity<byte[]> getFriend(@RequestParam("u1") String userName,
-                            @Nullable @RequestParam("r1") Integer range1,
-                            @Nullable @RequestParam("r2") Integer range2
-    ) {
-        BinUser nu = new BinUser();
-        userName = userName.trim();
-        long id = osuGetService.getOsuId(userName);
-        nu.setOsuID(id);
-        nu.setOsuName(userName);
-
-        var me = osuGetService.getPlayerInfo(id);
-        var allFriends = osuGetService.getFriendList(nu);
-        List<MicroUser> friend = null;
-
-        // 计算范围
-        var n = 0;
-        var m = 0;
-
-        boolean doRandom = false;
-
-        if (range1 == null) {
-            m = 11;
-            doRandom = true; //12个人
-        } else if (range2 == null) {
-            m = range1 - 1;
-            doRandom = true;
-        } else {
-            n = Math.min(range1 - 1, range2 - 1);
-            m = Math.max(range1 - 1, range2 - 1);
-        }
-
-        if (m - n < 0 || m - n > 100) throw new RuntimeException("输入范围错误！");
-
-        //构造随机数组
-        int[] index = null;
-        if (doRandom) {
-            index = new int[allFriends.size()];
-            for (int i = 0; i < index.length; i++) {
-                index[i] = i;
-            }
-            for (int i = 0; i < index.length; i++) {
-                int rand = rand(i, index.length);
-                if (rand != 1) {
-                    int temp = index[rand];
-                    index[rand] = index[i];
-                    index[i] = temp;
-                }
-            }
-        }
-
-        //好友数据打包
-        for (int i = n; i <= m && i < allFriends.size(); i++) {
-            try {
-                MicroUser infoO;
-                if (doRandom) {
-                    infoO = allFriends.get(index[i]);
-                } else {
-                    infoO = allFriends.get(i);
-                }
-
-                friend.add(infoO);
-            } catch (Exception e) {
-                throw new RuntimeException("卡片加载失败，报错信息为：\n{}", e);
-            }
-        }
-
-        var data = imageService.getPanelA1(me, friend);
-        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
-    }
 
     @GetMapping("file/{key}")
     public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) throws IOException {
