@@ -183,6 +183,11 @@ public enum Instruction {
     TESTCOUNTMSG(CountQQMessageService.class,
             Pattern.compile("^#test统计(?<d>\\d+) (?<d1>\\d+)")),
 
+    // 临时添加, 随便搞一个不可能触发的正则
+    BAN(BanService.class,
+            Pattern.compile("^sfesf#@%@de%@#f$")),
+    AUDIO(AudioService.class,
+            Pattern.compile("^sfesf#@%@de%@#f$")),
 
     ;
 

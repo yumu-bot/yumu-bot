@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("Audio")
-public class AudioService implements MessageService<Matcher> {
+public class AudioService implements MessageService<AudioService.AudioParam> {
     private static final Logger log = LoggerFactory.getLogger(AudioService.class);
 
     @Autowired
@@ -50,39 +50,46 @@ public class AudioService implements MessageService<Matcher> {
             .build();
     Pattern p1 = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![a-zA-Z_]))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?");
 
+    static class AudioParam {
+        Boolean isBid;
+        Integer id;
+        Exception err;
+    }
+
     @Override
     public boolean isHandle(MessageEvent event, DataValue data) {
-        var m = p1.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
+        var matcher = p1.matcher(event.getRawMessage().trim());
+        if (matcher.find()) {
+            // 处理参数
+            var param = new AudioParam();
+            try {
+                var id_str = matcher.group("id");
+                var type = matcher.group("type");
+
+                if (id_str == null) throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+                param.id = Integer.parseInt(id_str);
+                if (Objects.equals(type, "s") || Objects.equals(type, "sid")) param.isBid = false;
+            } catch (NumberFormatException e) {
+                param.err = new AudioException(AudioException.Type.SONG_Parameter_BidError);
+            } catch (Exception e) {
+                param.err = e;
+            }
+            data.setValue(param);
             return true;
         }
         return false;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, AudioParam param) throws Throwable {
 
         var from = event.getSubject();
         //BinUser user = bindDao.getUser(event.getSender().getId());
-        boolean isBid = true;
-
-        var id_str = matcher.group("id");
-        var type = matcher.group("type");
-        int id;
-
-        if (id_str != null) {
-            try {
-                id = Integer.parseInt(id_str);
-            } catch (NumberFormatException e) {
-                throw new AudioException(AudioException.Type.SONG_Parameter_BidError);
-            }
-        } else {
-            throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
-            //if (id == 0) from.sendMessage("参数为<bid>或者指定sid/bid查询bid:<bid>/sid:<sid>");
+        if (param.err != null) {
+            throw param.err;
         }
-
-        if (Objects.equals(type, "s") || Objects.equals(type, "sid")) isBid = false;
+        boolean isBid = param.isBid;
+        int id = param.id;
 
         URL url;
         if (isBid) {

@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
@@ -38,10 +39,14 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
         var serviceMap = new HashMap<Class<? extends MessageService>, MessageService>();
-        for (var i : Instruction.values()){
-            var iClass = i.getaClass();
-            serviceMap.put(iClass, applicationContext.getBean(iClass));
-        }
+        ;
+        serviceMap.putAll(applicationContext
+                .getBeansOfType(MessageService.class)
+                .values()
+                .stream()
+                .collect(Collectors.toMap(s -> s.getClass(), s->s, (s1,s2) -> s2))
+        );
+
         messageListener.init(serviceMap);
         oneBotListener.init(serviceMap);
         this.check = check;

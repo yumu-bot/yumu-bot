@@ -47,10 +47,10 @@ public class Permission {
     private static PermissionData                   ALL_W;
     private static PermissionData                   ALL_B;
     //service名单
-    private static Map<String, PermissionData>      PERMISSIONS = new ConcurrentHashMap<>();
-    private static CopyOnWriteArraySet<Instruction> OFF_SERVICE = null;
+    private static final Map<String, PermissionData>    PERMISSIONS = new ConcurrentHashMap<>();
+    private static CopyOnWriteArraySet<Instruction>     OFF_SERVICE = null;
 
-    private static Map<Instruction, String> SERVICE_NAME = new TreeMap<>();
+    private static final Map<Instruction, String>       SERVICE_NAME = new TreeMap<>();
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
