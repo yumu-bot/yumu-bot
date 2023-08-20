@@ -11,6 +11,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BphtService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
+import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
@@ -44,6 +45,8 @@ public class BotWebApi {
     BphtService   bphtService;
     @Resource
     MRAService    mraService;
+    @Resource
+    MonitorNowService monitorNowService;
     @Resource
     ImageService  imageService;
 
@@ -97,30 +100,12 @@ public class BotWebApi {
      */
     @GetMapping(value = "match")
     public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
-        Match match = osuGetService.getMatchInfo(mid);
-        int gameTime = 0;
-        var m = match.getEvents().stream()
-                .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                .get(Boolean.FALSE);
-        if (m != null) {
-            gameTime = m.intValue();
-        }
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId()) && gameTime < 40) {
-            var next = osuGetService.getMatchInfo(mid, match.getEvents().get(0).getId());
-            m = next.getEvents().stream()
-                    .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                    .get(Boolean.FALSE);
-            if (m != null) {
-                gameTime += m.intValue();
-            }
-            match.addEventList(next);
-        }
         if (k == null) k = 0;
         if (d == null) d = 0;
-        f = f != null;
-        r = r != null;
-        var data = imageService.getPanelF(match, osuGetService, k, d, f, r);
-        return new ResponseEntity<>(data, getImageHeader(mid + "-mra.jpg", data.length), HttpStatus.OK);
+        f = Boolean.TRUE.equals(f);
+        r = Boolean.TRUE.equals(r);
+        var data = monitorNowService.getImage(mid, k, d, f, r);
+        return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
     }
 
     /***

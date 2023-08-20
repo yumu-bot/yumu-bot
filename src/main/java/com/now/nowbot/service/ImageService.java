@@ -321,9 +321,8 @@ public class ImageService {
                 .filter(Objects::nonNull)
                 .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
                 .toList();
-        final int rSise = games.size();
         {
-
+            final int rSise = games.size();
             var streamTemp = games.stream().limit(rSise - deleteEnd).skip(skipRounds);
 
             if (includingRematch) {
