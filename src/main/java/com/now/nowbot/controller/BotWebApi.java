@@ -102,8 +102,8 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
-        f = Boolean.TRUE.equals(f);
-        r = Boolean.TRUE.equals(r);
+        if (f == null) f = true;
+        if (r == null) r = true;
         var data = monitorNowService.getImage(mid, k, d, f, r);
         return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
     }
@@ -121,8 +121,9 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
-        f = f != null;
-        r = r != null;
+        if (f == null) f = true;
+        if (r == null) r = true;
+
         var data = mraService.getDataImage(matchId, k, d, f, r);
         return new ResponseEntity<>(data, getImageHeader(matchId + "-mra.jpg", data.length), HttpStatus.OK);
     }
