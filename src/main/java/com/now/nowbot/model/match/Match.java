@@ -79,15 +79,12 @@ public class Match {
     }
 
     public void addEventList(Match m){
-        if (true){
-            var nList = m.getEvents();
-            nList.addAll(this.getEvents());
-            var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getId).toList());
-            for (var mu : this.getUsers()){
-                nameSet.remove(mu.getId());
-            }
-            getUsers().addAll(m.getUsers().stream().filter(u->nameSet.contains(u.getId())).toList());
-            this.setEvents(nList);
+        var nList = m.getEvents();
+        var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getId).toList());
+        for (var mu : this.getUsers()){
+            nameSet.remove(mu.getId());
         }
+        getUsers().addAll(m.getUsers().stream().filter(u->nameSet.contains(u.getId())).toList());
+        this.getEvents().addAll(0, nList);
     }
 }
