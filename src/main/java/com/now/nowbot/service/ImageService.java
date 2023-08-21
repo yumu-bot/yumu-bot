@@ -7,10 +7,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.match.Match;
-import com.now.nowbot.model.match.MatchEvent;
-import com.now.nowbot.model.match.MatchInfo;
-import com.now.nowbot.model.match.UserMatchData;
+import com.now.nowbot.model.match.*;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.model.score.MpScoreInfo;
 import com.now.nowbot.util.SkiaUtil;
@@ -316,25 +313,28 @@ public class ImageService {
 
     public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
         //scores
-        var games = match.getEvents().stream()
+        List<GameInfo> games = match.getEvents().stream()
                 .map(MatchEvent::getGame)
                 .filter(Objects::nonNull)
                 .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
                 .toList();
         {
             final int rSise = games.size();
-            var streamTemp = games.stream().limit(rSise - deleteEnd).skip(skipRounds);
+            games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).collect(Collectors.toList());
 
-            if (includingRematch) {
-                games = streamTemp.toList();
-            } else {
-                games = streamTemp.collect(
-                        Collectors.toMap(
-                                e -> e.getBeatmap().getId(),
-                                v -> v,
-                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
-                        )
-                ).values().stream().toList();
+            if (!includingRematch) {
+                // 保证顺序的情况下,去除重复
+                var bsit = new HashSet<Integer>();
+                games = new ArrayList<>(games);
+                Collections.reverse(games);
+                games.removeIf((e) -> {
+                    if (bsit.contains(e.getBeatmap().getId())) {
+                        return true;
+                    }
+                    bsit.add(e.getBeatmap().getId());
+                    return false;
+                });
+                Collections.reverse(games);
             }
         }
 
