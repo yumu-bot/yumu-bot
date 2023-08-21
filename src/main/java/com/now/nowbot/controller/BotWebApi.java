@@ -3,6 +3,7 @@ package com.now.nowbot.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
@@ -338,6 +339,10 @@ public class BotWebApi {
                 }
                 if (score == null) {
                     throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
+                } else {
+                    var bm = new BeatMap();
+                    bm.setId(Long.valueOf(value));
+                    score.setBeatMap(bm);
                 }
             } else {
                 score = osuGetService.getScore(value, uid, mode).getScore();
