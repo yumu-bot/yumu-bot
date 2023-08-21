@@ -320,7 +320,7 @@ public class BotWebApi {
         } else if (type == 2) {
             if (value == null) throw new RuntimeException("value 参数错误");
 
-            if (param != null && param != 0) {
+            if (param != null) {
                 List<Score> a;
                 try {
                     a = osuGetService.getScoreAll(value, uid, mode);
@@ -394,9 +394,11 @@ public class BotWebApi {
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("bid") Integer value,
-            @Nullable @RequestParam("mods") Integer mods
+            @Nullable @RequestParam("mods") String mods
     ){
-        return getScore(userName, playMode, 2, value, mods);
+        Integer modInt = null;
+        if (mods != null) modInt = Mod.getModsValue(mods);
+        return getScore(userName, playMode, 2, value, modInt);
     }
 
     @GetMapping(value = "bpa")
