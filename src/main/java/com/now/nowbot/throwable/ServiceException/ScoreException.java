@@ -14,7 +14,7 @@ public class ScoreException extends TipsException {
         SCORE_Send_Error ("成绩发送失败，请重试。") //发送_发送失败
 
         ;//逗号分隔
-        String message;
+        public String message;
         Type(String message) {
             this.message = message;
         }

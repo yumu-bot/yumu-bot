@@ -14,8 +14,8 @@ import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-@ServerEndpoint("/websocket")
-@RestController
+//@ServerEndpoint("/websocket")
+//@RestController
 public class CqhttpWebsocket {
     private static final Logger log = LoggerFactory.getLogger(CqhttpWebsocket.class);
 

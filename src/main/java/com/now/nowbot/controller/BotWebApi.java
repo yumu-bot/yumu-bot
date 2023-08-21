@@ -6,6 +6,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
@@ -13,6 +14,7 @@ import com.now.nowbot.service.MessageServiceImpl.BphtService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -42,13 +45,13 @@ public class BotWebApi {
     @Resource
     OsuGetService osuGetService;
     @Resource
-    BphtService   bphtService;
+    BphtService bphtService;
     @Resource
-    MRAService    mraService;
+    MRAService mraService;
     @Resource
     MonitorNowService monitorNowService;
     @Resource
-    ImageService  imageService;
+    ImageService imageService;
 
     /**
      * 如果包含 u2 则响应为 ppmvs
@@ -174,19 +177,16 @@ public class BotWebApi {
      * @param value    不传默认为 1,具体含义取决于 type,范围在 1-100 之间
      * @return
      */
-    @GetMapping(value = "scores")
-    public ResponseEntity<byte[]> getPR(@RequestParam("u1") String userName,
-                                        @Nullable @RequestParam("mode") String playMode,
-                                        @Nullable @RequestParam("type") Integer type,
-                                        @Nullable @RequestParam("value") Integer value
+    public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
+                                            @Nullable @RequestParam("mode") String playMode,
+                                            @Nullable @RequestParam("type") Integer type,
+                                            @Nullable @RequestParam("value") Integer value
     ) {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
         //绘制自己的卡片
         var infoMe = osuGetService.getPlayerInfo(userName);
         List<Score> bps;
-        if (value == null) value = 1;
-        value = Math.max(1, value);
         if (type == null || type == 0) {
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
             // 时间计算
@@ -194,13 +194,10 @@ public class BotWebApi {
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
             bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
         } else if (type == 1) {
-            if (value > 100) value = 100;
             bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, value);
         } else if (type == 2) {
-            if (value > 100) value = 100;
             bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, value);
         } else if (type == 3) {
-            if (value > 100) value = 100;
             bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, value);
         } else {
             throw new RuntimeException("type 参数错误");
@@ -222,6 +219,60 @@ public class BotWebApi {
         }
     }
 
+    @GetMapping(value = "scores/bp-days")
+    public ResponseEntity<byte[]> getBpDay(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        if (value == null) value = 1;
+        if (value <= 0) value = 1;
+        else if (value > 999) value = 999;
+        return getScores(userName, playMode, 0, value);
+    }
+
+    @GetMapping(value = "scores/bp-range")
+    public ResponseEntity<byte[]> getBpRange(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        if (value == null) value = 1;
+        if (value <= 0) value = 1;
+        else if (value > 100) value = 100;
+        return getScores(userName, playMode, 1, value);
+    }
+
+    /**
+     * 不计入 fail 成绩
+     */
+    @GetMapping(value = "scores/pr")
+    public ResponseEntity<byte[]> getPlayPassScores(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        if (value == null) value = 1;
+        if (value <= 0) value = 1;
+        else if (value > 100) value = 100;
+        return getScores(userName, playMode, 2, value);
+    }
+
+    /**
+     * 计入 fail 成绩
+     */
+    @GetMapping(value = "scores/re")
+    public ResponseEntity<byte[]> getPlayAllScores(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        if (value == null) value = 1;
+        if (value <= 0) value = 1;
+        else if (value > 100) value = 100;
+        return getScores(userName, playMode, 3, value);
+    }
+
 
     /**
      * 单个成绩接口
@@ -236,14 +287,13 @@ public class BotWebApi {
      *                 查询bp: 无需此值
      *                 查询谱面成绩: 指定 mod_int, 不传默认谱面最高成绩
      */
-    @GetMapping(value = "score")
     public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
                                            @Nullable @RequestParam("mode") String playMode,
                                            @Nullable @RequestParam("type") Integer type,
                                            @Nullable @RequestParam("value") Integer value,
                                            @Nullable @RequestParam("param") Integer param
-                                           ) {
-        Score score;
+    ) {
+        Score score = null;
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = osuGetService.getOsuId(userName);
@@ -269,10 +319,28 @@ public class BotWebApi {
             score = scores.get(0);
         } else if (type == 2) {
             if (value == null) throw new RuntimeException("value 参数错误");
-            try {
+
+            if (param != null && param != 0) {
+                List<Score> a;
+                try {
+                    a = osuGetService.getScoreAll(value, uid, mode);
+                } catch (Exception e) {
+                    throw new RuntimeException("没打过");
+                }
+                for (var s : a) {
+                    if (s.getMods().size() == 0 && Mod.None.check(param)) {
+                        score = s;
+                        break;
+                    } else if (Mod.getModsValueFromStr(s.getMods()) == param) {
+                        score = s;
+                        break;
+                    }
+                }
+                if (score == null) {
+                    throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
+                }
+            } else {
                 score = osuGetService.getScore(value, uid, mode).getScore();
-            } catch (Exception e) {
-                throw new RuntimeException("没打过");
             }
         } else {
             throw new RuntimeException("type 参数错误");
@@ -280,6 +348,55 @@ public class BotWebApi {
 
         var data = imageService.getPanelE(userInfo, score, osuGetService);
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
+    }
+
+    /**
+     * n 从0开始, 不传默认为0
+     */
+    @GetMapping(value = "score/pr")
+    public ResponseEntity<byte[]> getScorePr(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ){
+        if (value == null) value = 0;
+        return getScore(userName, playMode, 0, value, 0);
+    }
+
+    /**
+     * n 从0开始, 不传默认为0
+     */
+    @GetMapping(value = "score/re")
+    public ResponseEntity<byte[]> getScoreRe(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ){
+        if (value == null) value = 0;
+        return getScore(userName, playMode, 0, value, 1);
+    }
+
+    /**
+     * n 从0开始, 不传默认为0
+     */
+    @GetMapping(value = "score/bp")
+    public ResponseEntity<byte[]> getScoreBp(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ){
+        if (value == null) value = 0;
+        return getScore(userName, playMode, 1, value, null);
+    }
+
+    @GetMapping(value = "score")
+    public ResponseEntity<byte[]> getScore(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("bid") Integer value,
+            @Nullable @RequestParam("mods") Integer mods
+    ){
+        return getScore(userName, playMode, 2, value, mods);
     }
 
     @GetMapping(value = "bpa")
@@ -296,7 +413,13 @@ public class BotWebApi {
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
-
+    /**
+     * 用于使用 go-cqhttp 发送文件的下载接口
+     *
+     * @param key file key
+     * @return file
+     * @throws IOException read error
+     */
     @GetMapping("file/{key}")
     public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) throws IOException {
         var data = QQMsgUtil.getFileData(key);
@@ -322,14 +445,7 @@ public class BotWebApi {
         return "ok - " + l.levelStr;
     }
 
-
-    static final Random random = new Random();
-
-    static int rand(int min, int max) {
-        return min + random.nextInt(max - min);
-    }
-
-    HttpHeaders getImageHeader(String name, long length) {
+    private static HttpHeaders getImageHeader(String name, long length) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
         headers.setContentLength(length);
