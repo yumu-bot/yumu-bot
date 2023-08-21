@@ -42,7 +42,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
 
     @Override
     public MessageChain getMessage() {
-        return getMessageChain(ShiroUtils.rawToArrayMsg(event.getRawMessage()));
+        return getMessageChain(event.getArrayMsg());
     }
 
     public String getRawMessage() {
