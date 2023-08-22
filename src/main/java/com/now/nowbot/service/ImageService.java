@@ -316,7 +316,7 @@ public class ImageService {
         List<GameInfo> games = match.getEvents().stream()
                 .map(MatchEvent::getGame)
                 .filter(Objects::nonNull)
-                .filter(m -> m.getScoreInfos() != null && m.getScoreInfos().size() != 0)
+                .filter(m -> m.getScoreInfos() != null && !m.getScoreInfos().isEmpty())
                 .toList();
         {
             final int rSise = games.size();
@@ -374,7 +374,7 @@ public class ImageService {
                 statistics.put("mapper", info.getMapSet().getCreator());
                 statistics.put("difficulty", info.getVersion());
                 statistics.put("status", info.getMapSet().getStatus());
-                statistics.put("bid", g.getBeatmap().getId());
+                statistics.put("bid", g.getBID());
                 statistics.put("mode", g.getMode());
 //                if (gameItem.getModInt() != null) {
 //                    statistics.put("mod_int", gameItem.getModInt());
@@ -384,7 +384,7 @@ public class ImageService {
                 statistics.put("mod_int", allUserModInt);
             } else {
                 statistics.put("delete", true);
-                statistics.put("bid", g.getBeatmap().getId());
+                statistics.put("bid", g.getBID());
             }
             var scoreRankList = g.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(g.getTeamType())) {
@@ -423,7 +423,7 @@ public class ImageService {
                     var u = uidMap.get(s.getUserId().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
-                if (r_user_list.size() == 0 || b_user_list.size() == 0) continue;
+                if (r_user_list.isEmpty() || b_user_list.isEmpty()) continue;
                 scores.add(Map.of(
                         "statistics", statistics,
                         "red", r_user_list,
