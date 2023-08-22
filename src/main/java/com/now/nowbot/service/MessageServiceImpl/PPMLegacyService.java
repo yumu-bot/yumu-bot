@@ -12,7 +12,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.PPMException;
+import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.Panel.ACardBuilder;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.PPMPanelBuilder;
@@ -66,7 +66,7 @@ public class PPMLegacyService implements MessageService {
             ppm = Ppm.getInstance(mode, user, bps);
         } else {
             // 不包含@ 分为查自身/查他人
-            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+            if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
                 // 查他人
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = osuGetService.getPlayerInfo(id, mode);
@@ -156,7 +156,7 @@ public class PPMLegacyService implements MessageService {
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
             if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
-                throw new PPMException(PPMException.Type.PPM_Me_PlayTimeTooShort);
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
         //生成panel名
@@ -173,16 +173,16 @@ public class PPMLegacyService implements MessageService {
             userOther = osuGetService.getPlayerInfo(OtherBin, mode);
             bpListOther = osuGetService.getBestPerformance(OtherBin, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
-        } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+        } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
             userOther = osuGetService.getPlayerInfo(id, mode);
             bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else {
-            throw new PPMException(PPMException.Type.PPM_Player_VSNotFound);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
         }
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
-            throw new PPMException(PPMException.Type.PPM_Player_PlayTimeTooShort);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
             PPMinusService.setUser(ppmOther, 999.99f);

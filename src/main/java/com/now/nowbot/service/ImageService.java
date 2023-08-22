@@ -319,8 +319,8 @@ public class ImageService {
                 .filter(m -> m.getScoreInfos() != null && !m.getScoreInfos().isEmpty())
                 .toList();
         {
-            final int rSise = games.size();
-            games = games.stream().limit(rSise - deleteEnd).skip(skipRounds).collect(Collectors.toList());
+            final int rawSize = games.size();
+            games = games.stream().limit(rawSize - deleteEnd).skip(skipRounds).collect(Collectors.toList());
 
             if (!includingRematch) {
                 // 保证顺序的情况下,去除重复

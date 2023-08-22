@@ -11,7 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.ServiceException.PPMException;
+import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,13 +59,13 @@ public class PPMinusService implements MessageService {
             ppm = Ppm.getInstance(mode, user, bps);
         } else {
             // 不包含@ 分为查自身/查他人
-            if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+            if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
                 // 查他人
                 long id;
                 try {
                     id = osuGetService.getOsuId(matcher.group("name").trim());
                 } catch (HttpClientErrorException e) {
-                    throw new PPMException(PPMException.Type.PPM_Player_NotFound);
+                    throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
                 }
 
                 user = osuGetService.getPlayerInfo(id, mode);
@@ -88,12 +88,12 @@ public class PPMinusService implements MessageService {
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
-            throw new PPMException(PPMException.Type.PPM_Default_Error);
+            throw new PPMinusException(PPMinusException.Type.PPM_Default_Error);
             //from.sendMessage("PPM 渲染图片超时，请重试。\n或尝试旧版渲染 !p2。");
         }
     }
 
-    private void doVs(MessageEvent event, Matcher matcher) throws BindException, PPMException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
+    private void doVs(MessageEvent event, Matcher matcher) throws BindException, PPMinusException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -109,14 +109,14 @@ public class PPMinusService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
         if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
-        me://自己的信息
+        //自己的信息
         {
 
             userMe = osuGetService.getPlayerInfo(userBin, mode);
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
             ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
             if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
-                throw new PPMException(PPMException.Type.PPM_Me_PlayTimeTooShort);
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
 
@@ -126,16 +126,16 @@ public class PPMinusService implements MessageService {
             userOther = osuGetService.getPlayerInfo(OtherBin, mode);
             bpListOther = osuGetService.getBestPerformance(OtherBin, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
-        } else if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+        } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
             userOther = osuGetService.getPlayerInfo(id, mode);
             bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else {
-            throw new PPMException(PPMException.Type.PPM_Player_VSNotFound);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
         }
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
-            throw new PPMException(PPMException.Type.PPM_Player_PlayTimeTooShort);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
         if (userOther.getId() == 17064371L){
             setUser(ppmOther, 999.99f);

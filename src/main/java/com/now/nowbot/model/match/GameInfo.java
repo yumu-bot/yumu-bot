@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.beatmap.BeatmapInfo4Match;
 import com.now.nowbot.model.score.MpScoreInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -29,7 +28,6 @@ public class GameInfo {
     @JsonProperty("team_type")
     String teamType;
     String[] mods;
-    @Nullable
     BeatmapInfo4Match beatmap;
     @JsonProperty("scores")
     List<MpScoreInfo> scoreInfos;
@@ -124,6 +122,7 @@ public class GameInfo {
 
     public String toString() {
         return new StringJoiner(", ", GameInfo.class.getSimpleName() + "[", "]")
+                .add("bid=" + bid)
                 .add("id=" + id)
                 .add("startTime=" + startTime)
                 .add("endTime=" + endTime)
