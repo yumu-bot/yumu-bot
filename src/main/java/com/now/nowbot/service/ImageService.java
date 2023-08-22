@@ -347,10 +347,10 @@ public class ImageService {
         int r_win = 0;
         int b_win = 0;
         int n_win = 0;
-        for (var gameItem : games) {
+        for (var g : games) {
             var statistics = new HashMap<String, Object>();
 
-            var g_scores = gameItem.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
+            var g_scores = g.getScoreInfos().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
             final int allScoreSize = g_scores.size();
             var allUserModInt = g_scores.stream()
                     .flatMap(m -> Arrays.stream(m.getMods()))
@@ -362,20 +362,20 @@ public class ImageService {
                     .mapToInt(m -> m.value)
                     .reduce(0, (a, i) -> a | i);
 
-            if (gameItem.getBeatmap() != null) {
-                var mapInfo = osuGetService.getMapInfoLite(gameItem.getBeatmap().getId());
+            if (g.getBeatmap() != null) {
+                var info = osuGetService.getMapInfoLite(g.getBeatmap().getId());
                 if (firstBackground == null) {
-                    firstBackground = mapInfo.getMapSet().getList();
+                    firstBackground = info.getMapSet().getList();
                 }
                 statistics.put("delete", false);
-                statistics.put("background", mapInfo.getMapSet().getList());
-                statistics.put("title", mapInfo.getMapSet().getTitle());
-                statistics.put("artist", mapInfo.getMapSet().getArtist());
-                statistics.put("mapper", mapInfo.getMapSet().getCreator());
-                statistics.put("difficulty", mapInfo.getVersion());
-                statistics.put("status", mapInfo.getMapSet().getStatus());
-                statistics.put("bid", gameItem.getBeatmap().getId());
-                statistics.put("mode", gameItem.getMode());
+                statistics.put("background", info.getMapSet().getList());
+                statistics.put("title", info.getMapSet().getTitle());
+                statistics.put("artist", info.getMapSet().getArtist());
+                statistics.put("mapper", info.getMapSet().getCreator());
+                statistics.put("difficulty", info.getVersion());
+                statistics.put("status", info.getMapSet().getStatus());
+                statistics.put("bid", g.getBeatmap().getId());
+                statistics.put("mode", g.getMode());
 //                if (gameItem.getModInt() != null) {
 //                    statistics.put("mod_int", gameItem.getModInt());
 //                } else {
@@ -384,9 +384,10 @@ public class ImageService {
                 statistics.put("mod_int", allUserModInt);
             } else {
                 statistics.put("delete", true);
+                statistics.put("bid", g.getBeatmap().getId());
             }
-            var scoreRankList = gameItem.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
-            if ("team-vs".equals(gameItem.getTeamType())) {
+            var scoreRankList = g.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
+            if ("team-vs".equals(g.getTeamType())) {
                 statistics.put("is_team_vs", true);
                 // 成绩分类
                 var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();

@@ -97,6 +97,7 @@ public class MRAService implements MessageService {
         int sid = 0;
         float averageStar = 0f;
         int rounds = games.size();
+        int noMapRounds = 0;
         for(var g : games) {
             if (sid == 0 && g.getBeatmap() != null) {
                 sid = g.getBeatmap().getBeatmapsetId();
@@ -107,9 +108,13 @@ public class MRAService implements MessageService {
             }
 
             if (g.getBeatmap() != null) {
-                averageStar += (float) (1.0f * g.getBeatmap().getDifficultyRating() / rounds);
+                averageStar += g.getBeatmap().getDifficultyRating();
+            } else {
+                noMapRounds ++;
             }
         }
+
+        averageStar /= (rounds - noMapRounds);
 
         return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
     }
