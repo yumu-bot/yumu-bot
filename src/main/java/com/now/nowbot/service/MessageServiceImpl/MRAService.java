@@ -98,14 +98,17 @@ public class MRAService implements MessageService {
         float averageStar = 0f;
         int rounds = games.size();
         for(var g : games) {
-            if (sid == 0) {
+            if (sid == 0 && g.getBeatmap() != null) {
                 sid = g.getBeatmap().getBeatmapsetId();
             }
 
             if (Mod.hasChangeRating(Mod.getModsValue(g.getMods()))) {
                 // todo 在绘图模块实现
             }
-            averageStar += g.getBeatmap().getDifficultyRating() / rounds;
+
+            if (g.getBeatmap() != null) {
+                averageStar += (float) (1.0f * g.getBeatmap().getDifficultyRating() / rounds);
+            }
         }
 
         return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
@@ -234,7 +237,7 @@ public class MRAService implements MessageService {
        }
          */
         //22-04-15 尝试缩短代码
-        users.values().removeIf(user -> user.getRRAs().size() == 0);
+        users.values().removeIf(user -> user.getRRAs().isEmpty());
 
         //计算步骤封装
         matchStatistics.calculate();
