@@ -32,10 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -181,7 +178,7 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
                                             @Nullable @RequestParam("mode") String playMode,
                                             @Nullable @RequestParam("type") Integer type,
-                                            @Nullable @RequestParam("value") Integer value
+                                            @RequestParam("value") int value
     ) {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
@@ -211,8 +208,8 @@ public class BotWebApi {
             }
             var panel = new TBPPanelBuilder(lines.size());
             panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            var data = panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
-                    .encodeToData(EncodedImageFormat.JPEG, 80)
+            var data = Objects.requireNonNull(panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
+                            .encodeToData(EncodedImageFormat.JPEG, 80))
                     .getBytes();
             return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
         } catch (IOException e) {

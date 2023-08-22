@@ -59,11 +59,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     @Override
     public boolean isHandle(MessageEvent event, DataValue data) {
         var matcher = p1.matcher(event.getRawMessage().trim());
-        if (event.getSender().getId() == 365246692L)
-            log.info("a---");
         if (matcher.find()) {
-            // 处理参数
-            log.info("a ture");
             var param = new AudioParam();
             try {
                 var id_str = matcher.group("id");

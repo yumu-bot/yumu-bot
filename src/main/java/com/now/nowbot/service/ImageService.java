@@ -324,16 +324,9 @@ public class ImageService {
 
             if (!includingRematch) {
                 // 保证顺序的情况下,去除重复
-                var bsit = new HashSet<Integer>();
-                games = new ArrayList<>(games);
+                var bsit = new HashSet<Long>();
                 Collections.reverse(games);
-                games.removeIf((e) -> {
-                    if (bsit.contains(e.getBeatmap().getId())) {
-                        return true;
-                    }
-                    bsit.add(e.getBeatmap().getId());
-                    return false;
-                });
+                games.removeIf((e) -> !bsit.add(e.getBid()));
                 Collections.reverse(games);
             }
         }
@@ -374,7 +367,7 @@ public class ImageService {
                 statistics.put("mapper", info.getMapSet().getCreator());
                 statistics.put("difficulty", info.getVersion());
                 statistics.put("status", info.getMapSet().getStatus());
-                statistics.put("bid", g.getBID());
+                statistics.put("bid", g.getBid());
                 statistics.put("mode", g.getMode());
 //                if (gameItem.getModInt() != null) {
 //                    statistics.put("mod_int", gameItem.getModInt());
@@ -384,7 +377,7 @@ public class ImageService {
                 statistics.put("mod_int", allUserModInt);
             } else {
                 statistics.put("delete", true);
-                statistics.put("bid", g.getBID());
+                statistics.put("bid", g.getBid());
             }
             var scoreRankList = g.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
             if ("team-vs".equals(g.getTeamType())) {
@@ -443,22 +436,14 @@ public class ImageService {
                 //如果只有一两个人，则不排序
                 List user_list;
 
-                if (g_scores.size() > 2) {
-                    user_list = g_scores.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
-                        var u = uidMap.get(s.getUserId().longValue());
-                        if (u == null) {
-                            return getMatchScoreInfo("Unknown",
-                                    "https://osu.ppy.sh/images/layout/avatar-guest.png",
-                                    0,
-                                    new String[0],
-                                    -1
-                            );
-                        }
-                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
-                    }).toList();
+                {
+                    var stream = g_scores.stream();
 
-                } else {
-                    user_list = g_scores.stream().map(s -> {
+                    if (g_scores.size() > 2) {
+                        stream = stream.sorted(Comparator.comparing(MpScoreInfo::getScore).reversed());
+                    }
+
+                    user_list = stream.map(s -> {
                         var u = uidMap.get(s.getUserId().longValue());
                         if (u == null) {
                             return getMatchScoreInfo("Unknown",
@@ -470,12 +455,11 @@ public class ImageService {
                         }
                         return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                     }).toList();
+                    scores.add(Map.of(
+                            "statistics", statistics,
+                            "none", user_list
+                    ));
                 }
-
-                scores.add(Map.of(
-                        "statistics", statistics,
-                        "none", user_list
-                ));
 
                 n_win++;
             }

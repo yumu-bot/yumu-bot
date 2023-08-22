@@ -69,20 +69,14 @@ public class MRAService implements MessageService {
         int s = games.size();
 
         {
-            var streamTemp = games.stream()
+            games = games.stream()
                     .limit(s - deleteEnd)
                     .skip(skipRounds)
-                    .filter(gameInfo -> gameInfo.getEndTime() != null);
-            if (includingRepeat) {
-                games = streamTemp.toList();
-            } else {
-                games = streamTemp.collect(
-                        Collectors.toMap(
-                                e -> e.getBeatmap().getId(),
-                                v -> v,
-                                (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
-                        )
-                ).values().stream().toList();
+                    .filter(gameInfo -> gameInfo.getEndTime() != null).collect(Collectors.toList());
+            if (!includingRepeat) {
+                Collections.reverse(games);
+                var mapSet = new HashSet<Long>();
+                games.removeIf(e -> !mapSet.add(e.getBid()));
             }
         }
 

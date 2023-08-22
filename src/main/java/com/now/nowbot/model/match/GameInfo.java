@@ -42,14 +42,6 @@ public class GameInfo {
         this.teamType = teamType;
     }
 
-    public long getBID() {
-        return bid;
-    }
-
-    public void setBID(long bid) {
-        this.bid = bid;
-    }
-
     public Integer getMatchID() {
         return id;
     }
@@ -120,6 +112,14 @@ public class GameInfo {
 
     public void setScoreInfos(List<MpScoreInfo> scoreInfos) {
         this.scoreInfos = scoreInfos;
+    }
+
+    public Long getBid() {
+        return bid;
+    }
+
+    public void setBid(Long bid) {
+        this.bid = bid;
     }
 
     public String toString() {
