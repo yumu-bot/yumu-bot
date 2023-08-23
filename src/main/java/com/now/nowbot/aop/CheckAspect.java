@@ -39,6 +39,18 @@ public class CheckAspect {
     public void servicePoint() {
     }
 
+    @Pointcut("@annotation(com.mikuac.shiro.annotation.GroupMessageHandler)")
+    public void groupMessageHandlerPoint(){
+
+    }
+
+    @AfterThrowing(value = "groupMessageHandlerPoint()", throwing = "e")
+    public Object handleError(JoinPoint point, Exception e){
+        // 处理异常
+        log.error("AOP E", e);
+        return point.getTarget();
+    }
+
     /***
      * 注解权限切点
      * 加了@CheckPermission注解的

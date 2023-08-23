@@ -37,6 +37,13 @@ public class OneBotListener {
     }
 
 
+
+
+    @GroupMessageHandler()
+    public void handlez(Bot bot, GroupMessageEvent onebotEvent) {
+        if (onebotEvent.getSender().getUserId() == 365246692L) throw new RuntimeException("test error");
+    }
+
     @GroupMessageHandler()
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
