@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.Cover;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -9,10 +10,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 @Service("MRA")
 public class MRAService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(MRAService.class);
     @Autowired
     RestTemplate template;
 
@@ -38,26 +37,35 @@ public class MRAService implements MessageService {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        int matchId = Integer.parseInt(matcher.group("matchid"));
+        int matchID;
+
+        try {
+            matchID = Integer.parseInt(matcher.group("matchid"));
+        } catch (NullPointerException e) {
+            throw new MRAException(MRAException.Type.RATING_Parameter_None);
+        }
+
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
         boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
+
         var from = event.getSubject();
         try {
-            var img = getDataImage(matchId, skipedRounds, deletEndRounds, includingFail, includingRematch);
+            var img = getDataImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            log.error("MRA 数据请求失败", e);
-            from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rl <mpid>。");
+            NowbotApplication.log.error("MRA 数据请求失败", e);
+            throw new MRAException(MRAException.Type.RATING_MRA_Error);
+            //from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rl <mpid>。");
         }
     }
 
-    public byte[] getDataImage (int matchId, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
-        Match match = osuGetService.getMatchInfo(matchId);
+    public byte[] getDataImage (int matchID, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
+        Match match = osuGetService.getMatchInfo(matchID);
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
+            var events = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID()).getEvents();
             match.getEvents().addAll(0, events);
         }
 
@@ -65,7 +73,6 @@ public class MRAService implements MessageService {
         List<GameInfo> games = match.getEvents().stream().map(MatchEvent::getGame).filter(Objects::nonNull).toList();
 
         //跳过前几轮
-
         int s = games.size();
 
         {
@@ -87,12 +94,12 @@ public class MRAService implements MessageService {
         var redList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
         var noneList = finalUsers.stream().filter(userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).toList();
 
-        //平均星数和第一个sid
+        //平均星数和获取第一个sid
         int sid = 0;
         float averageStar = 0f;
         int rounds = games.size();
         int noMapRounds = 0;
-        for(var g : games) {
+        for (var g : games) {
             if (sid == 0 && g.getBeatmap() != null) {
                 sid = g.getBeatmap().getBeatmapsetId();
             }
@@ -112,31 +119,6 @@ public class MRAService implements MessageService {
 
         return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
     }
-
-    /*
-    public byte[] postImage(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, int redwins, int bluewins, boolean isTeamVs) {
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        var body = Map.of(
-                "redUsers", red,
-                "blueUsers", blue,
-                "noneUsers", none,
-                "matchInfo", matchInfo,
-                "sid", sid,
-                "redWins", redwins,
-                "blueWins", bluewins,
-                "isTeamVs", isTeamVs
-        );
-
-        HttpEntity httpEntity = new HttpEntity(body, headers);
-        ResponseEntity<byte[]> s = template.exchange(URI.create("http://127.0.0.1:1611/panel_C"), HttpMethod.POST, httpEntity, byte[].class);
-        return s.getBody();
-    }
-
-     */
 
     //主计算方法
     public static RatingData calculate(List<MicroUser> userAll, List<GameInfo> games, boolean includingFail, OsuGetService osuGetService) {
@@ -227,15 +209,6 @@ public class MRAService implements MessageService {
         matchStatistics.setScoreNum(scoreNum);
 
         //剔除没参赛的用户
-        /*
-        Iterator<Map.Entry<Integer, UserMatchData>> it = users.entrySet().iterator();
-        while (it.hasNext()) {
-            var user = it.next().getValue();
-           if (user.getRRAs().size() == 0)
-                it.remove();
-       }
-         */
-        //22-04-15 尝试缩短代码
         users.values().removeIf(user -> user.getRRAs().isEmpty());
 
         //计算步骤封装

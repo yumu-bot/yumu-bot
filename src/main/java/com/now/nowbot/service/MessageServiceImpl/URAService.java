@@ -1,11 +1,11 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.now.nowbot.throwable.ServiceException.MRAException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 @Service("URA")
 public class URAService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(URAService.class);
     @Autowired
     RestTemplate template;
 
@@ -37,8 +36,8 @@ public class URAService implements MessageService {
         var from = event.getSubject();
 
         Match match = osuGetService.getMatchInfo(matchId);
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
+            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getID()).getEvents();
             match.getEvents().addAll(0, events);
         }
 
@@ -65,8 +64,9 @@ public class URAService implements MessageService {
         try {
             from.sendMessage(sb.toString());
         } catch (Exception e) {
-            log.error("URA 数据请求失败", e);
-            from.sendMessage("URA 输出失败，请重试。\n或尝试最新版渲染 !ra <mpid>。");
+            NowbotApplication.log.error("URA 数据请求失败", e);
+            throw new MRAException(MRAException.Type.RATING_URA_Error);
+            //from.sendMessage("URA 输出失败，请重试。\n或尝试最新版渲染 !ra <mpid>。");
         }
     }
 
@@ -170,7 +170,7 @@ public class URAService implements MessageService {
         matchStatistics.setScoreNum(scoreNum);
 
         //剔除没参赛的用户
-        users.values().removeIf(user -> user.getRRAs().size() == 0);
+        users.values().removeIf(user -> user.getRRAs().isEmpty());
 
         //计算步骤封装
         matchStatistics.calculate();

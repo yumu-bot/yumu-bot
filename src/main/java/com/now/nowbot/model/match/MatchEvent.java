@@ -1,10 +1,8 @@
 package com.now.nowbot.model.match;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -12,14 +10,14 @@ public class MatchEvent {
     Long id;
     OffsetDateTime timestamp;
     @JsonProperty("user_id")
-    Integer userId;
+    Integer UID;
     GameInfo game;
 
-    public Long getId() {
+    public Long getID() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setID(Long id) {
         this.id = id;
     }
 
@@ -31,12 +29,12 @@ public class MatchEvent {
         this.timestamp = timestamp;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public Integer getUserID() {
+        return UID;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setUserID(Integer UID) {
+        this.UID = UID;
     }
 
     public GameInfo getGame() {

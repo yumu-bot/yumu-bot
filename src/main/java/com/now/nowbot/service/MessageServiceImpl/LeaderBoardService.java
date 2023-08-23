@@ -45,7 +45,7 @@ public class LeaderBoardService implements MessageService {
         }
 
         if (matcher.group("range") == null) {
-            range = 20;
+            range = 50;
         } else {
             try {
                 range = Integer.parseInt(matcher.group("range"));

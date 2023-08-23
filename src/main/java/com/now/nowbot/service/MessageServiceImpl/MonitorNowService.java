@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.match.Match;
-import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -10,18 +9,13 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 @Service("MonitorNow")
 public class MonitorNowService implements MessageService {
-    // 不是,你删我 log 干啥
-    private static final Logger log = LoggerFactory.getLogger(MonitorNowService.class);
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -58,7 +52,7 @@ public class MonitorNowService implements MessageService {
         try {
             match = osuGetService.getMatchInfo(matchID);
         } catch (Exception e) {
-            log.error("mn 请求异常", e);
+            NowbotApplication.log.error("mn 请求异常", e);
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_NotFound);
         }
         int gameTime = 0;
@@ -69,8 +63,8 @@ public class MonitorNowService implements MessageService {
             gameTime = m.intValue();
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId()) && gameTime < 40) {
-            var next = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getId());
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID()) && gameTime < 40) {
+            var next = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID());
             m = next.getEvents().stream()
                     .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
                     .get(Boolean.FALSE);

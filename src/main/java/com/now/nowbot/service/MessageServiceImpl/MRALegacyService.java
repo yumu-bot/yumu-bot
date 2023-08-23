@@ -8,8 +8,6 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.util.Panel.MatchRatingPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 
 @Service("MRALegacy")
 public class MRALegacyService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(MRALegacyService.class);
     @Autowired
     RestTemplate template;
 
@@ -42,11 +39,11 @@ public class MRALegacyService implements MessageService {
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
         int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
         boolean includingFail = matcher.group("includingfail") == null || !matcher.group("includingfail").equals("0");
-        var from = event.getSubject();
+        //var from = event.getSubject();
 
         Match match = osuGetService.getMatchInfo(matchId);
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getId()).getEvents();
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
+            var events = osuGetService.getMatchInfo(matchId, match.getEvents().get(0).getID()).getEvents();
             match.getEvents().addAll(0, events);
         }
 
@@ -69,39 +66,39 @@ public class MRALegacyService implements MessageService {
                             Math.round((double) user.getWins() * 100 / (user.getWins() + user.getLost())), user.getTotalScore(), user.getPlayerLabelV2()))
                     .append("\n\n");
         }
-         */
 
-//        //色彩debug
-//        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
-//        var c = s.getCanvas();
-//        finalUsers.forEach(
-//                userMatchData -> {
-//                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
-//                    c.translate(0,50);
-//                }
-//        );
-//        try {
-//            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        //输出完整用户数据
-//        for(var user:sortedUsers){
-//            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
-//                    .append("TMG: ").append(user.getTMG()).append("\n")
-//                    .append("AMG: ").append(user.getAMG()).append("\n")
-//                    .append("ERA: ").append(user.getERA()).append("\n")
-//                    .append("DRA: ").append(user.getDRA()).append("\n");
-//            //输出完整的分数信息
-////                    .append("Scores And RRAs: ").append("\n");
-////            for(int i=0;i<user.getScores().size();i++){
-////                sb.append(user.getScores().get(i)).append(" ")
-////                        .append(user.getRRAs().get(i)).append("\n");
-////            }
-//        }
-//        event.getSubject().sendMessage(sb.toString());
+        //色彩debug
+        var s = Surface.makeRasterN32Premul(50,50*finalUsers.size());
+        var c = s.getCanvas();
+        finalUsers.forEach(
+                userMatchData -> {
+                    c.drawRect(Rect.makeWH(50,50), new Paint().setColor(userMatchData.getRating().color));
+                    c.translate(0,50);
+                }
+        );
+        try {
+            Files.write(Path.of("D:/ra.png"), s.makeImageSnapshot().encodeToData().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        //输出完整用户数据
+        for(var user:sortedUsers){
+            sb.append("\n").append(user.getUsername()).append(" ").append(user.getTeam()).append("\n")
+                    .append("TMG: ").append(user.getTMG()).append("\n")
+                    .append("AMG: ").append(user.getAMG()).append("\n")
+                    .append("ERA: ").append(user.getERA()).append("\n")
+                    .append("DRA: ").append(user.getDRA()).append("\n");
+            //输出完整的分数信息
+                    .append("Scores And RRAs: ").append("\n");
+            for(int i=0;i<user.getScores().size();i++){
+                sb.append(user.getScores().get(i)).append(" ")
+                        .append(user.getRRAs().get(i)).append("\n");
+            }
+        }
+        event.getSubject().sendMessage(sb.toString());
+
+        */
 
         //第二版图像渲染
 
@@ -234,7 +231,7 @@ public class MRALegacyService implements MessageService {
 //            if (user.getRRAs().size() == 0)
 //                it.remove();
 //        } //22-04-15 尝试缩短代码
-        users.values().removeIf(user -> user.getRRAs().size() == 0);
+        users.values().removeIf(user -> user.getRRAs().isEmpty());
 
         //计算步骤封装
         matchStatistics.calculate();

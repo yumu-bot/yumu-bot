@@ -6,6 +6,7 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.MRAException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +16,13 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 
 @Service("t-ra")
-public class TestRaService implements MessageService {
+public class TestRAService implements MessageService {
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
     OsuGetService osuGetService;
 
     @Autowired
-    TestRaService(OsuGetService osuGetService) {
+    TestRAService(OsuGetService osuGetService) {
         this.osuGetService = osuGetService;
     }
 
@@ -29,10 +30,17 @@ public class TestRaService implements MessageService {
     @CheckPermission(supperOnly = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
+        int id;
+
+        try {
+            id = Integer.parseInt(matcher.group("id"));
+        } catch (NullPointerException e) {
+            throw new MRAException(MRAException.Type.RATING_TRA_None);
+        }
 
         StringBuilder sb = new StringBuilder();
-        from.sendMessage("正在处理" + matcher.group("id"));
-        mo(Integer.parseInt(matcher.group("id")), -1, sb);
+        from.sendMessage("正在处理" + id);
+        testRaCalculate(id, sb);
 
         if (from instanceof Group group) {
             try {
@@ -41,15 +49,15 @@ public class TestRaService implements MessageService {
                 from.sendMessage(e.getMessage());
             }
         } else {
-            from.sendMessage("私聊不行");
+            throw new MRAException(MRAException.Type.RATING_TRA_NotGroup);
+            //from.sendMessage("私聊不行");
         }
-//        AbsoluteFileFolder
     }
 
-    public void mo(int id, long eventid, StringBuilder strData) {
+    public void testRaCalculate(int id, StringBuilder strData) {
         Match match = osuGetService.getMatchInfo(id);
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getId()).getEvents();
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
+            var events = osuGetService.getMatchInfo(id, match.getEvents().get(0).getID()).getEvents();
             match.getEvents().addAll(0, events);
         }
 

@@ -165,7 +165,7 @@ public enum Instruction {
     TESTID(TestGetId.class,
             Pattern.compile("^[!！]\\s*(?i)testid\\s*(?<ids>((\\d)+(,)?)+)")),
 
-    TESTRA(TestRaService.class,
+    TESTRA(TestRAService.class,
             Pattern.compile("[!！]\\s*(?i)testra(\\s+(?<id>\\d+))")),
 
     TESTPPM(TestPPMService.class,
