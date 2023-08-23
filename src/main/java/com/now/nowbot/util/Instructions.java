@@ -3,10 +3,18 @@ package com.now.nowbot.util;
 import java.util.regex.Pattern;
 
 public class Instructions {
-    static String DELIMIT_COLON = "[:：]";
+    static String COLON = "[:：]";
     static String DELIMIT_WHAT = "#";
-    static String DELIMIT_A = "\\s*";
-    static String DELIMIT_S = "\\s+";
+    static String SPACE_0P = "\\s*";
+    static String SPACE_1P = "\\s+";
+    static String SPACE_01 = "\\s?";
+    static String WORD_0P = "\\w*";
+    static String WORD_1P = "\\w+";
+    static String WORD_01 = "\\w?";
+    static String NUMBER_0P = "\\d*";
+    static String NUMBER_1P = "\\d+";
+    static String NUMBER_01 = "\\d?";
+    static String NO_ADD_WORD = "(?![a-zA-Z_])";
     static Pattern OSU_MODE = Pattern.compile("(?<mode>(?i)[0-3otcfm]|osu|taiko|catch|fruits|mania)");
     static Pattern OSU_NAME = Pattern.compile("(?<name>[a-zA-Z0-9\\[\\]\\-_ ]{3,15})");
     static Pattern OSU_UID = Pattern.compile("(?<uid>\\d{1,8})");
@@ -62,7 +70,7 @@ public class Instructions {
          *
          * @return this
          */
-        public RegexBuilder nullable() {
+        public RegexBuilder i01() {
             sb.append('?');
             return this;
         }
@@ -72,7 +80,7 @@ public class Instructions {
          *
          * @return this
          */
-        public RegexBuilder more() {
+        public RegexBuilder i1P() {
             sb.append('+');
             return this;
         }
@@ -82,19 +90,59 @@ public class Instructions {
          *
          * @return this
          */
-        public RegexBuilder any() {
+        public RegexBuilder i0P() {
             sb.append('*');
             return this;
         }
 
 
-        public RegexBuilder addDelimitColon() {
-            sb.append(DELIMIT_COLON);
+        public RegexBuilder addColon() {
+            sb.append(COLON);
             return this;
         }
 
-        public RegexBuilder addSplit() {
-            sb.append(DELIMIT_A);
+        public RegexBuilder addSpace0P() {
+            sb.append(SPACE_0P);
+            return this;
+        }
+
+        public RegexBuilder addSpace1P() {
+            sb.append(SPACE_1P);
+            return this;
+        }
+
+        public RegexBuilder addSpace01() {
+            sb.append(SPACE_01);
+            return this;
+        }
+
+        public RegexBuilder addWord1P() {
+            sb.append(WORD_1P);
+            return this;
+        }
+
+        public RegexBuilder addWord0P() {
+            sb.append(WORD_0P);
+            return this;
+        }
+
+        public RegexBuilder addWord01() {
+            sb.append(WORD_01);
+            return this;
+        }
+
+        public RegexBuilder addNumber1P() {
+            sb.append(NUMBER_1P);
+            return this;
+        }
+
+        public RegexBuilder addNumber0P() {
+            sb.append(NUMBER_0P);
+            return this;
+        }
+
+        public RegexBuilder addNumber01() {
+            sb.append(NUMBER_01);
             return this;
         }
 

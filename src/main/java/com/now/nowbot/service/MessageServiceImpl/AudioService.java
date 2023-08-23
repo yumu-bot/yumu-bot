@@ -18,7 +18,6 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("Audio")
@@ -34,18 +33,18 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
             .getRegexBuilder("[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))")
 
             .groupStart()
-            .addDelimitColon()
+            .addColon()
                 .groupStart("type")
-                .addRegex("\\w+")
+                .addWord1P()
                 .groupEnd()
-            .nullable()
+            .i01()
             .groupEnd()
 
-            .addSplit()
+            .addSpace0P()
                 .groupStart("id")
-                .addRegex("\\d+")
+                .addNumber1P()
                 .groupEnd()
-            .nullable()
+            .i01()
 
             .build();
     Pattern p1 = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![a-zA-Z_]))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?");
