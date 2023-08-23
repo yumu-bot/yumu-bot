@@ -71,6 +71,12 @@ public enum Mod {
         return mList;
     }
 
+    public static List<Mod> getModsList(int mods) {
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        check(mList);
+        return mList;
+    }
+
     public static int getModsValue(String modsStr) {
         var modStrArray = getModsString(modsStr);
         var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).toList();

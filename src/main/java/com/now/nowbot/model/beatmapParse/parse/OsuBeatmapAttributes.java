@@ -4,6 +4,7 @@ import com.now.nowbot.model.beatmapParse.HitObject;
 import com.now.nowbot.model.beatmapParse.Timing;
 import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
 import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 
 import java.io.BufferedReader;
@@ -11,7 +12,20 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+@SuppressWarnings("all")
 public class OsuBeatmapAttributes {
+    static final double HIT_WINDOW_OSU_MAX = 80;
+    static final double HIT_WINDOW_OSU_MID = 50;
+    static final double HIT_WINDOW_OSU_MIN = 20;
+
+    static final double HIT_WINDOW_TAIKO_MAX = 50;
+    static final double HIT_WINDOW_TAIKO_MID = 35;
+    static final double HIT_WINDOW_TAIKO_MIN = 20;
+
+    static final double AR_MS_MAX = 1800;
+    static final double AR_MS_MID = 1200;
+    static final double AR_MS_MIN = 450;
+
     protected Integer version;
 
     protected Integer circleCount;
@@ -39,7 +53,7 @@ public class OsuBeatmapAttributes {
      *
      * @param read    osu file
      * @param general 元信息
-     * @throws {@link IOException} io exception
+     * @throws io exception {@link IOException}
      */
     public OsuBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
 
@@ -61,7 +75,7 @@ public class OsuBeatmapAttributes {
 
     boolean parseDifficulty(BufferedReader reader) throws IOException {
         boolean empty = true;
-        String line = "";
+        String line;
         while ((line = reader.readLine()) != null && !line.equals("")) {
             var entity = line.split(":");
             if (entity.length == 2) {
@@ -256,5 +270,76 @@ public class OsuBeatmapAttributes {
 
     public void setTimings(List<Timing> timings) {
         this.timings = timings;
+    }
+
+    public boolean isConverted() {
+        return this.getClass() != OsuBeatmapAttributes.class && mode == OsuMode.OSU;
+    }
+
+    public double getArHitWindow(int mods, double clockRate) {
+        double arValue = getAR();
+        if (Mod.hasHr(mods)) {
+            arValue = Math.min(arValue * 1.4, 10d);
+        } else if (Mod.hasEz(mods)) {
+            arValue *= 0.5;
+        }
+
+        return difficultyRange(arValue, AR_MS_MIN, AR_MS_MID, AR_MS_MAX) / clockRate;
+    }
+
+    public double getOdHitWindow(int mods, double clockRate) {
+        double odValue = getOD();
+        if (Mod.hasHr(mods)) {
+            odValue = Math.min(odValue * 1.4, 10d);
+        } else if (Mod.hasEz(mods)) {
+            odValue *= 0.5;
+        }
+        double window = 0;
+        switch (mode) {
+            case OSU, CATCH -> {
+                window = difficultyRange(
+                        odValue,
+                        HIT_WINDOW_OSU_MAX,
+                        HIT_WINDOW_OSU_MID,
+                        HIT_WINDOW_OSU_MIN
+                ) / clockRate;
+            }
+            case TAIKO -> {
+                window = difficultyRange(
+                        odValue,
+                        HIT_WINDOW_TAIKO_MAX,
+                        HIT_WINDOW_TAIKO_MID,
+                        HIT_WINDOW_TAIKO_MIN
+                ) / clockRate;
+            }
+            case MANIA -> {
+                if (!isConverted()) {
+                    window = 34.0 + 3.0 * (Math.min(10, Math.max(0,(10.0 - getOD()))));
+                } else if (getOD() > 4) {
+                    window = 34;
+                } else {
+                    window = 47;
+                }
+                if (Mod.hasHr(mods)) {
+                    window /= 1.4;
+                } else if (Mod.hasEz(mods)) {
+                    window *= 1.4;
+                }
+            }
+            case null, default -> {
+                throw new RuntimeException("?");
+            }
+        }
+        return Math.ceil((window * Math.floor(clockRate)) / clockRate);
+    }
+
+    private double difficultyRange(double difficulty, double min, double mid, double max) {
+        if (difficulty > 5) {
+            return mid + (max - mid) * (difficulty - 5) / 5;
+        } else if (difficulty < 5){
+            return mid - (mid - min) * (5 - difficulty) / 5;
+        } else {
+            return mid;
+        }
     }
 }

@@ -8,13 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ASyncMessageUtil{
 
-    private static final Long OFF_TIME = 90*1000L;
-    static class Lock{
+    private static final Long OFF_TIME = 120*1000L;
+    private static final ReentrantLock reentrantLock = new ReentrantLock();
+    public static class Lock{
 
         Long group;
         Long send;
@@ -22,19 +24,10 @@ public class ASyncMessageUtil{
         long         off = 0;
         MessageEvent msg;
         // 线程同步锁
-        private final ReentrantLock reentrantLock = new ReentrantLock();
+
         private final Condition getCondition = reentrantLock.newCondition();
 
         boolean isClose(){
-            if (System.currentTimeMillis()-time > OFF_TIME){
-                this.reentrantLock.lock();
-                try {
-                    getCondition.signal();
-                } finally {
-                    reentrantLock.unlock();
-                }
-                return true;
-            }
             return false;
         }
 
@@ -44,13 +37,32 @@ public class ASyncMessageUtil{
                     (this.send == null && message instanceof GroupMessageEvent && message.getSubject().getId() == this.group) ||
                     (message instanceof GroupMessageEvent && message.getSubject().getId() == this.group && message.getSender().getId() == this.send)
             ){
-                this.reentrantLock.lock();
+                reentrantLock.lock();
                 try {
                     this.msg = message;
-                    getCondition.signal();
+                    getCondition.signalAll();
                 } finally {
                     reentrantLock.unlock();
                 }
+            }
+        }
+
+        @SuppressWarnings({"ResultOfMethodCallIgnored"})
+        public MessageEvent get() {
+            ASyncMessageUtil.lockList.add(this);
+            try {
+                reentrantLock.lock();
+                if (msg == null) {
+                    getCondition.await(off, TimeUnit.MILLISECONDS);
+                }
+                return msg;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            } finally {
+                reentrantLock.unlock();
+                ASyncMessageUtil.lockList.remove(this);
+                msg = null;
             }
         }
 
@@ -64,10 +76,10 @@ public class ASyncMessageUtil{
      * @param send
      * @return
      */
-    public static Object getLock(long group, long send){
+    public static Lock getLock(long group, long send){
         return getLock(group, send, OFF_TIME);
     }
-    public static Object getLock(long group, long send, Long offTime){
+    public static Lock getLock(long group, long send, Long offTime){
         var l = new Lock();
         l.group = group;
         l.send = send;
@@ -75,7 +87,7 @@ public class ASyncMessageUtil{
         lockList.add(l);
         return l;
     }
-    public static Object getLock(MessageEvent event){
+    public static Lock getLock(MessageEvent event){
         if (event instanceof GroupMessageEvent g){
             return getLock(g.getGroup().getId(), g.getSender().getId());
         }
@@ -87,14 +99,13 @@ public class ASyncMessageUtil{
      * @param send
      * @return
      */
-    public static Object getSenderLock(long send){
+    public static Lock getSenderLock(long send){
         return getSenderLock(send, OFF_TIME);
     }
-    public static Object getSenderLock(long send, Long offTime){
+    public static Lock getSenderLock(long send, Long offTime){
         var l = new Lock();
         l.send = send;
         l.off = offTime;
-        lockList.add(l);
         return l;
     }
 
@@ -103,14 +114,13 @@ public class ASyncMessageUtil{
      * @param group
      * @return
      */
-    public static Object getGroupLock(long group){
+    public static Lock getGroupLock(long group){
         return getGroupLock(group, OFF_TIME);
     }
-    public static Object getGroupLock(long group, Long offTime){
+    public static Lock getGroupLock(long group, Long offTime){
         var l = new Lock();
         l.group = group;
         l.off = offTime;
-        lockList.add(l);
         return l;
     }
 
@@ -119,39 +129,6 @@ public class ASyncMessageUtil{
      * @param message
      */
     public static void put(MessageEvent message){
-        close();
-        lockList.forEach(lock -> {
-            lock.checkAdd(message);
-        });
-    }
-
-    public static @Nullable MessageEvent getEvent (Object lock) throws InterruptedException{
-        if(lock instanceof Lock t && !t.isClose()) {
-            t.time = System.currentTimeMillis();
-            t.reentrantLock.lock();
-            try {
-                while (t.msg == null) {
-                    t.getCondition.await();
-                }
-                return t.msg;
-            } finally {
-                t.reentrantLock.unlock();
-                t.msg = null;
-            }
-
-        }
-        return null;
-    }
-
-    public static void close(){
-        lockList.removeIf(Lock::isClose);
-    }
-
-    /**
-     * 尽量手动关闭监听
-     * @param lock
-     */
-    public static void close(Object lock){
-        lockList.remove(lock);
+        lockList.forEach(lock -> lock.checkAdd(message));
     }
 }

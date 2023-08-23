@@ -9,7 +9,7 @@ public class CatchBeatmapAttributes extends OsuBeatmapAttributes {
      *
      * @param read    osu file
      * @param general 元信息
-     * @throws {@link IOException} io exception
+     * @throws io exception {@link IOException}
      */
     public CatchBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
         super(read, general);

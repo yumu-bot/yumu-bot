@@ -79,7 +79,11 @@ public class OsuFile {
      * @param read osu file
      * @throws {@link IOException} io exception
      */
+    @SuppressWarnings("")
     OsuFile(BufferedReader read) throws IOException {
+        // 这里将 version 与 general 读取拆分出来, 然后解析出的所有属性放入 Attributes 类中
+        // 一是在读取的时候可以自动判断并生成对应的类型, 防止读取未知类型谱面的时候错过其他类型的解析, 比如骂娘的 Column
+        // 另外也能将 osu 转谱其他模式
         // 读取 version
         var versionStr = read.readLine();
         int versionInt;

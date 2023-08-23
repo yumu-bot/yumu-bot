@@ -56,8 +56,8 @@ public class BindService implements MessageService {
                 // 只有管理才有权力@人绑定,提示就不改了
                 from.sendMessage("你叫啥名呀？告诉我吧");
                 // throw new BindException(BindException.Type.BIND_Client_BindingNoName);
-                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
-                var s = ASyncMessageUtil.getEvent(lock);//阻塞,注意超时判空
+                var lock = ASyncMessageUtil.getLock(event);
+                var s = lock.get();//阻塞,注意超时判空
                 if (s != null) {
                     String Oname = s.getRawMessage();
                     Long id;
@@ -76,7 +76,7 @@ public class BindService implements MessageService {
                             //from.sendMessage("绑定成功");
                         } else {
                             from.sendMessage(buser.getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
-                            s = ASyncMessageUtil.getEvent(lock);
+                            s = lock.get();
                             if (s != null && s.getRawMessage().startsWith("OK")) {
                                 buser.setQq(at.getTarget());
                                 bindDao.update(buser);
@@ -141,8 +141,8 @@ public class BindService implements MessageService {
             }
             if (user != null && user.getAccessToken() != null) {
                 from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
-                var lock = ASyncMessageUtil.getLock(from.getId(), event.getSender().getId());
-                var s = ASyncMessageUtil.getEvent(lock);
+                var lock = ASyncMessageUtil.getLock(event);
+                var s = lock.get();
                 if (s != null && s.getRawMessage().trim().equalsIgnoreCase("OK")) {
                 } else {
                     return;

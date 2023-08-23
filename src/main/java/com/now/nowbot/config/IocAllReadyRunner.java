@@ -17,6 +17,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -75,14 +76,13 @@ public class IocAllReadyRunner implements CommandLineRunner {
                 .getProtocolHandler()
                 .setExecutor(executor);
 
-        /*
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
-            if (bot != null && bot.getGroup(746671531L) != null) {
-                bot.getGroup(746671531L).sendMessage("程序关闭");
-            }
+            ((ThreadPoolTaskExecutor)executor).shutdown();
         }, "endThread"));
         log.info("启动成功");
+        /*
         if (NowbotConfig.QQ_LOGIN) {
             //登录
             bot.login();

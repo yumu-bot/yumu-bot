@@ -35,21 +35,11 @@ public class CheckAspect {
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现MessageService的HandMessage方法切入点
-    @Pointcut("execution(public void com.now.nowbot.service.MessageServiceImpl..HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
-    public void servicePoint() {
-    }
+    @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(void HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
+    public void servicePoint() {}
 
-    @Pointcut("@annotation(com.mikuac.shiro.annotation.GroupMessageHandler)")
-    public void groupMessageHandlerPoint(){
-
-    }
-
-    @AfterThrowing(value = "groupMessageHandlerPoint()", throwing = "e")
-    public Object handleError(JoinPoint point, Exception e){
-        // 处理异常
-        log.error("AOP E", e);
-        return point.getTarget();
-    }
+    @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
+    public void restTemplate(){}
 
     /***
      * 注解权限切点
