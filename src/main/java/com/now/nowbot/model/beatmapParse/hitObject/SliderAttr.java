@@ -24,7 +24,7 @@ enum PointType {
     Catmull(0),
     Bezier(1),
     Linear(2),
-    PerfectCurve(3),
+    PerfectCircle(3),
     ;
     final int type;
 
@@ -33,7 +33,7 @@ enum PointType {
     }
 
     static PointType fromStr(String s) {
-        if (s.length() < 1) return fromChar('*');
+        if (s.isEmpty()) return fromChar('*');
         return fromChar(s.charAt(0));
     }
 
@@ -41,7 +41,7 @@ enum PointType {
         return switch (s) {
             case 'L' -> Linear;
             case 'B' -> Bezier;
-            case 'P' -> PerfectCurve;
+            case 'P' -> PerfectCircle;
             default -> Catmull;
         };
     }
