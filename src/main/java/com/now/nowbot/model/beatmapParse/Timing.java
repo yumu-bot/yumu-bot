@@ -1,16 +1,16 @@
-package com.now.nowbot.model.osufile;
+package com.now.nowbot.model.beatmapParse;
 
-import com.now.nowbot.model.osufile.timing.TimingEffect;
-import com.now.nowbot.model.osufile.timing.TimingSampleSet;
+import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
+import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
 
 public class Timing {
-    int start_time;
+    Integer start_time;
     Double beat_length;
-    int meter; //节拍
+    Integer meter; //节拍
     TimingSampleSet sample_set;
-    int sample_parameter;
-    int volume;
-    boolean isRedLine;
+    Integer sample_parameter;
+    Integer volume;
+    Boolean isRedLine;
     TimingEffect effect;
 
 

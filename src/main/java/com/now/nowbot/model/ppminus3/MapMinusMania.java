@@ -3,9 +3,9 @@ package com.now.nowbot.model.ppminus3;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.now.nowbot.model.osufile.HitObject;
-import com.now.nowbot.model.osufile.OsuFile;
-import com.now.nowbot.model.osufile.hitObject.HitObjectType;
+import com.now.nowbot.model.beatmapParse.HitObject;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
+import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +63,7 @@ public class MapMinusMania extends MapMinus{
     int frac_1 = 333;
     int calculate_unit = 2500; //一个计算元的区域（毫秒）。这其中的数据会统计到一个计算元中。
 
-    public MapMinusMania(OsuFile file) {
+    public MapMinusMania(ManiaBeatmapAttributes file) {
         //data 数据，不变。
         var hitObjects = file.getHitObjects();
         var timings = file.getTimings();

@@ -2,8 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.osufile.OsuFile;
-import com.now.nowbot.model.osufile.OsuFileMania;
+import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -57,7 +56,7 @@ public class MapMinusService implements MessageService {
         if (mode != null) {
             try {
                 switch (mode) {
-                    case MANIA -> file = new OsuFileMania(fileStr);
+                    case MANIA -> file = OsuFile.getInstance(fileStr);
                     default -> throw new MapMinusException(MapMinusException.Type.MM_Function_NotSupported);
                     //throw new TipsException("抱歉，本功能暂不支持除Mania模式以外的谱面！");//file = new OsuFile(fileStr);
                 }

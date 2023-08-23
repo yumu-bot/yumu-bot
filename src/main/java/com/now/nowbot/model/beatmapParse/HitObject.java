@@ -1,9 +1,9 @@
-package com.now.nowbot.model.osufile;
+package com.now.nowbot.model.beatmapParse;
 
-import com.now.nowbot.model.osufile.hitObject.HitObjectPosition;
-import com.now.nowbot.model.osufile.hitObject.HitObjectSound;
-import com.now.nowbot.model.osufile.hitObject.HitObjectType;
-import com.now.nowbot.model.osufile.hitObject.SliderAttr;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectSound;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
+import com.now.nowbot.model.beatmapParse.hitObject.SliderAttr;
 
 public class HitObject {
     HitObjectPosition position;

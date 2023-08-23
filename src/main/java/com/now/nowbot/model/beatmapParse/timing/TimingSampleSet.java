@@ -1,4 +1,4 @@
-package com.now.nowbot.model.osufile.timing;
+package com.now.nowbot.model.beatmapParse.timing;
 
 public enum TimingSampleSet {
     DEFAULT("default",0),

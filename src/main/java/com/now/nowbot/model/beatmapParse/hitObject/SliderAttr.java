@@ -1,4 +1,4 @@
-package com.now.nowbot.model.osufile.hitObject;
+package com.now.nowbot.model.beatmapParse.hitObject;
 
 import java.util.List;
 

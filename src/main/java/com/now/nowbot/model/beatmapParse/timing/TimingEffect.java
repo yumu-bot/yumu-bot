@@ -1,24 +1,20 @@
-package com.now.nowbot.model.osufile.hitObject;
+package com.now.nowbot.model.beatmapParse.timing;
 
-public enum HitObjectType{
+public enum TimingEffect {
     DEFAULT("default",0),
-    CIRCLE("circle",1),
-    SLIDER("slider",2),
-    SPINNER("spinner",8),
-    LONGNOTE("longnote",128);
+    KIAI("normal",1),
+    OMITFIRSTBAR("soft",8);
     String type_name;
     int type_value;
 
-    HitObjectType(String name, int value) {
+    TimingEffect(String name, int value) {
         type_name = name;
         type_value = value;
     }
 
-    public static HitObjectType getType(int value) {
-        if ((value & 0b1) == 1) return CIRCLE;
-        else if ((value >> 1 & 0b1) == 1) return SLIDER;
-        else if ((value >> 3 & 0b1) == 1) return SPINNER;
-        else if ((value >> 7 & 0b1) == 1) return LONGNOTE;
+    public static TimingEffect getType(int value) {
+        if ((value & 0b1) == 1) return KIAI;
+        else if ((value >> 2 & 0b1) == 1) return OMITFIRSTBAR;
         else return DEFAULT;
     }
 

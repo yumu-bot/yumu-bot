@@ -1,30 +1,18 @@
-package com.now.nowbot.model.osufile;
+package com.now.nowbot.model.beatmapParse.parse;
 
-import com.now.nowbot.model.osufile.hitObject.HitObjectType;
+import com.now.nowbot.model.beatmapParse.HitObject;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
-public class OsuFileMania extends OsuFile {
+public class ManiaBeatmapAttributes extends OsuBeatmapAttributes {
 
-    public OsuFileMania(String file) throws IOException {
-        this(new BufferedReader(
-                new InputStreamReader(
-                        new ByteArrayInputStream(
-                                file.getBytes(StandardCharsets.UTF_8)
-                        )
-                )
-        ));
-    }
-
-    public OsuFileMania(BufferedReader reader) throws IOException {
-        super(reader);
+    public ManiaBeatmapAttributes(BufferedReader reader, BeatmapGeneral general) throws IOException {
+        super(reader, general);
         for (HitObject line : hitObjects) {
-            var column = getColumn(line.position.getX(), (int) Math.floor(CS));
+            var column = getColumn(line.getPosition().getX(), (int) Math.floor(CS));
             line.setColumn(column);
         }
     }

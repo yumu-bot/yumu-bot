@@ -1,18 +1,17 @@
-package com.now.nowbot.model.osufile;
+package com.now.nowbot.model.beatmapParse.parse;
 
+import com.now.nowbot.model.beatmapParse.HitObject;
+import com.now.nowbot.model.beatmapParse.Timing;
+import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
+import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.osufile.timing.TimingEffect;
-import com.now.nowbot.model.osufile.timing.TimingSampleSet;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 
-public class OsuFile {
+public class OsuBeatmapAttributes {
     protected Integer version;
 
     protected Integer circleCount;
@@ -35,82 +34,29 @@ public class OsuFile {
 
     List<Timing> timings;
 
-    public static OsuFile getInstance() {
-//        不应该直接新建, 而是通过解析谱面创建这个对象
-//        而且 mode 由谱面文件内容 [General] Mode 确定
-//        建议暂时不要考虑转谱
-        return null;
-    }
-
-    public OsuFile(String osuFileStr) throws IOException {
-//        转化为 BufferedReader 逐行读取
-        new OsuFile(new BufferedReader(
-                new InputStreamReader(
-                        new ByteArrayInputStream(
-                                osuFileStr.getBytes(StandardCharsets.UTF_8)
-                        )
-                )
-        ));
-    }
-
     /**
      * 逐行读取
      *
-     * @param read osu file
-     * @throws IOException
+     * @param read    osu file
+     * @param general 元信息
+     * @throws {@link IOException} io exception
      */
-    public OsuFile(BufferedReader read) throws IOException {
-        // 读取 version
-        var verson = read.readLine();
-        if (verson != null && verson.startsWith("osu file format v")) {
-            this.version = Integer.parseInt(verson.substring(17));
-        } else {
-            throw new RuntimeException("解析错误,文件无效");
-        }
+    public OsuBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
+
         String line;
         // 逐行
         while ((line = read.readLine()) != null) {
-            if (line.equals("")) continue;
-            if (line.startsWith("[General]")) {
-                // 读取 General 块
-                parseGeneral(read);
-            } else
             if (line.startsWith("[Difficulty]")) {
                 // 读取 Difficulty 块
                 parseDifficulty(read);
-            } else
-            if (line.startsWith("[TimingPoints]")) {
+            } else if (line.startsWith("[TimingPoints]")) {
                 // 读取 TimingPoints 块
                 parseTiming(read);
-            } else
-            if (line.startsWith("[HitObjects]")) {
+            } else if (line.startsWith("[HitObjects]")) {
                 parseHitObject(read);
             }
 
         }
-    }
-
-
-    boolean parseGeneral(BufferedReader reader) throws IOException {
-        boolean empty = true;
-        String line = "";
-        while ((line = reader.readLine()) != null && !line.equals("")) {
-            var entity = line.split(":");
-            if (entity.length == 2) {
-                var key = entity[0].trim();
-                var val = entity[1].trim();
-
-                if (key.equals("Mode")) {
-                    mode = OsuMode.getMode(val);
-                    empty = false;
-                }
-                if (key.equals("StackLeniency")) {
-                    stackLeniency = Double.parseDouble(val);
-                    empty = false;
-                }
-            }
-        }
-        return empty;
     }
 
     boolean parseDifficulty(BufferedReader reader) throws IOException {
@@ -192,92 +138,36 @@ public class OsuFile {
         return empty;
     }
 
-    public int getFileVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setFileVersion(int version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 
-    public int getCircleCount() {
+    public Integer getCircleCount() {
         return circleCount;
     }
 
-    public void setCircleCount(int count) {
-        this.circleCount = count;
+    public void setCircleCount(Integer circleCount) {
+        this.circleCount = circleCount;
     }
 
-    public int getSliderCount() {
+    public Integer getSliderCount() {
         return sliderCount;
     }
 
-    public void setSliderCount(int count) {
-        this.sliderCount = count;
+    public void setSliderCount(Integer sliderCount) {
+        this.sliderCount = sliderCount;
     }
 
-    public int getSpinnerCount() {
+    public Integer getSpinnerCount() {
         return spinnerCount;
     }
 
-    public void setSpinnerCount(int count) {
-        this.sliderCount = count;
-    }
-
-    public double getAR() {
-        return AR;
-    }
-
-    public void setAR(double AR) {
-        this.AR = AR;
-    }
-
-    public double getCS() {
-        return CS;
-    }
-
-    public void setCS(double CS) {
-        this.CS = CS;
-    }
-
-    public double getOD() {
-        return OD;
-    }
-
-    public void setOD(double OD) {
-        this.OD = OD;
-    }
-
-    public double getHP() {
-        return HP;
-    }
-
-    public void setHP(double HP) {
-        this.HP = HP;
-    }
-
-    public double getSV() {
-        return sliderBaseVelocity;
-    }
-
-    public void setSV(double base_sv) {
-        this.sliderBaseVelocity = base_sv;
-    }
-
-    public double getTickRate() {
-        return sliderTickRate;
-    }
-
-    public void setTickRate(double tick_rate) {
-        this.sliderTickRate = tick_rate;
-    }
-
-    public Double getSL() {
-        return stackLeniency;
-    }
-
-    public void setSL(Double stack_leniency) {
-        this.stackLeniency = stack_leniency;
+    public void setSpinnerCount(Integer spinnerCount) {
+        this.spinnerCount = spinnerCount;
     }
 
     public OsuMode getMode() {
@@ -286,6 +176,70 @@ public class OsuFile {
 
     public void setMode(OsuMode mode) {
         this.mode = mode;
+    }
+
+    public Double getAR() {
+        return AR;
+    }
+
+    public void setAR(Double AR) {
+        this.AR = AR;
+    }
+
+    public Double getCS() {
+        return CS;
+    }
+
+    public void setCS(Double CS) {
+        this.CS = CS;
+    }
+
+    public Double getOD() {
+        return OD;
+    }
+
+    public void setOD(Double OD) {
+        this.OD = OD;
+    }
+
+    public Double getHP() {
+        return HP;
+    }
+
+    public void setHP(Double HP) {
+        this.HP = HP;
+    }
+
+    public Double getSliderBaseVelocity() {
+        return sliderBaseVelocity;
+    }
+
+    public void setSliderBaseVelocity(Double sliderBaseVelocity) {
+        this.sliderBaseVelocity = sliderBaseVelocity;
+    }
+
+    public Double getSliderTickRate() {
+        return sliderTickRate;
+    }
+
+    public void setSliderTickRate(Double sliderTickRate) {
+        this.sliderTickRate = sliderTickRate;
+    }
+
+    public Double getSliderMultiplier() {
+        return sliderMultiplier;
+    }
+
+    public void setSliderMultiplier(Double sliderMultiplier) {
+        this.sliderMultiplier = sliderMultiplier;
+    }
+
+    public Double getStackLeniency() {
+        return stackLeniency;
+    }
+
+    public void setStackLeniency(Double stackLeniency) {
+        this.stackLeniency = stackLeniency;
     }
 
     public List<HitObject> getHitObjects() {
@@ -300,8 +254,7 @@ public class OsuFile {
         return timings;
     }
 
-    public void setTimings(List<Timing> hitObjects) {
+    public void setTimings(List<Timing> timings) {
         this.timings = timings;
     }
 }
-
