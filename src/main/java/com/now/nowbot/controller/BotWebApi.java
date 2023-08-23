@@ -15,6 +15,7 @@ import com.now.nowbot.service.MessageServiceImpl.BphtService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
@@ -100,7 +101,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "match")
-    public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
+    public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;

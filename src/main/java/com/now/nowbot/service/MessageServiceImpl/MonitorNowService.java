@@ -10,6 +10,8 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 
 @Service("MonitorNow")
 public class MonitorNowService implements MessageService {
+    // 不是,你删我 log 干啥
+    private static final Logger log = LoggerFactory.getLogger(MonitorNowService.class);
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -37,24 +41,6 @@ public class MonitorNowService implements MessageService {
             throw new MonitorNowException(MonitorNowException.Type.MN_MatchId_Error);
         }
 
-        //总感觉这样写会多次请求，能不能优化一下？
-        Match match;
-
-        try {
-            match = osuGetService.getMatchInfo(matchID);
-        } catch (Exception e) {
-            throw new MonitorNowException(MonitorNowException.Type.MN_Match_NotFound);
-        }
-
-        long gameSize = match.getEvents().stream()
-                .map(MatchEvent::getGame)
-                .filter(Objects::nonNull)
-                .filter(i -> i.getScoreInfos() != null && !i.getScoreInfos().isEmpty())
-                .count();
-
-        if (gameSize <= 0) throw new MonitorNowException(MonitorNowException.Type.MN_Match_Empty);
-        else if (gameSize - deletEndRounds - skipedRounds <= 0) throw new MonitorNowException(MonitorNowException.Type.MN_Match_OutOfBoundsError);
-
         var from = event.getSubject();
         try {
             var f = getImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
@@ -67,8 +53,14 @@ public class MonitorNowService implements MessageService {
         }
     }
 
-    public byte[] getImage(int matchID, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
-        Match match = osuGetService.getMatchInfo(matchID);
+    public byte[] getImage(int matchID, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) throws MonitorNowException {
+        Match match = null;
+        try {
+            match = osuGetService.getMatchInfo(matchID);
+        } catch (Exception e) {
+            log.error("mn 请求异常", e);
+            throw new MonitorNowException(MonitorNowException.Type.MN_Match_NotFound);
+        }
         int gameTime = 0;
         var m = match.getEvents().stream()
                 .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
@@ -86,6 +78,13 @@ public class MonitorNowService implements MessageService {
                 gameTime += m.intValue();
             }
             match.addEventList(next);
+        }
+
+        if (gameTime <= 0) {
+            throw new MonitorNowException(MonitorNowException.Type.MN_Match_Empty);
+        }
+        if (0 <= gameTime - deleteEnd - skipRounds) {
+            throw new MonitorNowException(MonitorNowException.Type.MN_Match_OutOfBoundsError);
         }
 
         return imageService.getPanelF(match, osuGetService, skipRounds, deleteEnd, includingFail, includingRematch);
