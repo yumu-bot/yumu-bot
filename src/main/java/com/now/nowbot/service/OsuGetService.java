@@ -275,6 +275,7 @@ public interface OsuGetService {
     JsonNode lookupBeatmap(String checksum, String filename, Long id);
 
     Search searchBeatmap(Map<String, Object> query);
+    JsonNode searchBeatmapN(Map<String, Object> query);
 
     JsonNode chatGetChannels(BinUser user);
 }

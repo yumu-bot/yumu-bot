@@ -987,6 +987,24 @@ public class OsuGetServiceImpl implements OsuGetService {
         return resolute;
     }
 
+    @Override
+    public JsonNode searchBeatmapN(Map<String, Object> query) {
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmapsets/search/");
+        for (var e : query.entrySet()) {
+            if (e.getValue() != null) {
+                data.queryParam(e.getKey(), e.getValue());
+            } else {
+                data.queryParam(e.getKey());
+            }
+        }
+        var uri = data.build().toUri();
+        var headers = getHeader();
+
+        HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+        var x = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
+        return x.getBody();
+    }
+
 
     @Override
     public JsonNode chatGetChannels(BinUser user) {

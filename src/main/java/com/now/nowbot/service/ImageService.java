@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 @Service("nowbot-image")
 public class ImageService {
-    private static final Logger   log        = LoggerFactory.getLogger(ImageService.class);
+    private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
@@ -142,6 +142,7 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
         return doPost("panel_A3", httpEntity);
     }
+
     public byte[] getPanelA4(OsuUser osuUser, List<Score> bpList, ArrayList<Integer> bpRank) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -309,6 +310,19 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_D", httpEntity);
+    }
+
+    public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
+        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
+        score.setBeatMap(map);
+        score.setBeatMapSet(map.getBeatMapSet());
+
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of("user", user,
+                "score", score
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E", httpEntity);
     }
 
     public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
@@ -496,7 +510,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService){
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, Math.min(bpSize, 5));
@@ -718,17 +732,32 @@ public class ImageService {
         return doPost("panel_J", httpEntity);
     }
 
-    public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
-        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
-        score.setBeatMap(map);
-        score.setBeatMapSet(map.getBeatMapSet());
+    public byte[] getPanelM(OsuUser user, OsuGetService osuGetService) {
+        var search = osuGetService.searchBeatmap(Map.of("q", "creator=" + user.getId(), "s", "any"));
+        List<BeatMapSet> ms = search.getBeatmapsets().stream().limit(6).toList();
 
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of("user", user,
-                "score", score
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E", httpEntity);
+        var mostRecentRankedReatmap = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified")) && user.getId() == s.getMapperId().longValue()).findFirst().orElse(null);
+        var mostRecentRankedGuestDiff = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified")) && user.getId() != s.getMapperId().longValue()).findFirst().orElse(null);
+        var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
+
+        var diffArr = new int[10];
+        {
+            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getId()).mapToDouble(BeatMap::getDifficultyRating).toArray();
+            var n = new double[]{0, 2, 2.8,}; // 懒, 帮我写, 把数组补充完整, 到 10 就行,
+            for (var d : diffAll) {
+                int i = n.length - 1;
+                while (i >= 0 && d > n[i]) --i;
+                diffArr[i] ++;
+            }
+        }
+
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("most_popular_beatmap", ms);
+        body.put("most_recent_ranked_beatmap", mostRecentRankedReatmap);
+        body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
+        body.put("difficulty_arr", diffArr);
+        return doPost("panel_M", new HttpEntity<>(body, headers));
     }
 
     public byte[] drawLine(String... lines) {
