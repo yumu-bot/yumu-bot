@@ -143,7 +143,7 @@ public class J1CardBuilder extends PanelBuilder {
             J3t = String.valueOf(user.getMaxCombo());
         }
 
-        J5t = String.valueOf(user.getId());
+        J5t = String.valueOf(user.getUID());
 
         TextLine J1 = TextLine.make(J1t, fontS36);
         TextLine J2 = TextLine.make(J2t, fontS36);

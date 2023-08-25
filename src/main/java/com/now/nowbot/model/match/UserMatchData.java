@@ -90,7 +90,7 @@ public class UserMatchData {
     }
 
     public UserMatchData(OsuUser userdata) {
-        this.id = Math.toIntExact(userdata.getId());
+        this.id = Math.toIntExact(userdata.getUID());
         this.username = userdata.getUsername();
         this.userData = userdata;
     }

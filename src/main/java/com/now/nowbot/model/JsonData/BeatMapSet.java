@@ -60,9 +60,12 @@ public class BeatMapSet {
     @JsonProperty("beatmaps")
     List<BeatMap> beatmaps;
 
+    @JsonProperty("last_updated")
+    String updatedTime;
+
     @JsonProperty("ranked_date")
     @Nullable
-    String rankedDate;
+    String rankedTime;
 
     @JsonIgnoreProperties
     Boolean availabilityDownloadDisable;
@@ -78,19 +81,19 @@ public class BeatMapSet {
     @JsonIgnoreProperties
     boolean fromDatabases = false;
 
-    public Integer getId() {
+    public Integer getSID() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setSID(Integer id) {
         this.id = id;
     }
 
-    public Integer getMapperId() {
+    public Integer getMapperUID() {
         return mapperId;
     }
 
-    public void setMapperId(Integer mapperId) {
+    public void setMapperUID(Integer mapperId) {
         this.mapperId = mapperId;
     }
 
@@ -134,11 +137,11 @@ public class BeatMapSet {
         this.titleUTF = titleUTF;
     }
 
-    public String getCreator() {
+    public String getMapperName() {
         return creator;
     }
 
-    public void setCreator(String creator) {
+    public void setMapperName(String creator) {
         this.creator = creator;
     }
 
@@ -274,12 +277,21 @@ public class BeatMapSet {
     public void setBeatmaps(List<BeatMap> beatmaps) {
         this.beatmaps = beatmaps;
     }
-    public String getRankedDate() {
-        return rankedDate;
+
+    public String getUpdatedTime() {
+        return updatedTime;
     }
 
-    public void setRankedDate(String rankedDate) {
-        this.rankedDate = rankedDate;
+    public void setUpdatedTime(String updatedTime) {
+        this.updatedTime = updatedTime;
+    }
+
+    public String getRankedTime() {
+        return rankedTime;
+    }
+
+    public void setRankedTime(String rankedTime) {
+        this.rankedTime = rankedTime;
     }
 
     public void setAvailabilityInformation(@Nullable String availabilityInformation) {

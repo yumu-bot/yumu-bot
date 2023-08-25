@@ -184,7 +184,7 @@ public class PPMLegacyService implements MessageService {
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
-        if (userOther.getId() == 17064371L){
+        if (userOther.getUID() == 17064371L){
             PPMinusService.setUser(ppmOther, 999.99f);
         }
 

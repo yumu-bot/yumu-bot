@@ -136,11 +136,11 @@ public class OsuUser{
             this.rankHistory = new RankHistory(OsuMode.getMode((String) map.get("mode")), (List<Integer>) map.get("data"));
     }
 
-    public Long getId() {
+    public Long getUID() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setUID(Long id) {
         this.id = id;
     }
 

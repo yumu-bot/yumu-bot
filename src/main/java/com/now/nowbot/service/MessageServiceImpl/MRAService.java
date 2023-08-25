@@ -142,7 +142,7 @@ public class MRAService implements MessageService {
         //获取所有user
         for (var jUser : userAll) {
             var u = new OsuUser();
-            u.setId(jUser.getId());
+            u.setUID(jUser.getId());
             u.setUsername(jUser.getUserName());
             u.setCover(uid4cover.get(jUser.getId()));
             u.setAvatarUrl(jUser.getAvatarUrl());

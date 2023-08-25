@@ -169,15 +169,15 @@ public class OsuGetServiceImpl implements OsuGetService {
 
         }
         var date = getPlayerInfo(name);
-        bindDao.removeOsuNameToId(date.getId());
+        bindDao.removeOsuNameToId(date.getUID());
         String[] names = new String[date.getPreviousName().size() + 1];
         int i = 0;
         names[i++] = date.getUsername().toUpperCase();
         for (var nName : date.getPreviousName()) {
             names[i++] = nName.toUpperCase();
         }
-        bindDao.saveOsuNameToId(date.getId(), names);
-        return date.getId();
+        bindDao.saveOsuNameToId(date.getUID(), names);
+        return date.getUID();
     }
 
     @Override
@@ -250,7 +250,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
-        user.setOsuID(data.getId());
+        user.setOsuID(data.getUID());
         user.setOsuName(data.getUsername());
         user.setMode(data.getPlayMode());
         return data;

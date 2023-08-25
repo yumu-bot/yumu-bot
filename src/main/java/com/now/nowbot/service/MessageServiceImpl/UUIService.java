@@ -108,7 +108,7 @@ public class UUIService implements MessageService {
                 .append('(').append(statistics.getSH()).append(')')
                 .append(" A:").append(statistics.getA()).append('\n');
         // uid:7003013
-        sb.append("UID:").append(data.getId()).append('\n');
+        sb.append("UID:").append(data.getUID()).append('\n');
 
         String occupation = data.getOccupation();
         String discord = data.getDiscord();

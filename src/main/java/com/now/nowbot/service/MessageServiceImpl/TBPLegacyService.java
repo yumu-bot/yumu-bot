@@ -69,7 +69,7 @@ public class TBPLegacyService implements MessageService {
             bpList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
         } else if (!name.isEmpty()) {
             user = osuGetService.getPlayerInfo(name, mode);
-            bpList = osuGetService.getBestPerformance(user.getId(), mode, 0, 100);
+            bpList = osuGetService.getBestPerformance(user.getUID(), mode, 0, 100);
         } else {
             var bUser = bindDao.getUser(event.getSender().getId());
             if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
@@ -95,7 +95,7 @@ public class TBPLegacyService implements MessageService {
         //生成hcard
         for (int i = 0; i < bpList.size(); i++) {
             var bp = bpList.get(i);
-            if (dayBefore.isBefore(bp.getCreateTime()) || user.getId().equals(17064371L)){
+            if (dayBefore.isBefore(bp.getCreateTime()) || user.getUID().equals(17064371L)){
                 lines.add(new HCardBuilder(bp, i+1).build());
             }
         }

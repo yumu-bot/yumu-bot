@@ -137,9 +137,9 @@ public class PPMinusService implements MessageService {
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
-        if (userOther.getId() == 17064371L){
+        if (userOther.getUID() == 17064371L){
             setUser(ppmOther, 999.99f);
-        } else if (userOther.getId().equals(19673275L)) {
+        } else if (userOther.getUID().equals(19673275L)) {
             setUser(ppmOther, 0);
         }
 

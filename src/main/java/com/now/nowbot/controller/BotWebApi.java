@@ -4,12 +4,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BphtService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
@@ -34,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
@@ -65,7 +62,7 @@ public class BotWebApi {
         }
         var mode = OsuMode.getMode(playMode);
         var info = osuGetService.getPlayerInfo(user1.trim(), mode);
-        var bplist = osuGetService.getBestPerformance(info.getId(), mode, 0, 100);
+        var bplist = osuGetService.getBestPerformance(info.getUID(), mode, 0, 100);
         var ppm = Ppm.getInstance(mode, info, bplist);
         if (ppm == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
@@ -81,8 +78,8 @@ public class BotWebApi {
         var info1 = osuGetService.getPlayerInfo(user1.trim());
         var info2 = osuGetService.getPlayerInfo(user2.trim());
         if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
-        var bplist1 = osuGetService.getBestPerformance(info1.getId(), mode, 0, 100);
-        var bplist2 = osuGetService.getBestPerformance(info2.getId(), mode, 0, 100);
+        var bplist1 = osuGetService.getBestPerformance(info1.getUID(), mode, 0, 100);
+        var bplist2 = osuGetService.getBestPerformance(info2.getUID(), mode, 0, 100);
         var ppm1 = Ppm.getInstance(mode, info1, bplist1);
         var ppm2 = Ppm.getInstance(mode, info2, bplist2);
         if (ppm1 == null || ppm2 == null) {
@@ -187,17 +184,17 @@ public class BotWebApi {
         var infoMe = osuGetService.getPlayerInfo(userName);
         List<Score> bps;
         if (type == null || type == 0) {
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, 100);
+            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, 100);
             // 时间计算
             int dat = -Math.min(999, value);
             LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
             bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
         } else if (type == 1) {
-            bps = osuGetService.getBestPerformance(infoMe.getId(), mode, 0, value);
+            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, value);
         } else if (type == 2) {
-            bps = osuGetService.getRecentN(infoMe.getId(), mode, 0, value);
+            bps = osuGetService.getRecentN(infoMe.getUID(), mode, 0, value);
         } else if (type == 3) {
-            bps = osuGetService.getAllRecentN(infoMe.getId(), mode, 0, value);
+            bps = osuGetService.getAllRecentN(infoMe.getUID(), mode, 0, value);
         } else {
             throw new RuntimeException("type 参数错误");
         }

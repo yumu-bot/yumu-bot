@@ -1,7 +1,6 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.JsonData.BeatMapSet;
-import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
 
@@ -170,14 +169,14 @@ public class BeatMapSetInfoLite {
 
     public static BeatMapSetInfoLite from(BeatMapSet mapSet) {
         var t = new BeatMapSetInfoLite();
-        t.sid = mapSet.getId();
+        t.sid = mapSet.getSID();
 
         t.artistUnicode = mapSet.getArtistUTF();
         t.artist = mapSet.getArtist();
         t.title = mapSet.getTitle();
 
-        t.mapper = mapSet.getCreator();
-        t.mapperId = mapSet.getMapperId();
+        t.mapper = mapSet.getMapperName();
+        t.mapperId = mapSet.getMapperUID();
 
         t.nsfw = mapSet.getNsfw();
         t.video = mapSet.getVideo();

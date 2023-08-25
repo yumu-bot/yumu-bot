@@ -731,19 +731,33 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_J", httpEntity);
     }
+    //2023-07-12T12:42:37Z
 
     public byte[] getPanelM(OsuUser user, OsuGetService osuGetService) {
-        var search = osuGetService.searchBeatmap(Map.of("q", "creator=" + user.getId(), "s", "any"));
-        List<BeatMapSet> ms = search.getBeatmapsets().stream().limit(6).toList();
 
-        var mostRecentRankedReatmap = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified")) && user.getId() == s.getMapperId().longValue()).findFirst().orElse(null);
-        var mostRecentRankedGuestDiff = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified")) && user.getId() != s.getMapperId().longValue()).findFirst().orElse(null);
+        DateTimeFormatter formater = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+        DateTimeFormatter formatterMS = DateTimeFormatter.ofPattern("N").withLocale(Locale.CHINA);
+
+        var search = osuGetService.searchBeatmap(Map.of(
+                "q", "creator=" + user.getUID(),
+                "sort","ranked_desc",
+                "s", "any"));
+
+        List<BeatMapSet> mostPopularBeatmap = search.getBeatmapsets().stream().filter(
+                s -> (s.getMapperUID().longValue() == user.getUID())
+        ).sorted(Comparator.comparing(
+                s -> (Integer.parseInt(LocalDate.parse(s.getUpdatedTime(), formater).format(formatterMS))))
+        ).limit(6).toList();
+
+        var mostRecentRankedBeatmap = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() == s.getMapperUID().longValue()).findFirst().orElse(null);
+
+        var mostRecentRankedGuestDiff = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() != s.getMapperUID().longValue()).findFirst().orElse(null);
         var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
 
         var diffArr = new int[10];
         {
-            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getId()).mapToDouble(BeatMap::getDifficultyRating).toArray();
-            var n = new double[]{0, 2, 2.8,}; // 懒, 帮我写, 把数组补充完整, 到 10 就行,
+            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
+            var n = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10, 200};
             for (var d : diffAll) {
                 int i = n.length - 1;
                 while (i >= 0 && d > n[i]) --i;
@@ -753,8 +767,8 @@ public class ImageService {
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
-        body.put("most_popular_beatmap", ms);
-        body.put("most_recent_ranked_beatmap", mostRecentRankedReatmap);
+        body.put("most_popular_beatmap", mostPopularBeatmap);
+        body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
         body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
         body.put("difficulty_arr", diffArr);
         return doPost("panel_M", new HttpEntity<>(body, headers));

@@ -60,8 +60,8 @@ public class BeatMapDao {
 
     public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
         var s = new BeatMapSet();
-        s.setId(mapSet.getId());
-        s.setMapperId(mapSet.getMapperId());
+        s.setSID(mapSet.getId());
+        s.setMapperUID(mapSet.getMapperId());
         var cover = new Covers();
         cover.setCover(mapSet.getCover());
         cover.setCover2x(mapSet.getCover());
@@ -77,8 +77,8 @@ public class BeatMapDao {
         s.setAvailabilityDownloadDisable(mapSet.getAvailabilityDownloadDisable());
         s.setStoryboard(mapSet.getStoryboard());
 
-        s.setMapperId(mapSet.getMapperId());
-        s.setCreator(mapSet.getCreator());
+        s.setMapperUID(mapSet.getMapperId());
+        s.setMapperName(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
         s.setPlayCount(mapSet.getPlayCount());
@@ -96,7 +96,7 @@ public class BeatMapDao {
 
     public static MapSetLite fromMapSetModel(BeatMapSet mapSet){
         var s = new MapSetLite();
-        s.setId(mapSet.getId());
+        s.setId(mapSet.getSID());
         s.setCard(mapSet.getCovers().getCard2x());
         s.setCover(mapSet.getCovers().getCover2x());
         s.setList(mapSet.getCovers().getList2x());
@@ -108,8 +108,8 @@ public class BeatMapDao {
         s.setLegacyUrl(mapSet.getLegacyUrl());
         s.setMusicUrl(mapSet.getMusicUrl());
 
-        s.setMapperId(mapSet.getMapperId());
-        s.setCreator(mapSet.getCreator());
+        s.setMapperId(mapSet.getMapperUID());
+        s.setCreator(mapSet.getMapperName());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
         s.setPlayCount(mapSet.getPlayCount());

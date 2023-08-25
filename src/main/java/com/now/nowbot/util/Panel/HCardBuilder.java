@@ -241,8 +241,8 @@ public class HCardBuilder extends PanelBuilder{
         //标题行
         TextLine h2;
         {
-            sb.append(info.getBeatMapSet().getCreator());
-            h2 = TextLine.make(info.getBeatMapSet().getCreator(), fontS24);
+            sb.append(info.getBeatMapSet().getMapperName());
+            h2 = TextLine.make(info.getBeatMapSet().getMapperName(), fontS24);
             allWidth = (h2.getWidth() + 2*F24L.get(' ') + 2 * F24L.get('/') + pointW24);
             if (allWidth < maxWidth) {
                 sb.insert(0, " // ");

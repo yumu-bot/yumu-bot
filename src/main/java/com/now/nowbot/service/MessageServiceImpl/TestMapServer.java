@@ -27,7 +27,7 @@ public class TestMapServer implements MessageService {
         sb.append(bid).append(',');
         sb.append(info.getBeatMapSet().getArtistUTF()).append(' ').append('-').append(' ');
         sb.append(info.getBeatMapSet().getTitleUTF()).append(' ');
-        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')').append(' ');
+        sb.append('(').append(info.getBeatMapSet().getMapperName()).append(')').append(' ');
         sb.append('[').append(info.getVersion()).append(']').append(',');
 
 
@@ -51,7 +51,7 @@ public class TestMapServer implements MessageService {
         var mods = mod.split(",");
         int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = osuGetService.getAttributes((long)bid, modInt);
-        sb.append('(').append(info.getBeatMapSet().getMapperId()).append(')');
+        sb.append('(').append(info.getBeatMapSet().getMapperUID()).append(')');
         sb.append(a.getStarRating()).append(',')
                 .append(info.getBpm()).append(',')
                 .append(info.getHitLength()).append('\n');
