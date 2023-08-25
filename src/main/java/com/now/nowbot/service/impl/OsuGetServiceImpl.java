@@ -38,6 +38,8 @@ import java.io.InputStream;
 import java.net.*;
 import java.util.*;
 
+// qnmd, 瞎 warning
+@SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
     public static        BinUser botUser = new BinUser();
@@ -777,6 +779,34 @@ public class OsuGetServiceImpl implements OsuGetService {
         var data = response.getBody().get("user_data");
         if (data != null) return JacksonUtil.parseObject(data, PpPlus.class);
         else throw new RuntimeException("get response error");
+    }
+
+    @Override
+    public List<JsonNode> getUserRecentActivityN(long userId, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
+                .queryParam("offset",s)
+                .queryParam("limit",e)
+                .build().encode().toUri();
+
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<JsonNode>>() {});
+        return c.getBody();
+    }
+
+    @Override
+    public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
+                .queryParam("offset",s)
+                .queryParam("limit",e)
+                .build().encode().toUri();
+
+        HttpHeaders headers = getHeader();
+
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<List<ActivityEvent>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<ActivityEvent>>() {});
+        return c.getBody();
     }
 
     /***

@@ -8,11 +8,6 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
-import com.now.nowbot.service.impl.OsuGetServiceImpl;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.JacksonUtil;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.http.*;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
@@ -20,8 +15,9 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface OsuGetService {
     /***
@@ -276,6 +272,9 @@ public interface OsuGetService {
 
     Search searchBeatmap(Map<String, Object> query);
     JsonNode searchBeatmapN(Map<String, Object> query);
+
+    List<JsonNode> getUserRecentActivityN(long userId, int s, int e);
+    List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
 
     JsonNode chatGetChannels(BinUser user);
 }
