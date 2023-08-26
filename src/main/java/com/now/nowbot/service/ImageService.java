@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalField;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -743,15 +745,27 @@ public class ImageService {
                 "sort","ranked_desc",
                 "s", "any"));
 
-        List<BeatMapSet> mostPopularBeatmap = search.getBeatmapsets().stream().filter(
-                s -> (s.getMapperUID().longValue() == user.getUID())
-        ).sorted(Comparator.comparing(
-                s -> (Integer.parseInt(LocalDate.parse(s.getUpdatedTime(), formater).format(formatterMS))))
-        ).limit(6).toList();
+        List<BeatMapSet> mostPopularBeatmap = search
+                .getBeatmapsets()
+                .stream()
+                .filter(s -> (s.getMapperUID().longValue() == user.getUID()))
+                .sorted(Comparator.comparing(BeatMapSet::getUpdatedTime).reversed())
+                .limit(6)
+                .toList();
 
-        var mostRecentRankedBeatmap = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() == s.getMapperUID().longValue()).findFirst().orElse(null);
+        var mostRecentRankedBeatmap = search
+                .getBeatmapsets()
+                .stream()
+                .filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() == s.getMapperUID().longValue())
+                .findFirst()
+                .orElse(null);
 
-        var mostRecentRankedGuestDiff = search.getBeatmapsets().stream().filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() != s.getMapperUID().longValue()).findFirst().orElse(null);
+        var mostRecentRankedGuestDiff = search
+                .getBeatmapsets()
+                .stream()
+                .filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() != s.getMapperUID().longValue())
+                .findFirst()
+                .orElse(null);
         var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
 
         var diffArr = new int[10];
@@ -764,6 +778,20 @@ public class ImageService {
                 diffArr[i] ++;
             }
         }
+        int[] genre;
+        {
+            String[] keywords = new String[]{"unspecified", "video game", "anime", "rock", "pop", "other", "novelty", "hip hop", "electronic", "metal", "classical", "folk", "jazz"};
+            genre = new int[keywords.length];
+            for (int i = 0; i < keywords.length; i++) {
+                final int index = i;
+                var keyword = keywords[index];
+                search.getBeatmapsets().forEach(m -> {
+                    if (m.getTags().contains(keyword)) {
+                        genre[index]++;
+                    }
+                });
+            }
+        }
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
@@ -771,6 +799,7 @@ public class ImageService {
         body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
         body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
         body.put("difficulty_arr", diffArr);
+        body.put("genre", genre);
         return doPost("panel_M", new HttpEntity<>(body, headers));
     }
 
