@@ -77,7 +77,7 @@ public class MonitorNowService implements MessageService {
         if (gameTime <= 0) {
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_Empty);
         }
-        if (0 <= gameTime - deleteEnd - skipRounds) {
+        if (gameTime - deleteEnd - skipRounds <= 0) {
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_OutOfBoundsError);
         }
 
