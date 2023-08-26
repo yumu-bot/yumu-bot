@@ -64,6 +64,11 @@ public class FriendService implements MessageService {
             //throw new TipsException("参数范围错误!");
         }
 
+        if (buMe.getAccessToken() == null) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
+            //无权限
+        }
+
         var friendList = osuGetService.getFriendList(buMe);
 
         int[] index = null;
@@ -98,7 +103,7 @@ public class FriendService implements MessageService {
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("Friend: ", e);
-            throw new FriendException(FriendException.Type.FRIEND_Default_PictureSendFailed);
+            throw new FriendException(FriendException.Type.FRIEND_Send_Error);
         }
     }
 
