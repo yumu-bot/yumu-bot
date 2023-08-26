@@ -182,7 +182,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<MicroUser> getFriendList(BinUser user) {
-        if (user.getAccessToken() == null) throw new TipsRuntimeException("无权限");
+        if (!user.isAuthorized()) throw new TipsRuntimeException("无权限");
         String url = this.URL + "friends";
         HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -218,7 +218,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
-        if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID(), mode);
+        if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
         String url;
         if (mode == OsuMode.DEFAULT) {
             url = this.URL + "me";
@@ -239,7 +239,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public OsuUser getPlayerInfo(BinUser user) {
-        if (user.getAccessToken() == null) return getPlayerInfo(user.getOsuID());
+        if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID());
         String url;
         if (user.getMode() == null || user.getMode() == OsuMode.DEFAULT) {
             url = this.URL + "me";
@@ -403,7 +403,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public List<Score> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
-        if (user.getAccessToken() == null) return getBestPerformance(user.getOsuID(), mode, s, e);
+        if (!user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, s, e);
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
@@ -462,7 +462,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public List<Score> getRecentN(BinUser user, OsuMode mode, int offset, int limit) {
-        if (user.getAccessToken() == null) return getRecentN(user.getOsuID(), mode, offset, limit);
+        if (!user.isAuthorized()) return getRecentN(user.getOsuID(), mode, offset, limit);
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
                 .queryParam("limit", limit)
                 .queryParam("offset", offset);

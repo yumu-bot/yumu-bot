@@ -84,6 +84,10 @@ public class BinUser {
         return accessToken;
     }
 
+    public boolean isAuthorized() {
+        return (accessToken != null);
+    }
+
     public String getAccessToken(OsuGetService service) throws BindException {
         if (accessToken == null) {
             return service.getToken();

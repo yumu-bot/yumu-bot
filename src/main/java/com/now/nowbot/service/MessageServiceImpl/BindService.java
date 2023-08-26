@@ -139,7 +139,7 @@ public class BindService implements MessageService {
             } catch (BindException ignore) {
                 // do nothing
             }
-            if (user != null && user.getAccessToken() != null) {
+            if (user != null && user.isAuthorized()) {
                 from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();

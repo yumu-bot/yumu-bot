@@ -64,7 +64,7 @@ public class FriendService implements MessageService {
             //throw new TipsException("参数范围错误!");
         }
 
-        if (buMe.getAccessToken() == null) {
+        if (!buMe.isAuthorized()) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
             //无权限
         }

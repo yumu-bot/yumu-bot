@@ -88,7 +88,7 @@ public class PassRecentService implements MessageService {
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
         List<Score> scoreList = null;
-        if (user != null && user.getAccessToken() != null) {
+        if (user != null && user.isAuthorized()) {
             scoreList = getData(user, mode, isRecent);
         } else if (user != null) {
             scoreList = getData(user.getOsuID(), mode, isRecent);

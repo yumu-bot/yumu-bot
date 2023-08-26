@@ -420,10 +420,9 @@ public class BotWebApi {
      *
      * @param key file key
      * @return file
-     * @throws IOException read error
      */
     @GetMapping("file/{key}")
-    public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) throws IOException {
+    public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) {
         var data = QQMsgUtil.getFileData(key);
         if (data == null) throw new RuntimeException("文件不存在");
 
