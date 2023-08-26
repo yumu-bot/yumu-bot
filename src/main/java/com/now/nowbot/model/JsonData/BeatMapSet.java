@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 
@@ -61,11 +62,10 @@ public class BeatMapSet {
     List<BeatMap> beatmaps;
 
     @JsonProperty("last_updated")
-    String updatedTime;
+    OffsetDateTime updatedTime;
 
     @JsonProperty("ranked_date")
-    @Nullable
-    String rankedTime;
+    OffsetDateTime rankedTime;
 
     @JsonIgnoreProperties
     Boolean availabilityDownloadDisable;
@@ -278,19 +278,19 @@ public class BeatMapSet {
         this.beatmaps = beatmaps;
     }
 
-    public String getUpdatedTime() {
+    public OffsetDateTime getUpdatedTime() {
         return updatedTime;
     }
 
-    public void setUpdatedTime(String updatedTime) {
+    public void setUpdatedTime(OffsetDateTime updatedTime) {
         this.updatedTime = updatedTime;
     }
 
-    public String getRankedTime() {
+    public OffsetDateTime getRankedTime() {
         return rankedTime;
     }
 
-    public void setRankedTime(String rankedTime) {
+    public void setRankedTime(OffsetDateTime rankedTime) {
         this.rankedTime = rankedTime;
     }
 
