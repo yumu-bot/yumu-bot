@@ -1,11 +1,11 @@
 package com.now.nowbot.model.JsonData;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -29,6 +29,7 @@ public class ActivityEvent {
         beatmapsetRevive("beatmapset", "user"),
         beatmapsetUpdate("beatmapset", "user"),
         beatmapsetUpload("beatmapset", "user"),
+
         rank("scoreRank", "rank", "mode", "beatmap", "user"),
         rankLost("mode", "beatmap", "user"),
         userSupportAgain("user"),
@@ -164,6 +165,15 @@ public class ActivityEvent {
 
     public OsuMode getMode() {
         return OsuMode.getMode(mode);
+    }
+
+    public boolean isTypeMapping() {
+        return (type == EventType.beatmapsetApprove ||
+                type == EventType.beatmapsetDelete ||
+                type == EventType.beatmapsetRevive ||
+                type == EventType.beatmapsetUpdate ||
+                type == EventType.beatmapsetUpload
+        );
     }
 
     @Override

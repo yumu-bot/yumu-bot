@@ -8,6 +8,7 @@ import org.springframework.lang.Nullable;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -191,6 +192,10 @@ public class BeatMapSet {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean isRanked() {
+        return (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
     }
 
     public String getLegacyUrl() {

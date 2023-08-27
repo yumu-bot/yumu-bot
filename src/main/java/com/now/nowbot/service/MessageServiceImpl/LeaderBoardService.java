@@ -61,11 +61,11 @@ public class LeaderBoardService implements MessageService {
         OsuMode mode;
         List<Score> scores;
         BeatMap beatMap;
-        String status;
+        boolean isRanked;
 
         try {
             beatMap = osuGetService.getBeatMapInfo(bid);
-            status = beatMap.getStatus();
+            isRanked = beatMap.isRanked();
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);
         }
@@ -79,11 +79,11 @@ public class LeaderBoardService implements MessageService {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed);
         }
 
-        if (!(status.equals("ranked") || status.equals("qualified") || status.equals("loved") || status.equals("approved"))) {
+        if (!isRanked) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotRanked);
         }
 
-        // 对 可能null 以及 enmptu 的用这玩意判断
+        // 对 可能 null 以及 empty 的用这玩意判断
         if (CollectionUtils.isEmpty(scores)) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_NotFound);
 
         List<Score> subScores;

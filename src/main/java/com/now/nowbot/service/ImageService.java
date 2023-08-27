@@ -28,10 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -736,16 +735,14 @@ public class ImageService {
     //2023-07-12T12:42:37Z
 
     public byte[] getPanelM(OsuUser user, OsuGetService osuGetService) {
-
-        DateTimeFormatter formater = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-        DateTimeFormatter formatterMS = DateTimeFormatter.ofPattern("N").withLocale(Locale.CHINA);
-
         var search = osuGetService.searchBeatmap(Map.of(
                 "q", "creator=" + user.getUID(),
                 "sort","ranked_desc",
                 "s", "any"));
+        var activity = osuGetService.getUserRecentActivity(user.getUID(), 0, 10);
+        var mappingActivity = activity.stream().filter(ActivityEvent::isTypeMapping).toList();
 
-        List<BeatMapSet> mostPopularBeatmap = search
+        var mostPopularBeatmap = search
                 .getBeatmapsets()
                 .stream()
                 .filter(s -> (s.getMapperUID().longValue() == user.getUID()))
@@ -756,14 +753,14 @@ public class ImageService {
         var mostRecentRankedBeatmap = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() == s.getMapperUID().longValue())
+                .filter(s -> (s.isRanked()) && user.getUID() == s.getMapperUID().longValue())
                 .findFirst()
                 .orElse(null);
 
         var mostRecentRankedGuestDiff = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.getStatus().equals("ranked") || s.getStatus().equals("qualified") || s.getStatus().equals("approved")) && user.getUID() != s.getMapperUID().longValue())
+                .filter(s -> (s.isRanked()) && user.getUID() != s.getMapperUID().longValue())
                 .findFirst()
                 .orElse(null);
         var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
@@ -771,27 +768,49 @@ public class ImageService {
         var diffArr = new int[10];
         {
             var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
-            var n = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10, 200};
+            var starBoundary = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10, Double.MAX_VALUE};
             for (var d : diffAll) {
-                int i = n.length - 1;
-                while (i >= 0 && d > n[i]) --i;
+                int i = starBoundary.length - 1;
+                while (i >= 0 && d > starBoundary[i]) --i;
                 diffArr[i] ++;
             }
         }
+
         int[] genre;
         {
             String[] keywords = new String[]{"unspecified", "video game", "anime", "rock", "pop", "other", "novelty", "hip hop", "electronic", "metal", "classical", "folk", "jazz"};
             genre = new int[keywords.length];
-            for (int i = 0; i < keywords.length; i++) {
+            AtomicBoolean hasAnyGenre = new AtomicBoolean(false);
+
+            //0是实在找不到 tag 的时候所赋予的默认值
+            for (int i = 1; i < keywords.length; i++) {
                 final int index = i;
                 var keyword = keywords[index];
+
                 search.getBeatmapsets().forEach(m -> {
-                    if (m.getTags().contains(keyword)) {
+                    if (m.getTags().toLowerCase().contains(keyword)) {
                         genre[index]++;
+                        hasAnyGenre.set(true);
                     }
                 });
+
+                if (!hasAnyGenre.get()) {
+                    genre[0]++;
+                }
             }
         }
+
+        var feedbackArr = new int[10];
+        {
+            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getBeatMapRating).toArray();
+            var feedbackBoundary = new double[]{0, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10.01};
+            for (var d : diffAll) {
+                int i = feedbackBoundary.length - 1;
+                while (i >= 0 && d > feedbackBoundary[i]) --i;
+                diffArr[i] ++;
+            }
+        }
+
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
@@ -799,7 +818,9 @@ public class ImageService {
         body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
         body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
         body.put("difficulty_arr", diffArr);
+        body.put("player_feedback_arr", feedbackArr);
         body.put("genre", genre);
+        body.put("recent_activity", mappingActivity);
         return doPost("panel_M", new HttpEntity<>(body, headers));
     }
 

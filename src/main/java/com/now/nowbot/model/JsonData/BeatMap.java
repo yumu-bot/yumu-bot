@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -132,6 +133,10 @@ public class BeatMap {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean isRanked() {
+        return (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
     }
 
     public Integer getTotalLength() {

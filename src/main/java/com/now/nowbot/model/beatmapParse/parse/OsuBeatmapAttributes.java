@@ -325,10 +325,11 @@ public class OsuBeatmapAttributes {
                 } else if (Mod.hasEz(mods)) {
                     window *= 1.4;
                 }
-            }
+            }/*
             case null, default -> {
                 throw new RuntimeException("?");
             }
+            */
         }
         return Math.ceil((window * Math.floor(clockRate)) / clockRate);
     }
