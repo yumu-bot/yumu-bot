@@ -765,13 +765,13 @@ public class ImageService {
                 .orElse(null);
         var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
 
-        var diffArr = new int[10];
+        var diffArr = new int[8];
         {
             var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
-            var starBoundary = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10, Double.MAX_VALUE};
+            var starMinBoundary = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10};
             for (var d : diffAll) {
-                int i = starBoundary.length - 1;
-                while (i >= 0 && d > starBoundary[i]) --i;
+                int i = starMinBoundary.length - 1;
+                while (i >= 0 && d > starMinBoundary[i]) --i;
                 diffArr[i] ++;
             }
         }
@@ -800,13 +800,13 @@ public class ImageService {
             }
         }
 
-        var feedbackArr = new int[10];
+        var feedbackArr = new int[8];
         {
             var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getBeatMapRating).toArray();
-            var feedbackBoundary = new double[]{0, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10.01};
+            var feedbackMinBoundary = new double[]{0, 6.5, 7, 7.5, 8, 8.5, 9, 9.5};
             for (var d : diffAll) {
-                int i = feedbackBoundary.length - 1;
-                while (i >= 0 && d > feedbackBoundary[i]) --i;
+                int i = feedbackMinBoundary.length - 1;
+                while (i >= 0 && d > feedbackMinBoundary[i]) --i;
                 diffArr[i] ++;
             }
         }
