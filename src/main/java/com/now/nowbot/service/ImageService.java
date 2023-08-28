@@ -164,7 +164,8 @@ public class ImageService {
         } else {
             STBPRE = "STB";
         }
-        var Card_A = List.of(getPanelBUser(user));
+        //var Card_A = List.of(getPanelBUser(user));
+        var Card_A = List.of(user);
 
         var cardB = Map.of(
                 "ACC", ppmMe.getValue1(),
@@ -198,7 +199,8 @@ public class ImageService {
         } else {
             STBPRE = "STB";
         }
-        var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
+        //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
+        var Card_A = List.of(userMe, userOther);
 
         var cardB1 = Map.of(
                 "ACC", ppmMe.getValue1(),
@@ -880,22 +882,5 @@ public class ImageService {
     private byte[] doPost(String path, HttpEntity entity) {
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
         return s.getBody();
-    }
-
-    private Map<String, Object> getPanelBUser(OsuUser user) {
-        var map = new HashMap<String, Object>(12);
-        map.put("background", user.getCoverUrl());
-        map.put("avatar", user.getAvatarUrl());
-        map.put("sub_icon1", user.getCountry().countryCode());
-        map.put("sub_icon2", user.getSupportLeve());
-        map.put("name", user.getUsername());
-        map.put("rank_global", user.getGlobalRank());
-        map.put("rank_country", user.getCountryRank());
-        map.put("country", user.getCountry().countryCode());
-        map.put("acc", user.getAccuracy());
-        map.put("level", user.getLevelCurrent());
-        map.put("progress", user.getLevelProgress());
-        map.put("pp", user.getPP());
-        return map;
     }
 }
