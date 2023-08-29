@@ -112,7 +112,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![a-zA-Z_]))+\\s*(?<id>\\d+)?")),
 
     KITA(KitaService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-zA-Z_]))+\\s*(?<bid>\\d+)?\\s*(#(?<mod>\\w+))?\\s*(?<round>[\\w\\s]+)?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-zA-Z_]))+\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?")),
 
     // #5 osu! 比赛指令
 
