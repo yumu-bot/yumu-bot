@@ -111,6 +111,9 @@ public enum Instruction {
     MM(MapMinusService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![a-zA-Z_]))+\\s*(?<id>\\d+)?")),
 
+    KITA(KitaService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-zA-Z_]))+\\s*(?<id>\\d+)?\\s*(#(?<mod>\\w+))?\\s*(?<round>[\\w\\s]+)?")),
+
     // #5 osu! 比赛指令
 
     MRALEGACY(MRALegacyService.class,

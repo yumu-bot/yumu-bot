@@ -2,6 +2,7 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,12 +60,23 @@ public class OsuUser{
     String occupation;
     String discord;
     String interests;
+    @JsonProperty("nominated_beatmapset_count")
+    @Nullable
+    Integer beatmapSetCountNominated;
+    @JsonProperty("favourite_beatmapset_count")
+    Integer beatmapSetCountFavorite;
+    @JsonProperty("graveyard_beatmapset_count")
+    Integer beatmapSetCountGraveyard;
     @JsonProperty("unranked_beatmapset_count")
-    Integer beatmapSetCountUnranked;
+    Integer beatmapSetCountPending;
     @JsonProperty("ranked_beatmapset_count")
     Integer beatmapSetCountRanked;
     @JsonProperty("ranked_and_approved_beatmapset_count")
     Integer beatmapSetCountRankedAndApproved;
+    @JsonProperty("guest_beatmapset_count")
+    Integer beatmapSetCountGuest;
+    @JsonProperty("loved_beatmapset_count")
+    Integer beatmapSetCountLoved;
 
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapSetCountPlaycounts;
@@ -186,12 +198,21 @@ public class OsuUser{
         this.occupation = occupation;
     }
 
-    public Integer getBeatmapSetCountUnranked() {
-        return beatmapSetCountUnranked;
+    @Nullable
+    public Integer getBeatmapSetCountNominated() {
+        return beatmapSetCountNominated;
     }
 
-    public void setBeatmapSetCountUnranked(Integer beatmapSetCountUnranked) {
-        this.beatmapSetCountUnranked = beatmapSetCountUnranked;
+    public void setBeatmapSetCountNominated(@Nullable Integer beatmapSetCountNominated) {
+        this.beatmapSetCountNominated = beatmapSetCountNominated;
+    }
+
+    public Integer getBeatmapSetCountPending() {
+        return beatmapSetCountPending;
+    }
+
+    public void setBeatmapSetCountPending(Integer beatmapSetCountPending) {
+        this.beatmapSetCountPending = beatmapSetCountPending;
     }
 
     public Integer getBeatmapSetCountRanked() {
@@ -208,6 +229,38 @@ public class OsuUser{
 
     public void setBeatmapSetCountRankedAndApproved(Integer beatmapSetCountRankedAndApproved) {
         this.beatmapSetCountRankedAndApproved = beatmapSetCountRankedAndApproved;
+    }
+
+    public Integer getBeatmapSetCountFavorite() {
+        return beatmapSetCountFavorite;
+    }
+
+    public void setBeatmapSetCountFavorite(Integer beatmapSetCountFavorite) {
+        this.beatmapSetCountFavorite = beatmapSetCountFavorite;
+    }
+
+    public Integer getBeatmapSetCountGraveyard() {
+        return beatmapSetCountGraveyard;
+    }
+
+    public void setBeatmapSetCountGraveyard(Integer beatmapSetCountGraveyard) {
+        this.beatmapSetCountGraveyard = beatmapSetCountGraveyard;
+    }
+
+    public Integer getBeatmapSetCountGuest() {
+        return beatmapSetCountGuest;
+    }
+
+    public void setBeatmapSetCountGuest(Integer beatmapSetCountGuest) {
+        this.beatmapSetCountGuest = beatmapSetCountGuest;
+    }
+
+    public Integer getBeatmapSetCountLoved() {
+        return beatmapSetCountLoved;
+    }
+
+    public void setBeatmapSetCountLoved(Integer beatmapSetCountLoved) {
+        this.beatmapSetCountLoved = beatmapSetCountLoved;
     }
 
     public Integer getBeatmapSetCountPlaycounts() {
@@ -536,7 +589,7 @@ public class OsuUser{
         sb.append(", occupation='").append(occupation).append('\'');
         sb.append(", discord='").append(discord).append('\'');
         sb.append(", interests='").append(interests).append('\'');
-        sb.append(", beatmapSetCountUnranked=").append(beatmapSetCountUnranked);
+        sb.append(", beatmapSetCountPending=").append(beatmapSetCountPending);
         sb.append(", beatmapSetCountRanked=").append(beatmapSetCountRanked);
         sb.append(", beatmapSetCountRankedAndApproved=").append(beatmapSetCountRankedAndApproved);
         sb.append(", beatmapSetCountPlaycounts=").append(beatmapSetCountPlaycounts);

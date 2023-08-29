@@ -805,7 +805,7 @@ public class ImageService {
         var feedbackArr = new int[8];
         {
             var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getBeatMapRating).toArray();
-            var feedbackMinBoundary = new double[]{0, 6.5, 7, 7.5, 8, 8.5, 9, 9.5};
+            var feedbackMinBoundary = new double[]{0, 8.25, 8.5, 8.75, 9, 9.25, 9.5, 9.75};
             for (var d : diffAll) {
                 int i = feedbackMinBoundary.length - 1;
                 while (i >= 0 && d > feedbackMinBoundary[i]) --i;
@@ -816,6 +816,7 @@ public class ImageService {
 
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
+        body.put("user", user);
         body.put("most_popular_beatmap", mostPopularBeatmap);
         body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
         body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
@@ -850,6 +851,17 @@ public class ImageService {
         body.put("panel", "info");
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_Gamma", httpEntity);
+    }
+
+    public byte[] getPanelDelta(BeatMap beatMap, String round, String mod, Short position) {
+        var headers = getDefaultHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("beatMap", beatMap);
+        body.put("round", round);
+        body.put("mod", mod);
+        body.put("position", position);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_Delta", httpEntity);
     }
 
     public byte[] spInfo(Score s) {
