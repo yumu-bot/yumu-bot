@@ -58,24 +58,24 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     @Override
     public boolean isHandle(MessageEvent event, DataValue data) {
         var matcher = p1.matcher(event.getRawMessage().trim());
-        if (matcher.find()) {
-            var param = new AudioParam();
-            try {
-                var id_str = matcher.group("id");
-                var type = matcher.group("type");
-
-                if (id_str == null) throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
-                param.id = Integer.parseInt(id_str);
-                if (Objects.equals(type, "s") || Objects.equals(type, "sid")) param.isBid = false;
-            } catch (NumberFormatException e) {
-                param.err = new AudioException(AudioException.Type.SONG_Parameter_BidError);
-            } catch (Exception e) {
-                param.err = e;
-            }
-            data.setValue(param);
-            return true;
+        if (!matcher.find()) {
+            return false;
         }
-        return false;
+        var param = new AudioParam();
+        try {
+            var id_str = matcher.group("id");
+            var type = matcher.group("type");
+
+            if (id_str == null) throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+            param.id = Integer.parseInt(id_str);
+            if (Objects.equals(type, "s") || Objects.equals(type, "sid")) param.isBid = false;
+        } catch (NumberFormatException e) {
+            param.err = new AudioException(AudioException.Type.SONG_Parameter_BidError);
+        } catch (Exception e) {
+            param.err = e;
+        }
+        data.setValue(param);
+        return true;
     }
 
     @Override

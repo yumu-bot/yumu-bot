@@ -18,9 +18,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("BP")
-public class BPService implements MessageService {
+public class BPService implements MessageService<BPService.BPParam> {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -34,34 +35,82 @@ public class BPService implements MessageService {
         imageService = image;
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var nStr = matcher.group("n");
-        var mStr = matcher.group("m");
-        var uStr = matcher.group("name");
-
+    static class BPParam {
         int n;
-        int m = 1;
+        int m;
+        String name;
+        OsuMode mode;
+        Exception err;
+    }
+    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?![a-zA-Z_])|b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$");
 
-        if (nStr == null) nStr = "1";
-        if (mStr == null) mStr = "";
-        if (uStr == null) uStr = "";
-
-        if (nStr.isEmpty()) throw new BPException(BPException.Type.BP_Map_NoRank);
-        try {
-            n = Integer.parseInt(nStr) - 1;
-        } catch (NumberFormatException e) {
-            throw new BPException(BPException.Type.BP_Map_RankError);
+    public static void main(String[] args) {
+        var m = pattern.matcher("!b:o #15");
+        System.out.println(m.find());
+        System.out.println(m.group("name"));
+    }
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue data) {
+        var matcher = pattern.matcher(event.getRawMessage());
+        if (!matcher.find()) {
+            return false;
         }
+        var param = new BPParam();
+        try {
+            var nStr = matcher.group("n");
+            var mStr = matcher.group("m");
+            param.name = matcher.group("name");
 
-        if (n < 0) n = 0;
-        else if (n > 99) n = 99;
 
-        if (!mStr.isEmpty()) {
-            m = Integer.parseInt(mStr);
-            if (m <= n) throw new BPException(BPException.Type.BP_Map_RankError); //!bp 55-45
-            else if (m > 100) m = 100 - n; //!bp 45-101
-            else m = m - n;//正常
+
+            if (nStr == null || nStr.isEmpty()) {
+                // throw new BPException(BPException.Type.BP_Map_NoRank); // 你正则 (\d+)?  就不可能时空字符串,要么为 null 要么就是数字, 这两个抛错都不可能触发,请检查逻辑
+                param.n = 1;
+            } else {
+//                try {
+                param.n = Integer.parseInt(nStr) - 1;
+//                } catch (NumberFormatException e) {
+//                    throw new BPException(BPException.Type.BP_Map_RankError);
+//                }
+            }
+
+            if (param.n < 0) param.n = 0;
+            else if (param.n > 99) param.n = 99;
+
+            if (mStr != null && !mStr.isEmpty()) {
+                param.m = Integer.parseInt(mStr);
+                if (param.m < param.n) {
+                    int temp = param.m;
+                    param.m = param.n;
+                    param.n = temp;
+                    // throw new BPException(BPException.Type.BP_Map_RankError); //!bp 55-45  直接处理了
+                } else if (param.m == param.n) {
+                    throw new BPException(BPException.Type.BP_Map_RankError);
+                }
+                if (param.m > 100) {
+                    param.m = 100 - param.n; //!bp 45-101
+                } else {
+                    param.m = param.m - param.n;//正常
+                }
+            } else {
+                param.m = 1;
+            }
+        } catch (Exception e) {
+            param.err = e;
+        }
+        param.mode = OsuMode.getMode(matcher.group("mode"));
+        data.setValue(param);
+        return true;
+    }
+
+    @Override
+    public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
+
+        int n = param.n;
+        int m = param.m;
+
+        if (param.err != null) {
+            throw param.err;
         }
 
         var from = event.getSubject();
@@ -70,7 +119,7 @@ public class BPService implements MessageService {
         List<Score> bpList;
         ArrayList<Integer> rankList = new ArrayList<>();
 
-        if (uStr.isEmpty()) {
+        if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
             try {
                 user = bindDao.getUser(event.getSender().getId());
             } catch (Exception e) {
@@ -78,7 +127,7 @@ public class BPService implements MessageService {
             }
         } else {
             try {
-                long uid = osuGetService.getOsuId(uStr);
+                long uid = osuGetService.getOsuId(param.name);
                 user = new BinUser();
                 user.setOsuID(uid);
                 user.setMode(OsuMode.DEFAULT);
@@ -87,8 +136,7 @@ public class BPService implements MessageService {
             }
         }
 
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT) mode = user.getMode();
+        var mode = param.mode == OsuMode.DEFAULT ? user.getMode() : param.mode;
 
         try {
             bpList = osuGetService.getBestPerformance(user, mode, n, m);

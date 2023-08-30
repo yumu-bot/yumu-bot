@@ -55,13 +55,13 @@ public enum Instruction {
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?![a-zA-Z_])|b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$")),
+            null),
 
-/*
-    BP(BPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!\\d+))?\\s*((?<n>\\d+)(-(?<m>\\d+))?)$")),
+    /*
+        BP(BPService.class,
+                Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|bp(?!\\w)|b(?!\\w))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!\\d+))?\\s*((?<n>\\d+)(-(?<m>\\d+))?)$")),
 
- */
+     */
     BPLEGACY(BPLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformancelegacy|bpl(?![a-zA-Z_])|bl(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$")),
     TODAYBP(TodayBPService.class,
@@ -188,12 +188,10 @@ public enum Instruction {
 
     // 临时添加, 随便搞一个不可能触发的正则
     BAN(BanService.class,
-            Pattern.compile("^sfesf#@%@de%@#f$")),
+            null),
     AUDIO(AudioService.class,
-            Pattern.compile("^sfesf#@%@de%@#f$")),
-
+            null),
     ;
-
 
 
 //    MPOB("ob", "<未上线> 场记板，可记录并通报某场正在进行的比赛！", null),
@@ -208,7 +206,7 @@ public enum Instruction {
 
     private final Class aClass;
 
-    Instruction(Class<? extends MessageService> aClass, Pattern regex){
+    Instruction(Class<? extends MessageService> aClass, Pattern regex) {
         this.regex = regex;
         this.aClass = aClass;
     }
