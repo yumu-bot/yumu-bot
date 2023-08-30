@@ -11,6 +11,8 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +24,7 @@ import java.util.regex.Pattern;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
+    private static final Logger log = LoggerFactory.getLogger(BPService.class);
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -141,6 +144,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         try {
             bpList = osuGetService.getBestPerformance(user, mode, n, m);
         } catch (Exception e) {
+            log.error("请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
