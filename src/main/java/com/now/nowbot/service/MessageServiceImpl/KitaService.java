@@ -87,7 +87,7 @@ public class KitaService implements MessageService {
             if (from instanceof Group group) {
                 try {
                     var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
-                    group.sendFile(data, matcher.group("id") + ".png");
+                    group.sendFile(data, matcher.group("bid") + ' ' + mod + position + ".png");
                 } catch (Exception e) {
                     NowbotApplication.log.error("KITA-X", e);
                     throw new KitaException(KitaException.Type.KITA_Send_Error);
