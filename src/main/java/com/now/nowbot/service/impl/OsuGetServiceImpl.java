@@ -2,7 +2,7 @@ package com.now.nowbot.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BeatMapDao;
@@ -17,6 +17,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
+import jakarta.annotation.Resource;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,24 +36,32 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.zip.ZipInputStream;
 
 // qnmd, 瞎 warning
 @SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
-    public static        BinUser botUser = new BinUser();
-    private static final Logger  log     = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    public static BinUser botUser = new BinUser();
+    private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
 
-    private final int    oauthId;
+    private final int oauthId;
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    BindDao      bindDao;
+    BindDao bindDao;
     RestTemplate template;
-    BeatMapDao   beatMapDao;
+    BeatMapDao beatMapDao;
+
+    @Resource
+    @Lazy
+    FileConfig fileConfig;
 
     private final NoProxyRestTemplate noProxyRestTemplate;
 
@@ -278,6 +287,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         var data = c.getBody();
         return data;
     }
+
     @Override
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
         String url = this.URL + "users/" + userName;
@@ -561,7 +571,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
     @Override
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode){
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) {
         var data = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + bid + "/scores/users/" + uid);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
@@ -670,18 +680,39 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public String getBeatMapFile(long bid) throws IOException {
-        URL url = new URL("https://osu.ppy.sh/osu/" + bid);
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        byte[] byteData;
-        try {
-            httpConn.connect();
-            InputStream cin = httpConn.getInputStream();
-            byteData = cin.readAllBytes();
-        } catch (IOException e) {
-            NowbotApplication.log.error("getBeatMapFile Error: ", e);
+        Path f = Path.of(fileConfig.getOsuFilePath(), bid + ".osu");
+        if (Files.isRegularFile(f)) {
+            return Files.readString(f);
+        }
+        var uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/osu/" + bid).build().encode().toUri();
+        var s = template.getForEntity(uri, String.class);
+        if (s.getStatusCode().is4xxClientError()) {
             return null;
         }
-        return new String(byteData);
+        var str = s.getBody();
+        if (str == null) {
+            return null;
+        }
+        Files.writeString(f, str);
+        return str;
+
+    }
+
+    public void downloadAllFiles() throws IOException {
+        var res = noProxyRestTemplate.getForEntity("", org.springframework.core.io.Resource.class);
+        if (res.getStatusCode().is2xxSuccessful()) {
+            var resource = res.getBody();
+            if (resource == null) {
+                throw new RuntimeException("");
+            }
+
+            var in = resource.getInputStream();
+            var zip = new ZipInputStream(in);
+            var f = zip.getNextEntry();
+            if (!f.isDirectory()) {
+                f.getName();
+            }
+        }
     }
 
     /***
@@ -788,28 +819,30 @@ public class OsuGetServiceImpl implements OsuGetService {
     @Override
     public List<JsonNode> getUserRecentActivityN(long userId, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
-                .queryParam("offset",s)
-                .queryParam("limit",e)
+                .queryParam("offset", s)
+                .queryParam("limit", e)
                 .build().encode().toUri();
 
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<JsonNode>>() {});
+        ResponseEntity<List<JsonNode>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<JsonNode>>() {
+        });
         return c.getBody();
     }
 
     @Override
     public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
-                .queryParam("offset",s)
-                .queryParam("limit",e)
+                .queryParam("offset", s)
+                .queryParam("limit", e)
                 .build().encode().toUri();
 
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<List<ActivityEvent>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<ActivityEvent>>() {});
+        ResponseEntity<List<ActivityEvent>> c = template.exchange(uri, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<ActivityEvent>>() {
+        });
         return c.getBody();
     }
 
