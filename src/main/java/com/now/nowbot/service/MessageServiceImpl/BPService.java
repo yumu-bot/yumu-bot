@@ -65,10 +65,12 @@ public class BPService implements MessageService<BPService.BPParam> {
             param.name = matcher.group("name");
 
 
-
             if (nStr == null || nStr.isEmpty()) {
                 // throw new BPException(BPException.Type.BP_Map_NoRank); // 你正则 (\d+)?  就不可能时空字符串,要么为 null 要么就是数字, 这两个抛错都不可能触发,请检查逻辑
-                param.n = 1;
+                param.n = 0;
+                //有没有可能，那个d+是后面优化的，这里没改而已
+                //而且这里明显是从0开始，你初始是1，那查的就是bp2
+                //而且多加几层try catch难道还会有很大的性能损失？？？？？？？？？
             } else {
 //                try {
                 param.n = Integer.parseInt(nStr) - 1;
