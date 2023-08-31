@@ -42,22 +42,23 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 // qnmd, 瞎 warning
 @SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
-    public static BinUser botUser = new BinUser();
-    private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    public static        BinUser botUser = new BinUser();
+    private static final Logger  log     = LoggerFactory.getLogger(OsuGetServiceImpl.class);
 
-    private final int oauthId;
+    private final int    oauthId;
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    BindDao bindDao;
+    BindDao      bindDao;
     RestTemplate template;
-    BeatMapDao beatMapDao;
+    BeatMapDao   beatMapDao;
 
     @Resource
     @Lazy
@@ -698,20 +699,25 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     }
 
-    public void downloadAllFiles() throws IOException {
+    public void downloadAllFiles(long sid) throws IOException {
         var res = noProxyRestTemplate.getForEntity("", org.springframework.core.io.Resource.class);
-        if (res.getStatusCode().is2xxSuccessful()) {
-            var resource = res.getBody();
-            if (resource == null) {
-                throw new RuntimeException("");
-            }
+        Path tmp = Path.of(fileConfig.getOsuFilePath(), "tmp-"+sid);
 
-            var in = resource.getInputStream();
-            var zip = new ZipInputStream(in);
-            var f = zip.getNextEntry();
-            if (!f.isDirectory()) {
-                f.getName();
-            }
+        if (!res.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("link error");
+        }
+        var resource = res.getBody();
+        if (resource == null) {
+            throw new RuntimeException("download error");
+        }
+
+        var in = resource.getInputStream();
+        var zip = new ZipInputStream(in);
+        ZipEntry zipFile;
+        Files.createDirectories(tmp);
+        while ((zipFile = zip.getNextEntry()) != null)  {
+            if (zipFile.isDirectory()) break;
+            Files.write(Path.of(tmp.toString(), zipFile.getName()), zip.readNBytes((int)zipFile.getSize()));
         }
     }
 
