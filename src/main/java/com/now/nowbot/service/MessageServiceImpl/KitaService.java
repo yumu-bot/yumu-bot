@@ -35,6 +35,7 @@ public class KitaService implements MessageService {
         short position;
         String round;
         BeatMap beatMap;
+        boolean hasBG = matcher.group("noBG") == null;
 
         if (matcher.group("bid") == null) throw new KitaException(KitaException.Type.KITA_Parameter_BidError);
         try {
@@ -73,7 +74,7 @@ public class KitaService implements MessageService {
         }
 
         try {
-            var data = imageService.getPanelDelta(beatMap, round, mod, position);
+            var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("KITA", e);

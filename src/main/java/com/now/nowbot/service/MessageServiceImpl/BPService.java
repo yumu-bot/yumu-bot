@@ -19,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("BP")
@@ -71,6 +70,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             //而且多加几层try catch难道还会有很大的性能损失？？？？？？？？？ Y catch 会捕获函数调用栈, 占用内存
             // 其实性能损失不是什么大问题
             // 主要是大量用 try catch 让代码变得难读, 尤其是在超长的 try 块中还混着几个 try
+            // 这才几个try啊？而且我代码都是一块一块的，一块代码只做一件事，总比你堆一起好读
         } else {
             param.n = Integer.parseInt(nStr) - 1;
         }

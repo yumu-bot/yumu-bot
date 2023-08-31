@@ -854,13 +854,14 @@ public class ImageService {
         return doPost("panel_Gamma", httpEntity);
     }
 
-    public byte[] getPanelDelta(BeatMap beatMap, String round, String mod, Short position) {
+    public byte[] getPanelDelta(BeatMap beatMap, String round, String mod, Short position, boolean hasBG) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("beatMap", beatMap);
         body.put("round", round);
         body.put("mod", mod);
         body.put("position", position);
+        body.put("hasBG", hasBG);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_Delta", httpEntity);
     }
