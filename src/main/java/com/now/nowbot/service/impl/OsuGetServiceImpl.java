@@ -3,6 +3,7 @@ package com.now.nowbot.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.dao.BindDao;
@@ -53,8 +54,10 @@ public class OsuGetServiceImpl implements OsuGetService {
     RestTemplate template;
     BeatMapDao   beatMapDao;
 
+    private final NoProxyRestTemplate noProxyRestTemplate;
+
     @Autowired
-    OsuGetServiceImpl(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind, @Lazy BeatMapDao beatMap) {
+    OsuGetServiceImpl(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind, NoProxyRestTemplate noProxyRestTemplate, @Lazy BeatMapDao beatMap) {
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
@@ -63,6 +66,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         bindDao = bind;
         template = restTemplate;
         beatMapDao = beatMap;
+        this.noProxyRestTemplate = noProxyRestTemplate;
     }
 
 

@@ -10,6 +10,7 @@ botfile:
   font: ${botfile.root}font/
   imgbuffer: ${botfile.root}imgbuffer/
   osuid: ${botfile.root}Id/
+  osuFilePath: ${botfile.root}osufile/
 #数据源
 spring:
   profiles:

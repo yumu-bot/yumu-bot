@@ -14,6 +14,11 @@ public class FileConfig {
     String imgbuffer;
     String osuid;
 
+    /**
+     * 缓存 .osu 文件的路径
+     */
+    String osuFilePath = "/osufile";
+
     public String getRoot() {
         return root;
     }
@@ -68,5 +73,13 @@ public class FileConfig {
 
     public void setOsuid(String osuid) {
         this.osuid = osuid;
+    }
+
+    public String getOsuFilePath() {
+        return osuFilePath;
+    }
+
+    public void setOsuFilePath(String osuFilePath) {
+        this.osuFilePath = osuFilePath;
     }
 }

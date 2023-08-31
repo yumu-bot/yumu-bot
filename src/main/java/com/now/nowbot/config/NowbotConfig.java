@@ -94,6 +94,20 @@ public class NowbotConfig {
     }
 
     @Bean
+    public NoProxyRestTemplate noProxyRestTemplate() {
+        var tempFactory = new OkHttp3ClientHttpRequestFactory();
+        tempFactory.setConnectTimeout( 60000);
+        tempFactory.setReadTimeout( 60000);
+        var template = new NoProxyRestTemplate(tempFactory);
+        template.setErrorHandler(new DefaultResponseErrorHandler() {
+            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
+                throw new RequestException(response, statusCode);
+            }
+        });
+        return template;
+    }
+
+    @Bean(name = {"restTemplate", "template"})
     public RestTemplate restTemplate() {
         var client = httpClient();
 

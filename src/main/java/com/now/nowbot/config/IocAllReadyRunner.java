@@ -65,7 +65,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         PanelUtil.init();
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
-        MoliUtil.init(applicationContext.getBean(RestTemplate.class));
+        MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
         permission.init(applicationContext);
         initFountWidth();
 //        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);

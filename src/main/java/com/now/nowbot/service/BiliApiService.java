@@ -1,6 +1,7 @@
 package com.now.nowbot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.live.LiveRoom;
 import com.now.nowbot.model.live.LiveStatus;
 import com.now.nowbot.qq.Bot;
@@ -32,7 +33,7 @@ public class BiliApiService {
     private static final Set<Long>           lastList     = new HashSet<>();
 
     @Autowired
-    public BiliApiService(RestTemplate restTemplate) {
+    public BiliApiService(NoProxyRestTemplate restTemplate) {
         this.restTemplate = restTemplate;
 //        this.bot = bot;
 //        sendGroupMap.put(545149341L, 733244168L);

@@ -1,5 +1,6 @@
 package com.now.nowbot.service;
 
+import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.PPm.Ppm;
@@ -42,7 +43,7 @@ public class ImageService {
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
     @Autowired
-    ImageService(RestTemplate restTemplate) {
+    ImageService(NoProxyRestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
