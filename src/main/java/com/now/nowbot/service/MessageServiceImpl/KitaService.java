@@ -70,7 +70,7 @@ public class KitaService implements MessageService {
         try {
             beatMap = osuGetService.getBeatMapInfo(bid);
         } catch (Exception e) {
-            throw new KitaException(KitaException.Type.KITA_Map_NotFound);
+            throw new KitaException(KitaException.Type.KITA_Map_FetchFailed);
         }
 
         try {

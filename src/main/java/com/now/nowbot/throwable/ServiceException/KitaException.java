@@ -8,7 +8,7 @@ public class KitaException extends TipsException {
         KITA_Parameter_BidError("请输入正确的bid！"),
         KITA_Parameter_ModError("请输入正确的模组及位置！(NM1)"),
         KITA_Parameter_RoundError("请输入正确的对局名称！(Qualifier)"),
-        KITA_Map_NotFound ("找不到这张谱面，请检查。"),
+        KITA_Map_FetchFailed("从官网获取谱面失败。重试一下吧。"),
         KITA_Send_Error ("喜多发送失败，请重试。")
 
         ;//逗号分隔
