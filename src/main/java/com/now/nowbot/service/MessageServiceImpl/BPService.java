@@ -59,51 +59,43 @@ public class BPService implements MessageService<BPService.BPParam> {
             return false;
         }
         var param = new BPParam();
-        try {
-            var nStr = matcher.group("n");
-            var mStr = matcher.group("m");
-            param.name = matcher.group("name");
-
-
-            if (nStr == null || nStr.isEmpty()) {
-                // throw new BPException(BPException.Type.BP_Map_NoRank); // 你正则 (\d+)?  就不可能时空字符串,要么为 null 要么就是数字, 这两个抛错都不可能触发,请检查逻辑
-                param.n = 0;
-                //有没有可能，那个d+是后面优化的，这里没改而已
-                //而且这里明显是从0开始，你初始是1，那查的就是bp2
-                //而且多加几层try catch难道还会有很大的性能损失？？？？？？？？？
-            } else {
-//                try {
-                param.n = Integer.parseInt(nStr) - 1;
-//                } catch (NumberFormatException e) {
-//                    throw new BPException(BPException.Type.BP_Map_RankError);
-//                }
-            }
-
-            if (param.n < 0) param.n = 0;
-            else if (param.n > 99) param.n = 99;
-
-            if (mStr != null && !mStr.isEmpty()) {
-                param.m = Integer.parseInt(mStr);
-                if (param.m < param.n) {
-                    int temp = param.m;
-                    param.m = param.n;
-                    param.n = temp;
-                    // throw new BPException(BPException.Type.BP_Map_RankError); //!bp 55-45  直接处理了
-                } else if (param.m == param.n) {
-                    throw new BPException(BPException.Type.BP_Map_RankError);
-                }
-                if (param.m > 100) {
-                    param.m = 100 - param.n; //!bp 45-101
-                } else {
-                    param.m = param.m - param.n;//正常
-                }
-            } else {
-                param.m = 1;
-            }
-        } catch (Exception e) {
-            param.err = e;
-        }
         param.mode = OsuMode.getMode(matcher.group("mode"));
+        var nStr = matcher.group("n");
+        var mStr = matcher.group("m");
+        param.name = matcher.group("name");
+
+
+        if (nStr == null || nStr.isBlank()) {
+            // throw new BPException(BPException.Type.BP_Map_NoRank); // 你正则 (\d+)?  就不可能时空字符串,要么为 null 要么就是数字, 这两个抛错都不可能触发,请检查逻辑
+            param.n = 0;
+            //而且多加几层try catch难道还会有很大的性能损失？？？？？？？？？ Y catch 会捕获函数调用栈, 占用内存
+            // 其实性能损失不是什么大问题
+            // 主要是大量用 try catch 让代码变得难读, 尤其是在超长的 try 块中还混着几个 try
+        } else {
+            param.n = Integer.parseInt(nStr) - 1;
+        }
+
+        if (param.n < 0) param.n = 0;
+        else if (param.n > 99) param.n = 99;
+
+        if (mStr == null || mStr.isBlank()) {
+            param.m = 1;
+            data.setValue(param);
+            return true;
+        }
+        param.m = Integer.parseInt(mStr);
+        if (param.m < param.n) {
+            int temp = param.m;
+            param.m = param.n;
+            param.n = temp;
+        } else if (param.m == param.n) {
+            param.err =  new BPException(BPException.Type.BP_Map_RankError);
+        }
+        if (param.m > 100) {
+            param.m = 100 - param.n; //!bp 45-101
+        } else {
+            param.m = param.m - param.n;//正常
+        }
         data.setValue(param);
         return true;
     }
