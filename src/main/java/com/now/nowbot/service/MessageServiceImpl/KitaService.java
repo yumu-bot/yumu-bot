@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -73,13 +74,29 @@ public class KitaService implements MessageService {
             throw new KitaException(KitaException.Type.KITA_Map_FetchFailed);
         }
 
-        try {
-            var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
-            QQMsgUtil.sendImage(from, data);
-        } catch (Exception e) {
-            NowbotApplication.log.error("KITA", e);
-            throw new KitaException(KitaException.Type.KITA_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
+        if (hasBG) {
+            try {
+                var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
+                QQMsgUtil.sendImage(from, data);
+            } catch (Exception e) {
+                NowbotApplication.log.error("KITA", e);
+                throw new KitaException(KitaException.Type.KITA_Send_Error);
+                //from.sendMessage("出错了出错了,问问管理员");
+            }
+        } else {
+            if (from instanceof Group group) {
+                try {
+                    var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
+                    group.sendFile(data, matcher.group("id") + ".png");
+                } catch (Exception e) {
+                    NowbotApplication.log.error("KITA-X", e);
+                    throw new KitaException(KitaException.Type.KITA_Send_Error);
+                    //from.sendMessage("出错了出错了,问问管理员");
+                }
+            } else {
+                throw new KitaException(KitaException.Type.KITA_Send_NotGroup);
+            }
         }
+
     }
 }

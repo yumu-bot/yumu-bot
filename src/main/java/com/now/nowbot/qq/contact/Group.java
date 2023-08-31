@@ -11,5 +11,5 @@ public interface Group extends Contact {
 
     List<? extends GroupContact> getAllUser();
 
-    void sendFile(byte[] data, String mame);
+    void sendFile(byte[] data, String name);
 }
