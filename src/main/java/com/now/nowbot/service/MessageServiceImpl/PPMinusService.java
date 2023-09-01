@@ -84,7 +84,7 @@ public class PPMinusService implements MessageService {
 
         try {
             long now = System.currentTimeMillis();
-            var img = imageService.getPanelB(user, mode, ppm);
+            var img = imageService.getPanelB1(user, mode, ppm);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
@@ -143,7 +143,7 @@ public class PPMinusService implements MessageService {
             setUser(ppmOther, 0);
         }
 
-        var data = imageService.getPanelB(userMe, userOther, ppmMe, ppmOther, mode);
+        var data = imageService.getPanelB1(userMe, userOther, ppmMe, ppmOther, mode);
         QQMsgUtil.sendImage(from, data);
     }
 

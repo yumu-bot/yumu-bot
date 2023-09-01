@@ -67,7 +67,7 @@ public class BotWebApi {
         if (ppm == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
         } else {
-            var data = imageService.getPanelB(info, mode, ppm);
+            var data = imageService.getPanelB1(info, mode, ppm);
             return new ResponseEntity<>(data, getImageHeader(user1.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
         }
     }
@@ -85,7 +85,7 @@ public class BotWebApi {
         if (ppm1 == null || ppm2 == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe/Other 不存在");
         } else {
-            var data = imageService.getPanelB(info1, info2, ppm1, ppm2, mode);
+            var data = imageService.getPanelB1(info1, info2, ppm1, ppm2, mode);
             return new ResponseEntity<>(data, getImageHeader(user1.trim() + " vs " + user2.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
         }
     }

@@ -157,7 +157,7 @@ public class ImageService {
         return doPost("panel_A4", httpEntity);
     }
 
-    public byte[] getPanelB(OsuUser user, OsuMode mode, Ppm ppmMe) {
+    public byte[] getPanelB1(OsuUser user, OsuMode mode, Ppm ppmMe) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -189,10 +189,10 @@ public class ImageService {
                 "statistics", statistics
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
-        return doPost("panel_B", httpEntity);
+        return doPost("panel_B1", httpEntity);
     }
 
-    public byte[] getPanelB(OsuUser userMe, OsuUser userOther, Ppm ppmMe, Ppm ppmOther, OsuMode mode) {
+    public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, Ppm ppmMe, Ppm ppmOther, OsuMode mode) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -234,7 +234,7 @@ public class ImageService {
                 "statistics", statistics
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
-        return doPost("panel_B", httpEntity);
+        return doPost("panel_B1", httpEntity);
     }
 
     public byte[] getPanelB2(BeatMap beatMap, MapMinus mapMinus) {
