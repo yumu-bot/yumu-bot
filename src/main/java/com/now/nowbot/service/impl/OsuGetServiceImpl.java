@@ -7,9 +7,12 @@ import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.entity.BeatMapFileLite;
 import com.now.nowbot.entity.BeatmapLite;
+import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
+import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.match.Match;
@@ -17,6 +20,7 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.OsuMapDownloadUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -35,6 +39,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -63,6 +69,12 @@ public class OsuGetServiceImpl implements OsuGetService {
     @Resource
     @Lazy
     FileConfig fileConfig;
+
+    @Resource
+    OsuMapDownloadUtil osuMapDownloadUtil;
+
+    @Resource
+    BeatMapFileRepository beatMapFileRepository;
 
     private final NoProxyRestTemplate noProxyRestTemplate;
 
@@ -700,25 +712,59 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
     public void downloadAllFiles(long sid) throws IOException {
-        var res = noProxyRestTemplate.getForEntity("", org.springframework.core.io.Resource.class);
         Path tmp = Path.of(fileConfig.getOsuFilePath(), "tmp-"+sid);
+        HashMap<String, Path> fileMap = new HashMap<>();
+        var account = osuMapDownloadUtil.getAccount();
+        try (var in = osuMapDownloadUtil.download(sid, account);) {
+            var zip = new ZipInputStream(in);
+            ZipEntry zipFile;
+            Files.createDirectories(tmp);
+            while ((zipFile = zip.getNextEntry()) != null)  {
+                if (zipFile.isDirectory()) continue;
+                try {
+                    Path zipFilePath = Path.of(tmp.toString(), zipFile.getName());
+                    Files.write(zipFilePath, zip.readNBytes((int)zipFile.getSize()));
+                    fileMap.put(zipFile.getName(), zipFilePath);
+                } catch (IOException e) {
+                    // do nothing
+                    continue;
+                }
+            }
+        }
 
-        if (!res.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("link error");
-        }
-        var resource = res.getBody();
-        if (resource == null) {
-            throw new RuntimeException("download error");
+
+        var osuPaths = fileMap
+                .entrySet()
+                .stream()
+                .filter(e -> e.getKey().endsWith(".osu"))
+                .map(Map.Entry::getValue)
+                .toList();
+        List<String> saveFiles = new ArrayList<>(fileMap.size());
+        List<BeatMapFileLite> beatmaps = new LinkedList<>();
+        for (var osuPath : osuPaths) {
+            var info = OsuFile.parseInfo(new BufferedReader(new FileReader(osuPath.toString())));
+            info.setSid(sid);
+            if (!saveFiles.contains(info.getBackground())) {
+                saveFiles.add(info.getBackground());
+            }
+            if (!saveFiles.contains(info.getAudio())) {
+                saveFiles.add(info.getAudio());
+            }
+            Files.move(osuPath, Path.of(tmp.toString(), info.getBid()+".osu"));
+            beatmaps.add(info);
         }
 
-        var in = resource.getInputStream();
-        var zip = new ZipInputStream(in);
-        ZipEntry zipFile;
-        Files.createDirectories(tmp);
-        while ((zipFile = zip.getNextEntry()) != null)  {
-            if (zipFile.isDirectory()) break;
-            Files.write(Path.of(tmp.toString(), zipFile.getName()), zip.readNBytes((int)zipFile.getSize()));
-        }
+        fileMap.forEach((fname, fpath) -> {
+            if (saveFiles.contains(fname)) return;
+            try {
+                Files.delete(fpath);
+            } catch (IOException e) {
+                return;
+            }
+        });
+
+        Files.move(tmp, Path.of(fileConfig.getOsuFilePath(), Long.toString(sid)));
+        beatMapFileRepository.saveAll(beatmaps);
     }
 
     /***

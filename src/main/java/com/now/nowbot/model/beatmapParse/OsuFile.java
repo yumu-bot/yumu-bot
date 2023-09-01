@@ -1,5 +1,7 @@
 package com.now.nowbot.model.beatmapParse;
 
+import com.now.nowbot.entity.BeatMapFileLite;
+import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.model.beatmapParse.parse.*;
 import com.now.nowbot.model.enums.OsuMode;
 
@@ -8,6 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OsuFile {
     private BeatmapGeneral general;
@@ -26,6 +30,58 @@ public class OsuFile {
 
     public static OsuFile getInstance(BufferedReader read) throws IOException {
         return new OsuFile(read);
+    }
+
+    public static BeatMapFileLite parseInfo(BufferedReader read) throws IOException {
+        var versionStr = read.readLine();
+        if (versionStr == null || !versionStr.startsWith("osu file format v")) {
+            throw new RuntimeException("解析错误,文件无效");
+        }
+        var bf = new BeatMapFileLite();
+        HashMap<String, String> info = new HashMap<>(5);
+        info.put("AudioFilename", null);
+        info.put("Mode", null);
+        info.put("BeatmapID", null);
+        info.put("BeatmapSetID", null);
+        String line;
+        // 逐行
+        while ((line = read.readLine()) != null) {
+            if (line.startsWith("[General]") || line.startsWith("[Metadata]")) {
+                // 读取 General 块
+                parseAny(read, info);
+            } if (line.startsWith("[Events]")) {
+                break;
+            }
+        }
+
+        while ((line = read.readLine()) != null) {
+            if (line.startsWith("//") || line.isBlank()) {
+                continue;
+            } else if (line.startsWith("[")) {
+                break;
+            }
+
+            int start = line.indexOf('"');
+            int end = line.lastIndexOf('"');
+
+            bf.setBackground(line.substring(start + 1, end));
+        }
+
+        if (info.get("AudioFilename") != null) {
+            bf.setAudio(info.get("AudioFilename"));
+        }
+        if (info.get("Mode") != null) {
+            bf.setMode(Integer.parseInt(info.get("Mode")));
+        }
+        if (info.get("BeatmapID") != null) {
+            bf.setBid(Long.parseLong(info.get("BeatmapID")));
+        }
+        if (info.get("BeatmapSetID") != null) {
+            bf.setSid(Long.parseLong(info.get("BeatmapSetID")));
+        }
+
+        read.close();
+        return bf;
     }
 
     public OsuBeatmapAttributes getOsu() throws IOException {
@@ -110,14 +166,33 @@ public class OsuFile {
         String line;
         while ((line = reader.readLine()) != null && !line.equals("")) {
             var entity = line.split(":");
-            if (entity.length == 2) {
-                var key = entity[0].trim();
-                var val = entity[1].trim();
+            if (entity.length != 2) {
+                continue;
+            }
+            var key = entity[0].trim();
+            var val = entity[1].trim();
 
-                switch (key) {
-                    case "Mode" -> general.setMode(OsuMode.getMode(val));
-                    case "StackLeniency" -> general.setStackLeniency(Double.parseDouble(val));
-                    case "SampleSet" -> general.setSampleSet(val);
+            switch (key) {
+                case "Mode" -> general.setMode(OsuMode.getMode(val));
+                case "StackLeniency" -> general.setStackLeniency(Double.parseDouble(val));
+                case "SampleSet" -> general.setSampleSet(val);
+            }
+        }
+    }
+
+    private static void parseAny(BufferedReader reader, Map<String, String> parseMap) throws IOException {
+        String line;
+        while ((line = reader.readLine()) != null && !line.equals("")) {
+            var entity = line.split(":");
+            if (entity.length != 2) {
+                continue;
+            }
+            var key = entity[0].trim();
+            var val = entity[1].trim();
+
+            if (parseMap != null) {
+                if (parseMap.containsKey(key)){
+                    parseMap.put(key, val);
                 }
             }
         }
