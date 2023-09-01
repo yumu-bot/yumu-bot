@@ -461,6 +461,21 @@ public class BotWebApi {
     @GetMapping("/background/{bid}")
     public ResponseEntity<byte[]> getImage(@PathVariable("bid")String bidStr) throws IOException {
         long bid = Long.parseLong(bidStr);
+        return getFile(bid, true, false);
+    }
+    @GetMapping("/audio/{bid}")
+    public ResponseEntity<byte[]> getAudio(@PathVariable("bid")String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        return getFile(bid, false, false);
+    }
+    @GetMapping("/osufile/{bid}")
+    public ResponseEntity<byte[]> getOsuFile(@PathVariable("bid")String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        return getFile(bid, false, true);
+    }
+
+    private ResponseEntity<byte[]> getFile(long bid, boolean isBg, boolean isFile) throws IOException {
+
         var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         if (fopt.isEmpty()) {
             var finfo = osuGetService.getMapInfoFromDB(bid);
@@ -472,8 +487,17 @@ public class BotWebApi {
         HttpHeaders headers = new HttpHeaders();
 
 
-        var path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
-        headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getBackground()).build());
+        Path path;
+        if (isBg) {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
+            headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getBackground()).build());
+        } else if (isFile) {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), bid + ".osu");
+            headers.setContentDisposition(ContentDisposition.inline().filename(bid + ".osu").build());
+        } else {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getAudio());
+            headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getAudio()).build());
+        }
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         try {
             byte[] data = Files.readAllBytes(path);
