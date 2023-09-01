@@ -107,17 +107,6 @@ public class ImageService {
         return new byte[0];
     }
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bp) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "card_A1", user,
-                "bp", bp
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
-        return doPost("panel_J", httpEntity);
-    }
-
     public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
@@ -129,8 +118,7 @@ public class ImageService {
 
     public byte[] getPanelA2(Search search) {
         HttpHeaders headers = getDefaultHeader();
-        var body = search;
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Search> httpEntity = new HttpEntity<>(search, headers);
         return doPost("panel_A2", httpEntity);
     }
 
@@ -141,7 +129,7 @@ public class ImageService {
                 "beatmap", beatMap,
                 "scores", scores
         );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A3", httpEntity);
     }
 
@@ -153,7 +141,7 @@ public class ImageService {
                 "bps", bpList,
                 "rank", bpRank
         );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A4", httpEntity);
     }
 
@@ -188,7 +176,7 @@ public class ImageService {
                 "card_b_1", cardB,
                 "statistics", statistics
         );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
 
@@ -233,7 +221,7 @@ public class ImageService {
                 "card_b_2", cardB2,
                 "statistics", statistics
         );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
 
@@ -452,7 +440,7 @@ public class ImageService {
                 statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
 
                 //如果只有一两个人，则不排序
-                List user_list;
+                List<Map<String, Object>> user_list;
 
                 {
                     var stream = g_scores.stream();
@@ -643,7 +631,7 @@ public class ImageService {
                 .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
                 .entrySet()
                 .stream()
-                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(e -> e.getValue(), Comparator.reverseOrder()))
+                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
                 .map(e -> {
                     String name = "";
                     String avatar = "";
@@ -893,7 +881,7 @@ public class ImageService {
         return headers;
     }
 
-    private byte[] doPost(String path, HttpEntity entity) {
+    private byte[] doPost(String path, HttpEntity<?> entity) {
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
         return s.getBody();
     }
