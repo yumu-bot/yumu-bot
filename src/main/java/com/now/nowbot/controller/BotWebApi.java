@@ -2,6 +2,8 @@ package com.now.nowbot.controller;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.now.nowbot.config.FileConfig;
+import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
@@ -23,13 +25,17 @@ import com.now.nowbot.util.QQMsgUtil;
 import io.github.humbleui.skija.EncodedImageFormat;
 import io.github.humbleui.skija.Image;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -41,6 +47,11 @@ public class BotWebApi {
     @Resource
     OsuGetService osuGetService;
     @Resource
+    BeatMapFileRepository beatMapFileRepository;
+    @Resource
+    @Lazy
+    FileConfig fileConfig;
+    @Resource
     BphtService bphtService;
     @Resource
     MRAService mraService;
@@ -48,6 +59,7 @@ public class BotWebApi {
     MonitorNowService monitorNowService;
     @Resource
     ImageService imageService;
+
 
     /**
      * 如果包含 u2 则响应为 ppmvs
@@ -444,6 +456,32 @@ public class BotWebApi {
         log.error("error");
 
         return "ok - " + l.levelStr;
+    }
+
+    @GetMapping("/background/{bid}")
+    public ResponseEntity<byte[]> getImage(@PathVariable("bid")String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+        if (fopt.isEmpty()) {
+            var finfo = osuGetService.getMapInfoFromDB(bid);
+            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
+            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+        }
+        if (fopt.isEmpty()) throw new IOException("download error");
+        var fileInfo = fopt.get();
+        HttpHeaders headers = new HttpHeaders();
+
+
+        var path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
+        headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getBackground()).build());
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        try {
+            byte[] data = Files.readAllBytes(path);
+            headers.setContentLength(Files.size(path));
+            return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new RuntimeException("文件已失效...");
+        }
     }
 
     private static HttpHeaders getImageHeader(String name, long length) {

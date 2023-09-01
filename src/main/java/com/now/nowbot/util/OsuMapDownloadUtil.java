@@ -6,6 +6,7 @@ import com.now.nowbot.entity.UserAccountLite;
 import com.now.nowbot.mapper.AccountRepository;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -13,6 +14,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
@@ -39,26 +44,30 @@ public class OsuMapDownloadUtil {
 
     record OsuWebSessionBO(String csrfToken, String session){}
 
-    private UserAccountLite getAccount(){
+    public UserAccountLite getAccount(){
         long count = accountRepository.count();
         if (count != 0){
             return accountRepository.getByIndex(ThreadLocalRandom.current().nextLong(count));
         } throw new RuntimeException("账号池获取账号失败");
     }
 
-    public byte[] download(Long sid, UserAccountLite account){
+    public InputStream download(Long sid, UserAccountLite account) throws IOException {
+        if (account.getAkV1() == null) {
+            initAccount(account);
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("referer", "https://osu.ppy.sh/beatmapsets/" + sid);
         headers.set("cookie", "osu_session=" + account.getSession());
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<byte[]> data = null;
+        ResponseEntity<Resource> data = null;
         try {
-            data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, httpEntity, byte[].class);
+            data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, httpEntity, Resource.class);
         } catch (RestClientException e) {
-            var homePageSession = visitHomePage(account);
-            login(account, homePageSession);
+            visitHomePage(account);
+            login(account);
             HttpHeaders newHeaders = new HttpHeaders();
             newHeaders.set("referer", "https://osu.ppy.sh/beatmapsets/" + sid);
             newHeaders.set("cookie", "osu_session=" + account.getSession());
@@ -66,47 +75,51 @@ public class OsuMapDownloadUtil {
 
             HttpEntity newHttpEntity = new HttpEntity(newHeaders);
             try {
-                data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, newHttpEntity, byte[].class);
-                fromCookie(data.getHeaders(), account);
+                data = template.exchange(String.format(DOWNLOAD_URL, sid), HttpMethod.GET, newHttpEntity, Resource.class);
             } catch (RestClientException ex) {
                 throw new TipsRuntimeException("下图失败");
             }
         }
-
-        if (data != null){
+        var in = data.getBody();
+        if (in != null){
             fromCookie(data.getHeaders(), account);
-            return data.getBody();
+            return in.getInputStream();
         }
-        return new byte[0];
+        throw new IOException("");
     }
 
-    private OsuWebSessionBO login(UserAccountLite account, OsuWebSessionBO homePageSession){
+    private void initAccount(UserAccountLite account) {
+        visitHomePage(account);
+        login(account);
+    }
+
+    private void login(UserAccountLite account){
         HttpHeaders headers = new HttpHeaders();
         headers.set("referer", HOME_PAGE_URL);
-        headers.set("cookie", "XSRF-TOKEN=" + homePageSession.csrfToken() + "; osu_session=" + homePageSession.session());
+        headers.set("cookie", "XSRF-TOKEN=" + account.getAkV1() + "; osu_session=" + account.getSession());
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.set("_token", homePageSession.csrfToken());
+        body.set("_token", account.getAkV1());
         body.set("username", account.getUsername());
         body.set("password", account.getPassword());
-        HttpEntity httpEntity = new HttpEntity(body, headers);
+        HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(body, headers);
         var data = template.exchange(LOGIN_URL, HttpMethod.POST, httpEntity, String.class);
 
-        return fromCookie(data.getHeaders(), account);
+        fromCookie(data.getHeaders(), account);
     }
 
-    private OsuWebSessionBO visitHomePage(UserAccountLite account){
+    private void visitHomePage(UserAccountLite account){
         var response = template.getForEntity(HOME_PAGE_URL, String.class);
-        return fromCookie(response.getHeaders(), account);
+        fromCookie(response.getHeaders(), account);
     }
 
-    private OsuWebSessionBO fromCookie(HttpHeaders headers, UserAccountLite account){
+    private void fromCookie(HttpHeaders headers, UserAccountLite account){
         String token = "";
         String session = "";
         var setCookie = headers.get("set-cookie");
         if (setCookie != null) {
-            var pattern = Pattern.compile("(^XSRF-TOKEN=(?<token>[\\w\\d]+);)|(^osu_session=(?<session>[\\w\\d%]+);)");
+            var pattern = Pattern.compile("(^XSRF-TOKEN=(?<token>[\\w]+);)|(^osu_session=(?<session>[\\w%]+);)");
             for (var str : setCookie){
                 var matcher = pattern.matcher(str);
                 if (matcher.find()) {
@@ -116,97 +129,12 @@ public class OsuMapDownloadUtil {
                 if (!token.equals("") && !session.equals("")) break;
             }
         }
-        if (!session.equals("")){
-            account.setSession(session);
-            accountRepository.save(account);
+        if (!token.isBlank()) {
+            account.setAkV1(token);
         }
-        return new OsuWebSessionBO(token, session);
-    }
-}
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-class BeatmapDTO {
-    @JsonProperty("beatmapset_id")
-    private Integer setId;
-
-    @JsonProperty("beatmap_id")
-    private Integer beatmapId;
-
-    private Integer approved;
-
-    @JsonProperty("file_md5")
-    private String md5;
-
-    @JsonProperty("last_update")
-    private String lastUpdate;
-
-    private Integer timeZone;
-
-    public Integer getSetId() {
-        return setId;
-    }
-
-    public void setSetId(Integer setId) {
-        this.setId = setId;
-    }
-
-    public Integer getBeatmapId() {
-        return beatmapId;
-    }
-
-    public void setBeatmapId(Integer beatmapId) {
-        this.beatmapId = beatmapId;
-    }
-
-    public Integer getApproved() {
-        return approved;
-    }
-
-    public void setApproved(Integer approved) {
-        this.approved = approved;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
-    }
-
-    public String getLastUpdate() {
-        return lastUpdate;
-    }
-
-    public void setLastUpdate(String lastUpdate) {
-        this.lastUpdate = lastUpdate;
-    }
-
-    public Integer getTimeZone() {
-        return timeZone;
-    }
-
-    public void setTimeZone(Integer timeZone) {
-        this.timeZone = timeZone;
-    }
-}
-class OsuWebSessionBO {
-    private String csrfToken;
-    private String session;
-
-    public String getCsrfToken() {
-        return csrfToken;
-    }
-
-    public void setCsrfToken(String csrfToken) {
-        this.csrfToken = csrfToken;
-    }
-
-    public String getSession() {
-        return session;
-    }
-
-    public void setSession(String session) {
-        this.session = session;
+        if (!session.isBlank()){
+            account.setSession(session);
+        }
+        accountRepository.save(account);
     }
 }

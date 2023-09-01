@@ -277,4 +277,6 @@ public interface OsuGetService {
     List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
 
     JsonNode chatGetChannels(BinUser user);
+
+    void downloadAllFiles(long sid) throws IOException;
 }
