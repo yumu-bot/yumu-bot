@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PpPlus {
+public class PPPlus {
     @JsonProperty("UserID")
     private Long uid;
     @JsonProperty("UserName")
@@ -30,10 +30,10 @@ public class PpPlus {
     @JsonProperty("PrecisionTotal")
     private Double Pre;
 
-    public PpPlus() {
+    public PPPlus() {
     }
 
-    public PpPlus(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
+    public PPPlus(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.uid = uid;
         this.time = time;
         Total = total;
@@ -50,7 +50,7 @@ public class PpPlus {
         return uid;
     }
 
-    public PpPlus setUid(Long uid) {
+    public PPPlus setUid(Long uid) {
         this.uid = uid;
         return this;
     }
@@ -60,7 +60,7 @@ public class PpPlus {
     }
 
 
-    public PpPlus setName(String name) {
+    public PPPlus setName(String name) {
         this.name = name;
         return this;
     }
@@ -69,7 +69,7 @@ public class PpPlus {
         return time;
     }
 
-    public PpPlus setTime(LocalDateTime time) {
+    public PPPlus setTime(LocalDateTime time) {
         this.time = time;
         return this;
     }
@@ -78,7 +78,7 @@ public class PpPlus {
         return Total;
     }
 
-    public PpPlus setTotal(Double total) {
+    public PPPlus setTotal(Double total) {
         Total = total;
         return this;
     }
@@ -88,7 +88,7 @@ public class PpPlus {
     }
 
 
-    public PpPlus setJump(Double jump) {
+    public PPPlus setJump(Double jump) {
         Jump = jump;
         return this;
     }
@@ -98,7 +98,7 @@ public class PpPlus {
     }
 
 
-    public PpPlus setFlow(Double flow) {
+    public PPPlus setFlow(Double flow) {
         Flow = flow;
         return this;
     }
@@ -107,7 +107,7 @@ public class PpPlus {
         return Acc;
     }
 
-    public PpPlus setAcc(Double acc) {
+    public PPPlus setAcc(Double acc) {
         Acc = acc;
         return this;
     }
@@ -116,7 +116,7 @@ public class PpPlus {
         return Sta;
     }
 
-    public PpPlus setSta(Double sta) {
+    public PPPlus setSta(Double sta) {
         Sta = sta;
         return this;
     }
@@ -126,7 +126,7 @@ public class PpPlus {
     }
 
 
-    public PpPlus setSpd(Double spd) {
+    public PPPlus setSpd(Double spd) {
         Spd = spd;
         return this;
     }
@@ -135,14 +135,14 @@ public class PpPlus {
         return Pre;
     }
 
-    public PpPlus setPre(Double pre) {
+    public PPPlus setPre(Double pre) {
         Pre = pre;
         return this;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("PpPlus{");
+        final StringBuilder sb = new StringBuilder("PPPlus{");
         sb.append("uid=").append(uid);
         sb.append(", name='").append(name).append('\'');
         sb.append(", time=").append(time);

@@ -852,7 +852,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     @Override
     @Retryable(value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
             maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
-    public PpPlus ppPlus(String name) {
+    public PPPlus ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name).build().encode().toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -864,7 +864,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
 
         var data = response.getBody().get("user_data");
-        if (data != null) return JacksonUtil.parseObject(data, PpPlus.class);
+        if (data != null) return JacksonUtil.parseObject(data, PPPlus.class);
         else throw new RuntimeException("get response error");
     }
 

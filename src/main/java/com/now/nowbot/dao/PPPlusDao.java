@@ -2,7 +2,7 @@ package com.now.nowbot.dao;
 
 import com.now.nowbot.entity.PPPLite;
 import com.now.nowbot.mapper.PPPlusMapper;
-import com.now.nowbot.model.JsonData.PpPlus;
+import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.service.OsuGetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class PPPlusDao {
         this.osuGetService = osuGetService;
     }
 
-    public PpPlus getobject(String uid){
+    public PPPlus getobject(String uid){
         var p = ppPlusMapper.getFirstByUserIdOrderByDateDesc(Long.parseLong(uid));
         if (p == null){
             var node = osuGetService.ppPlus(uid);
@@ -33,14 +33,14 @@ public class PPPlusDao {
         return parse(p);
     }
 
-    PPPLite parse(PpPlus obj){
+    PPPLite parse(PPPlus obj){
         return new PPPLite(obj.getUid(), LocalDateTime.now(), obj.getTotal(), obj.getJump(), obj.getFlow(), obj.getAcc(), obj.getSta(), obj.getSpd(), obj.getPre());
     }
-    PpPlus parse(PPPLite pppLite){
-        return new PpPlus(pppLite.getId(),pppLite.getDate(), pppLite.getTotal(), pppLite.getJump(), pppLite.getFlow(), pppLite.getAcc(), pppLite.getSta(), pppLite.getSpd(), pppLite.getPre());
+    PPPlus parse(PPPLite pppLite){
+        return new PPPlus(pppLite.getId(),pppLite.getDate(), pppLite.getTotal(), pppLite.getJump(), pppLite.getFlow(), pppLite.getAcc(), pppLite.getSta(), pppLite.getSpd(), pppLite.getPre());
     }
 
-    public float[] ppsize(PpPlus obj){
+    public float[] ppsize(PPPlus obj){
         float[] data = new float[6];
         data[0] = obj.getJump().floatValue();
         data[1] = obj.getFlow().floatValue();

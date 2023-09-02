@@ -228,7 +228,7 @@ public interface OsuGetService {
      */
     @Retryable(value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
             maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
-    PpPlus ppPlus(String name);
+    PPPlus ppPlus(String name);
 
     /***
      * pp+比例
