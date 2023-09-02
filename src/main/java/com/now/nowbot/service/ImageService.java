@@ -51,7 +51,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of("md", markdown, "width", 1500);
-        HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
     }
 
@@ -64,7 +64,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of("md", markdown, "width", width);
-        HttpEntity<Map> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
     }
 
