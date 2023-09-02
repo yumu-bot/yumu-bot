@@ -25,11 +25,11 @@ public enum Instruction {
 
     // #0 调出帮助
     HELP(HelpService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h(?!\\w))+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     // #1 BOT 内部指令
     PING(PingService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(ping|pi(?!\\w))+")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))+|yumu)")),
 
     BIND(BindService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?")),
