@@ -318,20 +318,7 @@ public class BeatMap {
     public List<Integer> getBeatMapRatingList() {return null;}
 
     public double getBeatMapRating() {
-        List<Integer> rl = getBeatMapRatingList();
-        if (null == rl) return 0D;
-        double r = 0;
-        double sum = 0;
-        int i;
-
-        for (i = 0; i < rl.size(); i++) {
-            sum = sum + rl.get(i);
-        }
-
-        for (int j = 0; j <= 10; j++) {
-            r = r + j / 10D * rl.get(j) / sum;
-        }
-        return r;
+        return 0f;
     }
 
     public List<Integer> getBeatMapRetryList() {return retryList;}

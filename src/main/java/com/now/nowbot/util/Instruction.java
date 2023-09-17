@@ -83,6 +83,8 @@ public enum Instruction {
 
     UUINFO(UUIService.class,
             Pattern.compile("^[!！]\\s*(?i)(uu)+(info|i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+    IM(IMapperService.class,
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((im)?mapper|im(?![a-zA-Z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     FRIENDLEGACY(FriendLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
@@ -94,7 +96,7 @@ public enum Instruction {
             Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?")),
 
     PPM(PPMinusService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppminus|(p?(pm))(?![a-zA-Z_]))+(?<vs>vs)?\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(ppminus|(p?(pm))(?![a-rt-uw-zA-RT-UW-Z_]))\\s*(?<vs>vs)?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     PPMLEGACY(PPMLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(pl(?![a-zA-Z_])|ppminuslegacy)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),

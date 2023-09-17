@@ -35,6 +35,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toCollection;
+
 @Service("nowbot-image")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
@@ -726,27 +729,78 @@ public class ImageService {
     //2023-07-12T12:42:37Z
 
     public byte[] getPanelM(OsuUser user, OsuGetService osuGetService) {
-        var search = osuGetService.searchBeatmap(Map.of(
-                "q", "creator=" + user.getUID(),
-                "sort","ranked_desc",
-                "s", "any"));
-        var activity = osuGetService.getUserRecentActivity(user.getUID(), 0, 10);
-        var mappingActivity = activity.stream().filter(ActivityEvent::isTypeMapping).toList();
+        var page = 1;
+        var query = new HashMap<String, Object>();
+        query.put("q", "creator=" + user.getUID());
+        query.put("sort","ranked_desc");
+        query.put("s", "any");
+        query.put("page", page);
+
+        Search search = null;
+        //依据QualifiedMapService 的逻辑来多次获取
+
+        {
+            int resultCount = 0;
+            do {
+                if (search == null) {
+                    search = osuGetService.searchBeatmap(query);
+                    resultCount += search.getBeatmapsets().size();
+                    continue;
+                }
+                page ++;
+                query.put("page", page);
+                var result = osuGetService.searchBeatmap(query);
+                resultCount += result.getResultCount();
+                search.getBeatmapsets().addAll(result.getBeatmapsets());
+            } while (resultCount < search.getTotal() && page < 10);
+        }
+
+        List<ActivityEvent> activity;
+        List<ActivityEvent> mappingActivity;
+        try {
+            activity = osuGetService.getUserRecentActivity(user.getUID(), 0, 100);
+            mappingActivity = activity.stream().filter(ActivityEvent::isTypeMapping).toList();
+                    /* 原设想是，这里把相近的同名同属性活动删去。但是不知道怎么写
+                    .collect(collectingAndThen(
+                    toCollection(() -> new TreeSet<>(Comparator.comparing(s -> (s.getBeatmapSet().title())))),
+                    ArrayList::new))
+
+                    .stream().sorted(Comparator.comparing(ActivityEvent::getCreatedAt).reversed()).toList();
+
+                     */
+
+        } catch (Exception e) {
+            mappingActivity = null;
+        }
 
         var mostPopularBeatmap = search
                 .getBeatmapsets()
                 .stream()
                 .filter(s -> (s.getMapperUID().longValue() == user.getUID()))
-                .sorted(Comparator.comparing(BeatMapSet::getUpdatedTime).reversed())
+                .sorted(Comparator.comparing(BeatMapSet::getPlayCount).reversed())
                 .limit(6)
                 .toList();
 
         var mostRecentRankedBeatmap = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.isRanked()) && user.getUID() == s.getMapperUID().longValue())
+                .filter(s -> (s.isRanked() && user.getUID() == s.getMapperUID().longValue()))
                 .findFirst()
                 .orElse(null);
+
+        if (mostRecentRankedBeatmap == null && user.getBeatmapSetCountRankedAndApproved() > 0) {
+            try {
+                var query1 = new HashMap<String, Object>();
+                query1.put("q", user.getUID().toString());
+                query1.put("sort", "ranked_desc");
+                query1.put("s", "any");
+                query1.put("page", 1);
+
+                var search1 = osuGetService.searchBeatmap(query1);
+                mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::isRanked).findFirst().orElse(null);
+
+            } catch (Exception ignored) {}
+        }
 
         var mostRecentRankedGuestDiff = search
                 .getBeatmapsets()
@@ -759,11 +813,14 @@ public class ImageService {
         var diffArr = new int[8];
         {
             var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
-            var starMinBoundary = new double[]{0, 2, 2.8, 4, 5.3, 6.5, 8, 10};
+            var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
             for (var d : diffAll) {
-                int i = starMinBoundary.length - 1;
-                while (i >= 0 && d > starMinBoundary[i]) --i;
-                diffArr[i] ++;
+                for (int i = 0; i < 8; i++) {
+                    if (d <= starMaxBoundary[i]) {
+                        diffArr[i]++;
+                        break;
+                    }
+                }
             }
         }
 
@@ -791,14 +848,17 @@ public class ImageService {
             }
         }
 
-        var feedbackArr = new int[8];
+        var lengthArr = new int[8];
         {
-            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getBeatMapRating).toArray();
-            var feedbackMinBoundary = new double[]{0, 8.25, 8.5, 8.75, 9, 9.25, 9.5, 9.75};
-            for (var d : diffAll) {
-                int i = feedbackMinBoundary.length - 1;
-                while (i >= 0 && d > feedbackMinBoundary[i]) --i;
-                diffArr[i] ++;
+            var lengthAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
+            var lengthMaxBoundary = new double[]{60, 90, 120, 150, 180, 210, 240, Double.MAX_VALUE};
+            for (var f : lengthAll) {
+                for (int i = 0; i < 8; i++) {
+                    if (f <= lengthMaxBoundary[i]) {
+                        lengthArr[i]++;
+                        break;
+                    }
+                }
             }
         }
 
@@ -810,7 +870,7 @@ public class ImageService {
         body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
         body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
         body.put("difficulty_arr", diffArr);
-        body.put("player_feedback_arr", feedbackArr);
+        body.put("length_arr", lengthArr);
         body.put("genre", genre);
         body.put("recent_activity", mappingActivity);
         return doPost("panel_M", new HttpEntity<>(body, headers));

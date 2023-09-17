@@ -17,7 +17,7 @@
         <java.version>17</java.version>
         <skipTests>true</skipTests>
         <mirai.version>2.15.0-RC</mirai.version>
-        <run.os>linux</run.os>
+        <run.os>windows</run.os>
         <flexmark.version>0.26.4</flexmark.version>
     </properties>
 
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>io.github.humbleui</groupId>
             <artifactId>skija-${run.os}-x64</artifactId>
-            <version>0.109.2</version>
+            <version>0.116.1</version>
         </dependency>
         <!--
         <dependency>
@@ -120,20 +120,20 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-<!--
+        <!--
 
-        <dependency>
-            <groupId>com.kennycason</groupId>
-            <artifactId>kumo-core</artifactId>
-            <version>1.28</version>
-        </dependency>
+                <dependency>
+                    <groupId>com.kennycason</groupId>
+                    <artifactId>kumo-core</artifactId>
+                    <version>1.28</version>
+                </dependency>
 
-        <dependency>
-            <groupId>com.kennycason</groupId>
-            <artifactId>kumo-tokenizers</artifactId>
-            <version>1.28</version>
-        </dependency>
--->
+                <dependency>
+                    <groupId>com.kennycason</groupId>
+                    <artifactId>kumo-tokenizers</artifactId>
+                    <version>1.28</version>
+                </dependency>
+        -->
 
         <dependency>
             <groupId>io.minio</groupId>

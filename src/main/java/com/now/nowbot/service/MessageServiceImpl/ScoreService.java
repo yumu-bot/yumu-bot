@@ -67,7 +67,13 @@ public class ScoreService implements MessageService {
 
         Score score = null;
         if (mods != null && mods.size() > 0) {
-            var scoreall = osuGetService.getScoreAll(bid, user, isDefault ? user.getMode() : mode);
+            List<Score> scoreall;
+            try {
+                scoreall = osuGetService.getScoreAll(bid, user, isDefault ? user.getMode() : mode);
+            } catch (Exception e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
+            }
+
             for (var s : scoreall) {
                 if (s.getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None) {
                     score = s;

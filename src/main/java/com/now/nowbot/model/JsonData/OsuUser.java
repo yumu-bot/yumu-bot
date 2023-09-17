@@ -78,6 +78,9 @@ public class OsuUser{
     @JsonProperty("loved_beatmapset_count")
     Integer beatmapSetCountLoved;
 
+    @JsonProperty("groups")
+    List<UserGroups> groups;
+
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapSetCountPlaycounts;
     @JsonProperty("mapping_follower_count")
@@ -269,6 +272,14 @@ public class OsuUser{
 
     public void setBeatmapSetCountPlaycounts(Integer beatmapSetCountPlaycounts) {
         this.beatmapSetCountPlaycounts = beatmapSetCountPlaycounts;
+    }
+
+    public List<UserGroups> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<UserGroups> groups) {
+        this.groups = groups;
     }
 
     public String getAvatarUrl() {

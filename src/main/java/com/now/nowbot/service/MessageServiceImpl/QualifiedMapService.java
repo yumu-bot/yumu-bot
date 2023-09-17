@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -47,7 +48,7 @@ public class QualifiedMapService implements MessageService {
 
         if (range < 1 || range > 50) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
 
-        int page = 1; //(int) (Math.floor(range / 50f) + 1); 这里需要重复获取，page最多取4页（200个），总之我不知道怎么实现
+        int page = 1; //(int) (Math.floor(range / 50f) + 1); 这里需要重复获取，page最多取10页（500个），总之我不知道怎么实现
 
         var query = new HashMap<String, Object>();
         status = getStatus(status);
@@ -56,10 +57,25 @@ public class QualifiedMapService implements MessageService {
         query.put("sort", getSort(sort));
         query.put("page", page);
 
-
         try {
-            var d = osuGetService.searchBeatmap(query);
-            d.setResultCount(Math.min(d.getTotal(), range));
+            Search d = null;
+            int resultCount = 0;
+            do {
+                if (d == null) {
+                    d = osuGetService.searchBeatmap(query);
+                    resultCount += d.getBeatmapsets().size();
+                    continue;
+                }
+                page ++;
+                query.put("page", page);
+                var result = osuGetService.searchBeatmap(query);
+                resultCount += result.getBeatmapsets().size();
+                d.getBeatmapsets().addAll(result.getBeatmapsets());
+            } while (resultCount < d.getTotal() && page < 10);
+            d.setResultCount(resultCount);
+
+            //var d = osuGetService.searchBeatmap(query);
+            //d.setResultCount(Math.min(d.getTotal(), range));
             d.setRule(status);
             d.sortBeatmapDiff();
             var img = imageService.getPanelA2(d);

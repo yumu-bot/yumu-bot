@@ -259,9 +259,27 @@ public class BeatMapSet {
         this.video = video;
     }
 
-    public List<Integer> getRatings() {
+    public List<Integer> getRatingList() {
         return ratings;
     }
+
+    public double getRating() {
+        List<Integer> rl = ratings;
+        if (null == rl) return 0D;
+        double r = 0;
+        double sum = 0;
+        int i;
+
+        for (i = 0; i < rl.size(); i++) {
+            sum = sum + rl.get(i);
+        }
+
+        for (int j = 0; j <= 10; j++) {
+            r = r + j / 10D * rl.get(j) / sum;
+        }
+        return r;
+    }
+
 
     public void setRatings(List<Integer> ratings) {
         this.ratings = ratings;
