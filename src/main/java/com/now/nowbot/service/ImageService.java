@@ -852,6 +852,17 @@ public class ImageService {
             }
         }
 
+        int favorite = 0;
+        int playcount = 0;
+        if (!search.getBeatmapsets().isEmpty()) {
+            for (int i = 0; i < search.getBeatmapsets().size(); i++) {
+                var v = search.getBeatmapsets().get(i);
+
+                favorite += v.getFavourite();
+                playcount += v.getPlayCount();
+            };
+        }
+
         var lengthArr = new int[8];
         {
             var lengthAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
@@ -877,6 +888,8 @@ public class ImageService {
         body.put("length_arr", lengthArr);
         body.put("genre", genre);
         body.put("recent_activity", mappingActivity);
+        body.put("favorite", favorite);
+        body.put("playcount", playcount);
         return doPost("panel_M", new HttpEntity<>(body, headers));
     }
 
