@@ -830,21 +830,25 @@ public class ImageService {
             genre = new int[keywords.length];
             AtomicBoolean hasAnyGenre = new AtomicBoolean(false);
 
-            //0是实在找不到 tag 的时候所赋予的默认值
-            for (int i = 1; i < keywords.length; i++) {
-                final int index = i;
-                var keyword = keywords[index];
-
+            //逻辑应该是先每张图然后再遍历12吧？
+            if (!search.getBeatmapsets().isEmpty()) {
                 search.getBeatmapsets().forEach(m -> {
-                    if (m.getTags().toLowerCase().contains(keyword)) {
-                        genre[index]++;
-                        hasAnyGenre.set(true);
+                    for (int i = 1; i < keywords.length; i++) {
+                        var keyword = keywords[i];
+
+                        if (m.getTags().toLowerCase().contains(keyword)) {
+                            genre[i]++;
+                            hasAnyGenre.set(true);
+                        }
+                    }
+
+                    //0是实在找不到 tag 的时候所赋予的默认值
+                    if (hasAnyGenre.get()) {
+                        hasAnyGenre.set(false);
+                    } else {
+                        genre[0]++;
                     }
                 });
-
-                if (!hasAnyGenre.get()) {
-                    genre[0]++;
-                }
             }
         }
 
