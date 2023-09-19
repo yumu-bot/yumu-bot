@@ -65,14 +65,20 @@ public class BPService implements MessageService<BPService.BPParam> {
 
 
         if (nStr == null || nStr.isBlank()) {
-            // throw new BPException(BPException.Type.BP_Map_NoRank); // 你正则 (\d+)?  就不可能时空字符串,要么为 null 要么就是数字, 这两个抛错都不可能触发,请检查逻辑
+            // throw new BPException(BPException.Type.BP_Map_NoRank)
             param.n = 0;
-            //而且多加几层try catch难道还会有很大的性能损失？？？？？？？？？ Y catch 会捕获函数调用栈, 占用内存
-            // 其实性能损失不是什么大问题
-            // 主要是大量用 try catch 让代码变得难读, 尤其是在超长的 try 块中还混着几个 try
-            // 这才几个try啊？而且我代码都是一块一块的，一块代码只做一件事，总比你堆一起好读
         } else {
-            param.n = Integer.parseInt(nStr) - 1;
+            try {
+                param.n = Integer.parseInt(nStr) - 1;
+            } catch (NumberFormatException e) {
+                param.err = new BPException(BPException.Type.BP_Map_RankError);
+            }
+            // 笑死 根本不检查输入 throw new BPException(BPException.Type.BP_Map_RankError);
+            //        java.lang.NumberFormatException: For input string: "114514191981066"
+            //        at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67) ~[na:na]
+            //        at java.base/java.lang.Integer.parseInt(Integer.java:665) ~[na:na]
+            //        at java.base/java.lang.Integer.parseInt(Integer.java:781) ~[na:na]
+            //        at com.now.nowbot.service.MessageServiceImpl.BPService.isHandle(BPService.java:75) ~[classes/:na]
         }
 
         if (param.n < 0) param.n = 0;
@@ -89,7 +95,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             param.m = param.n;
             param.n = temp;
         } else if (param.m == param.n) {
-            param.err =  new BPException(BPException.Type.BP_Map_RankError);
+            param.err = new BPException(BPException.Type.BP_Map_RankError);
         }
         if (param.m > 100) {
             param.m = 100 - param.n; //!bp 45-101
