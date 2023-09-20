@@ -263,43 +263,29 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(BinUser user, OsuMode mode, OsuGetService osuGetService) {
-        var userInfo = osuGetService.getPlayerInfo(user, mode);
-        var bps = osuGetService.getBestPerformance(user, mode, 0, 100);
-        var res = osuGetService.getRecentN(user, mode, 0, 3);
-
-        /*
-        double bpp = 0;
-
-        for (int i = 0; i < bps.size(); i++) {
-            var bp = bps.get(i);
-            bpp += bp.getWeight().getPP();
-        }
-
-         */
+    public byte[] getPanelD(OsuUser osuUser, List<Score> BPs, List<Score> Recents, OsuMode mode, OsuGetService osuGetService) {
 
         double bonus = 0f;
-        if (!bps.isEmpty()) {
-            var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
-            bonus = SkiaUtil.getBonusPP(userInfo.getPP(), bpPPs);
-            // bonus = Math.max(userInfo.getPP() - bpp - SkiaUtil.getOverBP100PP(bpPPs, userInfo.getPlayCount()), 0f);
+        if (!BPs.isEmpty()) {
+            var bpPPs = BPs.stream().mapToDouble(Score::getPP).toArray();
+            bonus = SkiaUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
-        var times = bps.stream().map(Score::getCreateTime).toList();
+        var times = BPs.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();
-        var bpNum = new int[90];
+        var bpTimes = new int[90];
         times.forEach(time -> {
             var day = (int) (now.toEpochDay() - time.toLocalDate().toEpochDay());
             if (day > 0 && day <= 90) {
-                bpNum[90 - day]++;
+                bpTimes[90 - day]++;
             }
         });
 
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of("user", userInfo,
-                "bp-time", bpNum,
-                "bp-list", bps.subList(0, Math.min(bps.size(), 8)),
-                "re-list", res,
+        var body = Map.of("user", osuUser,
+                "bp-time", bpTimes,
+                "bp-list", BPs.subList(0, Math.min(BPs.size(), 8)),
+                "re-list", Recents,
                 "bonus_pp", bonus,
                 "mode", mode.getName()
         );

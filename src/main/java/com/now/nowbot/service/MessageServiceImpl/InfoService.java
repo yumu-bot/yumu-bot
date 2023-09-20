@@ -2,12 +2,15 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("Info")
@@ -40,22 +44,44 @@ public class InfoService implements MessageService {
         if (at != null) {
             user = bindDao.getUser(at.getTarget());
         } else {
-            if (name != null && !name.trim().equals("")) {
-                var id = osuGetService.getOsuId(matcher.group("name").trim());
+            if (name != null && !name.trim().isEmpty()) {
+                long id;
+                try {
+                    id = osuGetService.getOsuId(matcher.group("name").trim());
+                } catch (Exception e) {
+                    throw new InfoException(InfoException.Type.INFO_Player_NotFound);
+                }
                 user = new BinUser();
                 user.setOsuID(id);
                 user.setMode(OsuMode.DEFAULT);
             } else {
-                user = bindDao.getUser(event.getSender().getId());
+                try {
+                    user = bindDao.getUser(event.getSender().getId());
+                } catch (Exception e) {
+                    throw new InfoException(InfoException.Type.INFO_Me_NotFound);
+                }
             }
         }
-        var mode = OsuMode.getMode(matcher.group("mode"));
+
         //处理默认mode
+        var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
-//        Image img = from.uploadImage(ExternalResource.create());
+        OsuUser osuUser;
+        List<Score> BPs;
+        List<Score> Recents;
+
         try {
-            var img = imageService.getPanelD(user, mode, osuGetService);
+            osuUser = osuGetService.getPlayerInfo(user, mode);
+            BPs = osuGetService.getBestPerformance(user, mode, 0, 100);
+        } catch (Exception e) {
+            throw new InfoException(InfoException.Type.INFO_Player_NoBP);
+        }
+
+        Recents = osuGetService.getRecentN(user, mode, 0, 3);
+
+        try {
+            var img = imageService.getPanelD(osuUser, BPs, Recents, mode, osuGetService);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("INFO 数据请求失败", e);
