@@ -44,7 +44,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         OsuMode mode;
         Exception err;
     }
-    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?bestperformance|(ym)?best|ymbp(?![a-zA-Z_])|(ym)?b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     public static void main(String[] args) {
         var m = pattern.matcher("!b:o #15");
