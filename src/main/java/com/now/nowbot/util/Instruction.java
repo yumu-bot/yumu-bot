@@ -48,10 +48,12 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![a-zA-Z_]))+\\s*(?<mode>\\w+)")),
 
     SCOREPR(PassRecentService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((?<pass>(pass|p(?![a-zA-Z_])))|(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(?<recent>(ymrecent|(ym)?r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            //Pattern.compile("^[!！]\\s*(?i)(ym)?((?<pass>(pass|p(?![a-zA-Z_])))|(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ymscore|(ym)?s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
+            //Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
@@ -79,12 +81,12 @@ public enum Instruction {
 
     // i ymi yminfo :0-3 name
     INFO(InfoService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ym)?information|(ym)+info(?![a-zA-Z_])|(ym)?i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?information|yminfo(?![a-zA-Z_])|(ym)?i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
 
     UUINFO(UUIService.class,
-            Pattern.compile("^[!！]\\s*(?i)(uu)+(info|i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
+            Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?")),
     IM(IMapperService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?((im)?mapper|im(?![a-zA-Z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![a-zA-Z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     FRIENDLEGACY(FriendLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?")),
@@ -147,6 +149,7 @@ public enum Instruction {
 
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?![a-zA-Z_]))+(\\s+(?<SR>[0-9.]*))?")),
+
     SQL(SqlService.class,
             Pattern.compile("^[!！]sql\\s")),
 
