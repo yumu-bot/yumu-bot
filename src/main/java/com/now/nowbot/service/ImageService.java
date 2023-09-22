@@ -306,6 +306,17 @@ public class ImageService {
         return doPost("panel_E", httpEntity);
     }
 
+    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of(
+                "user", user,
+                "score", scores
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A5", httpEntity);
+    }
+
     public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
         //scores
         List<GameInfo> games = match.getEvents().stream()

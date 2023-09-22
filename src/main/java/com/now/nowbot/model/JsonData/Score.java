@@ -227,7 +227,7 @@ public class Score {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public class Weight {
+    public static class Weight {
         @JsonProperty("percentage")
         Float percentage;
         @JsonProperty("pp")

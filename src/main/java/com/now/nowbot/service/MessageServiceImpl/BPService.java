@@ -59,48 +59,52 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
         var param = new BPParam();
         param.mode = OsuMode.getMode(matcher.group("mode"));
-        var nStr = matcher.group("n");
-        var mStr = matcher.group("m");
         param.name = matcher.group("name");
 
+        //处理 n，m
+        {
+            var nStr = matcher.group("n");
+            var mStr = matcher.group("m");
 
-        if (nStr == null || nStr.isBlank()) {
-            // throw new BPException(BPException.Type.BP_Map_NoRank)
-            param.n = 0;
-        } else {
-            try {
-                param.n = Integer.parseInt(nStr) - 1;
-            } catch (NumberFormatException e) {
+            if (nStr == null || nStr.isBlank()) {
+                param.n = 0;
+            } else {
+                try {
+                    param.n = Integer.parseInt(nStr) - 1;
+                } catch (NumberFormatException e) {
+                    param.err = new BPException(BPException.Type.BP_Map_RankError);
+                }
+            }
+
+            //避免 !b lolol233 这样子被错误匹配
+            if (param.n < 0 || param.n > 99) {
+                if (param.name.isBlank()) {
+                    param.name += nStr;
+                    param.n = 0;
+                } else {
+                    param.err = new BPException(BPException.Type.BP_Map_RankError);
+                }
+            }
+
+            if (mStr == null || mStr.isBlank()) {
+                param.m = 1;
+                data.setValue(param);
+                return true;
+            }
+
+            param.m = Integer.parseInt(mStr);
+            if (param.m < param.n) {
+                int temp = param.m;
+                param.m = param.n;
+                param.n = temp;
+            } else if (param.m == param.n) {
                 param.err = new BPException(BPException.Type.BP_Map_RankError);
             }
-            // 笑死 根本不检查输入 throw new BPException(BPException.Type.BP_Map_RankError);
-            //        java.lang.NumberFormatException: For input string: "114514191981066"
-            //        at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67) ~[na:na]
-            //        at java.base/java.lang.Integer.parseInt(Integer.java:665) ~[na:na]
-            //        at java.base/java.lang.Integer.parseInt(Integer.java:781) ~[na:na]
-            //        at com.now.nowbot.service.MessageServiceImpl.BPService.isHandle(BPService.java:75) ~[classes/:na]
-        }
-
-        if (param.n < 0) param.n = 0;
-        else if (param.n > 99) param.n = 99;
-
-        if (mStr == null || mStr.isBlank()) {
-            param.m = 1;
-            data.setValue(param);
-            return true;
-        }
-        param.m = Integer.parseInt(mStr);
-        if (param.m < param.n) {
-            int temp = param.m;
-            param.m = param.n;
-            param.n = temp;
-        } else if (param.m == param.n) {
-            param.err = new BPException(BPException.Type.BP_Map_RankError);
-        }
-        if (param.m > 100) {
-            param.m = 100 - param.n; //!bp 45-101
-        } else {
-            param.m = param.m - param.n;//正常
+            if (param.m > 100) {
+                param.m = 100 - param.n; //!bp 45-101
+            } else {
+                param.m = param.m - param.n;//正常
+            }
         }
         data.setValue(param);
         return true;

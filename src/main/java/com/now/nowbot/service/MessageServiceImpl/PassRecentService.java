@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Ymp;
 import com.now.nowbot.model.enums.OsuMode;
@@ -31,7 +32,7 @@ public class PassRecentService implements MessageService {
 
     RestTemplate template;
     OsuGetService osuGetService;
-    BindDao      bindDao;
+    BindDao bindDao;
     ImageService imageService;
 
     @Autowired
@@ -45,34 +46,97 @@ public class PassRecentService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        boolean isRecent;
+        var name = matcher.group("name");
 
-        if (matcher.group("recent") != null) isRecent = true;
-        else if (matcher.group("pass") != null) isRecent = false;
-        else throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
+        int offset;
+        int limit;
+        boolean isRecent;
+        boolean isMultipleScore = true;
+
+        if (matcher.group("recent") != null) {
+            isRecent = true;
+        } else if (matcher.group("pass") != null) {
+            isRecent = false;
+        } else {
+            throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
+        }
+
+        //处理 n，m
+        // !p 45-55 offset/n = 44 limit/m = 11
+        {
+            int n;
+            int m;
+            var nStr = matcher.group("n");
+            var mStr = matcher.group("m");
+
+            if (nStr == null || nStr.isBlank()) {
+                n = 1;
+            } else {
+                try {
+                    n = Integer.parseInt(nStr);
+                } catch (NumberFormatException e) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+                }
+            }
+
+            if (mStr == null || mStr.isBlank()) {
+                m = n;
+            } else {
+                try {
+                    m = Integer.parseInt(mStr);
+                } catch (NumberFormatException e) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+                }
+            }
+
+            //避免 !b lolol233 这样子被错误匹配
+            if (n < 1 || n > 100) {
+                if (name == null || name.isBlank()) {
+                    name += nStr;
+                    n = 1;
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+                }
+            }
+
+            //分流：正常，相等，相反
+            if (m > n) {
+                offset = n - 1;
+                limit = m - n + 1;
+            } else if (m == n) {
+                offset = n - 1;
+                limit = 1;
+            } else {
+                offset = m - 1;
+                limit = n - m + 1;
+            }
+
+            isMultipleScore = (limit != 1);
+        }
 
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
-        var name = matcher.group("name");
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        BinUser user;
+        BinUser binUser;
+        OsuUser osuUser;
+
         if (at != null) {
-            user = bindDao.getUser(at.getTarget());
+            binUser = bindDao.getUser(at.getTarget());
         } else {
             if (name != null && !name.trim().isEmpty()) {
-                user = new BinUser();
+                binUser = new BinUser();
+                Long id;
                 try {
-                    Long id;
                     id = osuGetService.getOsuId(matcher.group("name").trim());
-                    user.setOsuID(id);
+                    binUser.setOsuID(id);
                 } catch (IllegalArgumentException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
-            } else {
-                if (event.getSender().getId() == 365246692L) {
+
+                if (id == 17064371L) {
                     var mode = OsuMode.getMode(matcher.group("mode"));
                     byte[] img;
                     try {
-                        img = getSPanel(mode, isRecent);
+                        img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
                     } catch (RuntimeException e) {
                         throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
                         //log.error("s: ", e);
@@ -81,35 +145,76 @@ public class PassRecentService implements MessageService {
                     event.getSubject().sendImage(img);
                     return;
                 }
-                user = bindDao.getUser(event.getSender().getId());
+
+            } else {
+                if (event.getSender().getId() == 365246692L) {
+                    var mode = OsuMode.getMode(matcher.group("mode"));
+                    byte[] img;
+                    try {
+                        img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
+                    } catch (RuntimeException e) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+                        //log.error("s: ", e);
+                        //throw new TipsException("24h内无记录");
+                    }
+                    event.getSubject().sendImage(img);
+                    return;
+                }
+                binUser = bindDao.getUser(event.getSender().getId());
             }
         }
-        var mode = OsuMode.getMode(matcher.group("mode"));
+
         //处理默认mode
-        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
+
         List<Score> scoreList = null;
-        if (user != null && user.isAuthorized()) {
-            scoreList = getData(user, mode, isRecent);
-        } else if (user != null) {
-            scoreList = getData(user.getOsuID(), mode, isRecent);
+
+        if (binUser != null && binUser.isAuthorized()) {
+            scoreList = getData(binUser, mode, offset, limit, isRecent);
+        } else if (binUser != null) {
+            scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
         }
-        if (scoreList != null && scoreList.isEmpty()) {
+
+        if (scoreList == null || scoreList.isEmpty()) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
 
         try {
-            var osuUser = osuGetService.getPlayerInfo(user, mode);
-            var data = imageService.getPanelE(osuUser, scoreList.get(0),osuGetService);
-            QQMsgUtil.sendImage(from, data);
+            osuUser = osuGetService.getPlayerInfo(binUser, mode);
         } catch (Exception e) {
-            log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
-            handleText(scoreList.get(0), isRecent, from);
+            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
 
+        //成绩发送
+        if (isMultipleScore) {
+            int scoreSize = scoreList.size();
+
+            //M太大
+            if (scoreSize < offset + limit) limit = scoreSize - offset;
+            if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
+
+            try {
+                var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                QQMsgUtil.sendImage(from, data);
+            } catch (Exception e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
+            }
+
+        } else {
+            //单成绩发送
+            try {
+                var data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                QQMsgUtil.sendImage(from, data);
+            } catch (Exception e) {
+                log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
+                handleText(scoreList.get(0), isRecent, from);
+            }
+        }
     }
 
-    private byte[] getSPanel(OsuMode m, boolean all) throws ScoreException {
-        var s = getData(bindDao.getUser(365246692L), m, all);
+    private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
+        var s = getData(bindDao.getUser(365246692L), mode, offset, limit, isRecent);
         if (CollectionUtils.isEmpty(s)) {
             //throw new RuntimeException("没打");
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
@@ -125,17 +230,17 @@ public class PassRecentService implements MessageService {
         from.sendMessage(new MessageChain.MessageChainBuilder().addImage(bytes).addText(d.getOut()).build());
     }
 
-    private List<Score> getData(BinUser user, OsuMode mode, boolean isAll) {
-        if (isAll)
-            return osuGetService.getAllRecentN(user, mode, 0, 1);
+    private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {
+        if (isRecent)
+            return osuGetService.getAllRecentN(user, mode, offset, limit);
         else
-            return osuGetService.getRecentN(user, mode, 0, 1);
+            return osuGetService.getRecentN(user, mode, offset, limit);
     }
 
-    private List<Score> getData(Long id, OsuMode mode, boolean isAll) {
-        if (isAll)
-            return osuGetService.getAllRecentN(id, mode, 0, 1);
+    private List<Score> getData(Long id, OsuMode mode, int offset, int limit, boolean isRecent) {
+        if (isRecent)
+            return osuGetService.getAllRecentN(id, mode, offset, limit);
         else
-            return osuGetService.getRecentN(id, mode, 0, 1);
+            return osuGetService.getRecentN(id, mode, offset, limit);
     }
 }
