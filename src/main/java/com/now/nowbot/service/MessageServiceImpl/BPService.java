@@ -78,12 +78,8 @@ public class BPService implements MessageService<BPService.BPParam> {
 
             //避免 !b lolol233 这样子被错误匹配
             if (param.n < 0 || param.n > 99) {
-                if (param.name.isBlank()) {
-                    param.name += nStr;
-                    param.n = 0;
-                } else {
-                    param.err = new BPException(BPException.Type.BP_Map_RankError);
-                }
+                param.name += nStr;
+                param.n = 0;
             }
 
             if (mStr == null || mStr.isBlank()) {

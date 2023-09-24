@@ -91,12 +91,8 @@ public class PassRecentService implements MessageService {
 
             //避免 !b lolol233 这样子被错误匹配
             if (n < 1 || n > 100) {
-                if (name == null || name.isBlank()) {
-                    name += nStr;
-                    n = 1;
-                } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
-                }
+                name += nStr;
+                n = 1;
             }
 
             //分流：正常，相等，相反
