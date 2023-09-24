@@ -18,9 +18,11 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -122,9 +124,9 @@ public class PassRecentService implements MessageService {
                 binUser = new BinUser();
                 Long id;
                 try {
-                    id = osuGetService.getOsuId(name);
+                    id = osuGetService.getOsuId(name.trim());
                     binUser.setOsuID(id);
-                } catch (IllegalArgumentException e) {
+                } catch (HttpClientErrorException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
 
