@@ -79,6 +79,12 @@ public class PassRecentService implements MessageService {
                 }
             }
 
+            //避免 !b lolol233 这样子被错误匹配
+            if (n < 1 || n > 100) {
+                name += nStr;
+                n = 1;
+            }
+
             if (mStr == null || mStr.isBlank()) {
                 m = n;
             } else {
@@ -87,12 +93,6 @@ public class PassRecentService implements MessageService {
                 } catch (NumberFormatException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
-            }
-
-            //避免 !b lolol233 这样子被错误匹配
-            if (n < 1 || n > 100) {
-                name += nStr;
-                n = 1;
             }
 
             //分流：正常，相等，相反
@@ -122,7 +122,7 @@ public class PassRecentService implements MessageService {
                 binUser = new BinUser();
                 Long id;
                 try {
-                    id = osuGetService.getOsuId(matcher.group("name").trim());
+                    id = osuGetService.getOsuId(name);
                     binUser.setOsuID(id);
                 } catch (IllegalArgumentException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
