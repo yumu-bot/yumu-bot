@@ -92,7 +92,11 @@ public class FriendService implements MessageService {
             if (doRandom) {
                 friends.add(friendList.get(index[i]));
             } else {
-                friends.add(friendList.get(i));
+                try {
+                    friends.add(friendList.get(i));
+                } catch (IndexOutOfBoundsException e) {
+                    NowbotApplication.log.error("Friend: 莫名其妙的数组越界", e);
+                }
             }
         }
 

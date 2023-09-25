@@ -46,9 +46,10 @@ public class QualifiedMapService implements MessageService {
             }
         }
 
-        if (range < 1 || range > 50) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
+        if (range < 1 || range > 999) throw new QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange);
 
-        int page = 1; //(int) (Math.floor(range / 50f) + 1); 这里需要重复获取，page最多取10页（500个），总之我不知道怎么实现
+        int page = 1;
+        int page_aim = (int) Math.max(Math.floor(range / 50f) + 1, 10);// 这里需要重复获取，page最多取10页（500个），总之我不知道怎么实现
 
         var query = new HashMap<String, Object>();
         status = getStatus(status);
@@ -71,11 +72,11 @@ public class QualifiedMapService implements MessageService {
                 var result = osuGetService.searchBeatmap(query);
                 resultCount += result.getBeatmapsets().size();
                 d.getBeatmapsets().addAll(result.getBeatmapsets());
-            } while (resultCount < d.getTotal() && page < 10);
-            d.setResultCount(resultCount);
+            } while (resultCount < d.getTotal() && page < page_aim);
 
             //var d = osuGetService.searchBeatmap(query);
-            //d.setResultCount(Math.min(d.getTotal(), range));
+
+            d.setResultCount(Math.min(d.getTotal(), range));
             d.setRule(status);
             d.sortBeatmapDiff();
             var img = imageService.getPanelA2(d);
