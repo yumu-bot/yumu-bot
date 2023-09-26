@@ -71,7 +71,7 @@ public class CheckAspect {
             }
         }
         // test 功能
-        if (CheckPermission.test() && !permission.isTester(event.getSender().getId())) {
+        if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
             throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
         }
         //服务权限判断
