@@ -4,6 +4,7 @@ import com.now.nowbot.throwable.TipsException;
 
 public class ScoreException extends TipsException {
     public static enum Type {
+        SCORE_Me_NoAuthorization("您撤销了授权呢，请输入 !ymbind 点击链接登录，重新授权吧"),//查询自己_玩家撤销授权
         SCORE_Player_NotFound("找不到此玩家，请检查。"), //获取玩家失败
         SCORE_Player_NoBind ("对方还没有绑定呢，请提醒他输入 !bind 点击链接登录，完成绑定吧"), //玩家_对方未绑定
         SCORE_Player_NoScore ("找不到此玩家的成绩，请检查。"), //玩家_找不到分数

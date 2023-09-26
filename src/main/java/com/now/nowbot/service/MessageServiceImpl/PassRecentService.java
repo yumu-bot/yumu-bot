@@ -168,10 +168,14 @@ public class PassRecentService implements MessageService {
 
         List<Score> scoreList = null;
 
-        if (binUser != null && binUser.isAuthorized()) {
-            scoreList = getData(binUser, mode, offset, limit, isRecent);
-        } else if (binUser != null) {
-            scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
+        try {
+            if (binUser != null && binUser.isAuthorized()) {
+                scoreList = getData(binUser, mode, offset, limit, isRecent);
+            } else if (binUser != null) {
+                scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
+            }
+        } catch (HttpClientErrorException e) {
+            throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
         }
 
         if (scoreList == null || scoreList.isEmpty()) {
