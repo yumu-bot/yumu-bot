@@ -55,7 +55,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         var builder = MsgUtils.builder();
         for (var msg : messageChain.getMessageList()) {
 
-            //他不支持我也没办法
+            //他不支持我也没办法 
+            // 不支持就升级 java 21
             if (msg instanceof ImageMessage) {
                 if (((ImageMessage) msg).isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(((ImageMessage) msg).getData()));
                 else builder.img(((ImageMessage) msg).getPath());

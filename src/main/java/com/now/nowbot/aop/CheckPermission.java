@@ -35,8 +35,10 @@ public @interface CheckPermission {
 
     /**
      * 管理员专用功能
+     * 改回super
      */
     boolean administrator() default false;
+    boolean isGroupAdmin()  default false;
     boolean test() default false;
 
 }
