@@ -116,7 +116,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![a-zA-Z_]))+\\s*(?<id>\\d+)?")),
 
     KITA(KitaService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))+(?<noBG>(x(?![a-zA-Z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))+(?<noBG>([xX](?![a-zA-Z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?")),
 
     // #5 osu! 比赛指令
 
@@ -130,7 +130,7 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
     CRA(CRAService.class,
-            Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-yA-Y_])|cra(?![a-yA-Y_])))+\\s*(?<z>[zZ])?\\s*(?<id>\\d+)?")),
+            Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?")),
 
     MONOW(MonitorNowService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),

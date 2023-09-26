@@ -18,7 +18,7 @@ public class SqlService implements MessageService {
     EntityManager entityManager;
 
     @Override
-    @CheckPermission(administrator = true)
+    @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var sql = event.getRawMessage().substring(event.getRawMessage().indexOf('\n'));
         jakarta.persistence.Query q = entityManager.createNativeQuery(sql);

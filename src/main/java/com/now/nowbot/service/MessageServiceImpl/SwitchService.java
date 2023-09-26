@@ -25,7 +25,7 @@ public class SwitchService implements MessageService {
         this.imageService = imageService;
     }
     @Override
-    @CheckPermission(administrator = true)
+    @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         //我忘了这玩意挖坑是干啥的...似乎是没什么用
         var from = event.getSubject();

@@ -83,7 +83,7 @@ public class Permission {
 
             //如果包含权限注解 则初始化权限列表
             if ($beansCheck != null) {
-                if ($beansCheck.administrator()) {
+                if ($beansCheck.isSuperAdmin()) {
                     var obj = new PermissionData(true);
                     Permission.PERMISSIONS.put(name, obj);
                 } else {

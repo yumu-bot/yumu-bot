@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.onebot.contact.GroupContact;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
@@ -66,12 +67,12 @@ public class CheckAspect {
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
             if (event.getSender() instanceof GroupContact groupUser && !groupUser.getRoll().equals(Role.ADMIN)) {
-                throw new PermissionException(servicename + "非管理员使用管理功能" + event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
             }
         }
         // test 功能
         if (CheckPermission.test() && !permission.isTester(event.getSender().getId())) {
-            throw new PermissionException(servicename + "有人使用测试功能 " + event.getSender().getId() + " -> " + servicename);
+            throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
         }
         //服务权限判断
         //白/黑名单

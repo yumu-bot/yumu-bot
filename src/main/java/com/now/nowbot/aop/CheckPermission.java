@@ -11,19 +11,16 @@ import java.lang.annotation.Target;
 public @interface CheckPermission {
     /***
      * 黑/白 名单类型 true白  false黑
-     * @return
      */
     boolean isWhite() default false;
 
     /***
      * 群组记录
-     * @return
      */
     boolean group() default true;
 
     /***
      * 个人记录
-     * @return
      */
     boolean friend() default true;
 
@@ -34,11 +31,14 @@ public @interface CheckPermission {
     boolean userSet() default false;
 
     /**
-     * 管理员专用功能
-     * 改回super
+     * 超级管理员专用功能
      */
-    boolean administrator() default false;
-    boolean isGroupAdmin()  default false;
+    boolean isSuperAdmin() default false;
+
+    /**
+     * 群聊管理员专用功能
+     */
+    boolean isGroupAdmin() default false;
     boolean test() default false;
 
 }

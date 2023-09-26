@@ -32,10 +32,10 @@ public class CRAService implements MessageService {
 
 
     @Override
-    @CheckPermission(administrator = true)
+    @CheckPermission(isGroupAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        var isLite = matcher.group("z") != null;
+        var isLite = matcher.group("x") != null;
         int id;
 
         try {

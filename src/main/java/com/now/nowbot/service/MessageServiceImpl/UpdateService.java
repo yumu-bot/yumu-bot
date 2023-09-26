@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 @Service("update")
 public class UpdateService implements MessageService {
     @Override
-    @CheckPermission(administrator = true)
+    @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         event.getSubject().sendMessage("即将更新重启...");
         UpdateUtil.update();
