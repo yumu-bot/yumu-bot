@@ -48,11 +48,11 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![a-zA-Z_]))+\\s*(?<mode>\\w+)")),
 
     SCOREPR(PassRecentService.class,
-            Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(?<recent>(ymrecent|(ym)?r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$")),
+            Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(ym)?(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$")),
             //Pattern.compile("^[!！]\\s*(?i)(ym)?((?<pass>(pass|p(?![a-zA-Z_])))|(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ymscore|(ym)?s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
             //Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
 
     // b ymb ymbp :0-3 name 1-100
