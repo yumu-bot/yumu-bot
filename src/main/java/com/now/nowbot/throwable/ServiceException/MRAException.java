@@ -31,9 +31,10 @@ public class MRAException extends TipsException {
 
         RATING_MRA_Error("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rl <mpid>。"),
         RATING_URA_Error("URA 输出失败，请重试。\n或尝试最新版渲染 !ra <mpid>。"),
+        RATING_CRA_Error("CRA 输出失败，请重试。\n或尝试文字版渲染 !ura <mpid>。"),
 
-        RATING_TRA_None("TestRa-请输入正确的房间号！"),
-        RATING_TRA_NotGroup("TestRa-请在群聊中使用！"),
+        RATING_CRA_MatchIDNotFound("CRA 请输入正确的房间号！"),
+        RATING_CRA_NotGroup("CRA 请在群聊中使用！"),
         ;//逗号分隔
         final String message;
         Type (String message) {

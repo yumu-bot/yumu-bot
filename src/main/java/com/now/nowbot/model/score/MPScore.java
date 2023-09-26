@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MpScoreInfo {
+public class MPScore {
     Long id;
     @JsonProperty("user_id")
     Integer userId;
@@ -45,7 +45,7 @@ public class MpScoreInfo {
         this.id = id;
     }
 
-    public Integer getUserId() {
+    public Integer getUserID() {
         return userId;
     }
 

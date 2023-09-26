@@ -141,10 +141,10 @@ public class URAService implements MessageService {
                         matchStatistics.setTeamVs(false);
                     }
                     //填充用户队伍信息和总分信息
-                    var user = users.get(scoreInfo.getUserId());
+                    var user = users.get(scoreInfo.getUserID());
                     if (user == null) {
-                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserId().longValue()));
-                        users.put(scoreInfo.getUserId(), user);
+                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserID().longValue()));
+                        users.put(scoreInfo.getUserID(), user);
                     }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());

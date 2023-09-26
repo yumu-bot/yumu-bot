@@ -129,6 +129,9 @@ public enum Instruction {
     URA(URAService.class,
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
+    CRA(CRAService.class,
+            Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-yA-Y_])|cra(?![a-yA-Y_])))+\\s*(?<z>[zZ])?\\s*(?<id>\\d+)?")),
+
     MONOW(MonitorNowService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
@@ -172,9 +175,6 @@ public enum Instruction {
 
     TESTID(TestGetId.class,
             Pattern.compile("^[!！]\\s*(?i)testid\\s*(?<ids>((\\d)+(,)?)+)")),
-
-    TESTRA(TestRAService.class,
-            Pattern.compile("[!！]\\s*(?i)testra(\\s+(?<id>\\d+))")),
 
     TESTPPM(TestPPMService.class,
             Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),

@@ -1,7 +1,6 @@
 package com.now.nowbot.service;
 
 import com.now.nowbot.config.NoProxyRestTemplate;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
@@ -10,7 +9,7 @@ import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.model.ppminus3.MapMinus;
-import com.now.nowbot.model.score.MpScoreInfo;
+import com.now.nowbot.model.score.MPScore;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +33,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toCollection;
 
 @Service("nowbot-image")
 public class ImageService {
@@ -385,15 +381,15 @@ public class ImageService {
                 statistics.put("delete", true);
                 statistics.put("bid", g.getBid());
             }
-            var scoreRankList = g.getScoreInfos().stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(MpScoreInfo::getUserId).toList();
+            var scoreRankList = g.getScoreInfos().stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(MPScore::getUserID).toList();
             if ("team-vs".equals(g.getTeamType())) {
                 statistics.put("is_team_vs", true);
                 // 成绩分类
                 var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();
                 var b_score = g_scores.stream().filter(s -> "blue".equals(s.getMatch().get("team").asText())).toList();
                 // 计算胜利(仅分数和
-                var b_score_sum = b_score.stream().mapToInt(MpScoreInfo::getScore).sum();
-                var r_score_sum = r_score.stream().mapToInt(MpScoreInfo::getScore).sum();
+                var b_score_sum = b_score.stream().mapToInt(MPScore::getScore).sum();
+                var r_score_sum = r_score.stream().mapToInt(MPScore::getScore).sum();
                 statistics.put("score_team_red", r_score_sum);
                 statistics.put("score_team_blue", b_score_sum);
                 statistics.put("score_total", r_score_sum + b_score_sum);
@@ -414,12 +410,12 @@ public class ImageService {
                 statistics.put("wins_team_red_before", r_win);
                 statistics.put("wins_team_blue_before", b_win);
 
-                var r_user_list = r_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUserId().longValue());
+                var r_user_list = r_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
+                    var u = uidMap.get(s.getUserID().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
-                var b_user_list = b_score.stream().sorted(Comparator.comparing(MpScoreInfo::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUserId().longValue());
+                var b_user_list = b_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
+                    var u = uidMap.get(s.getUserID().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 if (r_user_list.isEmpty() || b_user_list.isEmpty()) continue;
@@ -437,7 +433,7 @@ public class ImageService {
                 statistics.put("wins_team_red_before", 0);
                 statistics.put("wins_team_blue_before", 0);
 
-                statistics.put("score_total", g_scores.stream().mapToInt(MpScoreInfo::getScore).sum());
+                statistics.put("score_total", g_scores.stream().mapToInt(MPScore::getScore).sum());
 
                 //如果只有一两个人，则不排序
                 List<Map<String, Object>> user_list;
@@ -446,11 +442,11 @@ public class ImageService {
                     var stream = g_scores.stream();
 
                     if (g_scores.size() > 2) {
-                        stream = stream.sorted(Comparator.comparing(MpScoreInfo::getScore).reversed());
+                        stream = stream.sorted(Comparator.comparing(MPScore::getScore).reversed());
                     }
 
                     user_list = stream.map(s -> {
-                        var u = uidMap.get(s.getUserId().longValue());
+                        var u = uidMap.get(s.getUserID().longValue());
                         if (u == null) {
                             return getMatchScoreInfo("Unknown",
                                     "https://osu.ppy.sh/images/layout/avatar-guest.png",

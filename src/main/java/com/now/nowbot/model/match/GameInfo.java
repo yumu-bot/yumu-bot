@@ -3,7 +3,7 @@ package com.now.nowbot.model.match;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.beatmap.BeatmapInfo4Match;
-import com.now.nowbot.model.score.MpScoreInfo;
+import com.now.nowbot.model.score.MPScore;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -30,7 +30,7 @@ public class GameInfo {
     String[] mods;
     BeatmapInfo4Match beatmap;
     @JsonProperty("scores")
-    List<MpScoreInfo> scoreInfos;
+    List<MPScore> scoreInfos;
 
     public String getTeamType() {
         return teamType;
@@ -104,11 +104,11 @@ public class GameInfo {
         this.beatmap = beatmap;
     }
 
-    public List<MpScoreInfo> getScoreInfos() {
+    public List<MPScore> getScoreInfos() {
         return scoreInfos;
     }
 
-    public void setScoreInfos(List<MpScoreInfo> scoreInfos) {
+    public void setScoreInfos(List<MPScore> scoreInfos) {
         this.scoreInfos = scoreInfos;
     }
 
