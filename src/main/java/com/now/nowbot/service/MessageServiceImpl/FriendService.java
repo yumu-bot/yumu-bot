@@ -2,7 +2,9 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -36,14 +38,13 @@ public class FriendService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        var buMe = bindDao.getUser(event.getSender().getId());
-        var ouMe = osuGetService.getPlayerInfo(buMe);
+        BinUser binMe;
+        OsuUser osuMe;
 
-        //OsuUser me = null;
         List<MicroUser> friends = new ArrayList<>();
 
         //拿到参数,默认1-24个
-        int n1 = 0, n2 = 0;
+        int n1 = 0, n2;
         boolean doRandom = true;
         if (matcher.group("m") == null) {
             n2 = matcher.group("n") == null ? 12 : Integer.parseInt(matcher.group("n"));
@@ -60,16 +61,28 @@ public class FriendService implements MessageService {
         }
         n2--;
         if (n2 == 0 || 100 < n2 - n1) {
-            throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOverRange);
+            throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds);
             //throw new TipsException("参数范围错误!");
         }
 
-        if (!buMe.isAuthorized()) {
+        try {
+            binMe = bindDao.getUser(event.getSender().getId());
+        } catch (Exception e) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
+        }
+
+        if (!binMe.isAuthorized()) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
             //无权限
         }
 
-        var friendList = osuGetService.getFriendList(buMe);
+        try {
+            osuMe = osuGetService.getPlayerInfo(binMe);
+        } catch (Exception e) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_NotFound);
+        }
+
+        var friendList = osuGetService.getFriendList(binMe);
 
         int[] index = null;
         if (doRandom) {
@@ -103,7 +116,7 @@ public class FriendService implements MessageService {
         if (CollectionUtils.isEmpty(friends)) throw new FriendException(FriendException.Type.FRIEND_Client_NoFriend);
 
         try {
-            var data = imageService.getPanelA1(ouMe, friends);
+            var data = imageService.getPanelA1(osuMe, friends);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("Friend: ", e);
