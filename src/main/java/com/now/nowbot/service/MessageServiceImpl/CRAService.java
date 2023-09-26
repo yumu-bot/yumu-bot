@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.match.GameInfo;
 import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.score.MPScore;
@@ -29,7 +30,9 @@ public class CRAService implements MessageService {
         this.osuGetService = osuGetService;
     }
 
+
     @Override
+    @CheckPermission(administrator = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var isLite = matcher.group("z") != null;
@@ -41,7 +44,6 @@ public class CRAService implements MessageService {
             throw new MRAException(MRAException.Type.RATING_CRA_MatchIDNotFound);
         }
 
-
         StringBuilder sb = new StringBuilder();
         from.sendMessage("正在处理" + id);
         CRaCalculate(sb, id, isLite);
@@ -50,14 +52,6 @@ public class CRAService implements MessageService {
         if (from instanceof Group group) {
             try {
                 group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
-
-                //用一次睡10秒
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ignored) {
-                    // ignore
-                }
-
             } catch (Exception e) {
                 NowbotApplication.log.error("CRA:", e);
                 throw new MRAException(MRAException.Type.RATING_CRA_Error);
@@ -145,10 +139,13 @@ public class CRAService implements MessageService {
                 userName = score.getUserID().toString();
             }
 
-            sb.append(userName).append(',')
+            sb.append(score.getMatch().get("team").asText()).append(',')
+                    .append(score.getUserID()).append(',')
+                    .append(userName).append(',')
                     .append(score.getScore()).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
                     .append(score.getMaxCombo()).append(',')
+                    .append(String.format("%4.4f", score.getAccuracy())).append(',')
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');

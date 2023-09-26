@@ -140,11 +140,14 @@ public class BindService implements MessageService {
                 // do nothing
             }
             if (user != null && user.isAuthorized()) {
-                from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
+                if (user.getRefreshToken() != null) {
+                    from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
+                } else {
+                    from.sendMessage("您的令牌已经失效。回复 OK 重新绑定。");
+                }
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
-                if (s != null && s.getRawMessage().trim().equalsIgnoreCase("OK")) {
-                } else {
+                if (!(s != null && s.getRawMessage().trim().equalsIgnoreCase("OK"))) {
                     return;
                 }
             }

@@ -63,7 +63,7 @@ public class CheckAspect {
             return args;
         }
         //超管权限判断
-        if (CheckPermission.supperOnly()) {
+        if (CheckPermission.administrator()) {
             throw new PermissionException(servicename + "有人使用最高权限 " + event.getSender().getId() + " -> " + servicename);
         }
         // test 功能
