@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -9,41 +10,28 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("ScorePr")
-public class PassRecentService implements MessageService {
-    private static final Logger log = LoggerFactory.getLogger(PassRecentService.class);
+@Service("UUPR")
+public class UUPRService implements MessageService {
 
     RestTemplate template;
-    OsuGetService osuGetService;
-    BindDao bindDao;
-    ImageService imageService;
-
     @Autowired
-    public PassRecentService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
-        template = restTemplate;
-        this.osuGetService = osuGetService;
-        this.bindDao = bindDao;
-        imageService = image;
-    }
+    OsuGetService osuGetService;
+    @Autowired
+    BindDao bindDao;
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -53,7 +41,6 @@ public class PassRecentService implements MessageService {
         int offset;
         int limit;
         boolean isRecent;
-        boolean isMultipleScore;
 
         if (matcher.group("recent") != null) {
             isRecent = true;
@@ -63,13 +50,10 @@ public class PassRecentService implements MessageService {
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
-        //处理 n，m
-        // !p 45-55 offset/n = 44 limit/m = 11
+        //处理 n
         {
             int n;
-            int m;
             var nStr = matcher.group("n");
-            var mStr = matcher.group("m");
 
             if (nStr == null || nStr.isBlank()) {
                 n = 1;
@@ -87,32 +71,10 @@ public class PassRecentService implements MessageService {
                 n = 1;
             }
 
-            if (mStr == null || mStr.isBlank()) {
-                m = n;
-            } else {
-                try {
-                    m = Integer.parseInt(mStr);
-                } catch (NumberFormatException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
-                }
-            }
-
-            //分流：正常，相等，相反
-            if (m > n) {
-                offset = n - 1;
-                limit = m - n + 1;
-            } else if (m == n) {
-                offset = n - 1;
-                limit = 1;
-            } else {
-                offset = m - 1;
-                limit = n - m + 1;
-            }
-
-            isMultipleScore = (limit != 1);
+            offset = n;
+            limit = 1;
         }
 
-        //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser binUser;
         OsuUser osuUser;
@@ -130,34 +92,7 @@ public class PassRecentService implements MessageService {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
 
-                if (id == 17064371L) {
-                    var mode = OsuMode.getMode(matcher.group("mode"));
-                    byte[] img;
-                    try {
-                        img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
-                    } catch (RuntimeException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-                        //log.error("s: ", e);
-                        //throw new TipsException("24h内无记录");
-                    }
-                    event.getSubject().sendImage(img);
-                    return;
-                }
-
             } else {
-                if (event.getSender().getId() == 365246692L) {
-                    var mode = OsuMode.getMode(matcher.group("mode"));
-                    byte[] img;
-                    try {
-                        img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
-                    } catch (RuntimeException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-                        //log.error("s: ", e);
-                        //throw new TipsException("24h内无记录");
-                    }
-                    event.getSubject().sendImage(img);
-                    return;
-                }
                 binUser = bindDao.getUser(event.getSender().getId());
             }
         }
@@ -188,40 +123,13 @@ public class PassRecentService implements MessageService {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
 
-        //成绩发送
-        if (isMultipleScore) {
-            int scoreSize = scoreList.size();
-
-            //M太大
-            if (scoreSize < offset + limit) limit = scoreSize - offset;
-            if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
-
-            try {
-                var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                QQMsgUtil.sendImage(from, data);
-            } catch (Exception e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
-            }
-
-        } else {
-            //单成绩发送
-            try {
-                var data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
-                QQMsgUtil.sendImage(from, data);
-            } catch (Exception e) {
-                log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
-                getTextOutput(scoreList.get(0), from);
-            }
+        //单成绩发送
+        try {
+            getTextOutput(scoreList.get(0), from);
+        } catch (Exception e) {
+            from.sendMessage("UUPR 发送失败，请重试");
+            NowbotApplication.log.error("UUPR 发送失败：", e);
         }
-    }
-
-    private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
-        var s = getData(bindDao.getUser(365246692L), mode, offset, limit, isRecent);
-        if (CollectionUtils.isEmpty(s)) {
-            //throw new RuntimeException("没打");
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-        }
-        return imageService.spInfo(s.get(0));
     }
 
     private void getTextOutput(Score score, Contact from) {
@@ -247,3 +155,4 @@ public class PassRecentService implements MessageService {
             return osuGetService.getRecentN(id, mode, offset, limit);
     }
 }
+

@@ -5,7 +5,7 @@ import com.now.nowbot.model.JsonData.Score;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 
-public class Ymp {
+public class ScoreLegacy {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter SIZE_FORMATTER = DateTimeFormatter.ofPattern("m:ss");
 
@@ -14,16 +14,16 @@ public class Ymp {
     String country;
     int map_length;
     String map_name;
-    String map_hard;
+    String difficulty_name;
     String artist;
-    float difficulty;
-    String star;
+    float star_rating;
+    String star_str;
     String rank;
     String[] mods;
     int score;
     float acc;
     float pp;
-    int combo_max;
+    int max_combo;
     int combo;
     int bid;
 
@@ -42,95 +42,103 @@ public class Ymp {
         return url;
     }
 
+    public ScoreLegacy(Score score) {
+        var user = score.getUser();
+        var beatMap = score.getBeatMap();
+        var beatMapSet = beatMap.getBeatMapSet();
+        var modsList = score.getMods();
 
-    public Ymp(Score date) {
-        var user = date.getUser();
         name = user.getUserName();
-        mode = date.getMode().getName();
+        mode = score.getMode().getName();
         country = user.getCountryCode();
-        var modsdate = date.getMods();
-        mods = new String[modsdate.size()];
+        mods = new String[modsList.size()];
         for (int i = 0; i < mods.length; i++) {
-            mods[i] = modsdate.get(i);
+            mods[i] = modsList.get(i);
         }
-        var beatmapset = date.getBeatMapSet();
-        map_name = beatmapset.getTitleUTF();
-        artist = beatmapset.getArtistUTF();
-        url = beatmapset.getCovers().getCard();
-        map_hard = date.getBeatMap().getVersion();
+        map_name = beatMapSet.getTitleUTF();
+        artist = beatMapSet.getArtistUTF();
+        url = beatMapSet.getCovers().getCard();
+        max_combo = beatMap.getMaxCombo();
+        difficulty_name = beatMap.getVersion();
 
-        difficulty = date.getBeatMap().getDifficultyRating();
-        map_length = date.getBeatMap().getTotalLength();
-        int starmun = (int) Math.floor(difficulty);
-        star = "";
-        for (int i = 0; i < starmun && i < 10; i++) {
-            star += '★';
+        star_rating = beatMap.getDifficultyRating();
+        map_length = beatMap.getTotalLength();
+
+        int sr_floor = (int) Math.floor(star_rating);
+        star_str = "";
+        for (int i = 0; i < sr_floor && i < 10; i++) {
+            star_str += '★';
         }
-        if (0.5 < (difficulty - starmun) && starmun < 10) {
-            star += '☆';
+        if (0.5 < (star_rating - sr_floor) && sr_floor < 10) {
+            star_str += '☆';
         }
 
-        rank = date.getRank();
-        score = date.getScore();
-        acc = (float) ((Math.round(date.getAccuracy() * 10000)) / 100D);
+        rank = score.getRank();
+        this.score = score.getScore();
+        acc = (float) ((Math.round(score.getAccuracy() * 10000)) / 100D);
 
-        if (null == date.getPP()) {
+        if (score.getPP() == null) {
             pp = 0;
         } else {
-            pp = date.getPP();
+            pp = score.getPP();
         }
 
-        combo = date.getMaxCombo();
-        bid = Math.toIntExact(date.getBeatMap().getId());
-        passed = date.getPassed();
-        key = date.getBeatMap().getCS().intValue();
+        combo = score.getMaxCombo();
+        bid = Math.toIntExact(score.getBeatMap().getId());
+        passed = score.getPassed();
+        key = score.getBeatMap().getCS().intValue();
+        play_time = score.getCreateTime().toString();
 
-        var ndate = date.getStatistics();
-        n_300 = ndate.getCount300();
-        n_100 = ndate.getCount100();
-        n_50 = ndate.getCount50();
-        n_0 = ndate.getCountMiss();
-        n_geki = ndate.getCountGeki();
-        n_katu = ndate.getCountKatu();
-        play_time = date.getCreateTime().toString();
+        var stat = score.getStatistics();
+        n_300 = stat.getCount300();
+        n_100 = stat.getCount100();
+        n_50 = stat.getCount50();
+        n_0 = stat.getCountMiss();
+        n_geki = stat.getCountGeki();
+        n_katu = stat.getCountKatu();
 
         if (!passed) rank = "F";
     }
 
-    public static Ymp getInstance(Score date) {
-        return new Ymp(date);
+    public static ScoreLegacy getInstance(Score score) {
+        return new ScoreLegacy(score);
     }
 
-    public String getOut() {
+    public String getScoreLegacyOutput() {
         StringBuilder sb = new StringBuilder();
 
-        //  "username"("country_code"): "mode" ("key"K)-if needed
+        //  "username" ("country_code"): "mode" ("key"K)-if needed
         if ("mania".equals(mode)) {
-            map_hard = map_hard.replaceAll("^\\[\\d{1,2}K\\]\\s*", "");
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append(' ')
+            difficulty_name = difficulty_name.replaceAll("^\\[\\d{1,2}K\\]\\s*", "");
+            sb.append(name).append(' ').append('(').append(country).append(')').append(':').append(' ').append(mode).append(' ')
                     .append('(').append(key).append("K").append(')').append('\n');
         } else {
             sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
         }
 
         //  "artist_unicode" - "title_unicode" ["version"]
-        sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(map_hard).append(']').append('\n');
+        sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(difficulty_name).append(']').append('\n');
 
         //  ★★★★★ "difficulty_rating"* mm:ss
-        sb.append(star).append(' ').append(format(difficulty)).append('*').append(' ')
+        sb.append(star_str).append(' ').append(format(star_rating)).append('*').append(' ')
                 .append(map_length / 60).append(':').append(String.format("%02d", map_length % 60)).append('\n');
 
-        //  ["rank"] +"mods" "score" ("accuracy"%)
+        //  ["rank"] +"mods" "score" "pp"(###)PP
         sb.append('[').append(rank).append(']').append(' ');
-        for (String mod : mods) {
-            sb.append(mod).append(' ');
+
+        if (mods.length >= 1) {
+            sb.append('+');
+            for (String mod : mods) {
+                sb.append(mod).append(' ');
+            }
         }
-        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)", "\'")).append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
 
-        //  "pp"(###)PP  "max_combo"/###x
-        sb.append(format(pp)).append("(0)PP  ").append(combo).append("/0x").append('\n');
+        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)", "'")).append(' ').append(format(pp)).append("PP").append('\n');
 
-        //   "count_300" /  "count_100" / "count_50" / "count_miss"
+        //  "max_combo"/###x "accuracy"%
+        sb.append(combo).append('x').append('/').append(max_combo).append('x').append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+
+        //  "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode) {
             default:
             case "osu": {
@@ -144,9 +152,9 @@ public class Ymp {
             case "mania": {
                 sb.append(n_300).append('+').append(n_geki).append('(');
                 if (n_300 >= n_geki && n_geki != 0) {
-                    sb.append(String.format("%.1f", (1F * n_300 / n_geki))).append(':').append(1);
+                    sb.append(String.format("%.2f", (1F * n_geki / n_300)));
                 } else if (n_300 < n_geki && n_300 != 0) {
-                    sb.append(1).append(':').append(String.format("%.1f", (1F * n_geki / n_300)));
+                    sb.append(String.format("%.1f", (1F * n_geki / n_300)));
                 } else {
                     sb.append('-');
                 }

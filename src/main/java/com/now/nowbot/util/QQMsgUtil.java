@@ -54,9 +54,9 @@ public class QQMsgUtil {
         return qqMessageDao.getReply(reply);
     }
 
-    public static MessageReceipt sendTextAndImage(Contact from, String text, byte[] imgDate) {
+    public static MessageReceipt sendTextAndImage(Contact from, String text, byte[] imgData) {
         befor(from);
-        return from.sendMessage(new MessageChain.MessageChainBuilder().addText(text).addImage(imgDate).build());
+        return from.sendMessage(new MessageChain.MessageChainBuilder().addText(text).addImage(imgData).build());
     }
 
     public static void sendGroupFile(Group group, String name, byte[] data) {
