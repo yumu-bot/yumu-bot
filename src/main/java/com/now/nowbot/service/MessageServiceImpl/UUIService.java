@@ -45,7 +45,7 @@ public class UUIService implements MessageService {
         if (at != null) {
             user = bindDao.getUser(at.getTarget());
         } else {
-            if (name != null && !name.trim().equals("")) {
+            if (name != null && !name.trim().isEmpty()) {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
