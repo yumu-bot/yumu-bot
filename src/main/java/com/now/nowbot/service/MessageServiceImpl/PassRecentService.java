@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -174,7 +175,12 @@ public class PassRecentService implements MessageService {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             }
         } catch (HttpClientErrorException e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+            //退避 !recent
+            if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
+                NowbotApplication.log.info("recent 退避成功");
+            } else {
+                throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+            }
         }
 
         if (scoreList == null || scoreList.isEmpty()) {
