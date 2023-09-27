@@ -65,14 +65,12 @@ public class CheckAspect {
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
             if (event.getSender() instanceof GroupContact groupUser && !groupUser.getRoll().equals(Role.ADMIN)) {
-                NowbotApplication.log.info("非管理员使用管理功能 " + servicename);
-                //throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
             }
         }
         // test 功能
         if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
-            NowbotApplication.log.info("有人使用测试功能 " + servicename);
-            //throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
+            throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
         }
         //服务权限判断
         //白/黑名单
