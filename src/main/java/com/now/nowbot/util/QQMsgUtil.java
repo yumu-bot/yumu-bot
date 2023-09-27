@@ -54,7 +54,7 @@ public class QQMsgUtil {
         return qqMessageDao.getReply(reply);
     }
 
-    public static MessageReceipt sendTextAndImage(Contact from, String text, byte[] imgData) {
+    public static MessageReceipt sendImageAndText(Contact from, byte[] imgData, String text) {
         befor(from);
         return from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgData).addText(text).build());
     }

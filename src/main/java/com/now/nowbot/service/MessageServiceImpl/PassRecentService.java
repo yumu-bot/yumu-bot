@@ -9,7 +9,6 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
@@ -230,7 +229,7 @@ public class PassRecentService implements MessageService {
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
         //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
-        QQMsgUtil.sendTextAndImage(from, d.getScoreLegacyOutput(), imgBytes);
+        QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
     }
 
     private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {

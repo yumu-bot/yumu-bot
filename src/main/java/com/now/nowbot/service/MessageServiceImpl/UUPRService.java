@@ -10,7 +10,6 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
@@ -33,7 +32,7 @@ public class UUPRService implements MessageService {
     BindDao bindDao;
 
     @Autowired
-    public UUPRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public UUPRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
@@ -144,7 +143,7 @@ public class UUPRService implements MessageService {
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
         //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
-        QQMsgUtil.sendTextAndImage(from, d.getScoreLegacyOutput(), imgBytes);
+        QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
     }
 
     private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {

@@ -72,7 +72,7 @@ public class BiliApiService {
                     log.error("直播画面拉取异常", e);
                 }
                 if (img != null) {
-                    QQMsgUtil.sendTextAndImage(group, sb.toString(), img);
+                    QQMsgUtil.sendImageAndText(group, img, sb.toString());
                 } else {
                     group.sendMessage(sb.toString());
                 }
@@ -88,7 +88,7 @@ public class BiliApiService {
                     log.error("直播画面拉取异常", e);
                 }
                 if (img != null) {
-                    QQMsgUtil.sendTextAndImage(group, sb.toString(), img);
+                    QQMsgUtil.sendImageAndText(group, img, sb.toString());
                 } else {
                     group.sendMessage(sb.toString());
                 }
