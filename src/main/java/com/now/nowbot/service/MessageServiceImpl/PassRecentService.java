@@ -225,7 +225,7 @@ public class PassRecentService implements MessageService {
     }
 
     private void getTextOutput(Score score, Contact from) {
-        var d = ScoreLegacy.getInstance(score);
+        var d = ScoreLegacy.getInstance(score, osuGetService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 

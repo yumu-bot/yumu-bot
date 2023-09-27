@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
@@ -28,10 +29,15 @@ import java.util.regex.Matcher;
 public class UUPRService implements MessageService {
 
     RestTemplate template;
-    @Autowired
     OsuGetService osuGetService;
-    @Autowired
     BindDao bindDao;
+
+    @Autowired
+    public UUPRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+        template = restTemplate;
+        this.osuGetService = osuGetService;
+        this.bindDao = bindDao;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -71,7 +77,7 @@ public class UUPRService implements MessageService {
                 n = 1;
             }
 
-            offset = n;
+            offset = n - 1;
             limit = 1;
         }
 
@@ -133,7 +139,7 @@ public class UUPRService implements MessageService {
     }
 
     private void getTextOutput(Score score, Contact from) {
-        var d = ScoreLegacy.getInstance(score);
+        var d = ScoreLegacy.getInstance(score, osuGetService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 

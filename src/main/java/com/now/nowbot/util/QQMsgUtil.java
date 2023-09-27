@@ -56,7 +56,7 @@ public class QQMsgUtil {
 
     public static MessageReceipt sendTextAndImage(Contact from, String text, byte[] imgData) {
         befor(from);
-        return from.sendMessage(new MessageChain.MessageChainBuilder().addText(text).addImage(imgData).build());
+        return from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgData).addText(text).build());
     }
 
     public static void sendGroupFile(Group group, String name, byte[] data) {

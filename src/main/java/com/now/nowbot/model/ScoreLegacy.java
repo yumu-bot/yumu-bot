@@ -1,6 +1,7 @@
 package com.now.nowbot.model;
 
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.service.OsuGetService;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -42,9 +43,11 @@ public class ScoreLegacy {
         return url;
     }
 
-    public ScoreLegacy(Score score) {
+    public ScoreLegacy(Score score, OsuGetService osuGetService) {
         var user = score.getUser();
-        var beatMap = score.getBeatMap();
+        bid = Math.toIntExact(score.getBeatMap().getId());
+
+        var beatMap = osuGetService.getBeatMapInfo(bid);
         var beatMapSet = beatMap.getBeatMapSet();
         var modsList = score.getMods();
 
@@ -84,7 +87,6 @@ public class ScoreLegacy {
         }
 
         combo = score.getMaxCombo();
-        bid = Math.toIntExact(score.getBeatMap().getId());
         passed = score.getPassed();
         key = score.getBeatMap().getCS().intValue();
         play_time = score.getCreateTime().toString();
@@ -100,20 +102,22 @@ public class ScoreLegacy {
         if (!passed) rank = "F";
     }
 
-    public static ScoreLegacy getInstance(Score score) {
-        return new ScoreLegacy(score);
+    public static ScoreLegacy getInstance(Score score, OsuGetService osuGetService) {
+        return new ScoreLegacy(score, osuGetService);
     }
 
     public String getScoreLegacyOutput() {
         StringBuilder sb = new StringBuilder();
 
         //  "username" ("country_code"): "mode" ("key"K)-if needed
-        if ("mania".equals(mode)) {
+
+        sb.append(name).append(' ').append('(').append(country).append(')').append(':').append(' ').append(mode);
+
+        if (mode.equals("mania")) {
             difficulty_name = difficulty_name.replaceAll("^\\[\\d{1,2}K\\]\\s*", "");
-            sb.append(name).append(' ').append('(').append(country).append(')').append(':').append(' ').append(mode).append(' ')
-                    .append('(').append(key).append("K").append(')').append('\n');
+            sb.append(' ').append('(').append(key).append("K").append(')').append('\n');
         } else {
-            sb.append(name).append('(').append(country).append(')').append(':').append(mode).append('\n');
+            sb.append('\n');
         }
 
         //  "artist_unicode" - "title_unicode" ["version"]
@@ -133,10 +137,11 @@ public class ScoreLegacy {
             }
         }
 
-        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)", "'")).append(' ').append(format(pp)).append("PP").append('\n');
+        sb.append(String.valueOf(score).replaceAll("(?<=\\d)(?=(?:\\d{4})+$)", "'")).append(' ').append('(').append(format(pp)).append("PP").append(')').append('\n');
 
         //  "max_combo"/###x "accuracy"%
-        sb.append(combo).append('x').append('/').append(max_combo).append('x').append(' ').append('(').append(format(acc)).append('%').append(')').append('\n');
+        sb.append(combo).append('x').append(' ').append('/').append(' ').append(max_combo).append('x')
+                .append(' ').append('/').append('/').append(' ').append(format(acc)).append('%').append('\n');
 
         //  "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode) {
@@ -170,7 +175,7 @@ public class ScoreLegacy {
 
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
 
-        sb.append("bid:").append(bid);
+        sb.append("bid: ").append(bid);
         return sb.toString();
     }
 
