@@ -39,9 +39,9 @@ public class BPAnalysisService implements MessageService {
         var mode = OsuMode.getMode(matcher.group("mode"));
         //bp列表
         List<Score> bps;
-        OsuUser user;
+        OsuUser osuUser;
         var name = matcher.group("name");
-        if (name != null && !name.trim().equals("")) {
+        if (name != null && !name.trim().isEmpty()) {
             //查询其他人 bpht [name]
             name = name.trim();
             long id;
@@ -50,38 +50,52 @@ public class BPAnalysisService implements MessageService {
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
-            if (mode != OsuMode.DEFAULT) {
-                bps = osuGetService.getBestPerformance(id, mode, 0, 100);
-                user = osuGetService.getPlayerInfo(id, mode);
-                user.setPlayMode(mode.getName());
-            } else {
-                user = osuGetService.getPlayerInfo(id);
-                bps = osuGetService.getBestPerformance(id, user.getPlayMode(), 0, 100);
+            try {
+                if (mode != OsuMode.DEFAULT) {
+                    bps = osuGetService.getBestPerformance(id, mode, 0, 100);
+                    osuUser = osuGetService.getPlayerInfo(id, mode);
+                    osuUser.setPlayMode(mode.getName());
+                } else {
+                    osuUser = osuGetService.getPlayerInfo(id);
+                    bps = osuGetService.getBestPerformance(id, osuUser.getPlayMode(), 0, 100);
+                }
+            } catch (Exception e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
             }
         } else {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-            BinUser b;
+            BinUser binUser;
+
             if (at != null) {
                 try {
-                    b = bindDao.getUser(at.getTarget());
+                    binUser = bindDao.getUser(at.getTarget());
                 } catch (BindException e) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
                 }
             } else {
-                b = bindDao.getUser(event.getSender().getId());
+                binUser = bindDao.getUser(event.getSender().getId());
             }
-            if (mode != OsuMode.DEFAULT) {
-                user = osuGetService.getPlayerInfo(b, mode);
-                user.setPlayMode(mode.getName());
-                bps = osuGetService.getBestPerformance(b, mode, 0, 100);
-            } else {
-                bps = osuGetService.getBestPerformance(b, b.getMode(), 0, 100);
-                user = osuGetService.getPlayerInfo(b, b.getMode());
+
+            try {
+                if (mode != OsuMode.DEFAULT) {
+                    osuUser = osuGetService.getPlayerInfo(binUser, mode);
+                    osuUser.setPlayMode(mode.getName());
+                    bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+                } else {
+                    bps = osuGetService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
+                    osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
+                }
+            } catch (Exception e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
             }
         }
 
+        if (bps == null || bps.size() <= 5) {
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+        }
+
         try {
-            var data = imageService.getPanelJ(user, bps, osuGetService);
+            var data = imageService.getPanelJ(osuUser, bps, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("BPA Error: ", e);

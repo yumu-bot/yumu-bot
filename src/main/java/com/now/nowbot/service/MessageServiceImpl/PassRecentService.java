@@ -173,11 +173,20 @@ public class PassRecentService implements MessageService {
                 scoreList = getData(binUser, mode, offset, limit, isRecent);
             } else if (binUser != null) {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
+            } else {
+                //退避 !recent
+                if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
+                    NowbotApplication.log.info("recent 退避成功");
+                    return;
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+                }
             }
         } catch (HttpClientErrorException e) {
             //退避 !recent
             if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
                 NowbotApplication.log.info("recent 退避成功");
+                return;
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
             }
