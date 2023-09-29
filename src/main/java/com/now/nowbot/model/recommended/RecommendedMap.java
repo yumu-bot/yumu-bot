@@ -33,7 +33,7 @@ public class RecommendedMap {
         data.AR = mapInfo.getAR();
         data.HP = mapInfo.getHP();
         data.CS = mapInfo.getCS();
-        data.bpm = mapInfo.getBpm();
+        data.bpm = mapInfo.getBPM();
         data.Objects = mapInfo.getSpinners() + mapInfo.getCircles() + mapInfo.getSliders();
         data.length = mapInfo.getTotalLength();
         data.title = mapInfo.getBeatMapSet().getTitleUTF();

@@ -203,7 +203,7 @@ public class BeatMap {
         this.hp = hp;
     }
 
-    public Float getBpm() {
+    public Float getBPM() {
         return bpm;
     }
 

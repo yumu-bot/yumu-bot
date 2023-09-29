@@ -67,11 +67,7 @@ public class BPAnalysisService implements MessageService {
             BinUser binUser;
 
             if (at != null) {
-                try {
-                    binUser = bindDao.getUser(at.getTarget());
-                } catch (BindException e) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
-                }
+                binUser = bindDao.getUser(at.getTarget());
             } else {
                 binUser = bindDao.getUser(event.getSender().getId());
             }
@@ -86,7 +82,11 @@ public class BPAnalysisService implements MessageService {
                     osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
                 }
             } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+                if (at != null) {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+                } else {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_FetchFailed);
+                }
             }
         }
 

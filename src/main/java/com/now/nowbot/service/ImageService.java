@@ -538,17 +538,17 @@ public class ImageService {
                     minfo.setDifficultyRating(attr.getStars());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
                         minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
-                        minfo.setBpm(minfo.getBpm() * 1.5f);
+                        minfo.setBpm(minfo.getBPM() * 1.5f);
                     } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
                         minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
-                        minfo.setBpm(minfo.getBpm() * 0.75f);
+                        minfo.setBpm(minfo.getBPM() * 0.75f);
                     }
                 }
                 var m = new map(
                         i + 1,
                         minfo.getTotalLength(),
                         s.getMaxCombo(),
-                        minfo.getBpm(),
+                        minfo.getBPM(),
                         minfo.getDifficultyRating(),
                         s.getRank(),
                         s.getBeatMapSet().getCovers().getList2x(),

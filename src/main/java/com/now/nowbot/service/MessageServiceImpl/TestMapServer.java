@@ -34,7 +34,7 @@ public class TestMapServer implements MessageService {
         if (mod == null || mod.trim().equals("")){
 
             sb.append(info.getDifficultyRating()).append(',')
-                    .append(info.getBpm()).append(',')
+                    .append(info.getBPM()).append(',')
                     .append(String.format("%d", (int) (Math.floor(info.getTotalLength() / 60f))))
                     .append(':')
                     .append(String.format("%02d", (int) (info.getTotalLength() % 60f)))
@@ -53,7 +53,7 @@ public class TestMapServer implements MessageService {
         var a = osuGetService.getAttributes((long)bid, modInt);
         sb.append('(').append(info.getBeatMapSet().getMapperUID()).append(')');
         sb.append(a.getStarRating()).append(',')
-                .append(info.getBpm()).append(',')
+                .append(info.getBPM()).append(',')
                 .append(info.getHitLength()).append('\n');
         sb.append(a.getMaxCombo()).append(',')
                 .append(DataUtil.CS(info.getCS(), modInt)).append(',')

@@ -13,7 +13,7 @@ public class ScoreException extends TipsException {
         SCORE_Score_OutOfRange ("找不到这张谱面上的相应成绩，请检查。"), //分数_找不到分数
         SCORE_Recent_NotFound ("找不到 24 小时内的成绩。"), //分数_找不到分数
         SCORE_Mod_NotFound ("找不到这张谱面上含有相应模组的成绩，请检查。"), //模组_找不到分数
-        SCORE_Mode_MainNotFound ("找不到这张谱面主游戏模式的成绩，请检查。"), //游戏模式_找不到分数
+        SCORE_Mode_MainNotFound ("找不到这张谱面所属游戏模式的成绩，请检查。"), //游戏模式_找不到分数
         SCORE_Mode_NotFound("找不到这张谱面对应游戏模式的成绩，请检查。\n或者，不要指定游戏模式。(!s [bid])"), //游戏模式_找不到分数
         SCORE_Send_Error ("成绩发送失败，请重试。") //发送_发送失败
 

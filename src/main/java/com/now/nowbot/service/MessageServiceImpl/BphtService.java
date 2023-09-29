@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Service("bpht")
 public class BphtService implements MessageService {
-    private static final String TIPS = "此功能即将下线，请使用新设计面板 -> !ba \n\n";
+    private static final String TIPS = "此功能已经有新设计，请使用新面板 -> !ba \n\n";
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
@@ -80,7 +80,11 @@ public class BphtService implements MessageService {
         }
 
         if (binUser == null) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_LoseBind);
+            if (matcher.group("name") == null || matcher.group("name").trim().isEmpty()) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_LoseBind);
+            } else {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
+            }
         }
 
         //bp列表
@@ -180,26 +184,24 @@ public class BphtService implements MessageService {
         var sb = new StringBuffer(TIPS)
                 .append(name).append('[').append(mode).append(']').append('\n');
 
-        var t1 = bps.get(0);
-        var t1Bpm = t1.getBeatMap().getBpm();
-        float t1BLength = t1.getBeatMap().getTotalLength();
-        if (t1.getMods().contains("DT") || t1.getMods().contains("NC")) {
-            t1BLength /= 1.5f;
-            t1Bpm *= 1.5f;
-        } else if (t1.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-            t1BLength /= 0.75f;
-            t1Bpm *= 0.75f;
+        var BP1 = bps.get(0);
+        var BP1BPM = BP1.getBeatMap().getBPM();
+        float BP1Length = BP1.getBeatMap().getTotalLength();
+        if (BP1.getMods().contains("DT") || BP1.getMods().contains("NC")) {
+            BP1Length /= 1.5f;
+            BP1BPM *= 1.5f;
+        } else if (BP1.getMods().stream().anyMatch(r -> r.equals("HT"))) {
+            BP1Length /= 0.75f;
+            BP1BPM *= 0.75f;
         }
         float star = 0;
-        int maxBpm = 0;
-        float maxBpmValue = t1Bpm;
+        float maxBPM = BP1BPM;
         int maxCombo = 0;
-        int maxComboValue = t1.getMaxCombo();
+        int maxComboValue = BP1.getMaxCombo();
         int maxLength = 0;
-        float maxLengthValue = t1BLength;
+        float maxLengthValue = BP1Length;
 
-        int minBpm = 0;
-        float minBpmValue = maxBpmValue;
+        float minBPM = maxBPM;
         int minCombo = 0;
         int minComboValue = maxComboValue;
         int minLength = 0;
@@ -234,7 +236,7 @@ public class BphtService implements MessageService {
             var bp = bps.get(i);
             var map = bp.getBeatMap();
             int length = map.getTotalLength();
-            float bpm = map.getBpm();
+            float bpm = map.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
                     modSum.get(r).add(bp.getWeight().getPP());
@@ -258,12 +260,10 @@ public class BphtService implements MessageService {
                 star += bp.getBeatMap().getDifficultyRating();
             }
 
-            if (bpm < minBpmValue) {
-                minBpm = i;
-                minBpmValue = bpm;
-            } else if (bpm > maxBpmValue) {
-                maxBpm = i;
-                maxBpmValue = bpm;
+            if (bpm < minBPM) {
+                minBPM = bpm;
+            } else if (bpm > maxBPM) {
+                maxBPM = bpm;
             }
 
             if (length < minLengthValue) {
@@ -306,14 +306,14 @@ public class BphtService implements MessageService {
         sb.append("最短是 BP").append(minLength + 1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
 
         sb.append("BP 平均连击: ").append(avgCombo).append('\n');
-        sb.append("BP 平均星级: ").append(star).append('\n');
-        sb.append("Combo 最大是 BP").append(maxCombo + 1).append(' ').append(maxComboValue).append('\n');
-        sb.append("Combo 最小是 BP").append(minCombo + 1).append(' ').append(minComboValue).append('\n');
+        sb.append("BP 平均星级: ").append(String.format("%.2f", star)).append('\n');
+        sb.append("Combo 最大是 BP").append(maxCombo + 1).append(' ').append(maxComboValue).append('x').append('\n');
+        sb.append("Combo 最小是 BP").append(minCombo + 1).append(' ').append(minComboValue).append('x').append('\n');
 
-        sb.append("单图 PP/TTH 比例最大的是BP").append(maxTimeToPp + 1)
-                .append(" 获得").append(decimalFormat.format(maxTimeToPpValue)).append("pp/tth").append('\n');
+        sb.append("单图 PP/TTH 比例最大的是 BP").append(maxTimeToPp + 1)
+                .append(" 获得").append(decimalFormat.format(maxTimeToPpValue)).append("PP/TTH").append('\n');
 
-        sb.append("BPM 统计:").append(decimalFormat.format(maxBpmValue)).append('-').append(decimalFormat.format(minBpmValue)).append('\n');
+        sb.append("BPM 统计:").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
 
         sb.append("BP Mapper 统计:\n");
         var mappers = mapperSum.values().stream()
@@ -337,10 +337,10 @@ public class BphtService implements MessageService {
                         .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
             }
         });
-        sb.append("累计mod有:\n");
+        sb.append("累计模组有:\n");
         float finalAllPP = nowPP;
         modSum.forEach((mod, sum) -> sb.append(mod).append('*').append(sum.size).append(' ').append("总计")
-                .append(sum.getAllPP())
+                .append(decimalFormat.format(sum.getAllPP()))
                 .append('[').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(']')
                 .append('\n'));
         return sb.toString().split("\n");

@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashSet;
@@ -40,21 +41,32 @@ public class ScoreService implements MessageService {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        BinUser user = null;
+        var name = matcher.group("name");
+        BinUser binUser;
 
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
         if (at != null) {
             try {
-                user = bindDao.getUser(at.getTarget());
+                binUser = bindDao.getUser(at.getTarget());
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoBind);
             }
+        } else if (name != null && !name.trim().isEmpty()) {
+            binUser = new BinUser();
+            Long id;
+            try {
+                id = osuGetService.getOsuId(name.trim());
+                binUser.setOsuID(id);
+            } catch (HttpClientErrorException e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+            }
         } else {
-            user = bindDao.getUser(event.getSender().getId());
+            binUser = bindDao.getUser(event.getSender().getId());
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
-        boolean isDefault = (mode == OsuMode.DEFAULT && user != null && user.getMode() != null);
+        boolean isDefault = (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null);
 
         var bid = Long.parseLong(matcher.group("bid"));
 
@@ -66,16 +78,16 @@ public class ScoreService implements MessageService {
         }
 
         Score score = null;
-        if (mods != null && mods.size() > 0) {
+        if (mods != null && !mods.isEmpty()) {
             List<Score> scoreall;
             try {
-                scoreall = osuGetService.getScoreAll(bid, user, isDefault ? user.getMode() : mode);
+                scoreall = osuGetService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
             }
 
             for (var s : scoreall) {
-                if (s.getMods().size() == 0 && mods.size() == 1 && mods.get(0) == Mod.None) {
+                if (s.getMods().isEmpty() && mods.size() == 1 && mods.get(0) == Mod.None) {
                     score = s;
                     break;
                 }
@@ -95,26 +107,26 @@ public class ScoreService implements MessageService {
                 score.setBeatMap(bm);
             }
         } else {
-            ScoreException.Type error = null;
+            ScoreException.Type err = null;
             try {
-                score = osuGetService.getScore(bid, user, isDefault ? user.getMode() : mode).getScore();
+                score = osuGetService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
             } catch (Exception e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        score = osuGetService.getScore(bid, user, OsuMode.DEFAULT).getScore();
+                        score = osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
                     } catch (Exception e2) {
-                        error = ScoreException.Type.SCORE_Mode_MainNotFound;
+                        err = ScoreException.Type.SCORE_Mode_MainNotFound;
                     }
                 } else {
-                    error = ScoreException.Type.SCORE_Mode_NotFound;
+                    err = ScoreException.Type.SCORE_Mode_NotFound;
                 }
             }
-            if (error != null) throw new ScoreException(error);
+            if (err != null) throw new ScoreException(err);
         }
 
         //这里的mode必须用谱面传过来的
-        var userInfo = osuGetService.getPlayerInfo(user, score.getMode());
+        var userInfo = osuGetService.getPlayerInfo(binUser, score.getMode());
 
         try {
             var data = imageService.getPanelE(userInfo, score, osuGetService);

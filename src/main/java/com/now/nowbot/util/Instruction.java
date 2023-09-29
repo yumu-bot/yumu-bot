@@ -55,8 +55,8 @@ public enum Instruction {
             Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![a-zA-Z_])))|uu(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+))?$")),
 
     SCORE(ScoreService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
-            //Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s?(?<bid>\\d+)(\\s*\\+(?<mod>( ?[EZNMFHTDRSPCLO]*)+))?")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?")),
+            //Pattern.compile("^[!！]\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\s*([:：](?<mode>[\w\d]+))?\s*(?<bid>\d+)\s*(\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?")),
 
     // b ymb ymbp :0-3 name 1-100
     BP(BPService.class,
@@ -70,7 +70,7 @@ public enum Instruction {
     BPLEGACY(BPLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformancelegacy|bpl(?![a-zA-Z_])|bl(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$")),
     TODAYBP(TodayBPService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|tbp(?![a-zA-Z_])|t(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$")),
+            Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|(tbp|tdp|t(?![a-zA-Z_])))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$")),
     TODAYBPLEGACY(TBPLegacyService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybplegacy|tbpl(?![a-zA-Z_])|tl(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$")),
 
