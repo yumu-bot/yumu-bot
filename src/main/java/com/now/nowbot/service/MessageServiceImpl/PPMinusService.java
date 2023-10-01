@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
@@ -40,7 +41,6 @@ public class PPMinusService implements MessageService {
             doVs(event, matcher);
             return;
         }
-
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -48,42 +48,50 @@ public class PPMinusService implements MessageService {
         OsuUser user;
         List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
-
-        if (at != null) {
-            // 包含有@
-            var userBin = bindDao.getUser(at.getTarget());
-            //处理默认mode
-            if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
-            user = osuGetService.getPlayerInfo(userBin, mode);
-            bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
-            ppm = Ppm.getInstance(mode, user, bps);
-        } else {
             // 不包含@ 分为查自身/查他人
-            if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
-                // 查他人
-                long id;
-                try {
-                    id = osuGetService.getOsuId(matcher.group("name").trim());
-                } catch (HttpClientErrorException e) {
-                    throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
-                }
-
+        if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
+            // 查他人
+            try {
+                var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = osuGetService.getPlayerInfo(id, mode);
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
-                //默认无主模式
-                if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
-                ppm = Ppm.getInstance(mode, user, bps);
-            } else {
-                var userBin = bindDao.getUser(event.getSender().getId());//处理默认mode
-                if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
-                user = osuGetService.getPlayerInfo(userBin, mode);
-                bps = osuGetService.getBestPerformance(userBin, mode, 0, 100);
-                ppm = Ppm.getInstance(mode, user, bps);
+            } catch (HttpClientErrorException e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            }
+            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
+            }
+            //默认无主模式
+            if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
+
+        } else if (at != null) {
+            try {
+                var binUser = bindDao.getUser(at.getTarget());//处理默认mode
+                if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
+                user = osuGetService.getPlayerInfo(binUser, mode);
+                bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+            } catch (Exception e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            }
+            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
+            }
+        } else {
+            try {
+                var binUser = bindDao.getUser(event.getSender().getId());//处理默认mode
+                if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
+                user = osuGetService.getPlayerInfo(binUser, mode);
+                bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+            } catch (Exception e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_NotFound);
+            }
+            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
             }
         }
+        ppm = Ppm.getInstance(mode, user, bps);
 
         try {
-            long now = System.currentTimeMillis();
             var img = imageService.getPanelB1(user, mode, ppm);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
