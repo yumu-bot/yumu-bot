@@ -32,21 +32,21 @@ public class HelpService implements MessageService<Matcher> {
         String web = "https://docs.365246692.xyz/help/";
         String html = ".html";
         String link = switch (module) {
-            case "bot", "b" -> "bot";
-            case "score", "s" -> "score";
-            case "player", "p" -> "player";
-            case "map", "m" -> "map";
-            case "chat", "c" -> "chat";
-            case "fun", "f" -> "fun";
-            case "aid", "a" -> "aid";
-            case "tournament", "t" -> "tournament";
-            default -> "command";
+            case "bot", "b" -> "bot" + html;
+            case "score", "s" -> "score" + html;
+            case "player", "p" -> "player" + html;
+            case "map", "m" -> "map" + html;
+            case "chat", "c" -> "chat" + html;
+            case "fun", "f" -> "fun" + html;
+            case "aid", "a" -> "aid" + html;
+            case "tournament", "t" -> "tournament" + html;
+            default -> "";
         };
 
         QQMsgUtil.sendImage(from, Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/" + path)));
 
         if (isSendLink) {
-            var receipt = from.sendMessage("请参阅：" + web + link + html);
+            var receipt = from.sendMessage("请参阅：" + web + link);
             //默认110秒后撤回
             from.recallIn(receipt, 110 * 1000);
         }
