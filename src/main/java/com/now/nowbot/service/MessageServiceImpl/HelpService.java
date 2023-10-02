@@ -11,9 +11,10 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("help")
-public class HelpService implements MessageService {
+public class HelpService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        boolean isSendLink = true; //这是防止web不能用，临时关闭的布尔值
         var from = event.getSubject();
         String module = matcher.group("module").trim(); //传东西进来
         String path = switch (module) {
@@ -28,9 +29,26 @@ public class HelpService implements MessageService {
             default -> "help-default.png";
         };
 
-        path = "ExportFileV3/" + path;
+        String web = "https://docs.365246692.xyz/help/";
+        String html = ".html";
+        String link = switch (module) {
+            case "bot", "b" -> "bot";
+            case "score", "s" -> "score";
+            case "player", "p" -> "player";
+            case "map", "m" -> "map";
+            case "chat", "c" -> "chat";
+            case "fun", "f" -> "fun";
+            case "aid", "a" -> "aid";
+            case "tournament", "t" -> "tournament";
+            default -> "command";
+        };
 
-        QQMsgUtil.sendImage(from,Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve(path)));
+        QQMsgUtil.sendImage(from, Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/" + path)));
 
+        if (isSendLink) {
+            var receipt = from.sendMessage("请参阅：" + web + link + html);
+            //默认110秒后撤回
+            from.recallIn(receipt, 110 * 1000);
+        }
     }
 }
