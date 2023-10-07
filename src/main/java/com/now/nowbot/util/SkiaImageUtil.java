@@ -16,6 +16,28 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class SkiaImageUtil {
+    static MessageDigest MD;
+
+    static {
+        try {
+            MD = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        String path = "https://git.365246692.xyz/bot/nowbot_image";
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        md.update(path.getBytes());
+        md.getAlgorithm();
+        System.out.println(new BigInteger(1, md.digest()).toString(16));
+    }
 
     /**
      * 加载网络图片,优先从本地加载图片
@@ -25,18 +47,14 @@ public class SkiaImageUtil {
      * @throws IOException
      */
     public static Image getImageFronNetworkWithCache(String path) throws IOException {
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        if (MD == null) {
+            return null;
         }
-        md.update(path.getBytes());
-        md.getAlgorithm();
-        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH + new BigInteger(1, md.digest()).toString(16));
+        MD.update(path.getBytes());
+        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH + new BigInteger(1, MD.digest()).toString(16));
 
         if (Files.isRegularFile(pt)) {
-            md.reset();
+            MD.reset();
             return Image.makeFromEncoded(Files.readAllBytes(pt));
         } else {
             URL url = new URL(path);
