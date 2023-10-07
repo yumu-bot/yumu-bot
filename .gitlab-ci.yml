@@ -1,21 +1,36 @@
-
-stages:
-  - build
-  - update
-job-build:
-  stage: build
+default:
   tags:
     - master
+  
+variables:
+    GIT_STRATEGY: none
+
+stages:
+  - update
+  # - restart
+
+job-build:
+  stage: update
+  needs: []
   script:
-    - pwd
-    - cd /home/spring/work
-    - ls -al
+    - cd ~/nowbot
+    - git fetch --all
+    - git reset --hard origin/master
+    - git pull
+    - mvn package
 
 job-update:
   stage: update
-  tags:
-    - master
+  needs: 
+    - job-build
   script:
-    - pwd
-    - cd /home/spring/work
-    - ls -al
+    - cd ~/nowbot
+    - mv ./target/nowbot-linux.jar ~/work
+    - sudo systemctl restart nowbot
+# job-restart-server:
+#   stage: restart
+#   needs: 
+#     - job-update
+#   script:
+    
+#   when: manual
