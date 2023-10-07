@@ -1,0 +1,21 @@
+
+stages:
+  - build
+  - update
+job-build:
+  stage: build
+  tags:
+    - master
+  script:
+    - pwd
+    - cd /home/spring/work
+    - ls -al
+
+job-update:
+  stage: update
+  tags:
+    - master
+  script:
+    - pwd
+    - cd /home/spring/work
+    - ls -al
