@@ -15,7 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 import java.util.regex.Matcher;
 
-@Service("switch")
+
+@Service("switch") //修改 "switch" 一定要修改
 public class SwitchService implements MessageService {
     Permission permission;
     ImageService imageService;

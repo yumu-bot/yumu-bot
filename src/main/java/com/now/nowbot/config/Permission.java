@@ -48,9 +48,7 @@ public class Permission {
     private static PermissionData                   ALL_B;
     //service名单
     private static final Map<String, PermissionData>    PERMISSIONS = new ConcurrentHashMap<>();
-    private static CopyOnWriteArraySet<Instruction>     OFF_SERVICE = null;
-
-    private static final Map<Instruction, String>       SERVICE_NAME = new TreeMap<>();
+    private static CopyOnWriteArraySet<String>     OFF_SERVICE = null;
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
@@ -138,6 +136,14 @@ public class Permission {
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
         OFF_SERVICE = new CopyOnWriteArraySet<>();
 
+        var messageService = applicationContext.getBeansOfType(MessageService.class);
+        messageService.forEach((name, service) -> {
+            var p = serviceSwitchMapper.findById(name);
+            if (p.isPresent() && !p.get().isSwitch()) {
+                OFF_SERVICE.add(name);
+            }
+        });
+        /*
         for (var i : Instruction.values()) {
             var names = applicationContext.getBeanNamesForType(i.getaClass());
             if (names.length > 0) {
@@ -157,6 +163,7 @@ public class Permission {
                 }
             }
         }
+         */
         log.info("名单初始化完成");
     }
 
@@ -337,34 +344,20 @@ public class Permission {
 
     /**
      * 单功能开关
-     *
-     * @param i
      * @return
      */
-    public static boolean isServiceClose(Instruction i) {
-        return OFF_SERVICE.contains(i) && i != Instruction.SWITCH;
+    public static boolean isServiceClose(String name) {
+        return OFF_SERVICE.contains(name) && !name.equals("switch");
     }
 
-    public static void closeService(Instruction i) {
-        OFF_SERVICE.add(i);
-        for (String s : getServiceName(i)) {
-            serviceSwitchMapper.save(new ServiceSwitchLite(s, false));
-        }
+    public static void closeService(String name) {
+        OFF_SERVICE.add(name);
+        serviceSwitchMapper.save(new ServiceSwitchLite(name, false));
     }
 
-    public static void openService(Instruction i) {
-        OFF_SERVICE.remove(i);
-        for (String s : getServiceName(i)) {
-            serviceSwitchMapper.save(new ServiceSwitchLite(s, true));
-        }
-    }
-
-    public static String[] getServiceName(Instruction i) {
-        String[] out = new String[0];
-        if (SERVICE_NAME != null) {
-            out = SERVICE_NAME.get(i).split(",");
-        }
-        return out;
+    public static void openService(String name) {
+        OFF_SERVICE.remove(name);
+        serviceSwitchMapper.save(new ServiceSwitchLite(name, true));
     }
 
     /**
@@ -372,8 +365,8 @@ public class Permission {
      *
      * @return 所有的功能
      */
-    public static List<Instruction> getCloseServices() {
-        return OFF_SERVICE.stream().toList();
+    public static Set<String> getCloseServices() {
+        return OFF_SERVICE;
     }
 
     public static boolean isTester(long qq) {
