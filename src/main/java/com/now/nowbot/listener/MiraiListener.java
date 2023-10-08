@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Async;
 import java.util.Map;
 
 public interface MiraiListener {
-    void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException;
+    void init(Map<String, MessageService> beanMap) throws BeansException;
 
     void handleException(@NotNull CoroutineContext context, @NotNull Throwable exception);
 

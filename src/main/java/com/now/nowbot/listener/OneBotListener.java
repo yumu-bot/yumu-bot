@@ -31,9 +31,9 @@ import java.util.regex.Matcher;
 public class OneBotListener {
     static int RECAL_TIME = 1000 * 100;
     Logger log = LoggerFactory.getLogger(OneBotListener.class);
-    private static Map<Class<? extends MessageService>, MessageService> messageServiceMap = null;
+    private static Map<String, MessageService> messageServiceMap = null;
 
-    public void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException {
+    public void init(Map<String, MessageService> beanMap) throws BeansException {
         messageServiceMap = beanMap;
     }
 
@@ -43,22 +43,15 @@ public class OneBotListener {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
-        for (var ins : Instruction.values()) {
+        for (var ins : Permission.getAllService()) {
             //功能关闭 优先级高于aop拦截
             if (Permission.isServiceClose(ins) && !Permission.isSuper(event.getSender().getId())) continue;
 
             try {
-                var service = messageServiceMap.get(ins.getaClass());
-                if (ins.getRegex() == null) {
-                    var d = new MessageService.DataValue();
-                    if (service.isHandle(event, d)) {
-                        service.HandleMessage(event, d.getValue());
-                    }
-                    continue;
-                }
-                Matcher matcher = ins.getRegex().matcher(event.getRawMessage().trim());
-                if (matcher.find()) {
-                    service.HandleMessage(event, matcher);
+                var service = messageServiceMap.get(ins);
+                var d = new MessageService.DataValue();
+                if (service.isHandle(event, d)) {
+                    service.HandleMessage(event, d.getValue());
                 }
             } catch (Throwable e) {
                 errorHandle(event, e);

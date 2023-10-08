@@ -39,7 +39,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
     @Autowired
     public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
-        var serviceMap = new HashMap<Class<? extends MessageService>, MessageService>();
 
 //        serviceMap.putAll(applicationContext
 //                .getBeansOfType(MessageService.class)
@@ -48,13 +47,9 @@ public class IocAllReadyRunner implements CommandLineRunner {
 //                .collect(Collectors.toMap(s -> s.getClass(), s->s, (s1,s2) -> s2))
 //        );
 
-        for (var i : Instruction.values()){
-            var iClass = i.getaClass();
-            serviceMap.put(iClass, applicationContext.getBean(iClass));
-        }
-
-        messageListener.init(serviceMap);
-        oneBotListener.init(serviceMap);
+        var services = applicationContext.getBeansOfType(MessageService.class);
+        messageListener.init(services);
+        oneBotListener.init(services);
         this.check = check;
         this.permission = permission;
     }
@@ -67,7 +62,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
         MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
         permission.init(applicationContext);
-        initFountWidth();
+//        initFountWidth();
 //        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);
 
         ((TomcatWebServer) webServerApplicationContext.getWebServer())

@@ -38,10 +38,10 @@ public class MessageListener extends SimpleListenerHost implements MiraiListener
         this.messageMapper = messageMapper;
     }
 
-    private static Map<Class<? extends MessageService>, MessageService> messageServiceMap = null;
+    private static Map<String, MessageService> messageServiceMap = null;
 
     @Override
-    public void init(Map<Class<? extends MessageService>, MessageService> beanMap) throws BeansException {
+    public void init(Map<String, MessageService> beanMap) throws BeansException {
         messageServiceMap = beanMap;
     }
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

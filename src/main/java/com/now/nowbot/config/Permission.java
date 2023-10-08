@@ -48,6 +48,8 @@ public class Permission {
     private static PermissionData                   ALL_B;
     //service名单
     private static final Map<String, PermissionData>    PERMISSIONS = new ConcurrentHashMap<>();
+
+    private static final ArrayList<String> ALL_SERVICE = new ArrayList<>();
     private static CopyOnWriteArraySet<String>     OFF_SERVICE = null;
 
     void init(ApplicationContext applicationContext) {
@@ -138,6 +140,7 @@ public class Permission {
 
         var messageService = applicationContext.getBeansOfType(MessageService.class);
         messageService.forEach((name, service) -> {
+            ALL_SERVICE.add(name);
             var p = serviceSwitchMapper.findById(name);
             if (p.isPresent() && !p.get().isSwitch()) {
                 OFF_SERVICE.add(name);
@@ -367,6 +370,10 @@ public class Permission {
      */
     public static Set<String> getCloseServices() {
         return OFF_SERVICE;
+    }
+
+    public static Collection<String> getAllService() {
+        return ALL_SERVICE;
     }
 
     public static boolean isTester(long qq) {
