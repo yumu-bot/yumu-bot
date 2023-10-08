@@ -23,9 +23,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("PPMinus")
-public class PPMinusService implements MessageService {
+public class PPMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
     @Autowired
     OsuGetService osuGetService;
@@ -33,6 +34,17 @@ public class PPMinusService implements MessageService {
     BindDao bindDao;
     @Autowired
     ImageService imageService;
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

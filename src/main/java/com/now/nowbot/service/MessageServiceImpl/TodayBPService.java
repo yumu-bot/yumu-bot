@@ -21,9 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("TodayBP")
-public class TodayBPService implements MessageService {
+public class TodayBPService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
@@ -32,6 +33,17 @@ public class TodayBPService implements MessageService {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.imageService = imageService;
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

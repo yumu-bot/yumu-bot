@@ -22,9 +22,10 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("bind")
-public class BindService implements MessageService {
+public class BindService implements MessageService<Matcher> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLAER = false;
@@ -42,6 +43,17 @@ public class BindService implements MessageService {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.taskExecutor = taskExecutor;
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

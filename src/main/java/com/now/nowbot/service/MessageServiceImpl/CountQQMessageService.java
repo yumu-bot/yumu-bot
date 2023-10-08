@@ -11,32 +11,55 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("countQQmsg")
-public class CountQQMessageService implements MessageService {
+public class CountQQMessageService implements MessageService<Matcher> {
     @Resource
     MessageMapper messageMapper;
     @Resource
-    ImageService imageService;
+    ImageService  imageService;
 
-    private record Res(long qq, int n){}
+    private record Res(long qq, int n) {
+    }
+
+    Pattern pattern1 = Pattern.compile("^[!！]\\s*(?i)(ym)?((cm(?![a-zA-Z_]))|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))");
+    Pattern pattern2 = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
+
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern1.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else {
+            m = pattern2.matcher(event.getRawMessage().trim());
+            if (m.find()) {
+                data.setValue(m);
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var bot = event.getBot();
         String groupType = matcher.group("d");
-        if (false){
+        if (false) {
             var end = LocalDateTime.now();
             var start = end.plusDays(-1);
             var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
                     Long.parseLong(groupType),
                     Long.parseLong("0")
             );
-            if (res.size() == 0){
+            if (res.size() == 0) {
                 event.getSubject().sendMessage("无消息");
             }
             var data = res.get(0);
@@ -46,20 +69,26 @@ public class CountQQMessageService implements MessageService {
             return;
         }
         long groupId;
-        switch (groupType){
+        switch (groupType) {
             default:
-            case "n" :
-            case "N" :
-            case "新人" : groupId = 595985887; break;
-            case "a" :
-            case "A" :
-            case "进阶" : groupId = 928936255; break;
-            case "h" :
-            case "H" :
-            case "高阶" : groupId = 281624271; break;
+            case "n":
+            case "N":
+            case "新人":
+                groupId = 595985887;
+                break;
+            case "a":
+            case "A":
+            case "进阶":
+                groupId = 928936255;
+                break;
+            case "h":
+            case "H":
+            case "高阶":
+                groupId = 281624271;
+                break;
         }
         var group = bot.getGroup(groupId);
-        if (group == null){
+        if (group == null) {
             throw new TipsException("不在群里");
         }
         var users = group.getAllUser().stream()
@@ -73,13 +102,13 @@ public class CountQQMessageService implements MessageService {
         var end = LocalDateTime.now();
         var start = end.plusDays(-7);
         var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
-                    groupId,
-                    userArr
-                );
+                groupId,
+                userArr
+        );
         var resList = res.stream().map(l -> new Res(l.get("QQ").longValue(), l.get("sum").intValue()))
                 .sorted(Comparator.comparingInt(Res::n).reversed()).toList();
         StringBuilder sb = new StringBuilder("|消息数量|QQ|群名片|\n|--:|:--:|:--|\n");
-        for (var m: resList){
+        for (var m : resList) {
             long qq = m.qq();
             var u = group.getUser(qq);
             if (u == null) continue;

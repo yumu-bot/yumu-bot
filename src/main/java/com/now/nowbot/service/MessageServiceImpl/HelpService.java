@@ -9,9 +9,20 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("help")
 public class HelpService implements MessageService<Matcher> {
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         boolean isSendLink = true; //这是防止web不能用，临时关闭的布尔值

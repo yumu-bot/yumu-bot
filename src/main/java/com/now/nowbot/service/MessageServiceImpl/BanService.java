@@ -33,7 +33,7 @@ public class BanService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue data) {
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
         //没想好怎么做
         var m = p1.matcher(event.getRawMessage().trim());
         if (m.find()) {

@@ -52,7 +52,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         System.out.println(m.group("name"));
     }
     @Override
-    public boolean isHandle(MessageEvent event, DataValue data) {
+    public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
         var matcher = pattern.matcher(event.getRawMessage());
         if (!matcher.find()) {
             return false;

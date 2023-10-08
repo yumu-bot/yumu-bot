@@ -15,9 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("IM")
-public class IMapperService implements MessageService {
+public class IMapperService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -29,6 +30,18 @@ public class IMapperService implements MessageService {
         this.template = template;
         this.bindDao = bindDao;
         imageService = image;
+    }
+
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

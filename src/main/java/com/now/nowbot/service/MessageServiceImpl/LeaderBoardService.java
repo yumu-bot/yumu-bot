@@ -17,9 +17,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("Leader")
-public class LeaderBoardService implements MessageService {
+public class LeaderBoardService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     RestTemplate template;
     ImageService imageService;
@@ -30,6 +31,18 @@ public class LeaderBoardService implements MessageService {
         this.template = template;
         imageService = image;
     }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();

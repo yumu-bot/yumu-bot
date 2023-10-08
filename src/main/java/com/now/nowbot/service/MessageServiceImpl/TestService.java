@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("test")
-public class TestService implements MessageService {
+public class TestService implements MessageService<Matcher> {
     private final Logger log = LoggerFactory.getLogger(TestService.class);
 
     OsuGetService osuGetService;
@@ -41,6 +41,16 @@ public class TestService implements MessageService {
         this.qqMessageDao = qqMessageDao;
     }
 
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
 
     @Override
     @CheckPermission(test = true)

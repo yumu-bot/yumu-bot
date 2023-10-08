@@ -22,9 +22,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Random;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("FriendLegacy")
-public class FriendLegacyService implements MessageService {
+public class FriendLegacyService implements MessageService<Matcher> {
     //    static final ThreadPoolExecutor threads = new ThreadPoolExecutor(0, 12, 100, TimeUnit.MILLISECONDS, new LinkedBlockingQueue(256));
     private static final Logger log = LoggerFactory.getLogger(FriendLegacyService.class);
 
@@ -35,6 +36,17 @@ public class FriendLegacyService implements MessageService {
     public FriendLegacyService(OsuGetService osuGetService, BindDao bindDao) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

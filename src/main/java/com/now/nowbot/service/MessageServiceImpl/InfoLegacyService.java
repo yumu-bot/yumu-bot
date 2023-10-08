@@ -14,15 +14,28 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("InfoLegacy")
-public class InfoLegacyService implements MessageService {
+public class InfoLegacyService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
 
     public InfoLegacyService(OsuGetService osuGetService, BindDao bindDao){
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
+    }
+
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {

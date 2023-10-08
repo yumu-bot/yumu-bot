@@ -11,7 +11,7 @@ import jakarta.annotation.Resource;
 import java.util.regex.Matcher;
 
 @Service("map")
-public class MapPoolService implements MessageService {
+public class MapPoolService implements MessageService<Object> {
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -19,9 +19,13 @@ public class MapPoolService implements MessageService {
     @Resource
     BeatMapPoolMapper beatMapPoolMapper;
 
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Object> data) throws Exception {
+        return false;
+    }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, Object obj) throws Throwable {
 
     }
 }

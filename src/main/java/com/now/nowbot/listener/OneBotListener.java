@@ -9,7 +9,6 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.Instruction;
 import net.mamoe.mirai.event.events.EventCancelledException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,8 @@ public class OneBotListener {
 
             try {
                 var service = messageServiceMap.get(ins);
+                var type = service.getClass().getGenericSuperclass();
+
                 var d = new MessageService.DataValue();
                 if (service.isHandle(event, d)) {
                     service.HandleMessage(event, d.getValue());

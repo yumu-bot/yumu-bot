@@ -11,7 +11,6 @@ import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
-import com.now.nowbot.util.Instruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;

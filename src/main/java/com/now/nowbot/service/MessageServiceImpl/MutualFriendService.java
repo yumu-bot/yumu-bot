@@ -12,9 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("mu")
-public class MutualFriendService implements MessageService {
+public class MutualFriendService implements MessageService<Matcher> {
     private OsuGetService osuGetService;
     @Autowired
     BindDao bindDao;
@@ -22,6 +23,18 @@ public class MutualFriendService implements MessageService {
     MutualFriendService(OsuGetService osuGetService){
         this.osuGetService = osuGetService;
     }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 

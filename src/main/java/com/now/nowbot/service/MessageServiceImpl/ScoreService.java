@@ -22,9 +22,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("score")
-public class ScoreService implements MessageService {
+public class ScoreService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -36,6 +37,17 @@ public class ScoreService implements MessageService {
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

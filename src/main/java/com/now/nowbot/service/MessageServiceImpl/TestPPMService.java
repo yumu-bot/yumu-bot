@@ -13,11 +13,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
 @Service("t-ppm")
-public class TestPPMService implements MessageService {
+public class TestPPMService implements MessageService<Matcher> {
     @Autowired
     public TestPPMService(OsuGetService osuGetService,BindDao bindDao) {
         this.osuGetService = osuGetService;
@@ -26,6 +27,17 @@ public class TestPPMService implements MessageService {
 
     BindDao bindDao;
     private OsuGetService osuGetService;
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
 
     @Override
     @CheckPermission(test = true)

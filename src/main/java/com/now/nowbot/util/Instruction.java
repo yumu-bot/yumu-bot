@@ -38,10 +38,6 @@ public enum Instruction {
     SWITCH(SwitchService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?")),
 
-    // BOT 自己更新的功能，现在因为可以 SSH 远程更新，所以几乎不用了
-    UPDATE(UpdateService.class,
-            Pattern.compile("^&!update$")),
-
 
     // #2 osu! 成绩指令
     SETMODE(SetModeService.class,

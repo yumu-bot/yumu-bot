@@ -10,12 +10,24 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("SQL")
-public class SqlService implements MessageService {
+public class SqlService implements MessageService<Matcher> {
 
     @Resource
     EntityManager entityManager;
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
 
     @Override
     @CheckPermission(isSuperAdmin = true)

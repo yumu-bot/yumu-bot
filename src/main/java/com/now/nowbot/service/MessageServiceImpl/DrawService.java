@@ -16,13 +16,25 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("draw")
-public class DrawService implements MessageService {
+public class DrawService implements MessageService<Matcher> {
     @Resource
     private BindDao bindDao;
     @Resource
     private DrawLogLiteRepository drawLogLiteRepository;
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
 
     @Override
     @CheckPermission(test = true)

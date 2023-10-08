@@ -56,7 +56,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue data) {
+    public boolean isHandle(MessageEvent event, DataValue<AudioParam> data) {
         var matcher = p1.matcher(event.getRawMessage().trim());
         if (!matcher.find()) {
             return false;

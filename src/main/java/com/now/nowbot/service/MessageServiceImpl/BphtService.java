@@ -21,10 +21,11 @@ import org.springframework.stereotype.Service;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service("bpht")
-public class BphtService implements MessageService {
+public class BphtService implements MessageService<Matcher> {
     private static final String TIPS = "此功能已经有新设计，请使用新面板 -> !ba \n\n";
     OsuGetService osuGetService;
     BindDao bindDao;
@@ -48,6 +49,18 @@ public class BphtService implements MessageService {
         public int value() {
             return value;
         }
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ht(?![a-zA-Z_]))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

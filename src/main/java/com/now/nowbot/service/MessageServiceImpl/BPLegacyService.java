@@ -24,9 +24,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("BPLegacy")
-public class BPLegacyService implements MessageService {
+public class BPLegacyService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -38,6 +39,17 @@ public class BPLegacyService implements MessageService {
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
+    }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformancelegacy|bpl(?![a-zA-Z_])|bl(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)(-(?<m>\\d+))?)?$");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

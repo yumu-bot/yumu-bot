@@ -16,9 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("MiniPanel")
-public class MiniPanelService implements MessageService {
+public class MiniPanelService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -30,6 +31,16 @@ public class MiniPanelService implements MessageService {
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
+    }
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

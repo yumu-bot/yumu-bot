@@ -6,7 +6,6 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SendmsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +13,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Random;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service("switch") //修改 "switch" 一定要修改
-public class SwitchService implements MessageService {
+public class SwitchService implements MessageService<Matcher> {
     Permission permission;
     ImageService imageService;
     @Autowired
@@ -25,6 +25,18 @@ public class SwitchService implements MessageService {
         this.permission = permission;
         this.imageService = imageService;
     }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -49,7 +61,7 @@ public class SwitchService implements MessageService {
 
             StringBuilder sb = new StringBuilder();
             var list = Permission.getCloseServices();
-            for (Instruction value : Instruction.values()) {
+            for (String value : Permission.getAllService()) {
                 sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             //from.sendMessage(sb.toString());
@@ -81,7 +93,7 @@ public class SwitchService implements MessageService {
             case "list" -> {
                 StringBuilder sb = new StringBuilder();
                 var list = Permission.getCloseServices();
-                for (Instruction value : Instruction.values()) {
+                for (String value : Permission.getAllService()) {
                     sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }
                 //from.sendMessage(sb.toString());
@@ -103,8 +115,7 @@ public class SwitchService implements MessageService {
             switch (p2.toLowerCase()){
                 case "off" -> {
                     try {
-                        var i = Instruction.valueOf(p1.toUpperCase());
-                        Permission.closeService(i);
+                        Permission.closeService(p1);
                         from.sendMessage("已关闭 " + p1 + " 服务");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("请输入正确的服务名");
@@ -112,8 +123,7 @@ public class SwitchService implements MessageService {
                 }
                 case "on" -> {
                     try {
-                        var i = Instruction.valueOf(p1.toUpperCase());
-                        Permission.openService(i);
+                        Permission.openService(p1);
                         from.sendMessage("已启动 " + p1 + " 服务");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("请输入正确的服务名");

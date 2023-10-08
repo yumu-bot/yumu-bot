@@ -15,9 +15,10 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("wiki")
-public class WikiService implements MessageService {
+public class WikiService implements MessageService<Matcher> {
     static JsonNode WIKI;
     WikiService(){
         String datestr = "";
@@ -28,6 +29,18 @@ public class WikiService implements MessageService {
         }
         WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
     }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String key = matcher.group("key");

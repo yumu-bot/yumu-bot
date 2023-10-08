@@ -19,9 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("BPA")
-public class BPAnalysisService implements MessageService {
+public class BPAnalysisService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
@@ -31,6 +32,16 @@ public class BPAnalysisService implements MessageService {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.imageService = imageService;
+    }
+
+    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![a-zA-Z_])|ba(?![a-zA-Z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
     }
 
     @Override

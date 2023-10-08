@@ -7,16 +7,16 @@ import java.util.regex.Matcher;
 
 public interface MessageService<T> {
 
-    static DataValue createData() {
+    static DataValue<?> createData() {
         return new DataValue();
     }
 
-    default boolean isHandle(MessageEvent event, DataValue data) {
+    default boolean isHandle(MessageEvent event, DataValue<T> data) throws Throwable {
         return false;
     }
 
-    default void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-    }
+//    default void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+//    }
 
     ;
 
@@ -25,14 +25,14 @@ public interface MessageService<T> {
 
     ;
 
-    class DataValue {
-        Object value;
+    class DataValue<T> {
+        T value;
 
-        public Object getValue() {
+        public T getValue() {
             return value;
         }
 
-        public void setValue(Object value) {
+        public void setValue(T value) {
             this.value = value;
         }
     }

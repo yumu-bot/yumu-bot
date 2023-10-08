@@ -9,12 +9,25 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Service("test-map")
-public class TestMapServer implements MessageService {
+public class TestMapServer implements MessageService<Matcher> {
     @Resource
     OsuGetService osuGetService;
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int bid = Integer.parseInt(matcher.group("d"));

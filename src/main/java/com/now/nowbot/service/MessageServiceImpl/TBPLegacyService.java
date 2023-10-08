@@ -31,9 +31,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("TBPLegacy")
-public class TBPLegacyService implements MessageService {
+public class TBPLegacyService implements MessageService<Matcher> {
     private static final int FONT_SIZE = 30;
     private Font font;
     DecimalFormat decimalFormat = new DecimalFormat("0.00");
@@ -51,6 +52,18 @@ public class TBPLegacyService implements MessageService {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
     }
+
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+
+    @Override
+    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (m.find()) {
+            data.setValue(m);
+            return true;
+        } else return false;
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
