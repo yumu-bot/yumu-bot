@@ -1,0 +1,36 @@
+default:
+  tags:
+    - master
+  
+variables:
+    GIT_STRATEGY: none
+
+stages:
+  - update
+  # - restart
+
+job-build:
+  stage: update
+  needs: []
+  script:
+    - cd ~/nowbot
+    - git fetch --all
+    - git reset --hard origin/master
+    - git pull
+    - mvn package
+
+job-update:
+  stage: update
+  needs: 
+    - job-build
+  script:
+    - cd ~/nowbot
+    - mv ./target/nowbot-linux.jar ~/work
+    - sudo systemctl restart nowbot
+# job-restart-server:
+#   stage: restart
+#   needs: 
+#     - job-update
+#   script:
+    
+#   when: manual

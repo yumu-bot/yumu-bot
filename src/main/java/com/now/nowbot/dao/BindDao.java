@@ -27,8 +27,7 @@ public class BindDao {
     public BinUser getUser(Long qq) throws BindException {
         var liteData = bindMapper.getByQq(qq);
         if (liteData.isEmpty()) {
-            return null;
-            //throw new BindException(BindException.Type.BIND_Me_NoBind);
+            throw new BindException(BindException.Type.BIND_Me_NoBind);
         } else if (liteData.size() > 1) {
             var liteLastUser = bindMapper.getFirstByQqOrderByTimeDesc(qq);
             bindMapper.deleteByQqAndIdNot(liteLastUser.getQq(),liteLastUser.getId());
