@@ -39,7 +39,7 @@ public class UUPRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![a-zA-Z_])))|uu(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+))?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

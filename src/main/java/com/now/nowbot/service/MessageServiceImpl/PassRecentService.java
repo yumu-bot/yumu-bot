@@ -45,7 +45,7 @@ public class PassRecentService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(ym)?(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

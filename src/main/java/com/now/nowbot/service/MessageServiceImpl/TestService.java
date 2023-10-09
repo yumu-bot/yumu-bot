@@ -34,14 +34,12 @@ public class TestService implements MessageService<Matcher> {
     @Resource
     RestTemplate restTemplate;
 
-    private static Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
+    private static final Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
     @Autowired
     public TestService(OsuGetService osuGetService, QQMessageDao qqMessageDao){
         this.osuGetService = osuGetService;
         this.qqMessageDao = qqMessageDao;
     }
-
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

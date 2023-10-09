@@ -33,7 +33,7 @@ public class MRALegacyService implements MessageService<Matcher> {
     public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(ratinglegacy|rav2(?![a-zA-Z_])|ral(?![a-zA-Z_])|rl(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s+(?<skipedrounds>\\d+))?(\\s+(?<deletendrounds>\\d+))?(\\s+(?<includingfail>\\d))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

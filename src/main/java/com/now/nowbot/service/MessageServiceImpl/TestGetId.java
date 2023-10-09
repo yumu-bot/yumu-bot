@@ -20,7 +20,7 @@ public class TestGetId implements MessageService<Matcher> {
         this.osuGetService = osuGetService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testid\\s*(?<ids>((\\d)+(,)?)+)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

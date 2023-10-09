@@ -35,7 +35,7 @@ public class MRAService implements MessageService<Matcher> {
 
     public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

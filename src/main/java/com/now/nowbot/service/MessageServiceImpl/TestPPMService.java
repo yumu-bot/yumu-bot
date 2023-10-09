@@ -28,7 +28,7 @@ public class TestPPMService implements MessageService<Matcher> {
     BindDao bindDao;
     private OsuGetService osuGetService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

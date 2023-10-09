@@ -53,7 +53,7 @@ public class TBPLegacyService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybplegacy|tbpl(?![a-zA-Z_])|tl(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

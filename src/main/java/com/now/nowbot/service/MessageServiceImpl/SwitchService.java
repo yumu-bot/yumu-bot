@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-@Service("switch") //修改 "switch" 一定要修改
+@Service("switch") //修改service名 "switch" 一定要修改 Permission
 public class SwitchService implements MessageService<Matcher> {
     Permission permission;
     ImageService imageService;
@@ -26,7 +26,7 @@ public class SwitchService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

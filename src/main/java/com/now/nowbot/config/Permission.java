@@ -77,7 +77,7 @@ public class Permission {
                 // 拿到方法上的权限注解
                 $beansCheck = AopUtils.getTargetClass(bean).getMethod("HandleMessage", MessageEvent.class, Matcher.class).getAnnotation(CheckPermission.class);
             } catch (NoSuchMethodException e) {
-                log.error("反射获取service类异常", e);
+                log.trace("service {} 无注解", bean.getClass().getSimpleName());
             }
 
             //如果包含权限注解 则初始化权限列表

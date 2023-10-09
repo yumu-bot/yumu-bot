@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 @Service("ping")
 public class PingService implements MessageService<Matcher> {
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))+|yumu)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

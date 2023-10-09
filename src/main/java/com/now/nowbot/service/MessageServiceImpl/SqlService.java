@@ -18,7 +18,7 @@ public class SqlService implements MessageService<Matcher> {
     @Resource
     EntityManager entityManager;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]sql\\s");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

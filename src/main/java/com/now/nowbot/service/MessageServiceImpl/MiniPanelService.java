@@ -32,7 +32,7 @@ public class MiniPanelService implements MessageService<Matcher> {
         this.template = template;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?!\\w))|(?<ymy>y(?!\\w)))+");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

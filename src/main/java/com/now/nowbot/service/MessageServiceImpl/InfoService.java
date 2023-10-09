@@ -36,7 +36,7 @@ public class InfoService implements MessageService<Matcher> {
     ImageService  imageService;
 
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?information|yminfo(?![a-zA-Z_])|(ym)?i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

@@ -34,7 +34,7 @@ public class SetuService implements MessageService<Matcher> {
         this.template = template;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(setu|se(?![a-zA-Z_]))+(\\s+(?<source>\\d+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

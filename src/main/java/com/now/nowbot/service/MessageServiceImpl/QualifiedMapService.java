@@ -24,7 +24,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
     @Resource
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![a-zA-Z_])|q(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

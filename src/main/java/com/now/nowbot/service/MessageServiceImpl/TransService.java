@@ -14,7 +14,7 @@ public class TransService implements MessageService<Matcher> {
     static int[] c1 = {0,2,4,5,7,9,11};
     static List<String> d1 = List.of("null","C","C#","D","D#","E","F","F#","G","G#","A","A#","B");
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(trans)+\\s(?<a>[A-G#]{1,2})(?<b>\\w)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

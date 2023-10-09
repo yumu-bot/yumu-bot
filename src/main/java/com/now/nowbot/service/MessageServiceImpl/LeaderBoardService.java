@@ -32,7 +32,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         imageService = image;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![a-zA-Z_])|list(?![a-zA-Z_])|l(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

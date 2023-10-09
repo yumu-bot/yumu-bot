@@ -17,7 +17,7 @@ public class TestMapServer implements MessageService<Matcher> {
     @Resource
     OsuGetService osuGetService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

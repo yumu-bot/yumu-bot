@@ -18,7 +18,7 @@ public class SetModeService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![a-zA-Z_]))+\\s*(?<mode>\\w+)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

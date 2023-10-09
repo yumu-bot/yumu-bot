@@ -30,7 +30,7 @@ public class WikiService implements MessageService<Matcher> {
         WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![a-zA-Z_]))+(\\s*(?<key>\\s*))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

@@ -35,7 +35,7 @@ public class FriendService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![a-zA-Z_]))+\\s*(?<n>\\d+)?(\\s*[:-]\\s*(?<m>\\d+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

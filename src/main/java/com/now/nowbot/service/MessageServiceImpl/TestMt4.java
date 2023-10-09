@@ -34,7 +34,7 @@ public class TestMt4 implements MessageService<Matcher> {
         }
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {

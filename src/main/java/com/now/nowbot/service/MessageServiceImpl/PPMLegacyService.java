@@ -41,7 +41,7 @@ public class PPMLegacyService implements MessageService<Matcher> {
     @Autowired
     BindDao bindDao;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(pl(?![a-zA-Z_])|ppminuslegacy)+(?<vs>vs)?([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
