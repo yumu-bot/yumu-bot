@@ -73,7 +73,7 @@ public class BphtService implements MessageService<BphtService.BphtParm> {
             data.setValue(new BphtParm(new UserParm(null, name, mode, false), info));
             return true;
         }
-        data.setValue(new BphtParm(new UserParm(event.getSubject().getId(), null, mode, false), false));
+        data.setValue(new BphtParm(new UserParm(event.getSender().getId(), null, mode, false), false));
         return true;
     }
 
