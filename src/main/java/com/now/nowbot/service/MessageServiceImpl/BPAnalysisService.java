@@ -64,6 +64,7 @@ public class BPAnalysisService implements MessageService<UserParm> {
     public void HandleMessage(MessageEvent event, UserParm parm) throws Throwable {
         var from = event.getSubject();
         var mode = parm.mode();
+
         //bp列表
         List<Score> bps;
         OsuUser osuUser;

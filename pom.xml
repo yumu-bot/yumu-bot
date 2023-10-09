@@ -14,7 +14,7 @@
     <name>nowbot</name>
     <description>Demo project for Spring Boot</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <skipTests>true</skipTests>
         <mirai.version>2.15.0-RC</mirai.version>
         <run.os>linux</run.os>
@@ -168,12 +168,17 @@
             <artifactId>kotlinx-coroutines-core-jvm</artifactId>
             <version>1.7.1</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>protocol</groupId>-->
+<!--            <artifactId>protocol</artifactId>-->
+<!--            <version>1.7.0</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>${project.basedir}/lib/fix-protocol-version-1.7.0.mirai2.jar</systemPath>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>protocol</groupId>
-            <artifactId>protocol</artifactId>
-            <version>1.7.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/fix-protocol-version-1.7.0.mirai2.jar</systemPath>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
