@@ -13,6 +13,8 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
+import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +56,7 @@ public class BPAnalysisService implements MessageService<UserParm> {
             data.setValue(new UserParm(null, name, mode, false));
             return true;
         }
-        data.setValue(new UserParm(event.getSubject().getId(), null, mode, false));
+        data.setValue(new UserParm(event.getSender().getId(), null, mode, false));
         return true;
     }
 
