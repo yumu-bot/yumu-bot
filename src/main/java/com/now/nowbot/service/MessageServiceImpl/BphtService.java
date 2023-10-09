@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 @Service("bpht")
 public class BphtService implements MessageService<BphtService.BphtParm> {
-    private static final String TIPS = "";
+    private static final String TIPS = "此功能已经有新设计，请使用新面板 -> !ba \n\n";
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
