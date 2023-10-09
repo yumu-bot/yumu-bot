@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.Service.UserParm;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -12,20 +13,22 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Service("BPA")
-public class BPAnalysisService implements MessageService<Matcher> {
+public class BPAnalysisService implements MessageService<UserParm> {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
+
+
 
     @Autowired
     public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
@@ -35,26 +38,55 @@ public class BPAnalysisService implements MessageService<Matcher> {
     }
 
     static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![a-zA-Z_])|ba(?![a-zA-Z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
+    public boolean isHandle(MessageEvent event, DataValue<UserParm> data) {
+        var matcher = pattern.matcher(event.getRawMessage().trim());
+        if (!matcher.find()) return false;
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        if (Objects.nonNull(at)) {
+            data.setValue(new UserParm(at.getTarget(), null, mode, true));
             return true;
-        } else return false;
+        }
+        String name = matcher.group("name");
+        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
+            data.setValue(new UserParm(null, name, mode, false));
+            return true;
+        }
+        data.setValue(new UserParm(event.getSubject().getId(), null, mode, false));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, UserParm parm) throws Throwable {
         var from = event.getSubject();
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        var mode = parm.mode();
         //bp列表
         List<Score> bps;
         OsuUser osuUser;
-        var name = matcher.group("name");
-        if (name != null && !name.trim().isEmpty()) {
-            //查询其他人 bpht [name]
-            name = name.trim();
+        if (Objects.nonNull(parm.qq())) {
+            BinUser binUser = bindDao.getUser(parm.qq());
+            try {
+                if (mode != OsuMode.DEFAULT) {
+                    osuUser = osuGetService.getPlayerInfo(binUser, mode);
+                    osuUser.setPlayMode(mode.getName());
+                    bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+                } else {
+                    bps = osuGetService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
+                    osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
+                }
+            } catch (Exception e) {
+                BPAnalysisException.Type etype;
+                if (parm.at()) {
+                    etype = BPAnalysisException.Type.BPA_Player_FetchFailed;
+                } else {
+                    etype = BPAnalysisException.Type.BPA_Me_FetchFailed;
+                }
+                throw new BPAnalysisException(etype);
+            }
+        } else {
+            String name = parm.name().trim();
             long id;
             try {
                 id = osuGetService.getOsuId(name);
@@ -73,32 +105,6 @@ public class BPAnalysisService implements MessageService<Matcher> {
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
             }
-        } else {
-            var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-            BinUser binUser;
-
-            if (at != null) {
-                binUser = bindDao.getUser(at.getTarget());
-            } else {
-                binUser = bindDao.getUser(event.getSender().getId());
-            }
-
-            try {
-                if (mode != OsuMode.DEFAULT) {
-                    osuUser = osuGetService.getPlayerInfo(binUser, mode);
-                    osuUser.setPlayMode(mode.getName());
-                    bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
-                } else {
-                    bps = osuGetService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
-                    osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
-                }
-            } catch (Exception e) {
-                if (at != null) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
-                } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_FetchFailed);
-                }
-            }
         }
 
         if (bps == null || bps.size() <= 5) {
@@ -111,7 +117,6 @@ public class BPAnalysisService implements MessageService<Matcher> {
         } catch (Exception e) {
             NowbotApplication.log.error("BPA Error: ", e);
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
         }
     }
 }

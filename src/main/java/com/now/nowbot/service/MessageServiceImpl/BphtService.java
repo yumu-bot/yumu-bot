@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.Service.UserParm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -15,21 +16,23 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service("bpht")
-public class BphtService implements MessageService<Matcher> {
-    private static final String TIPS = "此功能已经有新设计，请使用新面板 -> !ba \n\n";
+public class BphtService implements MessageService<BphtService.BphtParm> {
+    private static final String TIPS = "";
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
+
+    public record BphtParm(UserParm user, boolean info){}
 
     @Autowired
     public BphtService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
@@ -55,31 +58,45 @@ public class BphtService implements MessageService<Matcher> {
 
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
+    public boolean isHandle(MessageEvent event, DataValue<BphtParm> data) {
+        var matcher = pattern.matcher(event.getRawMessage().trim());
+        if (!matcher.find()) return false;
+        boolean info = Strings.isNotBlank(matcher.group("info"));
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        if (Objects.nonNull(at)) {
+            data.setValue(new BphtParm(new UserParm(at.getTarget(), null, mode, true), info));
             return true;
-        } else return false;
+        }
+        String name = matcher.group("name");
+        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
+            data.setValue(new BphtParm(new UserParm(null, name, mode, false), info));
+            return true;
+        }
+        data.setValue(new BphtParm(new UserParm(event.getSubject().getId(), null, mode, false), false));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, BphtParm parm) throws BPAnalysisException {
         var from = event.getSubject();
         BinUser binUser = null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 是否为绑定用户
-        if (at != null) {
-            binUser = bindDao.getUser(at.getTarget());
-        }
-        if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
+
+        if (Objects.nonNull(parm.user().qq())) {
+            binUser = bindDao.getUser(parm.user().qq());
+        } else {
             //查询其他人 bpht [name]
-            String name = matcher.group("name").trim();
-            long id = osuGetService.getOsuId(name);
+            String name = parm.user().name();
+            long id = 0;
             try {
+                id = osuGetService.getOsuId(name);
                 binUser = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
-                //do nothing
+                // ignore
+            } catch (Exception e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
             if (binUser == null) {
                 //构建只有 name + id 的对象
@@ -87,23 +104,12 @@ public class BphtService implements MessageService<Matcher> {
                 binUser.setOsuID(id);
                 binUser.setOsuName(name);
             }
-        } else {
-            //处理没有参数的情况 查询自身
-            binUser = bindDao.getUser(event.getSender().getId());
-        }
-
-        if (binUser == null) {
-            if (matcher.group("name") == null || matcher.group("name").trim().isEmpty()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_LoseBind);
-            } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
-            }
         }
 
         //bp列表
-        List<Score> bps = null;
+        List<Score> bps;
         //分别处理mode
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        var mode = parm.user().mode();
         //处理默认mode
         if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         try {
@@ -117,17 +123,17 @@ public class BphtService implements MessageService<Matcher> {
         }
 
         String[] Lines;
-        if (matcher.group("info") == null) {
+        if (parm.info()) {
+            if (mode == null || mode == OsuMode.DEFAULT) {
+                Lines = getAllMsgI(bps, binUser.getOsuName(), OsuMode.DEFAULT);
+            } else {
+                Lines = getAllMsgI(bps, binUser.getOsuName(), mode);
+            }
+        } else {
             if (mode == null || mode == OsuMode.DEFAULT) {
                 Lines = getAllMsg(bps, binUser.getOsuName(), "");
             } else {
                 Lines = getAllMsg(bps, binUser.getOsuName(), mode.getName());
-            }
-        } else {
-            if (mode == null || mode == OsuMode.DEFAULT) {
-                Lines = getAllMsg(bps, binUser.getOsuName(), OsuMode.DEFAULT);
-            } else {
-                Lines = getAllMsg(bps, binUser.getOsuName(), mode);
             }
         }
         QQMsgUtil.sendImage(from, imageService.drawLine(Lines));
@@ -192,7 +198,7 @@ public class BphtService implements MessageService<Matcher> {
         return dtbf.toString().split("\n");
     }
 
-    public String[] getAllMsg(List<Score> bps, String name, OsuMode mode) {
+    public String[] getAllMsgI(List<Score> bps, String name, OsuMode mode) {
         if (bps.isEmpty()) return new String[0];
         var sb = new StringBuffer(TIPS)
                 .append(name).append('[').append(mode).append(']').append('\n');

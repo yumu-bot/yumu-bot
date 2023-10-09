@@ -25,7 +25,6 @@ import com.now.nowbot.util.QQMsgUtil;
 import io.github.humbleui.skija.EncodedImageFormat;
 import io.github.humbleui.skija.Image;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -148,7 +147,7 @@ public class BotWebApi {
         nu.setOsuName(userName);
         var mode = OsuMode.getMode(playMode);
         var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
-        var msg = bphtService.getAllMsg(Bps, userName, mode);
+        var msg = bphtService.getAllMsgI(Bps, userName, mode);
         StringBuilder sb = new StringBuilder();
         for (var s : msg) {
             sb.append(s).append("\n");
