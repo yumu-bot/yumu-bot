@@ -27,9 +27,10 @@ public class AsyncSetting implements AsyncConfigurer {
 
     static {
         threadPool = new ThreadPoolTaskExecutor();
-        threadPool.setCorePoolSize(5);
-        threadPool.setMaxPoolSize(40);
-        threadPool.setKeepAliveSeconds(60);
+        threadPool.setThreadFactory(Thread.ofVirtual().factory());
+        threadPool.setCorePoolSize(1000);
+        threadPool.setMaxPoolSize(Integer.MAX_VALUE);
+        threadPool.setKeepAliveSeconds(5);
         threadPool.setQueueCapacity(Runtime.getRuntime().availableProcessors() * 10);
         threadPool.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
         threadPool.setWaitForTasksToCompleteOnShutdown(true);
