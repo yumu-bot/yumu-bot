@@ -283,7 +283,8 @@ public class ImageService {
                 "bp-list", BPs.subList(0, Math.min(BPs.size(), 8)),
                 "re-list", Recents,
                 "bonus_pp", bonus,
-                "mode", mode.getName()
+                "mode", mode.getName(),
+                "ranked_map_play_count", SkiaUtil.getPlayedRankedMapCount(bonus)
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_D", httpEntity);
