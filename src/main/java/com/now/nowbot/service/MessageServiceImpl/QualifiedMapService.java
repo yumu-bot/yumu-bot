@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -8,8 +9,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
 import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 
 @Service("Q")
 public class QualifiedMapService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(QualifiedMapService.class);
     @Resource
     OsuGetService osuGetService;
     @Resource
@@ -71,161 +69,63 @@ public class QualifiedMapService implements MessageService<Matcher> {
         query.put("page", page);
 
         try {
-            Search d = null;
+            Search data = null;
             int resultCount = 0;
             do {
-                if (d == null) {
-                    d = osuGetService.searchBeatmap(query);
-                    resultCount += d.getBeatmapsets().size();
+                if (data == null) {
+                    data = osuGetService.searchBeatmap(query);
+                    resultCount += data.getBeatmapsets().size();
                     continue;
                 }
                 page ++;
                 query.put("page", page);
                 var result = osuGetService.searchBeatmap(query);
                 resultCount += result.getBeatmapsets().size();
-                d.getBeatmapsets().addAll(result.getBeatmapsets());
-            } while (resultCount < d.getTotal() && page < page_aim);
+                data.getBeatmapsets().addAll(result.getBeatmapsets());
+            } while (resultCount < data.getTotal() && page < page_aim);
 
-            //var d = osuGetService.searchBeatmap(query);
+            if (resultCount == 0) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_NotFound);
 
-            d.setResultCount(Math.min(d.getTotal(), range));
-            d.setRule(status);
-            d.sortBeatmapDiff();
-            var img = imageService.getPanelA2(d);
+            data.setResultCount(Math.min(data.getTotal(), range));
+            data.setRule(status);
+            data.sortBeatmapDiff();
+            var img = imageService.getPanelA2(data);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            // 这里要打印日志,自己创建log
-            log.error("QuaMap: ", e);
+            NowbotApplication.log.error("QuaMap: ", e);
             throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }
 
     private static String getStatus(String status) {
-        switch (status.toLowerCase()) {
-            case "0":
-            case "p":
-                return  "pending";
-            case "1":
-            case "r":
-                return "ranked";
-            case "2":
-            case "a":
-                return "approved";
-            case "4":
-            case "l":
-                return "loved";
-            case "-1":
-            case "5":
-            case "w":
-                return "wip";
-            case "-2":
-            case "6":
-            case "g":
-                return "graveyard";
-            case "3":
-            case "q":
-            default:
-                return "qualified";
-        }
+        return switch (status.toLowerCase()) {
+            case "0", "p" -> "pending";
+            case "1", "r" -> "ranked";
+            case "2", "a" -> "approved";
+            case "4", "l" -> "loved";
+            case "-1", "5", "w" -> "wip";
+            case "-2", "6", "g" -> "graveyard";
+            default -> "qualified";
+        };
     }
 
     private static String getSort(String sort) {
-        switch (sort.toLowerCase()) {
-            case "t":
-            case "t+":
-            case "ta":
-            case "title":
-            case "title asc":
-            case "title_asc":
-                return "title_asc";
-            case "t-":
-            case "td":
-            case "title desc":
-            case "title_desc":
-                return "title_desc";
-
-            case "a":
-            case "a+":
-            case "aa":
-            case "artist":
-            case "artist asc":
-            case "artist_asc":
-                return "artist_asc";
-            case "a-":
-            case "ad":
-            case "artist desc":
-            case "artist_desc":
-                return "artist_desc";
-
-            case "d":
-            case "d+":
-            case "da":
-            case "difficulty":
-            case "difficulty asc":
-            case "difficulty_asc":
-            case "s":
-            case "s+":
-            case "sa":
-            case "star":
-            case "star asc":
-            case "star_asc":
-                return "difficulty_asc";
-            case "d-":
-            case "dd":
-            case "difficulty desc":
-            case "difficulty_desc":
-            case "s-":
-            case "sd":
-            case "star desc":
-            case "star_desc":
-                return "difficulty_desc";
-
-            case "m":
-            case "m+":
-            case "ma":
-            case "map":
-            case "rating":
-            case "rating asc":
-            case "rating_asc":
-                return "rating_asc";
-            case "m-":
-            case "md":
-            case "map desc":
-            case "rating desc":
-            case "rating_desc":
-                return "rating_desc";
-
-            case "p":
-            case "p+":
-            case "pa":
-            case "plays":
-            case "pc asc":
-            case "plays asc":
-            case "plays_asc":
-                return "plays_asc";
-            case "p-":
-            case "pd":
-            case "pc desc":
-            case "plays desc":
-            case "plays_desc":
-                return "plays_desc";
-
-            case "r":
-            case "r+":
-            case "ra":
-            case "ranked":
-            case "time asc":
-            case "ranked asc":
-            case "ranked_asc":
-                return "ranked_asc";
-            case "r-":
-            case "rd":
-            case "time desc":
-            case "ranked desc":
-            case "ranked_desc":
-                return "ranked_desc";
-
-            default: return "relevance_desc";
-        }
+        return switch (sort.toLowerCase()) {
+            case "t", "t+", "ta", "title", "title asc", "title_asc" -> "title_asc";
+            case "t-", "td", "title desc", "title_desc" -> "title_desc";
+            case "a", "a+", "aa", "artist", "artist asc", "artist_asc" -> "artist_asc";
+            case "a-", "ad", "artist desc", "artist_desc" -> "artist_desc";
+            case "d", "d+", "da", "difficulty", "difficulty asc", "difficulty_asc", "s", "s+", "sa", "star", "star asc", "star_asc" ->
+                    "difficulty_asc";
+            case "d-", "dd", "difficulty desc", "difficulty_desc", "s-", "sd", "star desc", "star_desc" ->
+                    "difficulty_desc";
+            case "m", "m+", "ma", "map", "rating", "rating asc", "rating_asc" -> "rating_asc";
+            case "m-", "md", "map desc", "rating desc", "rating_desc" -> "rating_desc";
+            case "p", "p+", "pa", "plays", "pc asc", "plays asc", "plays_asc" -> "plays_asc";
+            case "p-", "pd", "pc desc", "plays desc", "plays_desc" -> "plays_desc";
+            case "r", "r+", "ra", "ranked", "time asc", "ranked asc", "ranked_asc" -> "ranked_asc";
+            case "r-", "rd", "time desc", "ranked desc", "ranked_desc" -> "ranked_desc";
+            default -> "relevance_desc";
+        };
     }
 }

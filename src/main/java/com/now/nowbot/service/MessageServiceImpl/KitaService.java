@@ -43,16 +43,17 @@ public class KitaService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        long bid;
+        long BID;
         String mod;
         short position;
         String round;
         BeatMap beatMap;
         boolean hasBG = matcher.group("noBG") == null;
+        var BIDstr = matcher.group("bid");
 
-        if (matcher.group("bid") == null) throw new KitaException(KitaException.Type.KITA_Parameter_BidError);
+        if (BIDstr == null) throw new KitaException(KitaException.Type.KITA_Parameter_NoBid);
         try {
-            bid = Long.parseLong(matcher.group("bid"));
+            BID = Long.parseLong(BIDstr);
         } catch (NumberFormatException e) {
             throw new KitaException(KitaException.Type.KITA_Parameter_BidError);
         }
@@ -81,7 +82,7 @@ public class KitaService implements MessageService<Matcher> {
         }
 
         try {
-            beatMap = osuGetService.getBeatMapInfo(bid);
+            beatMap = osuGetService.getBeatMapInfo(BID);
         } catch (Exception e) {
             throw new KitaException(KitaException.Type.KITA_Map_FetchFailed);
         }

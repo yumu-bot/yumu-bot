@@ -4,7 +4,6 @@ import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.Cover;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -15,7 +14,6 @@ import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,15 +23,13 @@ import java.util.stream.Collectors;
 
 @Service("MRA")
 public class MRAService implements MessageService<Matcher> {
-    @Autowired
-    RestTemplate template;
 
     @Autowired
     OsuGetService osuGetService;
     @Autowired
     ImageService imageService;
 
-    public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
+    public record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
 
@@ -49,11 +45,16 @@ public class MRAService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchID;
+        var matchIDStr = matcher.group("matchid");
+
+        if (matchIDStr == null || matchIDStr.isBlank()) {
+            throw new MRAException(MRAException.Type.RATING_Parameter_None);
+        }
 
         try {
-            matchID = Integer.parseInt(matcher.group("matchid"));
-        } catch (NullPointerException e) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_None);
+            matchID = Integer.parseInt(matchIDStr);
+        } catch (NumberFormatException e) {
+            throw new MRAException(MRAException.Type.RATING_Parameter_Error);
         }
 
         int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
@@ -68,15 +69,17 @@ public class MRAService implements MessageService<Matcher> {
         } catch (Exception e) {
             NowbotApplication.log.error("MRA 数据请求失败", e);
             throw new MRAException(MRAException.Type.RATING_MRA_Error);
-            //from.sendMessage("MRA 渲染图片超时，请重试。\n或尝试旧版渲染 !rl <mpid>。");
         }
     }
 
     public byte[] getDataImage (int matchID, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
+
+        //throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDNotFound);
         Match match = osuGetService.getMatchInfo(matchID);
 
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
             var events = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID()).getEvents();
+            //if events.size == 0 throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDNotFound);
             match.getEvents().addAll(0, events);
         }
 
@@ -113,10 +116,6 @@ public class MRAService implements MessageService<Matcher> {
         for (var g : games) {
             if (sid == 0 && g.getBeatmap() != null) {
                 sid = g.getBeatmap().getBeatmapsetId();
-            }
-
-            if (Mod.hasChangeRating(Mod.getModsValue(g.getMods()))) {
-                // todo 在绘图模块实现
             }
 
             if (g.getBeatmap() != null) {

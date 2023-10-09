@@ -13,8 +13,6 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
@@ -28,9 +26,7 @@ import java.util.regex.Pattern;
 public class BindService implements MessageService<Matcher> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static boolean CLAER = false;
-
-    private static final Logger log = LoggerFactory.getLogger(BindService.class);
+    private static boolean CLEAR = false;
 
     OsuGetService osuGetService;
 
@@ -71,17 +67,17 @@ public class BindService implements MessageService<Matcher> {
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();//阻塞,注意超时判空
                 if (s != null) {
-                    String Oname = s.getRawMessage();
+                    String nameStr = s.getRawMessage();
                     Long id;
                     try {
-                        id = osuGetService.getOsuId(Oname);
+                        id = osuGetService.getOsuId(nameStr);
                     } catch (Exception e) {
                         throw new BindException(BindException.Type.BIND_Player_NotFound);
                     }
                     try {
                         var buser = bindDao.getUserLiteFromOsuid(id);
                         if (buser.getQq() == null) {
-                            from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
+                            from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + nameStr + "上");
                             buser.setQq(at.getTarget());
                             bindDao.update(buser);
                             throw new BindException(BindException.Type.BIND_Me_Success);
@@ -100,8 +96,8 @@ public class BindService implements MessageService<Matcher> {
                             }
                         }
                     } catch (BindException e) {
-                        from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + Oname + "上");
-                        bindDao.saveUser(at.getTarget(), Oname, id);
+                        from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + nameStr + "上");
+                        bindDao.saveUser(at.getTarget(), nameStr, id);
                         throw new BindException(BindException.Type.BIND_Me_Success);
                     }
                     //return;
@@ -152,6 +148,7 @@ public class BindService implements MessageService<Matcher> {
                 // do nothing
             }
             if (user != null && user.isAuthorized()) {
+                //这里的 if 第二分支无法触发，我的设想是这里能获取到假的绑定状态（用户撤销授权）
                 if (user.getRefreshToken() != null) {
                     from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您的令牌仍有可能已经失效。回复 OK 重新绑定。");
                 } else {
@@ -191,7 +188,7 @@ public class BindService implements MessageService<Matcher> {
     }
 
     private void unbind(Long qqId) throws BindException {
-        if (qqId == null) throw new BindException(BindException.Type.BIND_Player_NotFound);
+        if (qqId == null) throw new BindException(BindException.Type.BIND_Player_NoQQ);
         BinUser user = bindDao.getUser(qqId);
         if (user == null) {
             throw new BindException(BindException.Type.BIND_Player_NoBind);
@@ -209,8 +206,8 @@ public class BindService implements MessageService<Matcher> {
 
     private void putBind(Long t, Bind b) {
         removeOldBind();
-        if (BIND_MSG_MAP.size() > 20 && !CLAER) {
-            CLAER = true;
+        if (BIND_MSG_MAP.size() > 20 && !CLEAR) {
+            CLEAR = true;
             taskExecutor.execute(() -> {
                 try {
                     Thread.sleep(1000*5);
@@ -218,7 +215,7 @@ public class BindService implements MessageService<Matcher> {
                     // ignore
                 }
                 removeOldBind();
-                CLAER = false;
+                CLEAR = false;
             });
         }
         BIND_MSG_MAP.put(t, b);
