@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -29,9 +30,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("ScorePr")
-public class PassRecentService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(PassRecentService.class);
+@Service("ScorePrForMe")
+public class PassRecentForMeService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(PassRecentForMeService.class);
 
     RestTemplate template;
     OsuGetService osuGetService;
@@ -39,7 +40,7 @@ public class PassRecentService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Autowired
-    public PassRecentService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public PassRecentForMeService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
@@ -49,9 +50,11 @@ public class PassRecentService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+        if (event.getSender().getId() != 365246692L) return false;
         var m = pattern.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
+            Permission.stopListener();
             return true;
         } else return false;
     }
@@ -141,6 +144,19 @@ public class PassRecentService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
             } else {
+                if (event.getSender().getId() == 365246692L && false) {
+                    var mode = OsuMode.getMode(matcher.group("mode"));
+                    byte[] img;
+                    try {
+                        img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
+                    } catch (RuntimeException e) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+                        //log.error("s: ", e);
+                        //throw new TipsException("24h内无记录");
+                    }
+                    event.getSubject().sendImage(img);
+                    return;
+                }
                 binUser = bindDao.getUser(event.getSender().getId());
             }
         }
@@ -202,8 +218,9 @@ public class PassRecentService implements MessageService<Matcher> {
 
         } else {
             //单成绩发送
+
             try {
-                var data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                var data = getAlphaPanel(mode, offset, 1, isRecent);
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);

@@ -21,7 +21,6 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 
 @Shiro
@@ -45,7 +44,7 @@ public class OneBotListener {
         for (var ins : Permission.getAllService()) {
             //功能关闭 优先级高于aop拦截
             if (Permission.isServiceClose(ins) && !Permission.isSuper(event.getSender().getId())) continue;
-
+            if (Permission.checkStopListener()) break;
             try {
                 var service = messageServiceMap.get(ins);
                 var type = service.getClass().getGenericSuperclass();

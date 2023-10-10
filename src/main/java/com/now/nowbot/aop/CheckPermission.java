@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-
 public @interface CheckPermission {
     /***
      * 黑/白 名单类型 true白  false黑

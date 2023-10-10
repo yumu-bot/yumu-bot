@@ -5,7 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
 public interface OsuUserInfoMapper extends JpaRepository<OsuUserInfoArchiveLite, Long>, JpaSpecificationExecutor<OsuUserInfoArchiveLite> {
@@ -13,6 +15,11 @@ public interface OsuUserInfoMapper extends JpaRepository<OsuUserInfoArchiveLite,
 
     @Query("select o from OsuUserInfoArchiveLite o where o.osuID = :osuId and (o.time between :time1 and :time2) order by o.time desc ")
     Optional<OsuUserInfoArchiveLite> selectDayLast(Long osuId, LocalDateTime time1, LocalDateTime time2);
+
+    default Optional<OsuUserInfoArchiveLite> selectDayLast(Long osuId, LocalDate date) {
+        return selectDayLast(osuId, LocalDateTime.of(date, LocalTime.MIDNIGHT), LocalDateTime.of(date, LocalTime.MAX));
+    };
+
     @Query("select o from OsuUserInfoArchiveLite o where o.osuID = :osuId order by o.time desc ")
     Optional<OsuUserInfoArchiveLite> selectLast(Long osuId);
 

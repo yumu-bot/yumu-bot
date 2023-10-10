@@ -1,6 +1,7 @@
 package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
 import com.now.nowbot.mapper.ServiceSwitchMapper;
@@ -8,9 +9,9 @@ import com.now.nowbot.qq.Bot;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
-import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -18,10 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.regex.Matcher;
+import java.util.function.ToIntFunction;
 
 @Component()
 public class Permission {
@@ -43,13 +45,13 @@ public class Permission {
     }
 
     //全局名单
-    private static PermissionData                   ALL_W;
-    private static PermissionData                   ALL_B;
+    private static       PermissionData              ALL_W;
+    private static       PermissionData              ALL_B;
     //service名单
-    private static final Map<String, PermissionData>    PERMISSIONS = new ConcurrentHashMap<>();
+    private static final Map<String, PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
 
-    private static final ArrayList<String> ALL_SERVICE = new ArrayList<>();
-    private static CopyOnWriteArraySet<String>     OFF_SERVICE = null;
+    private static final ArrayList<String>           ALL_SERVICE = new ArrayList<>();
+    private static       CopyOnWriteArraySet<String> OFF_SERVICE = null;
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
@@ -65,6 +67,7 @@ public class Permission {
         //初始化各功能名单
 
         var beans = applicationContext.getBeansOfType(MessageService.class);
+        Map<String, Integer> sortServiceMap = new HashMap<>();
         beans.forEach((name, bean) -> {
             CheckPermission $beansCheck = null;
             /*
@@ -72,12 +75,21 @@ public class Permission {
              * AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
              * AopUtils.getTargetClass(point.getTarget()).getMethod("HandleMessage", MessageEvent.class, java.util.regex.Matcher.class).getAnnotation(com.now.nowbot.aop.CheckPermission.class);
              */
+            Method method = null;
+            for (var m : AopUtils.getTargetClass(bean).getMethods()) {
+                if (m.getName() == "HandleMessage") method = m;
+            }
+            if (method == null) return;
+            // 拿到方法上的权限注解
+            $beansCheck = method.getAnnotation(CheckPermission.class);
 
-            try {
-                // 拿到方法上的权限注解
-                $beansCheck = AopUtils.getTargetClass(bean).getMethod("HandleMessage", MessageEvent.class, Matcher.class).getAnnotation(CheckPermission.class);
-            } catch (NoSuchMethodException e) {
-                log.trace("service {} 无注解", bean.getClass().getSimpleName());
+
+            var sort = method.getAnnotation(ServiceOrder.class);
+
+            if (sort != null) {
+                sortServiceMap.put(name, sort.sort());
+            } else {
+                sortServiceMap.put(name, 0);
             }
 
             //如果包含权限注解 则初始化权限列表
@@ -111,7 +123,21 @@ public class Permission {
                     Permission.PERMISSIONS.put(name, obj);
                 }
             }
+            var serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
+            var p = serviceSwitchMapper.findById(name);
+            if (p.isPresent() && !p.get().isSwitch()) {
+                OFF_SERVICE.add(name);
+            }
         });
+
+        ALL_SERVICE.addAll(
+                sortServiceMap.entrySet()
+                        .stream()
+                        .sorted(Comparator.comparingInt((ToIntFunction<Map.Entry<String, Integer>>) Map.Entry::getValue).reversed())
+                        .map(Map.Entry::getKey)
+                        .toList()
+        );
+
         //初始化暗杀名单(
 //        Bot bot = applicationContext.getBean(Bot.class);
         Bot bot = null;
@@ -137,14 +163,6 @@ public class Permission {
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
         OFF_SERVICE = new CopyOnWriteArraySet<>();
 
-        var messageService = applicationContext.getBeansOfType(MessageService.class);
-        messageService.forEach((name, service) -> {
-            ALL_SERVICE.add(name);
-            var p = serviceSwitchMapper.findById(name);
-            if (p.isPresent() && !p.get().isSwitch()) {
-                OFF_SERVICE.add(name);
-            }
-        });
         /*
         for (var i : Instruction.values()) {
             var names = applicationContext.getBeanNamesForType(i.getaClass());
@@ -346,6 +364,7 @@ public class Permission {
 
     /**
      * 单功能开关
+     *
      * @return
      */
     public static boolean isServiceClose(String name) {
@@ -386,5 +405,13 @@ public class Permission {
         GroupContact member;
         if ((member = group.getUser(qq)) == null) return false;
         return member.getRoll() == Role.ADMIN || member.getRoll() == Role.OWNER;
+    }
+
+    public static void stopListener() {
+        ContextUtil.setContext("StopListener", Boolean.TRUE);
+    }
+
+    public static boolean checkStopListener() {
+        return Boolean.TRUE.equals(ContextUtil.getContext("StopListener", Boolean.class));
     }
 }

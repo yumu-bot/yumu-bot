@@ -53,7 +53,7 @@ public class OsuUserInfoDao {
     }
 
     public Optional<OsuUserInfoArchiveLite> getLast(Long uid, LocalDate date) {
-        return osuUserInfoMapper.selectDayLast(uid, LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
+        return osuUserInfoMapper.selectDayLast(uid, date);
     }
 
     public Optional<OsuUserInfoArchiveLite> getLast(Long uid) {
