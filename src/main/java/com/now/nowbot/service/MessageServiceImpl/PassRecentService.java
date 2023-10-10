@@ -156,7 +156,7 @@ public class PassRecentService implements MessageService<Matcher> {
                 }
 
             } else {
-                if (event.getSender().getId() == 365246692L) {
+                if (event.getSender().getId() == 365246692L && false) {
                     var mode = OsuMode.getMode(matcher.group("mode"));
                     byte[] img;
                     try {
