@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,7 +34,7 @@ public class OsuUserInfoDao {
 
     public void saveUsers(List<MicroUser> users) {
         var all = users.stream()
-                .map(microUser -> {
+                .flatMap(microUser -> {
                     var osu = fromStatustucs(microUser.getRulesets().getOsu(), OsuMode.OSU);
                     if (osu != null) osu.setOsuID(microUser.getId());
                     var taiko = fromStatustucs(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
@@ -43,9 +44,8 @@ public class OsuUserInfoDao {
                     var mania = fromStatustucs(microUser.getRulesets().getMania(), OsuMode.OSU);
                     if (mania != null) mania.setOsuID(microUser.getId());
 
-                    return List.of(osu, taiko, fruits, mania);
+                    return Stream.of(osu, taiko, fruits, mania);
                 })
-                .flatMap(Collection::stream)
                 .filter(su -> su != null)
                 .toList();
 
