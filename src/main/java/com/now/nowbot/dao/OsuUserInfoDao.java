@@ -35,13 +35,13 @@ public class OsuUserInfoDao {
         var all = users.stream()
                 .map(microUser -> {
                     var osu = fromStatustucs(microUser.getRulesets().getOsu(), OsuMode.OSU);
-                    osu.setOsuID(microUser.getId());
+                    if (osu != null) osu.setOsuID(microUser.getId());
                     var taiko = fromStatustucs(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
-                    taiko.setOsuID(microUser.getId());
+                    if (taiko != null) taiko.setOsuID(microUser.getId());
                     var fruits = fromStatustucs(microUser.getRulesets().getFruits(), OsuMode.CATCH);
-                    fruits.setOsuID(microUser.getId());
+                    if (fruits != null) fruits.setOsuID(microUser.getId());
                     var mania = fromStatustucs(microUser.getRulesets().getMania(), OsuMode.OSU);
-                    mania.setOsuID(microUser.getId());
+                    if (mania != null) mania.setOsuID(microUser.getId());
 
                     return List.of(osu, taiko, fruits, mania);
                 })
