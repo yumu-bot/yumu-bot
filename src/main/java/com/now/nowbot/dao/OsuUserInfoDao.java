@@ -46,6 +46,7 @@ public class OsuUserInfoDao {
                     return List.of(osu, taiko, fruits, mania);
                 })
                 .flatMap(Collection::stream)
+                .filter(su -> su != null)
                 .toList();
 
         osuUserInfoMapper.saveAllAndFlush(all);
@@ -86,6 +87,7 @@ public class OsuUserInfoDao {
         return out;
     }
     private static OsuUserInfoArchiveLite fromStatustucs(Statistics s, OsuMode mode){
+        if (s == null) return null;
         var out = new OsuUserInfoArchiveLite();
         out.setPlay_count(s.getPlayCount());
         out.setPlay_time(s.getPlayTime());
