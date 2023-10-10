@@ -144,9 +144,9 @@ public class MRAService implements MessageService<Matcher> {
             var l = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
             if (l.isEmpty()) break;
-            var us = osuGetService.getUsers(l).get("users");
+            var us = osuGetService.getUsers(l);
             for(var node: us) {
-                uid4cover.put(node.get("id").asLong(0), JacksonUtil.parseObject(node.get("cover"), Cover.class));
+                uid4cover.put(node.getId(), node.getCover());
             }
         }
         //获取所有user

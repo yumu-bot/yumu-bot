@@ -1,22 +1,21 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.enums.OsuMode;
-import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "osu_user_mode_score", indexes = {
-        @Index(name = "osu_id", columnList = "osu_id"),
-        @Index(name = "usermod_find", columnList = "osu_id,mode")
+@Table(name = "osu_user_info_archive", indexes = {
+        @Index(name = "index_osu_id", columnList = "osu_id"),
+        @Index(name = "index_usermod_find", columnList = "osu_id,mode")
 })
-public class OsuUserModeScoreLite {
+public class OsuUserInfoArchiveLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "osu_id")
-    private Integer osuID;
+    private Long osuID;
     private OsuMode mode;
 
     private LocalDateTime time;
@@ -57,11 +56,11 @@ public class OsuUserModeScoreLite {
         this.id = id;
     }
 
-    public Integer getOsuID() {
+    public Long getOsuID() {
         return osuID;
     }
 
-    public void setOsuID(Integer osuID) {
+    public void setOsuID(Long osuID) {
         this.osuID = osuID;
     }
 

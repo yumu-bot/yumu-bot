@@ -7,6 +7,7 @@ import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.entity.BeatMapFileLite;
 import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.mapper.BeatMapFileRepository;
@@ -55,16 +56,17 @@ import java.util.zip.ZipInputStream;
 @SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
-    public static        BinUser botUser = new BinUser();
-    private static final Logger  log     = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    public static BinUser botUser = new BinUser();
+    private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
 
-    private final int    oauthId;
+    private final int oauthId;
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    BindDao      bindDao;
+    BindDao bindDao;
     RestTemplate template;
-    BeatMapDao   beatMapDao;
+    BeatMapDao beatMapDao;
+    OsuUserInfoDao userInfoDao;
 
     @Resource
     @Lazy
@@ -79,7 +81,14 @@ public class OsuGetServiceImpl implements OsuGetService {
     private final NoProxyRestTemplate noProxyRestTemplate;
 
     @Autowired
-    OsuGetServiceImpl(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind, NoProxyRestTemplate noProxyRestTemplate, @Lazy BeatMapDao beatMap) {
+    OsuGetServiceImpl(
+            RestTemplate restTemplate,
+            OSUConfig osuConfig,
+            BindDao bind,
+            NoProxyRestTemplate noProxyRestTemplate,
+            @Lazy BeatMapDao beatMap,
+            OsuUserInfoDao osuUserInfoDao
+    ) {
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
@@ -88,6 +97,8 @@ public class OsuGetServiceImpl implements OsuGetService {
         bindDao = bind;
         template = restTemplate;
         beatMapDao = beatMap;
+        userInfoDao = osuUserInfoDao;
+
         this.noProxyRestTemplate = noProxyRestTemplate;
     }
 
@@ -254,7 +265,9 @@ public class OsuGetServiceImpl implements OsuGetService {
         HttpHeaders headers = getHeader(user);
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(url, HttpMethod.GET, httpEntity, OsuUser.class);
-        return c.getBody();
+        OsuUser u = c.getBody();
+        userInfoDao.saveUser(u);
+        return u;
     }
 
     /**
@@ -279,6 +292,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         user.setOsuID(data.getUID());
         user.setOsuName(data.getUsername());
         user.setMode(data.getPlayMode());
+        userInfoDao.saveUser(data);
         return data;
     }
 
@@ -298,6 +312,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
+        userInfoDao.saveUser(data);
         return data;
     }
 
@@ -316,6 +331,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
         var data = c.getBody();
+        userInfoDao.saveUser(data);
         return data;
     }
 
@@ -352,7 +368,9 @@ public class OsuGetServiceImpl implements OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
-        return c.getBody();
+        OsuUser u = c.getBody();
+        userInfoDao.saveUser(u);
+        return u;
     }
 
 
@@ -363,7 +381,9 @@ public class OsuGetServiceImpl implements OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
-        return c.getBody();
+        OsuUser u = c.getBody();
+        userInfoDao.saveUser(u);
+        return u;
     }
 
     @Override
@@ -390,7 +410,9 @@ public class OsuGetServiceImpl implements OsuGetService {
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<OsuUser> c = template.exchange(uri, HttpMethod.GET, httpEntity, OsuUser.class);
-        return c.getBody();
+        OsuUser u = c.getBody();
+        userInfoDao.saveUser(u);
+        return u;
     }
 
     @Override
@@ -409,14 +431,21 @@ public class OsuGetServiceImpl implements OsuGetService {
      * @return
      */
     @Override
-    public <T extends Number> JsonNode getUsers(Collection<T> users) {
+    public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users")
                 .queryParam("ids[]", users).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<JsonNode> c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
-        return c.getBody();
+        var data = c.getBody();
+        var usersdata = JacksonUtil.parseObjectList(data.get("users"), MicroUser.class);
+        saveAll(usersdata);
+        return usersdata;
+    }
+
+    private void saveAll(List<MicroUser> data) {
+        userInfoDao.saveUsers(data);
     }
 
     /**
@@ -712,18 +741,18 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
     public void downloadAllFiles(long sid) throws IOException {
-        Path tmp = Path.of(fileConfig.getOsuFilePath(), "tmp-"+sid);
+        Path tmp = Path.of(fileConfig.getOsuFilePath(), "tmp-" + sid);
         HashMap<String, Path> fileMap = new HashMap<>();
         var account = osuMapDownloadUtil.getAccount();
         try (var in = osuMapDownloadUtil.download(sid, account);) {
             var zip = new ZipInputStream(in);
             ZipEntry zipFile;
             Files.createDirectories(tmp);
-            while ((zipFile = zip.getNextEntry()) != null)  {
+            while ((zipFile = zip.getNextEntry()) != null) {
                 if (zipFile.isDirectory()) continue;
                 try {
                     Path zipFilePath = Path.of(tmp.toString(), zipFile.getName());
-                    Files.write(zipFilePath, zip.readNBytes((int)zipFile.getSize()));
+                    Files.write(zipFilePath, zip.readNBytes((int) zipFile.getSize()));
                     fileMap.put(zipFile.getName(), zipFilePath);
                 } catch (IOException e) {
                     // do nothing
@@ -750,7 +779,7 @@ public class OsuGetServiceImpl implements OsuGetService {
             if (!saveFiles.contains(info.getAudio())) {
                 saveFiles.add(info.getAudio());
             }
-            Files.move(osuPath, Path.of(tmp.toString(), info.getBid()+".osu"));
+            Files.move(osuPath, Path.of(tmp.toString(), info.getBid() + ".osu"));
             beatmaps.add(info);
         }
 
@@ -850,7 +879,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      * @return
      */
     @Override
-    @Retryable(value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
+    @Retryable(retryFor = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
             maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
     public PPPlus ppPlus(String name) {
         URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name).build().encode().toUri();

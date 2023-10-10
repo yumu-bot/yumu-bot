@@ -124,7 +124,7 @@ public interface OsuGetService {
      * @param users id
      * @return
      */
-    <T extends Number> JsonNode getUsers(Collection<T> users);
+    <T extends Number> List<MicroUser> getUsers(Collection<T> users);
 
     /**
      * 获得某个模式的bp表
@@ -226,7 +226,7 @@ public interface OsuGetService {
      * @param name
      * @return
      */
-    @Retryable(value = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
+    @Retryable(retryFor = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
             maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
     PPPlus ppPlus(String name);
 

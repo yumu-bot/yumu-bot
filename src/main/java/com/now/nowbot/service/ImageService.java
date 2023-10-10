@@ -621,21 +621,21 @@ public class ImageService {
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> o, LinkedHashMap::new));
-        var mapperInfo = osuGetService.getUsers(mapperCount.keySet()).get("users");
+        var mapperInfo = osuGetService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
 //                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
                 .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
                 .entrySet()
                 .stream()
-                .sorted(Comparator.<Map.Entry<Integer, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
+                .sorted(Comparator.<Map.Entry<Long, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
                 .map(e -> {
                     String name = "";
                     String avatar = "";
                     for (var node : mapperInfo) {
-                        if (e.getKey().equals(node.get("id").asInt(0))) {
-                            name = node.get("username").asText("unknown");
-                            avatar = node.get("avatar_url").asText("unknown");
+                        if (e.getKey().equals(node.getId())) {
+                            name = node.getUserName();
+                            avatar = node.getAvatarUrl();
                             break;
                         }
                     }

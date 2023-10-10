@@ -55,6 +55,10 @@ public class MicroUser {
     @JsonProperty("statistics")
     Statistics statistics;
 
+    // 只有 getUsers包含
+    @JsonProperty("statistics_rulesets")
+    UserStatisticsRulesets rulesets;
+
     public String getAvatar() {
         return avatarUrl;
     }
@@ -169,6 +173,14 @@ public class MicroUser {
 
     public String getCountryCode() {
         return countryCode;
+    }
+
+    public UserStatisticsRulesets getRulesets() {
+        return rulesets;
+    }
+
+    public void setRulesets(UserStatisticsRulesets rulesets) {
+        this.rulesets = rulesets;
     }
 
     @Override
