@@ -26,7 +26,7 @@ public class SwitchService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>\\w+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
