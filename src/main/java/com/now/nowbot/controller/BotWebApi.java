@@ -4,14 +4,12 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.mapper.BeatMapFileRepository;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageServiceImpl.BphtService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
@@ -36,7 +34,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
@@ -50,8 +50,6 @@ public class BotWebApi {
     @Resource
     @Lazy
     FileConfig fileConfig;
-    @Resource
-    BphtService bphtService;
     @Resource
     MRAService mraService;
     @Resource
@@ -136,40 +134,6 @@ public class BotWebApi {
 
         var data = mraService.getDataImage(matchId, k, d, f, r);
         return new ResponseEntity<>(data, getImageHeader(matchId + "-mra.jpg", data.length), HttpStatus.OK);
-    }
-
-    @GetMapping(value = "bphti", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public String getBPHTI(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
-        BinUser nu = new BinUser();
-        userName = userName.trim();
-        long id = osuGetService.getOsuId(userName);
-        nu.setOsuID(id);
-        nu.setOsuName(userName);
-        var mode = OsuMode.getMode(playMode);
-        var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
-        var msg = bphtService.getAllMsgI(Bps, userName, mode);
-        StringBuilder sb = new StringBuilder();
-        for (var s : msg) {
-            sb.append(s).append("\n");
-        }
-        return sb.toString();
-    }
-
-    @GetMapping(value = "bpht", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public String getBPHT(@RequestParam("u1") String userName, @Nullable @RequestParam("mode") String playMode) {
-        BinUser nu = new BinUser();
-        userName = userName.trim();
-        long id = osuGetService.getOsuId(userName);
-        nu.setOsuID(id);
-        nu.setOsuName(userName);
-        var mode = OsuMode.getMode(playMode);
-        var Bps = osuGetService.getBestPerformance(nu, mode, 0, 100);
-        var msg = bphtService.getAllMsg(Bps, userName, mode.getName());
-        StringBuilder sb = new StringBuilder();
-        for (var s : msg) {
-            sb.append(s).append("\n");
-        }
-        return sb.toString();
     }
 
     /**

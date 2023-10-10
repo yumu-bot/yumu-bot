@@ -4,7 +4,9 @@ import com.now.nowbot.entity.OsuUserModeScoreLite;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Component;
 
+@Component
 public interface OsuUserInfoMapper extends JpaRepository<OsuUserModeScoreLite, Long>, JpaSpecificationExecutor<OsuUserModeScoreLite> {
     OsuUserModeScoreLite getFirstByOsuIDOrderByTimeDesc(long osuid);
 

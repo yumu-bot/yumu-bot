@@ -74,7 +74,6 @@ public class IMapperService implements MessageService<Matcher> {
                     var uid = Long.parseLong(matcher.group("name"));
                     osuUser = osuGetService.getPlayerInfo(uid);
                 } catch (Exception e1) {
-                    //NowbotApplication.log.error("e1", e1);
                     throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
                 }
             }
@@ -86,7 +85,6 @@ public class IMapperService implements MessageService<Matcher> {
         } catch (Exception e) {
             NowbotApplication.log.error("IMapper", e);
             throw new IMapperException(IMapperException.Type.IM_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
         }
     }
 }

@@ -52,9 +52,6 @@ public enum Instruction {
     BPA(BPAnalysisService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![a-zA-Z_])|ba(?![a-zA-Z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
 
-    BPHT(BphtService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(bpht|ht(?![a-zA-Z_]))+(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?")),
-
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
@@ -124,9 +121,6 @@ public enum Instruction {
     OVERSR(OverSRService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?![a-zA-Z_]))+(\\s+(?<SR>[0-9.]*))?")),
 
-    SQL(SqlService.class,
-            Pattern.compile("^[!！]sql\\s")),
-
     DRAW(DrawService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?")),
 
@@ -136,16 +130,12 @@ public enum Instruction {
     COUNTMSG(CountQQMessageService.class,
             Pattern.compile("^[!！]\\s*(?i)(ym)?((cm(?![a-zA-Z_]))|(countmessage)|(countmsg))+\\s*(?<d>(n)|(a)|(h))")),
 
-    SETU(SetuService.class,
-            Pattern.compile("^[!！]\\s*(?i)(ym)?(setu|se(?![a-zA-Z_]))+(\\s+(?<source>\\d+))?")),
-    /*
+   /*
     新建服务并指定@Service("aClass"),实现MessageService接口的HandleMessage,参数就从matcher.group("")来获取,,参数就是正则中(?<aClass>value)中的name,取值为value,当有'?'修饰时为@Nullable
      */
     TEST(TestService.class,
             Pattern.compile("^[!！]\\s*test.*")),
 
-    TESTID(TestGetId.class,
-            Pattern.compile("^[!！]\\s*(?i)testid\\s*(?<ids>((\\d)+(,)?)+)")),
 
     TESTPPM(TestPPMService.class,
             Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))")),

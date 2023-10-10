@@ -111,7 +111,6 @@ public class LeaderBoardService implements MessageService<Matcher> {
         } catch (Exception e) {
             NowbotApplication.log.error("Leader", e);
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
         }
     }
 }
