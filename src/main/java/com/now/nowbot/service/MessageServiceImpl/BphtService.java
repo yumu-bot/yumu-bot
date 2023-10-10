@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 @Service("bpht")
 public class BphtService implements MessageService<BphtService.BphtParm> {
-    private static final String TIPS = "此功能已经有新设计，请使用新面板 -> !ba \n\n";
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
@@ -61,6 +60,7 @@ public class BphtService implements MessageService<BphtService.BphtParm> {
     public boolean isHandle(MessageEvent event, DataValue<BphtParm> data) {
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
+        if (matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -141,7 +141,7 @@ public class BphtService implements MessageService<BphtService.BphtParm> {
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {
-        var dtbf = new StringBuffer(TIPS)
+        var dtbf = new StringBuffer()
                 .append(name).append('[').append(mode).append(']').append('\n');
         double allPP = 0;
         int sSum = 0;
@@ -200,7 +200,7 @@ public class BphtService implements MessageService<BphtService.BphtParm> {
 
     public String[] getAllMsgI(List<Score> bps, String name, OsuMode mode) {
         if (bps.isEmpty()) return new String[0];
-        var sb = new StringBuffer(TIPS)
+        var sb = new StringBuffer()
                 .append(name).append('[').append(mode).append(']').append('\n');
 
         var BP1 = bps.get(0);

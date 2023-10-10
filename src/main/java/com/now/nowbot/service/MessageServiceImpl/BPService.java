@@ -46,11 +46,6 @@ public class BPService implements MessageService<BPService.BPParam> {
     }
     private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
-    public static void main(String[] args) {
-        var m = pattern.matcher("!b:o #15");
-        System.out.println(m.find());
-        System.out.println(m.group("name"));
-    }
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
         var matcher = pattern.matcher(event.getRawMessage());
