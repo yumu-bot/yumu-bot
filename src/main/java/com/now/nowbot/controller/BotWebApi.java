@@ -333,7 +333,7 @@ public class BotWebApi {
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("n") Integer value
-    ){
+    ) {
         if (value == null) value = 0;
         return getScore(userName, playMode, 0, value, 0);
     }
@@ -346,7 +346,7 @@ public class BotWebApi {
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("n") Integer value
-    ){
+    ) {
         if (value == null) value = 0;
         return getScore(userName, playMode, 0, value, 1);
     }
@@ -359,7 +359,7 @@ public class BotWebApi {
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("n") Integer value
-    ){
+    ) {
         if (value == null) value = 0;
         return getScore(userName, playMode, 1, value, null);
     }
@@ -370,7 +370,7 @@ public class BotWebApi {
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("bid") Integer value,
             @Nullable @RequestParam("mods") String mods
-    ){
+    ) {
         Integer modInt = null;
         if (mods != null) modInt = Mod.getModsValue(mods);
         return getScore(userName, playMode, 2, value, modInt);
@@ -422,19 +422,42 @@ public class BotWebApi {
     }
 
     @GetMapping("/background/{bid}")
-    public ResponseEntity<byte[]> getImage(@PathVariable("bid")String bidStr) throws IOException {
+    public ResponseEntity<byte[]> getImage(@PathVariable("bid") String bidStr) throws IOException {
         long bid = Long.parseLong(bidStr);
         return getFile(bid, true, false);
     }
+
     @GetMapping("/audio/{bid}")
-    public ResponseEntity<byte[]> getAudio(@PathVariable("bid")String bidStr) throws IOException {
+    public ResponseEntity<byte[]> getAudio(@PathVariable("bid") String bidStr) throws IOException {
         long bid = Long.parseLong(bidStr);
         return getFile(bid, false, false);
     }
+
     @GetMapping("/osufile/{bid}")
-    public ResponseEntity<byte[]> getOsuFile(@PathVariable("bid")String bidStr) throws IOException {
+    public ResponseEntity<byte[]> getOsuFile(@PathVariable("bid") String bidStr) throws IOException {
         long bid = Long.parseLong(bidStr);
         return getFile(bid, false, true);
+    }
+
+    @GetMapping("/l/background/{bid}")
+    @ResponseBody
+    public String getImagePath(@PathVariable("bid") String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        return getLocalFilePath(bid, true, false);
+    }
+
+    @GetMapping("/l/audio/{bid}")
+    @ResponseBody
+    public String getAudioPath(@PathVariable("bid") String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        return getLocalFilePath(bid, false, false);
+    }
+
+    @GetMapping("/l/osufile/{bid}")
+    @ResponseBody
+    public String getOsuFilePath(@PathVariable("bid") String bidStr) throws IOException {
+        long bid = Long.parseLong(bidStr);
+        return getLocalFilePath(bid, false, true);
     }
 
     private ResponseEntity<byte[]> getFile(long bid, boolean isBg, boolean isFile) throws IOException {
@@ -469,6 +492,27 @@ public class BotWebApi {
         } catch (IOException e) {
             throw new RuntimeException("文件已失效...");
         }
+    }
+
+    private String getLocalFilePath(long bid, boolean isBg, boolean isFile) throws IOException {
+
+        var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+        if (fopt.isEmpty()) {
+            var finfo = osuGetService.getMapInfoFromDB(bid);
+            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
+            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+        }
+        if (fopt.isEmpty()) throw new IOException("download error");
+        var fileInfo = fopt.get();
+        Path path;
+        if (isBg) {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
+        } else if (isFile) {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), bid + ".osu");
+        } else {
+            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getAudio());
+        }
+        return path.toAbsolutePath().toString();
     }
 
     private static HttpHeaders getImageHeader(String name, long length) {
