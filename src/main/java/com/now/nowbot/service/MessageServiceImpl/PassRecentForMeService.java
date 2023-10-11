@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
@@ -60,6 +61,7 @@ public class PassRecentForMeService implements MessageService<Matcher> {
     }
 
     @Override
+    @ServiceOrder(sort = 15)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var name = matcher.group("name");
