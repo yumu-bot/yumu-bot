@@ -64,7 +64,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && !groupUser.getRoll().equals(Role.ADMIN)) {
+            if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
                 throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
             }
         }
