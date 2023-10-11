@@ -24,15 +24,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 @Component()
 public class Permission {
-    private static final Logger    log            = LoggerFactory.getLogger(Permission.class);
-    private static       Set<Long> supetList;
-    private static       Set<Long> testerList;
-    private static final String    PERMISSION_ALL = "PERMISSION_ALL";
+    private static final Logger log = LoggerFactory.getLogger(Permission.class);
+    private static Set<Long> supetList;
+    private static Set<Long> testerList;
+    private static final String PERMISSION_ALL = "PERMISSION_ALL";
 
-    private static PermissionDao       permissionDao;
+    private static PermissionDao permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
 
     private static Bot bot;
@@ -45,13 +46,13 @@ public class Permission {
     }
 
     //全局名单
-    private static       PermissionData              ALL_W;
-    private static       PermissionData              ALL_B;
+    private static PermissionData ALL_W;
+    private static PermissionData ALL_B;
     //service名单
     private static final Map<String, PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
 
-    private static final ArrayList<String>           ALL_SERVICE = new ArrayList<>();
-    private static       CopyOnWriteArraySet<String> OFF_SERVICE = null;
+    private static ArrayList<String> ALL_SERVICE = null;
+    private static CopyOnWriteArraySet<String> OFF_SERVICE = null;
 
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
@@ -64,6 +65,10 @@ public class Permission {
         var AllGb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
         ALL_B = new PermissionData(new HashSet<>(AllFb), new HashSet<>(AllGb));
         ALL_B.setWhite(false);
+        OFF_SERVICE = new CopyOnWriteArraySet<>();
+        //初始化功能关闭菜单
+        serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
+
         //初始化各功能名单
 
         var beans = applicationContext.getBeansOfType(MessageService.class);
@@ -77,9 +82,16 @@ public class Permission {
              */
             Method method = null;
             for (var m : AopUtils.getTargetClass(bean).getMethods()) {
-                if (m.getName() == "HandleMessage") method = m;
+                if (m.getName().equals("HandleMessage")) method = m;
             }
+
             if (method == null) return;
+
+            var p = serviceSwitchMapper.findById(name);
+            if (p.isPresent() && !p.get().isSwitch()) {
+                OFF_SERVICE.add(name);
+            }
+
             // 拿到方法上的权限注解
             $beansCheck = method.getAnnotation(CheckPermission.class);
 
@@ -123,67 +135,19 @@ public class Permission {
                     Permission.PERMISSIONS.put(name, obj);
                 }
             }
-            var serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
-            var p = serviceSwitchMapper.findById(name);
-            if (p.isPresent() && !p.get().isSwitch()) {
-                OFF_SERVICE.add(name);
-            }
         });
 
-        ALL_SERVICE.addAll(
-                sortServiceMap.entrySet()
-                        .stream()
-                        .sorted(Comparator.comparingInt((ToIntFunction<Map.Entry<String, Integer>>) Map.Entry::getValue).reversed())
-                        .map(Map.Entry::getKey)
-                        .toList()
-        );
+        ALL_SERVICE = sortServiceMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt((ToIntFunction<Map.Entry<String, Integer>>) Map.Entry::getValue).reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toCollection(ArrayList::new));
+
 
         //初始化暗杀名单(
-//        Bot bot = applicationContext.getBean(Bot.class);
-        Bot bot = null;
-        if (bot != null) {
+        supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+        testerList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
 
-            Permission.bot = bot;
-            var devGroup = bot.getGroup(746671531L);
-            if (devGroup != null) {
-                supetList = Set.copyOf(devGroup.getAllUser().stream().map(GroupContact::getId).toList());
-            } else {
-                supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
-            }
-            var testGroup = bot.getGroup(722292097L);
-            if (testGroup != null) {
-                testerList = Set.copyOf(testGroup.getAllUser().stream().map(GroupContact::getId).toList());
-            }
-        } else {
-            supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
-            testerList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
-        }
-
-        //初始化功能关闭菜单
-        serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
-        OFF_SERVICE = new CopyOnWriteArraySet<>();
-
-        /*
-        for (var i : Instruction.values()) {
-            var names = applicationContext.getBeanNamesForType(i.getaClass());
-            if (names.length > 0) {
-                SERVICE_NAME.put(i, String.join(",", names));
-                var p = serviceSwitchMapper.findById(names[0]);
-                if (p.isPresent() && !p.get().isSwitch()) {
-                    OFF_SERVICE.add(i);
-                }
-            }
-        }
-
-        for (var i : Instruction.values()) {
-            for (String s : getServiceName(i)) {
-                var p = serviceSwitchMapper.findById(s);
-                if (p.isPresent() && !p.get().isSwitch()) {
-                    OFF_SERVICE.add(i);
-                }
-            }
-        }
-         */
         log.info("名单初始化完成");
     }
 

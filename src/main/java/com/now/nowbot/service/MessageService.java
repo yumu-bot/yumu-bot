@@ -15,11 +15,6 @@ public interface MessageService<T> {
         return false;
     }
 
-//    default void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-//    }
-
-    ;
-
     default void HandleMessage(MessageEvent event, T matcher) throws Throwable {
     }
 
