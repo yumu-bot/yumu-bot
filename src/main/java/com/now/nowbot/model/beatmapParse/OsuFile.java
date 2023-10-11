@@ -65,6 +65,7 @@ public class OsuFile {
             int end = line.lastIndexOf('"');
 
             bf.setBackground(line.substring(start + 1, end));
+            break;
         }
 
         if (info.get("AudioFilename") != null) {
