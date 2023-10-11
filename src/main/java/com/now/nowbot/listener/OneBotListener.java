@@ -40,7 +40,6 @@ public class OneBotListener {
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
-        if (event.getSender().getId() != 365246692L) return;
         ASyncMessageUtil.put(event);
         for (var ins : Permission.getAllService()) {
             //功能关闭 优先级高于aop拦截
@@ -48,8 +47,6 @@ public class OneBotListener {
             if (Permission.checkStopListener()) break;
             try {
                 var service = messageServiceMap.get(ins);
-                var type = service.getClass().getGenericSuperclass();
-
                 var d = new MessageService.DataValue();
                 if (service.isHandle(event, d)) {
                     service.HandleMessage(event, d.getValue());
