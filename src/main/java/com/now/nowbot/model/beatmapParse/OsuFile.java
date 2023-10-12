@@ -4,6 +4,8 @@ import com.now.nowbot.entity.BeatMapFileLite;
 import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.model.beatmapParse.parse.*;
 import com.now.nowbot.model.enums.OsuMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -14,7 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OsuFile {
-    private BeatmapGeneral general;
+    static final Logger         log =  LoggerFactory.getLogger(OsuFile.class.getName());
+    private      BeatmapGeneral general;
 
     private BufferedReader reader;
 
@@ -35,6 +38,7 @@ public class OsuFile {
     public static BeatMapFileLite parseInfo(BufferedReader read) throws IOException {
         var versionStr = read.readLine();
         if (versionStr == null || !versionStr.startsWith("osu file format v")) {
+            log.error("解析错误,文件无效 第一行为:[{}]", versionStr);
             throw new RuntimeException("解析错误,文件无效");
         }
         var bf = new BeatMapFileLite();

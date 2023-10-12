@@ -33,6 +33,7 @@ import org.springframework.http.*;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
@@ -46,9 +47,16 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -56,16 +64,19 @@ import java.util.zip.ZipInputStream;
 @SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
-    public static BinUser botUser = new BinUser();
-    private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    public static        BinUser                                 botUser = new BinUser();
+    private static final Logger                                  log     = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    private final        int                                     oauthId;
+    private final        String                                  redirectUrl;
+    private final        String                                  oauthToken;
+    private final        String                                  URL;
+    private static final ReentrantLock                           mapLock = new ReentrantLock();
+    private static final ConcurrentHashMap<Long, CountDownLatch> locks   = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, Boolean>        results = new ConcurrentHashMap<>();
 
-    private final int oauthId;
-    private final String redirectUrl;
-    private final String oauthToken;
-    private final String URL;
-    BindDao bindDao;
-    RestTemplate template;
-    BeatMapDao beatMapDao;
+    BindDao        bindDao;
+    RestTemplate   template;
+    BeatMapDao     beatMapDao;
     OsuUserInfoDao userInfoDao;
 
     @Resource
@@ -740,8 +751,22 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     }
 
-    public void downloadAllFiles(long sid) throws IOException {
+    public boolean downloadAllFiles(long sid) throws IOException {
+        CountDownLatch lock = locks.computeIfAbsent(sid, k -> new CountDownLatch(1));
+
+        Boolean result = results.get(sid);
+        if (result != null) {
+            return result;
+        }
+        lock.countDown();
+        return false;
+    }
+
+    private boolean doDownload(long sid) throws IOException {
         Path tmp = Path.of(fileConfig.getOsuFilePath(), "tmp-" + sid);
+        if (Files.exists(tmp)) {
+            deleteDirTree(tmp);
+        }
         HashMap<String, Path> fileMap = new HashMap<>();
         var account = osuMapDownloadUtil.getAccount();
         try (var in = osuMapDownloadUtil.download(sid, account);) {
@@ -760,14 +785,27 @@ public class OsuGetServiceImpl implements OsuGetService {
                 }
             }
         }
+        if (fileMap.isEmpty()) {
+            return false;
+        }
 
+        try {
+            List<Path> osuPaths = fileMap
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().endsWith(".osu"))
+                    .map(Map.Entry::getValue)
+                    .toList();
+            dealOsuFiles(osuPaths, fileMap, tmp, sid);
+        } catch (Exception e) {
+            log.error("处理文件出错:", e);
+            deleteDirTree(tmp);
+        }
+        return true;
+    }
 
-        var osuPaths = fileMap
-                .entrySet()
-                .stream()
-                .filter(e -> e.getKey().endsWith(".osu"))
-                .map(Map.Entry::getValue)
-                .toList();
+    private void dealOsuFiles(List<Path> allOsuFiles, HashMap<String, Path> fileMap, Path saveDir, Long sid) throws IOException {
+        List<Path> osuPaths = allOsuFiles;
         List<String> saveFiles = new ArrayList<>(fileMap.size());
         List<BeatMapFileLite> beatmaps = new LinkedList<>();
         for (var osuPath : osuPaths) {
@@ -779,7 +817,7 @@ public class OsuGetServiceImpl implements OsuGetService {
             if (!saveFiles.contains(info.getAudio())) {
                 saveFiles.add(info.getAudio());
             }
-            Files.move(osuPath, Path.of(tmp.toString(), info.getBid() + ".osu"));
+            Files.move(osuPath, Path.of(saveDir.toString(), info.getBid() + ".osu"));
             beatmaps.add(info);
         }
 
@@ -792,8 +830,16 @@ public class OsuGetServiceImpl implements OsuGetService {
             }
         });
 
-        Files.move(tmp, Path.of(fileConfig.getOsuFilePath(), Long.toString(sid)));
-        beatMapFileRepository.saveAll(beatmaps);
+        Files.move(saveDir, Path.of(fileConfig.getOsuFilePath(), Long.toString(sid)));
+        beatMapFileRepository.saveAllAndFlush(beatmaps);
+    }
+
+    public static void deleteDirTree(Path path) {
+        try {
+            FileSystemUtils.deleteRecursively(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /***

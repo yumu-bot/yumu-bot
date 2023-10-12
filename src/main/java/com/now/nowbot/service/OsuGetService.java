@@ -279,5 +279,5 @@ public interface OsuGetService {
 
     JsonNode chatGetChannels(BinUser user);
 
-    void downloadAllFiles(long sid) throws IOException;
+    boolean downloadAllFiles(long sid) throws IOException;
 }
