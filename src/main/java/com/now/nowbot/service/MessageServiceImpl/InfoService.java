@@ -43,13 +43,14 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<InfoParm> data) {
-        var matcher = pattern.matcher(event.getRawMessage().trim());
-
-        if (!matcher.find()) {
-            var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
-            if (!m4qq.find()) return false;
+        var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
+        if (m4qq.find()) {
             data.setValue(new InfoParm(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
             return true;
+        }
+        var matcher = pattern.matcher(event.getRawMessage().trim());
+        if (!matcher.find()) {
+            return false;
         }
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -72,7 +73,6 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         BinUser user;
-        log.info("触发查询: {}", JacksonUtil.objectToJsonPretty(parm));
         if (parm.name() != null) {
             long id;
             try {
