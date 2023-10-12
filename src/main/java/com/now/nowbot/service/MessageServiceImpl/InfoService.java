@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("Info")
-public class InfoService implements MessageService<Matcher> {
+public class InfoService implements MessageService<InfoService.InfoParm> {
     private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Autowired
     RestTemplate template;
@@ -34,50 +35,59 @@ public class InfoService implements MessageService<Matcher> {
     BindDao       bindDao;
     @Autowired
     ImageService  imageService;
-
+    public record InfoParm(String name, Long qq, OsuMode mode){}
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?information|yminfo(?![a-zA-Z_])|(ym)?i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    Pattern pattern4QQ = Pattern.compile("^[!！](?i)i\\s*qq=(?<qq>\\d+)");
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
+    public boolean isHandle(MessageEvent event, DataValue<InfoParm> data) {
+        var matcher = pattern.matcher(event.getRawMessage().trim());
+
+        if (!matcher.find()) {
+            var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
+            if (!m4qq.find()) return false;
+            data.setValue(new InfoParm(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
             return true;
-        } else return false;
+        }
+        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
+        if (at != null) {
+            data.setValue(new InfoParm(null, at.getTarget(), mode));
+            return true;
+        }
+        String name = matcher.group("name");
+        if (Strings.isNotBlank(name)) {
+            data.setValue(new InfoParm(name, null, mode));
+            return true;
+        }
+        data.setValue(new InfoParm(null, event.getSender().getId(), mode));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, InfoParm parm) throws Throwable {
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
-        String name = matcher.group("name");
-        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser user;
-        if (at != null) {
-            user = bindDao.getUser(at.getTarget());
-        } else {
-            if (name != null && !name.trim().isEmpty()) {
-                long id;
-                try {
-                    id = osuGetService.getOsuId(matcher.group("name").trim());
-                } catch (Exception e) {
-                    throw new InfoException(InfoException.Type.INFO_Player_NotFound);
-                }
-                user = new BinUser();
-                user.setOsuID(id);
-                user.setMode(OsuMode.DEFAULT);
-            } else {
-                try {
-                    user = bindDao.getUser(event.getSender().getId());
-                } catch (Exception e) {
-                    throw new InfoException(InfoException.Type.INFO_Me_NotFound);
-                }
+        if (parm.name() != null) {
+            long id;
+            try {
+                id = osuGetService.getOsuId(parm.name().trim());
+            } catch (Exception e) {
+                log.error("info: ", e);
+                throw new InfoException(InfoException.Type.INFO_Player_NotFound);
             }
+            user = new BinUser();
+            user.setOsuID(id);
+            user.setMode(OsuMode.DEFAULT);
+        } else {
+            user = bindDao.getUser(parm.qq());
         }
 
         //处理默认mode
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        var mode = parm.mode();
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
         OsuUser osuUser;
@@ -88,6 +98,7 @@ public class InfoService implements MessageService<Matcher> {
             osuUser = osuGetService.getPlayerInfo(user, mode);
             BPs = osuGetService.getBestPerformance(user, mode, 0, 100);
         } catch (Exception e) {
+            log.error("get info error:", e);
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         }
 
