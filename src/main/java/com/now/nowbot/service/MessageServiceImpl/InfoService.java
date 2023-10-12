@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.InfoException;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -71,6 +72,7 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
         var from = event.getSubject();
         //from.sendMessage("正在查询您的信息");
         BinUser user;
+        log.info("触发查询: {}", JacksonUtil.objectToJsonPretty(parm));
         if (parm.name() != null) {
             long id;
             try {
