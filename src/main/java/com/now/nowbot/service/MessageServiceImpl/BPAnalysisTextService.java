@@ -58,7 +58,6 @@ public class BPAnalysisTextService implements MessageService<BPAnalysisTextServi
 
 
     @Override
-    @CheckPermission(isSuperAdmin = true)
     public boolean isHandle(MessageEvent event, DataValue<BphtParm> data) {
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
@@ -79,6 +78,7 @@ public class BPAnalysisTextService implements MessageService<BPAnalysisTextServi
     }
 
     @Override
+    @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, BphtParm parm) throws BPAnalysisException {
         var from = event.getSubject();
         BinUser binUser = null;

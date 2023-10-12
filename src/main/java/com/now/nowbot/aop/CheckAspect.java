@@ -68,6 +68,9 @@ public class CheckAspect {
                 throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
             }
         }
+        if (CheckPermission.isSuperAdmin()) {
+                throw new PermissionException(servicename + "使用超管功能", event.getSender().getId() + " -> " + servicename);
+        }
         // test 功能
         if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
             throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
