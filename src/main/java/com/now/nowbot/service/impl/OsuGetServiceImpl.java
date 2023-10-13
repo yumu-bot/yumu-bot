@@ -20,6 +20,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.OsuMapDownloadUtil;
 import jakarta.annotation.Resource;
@@ -47,15 +48,12 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -64,19 +62,20 @@ import java.util.zip.ZipInputStream;
 @SuppressWarnings("all")
 @Service
 public class OsuGetServiceImpl implements OsuGetService {
-    public static        BinUser                                 botUser = new BinUser();
-    private static final Logger                                  log     = LoggerFactory.getLogger(OsuGetServiceImpl.class);
-    private final        int                                     oauthId;
-    private final        String                                  redirectUrl;
-    private final        String                                  oauthToken;
-    private final        String                                  URL;
-    private static final ReentrantLock                           mapLock = new ReentrantLock();
-    private static final ConcurrentHashMap<Long, CountDownLatch> locks   = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, Boolean>        results = new ConcurrentHashMap<>();
+    public static BinUser botUser = new BinUser();
+    private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
+    private final int oauthId;
+    private final String redirectUrl;
+    private final String oauthToken;
+    private final String URL;
+    private static final ReentrantLock reentrantLock = new ReentrantLock();
+    private static final ConcurrentHashMap<Long, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, Condition> locks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, Boolean> results = new ConcurrentHashMap<>();
 
-    BindDao        bindDao;
-    RestTemplate   template;
-    BeatMapDao     beatMapDao;
+    BindDao bindDao;
+    RestTemplate template;
+    BeatMapDao beatMapDao;
     OsuUserInfoDao userInfoDao;
 
     @Resource
@@ -92,14 +91,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     private final NoProxyRestTemplate noProxyRestTemplate;
 
     @Autowired
-    OsuGetServiceImpl(
-            RestTemplate restTemplate,
-            OSUConfig osuConfig,
-            BindDao bind,
-            NoProxyRestTemplate noProxyRestTemplate,
-            @Lazy BeatMapDao beatMap,
-            OsuUserInfoDao osuUserInfoDao
-    ) {
+    OsuGetServiceImpl(RestTemplate restTemplate, OSUConfig osuConfig, BindDao bind, NoProxyRestTemplate noProxyRestTemplate, @Lazy BeatMapDao beatMap, OsuUserInfoDao osuUserInfoDao) {
         oauthId = osuConfig.getId();
         redirectUrl = osuConfig.getCallBackUrl();
         oauthToken = osuConfig.getToken();
@@ -443,8 +435,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users")
-                .queryParam("ids[]", users).build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users").queryParam("ids[]", users).build().encode().toUri();
         HttpHeaders headers = getHeader();
 
         HttpEntity httpEntity = new HttpEntity(headers);
@@ -505,9 +496,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<JsonNode> getBestPerformance_raw(Long id, OsuMode mode, int s, int e) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + id + "/scores/best").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         URI uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -530,9 +519,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     @Override
     public List<Score> getRecentN(BinUser user, OsuMode mode, int offset, int limit) {
         if (!user.isAuthorized()) return getRecentN(user.getOsuID(), mode, offset, limit);
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
-                .queryParam("limit", limit)
-                .queryParam("offset", offset);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent").queryParam("limit", limit).queryParam("offset", offset);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader(user);
@@ -553,9 +540,7 @@ public class OsuGetServiceImpl implements OsuGetService {
      */
     @Override
     public List<Score> getRecentN(long userId, OsuMode mode, int offset, int limit) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("limit", limit)
-                .queryParam("offset", offset);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent").queryParam("limit", limit).queryParam("offset", offset);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -568,9 +553,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<JsonNode> getRecentNR(long userId, OsuMode mode, String s3, int s, int e) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent").queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
         HttpHeaders headers = getHeader();
@@ -583,10 +566,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<Score> getAllRecentN(long userId, OsuMode mode, int s, int e) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent")
-                .queryParam("include_fails", 1)
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/scores/recent").queryParam("include_fails", 1).queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
 
@@ -599,10 +579,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<Score> getAllRecentN(BinUser user, OsuMode mode, int s, int e) {
-        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent")
-                .queryParam("include_fails", 1)
-                .queryParam("limit", e)
-                .queryParam("offset", s);
+        var data = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + user.getOsuID() + "/scores/recent").queryParam("include_fails", 1).queryParam("limit", e).queryParam("offset", s);
         if (mode != OsuMode.DEFAULT) data.queryParam("mode", mode.getName());
         var uri = data.build().encode().toUri();
 
@@ -752,14 +729,13 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
     public boolean downloadAllFiles(long sid) throws IOException {
-        CountDownLatch lock = locks.computeIfAbsent(sid, k -> new CountDownLatch(1));
-
-        Boolean result = results.get(sid);
-        if (result != null) {
-            return result;
+        try {
+            return AsyncMethodExecutor.execute(() -> doDownload(sid), sid, false);
+        } catch (IOException ioException) {
+            throw ioException;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        lock.countDown();
-        return false;
     }
 
     private boolean doDownload(long sid) throws IOException {
@@ -790,12 +766,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         }
 
         try {
-            List<Path> osuPaths = fileMap
-                    .entrySet()
-                    .stream()
-                    .filter(e -> e.getKey().endsWith(".osu"))
-                    .map(Map.Entry::getValue)
-                    .toList();
+            List<Path> osuPaths = fileMap.entrySet().stream().filter(e -> e.getKey().endsWith(".osu")).map(Map.Entry::getValue).toList();
             dealOsuFiles(osuPaths, fileMap, tmp, sid);
         } catch (Exception e) {
             log.error("处理文件出错:", e);
@@ -945,10 +916,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<JsonNode> getUserRecentActivityN(long userId, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
-                .queryParam("offset", s)
-                .queryParam("limit", e)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity").queryParam("offset", s).queryParam("limit", e).build().encode().toUri();
 
         HttpHeaders headers = getHeader();
 
@@ -960,10 +928,7 @@ public class OsuGetServiceImpl implements OsuGetService {
 
     @Override
     public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity")
-                .queryParam("offset", s)
-                .queryParam("limit", e)
-                .build().encode().toUri();
+        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "users/" + userId + "/recent_activity").queryParam("offset", s).queryParam("limit", e).build().encode().toUri();
 
         HttpHeaders headers = getHeader();
 

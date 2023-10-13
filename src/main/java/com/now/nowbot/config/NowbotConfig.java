@@ -47,7 +47,6 @@ public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
     public static        String RUN_PATH;
     public static        String BOT_PATH;
-    public static        String BIN_PATH;
     public static        String FONT_PATH;
     public static        String BG_PATH;
     public static        String IMGBUFFER_PATH;
@@ -63,7 +62,6 @@ public class NowbotConfig {
     public NowbotConfig(FileConfig fileConfig, QQConfig qqConfig) {
         RUN_PATH = createDir(fileConfig.root);
         BOT_PATH = createDir(fileConfig.mirai);
-        BIN_PATH = createDir(fileConfig.bind);
         FONT_PATH = createDir(fileConfig.font);
         BG_PATH = createDir(fileConfig.bgdir);
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
