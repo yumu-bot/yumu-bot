@@ -59,16 +59,20 @@ public class OsuFile {
         }
 
         while ((line = read.readLine()) != null) {
-            if (line.startsWith("//") || line.isBlank()) {
+            var lineSplit = line.split(",");
+            if (line.startsWith("//") ||
+                    line.isBlank() ||
+                    lineSplit.length<3 ||
+                    !lineSplit[0].equals("0") ||
+                    !lineSplit[1].equals("0") ||
+                    !(lineSplit[3].startsWith("\"") && lineSplit[3].endsWith("\""))
+            ) {
                 continue;
             } else if (line.startsWith("[")) {
                 break;
             }
-
-            int start = line.indexOf('"');
-            int end = line.lastIndexOf('"');
-
-            bf.setBackground(line.substring(start + 1, end));
+            var bgStr = lineSplit[3];
+            bf.setBackground(bgStr.substring(1, bgStr.length()-1));
             break;
         }
 
