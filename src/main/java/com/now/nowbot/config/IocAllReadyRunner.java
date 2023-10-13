@@ -5,8 +5,11 @@ import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.*;
+import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.Panel.HCardBuilder;
+import com.now.nowbot.util.PanelUtil;
+import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.Font;
 import io.github.humbleui.skija.TextLine;
 import jakarta.annotation.Resource;
@@ -21,9 +24,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {

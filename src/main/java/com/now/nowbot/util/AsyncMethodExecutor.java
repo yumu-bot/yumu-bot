@@ -10,45 +10,50 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AsyncMethodExecutor {
-    public interface Supplier_<T>{
-        T get()throws Exception;
+    public interface Supplier<T> {
+        T get() throws Exception;
     }
-    public interface Runnable_ {
-        void run()throws Exception;
+
+    public interface Runnable {
+        void run() throws Exception;
     }
+
     private static final Logger log = LoggerFactory.getLogger(AsyncMethodExecutor.class);
     private static final ReentrantLock reentrantLock = new ReentrantLock();
     private static final ConcurrentHashMap<Object, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Object, Condition> locks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Object, Object> results = new ConcurrentHashMap<>();
-    public static<T> T execute(Supplier_<T> supplier, Object key, T defaultValue) throws Exception {
+//
+    public static <T> T execute(Supplier<T> supplier, Object key, T defaultValue) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
         hasLock = locks.containsKey(key);
-        lock = locks.computeIfAbsent(key, _ -> reentrantLock.newCondition());
+        lock = locks.computeIfAbsent(key, k -> reentrantLock.newCondition());
         reentrantLock.unlock();
         if (hasLock) {
             return waitForResult(lock, key, defaultValue);
         } else {
-            return getResult(lock,key,supplier,defaultValue);
+            return getResult(lock, key, supplier);
         }
     }
-    public static<T> T execute(Supplier_<T> supplier, Object key, Supplier_<T> getDefault) throws Exception {
+
+    public static <T> T execute(Supplier<T> supplier, Object key, Supplier<T> getDefault) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
         hasLock = locks.containsKey(key);
-        lock = locks.computeIfAbsent(key, _ -> reentrantLock.newCondition());
+        lock = locks.computeIfAbsent(key, k -> reentrantLock.newCondition());
         reentrantLock.unlock();
         if (hasLock) {
             return waitForResult(lock, key, getDefault);
         } else {
-            return getResult(lock,key,supplier,getDefault);
+            return getResult(lock, key, supplier);
         }
     }
+
     @SuppressWarnings("unchecked")
-    private static<T> T waitForResult(Condition lock, Object key, T defaultValue){
+    private static <T> T waitForResult(Condition lock, Object key, T defaultValue) {
         CountDownLatch countDownLock = null;
         try {
             reentrantLock.lock();
@@ -62,22 +67,24 @@ public class AsyncMethodExecutor {
             if (countDownLock != null) countDownLock.countDown();
         }
     }
+
     @SuppressWarnings("unchecked")
-    private static<T> T waitForResult(Condition lock, Object key, Supplier_<T> getDefault) throws Exception {
+    private static <T> T waitForResult(Condition lock, Object key, Supplier<T> getDefault) throws Exception {
         CountDownLatch countDownLock = null;
         try {
             reentrantLock.lock();
             lock.await();
             reentrantLock.unlock();
             countDownLock = countDownLocks.get(key);
-            return (T)results.get(key);
+            return (T) results.get(key);
         } catch (InterruptedException ignore) {
             return getDefault.get();
         } finally {
             if (countDownLock != null) countDownLock.countDown();
         }
     }
-    private static<T> T getResult(Condition lock, Object key, Supplier_<T> supplier, T defaultValue) throws Exception {
+
+    private static <T> T getResult(Condition lock, Object key, Supplier<T> supplier) throws Exception {
         T result;
         try {
             result = supplier.get();
@@ -97,27 +104,8 @@ public class AsyncMethodExecutor {
         }
         return result;
     }
-    private static<T> T getResult(Condition lock, Object key, Supplier_<T> supplier, Supplier_<T> getDefault) throws Exception {
-        T result;
-        try {
-            result = supplier.get();
-            results.put(key, result);
-            reentrantLock.lock();
-            CountDownLatch count = countDownLocks.computeIfAbsent(key, k -> new CountDownLatch(reentrantLock.getWaitQueueLength(lock)));
-            lock.signalAll();
-            reentrantLock.unlock();
 
-            if (count.await(5, TimeUnit.SECONDS)) {
-                log.warn("wait to long");
-            }
-        } finally {
-            results.remove(key);
-            locks.remove(key);
-            countDownLocks.remove(key);
-        }
-        return result;
-    }
-    public static void execute(Runnable_ work, Object key) throws Exception {
+    public static void execute(Runnable work, Object key) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
