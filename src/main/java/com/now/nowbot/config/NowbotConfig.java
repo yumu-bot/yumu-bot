@@ -4,14 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.throwable.RequestException;
-import kotlinx.coroutines.CoroutineScope;
-import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.BotFactory;
-import net.mamoe.mirai.auth.BotAuthorization;
-import net.mamoe.mirai.event.ListenerHost;
-import net.mamoe.mirai.utils.BotConfiguration;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -34,7 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -128,36 +120,8 @@ public class NowbotConfig {
         return template;
     }
 
-    @Autowired
-    MiraiListener messageListener;
 
-    @Bean
-    public Bot bot() {
-//        FixProtocolVersion.update();
-//        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
-//        log.info("update version: {}", FixProtocolVersion.info());
-        //创建bot配置类
-        BotConfiguration botConfiguration = new BotConfiguration();
-        //设置配置
-        botConfiguration.setCacheDir(new File(BOT_PATH));
-        botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
-        botConfiguration.setWorkingDir(new File(BOT_PATH));
 
-        File logdir = new File(BOT_PATH + "log");
-        if (!logdir.isDirectory()) logdir.mkdirs();
-        botConfiguration.redirectBotLogToDirectory(logdir);
-        botConfiguration.redirectNetworkLogToDirectory(logdir);
-        botConfiguration.fileBasedDeviceInfo();
-        botConfiguration.enableContactCache();
-        botConfiguration.getContactListCache().setSaveIntervalMillis(60000 * 30);
-        //配置完成，注册bot                    BotAuthorization.Companion.byPassword()
-        var auth = PASSWORD.equals("") ? BotAuthorization.Companion.byQRCode() : BotAuthorization.byPassword(PASSWORD);
-        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, auth, botConfiguration);
-        //注册监听 messageListener需要继承SimpleListenerHost类
-        bot.getEventChannel().parentScope((CoroutineScope) messageListener).registerListenerHost((ListenerHost) messageListener);
-        return bot;
-    }
 
     public static ApplicationContext applicationContext;
 

@@ -2,7 +2,6 @@ package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
-import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.MoliUtil;
@@ -38,7 +37,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
     Executor executor;
 
     @Autowired
-    public IocAllReadyRunner(MiraiListener messageListener, OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
+    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
 
 //        serviceMap.putAll(applicationContext
@@ -49,7 +48,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
 //        );
 
         var services = applicationContext.getBeansOfType(MessageService.class);
-        messageListener.init(services);
         oneBotListener.init(services);
         this.check = check;
         this.permission = permission;

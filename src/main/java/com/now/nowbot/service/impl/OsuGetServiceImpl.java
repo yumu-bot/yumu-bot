@@ -24,6 +24,7 @@ import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.OsuMapDownloadUtil;
 import jakarta.annotation.Resource;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +49,10 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -746,10 +749,10 @@ public class OsuGetServiceImpl implements OsuGetService {
         HashMap<String, Path> fileMap = new HashMap<>();
         var account = osuMapDownloadUtil.getAccount();
         try (var in = osuMapDownloadUtil.download(sid, account);) {
-            var zip = new ZipInputStream(in);
+            var zip = new ZipArchiveInputStream(in);
             ZipEntry zipFile;
             Files.createDirectories(tmp);
-            while ((zipFile = zip.getNextEntry()) != null) {
+            while ((zipFile = zip.getNextZipEntry()) != null) {
                 if (zipFile.isDirectory()) continue;
                 try {
                     Path zipFilePath = Path.of(tmp.toString(), zipFile.getName());

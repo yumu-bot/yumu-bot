@@ -3,7 +3,6 @@ package com.now.nowbot.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.service.MessageServiceImpl.BindService;
-import net.mamoe.mirai.Bot;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 public class WsController extends WebSocketListener {
     private static Logger log = LoggerFactory.getLogger(WsController.class);
-    static Bot bot;
     static WsController ws;
 
     static OkHttpClient client = new OkHttpClient.Builder()
@@ -26,8 +24,7 @@ public class WsController extends WebSocketListener {
 
     msgController msgController;
 
-    public static WsController getInstance(Bot bot){
-        WsController.bot = bot;
+    public static WsController getInstance(){
         if (ws != null){
             return ws;
         }
@@ -40,7 +37,6 @@ public class WsController extends WebSocketListener {
     @Override
     public void onOpen(WebSocket webSocket, Response response) {
         log.info("ws link:{}", response.code());
-        bot.getGroup(746671531).sendMessage("绑定服务已连接");
         this.webSocket = webSocket;
     }
 
@@ -93,7 +89,6 @@ public class WsController extends WebSocketListener {
         }
         log.info("ws 重连中");
         log.error("{}\n{}",code ,reason);
-        bot.getGroup(746671531).sendMessage("绑定服务已断开...");
         client.newWebSocket(req, this);
     }
 
@@ -107,7 +102,6 @@ public class WsController extends WebSocketListener {
         }
         log.info("ws 重连中", t);
         log.error("{}",response.body());
-        bot.getGroup(746671531).sendMessage("绑定服务已断开...");
         client.newWebSocket(req, this);
     }
 

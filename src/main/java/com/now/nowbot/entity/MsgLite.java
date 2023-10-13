@@ -1,9 +1,5 @@
 package com.now.nowbot.entity;
 
-import net.mamoe.mirai.message.data.MessageChain;
-import net.mamoe.mirai.message.data.MessageSource;
-import org.hibernate.annotations.Type;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -26,15 +22,6 @@ public class MsgLite {
     @Column(name = "content",columnDefinition = "TEXT")
     private String content;
 
-    public MsgLite(MessageChain msg) {
-        var source = msg.get(MessageSource.Key);
-        rawId = source.getIds()[0];
-        internal = source.getInternalIds()[0];
-        time = (long) source.getTime();
-        fromId = source.getFromId();
-        targetId = source.getTargetId();
-        content = MessageChain.serializeToJsonString(msg);
-    }
 
     public MsgLite() {
 
@@ -72,10 +59,6 @@ public class MsgLite {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public MessageChain getMessage() {
-        return MessageChain.deserializeFromJsonString(content);
     }
 
     public Integer getInternal() {

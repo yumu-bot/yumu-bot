@@ -16,19 +16,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OsuFile {
-    static final Logger         log =  LoggerFactory.getLogger(OsuFile.class.getName());
-    private      BeatmapGeneral general;
+    static final Logger log = LoggerFactory.getLogger(OsuFile.class.getName());
+    private BeatmapGeneral general;
 
     private BufferedReader reader;
 
     public static OsuFile getInstance(String osuFileStr) throws IOException {
-        return new OsuFile(new BufferedReader(
-                new InputStreamReader(
-                        new ByteArrayInputStream(
-                                osuFileStr.getBytes(StandardCharsets.UTF_8)
-                        )
-                )
-        ));
+        return new OsuFile(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(osuFileStr.getBytes(StandardCharsets.UTF_8)))));
     }
 
     public static OsuFile getInstance(BufferedReader read) throws IOException {
@@ -40,6 +34,10 @@ public class OsuFile {
         if (versionStr == null || !versionStr.startsWith("osu file format v")) {
             log.error("解析错误,文件无效 第一行为:[{}]", versionStr);
             throw new RuntimeException("解析错误,文件无效");
+        }
+        if (versionStr.endsWith("v3")) {
+            var bf = new BeatMapFileLite();
+            throw new RuntimeException("不支持v3版本的解析");
         }
         var bf = new BeatMapFileLite();
         HashMap<String, String> info = new HashMap<>(5);
@@ -53,26 +51,21 @@ public class OsuFile {
             if (line.startsWith("[General]") || line.startsWith("[Metadata]")) {
                 // 读取 General 块
                 parseAny(read, info);
-            } if (line.startsWith("[Events]")) {
+            }
+            if (line.startsWith("[Events]")) {
                 break;
             }
         }
 
         while ((line = read.readLine()) != null) {
             var lineSplit = line.split(",");
-            if (line.startsWith("//") ||
-                    line.isBlank() ||
-                    lineSplit.length<3 ||
-                    !lineSplit[0].equals("0") ||
-                    !lineSplit[1].equals("0") ||
-                    !(lineSplit[3].startsWith("\"") && lineSplit[3].endsWith("\""))
-            ) {
+            if (line.startsWith("//") || line.isBlank() || lineSplit.length < 3 || !lineSplit[0].equals("0") || !lineSplit[1].equals("0") || !(lineSplit[2].startsWith("\"") && lineSplit[2].endsWith("\""))) {
                 continue;
             } else if (line.startsWith("[")) {
                 break;
             }
-            var bgStr = lineSplit[3];
-            bf.setBackground(bgStr.substring(1, bgStr.length()-1));
+            var bgStr = lineSplit[2];
+            bf.setBackground(bgStr.substring(1, bgStr.length() - 1));
             break;
         }
 
@@ -91,6 +84,16 @@ public class OsuFile {
 
         read.close();
         return bf;
+    }
+
+    private void parseV3(BeatMapFileLite bf, BufferedReader read) throws IOException {
+        String line;
+        while ((line = read.readLine()) != null){
+            if (line.startsWith("AudioFilename")) {
+                var lineSplit = line.split(",");
+                bf.setAudio(lineSplit[1].trim());
+            }
+        }
     }
 
     public OsuBeatmapAttributes getOsu() throws IOException {
@@ -129,13 +132,7 @@ public class OsuFile {
 
     OsuFile(String osuFileStr) throws IOException {
 //        转化为 BufferedReader 逐行读取
-        new OsuFile(new BufferedReader(
-                new InputStreamReader(
-                        new ByteArrayInputStream(
-                                osuFileStr.getBytes(StandardCharsets.UTF_8)
-                        )
-                )
-        ));
+        new OsuFile(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(osuFileStr.getBytes(StandardCharsets.UTF_8)))));
     }
 
     /**
@@ -200,7 +197,7 @@ public class OsuFile {
             var val = entity[1].trim();
 
             if (parseMap != null) {
-                if (parseMap.containsKey(key)){
+                if (parseMap.containsKey(key)) {
                     parseMap.put(key, val);
                 }
             }
