@@ -58,13 +58,14 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa)(?![a-hj-zA-HJ-Z_]))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-    Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht|bpht-i))(\\w\\d)*");
+    //Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht|bpht-i))(\\w\\d)*");
 
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
 
         //旧功能指引
+        /*
         var matcher2 = pattern2.matcher(event.getRawMessage().trim());
         if (Strings.isNotBlank(matcher2.group("bpht"))) {
             String TIPS = "bpht 已移至 uuba。您也可以使用 !ba 来体验丰富版本。";
@@ -72,6 +73,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             return false;
             //throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
         }
+
+         */
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
