@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
-@Service("t-ppm")
+@Service("TESTPPM")
 public class TestPPMService implements MessageService<Matcher> {
     @Autowired
     public TestPPMService(OsuGetService osuGetService,BindDao bindDao) {
@@ -26,7 +26,7 @@ public class TestPPMService implements MessageService<Matcher> {
     }
 
     BindDao bindDao;
-    private OsuGetService osuGetService;
+    private final OsuGetService osuGetService;
 
     Pattern pattern = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
 
@@ -46,7 +46,7 @@ public class TestPPMService implements MessageService<Matcher> {
         OsuUser user;
         List<Score> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (matcher.group("name") != null && !matcher.group("name").trim().equals("")) {
+        if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
             user = osuGetService.getPlayerOsuInfo(id);
             bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
@@ -91,7 +91,7 @@ public class TestPPMService implements MessageService<Matcher> {
 
         event.getSubject().sendMessage(sb.toString());
     }
-    class ppmtest{
+    static class ppmtest{
         protected float ppv0 = 0;
         protected float ppv45 = 0;
         protected float ppv90 = 0;

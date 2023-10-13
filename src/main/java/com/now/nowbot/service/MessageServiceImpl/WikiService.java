@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("wiki")
+@Service("WIKI")
 public class WikiService implements MessageService<Matcher> {
     static JsonNode WIKI;
     WikiService(){

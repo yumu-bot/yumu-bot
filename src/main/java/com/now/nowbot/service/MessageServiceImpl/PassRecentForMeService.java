@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("ScorePrForMe")
+@Service("SCOREDELUXE")
 public class PassRecentForMeService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(PassRecentForMeService.class);
 
@@ -167,7 +167,7 @@ public class PassRecentForMeService implements MessageService<Matcher> {
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
 
-        List<Score> scoreList = null;
+        List<Score> scoreList;
 
         try {
             if (binUser != null && binUser.isAuthorized()) {

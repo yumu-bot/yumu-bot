@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service("nowbot-image")
+@Service("NOWBOTIMAGE")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
@@ -509,9 +509,7 @@ public class ImageService {
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> {
-                    mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods()));
-                });
+                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
         Map<Long, MapAttr> changedAttrsMap;
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
@@ -854,7 +852,7 @@ public class ImageService {
 
                 favorite += v.getFavourite();
                 playcount += v.getPlayCount();
-            };
+            }
         }
 
         var lengthArr = new int[8];

@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("ban")
+@Service("BAN")
 public class BanService implements MessageService<Matcher> {
     Permission   permission;
     ImageService imageService;
@@ -48,11 +48,11 @@ public class BanService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         boolean ban = false;
         long sendQQ = event.getSender().getId();
-        /*******************************************************************************************/
-//        消息改成 event.getMessage()
-//        String msg = event.getMessage().contentToString(); //原来
+        //*******************************************************************************************/
+        //消息改成 event.getMessage()
+        //String msg = event.getMessage().contentToString(); //原来
         String msg = event.getRawMessage(); // 对
-        /*******************************************************************************************/
+        //*******************************************************************************************/
         int index;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if ((index = msg.indexOf("list")) != -1) {

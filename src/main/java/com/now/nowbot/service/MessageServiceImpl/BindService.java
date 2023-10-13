@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("bind")
+@Service("BIND")
 public class BindService implements MessageService<Matcher> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();

@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("MapMinus")
+@Service("MAPMINUS")
 public class MapMinusService implements MessageService<Matcher> {
 
     OsuGetService osuGetService;
@@ -79,7 +79,10 @@ public class MapMinusService implements MessageService<Matcher> {
         }
 
         var beatMap = osuGetService.getMapInfoFromDB(bid);
-        var mapMinus = MapMinus.getInstance(file);
+        MapMinus mapMinus = null;
+        if (file != null) {
+            mapMinus = MapMinus.getInstance(file);
+        }
 
         try {
             var data = imageService.getPanelB2(beatMap, mapMinus);

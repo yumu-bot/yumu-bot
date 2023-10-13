@@ -2,12 +2,13 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.ServiceException.OverSRException;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("OverSR")
+@Service("OVERSR")
 public class OverSRService implements MessageService<Matcher> {
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?![a-zA-Z_]))+(\\s+(?<SR>[0-9.]*))?");
@@ -20,6 +21,7 @@ public class OverSRService implements MessageService<Matcher> {
             return true;
         } else return false;
     }
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         String SRStr = matcher.group("SR");
@@ -30,27 +32,25 @@ public class OverSRService implements MessageService<Matcher> {
             try {
                 SR = Double.parseDouble(SRStr);
                 message = OverSR(SR);
-
             } catch (Exception e) {
-                e.printStackTrace();
-                message = "捞翔恁发嘞是个啥玩应啊？";
+                throw new OverSRException(OverSRException.Type.OV_Parameter_Error);
             }
 
         } else {
-            message = "请输入正确的星数！"; //好像不该这么抛错
+            throw new OverSRException(OverSRException.Type.OV_Parameter_Null);
         }
 
         event.getSubject().sendMessage(message);
     }
 
-    private String OverSR(double SR) {
+    private String OverSR(double SR) throws OverSRException {
         StringBuilder message = new StringBuilder();
         double minute;
         double hour;
         double day;
 
         if ((int) (SR * 100f) <= 570) {
-            return "未超星";
+            throw new OverSRException(OverSRException.Type.OV_Send_Success);
         } else if ((int) (SR * 100f) <= 2000){
             // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             if ((int) (SR * 100f) <= 600) {
@@ -59,7 +59,7 @@ public class OverSRService implements MessageService<Matcher> {
                 minute = (SR - 5.7f) * 2000f;
             }
         } else {
-            return "对方真的糊了那么高星的图吗？还是说你在滥用功能...";
+            throw new OverSRException(OverSRException.Type.OV_Parameter_OutOfRange);
         }
 
         message.append("已超星，预计禁言：");

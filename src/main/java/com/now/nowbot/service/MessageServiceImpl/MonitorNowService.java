@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Service("MonitorNow")
+@Service("MONITORNOW")
 public class MonitorNowService implements MessageService<Matcher> {
     @Resource
     OsuGetService osuGetService;
@@ -59,7 +59,7 @@ public class MonitorNowService implements MessageService<Matcher> {
     }
 
     public byte[] getImage(int matchID, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) throws MonitorNowException {
-        Match match = null;
+        Match match;
         try {
             match = osuGetService.getMatchInfo(matchID);
         } catch (Exception e) {

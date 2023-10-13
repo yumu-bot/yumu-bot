@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("ping")
+@Service("PING")
 public class PingService implements MessageService<Matcher> {
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))+|yumu)");
@@ -35,7 +35,7 @@ public class PingService implements MessageService<Matcher> {
         try (Surface surface = Surface.makeRasterN32Premul(240,240)){
             Canvas canvas = surface.getCanvas();
 
-            Image BG = null;
+            Image BG;
             try {
                 BG = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/help-ping.png");
             } catch (IOException e) {

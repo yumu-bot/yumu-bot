@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("Q")
+@Service("QUALIFIEDMAP")
 public class QualifiedMapService implements MessageService<Matcher> {
     @Resource
     OsuGetService osuGetService;

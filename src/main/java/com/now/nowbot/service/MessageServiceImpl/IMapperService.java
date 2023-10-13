@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("IM")
+@Service("IMMAPPER")
 public class IMapperService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;

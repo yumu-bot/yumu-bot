@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("t-mt")
+@Service("TESTTAIKOCALCSR")
 public class TestMt4 implements MessageService<Matcher> {
     private static final char CHAR_X = 'x';
     private static final char CHAR_O = 'o';

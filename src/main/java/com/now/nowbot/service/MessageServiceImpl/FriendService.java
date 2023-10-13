@@ -21,7 +21,7 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("Friend")
+@Service("FRIEND")
 public class FriendService implements MessageService<Matcher> {
     BindDao bindDao;
     OsuGetService osuGetService;

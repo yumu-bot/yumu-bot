@@ -18,7 +18,7 @@ import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("countQQmsg")
+@Service("COUNTMSG")
 public class CountQQMessageService implements MessageService<Matcher> {
     @Resource
     MessageMapper messageMapper;
@@ -59,7 +59,7 @@ public class CountQQMessageService implements MessageService<Matcher> {
                     Long.parseLong(groupType),
                     Long.parseLong("0")
             );
-            if (res.size() == 0) {
+            if (res.isEmpty()) {
                 event.getSubject().sendMessage("无消息");
             }
             var data = res.get(0);
@@ -68,25 +68,11 @@ public class CountQQMessageService implements MessageService<Matcher> {
             event.getSubject().sendMessage(i + " -> " + n);
             return;
         }
-        long groupId;
-        switch (groupType) {
-            default:
-            case "n":
-            case "N":
-            case "新人":
-                groupId = 595985887;
-                break;
-            case "a":
-            case "A":
-            case "进阶":
-                groupId = 928936255;
-                break;
-            case "h":
-            case "H":
-            case "高阶":
-                groupId = 281624271;
-                break;
-        }
+        long groupId = switch (groupType) {
+            default -> 595985887;
+            case "a", "A", "进阶" -> 928936255;
+            case "h", "H", "高阶" -> 281624271;
+        };
         var group = bot.getGroup(groupId);
         if (group == null) {
             throw new TipsException("不在群里");

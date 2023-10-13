@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("csv-ra")
+@Service("CRA")
 public class CRAService implements MessageService<Matcher> {
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
@@ -142,7 +142,7 @@ public class CRAService implements MessageService<Matcher> {
     private void getScoreStringsLite(StringBuilder sb, MPScore score){
 
         try {
-            String userName = "";
+            String userName;
 
             try {
                 userName = osuGetService.getPlayerInfo((long) score.getUserID()).getUsername();

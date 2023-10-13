@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@Service("Info")
+@Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParm> {
     private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Autowired

@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-@Service("switch") //修改service名 "switch" 一定要修改 Permission
+@Service("SWITCH") //修改service名 "switch" 一定要修改 Permission
 public class SwitchService implements MessageService<Matcher> {
     Permission permission;
     ImageService imageService;

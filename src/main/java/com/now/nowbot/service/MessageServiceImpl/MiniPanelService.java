@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("MiniPanel")
+@Service("MINI")
 public class MiniPanelService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;

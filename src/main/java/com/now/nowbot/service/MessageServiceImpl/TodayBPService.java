@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("TodayBP")
+@Service("TODAYBP")
 public class TodayBPService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;

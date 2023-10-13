@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("help")
+@Service("HELP")
 public class HelpService implements MessageService<Matcher> {
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 

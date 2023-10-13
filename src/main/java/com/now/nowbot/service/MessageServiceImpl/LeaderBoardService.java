@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("Leader")
+@Service("LEADER")
 public class LeaderBoardService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     RestTemplate template;

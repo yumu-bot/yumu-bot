@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Service("test-map")
+@Service("TESTMAP")
 public class TestMapServer implements MessageService<Matcher> {
     @Resource
     OsuGetService osuGetService;
@@ -44,7 +44,7 @@ public class TestMapServer implements MessageService<Matcher> {
         sb.append('[').append(info.getVersion()).append(']').append(',');
 
 
-        if (mod == null || mod.trim().equals("")){
+        if (mod == null || mod.trim().isEmpty()){
 
             sb.append(info.getDifficultyRating()).append(',')
                     .append(info.getBPM()).append(',')

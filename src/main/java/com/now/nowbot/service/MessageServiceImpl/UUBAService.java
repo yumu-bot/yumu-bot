@@ -1,10 +1,9 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.Service.UserParm;
+import com.now.nowbot.model.Service.UserParam;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -22,20 +21,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Service("BPAT")
-public class BPAnalysisTextService implements MessageService<BPAnalysisTextService.BphtParm> {
+@Service("UUBA")
+public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
 
-    public record BphtParm(UserParm user, boolean info){}
+    //bpht 的全称大概是 BP Head / Tail
+    public record BPHeadTailParam(UserParam user, boolean info){}
 
     @Autowired
-    public BPAnalysisTextService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
+    public UUBAService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.imageService = imageService;
@@ -54,32 +57,46 @@ public class BPAnalysisTextService implements MessageService<BPAnalysisTextServi
         }
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)bt(?<info>-i)?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa)(?![a-hj-zA-HJ-Z_]))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht|bpht-i))(\\w\\d)*");
 
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BphtParm> data) {
+    public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
+
+        //旧功能指引
+        var matcher2 = pattern2.matcher(event.getRawMessage().trim());
+        if (Strings.isNotBlank(matcher2.group("bpht"))) {
+            String TIPS = "bpht 已移至 uuba。您也可以使用 !ba 来体验丰富版本。";
+            event.getSubject().sendMessage(TIPS);
+            return true;
+        }
+
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
         if (Objects.nonNull(at)) {
-            data.setValue(new BphtParm(new UserParm(at.getTarget(), null, mode, true), info));
+            data.setValue(new BPHeadTailParam(
+                    new UserParam(at.getTarget(), null, mode, true), info));
             return true;
         }
         String name = matcher.group("name");
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new BphtParm(new UserParm(null, name, mode, false), info));
+            data.setValue(new BPHeadTailParam(
+                    new UserParam(null, name, mode, false), info));
             return true;
         }
-        data.setValue(new BphtParm(new UserParm(event.getSender().getId(), null, mode, false), false));
+        data.setValue(new BPHeadTailParam(
+                new UserParam(event.getSender().getId(), null, mode, false), false));
         return true;
     }
 
     @Override
-    @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, BphtParm parm) throws BPAnalysisException {
+    //@CheckPermission(isSuperAdmin = true)
+    public void HandleMessage(MessageEvent event, BPHeadTailParam parm) throws BPAnalysisException {
         var from = event.getSubject();
         BinUser binUser = null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -247,9 +264,7 @@ public class BPAnalysisTextService implements MessageService<BPAnalysisTextServi
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> {
-                    mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore());
-                });
+                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore()));
         var changedStarMapAttrs = imageService.getMapAttr(mapAttrGet);
         var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
         for (int i = 0; i < bps.size(); i++) {

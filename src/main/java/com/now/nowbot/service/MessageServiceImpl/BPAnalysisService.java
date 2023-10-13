@@ -5,7 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.Service.UserParm;
+import com.now.nowbot.model.Service.UserParam;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -13,8 +13,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +22,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@Service("BPA")
-public class BPAnalysisService implements MessageService<UserParm> {
+@Service("BPANALYSIS")
+public class BPAnalysisService implements MessageService<UserParam> {
     OsuGetService osuGetService;
     BindDao bindDao;
     ImageService imageService;
@@ -42,26 +40,26 @@ public class BPAnalysisService implements MessageService<UserParm> {
     static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![a-zA-Z_])|ba(?![a-zA-Z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<UserParm> data) {
+    public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if (Objects.nonNull(at)) {
-            data.setValue(new UserParm(at.getTarget(), null, mode, true));
+            data.setValue(new UserParam(at.getTarget(), null, mode, true));
             return true;
         }
         String name = matcher.group("name");
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new UserParm(null, name, mode, false));
+            data.setValue(new UserParam(null, name, mode, false));
             return true;
         }
-        data.setValue(new UserParm(event.getSender().getId(), null, mode, false));
+        data.setValue(new UserParam(event.getSender().getId(), null, mode, false));
         return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, UserParm parm) throws Throwable {
+    public void HandleMessage(MessageEvent event, UserParam parm) throws Throwable {
         var from = event.getSubject();
         var mode = parm.mode();
 

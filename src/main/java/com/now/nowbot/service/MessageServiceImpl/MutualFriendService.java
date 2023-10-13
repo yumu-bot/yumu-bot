@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("mu")
+@Service("MUTUAL")
 public class MutualFriendService implements MessageService<Matcher> {
-    private OsuGetService osuGetService;
+    private final OsuGetService osuGetService;
     @Autowired
     BindDao bindDao;
     @Autowired
@@ -39,7 +39,7 @@ public class MutualFriendService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
         var atList = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
-        if (atList.size() > 0){
+        if (!atList.isEmpty()){
             var data = new MessageChain.MessageChainBuilder();
             atList.forEach(at->{
                 data.addAt(at.getTarget());
@@ -55,7 +55,7 @@ public class MutualFriendService implements MessageService<Matcher> {
             return;
         }
         var s = matcher.group("names");
-        if (s != null && !s.trim().equals("")){
+        if (s != null && !s.trim().isEmpty()){
             var names = s.split(",");
             StringBuilder sb = new StringBuilder();
             for (var name:names){

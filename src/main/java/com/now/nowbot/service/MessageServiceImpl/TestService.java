@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("test")
+@Service("TEST")
 public class TestService implements MessageService<Matcher> {
     private final Logger log = LoggerFactory.getLogger(TestService.class);
 
@@ -72,7 +72,7 @@ public class TestService implements MessageService<Matcher> {
 
                for (var name:names){
                    var nt = name.trim();
-                   if (!nt.equals("")) nameList.add(nt);
+                   if (!nt.isEmpty()) nameList.add(nt);
                }
 
                StringBuilder sb = new StringBuilder();
@@ -119,7 +119,6 @@ public class TestService implements MessageService<Matcher> {
             } else {
                 event.getSubject().sendMessage(String.valueOf(1 + (int) (Math.random() * 100)));
             }
-            return;
         }
 
 

@@ -20,7 +20,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@Service("Audio")
+@Service("AUDIO")
 public class AudioService implements MessageService<AudioService.AudioParam> {
     private static final Logger log = LoggerFactory.getLogger(AudioService.class);
 

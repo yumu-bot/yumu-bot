@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("Kita")
+@Service("KITA")
 public class KitaService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     RestTemplate template;

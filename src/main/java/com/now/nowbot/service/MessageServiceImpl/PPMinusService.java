@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("PPMinus")
+@Service("PPMINUS")
 public class PPMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
     @Autowired

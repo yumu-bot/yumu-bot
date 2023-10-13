@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("draw")
+@Service("DRAW")
 public class DrawService implements MessageService<Matcher> {
     @Resource
     private BindDao bindDao;

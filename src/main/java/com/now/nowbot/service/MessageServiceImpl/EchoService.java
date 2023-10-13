@@ -5,7 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import org.springframework.stereotype.Service;
 
-@Service("echo")
+@Service("ECHO")
 public class EchoService implements MessageService<String> {
     @Override
     public boolean isHandle(MessageEvent event, DataValue<String> data) {

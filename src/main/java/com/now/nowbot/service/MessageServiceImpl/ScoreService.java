@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("score")
+@Service("SCORE")
 public class ScoreService implements MessageService<Matcher> {
     OsuGetService osuGetService;
     BindDao bindDao;
