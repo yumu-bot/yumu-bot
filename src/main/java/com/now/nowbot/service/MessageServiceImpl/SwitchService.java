@@ -7,7 +7,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.SendmsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -76,7 +75,6 @@ public class SwitchService implements MessageService<Matcher> {
                     try {
                         int time = Integer.parseInt(p2);
                         from.sendMessage("晚安！");
-                        SendmsgUtil.addSleep(event.getSubject().getId(), time);
                     } catch (NumberFormatException e){
                         from.sendMessage("请输入正确的休眠参数！");
                     }
@@ -86,7 +84,6 @@ public class SwitchService implements MessageService<Matcher> {
             }
 
             case "wake" -> {
-                SendmsgUtil.wakeUp(event.getSubject().getId());
                 from.sendMessage("早安！");
             }
 
