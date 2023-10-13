@@ -69,7 +69,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         if (Strings.isNotBlank(matcher2.group("bpht"))) {
             String TIPS = "bpht 已移至 uuba。您也可以使用 !ba 来体验丰富版本。";
             event.getSubject().sendMessage(TIPS);
-            return true;
+            return false;
+            //throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
         }
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
