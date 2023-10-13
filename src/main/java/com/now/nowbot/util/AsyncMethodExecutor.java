@@ -90,12 +90,13 @@ public class AsyncMethodExecutor {
             result = supplier.get();
             results.put(key, result);
             reentrantLock.lock();
-            CountDownLatch count = countDownLocks.computeIfAbsent(key, k -> new CountDownLatch(reentrantLock.getWaitQueueLength(lock)));
+            int locksSum = reentrantLock.getWaitQueueLength(lock);
+            CountDownLatch count = countDownLocks.computeIfAbsent(key, k -> new CountDownLatch(locksSum));
             lock.signalAll();
             reentrantLock.unlock();
 
             if (count.await(5, TimeUnit.SECONDS)) {
-                log.warn("wait to long");
+                if (locksSum > 0) log.warn("wait to long");
             }
         } finally {
             results.remove(key);
@@ -121,11 +122,9 @@ public class AsyncMethodExecutor {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            log.info("wait ok, [{}]", locks.size());
             return;
         }
         try {
-            log.info("do work");
             work.run();
         } finally {
             reentrantLock.lock();
