@@ -65,13 +65,13 @@ public class OsuFile {
                     lineSplit.length<3 ||
                     !lineSplit[0].equals("0") ||
                     !lineSplit[1].equals("0") ||
-                    !(lineSplit[3].startsWith("\"") && lineSplit[3].endsWith("\""))
+                    !(lineSplit[2].startsWith("\"") && lineSplit[2].endsWith("\""))
             ) {
                 continue;
             } else if (line.startsWith("[")) {
                 break;
             }
-            var bgStr = lineSplit[3];
+            var bgStr = lineSplit[2];
             bf.setBackground(bgStr.substring(1, bgStr.length()-1));
             break;
         }
