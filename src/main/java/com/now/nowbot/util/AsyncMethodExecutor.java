@@ -10,10 +10,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AsyncMethodExecutor {
-    public interface Supplier<T>{
+    public interface Supplier_<T>{
         T get()throws Exception;
     }
-    public interface Runnable{
+    public interface Runnable_ {
         void run()throws Exception;
     }
     private static final Logger log = LoggerFactory.getLogger(AsyncMethodExecutor.class);
@@ -21,7 +21,7 @@ public class AsyncMethodExecutor {
     private static final ConcurrentHashMap<Object, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Object, Condition> locks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Object, Object> results = new ConcurrentHashMap<>();
-    public static<T> T execute(Supplier<T> supplier, Object key, T defaultValue) throws Exception {
+    public static<T> T execute(Supplier_<T> supplier, Object key, T defaultValue) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
@@ -34,7 +34,7 @@ public class AsyncMethodExecutor {
             return getResult(lock,key,supplier,defaultValue);
         }
     }
-    public static<T> T execute(Supplier<T> supplier, Object key, Supplier<T> getDefault) throws Exception {
+    public static<T> T execute(Supplier_<T> supplier, Object key, Supplier_<T> getDefault) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
@@ -63,7 +63,7 @@ public class AsyncMethodExecutor {
         }
     }
     @SuppressWarnings("unchecked")
-    private static<T> T waitForResult(Condition lock, Object key, Supplier<T> getDefault) throws Exception {
+    private static<T> T waitForResult(Condition lock, Object key, Supplier_<T> getDefault) throws Exception {
         CountDownLatch countDownLock = null;
         try {
             reentrantLock.lock();
@@ -77,7 +77,7 @@ public class AsyncMethodExecutor {
             if (countDownLock != null) countDownLock.countDown();
         }
     }
-    private static<T> T getResult(Condition lock, Object key, Supplier<T> supplier, T defaultValue) throws Exception {
+    private static<T> T getResult(Condition lock, Object key, Supplier_<T> supplier, T defaultValue) throws Exception {
         T result;
         try {
             result = supplier.get();
@@ -97,7 +97,7 @@ public class AsyncMethodExecutor {
         }
         return result;
     }
-    private static<T> T getResult(Condition lock, Object key, Supplier<T> supplier, Supplier<T> getDefault) throws Exception {
+    private static<T> T getResult(Condition lock, Object key, Supplier_<T> supplier, Supplier_<T> getDefault) throws Exception {
         T result;
         try {
             result = supplier.get();
@@ -117,7 +117,7 @@ public class AsyncMethodExecutor {
         }
         return result;
     }
-    public static void execute(Runnable work, Object key) throws Exception {
+    public static void execute(Runnable_ work, Object key) throws Exception {
         boolean hasLock;
         Condition lock;
         reentrantLock.lock();
