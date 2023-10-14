@@ -2,6 +2,7 @@ package com.now.nowbot.controller;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.JsonData.BeatMap;
@@ -65,6 +66,7 @@ public class BotWebApi {
      */
 
     @GetMapping(value = "ppm")
+    @OpenResource(name = "ppm", desp = {"u1: 第一个用户的名字", "mode: 模式"})
     public ResponseEntity<byte[]> getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         if (user2 != null) {
             return getPPMVS(user1, user2, playMode);
@@ -82,6 +84,7 @@ public class BotWebApi {
     }
 
     @GetMapping(value = "ppmvs")
+    @OpenResource(name = "ppmvs", desp = {"u1: 第一个用户的名字","u2: 第二个用户的名字", "mode: 模式"})
     public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
         var info1 = osuGetService.getPlayerInfo(user1.trim());
@@ -107,6 +110,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "match")
+    @OpenResource(name = "ymmn", desp = {"id: match id","k: 跳过前n场", "d: 跳过最后n场", "f: 包含失败", "r: 包含重赛"})
     public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
@@ -126,6 +130,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "rating")
+    @OpenResource(name = "ymra", desp = {"id: match id","k: 跳过前n场", "d: 跳过最后n场", "f: 包含失败", "r: 包含重赛"})
     public ResponseEntity<byte[]> getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;

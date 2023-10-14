@@ -1,6 +1,7 @@
 package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
