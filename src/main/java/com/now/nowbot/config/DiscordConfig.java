@@ -32,7 +32,7 @@ public class DiscordConfig {
     @Bean
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient) {
         WebSocketFactory factory = new WebSocketFactory();
-        factory.getProxySettings().setHost("127.0.0.1").setPort(7899);
+        factory.getProxySettings().setHost("127.0.0.1").setPort(7890);
         JDA build = JDABuilder.createDefault(token)
                 .setHttpClient(okHttpClient)
                 .setWebsocketFactory(factory)
