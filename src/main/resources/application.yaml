@@ -4,7 +4,6 @@ server:
 #botfile 程序的运行路径
 botfile:
   root: C:/bot #您想运行的位置
-  bind: ${botfile.root}bind/
   bgdir: ${botfile.root}bg/
   font: ${botfile.root}font/
   imgbuffer: ${botfile.root}imgbuffer/
