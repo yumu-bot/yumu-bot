@@ -51,8 +51,20 @@ public class DiscordConfig {
             SlashCommandData commandData = Commands.slash((commandSuffix + name).toLowerCase(), methodAnnotation.desp());
             for (Parameter parameter : declaredMethod.getParameters()) {
                 OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
+                if (parameterAnnotation == null) {
+                    continue;
+                }
+                OptionType optionType;
+                Class<?> type = parameter.getType();
+                if (type.equals(int.class) || type.equals(Integer.class)) {
+                    optionType = OptionType.INTEGER;
+                } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+                    optionType = OptionType.BOOLEAN;
+                } else {
+                    optionType = OptionType.STRING;
+                }
                 String parameterName = parameterAnnotation.name();
-                OptionData optionData = new OptionData(OptionType.STRING, parameterName.toLowerCase(), parameterAnnotation.desp());
+                OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
                 if (parameterName.equals("mode")) {
                     optionData.addChoice("OSU", "OSU");
                     optionData.addChoice("TAIKO", "TAIKO");

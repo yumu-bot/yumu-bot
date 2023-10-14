@@ -47,14 +47,20 @@ public class DiscordListener extends ListenerAdapter {
             try {
                 for (int i = 0; i < parameters.length; i++) {
                     Parameter parameter = parameters[i];
-                    OptionMapping option = event.getOption(parameter.getName().toLowerCase());
+                    OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
+                    if (parameterAnnotation == null) {
+                        continue;
+                    }
+                    OptionMapping option = event.getOption(parameterAnnotation.name().toLowerCase());
                     if (option == null) {
                         continue;
                     }
                     Class<?> type = parameter.getType();
                     if (type.equals(int.class) || type.equals(Integer.class)) {
                         objects[i] = option.getAsInt();
-                    } else if (type.equals(String.class)) {
+                    } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                        objects[i] = option.getAsBoolean();
+                    } else {
                         objects[i] = option.getAsString();
                     }
                 }
