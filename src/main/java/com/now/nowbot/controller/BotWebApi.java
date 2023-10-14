@@ -21,7 +21,8 @@ import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import io.github.humbleui.skija.EncodedImageFormat;
+import io.github.humbleui.skija.EncodeJPEGOptions;
+import io.github.humbleui.skija.EncoderJPEG;
 import io.github.humbleui.skija.Image;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -62,12 +63,14 @@ public class BotWebApi {
     /**
      * 如果包含 u2 则响应为 ppmvs
      *
-     * @return
+     * @return image
      */
 
     @GetMapping(value = "ppm")
-    @OpenResource(name = "ppm", desp = {"u1: 第一个用户的名字", "mode: 模式"})
-    public ResponseEntity<byte[]> getPPM(@RequestParam("u1") String user1, @Nullable @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
+    @OpenResource(name = "ppm", desp = "查询玩家的 PP- !ymppminus (!ppm)")
+    public ResponseEntity<byte[]> getPPM(@OpenResource(name = "user1", desp = "第一个用户的用户名", required = true) @RequestParam("u1") String user1,
+                                         @OpenResource(name = "user2", desp = "第二个用户的用户名") @Nullable @RequestParam("u2") String user2,
+                                         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
         if (user2 != null) {
             return getPPMVS(user1, user2, playMode);
         }
@@ -84,7 +87,6 @@ public class BotWebApi {
     }
 
     @GetMapping(value = "ppmvs")
-    @OpenResource(name = "ppmvs", desp = {"u1: 第一个用户的名字","u2: 第二个用户的名字", "mode: 模式"})
     public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
         var info1 = osuGetService.getPlayerInfo(user1.trim());
@@ -110,8 +112,12 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "match")
-    @OpenResource(name = "ymmn", desp = {"id: match id","k: 跳过前n场", "d: 跳过最后n场", "f: 包含失败", "r: 包含重赛"})
-    public ResponseEntity<byte[]> getMatch(@RequestParam("id") int mid, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) throws MonitorNowException {
+    @OpenResource(name = "ymmn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
+    public ResponseEntity<byte[]> getMatch(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
+                                           @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
+                                           @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
+                                           @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+                                           @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
@@ -122,7 +128,7 @@ public class BotWebApi {
 
     /***
      *
-     * @param matchId
+     * @param matchId match id
      * @param k skip round
      * @param d delete end
      * @param f include failed
@@ -130,8 +136,12 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "rating")
-    @OpenResource(name = "ymra", desp = {"id: match id","k: 跳过前n场", "d: 跳过最后n场", "f: 包含失败", "r: 包含重赛"})
-    public ResponseEntity<byte[]> getRa(@RequestParam("id") int matchId, @Nullable Integer k, @Nullable Integer d, @Nullable Boolean f, @Nullable Boolean r) {
+    @OpenResource(name = "ymra", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
+    public ResponseEntity<byte[]> getRa(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
+                                        @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
+                                        @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
+                                        @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+                                        @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
@@ -151,7 +161,7 @@ public class BotWebApi {
      *                 2: 最近N次游玩,不包含fail
      *                 3: 最近N次游玩,包含fail
      * @param value    不传默认为 1,具体含义取决于 type,范围在 1-100 之间
-     * @return
+     * @return image
      */
     public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
                                             @Nullable @RequestParam("mode") String playMode,
@@ -186,9 +196,9 @@ public class BotWebApi {
             }
             var panel = new TBPPanelBuilder(lines.size());
             panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            var data = Objects.requireNonNull(panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode)
-                            .encodeToData(EncodedImageFormat.JPEG, 80))
-                    .getBytes();
+            Image build = panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode);
+            var data = Objects.requireNonNull(EncoderJPEG.encode(build, EncodeJPEGOptions.DEFAULT.withQuality(80))).getBytes();
+            build.close();
             return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
         } catch (IOException e) {
             throw new RuntimeException(e);
