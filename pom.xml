@@ -161,11 +161,11 @@
 <!--        </dependency>-->
 <!--        mvn install:install-file -Dfile=jar包所在位置 -DgroupId=在pom中的groupId -DartifactId=在pom中的artifactId -Dversion=在pom中的version -Dpackaging=jar-->
 
-        <dependency>
-            <groupId>com.yurn</groupId>
-            <artifactId>YurnSatoriFramework</artifactId>
-            <version>0.0.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.yurn</groupId>-->
+<!--            <artifactId>YurnSatoriFramework</artifactId>-->
+<!--            <version>0.0.2</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

@@ -75,19 +75,18 @@ public class BindService implements MessageService<Matcher> {
                         throw new BindException(BindException.Type.BIND_Player_NotFound);
                     }
                     try {
-                        var buser = bindDao.getUserLiteFromOsuid(id);
-                        if (buser.getQq() == null) {
+                        var buser = bindDao.getQQLiteFromOsuId(id);
+                        if (buser.isEmpty()) {
                             from.sendMessage("正在将" + at.getTarget() + "绑定到 (" + id + ")" + nameStr + "上");
-                            buser.setQq(at.getTarget());
-                            bindDao.update(buser);
+                            bindDao.bindQQ(at.getTarget(), new BinUser(id, nameStr));
                             throw new BindException(BindException.Type.BIND_Me_Success);
                             //from.sendMessage("绑定成功");
                         } else {
-                            from.sendMessage(buser.getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
+                            var u= buser.get();
+                            from.sendMessage(u.getOsuUser().getOsuName() + "您已绑定在 QQ " + at.getTarget() + " 上，是否覆盖？回复 OK 生效");
                             s = lock.get();
                             if (s != null && s.getRawMessage().startsWith("OK")) {
-                                buser.setQq(at.getTarget());
-                                bindDao.update(buser);
+                                bindDao.bindQQ(at.getTarget(), u.getOsuUser());
                                 throw new BindException(BindException.Type.BIND_Me_Success);
                                 //from.sendMessage("绑定成功");
                             } else {
@@ -194,7 +193,7 @@ public class BindService implements MessageService<Matcher> {
             throw new BindException(BindException.Type.BIND_Player_NoBind);
         }
 
-        if (bindDao.unBind(user)) {
+        if (bindDao.unBindQQ(user)) {
             throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
         } else {
             throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);

@@ -9,20 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 
-public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
-    List<OsuBindUserLite> getByQq(Long qq);
+public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
+    Optional<OsuBindUserLite> getByOsuId(Long osuId);
 
-    OsuBindUserLite getFirstByQqOrderByTimeDesc(Long qq);
-
-    OsuBindUserLite getByOsuId(Long osuId);
-
-    OsuBindUserLite getByOsuNameLike(String osuName);
-
-    @Modifying
-    @Transactional
-    void deleteByQqAndIdNot(Long qq, Long id);
+    Optional<OsuBindUserLite> getByOsuNameLike(String osuName);
 
     @Modifying
     @Transactional
@@ -34,16 +27,9 @@ public interface BindMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpe
     @Query("update OsuBindUserLite o set o.mainMode = :mode where o.osuId = :uid ")
     void updateMode(Long uid, OsuMode mode);
 
-    @Modifying
-    @Transactional
-    @Query("update OsuBindUserLite o set o.qq = null where o.osuId = :uid ")
-    void unBind(Long uid);
 
     @Modifying
     @Transactional
     @Query("delete OsuBindUserLite o where o.osuId = :uid ")
     void deleteAllByOsuId(Long uid);
-
-    @Query("select o.qq from OsuBindUserLite o where o.osuId = :uid")
-    Long getqq(Long uid);
 }
