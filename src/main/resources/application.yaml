@@ -12,7 +12,7 @@ botfile:
 spring:
   profiles:
     include:
-      QQ,OSU
+      discord,OSU
 
   datasource:
     driver-class-name: org.postgresql.Driver
