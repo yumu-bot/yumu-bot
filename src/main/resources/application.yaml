@@ -5,11 +5,9 @@ server:
 botfile:
   root: C:/bot #您想运行的位置
   bind: ${botfile.root}bind/
-  mirai: ${botfile.root}
   bgdir: ${botfile.root}bg/
   font: ${botfile.root}font/
   imgbuffer: ${botfile.root}imgbuffer/
-  osuid: ${botfile.root}Id/
   osuFilePath: ${botfile.root}osufile/
 #数据源
 spring:

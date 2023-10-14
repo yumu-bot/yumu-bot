@@ -37,31 +37,23 @@ import java.nio.file.Path;
 @Configuration
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
+    /** bot 运行目录 */
     public static        String RUN_PATH;
-    public static        String BOT_PATH;
+    /** 字体资源文件 */
     public static        String FONT_PATH;
+    /** 素材资源文件 */
     public static        String BG_PATH;
+    /** 网络图片 本地缓存 */
     public static        String IMGBUFFER_PATH;
-    public static        String OSU_ID;
     public static        int    PORT;
-
-    public static long    QQ;
-    public static String  PASSWORD;
-    public static boolean QQ_LOGIN;
 
 
     @Autowired
-    public NowbotConfig(FileConfig fileConfig, QQConfig qqConfig) {
+    public NowbotConfig(FileConfig fileConfig) {
         RUN_PATH = createDir(fileConfig.root);
-        BOT_PATH = createDir(fileConfig.mirai);
         FONT_PATH = createDir(fileConfig.font);
         BG_PATH = createDir(fileConfig.bgdir);
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
-        OSU_ID = createDir(fileConfig.osuid);
-
-        QQ = qqConfig.qq;
-        PASSWORD = qqConfig.password;
-        QQ_LOGIN = qqConfig.login;
     }
 
     @Bean
@@ -136,7 +128,7 @@ public class NowbotConfig {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
-                log.error(BOT_PATH + "创建失败", e);
+                log.error(path + "创建失败", e);
             }
         }
         return path;

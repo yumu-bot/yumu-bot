@@ -7,12 +7,9 @@ import org.springframework.context.annotation.Primary;
 @ConfigurationProperties(prefix = "botfile")
 public class FileConfig {
     String root;
-    String bind;
-    String mirai;
     String bgdir;
     String font;
     String imgbuffer;
-    String osuid;
 
     /**
      * 缓存 .osu 文件的路径
@@ -25,22 +22,6 @@ public class FileConfig {
 
     public void setRoot(String root) {
         this.root = root;
-    }
-
-    public String getBind() {
-        return bind;
-    }
-
-    public void setBind(String bind) {
-        this.bind = bind;
-    }
-
-    public String getMirai() {
-        return mirai;
-    }
-
-    public void setMirai(String mirai) {
-        this.mirai = mirai;
     }
 
     public String getBgdir() {
@@ -67,13 +48,6 @@ public class FileConfig {
         this.imgbuffer = imgbuffer;
     }
 
-    public String getOsuid() {
-        return osuid;
-    }
-
-    public void setOsuid(String osuid) {
-        this.osuid = osuid;
-    }
 
     public String getOsuFilePath() {
         return osuFilePath;
