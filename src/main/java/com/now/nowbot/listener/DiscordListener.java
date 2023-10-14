@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.controller.BotWebApi;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -30,9 +31,15 @@ public class DiscordListener extends ListenerAdapter {
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         event.deferReply().queue();
         Optional<Method> first = Arrays.stream(botWebApi.getClass().getDeclaredMethods()).filter(
-                method -> method.getName().equalsIgnoreCase(
-                        event.getName().substring(event.getName().indexOf("-") + 1)
-                )).findFirst();
+                method -> {
+                    OpenResource annotation = method.getAnnotation(OpenResource.class);
+                    if (annotation == null) {
+                        return false;
+                    }
+                    return annotation.name().equalsIgnoreCase(event.getName().substring(event.getName().indexOf("-") + 1));
+
+                }
+        ).findFirst();
         if (first.isPresent()) {
             Method method = first.get();
             Parameter[] parameters = method.getParameters();
@@ -66,7 +73,7 @@ public class DiscordListener extends ListenerAdapter {
                 Throwable throwable;
                 if (e.getCause() != null) {
                     throwable = e.getCause();
-                }else {
+                } else {
                     throwable = e;
                 }
                 event.getHook().sendMessage("处理命令时发生了异常," + throwable.getMessage()).queue();
