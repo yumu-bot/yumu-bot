@@ -6,6 +6,7 @@ import com.now.nowbot.controller.BotWebApi;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -32,19 +33,21 @@ public class DiscordConfig {
     @Bean
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient) {
         WebSocketFactory factory = new WebSocketFactory();
-        factory.getProxySettings().setHost("127.0.0.1").setPort(7890);
+        factory.getProxySettings().setHost("127.0.0.1").setPort(7899);
         JDA build = JDABuilder.createDefault(token)
                 .setHttpClient(okHttpClient)
                 .setWebsocketFactory(factory)
                 .addEventListeners(listenerAdapters.toArray())
                 .build();
-
+        for (Command command : build.retrieveCommands().complete()) {
+            command.delete().complete();
+        }
         for (Method declaredMethod : BotWebApi.class.getDeclaredMethods()) {
             OpenResource methodAnnotation = declaredMethod.getAnnotation(OpenResource.class);
             if (methodAnnotation == null) {
                 continue;
             }
-            String name = declaredMethod.getName();
+            String name = methodAnnotation.name();
             SlashCommandData commandData = Commands.slash((commandSuffix + name).toLowerCase(), methodAnnotation.desp());
             for (Parameter parameter : declaredMethod.getParameters()) {
                 OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
