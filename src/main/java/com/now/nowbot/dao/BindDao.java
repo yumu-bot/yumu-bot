@@ -6,7 +6,7 @@ import com.now.nowbot.entity.bind.DiscordBindLite;
 import com.now.nowbot.entity.bind.QQBindLite;
 import com.now.nowbot.mapper.BindQQMapper;
 import com.now.nowbot.mapper.BindUserMapper;
-import com.now.nowbot.mapper.DiscordBindMapper;
+import com.now.nowbot.mapper.BindDiscordMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -23,13 +23,15 @@ public class BindDao {
     Logger            log = LoggerFactory.getLogger(BindDao.class);
     BindUserMapper    bindUserMapper;
     BindQQMapper      bindQQMapper;
-    DiscordBindMapper discordBindMapper;
+    BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper osuFindNameMapper;
 
     @Autowired
-    public BindDao(BindUserMapper mapper, OsuFindNameMapper nameMapper) {
+    public BindDao(BindUserMapper mapper, OsuFindNameMapper nameMapper, BindQQMapper QQMapper, BindDiscordMapper discordMapper) {
         bindUserMapper = mapper;
         osuFindNameMapper = nameMapper;
+        bindQQMapper = QQMapper;
+        bindDiscordMapper = discordMapper;
     }
 
     public BinUser getUser(Long qq) throws BindException {
@@ -83,7 +85,7 @@ public class BindDao {
         var discordBind = new DiscordBindLite();
         discordBind.setId(discordId);
         discordBind.setOsuUser(user);
-        return discordBindMapper.save(discordBind);
+        return bindDiscordMapper.save(discordBind);
     }
 
     public BinUser getBindUser(String name) {
@@ -122,7 +124,7 @@ public class BindDao {
         bindQQMapper.save(user);
     }
     public void update(DiscordBindLite user) {
-        discordBindMapper.save(user);
+        bindDiscordMapper.save(user);
     }
 
     public void update(OsuBindUserLite user) {

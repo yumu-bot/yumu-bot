@@ -7,9 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
-public interface DiscordBindMapper extends JpaRepository<DiscordBindLite, String>, JpaSpecificationExecutor<DiscordBindLite> {
+public interface BindDiscordMapper extends JpaRepository<DiscordBindLite, String>, JpaSpecificationExecutor<DiscordBindLite> {
     @Modifying
     @Transactional
     @Query("delete from DiscordBindLite dc where dc.osuUser.osuId=:osuId and dc.id = :id")
