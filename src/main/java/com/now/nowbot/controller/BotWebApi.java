@@ -112,7 +112,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "match")
-    @OpenResource(name = "ymmn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
+    @OpenResource(name = "mn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
     public ResponseEntity<byte[]> getMatch(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
                                            @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
                                            @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
@@ -136,7 +136,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "rating")
-    @OpenResource(name = "ymra", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
+    @OpenResource(name = "ra", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
     public ResponseEntity<byte[]> getRa(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
                                         @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
                                         @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
