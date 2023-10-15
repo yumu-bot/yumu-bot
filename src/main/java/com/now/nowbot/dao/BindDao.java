@@ -77,7 +77,7 @@ public class BindDao {
             }
         }
 
-        qqBind.setOsuUser(user);
+        qqBind.setOsuUser(bindUserMapper.save(user));
         return bindQQMapper.save(qqBind);
     }
 
