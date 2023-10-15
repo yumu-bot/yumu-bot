@@ -69,7 +69,8 @@ public class NowbotConfig {
     @Bean
     public OkHttpClient httpClient() {
         var builder = new OkHttpClient.Builder();
-        if (proxyPort != 0) builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyPort)));
+//        if (proxyPort != 0)
+            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost",proxyPort)));
         return builder.build();
     }
 

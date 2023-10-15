@@ -38,7 +38,8 @@ public class DiscordConfig {
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config) {
         WebSocketFactory factory = new WebSocketFactory();
         var proy = factory.getProxySettings();
-        if (config.proxyPort != 0) proy.setHost("127.0.0.1").setPort(config.proxyPort);
+//        if (config.proxyPort != 0)
+            proy.setHost("localhost").setPort(7890);
         JDA jda;
         try {
             jda = JDABuilder
