@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 @org.springframework.stereotype.Service("AR-CALC")
 public class ArCalService implements MessageService<ArCalService.Parm> {
-    private static Pattern pattern = Pattern.compile("#cal(?<type>[arodcshp]{2})\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtr]{2})+)?");
+    private static Pattern pattern = Pattern.compile("#cal\\s*(?<type>[arodcshp]{2})\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtr]{2})+)?");
     record Parm(String type, float value, String mods){}
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Parm> data) throws Throwable {
