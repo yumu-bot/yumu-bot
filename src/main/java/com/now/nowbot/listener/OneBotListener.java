@@ -37,7 +37,6 @@ public class OneBotListener {
     @GroupMessageHandler()
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
-        if (onebotEvent.getSender().getUserId() != 2480557535L) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
