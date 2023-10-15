@@ -48,7 +48,7 @@ public class DiscordConfig {
                     .addEventListeners(listenerAdapters.toArray())
                     .build();
             jda.awaitReady();
-        } catch (IllegalArgumentException | InvalidTokenException | InterruptedException e) {
+        } catch (Exception e) {
             log.error("create jda error", e);
             return null;
         }
