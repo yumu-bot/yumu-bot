@@ -21,16 +21,16 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
-public class msgController {
+public class BindController {
     public static final boolean debug = false;
-    static final Logger log = LoggerFactory.getLogger(msgController.class);
+    static final Logger log = LoggerFactory.getLogger(BindController.class);
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
     OsuGetService osuGetService;
     private BotContainer botContainer;
     BindDao bindDao;
 
     @Autowired
-    public msgController(OsuGetService osuGetService, BindDao dao, BotContainer botContainer) {
+    public BindController(OsuGetService osuGetService, BindDao dao, BotContainer botContainer) {
         this.osuGetService = osuGetService;
         bindDao = dao;
         this.botContainer = botContainer;
@@ -69,14 +69,12 @@ public class msgController {
                         return sb.toString();
                     }
                 }
-                BinUser bd = new BinUser(msg.QQ(), code);
+                BinUser bd = BinUser.create(code);
                 osuGetService.getToken(bd);
-                if (!debug) {
-//                    msg.receipt().getTarget().sendMessage("成功绑定:" + bd.getQq() + "->" + bd.getOsuName());
-                }
+                bindDao.bindQQ(msg.QQ(), bd);
                 BindService.removeBind(key);
                 sb.append("成功绑定:\n")
-                        .append(bd.getQq())
+                        .append(msg.QQ())
                         .append('>')
                         .append(bd.getOsuName());
             } catch (Exception e) {

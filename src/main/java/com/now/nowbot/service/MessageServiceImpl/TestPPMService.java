@@ -51,7 +51,7 @@ public class TestPPMService implements MessageService<Matcher> {
             user = osuGetService.getPlayerOsuInfo(id);
             bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
         } else {
-            var userBin = bindDao.getUser(event.getSender().getId());
+            var userBin = bindDao.getUserFromQQ(event.getSender().getId());
             user = osuGetService.getPlayerOsuInfo(userBin);
             bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
         }

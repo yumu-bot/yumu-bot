@@ -22,7 +22,7 @@ public class WsController extends WebSocketListener {
     static Request req = new Request.Builder().url("ws://1.116.209.39:20007").build();
     WebSocket webSocket;
 
-    msgController msgController;
+    BindController BindController;
 
     public static WsController getInstance(){
         if (ws != null){
@@ -64,8 +64,8 @@ public class WsController extends WebSocketListener {
                 log.error("parse error",e);
                 return;
             }
-            if (msgController != null){
-                var resp = msgController.saveBind(code, state[1]);
+            if (BindController != null){
+                var resp = BindController.saveBind(code, state[1]);
                 var p = new HashMap<String, String>();
                 p.put("response", resp);
                 p.put("echo", echo);
@@ -105,8 +105,8 @@ public class WsController extends WebSocketListener {
         client.newWebSocket(req, this);
     }
 
-    public void setMsgController(com.now.nowbot.controller.msgController msgController) {
-        this.msgController = msgController;
+    public void setMsgController(BindController BindController) {
+        this.BindController = BindController;
     }
 
 }

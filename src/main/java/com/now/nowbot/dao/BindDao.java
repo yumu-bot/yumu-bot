@@ -34,7 +34,7 @@ public class BindDao {
         bindDiscordMapper = discordMapper;
     }
 
-    public BinUser getUser(Long qq) throws BindException {
+    public BinUser getUserFromQQ(Long qq) throws BindException {
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Me_NoBind);
@@ -43,8 +43,8 @@ public class BindDao {
         return fromLite(liteData.get().getOsuUser());
     }
 
-    public BinUser getUser(int qq) throws BindException {
-        return getUser((long) qq);
+    public BinUser getUserFromQQ(int qq) throws BindException {
+        return getUserFromQQ((long) qq);
     }
 
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
@@ -55,6 +55,9 @@ public class BindDao {
 
     public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
         return bindQQMapper.findByOsuId(osuId);
+    }
+    public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
+        return bindQQMapper.findById(qq);
     }
 
     public QQBindLite bindQQ(Long qq, BinUser user) {
@@ -93,16 +96,6 @@ public class BindDao {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return fromLite(data.orElseGet(null));
-    }
-
-    public void saveUser(Long qqId, String name, Long osuId) {
-        var data = new BinUser();
-        data.setMode(OsuMode.OSU);
-        data.setQq(qqId);
-        data.setOsuName(name);
-        data.setOsuID(osuId);
-        data.setTime(0L);
-        saveUser(data);
     }
 
     public void saveUser(BinUser user) {

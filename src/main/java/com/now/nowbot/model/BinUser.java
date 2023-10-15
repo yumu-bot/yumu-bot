@@ -6,10 +6,6 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 
 public class BinUser {
     /**
-     * qq号
-     */
-    Long qq;
-    /**
      * osu name
      */
     String osuName;
@@ -37,21 +33,20 @@ public class BinUser {
     public BinUser() {
         reTime();
     }
-
-    public BinUser(long qq, String refreshToken) {
-        this.qq = qq;
-        this.refreshToken = refreshToken;
+    public BinUser(long osuId, String osuName) {
+        this.osuID = osuId;
+        this.osuName = osuName;
+        mode = OsuMode.DEFAULT;
+        time=0L;
         reTime();
     }
 
-    public Long getQq() {
-        return qq;
+    public static BinUser create(String refreshToken) {
+        var user = new BinUser();
+        user.refreshToken = refreshToken;
+        user.reTime();
+        return user;
     }
-
-    public void setQq(Long qq) {
-        this.qq = qq;
-    }
-
     public String getOsuName() {
         return osuName;
     }
@@ -142,7 +137,6 @@ public class BinUser {
     @Override
     public String toString() {
         return "BinUser{" +
-                "QQ=" + qq +
                 ", osuName='" + osuName + '\'' +
                 ", osuID='" + osuID + '\'' +
                 ", refresh_token='" + refreshToken + '\'' +

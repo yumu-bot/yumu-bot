@@ -83,7 +83,7 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
             user.setOsuID(id);
             user.setMode(OsuMode.DEFAULT);
         } else {
-            user = bindDao.getUser(parm.qq());
+            user = bindDao.getUserFromQQ(parm.qq());
         }
 
         //处理默认mode

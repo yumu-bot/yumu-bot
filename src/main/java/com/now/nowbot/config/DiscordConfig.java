@@ -5,6 +5,7 @@ import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.controller.BotWebApi;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.exceptions.InvalidTokenException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -12,6 +13,8 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,20 +29,31 @@ import java.util.List;
 @ConfigurationProperties(prefix = "discord", ignoreInvalidFields = true)
 
 public class DiscordConfig {
+    private static final Logger log = LoggerFactory.getLogger(DiscordConfig.class);
 
     private String token;
     private String commandSuffix;
 
     @Bean
-    public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient) {
+    public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config) {
         WebSocketFactory factory = new WebSocketFactory();
-        factory.getProxySettings().setHost("127.0.0.1").setPort(7890);
-        JDA build = JDABuilder.createDefault(token)
-                .setHttpClient(okHttpClient)
-                .setWebsocketFactory(factory)
-                .addEventListeners(listenerAdapters.toArray())
-                .build();
-        for (Command command : build.retrieveCommands().complete()) {
+        var proy = factory.getProxySettings();
+        if (config.proxyPort != 0) proy.setHost("127.0.0.1").setPort(config.proxyPort);
+        JDA jda;
+        try {
+            jda = JDABuilder
+                    .createDefault(token)
+                    .setHttpClient(okHttpClient)
+                    .setWebsocketFactory(factory)
+                    .addEventListeners(listenerAdapters.toArray())
+                    .build();
+            jda.awaitReady();
+        } catch (IllegalArgumentException | InvalidTokenException | InterruptedException e) {
+            log.error("create jda error", e);
+            return null;
+        }
+
+        for (Command command : jda.retrieveCommands().complete()) {
             command.delete().complete();
         }
         for (Method declaredMethod : BotWebApi.class.getDeclaredMethods()) {
@@ -74,11 +88,10 @@ public class DiscordConfig {
                 optionData.setRequired(parameterAnnotation.required());
                 commandData.addOptions(optionData);
             }
-            build.upsertCommand(commandData).complete();
+            jda.upsertCommand(commandData).complete();
         }
 
-
-        return build;
+        return jda;
     }
 
     public String getToken() {

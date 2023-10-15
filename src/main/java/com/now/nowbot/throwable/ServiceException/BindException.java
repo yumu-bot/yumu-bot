@@ -8,6 +8,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
         BIND_Client_BindingNoName("你叫啥名呀？告诉我吧。"),//绑定_玩家未输入用户名
         BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑，请输入 !ymbind 重新绑定哦。"),//绑定_玩家早已绑定
+        BIND_Client_AlreadyBoundByName("禁止在使用name绑定的情况下再次绑定, 若要修改绑定请直接使用 !ymbind 不要带其它参数"),
         BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
         BIND_Client_BindingRefused("已取消绑定。OwOb"),//绑定_取消绑定
 
@@ -31,7 +32,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Default_DefaultException("我好像生病了，需要休息一会..."),//默认报错
 
         BIND_Me_Success ("您已绑定成功！"),//查询自己_绑定成功
-        BIND_Player_Success (""),
+        BIND_Player_Success ("已绑定成功！"),
 
         ;//逗号分隔
         final String message;

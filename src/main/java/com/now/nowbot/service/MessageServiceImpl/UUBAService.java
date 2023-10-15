@@ -107,7 +107,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         // 是否为绑定用户
 
         if (Objects.nonNull(parm.user().qq())) {
-            binUser = bindDao.getUser(parm.user().qq());
+            binUser = bindDao.getUserFromQQ(parm.user().qq());
         } else {
             //查询其他人 [name]
             String name = parm.user().name();

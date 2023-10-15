@@ -129,7 +129,7 @@ public class PassRecentService implements MessageService<Matcher> {
         OsuUser osuUser;
 
         if (at != null) {
-            binUser = bindDao.getUser(at.getTarget());
+            binUser = bindDao.getUserFromQQ(at.getTarget());
         } else {
             if (name != null && !name.trim().isEmpty()) {
                 binUser = new BinUser();
@@ -141,7 +141,7 @@ public class PassRecentService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
             } else {
-                binUser = bindDao.getUser(event.getSender().getId());
+                binUser = bindDao.getUserFromQQ(event.getSender().getId());
             }
         }
 
@@ -213,7 +213,7 @@ public class PassRecentService implements MessageService<Matcher> {
     }
 
     private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
-        var s = getData(bindDao.getUser(365246692L), mode, offset, limit, isRecent);
+        var s = getData(bindDao.getUserFromQQ(365246692L), mode, offset, limit, isRecent);
         if (CollectionUtils.isEmpty(s)) {
             //throw new RuntimeException("没打");
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);

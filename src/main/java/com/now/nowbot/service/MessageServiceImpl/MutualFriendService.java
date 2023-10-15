@@ -45,7 +45,7 @@ public class MutualFriendService implements MessageService<Matcher> {
                 data.addAt(at.getTarget());
 
                     try {
-                        var u = bindDao.getUser(at.getTarget());
+                        var u = bindDao.getUserFromQQ(at.getTarget());
                         data.addText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n');
                     } catch (BindException e) {
                         data.addText(" 未绑定\n");
@@ -67,7 +67,7 @@ public class MutualFriendService implements MessageService<Matcher> {
         }
 
 
-        var user = bindDao.getUser(event.getSender().getId());
+        var user = bindDao.getUserFromQQ(event.getSender().getId());
         var id = user.getOsuID();
 
         event.getSubject().sendMessage("https://osu.ppy.sh/users/" + id);

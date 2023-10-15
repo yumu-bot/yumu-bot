@@ -59,7 +59,7 @@ public class OldAvatarService implements MessageService<UserParam> {
         OsuUser osuUser;
 
         if (Objects.nonNull(param.qq())) {
-            BinUser binUser = bindDao.getUser(param.qq());
+            BinUser binUser = bindDao.getUserFromQQ(param.qq());
             try {
                 osuUser = osuGetService.getPlayerInfo(binUser);
             } catch (Exception e) {

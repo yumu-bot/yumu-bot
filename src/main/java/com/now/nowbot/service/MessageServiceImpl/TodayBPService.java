@@ -64,7 +64,7 @@ public class TodayBPService implements MessageService<Matcher> {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if (at != null) {
             try {
-                var bUser = bindDao.getUser(at.getTarget());
+                var bUser = bindDao.getUserFromQQ(at.getTarget());
                 if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
                 ouMe = osuGetService.getPlayerInfo(bUser, mode);
                 bpAllList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
@@ -80,7 +80,7 @@ public class TodayBPService implements MessageService<Matcher> {
             }
         } else {
             try {
-                var buMe = bindDao.getUser(event.getSender().getId());
+                var buMe = bindDao.getUserFromQQ(event.getSender().getId());
                 if (mode == OsuMode.DEFAULT) mode = buMe.getMode();
                 ouMe = osuGetService.getPlayerInfo(buMe, mode);
                 bpAllList = osuGetService.getBestPerformance(buMe, mode, 0, 100);

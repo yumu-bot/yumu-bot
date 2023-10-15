@@ -41,6 +41,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  proxy:
+    port: 0
 shiro:
   ws-config:
     # 反向 Websocket 连接地址，无需该配置字段可删除，将使用默认值 "/ws/shiro"

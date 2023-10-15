@@ -37,15 +37,25 @@ import java.nio.file.Path;
 @Configuration
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
-    /** bot 运行目录 */
+    /**
+     * bot 运行目录
+     */
     public static        String RUN_PATH;
-    /** 字体资源文件 */
+    /**
+     * 字体资源文件
+     */
     public static        String FONT_PATH;
-    /** 素材资源文件 */
+    /**
+     * 素材资源文件
+     */
     public static        String BG_PATH;
-    /** 网络图片 本地缓存 */
+    /**
+     * 网络图片 本地缓存
+     */
     public static        String IMGBUFFER_PATH;
     public static        int    PORT;
+    @Value("${spring.proxy.port:0}")
+    public               int    proxyPort;
 
 
     @Autowired
@@ -58,9 +68,9 @@ public class NowbotConfig {
 
     @Bean
     public OkHttpClient httpClient() {
-        var clientBuilder = new OkHttpClient.Builder()
-                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
-        return clientBuilder.build();
+        var builder = new OkHttpClient.Builder();
+        if (proxyPort != 0) builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyPort)));
+        return builder.build();
     }
 
     @Bean
@@ -94,8 +104,8 @@ public class NowbotConfig {
         var client = httpClient();
 
         var tempFactory = new OkHttp3ClientHttpRequestFactory(client);
-        tempFactory.setConnectTimeout( 60 * 1000);
-        tempFactory.setReadTimeout( 60 * 1000);
+        tempFactory.setConnectTimeout(60 * 1000);
+        tempFactory.setReadTimeout(60 * 1000);
         var template = new RestTemplate(tempFactory);
         template.setErrorHandler(new DefaultResponseErrorHandler() {
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
@@ -111,8 +121,6 @@ public class NowbotConfig {
 //        template.setMessageConverters(messageConverters);
         return template;
     }
-
-
 
 
     public static ApplicationContext applicationContext;
@@ -152,7 +160,7 @@ public class NowbotConfig {
     }
 
     @Bean
-    public WebClient webCilent(WebClient.Builder builder)  {
+    public WebClient webCilent(WebClient.Builder builder) {
         return builder
                 .baseUrl("https://osu.ppy.sh/")
                 .build();

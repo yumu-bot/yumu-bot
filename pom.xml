@@ -16,9 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <skipTests>true</skipTests>
-        <mirai.version>2.15.0-RC</mirai.version>
         <run.os>linux</run.os>
-        <flexmark.version>0.26.4</flexmark.version>
     </properties>
 
     <dependencies>

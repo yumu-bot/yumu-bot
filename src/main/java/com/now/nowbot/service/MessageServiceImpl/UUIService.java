@@ -16,7 +16,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,14 +54,14 @@ public class UUIService implements MessageService<Matcher> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser user = null;
         if (at != null) {
-            user = bindDao.getUser(at.getTarget());
+            user = bindDao.getUserFromQQ(at.getTarget());
         } else {
             if (name != null && !name.trim().isEmpty()) {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
             } else {
-                user = bindDao.getUser(event.getSender().getId());
+                user = bindDao.getUserFromQQ(event.getSender().getId());
             }
         }
         var mode = OsuMode.getMode(matcher.group("mode"));
