@@ -5,17 +5,18 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DateUtil;
+import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
 
-@org.springframework.stereotype.Service("AR-CALC")
+@Service("AR-CALC")
 public class ArCalService implements MessageService<ArCalService.Parm> {
     private static Pattern pattern = Pattern.compile("#cal\\s*(?<type>[arodcshp]{2})\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtr]{2})+)?");
     record Parm(String type, float value, String mods){}
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Parm> data) throws Throwable {
         String message = event.getRawMessage();
-        if (message.startsWith("#cal")) return false;
+        if (!message.startsWith("#cal")) return false;
         var matcher = pattern.matcher(message);
         if (matcher.find()) {
             var d = new Parm(
