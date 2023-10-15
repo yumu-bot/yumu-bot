@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class DataUtil {
+public class DateUtil {
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
 
@@ -174,7 +174,7 @@ public class DataUtil {
         return out;
     }
 
-    private static int AR2MS(float ar){
+    public static int AR2MS(float ar){
         if (0 < ar - 5){
             if (ar > 11) return 300;
             return  1200 - (int) (150 * (ar - 5));
@@ -183,7 +183,7 @@ public class DataUtil {
         }
     }
 
-    private static float MS2AR(int ms){
+    public static float MS2AR(int ms){
         if (0 < 1200 - ms){
             if (ms < 300) return 11;
             return  5 + (1200 - ms) / 150f;
@@ -211,12 +211,12 @@ public class DataUtil {
         return (int)Math.ceil(ar * 100)/100f;
     }
 
-    private static float OD2MS(float od){
+    public static float OD2MS(float od){
         if (od > 10) return 20;
         return 80 - (6 * od);
     }
 
-    private static float MS2OD(float ms){
+    public static float MS2OD(float ms){
         return (80 - ms) / 6f;
     }
 

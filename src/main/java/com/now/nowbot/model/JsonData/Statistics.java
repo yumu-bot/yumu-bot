@@ -169,12 +169,12 @@ public class Statistics {
         int s_k = getCountKatu();
         int s_0 = getCountMiss();
 
-        switch (mode) {
-            case OSU : countAll = s_300 + s_100 + s_50 + s_0; break;
-            case TAIKO:
-            case CATCH : countAll = s_300 + s_100 + s_0; break;
-            case MANIA : countAll = s_g + s_300 + s_k + s_100 + s_50 + s_0; break;
-        }
+        countAll = switch (mode) {
+            case OSU -> s_300 + s_100 + s_50 + s_0;
+            case TAIKO, CATCH -> s_300 + s_100 + s_0;
+            case MANIA -> s_g + s_300 + s_k + s_100 + s_50 + s_0;
+            default -> countAll;
+        };
         return countAll;
     }
 

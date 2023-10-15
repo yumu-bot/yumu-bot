@@ -698,19 +698,16 @@ public class SkiaUtil {
         int c = score.getMaxCombo();
         int m = score.getBeatMap().getMaxCombo();
         double ap8 = Math.pow(score.getAccuracy(), 8f);
-        double v3 = 0;
-
-        switch (score.getMode()){
-            case OSU:
-            case CATCH:
-            case DEFAULT : v3 = fc * i * (0.7f * c / m + 0.3f * ap8) * p; break;
-            case TAIKO : v3 = fc * i * ( 0.75f * c / m + 0.25f * ap8) * p; break;
-            case MANIA : v3 = fc * i * ( 0.01f * c / m + 0.99f * ap8) * p; break;
-        }
+        double v3 = switch (score.getMode()) {
+            case OSU, CATCH, DEFAULT -> fc * i * (0.7f * c / m + 0.3f * ap8) * p;
+            case TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p;
+            case MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p;
+        };
 
         return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求
     }
 
+    // 这东西是啥?
     public static double getV3ModsMultiplier(List<String> mod, OsuMode mode) {
         double index = 1.00D;
 

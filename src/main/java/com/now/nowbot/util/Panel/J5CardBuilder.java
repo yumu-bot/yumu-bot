@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.DateUtil;
 import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
 
@@ -86,15 +86,15 @@ public class J5CardBuilder extends PanelBuilder {
         Font fontS24 = new Font(TorusSB, 24);
         Font fontS36 = new Font(TorusSB, 36);
 
-        String Jl1t = DataUtil.getRoundedNumberStr(user.getStatistics().getRankedScore(), 2);
-        String Jl2t = DataUtil.getRoundedNumberStr(user.getStatistics().getTotalScore(), 2);
-        String Jl3t = DataUtil.getRoundedNumberStr(user.getStatistics().getPlayCount(), 2);
-        String Jl4t = DataUtil.getRoundedNumberStr(user.getStatistics().getPlayTime(), 2);
+        String Jl1t = DateUtil.getRoundedNumberStr(user.getStatistics().getRankedScore(), 2);
+        String Jl2t = DateUtil.getRoundedNumberStr(user.getStatistics().getTotalScore(), 2);
+        String Jl3t = DateUtil.getRoundedNumberStr(user.getStatistics().getPlayCount(), 2);
+        String Jl4t = DateUtil.getRoundedNumberStr(user.getStatistics().getPlayTime(), 2);
 
-        String Jrr1t = DataUtil.getRoundedNumberStr(user.getBeatmapSetCountPlaycounts(), 2);
-        String Jrr2t = DataUtil.getRoundedNumberStr(user.getStatistics().getReplaysWatchedByOthers(), 2);
-        String Jrr3t = DataUtil.getRoundedNumberStr(user.getFollowerCount(), 2);
-        String Jrr4t = DataUtil.getRoundedNumberStr(user.getMappingFollowerCount(), 2);
+        String Jrr1t = DateUtil.getRoundedNumberStr(user.getBeatmapSetCountPlaycounts(), 2);
+        String Jrr2t = DateUtil.getRoundedNumberStr(user.getStatistics().getReplaysWatchedByOthers(), 2);
+        String Jrr3t = DateUtil.getRoundedNumberStr(user.getFollowerCount(), 2);
+        String Jrr4t = DateUtil.getRoundedNumberStr(user.getMappingFollowerCount(), 2);
 
 /*
         String Jml1t = "0"; //这里是以上值与上次查询的变化值，需要数据库一类的东西，我不会写  //好像还没写
