@@ -60,7 +60,7 @@ public class ScoreService implements MessageService<Matcher> {
 
         if (at != null) {
             try {
-                binUser = bindDao.getUser(at.getTarget());
+                binUser = bindDao.getUserFromQQ(at.getTarget());
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoBind);
             }
@@ -74,7 +74,7 @@ public class ScoreService implements MessageService<Matcher> {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             }
         } else {
-            binUser = bindDao.getUser(event.getSender().getId());
+            binUser = bindDao.getUserFromQQ(event.getSender().getId());
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));

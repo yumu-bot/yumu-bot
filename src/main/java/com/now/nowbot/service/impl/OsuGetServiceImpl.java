@@ -145,7 +145,6 @@ public class OsuGetServiceImpl implements OsuGetService {
 
         getPlayerInfo(binUser);
         bindDao.saveUser(binUser);
-
         return s;
     }
 

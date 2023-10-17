@@ -67,7 +67,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         List<Score> bps;
         OsuUser osuUser;
         if (Objects.nonNull(parm.qq())) {
-            BinUser binUser = bindDao.getUser(parm.qq());
+            BinUser binUser = bindDao.getUserFromQQ(parm.qq());
             try {
                 if (mode != OsuMode.DEFAULT) {
                     osuUser = osuGetService.getPlayerInfo(binUser, mode);

@@ -28,36 +28,22 @@ public enum OsuMode {
 
     public static OsuMode getMode(String desc){
         if (desc == null) return DEFAULT;
-        switch (desc.toLowerCase()){
-            case "osu":
-            case "o":
-            case "0":return OSU;
-
-            case "taiko":
-            case "t":
-            case "1":return TAIKO;
-
-            case "catch":
-            case "c":
-            case "fruits":
-            case "f":
-            case "2":return CATCH;
-
-            case "mania":
-            case "m":
-            case "3":return MANIA;
-
-            default:return DEFAULT;
-        }
+        return switch (desc.toLowerCase()) {
+            case "osu", "o", "0" -> OSU;
+            case "taiko", "t", "1" -> TAIKO;
+            case "catch", "c", "fruits", "f", "2" -> CATCH;
+            case "mania", "m", "3" -> MANIA;
+            default -> DEFAULT;
+        };
     }
     public static OsuMode getMode(int desc){
-        switch (desc) {
-            case 0 : return OSU;
-            case 1 : return TAIKO;
-            case 2 : return CATCH;
-            case 3 : return MANIA;
-            default : return DEFAULT;
-        }
+        return switch (desc) {
+            case 0 -> OSU;
+            case 1 -> TAIKO;
+            case 2 -> CATCH;
+            case 3 -> MANIA;
+            default -> DEFAULT;
+        };
     }
 
     @Override

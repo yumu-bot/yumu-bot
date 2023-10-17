@@ -54,25 +54,6 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
     protected static String getMsg4Chain(MessageChain messageChain) {
         var builder = MsgUtils.builder();
         for (var msg : messageChain.getMessageList()) {
-
-            //他不支持我也没办法 
-            // 不支持就升级 java 21
-            if (msg instanceof ImageMessage) {
-                if (((ImageMessage) msg).isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(((ImageMessage) msg).getData()));
-                else builder.img(((ImageMessage) msg).getPath());
-            } else if (msg instanceof VoiceMessage){
-                builder.voice("base64://" + QQMsgUtil.byte2str(((VoiceMessage) msg).getData()));
-            } else if (msg instanceof AtMessage){
-                if (!((AtMessage) msg).isAll()) builder.at(((AtMessage) msg).getQQ());
-                else builder.atAll();
-            } else if (msg instanceof TextMessage){
-                builder.text(msg.toString());
-            } else if (msg instanceof ReplayMessage){
-                builder.reply(Long.toString(((ReplayMessage) msg).getId()));
-            }
-
-            /*
-
             switch (msg) {
                 case ImageMessage img -> {
                     if (img.isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(img.getData()));
@@ -85,12 +66,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
                 }
                 case TextMessage text -> builder.text(text.toString());
                 case ReplayMessage re -> builder.reply(Long.toString(re.getId()));
-                default -> {
-
-                }
+                case null, default -> {}
             }
-
-             */
         }
         return builder.build();
     }

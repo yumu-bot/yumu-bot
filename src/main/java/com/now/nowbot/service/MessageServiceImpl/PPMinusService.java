@@ -77,7 +77,7 @@ public class PPMinusService implements MessageService<Matcher> {
 
         } else if (at != null) {
             try {
-                var binUser = bindDao.getUser(at.getTarget());//处理默认mode
+                var binUser = bindDao.getUserFromQQ(at.getTarget());//处理默认mode
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
                 user = osuGetService.getPlayerInfo(binUser, mode);
                 bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
@@ -89,7 +89,7 @@ public class PPMinusService implements MessageService<Matcher> {
             }
         } else {
             try {
-                var binUser = bindDao.getUser(event.getSender().getId());//处理默认mode
+                var binUser = bindDao.getUserFromQQ(event.getSender().getId());//处理默认mode
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
                 user = osuGetService.getPlayerInfo(binUser, mode);
                 bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
@@ -118,7 +118,7 @@ public class PPMinusService implements MessageService<Matcher> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         OsuUser userMe;
-        var userBin = bindDao.getUser(event.getSender().getId());
+        var userBin = bindDao.getUserFromQQ(event.getSender().getId());
         List<Score> bpListMe;
         OsuUser userOther;
         List<Score> bpListOther;
@@ -141,7 +141,7 @@ public class PPMinusService implements MessageService<Matcher> {
 
         if (at != null) {//被对比人的信息
             // 包含有@
-            var OtherBin = bindDao.getUser(at.getTarget());
+            var OtherBin = bindDao.getUserFromQQ(at.getTarget());
             userOther = osuGetService.getPlayerInfo(OtherBin, mode);
             bpListOther = osuGetService.getBestPerformance(OtherBin, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);

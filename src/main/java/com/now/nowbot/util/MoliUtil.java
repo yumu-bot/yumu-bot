@@ -1,8 +1,6 @@
 package com.now.nowbot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
-import net.mamoe.mirai.event.events.MessageEvent;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,15 +9,10 @@ public class MoliUtil {
     private static RestTemplate restTemplate;
     private static final String url = "https://i.mly.app/reply";
     private static final HttpHeaders headers = new HttpHeaders();
-    public static record Friend(String sg, String name, Long id){};
-    public static record Group(String sg, String name, Long id, String groupName, Long groupId){};
+    public record Friend(String sg, String name, Long id){}
+    public record Group(String sg, String name, Long id, String groupName, Long groupId){}
 
-    public static Friend getFriend(MessageEvent e){
-        return new Friend(e.getMessage().contentToString(), e.getSenderName(), e.getSender().getId());
-    }
-    public static Group getGroup(GroupMessageEvent e){
-        return new Group(e.getMessage().contentToString(), e.getSenderName(), e.getSender().getId(), e.getGroup().getName(), e.getGroup().getId());
-    }
+
     public static void init(RestTemplate restTemplate){
         MoliUtil.restTemplate = restTemplate;
         headers.setContentType(MediaType.APPLICATION_JSON);

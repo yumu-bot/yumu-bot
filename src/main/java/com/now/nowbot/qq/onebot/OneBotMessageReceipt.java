@@ -10,7 +10,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class OneBotMessageReceipt extends MessageReceipt {
-    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService executor;
+    static {
+        var threadFactory = Thread.ofVirtual().name("v-OneBotMessageReceipt", 50).factory();
+        executor = Executors.newScheduledThreadPool(Integer.MAX_VALUE, threadFactory);
+    }
     int mid;
     Bot bot;
     com.now.nowbot.qq.onebot.contact.Contact contact;

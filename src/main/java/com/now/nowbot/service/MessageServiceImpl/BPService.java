@@ -119,7 +119,7 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
             try {
-                user = bindDao.getUser(event.getSender().getId());
+                user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (Exception e) {
                 throw new BPException(BPException.Type.BP_Me_LoseBind);
             }

@@ -77,7 +77,7 @@ public class FriendService implements MessageService<Matcher> {
         }
 
         try {
-            binMe = bindDao.getUser(event.getSender().getId());
+            binMe = bindDao.getUserFromQQ(event.getSender().getId());
         } catch (Exception e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
         }

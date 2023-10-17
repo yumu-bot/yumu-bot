@@ -27,7 +27,7 @@ public class AsyncSetting implements AsyncConfigurer {
 
     static {
         threadPool = new ThreadPoolTaskExecutor();
-        threadPool.setThreadFactory(Thread.ofVirtual().factory());
+        threadPool.setThreadFactory(Thread.ofVirtual().name("NoBot").factory());
         threadPool.setCorePoolSize(1000);
         threadPool.setMaxPoolSize(Integer.MAX_VALUE);
         threadPool.setKeepAliveSeconds(5);
@@ -35,7 +35,6 @@ public class AsyncSetting implements AsyncConfigurer {
         threadPool.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
         threadPool.setWaitForTasksToCompleteOnShutdown(true);
         threadPool.setAwaitTerminationSeconds(5);
-        threadPool.setThreadNamePrefix("NoBot-");
         threadPool.initialize();
     }
 

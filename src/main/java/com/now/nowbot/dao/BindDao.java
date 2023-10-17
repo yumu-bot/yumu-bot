@@ -2,7 +2,11 @@ package com.now.nowbot.dao;
 
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.OsuNameToIdLite;
-import com.now.nowbot.mapper.BindMapper;
+import com.now.nowbot.entity.bind.DiscordBindLite;
+import com.now.nowbot.entity.bind.QQBindLite;
+import com.now.nowbot.mapper.BindQQMapper;
+import com.now.nowbot.mapper.BindUserMapper;
+import com.now.nowbot.mapper.BindDiscordMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -12,65 +16,93 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class BindDao {
-    Logger log = LoggerFactory.getLogger(BindDao.class);
-    BindMapper bindMapper;
+    Logger            log = LoggerFactory.getLogger(BindDao.class);
+    BindUserMapper    bindUserMapper;
+    BindQQMapper      bindQQMapper;
+    BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper osuFindNameMapper;
 
     @Autowired
-    public BindDao(BindMapper mapper, OsuFindNameMapper nameMapper) {
-        bindMapper = mapper;
+    public BindDao(BindUserMapper mapper, OsuFindNameMapper nameMapper, BindQQMapper QQMapper, BindDiscordMapper discordMapper) {
+        bindUserMapper = mapper;
         osuFindNameMapper = nameMapper;
+        bindQQMapper = QQMapper;
+        bindDiscordMapper = discordMapper;
     }
 
-    public BinUser getUser(Long qq) throws BindException {
-        var liteData = bindMapper.getByQq(qq);
+    public BinUser getUserFromQQ(Long qq) throws BindException {
+        var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Me_NoBind);
-        } else if (liteData.size() > 1) {
-            var liteLastUser = bindMapper.getFirstByQqOrderByTimeDesc(qq);
-            bindMapper.deleteByQqAndIdNot(liteLastUser.getQq(),liteLastUser.getId());
-            return fromLite(liteLastUser);
         }
-        return fromLite(liteData.get(0));
+
+        return fromLite(liteData.get().getOsuUser());
     }
-    public BinUser getUser(int qq) throws BindException {
-        return getUser((long) qq);
+
+    public BinUser getUserFromQQ(int qq) throws BindException {
+        return getUserFromQQ((long) qq);
     }
+
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
-        var liteData = bindMapper.getByOsuId(osuId);
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
-        return fromLite(liteData);
+        var liteData = bindUserMapper.getByOsuId(osuId);
+        if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
+        return fromLite(liteData.get());
     }
-    public OsuBindUserLite getUserLiteFromOsuid(Long osuId) throws BindException {
-        var liteData = bindMapper.getByOsuId(osuId);
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
-        return liteData;
+
+    public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
+        return bindQQMapper.findByOsuId(osuId);
+    }
+    public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
+        return bindQQMapper.findById(qq);
+    }
+
+    public QQBindLite bindQQ(Long qq, BinUser user) {
+        return bindQQ(qq, fromModel(user));
+    }
+
+    public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
+        bindQQMapper.deleteOtherBind(user.getOsuId(), qq);
+        var qqBind = new QQBindLite();
+        qqBind.setQq(qq);
+        if (user.getRefreshToken() == null) {
+            var uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+            if (uLiteOpt.isPresent()) {
+                var uLite = uLiteOpt.get();
+                qqBind.setOsuUser(uLite);
+                return bindQQMapper.save(qqBind);
+            }
+        }
+
+        qqBind.setOsuUser(bindUserMapper.save(user));
+        return bindQQMapper.save(qqBind);
+    }
+
+    public DiscordBindLite bindDiscord(String discordId, BinUser user) {
+        return bindDiscord(discordId,fromModel(user));
+    }
+    public DiscordBindLite bindDiscord(String discordId, OsuBindUserLite user) {
+        var discordBind = new DiscordBindLite();
+        discordBind.setId(discordId);
+        discordBind.setOsuUser(user);
+        return bindDiscordMapper.save(discordBind);
     }
 
     public BinUser getBindUser(String name) {
         var id = getOsuId(name);
         if (id == null) return null;
-        var data = bindMapper.getByOsuId(id);
-        return fromLite(data);
-    }
-
-    public void saveUser(Long qqId,String name, Long osuId){
-        var data = new BinUser();
-        data.setMode(OsuMode.OSU);
-        data.setQq(qqId);
-        data.setOsuName(name);
-        data.setOsuID(osuId);
-        data.setTime(0L);
-        saveUser(data);
+        var data = bindUserMapper.getByOsuId(id);
+        return fromLite(data.orElseGet(null));
     }
 
     public void saveUser(BinUser user) {
         var data = new OsuBindUserLite(user);
         try {
-            var t = bindMapper.getByOsuId(user.getOsuID());
-            if (t != null) data.setId(t.getId());
+            var t = bindUserMapper.getByOsuId(user.getOsuID());
+            if (t.isPresent()) data.setId(t.get().getId());
             else {
                 throw new BindException(BindException.Type.BIND_Player_NotFound);
             }
@@ -78,45 +110,54 @@ public class BindDao {
             // do nothing
         }
         if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
-        bindMapper.save(data);
+        bindUserMapper.save(data);
     }
 
-    public void update(OsuBindUserLite user){
-        bindMapper.save(user);
+    public void update(QQBindLite user) {
+        bindQQMapper.save(user);
     }
+    public void update(DiscordBindLite user) {
+        bindDiscordMapper.save(user);
+    }
+
+    public void update(OsuBindUserLite user) {
+        bindUserMapper.save(user);
+    }
+
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
-        bindMapper.updateToken(uid, accessToken, refreshToken, time);
+        bindUserMapper.updateToken(uid, accessToken, refreshToken, time);
     }
 
     public void updateMod(Long uid, OsuMode mode) {
-        bindMapper.updateMode(uid, mode);
+        bindUserMapper.updateMode(uid, mode);
     }
 
-    public boolean unBind(BinUser user) {
+    public boolean unBindQQ(BinUser user) {
         try {
-            bindMapper.unBind(user.getOsuID());
+            bindQQMapper.unBind(user.getOsuID());
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public void removeBind(long uid){
-        bindMapper.deleteAllByOsuId(uid);
+    public void removeBind(long uid) {
+        bindUserMapper.deleteAllByOsuId(uid);
     }
 
     public Long getQQ(Long uid) {
-        return bindMapper.getqq(uid);
+        var q = bindQQMapper.findByOsuId(uid);
+        if (q.isPresent()) return q.get().getQq();
+        throw new RuntimeException("没有绑定");
     }
 
-    //todo 一会切换到name表
     public Long getOsuId(String name) {
         Long uid;
         try {
             uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
         } catch (Exception e) {
             if (!(e instanceof NullPointerException)) {
-                log.error("get name Error",e);
+                log.error("get name Error", e);
             }
             return null;
         }
@@ -140,7 +181,7 @@ public class BindDao {
         if (osuBindUserLite == null) return null;
         var data = osuBindUserLite;
         var buser = new BinUser();
-        buser.setQq(data.getQq());
+//        buser.setQq(data.getQq());
         buser.setOsuID(data.getOsuId());
         buser.setOsuName(data.getOsuName());
         buser.setAccessToken(data.getAccessToken());

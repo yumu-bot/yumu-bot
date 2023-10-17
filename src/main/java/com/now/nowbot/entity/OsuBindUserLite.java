@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "osu_bind_user", indexes = {
-        @Index(name = "bind_qid", columnList = "qq"),
         @Index(name = "bind_oid", columnList = "osu_id"),
 })
 public class OsuBindUserLite {
@@ -23,7 +22,7 @@ public class OsuBindUserLite {
 //    @Lob
     @Column(name = "osu_name", columnDefinition = "TEXT")
     private String osuName;
-    private Long qq;
+
 //    @Lob
     @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
@@ -45,7 +44,6 @@ public class OsuBindUserLite {
         this.joinDate = LocalDateTime.now();
         this.osuId = data.getOsuID();
         this.osuName = data.getOsuName();
-        this.qq = data.getQq();
         this.accessToken = data.getAccessToken();
         this.refreshToken = data.getRefreshToken();
         this.time = data.getTime();
@@ -77,14 +75,6 @@ public class OsuBindUserLite {
 
     public void setOsuName(String osuName) {
         this.osuName = osuName;
-    }
-
-    public Long getQq() {
-        return qq;
-    }
-
-    public void setQq(Long qq) {
-        this.qq = qq;
     }
 
     public String getAccessToken() {

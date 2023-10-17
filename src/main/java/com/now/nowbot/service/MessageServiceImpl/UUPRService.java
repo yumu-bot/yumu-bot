@@ -97,7 +97,7 @@ public class UUPRService implements MessageService<Matcher> {
         OsuUser osuUser;
 
         if (at != null) {
-            binUser = bindDao.getUser(at.getTarget());
+            binUser = bindDao.getUserFromQQ(at.getTarget());
         } else {
             if (name != null && !name.trim().isEmpty()) {
                 binUser = new BinUser();
@@ -110,7 +110,7 @@ public class UUPRService implements MessageService<Matcher> {
                 }
 
             } else {
-                binUser = bindDao.getUser(event.getSender().getId());
+                binUser = bindDao.getUserFromQQ(event.getSender().getId());
             }
         }
 

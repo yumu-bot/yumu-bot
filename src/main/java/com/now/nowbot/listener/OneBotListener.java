@@ -9,7 +9,6 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.*;
 import com.now.nowbot.util.ASyncMessageUtil;
-import net.mamoe.mirai.event.events.EventCancelledException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -86,8 +85,6 @@ public class OneBotListener {
 //                default -> event.getSubject().sendMessage("其他错误 (HTTP " + reser.status.value() + " " + reser.status.getReasonPhrase() + ")\n请及时反馈给维护人员。");
 //            }
 
-        } else if (e instanceof EventCancelledException) {
-            log.info("取消消息发送 {}", e.getMessage());
         } else if (e instanceof LogException) {
             log.info(e.getMessage(), ((LogException) e).getThrowable());
         } else if (e instanceof IllegalArgumentException) {

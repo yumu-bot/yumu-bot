@@ -4,14 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.now.nowbot.listener.MiraiListener;
 import com.now.nowbot.throwable.RequestException;
-import kotlinx.coroutines.CoroutineScope;
-import net.mamoe.mirai.Bot;
-import net.mamoe.mirai.BotFactory;
-import net.mamoe.mirai.auth.BotAuthorization;
-import net.mamoe.mirai.event.ListenerHost;
-import net.mamoe.mirai.utils.BotConfiguration;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -34,7 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -45,38 +37,41 @@ import java.nio.file.Path;
 @Configuration
 public class NowbotConfig {
     private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
+    /**
+     * bot 运行目录
+     */
     public static        String RUN_PATH;
-    public static        String BOT_PATH;
+    /**
+     * 字体资源文件
+     */
     public static        String FONT_PATH;
+    /**
+     * 素材资源文件
+     */
     public static        String BG_PATH;
+    /**
+     * 网络图片 本地缓存
+     */
     public static        String IMGBUFFER_PATH;
-    public static        String OSU_ID;
     public static        int    PORT;
-
-    public static long    QQ;
-    public static String  PASSWORD;
-    public static boolean QQ_LOGIN;
+    @Value("${spring.proxy.port:0}")
+    public               int    proxyPort;
 
 
     @Autowired
-    public NowbotConfig(FileConfig fileConfig, QQConfig qqConfig) {
+    public NowbotConfig(FileConfig fileConfig) {
         RUN_PATH = createDir(fileConfig.root);
-        BOT_PATH = createDir(fileConfig.mirai);
         FONT_PATH = createDir(fileConfig.font);
         BG_PATH = createDir(fileConfig.bgdir);
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
-        OSU_ID = createDir(fileConfig.osuid);
-
-        QQ = qqConfig.qq;
-        PASSWORD = qqConfig.password;
-        QQ_LOGIN = qqConfig.login;
     }
 
     @Bean
     public OkHttpClient httpClient() {
-        var clientBuilder = new OkHttpClient.Builder()
-                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890)));
-        return clientBuilder.build();
+        var builder = new OkHttpClient.Builder();
+        if (proxyPort != 0)
+            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost",proxyPort)));
+        return builder.build();
     }
 
     @Bean
@@ -110,8 +105,8 @@ public class NowbotConfig {
         var client = httpClient();
 
         var tempFactory = new OkHttp3ClientHttpRequestFactory(client);
-        tempFactory.setConnectTimeout( 60 * 1000);
-        tempFactory.setReadTimeout( 60 * 1000);
+        tempFactory.setConnectTimeout(60 * 1000);
+        tempFactory.setReadTimeout(60 * 1000);
         var template = new RestTemplate(tempFactory);
         template.setErrorHandler(new DefaultResponseErrorHandler() {
             public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
@@ -128,36 +123,6 @@ public class NowbotConfig {
         return template;
     }
 
-    @Autowired
-    MiraiListener messageListener;
-
-    @Bean
-    public Bot bot() {
-//        FixProtocolVersion.update();
-//        FixProtocolVersion.sync(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
-//        log.info("update version: {}", FixProtocolVersion.info());
-        //创建bot配置类
-        BotConfiguration botConfiguration = new BotConfiguration();
-        //设置配置
-        botConfiguration.setCacheDir(new File(BOT_PATH));
-        botConfiguration.setHeartbeatStrategy(BotConfiguration.HeartbeatStrategy.STAT_HB);
-        botConfiguration.setProtocol(BotConfiguration.MiraiProtocol.ANDROID_WATCH);
-        botConfiguration.setWorkingDir(new File(BOT_PATH));
-
-        File logdir = new File(BOT_PATH + "log");
-        if (!logdir.isDirectory()) logdir.mkdirs();
-        botConfiguration.redirectBotLogToDirectory(logdir);
-        botConfiguration.redirectNetworkLogToDirectory(logdir);
-        botConfiguration.fileBasedDeviceInfo();
-        botConfiguration.enableContactCache();
-        botConfiguration.getContactListCache().setSaveIntervalMillis(60000 * 30);
-        //配置完成，注册bot                    BotAuthorization.Companion.byPassword()
-        var auth = PASSWORD.equals("") ? BotAuthorization.Companion.byQRCode() : BotAuthorization.byPassword(PASSWORD);
-        Bot bot = BotFactory.INSTANCE.newBot(NowbotConfig.QQ, auth, botConfiguration);
-        //注册监听 messageListener需要继承SimpleListenerHost类
-        bot.getEventChannel().parentScope((CoroutineScope) messageListener).registerListenerHost((ListenerHost) messageListener);
-        return bot;
-    }
 
     public static ApplicationContext applicationContext;
 
@@ -172,7 +137,7 @@ public class NowbotConfig {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
-                log.error(BOT_PATH + "创建失败", e);
+                log.error(path + "创建失败", e);
             }
         }
         return path;
@@ -196,7 +161,7 @@ public class NowbotConfig {
     }
 
     @Bean
-    public WebClient webCilent(WebClient.Builder builder)  {
+    public WebClient webCilent(WebClient.Builder builder) {
         return builder
                 .baseUrl("https://osu.ppy.sh/")
                 .build();

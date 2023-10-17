@@ -4,18 +4,15 @@ server:
 #botfile 程序的运行路径
 botfile:
   root: C:/bot #您想运行的位置
-  bind: ${botfile.root}bind/
-  mirai: ${botfile.root}
   bgdir: ${botfile.root}bg/
   font: ${botfile.root}font/
   imgbuffer: ${botfile.root}imgbuffer/
-  osuid: ${botfile.root}Id/
   osuFilePath: ${botfile.root}osufile/
 #数据源
 spring:
   profiles:
     include:
-      QQ,OSU
+      discord,OSU
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -44,6 +41,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  proxy:
+    port: 0
 shiro:
   ws-config:
     # 反向 Websocket 连接地址，无需该配置字段可删除，将使用默认值 "/ws/shiro"

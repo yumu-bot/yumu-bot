@@ -145,16 +145,10 @@ public class ScoreLegacy {
 
         //  "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode) {
-            default:
-            case "osu": {
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
-            }
-            break;
-            case "taiko": {
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
-            }
-            break;
-            case "mania": {
+            // "osu" 与其他走默认分支
+            default -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
+            case "taiko" -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
+            case "mania" -> {
                 sb.append(n_300).append('+').append(n_geki).append('(');
                 if (n_300 >= n_geki && n_geki != 0) {
                     sb.append(String.format("%.2f", (1F * n_geki / n_300)));
@@ -165,12 +159,8 @@ public class ScoreLegacy {
                 }
                 sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             }
-            break;
-            case "catch":
-            case "fruits": {
-                sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
-            }
-            break;
+            case "catch", "fruits" ->  sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
+
         }
 
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式

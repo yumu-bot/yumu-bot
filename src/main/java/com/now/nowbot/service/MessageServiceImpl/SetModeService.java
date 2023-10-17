@@ -31,7 +31,7 @@ public class SetModeService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var user = bindDao.getUser(event.getSender().getId());
+        var user = bindDao.getUserFromQQ(event.getSender().getId());
         var from = event.getSubject();
 
         var modeStr = matcher.group("mode");
