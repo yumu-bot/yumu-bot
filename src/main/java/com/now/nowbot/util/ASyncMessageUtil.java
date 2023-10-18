@@ -93,6 +93,12 @@ public class ASyncMessageUtil{
         }
         return getSenderLock(event.getSender().getId());
     }
+    public static Lock getLock(MessageEvent event, long offTime){
+        if (event instanceof GroupMessageEvent g){
+            return getLock(g.getGroup().getId(), g.getSender().getId(), offTime);
+        }
+        return getSenderLock(event.getSender().getId(), offTime);
+    }
 
     /**
      * 指定发送人的锁(无论哪个群)

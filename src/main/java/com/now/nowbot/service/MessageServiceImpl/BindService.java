@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class BindService implements MessageService<Matcher> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static      boolean         CLEAR        = false;
+    private static boolean CLEAR = false;
 
     OsuGetService osuGetService;
 
@@ -75,7 +75,7 @@ public class BindService implements MessageService<Matcher> {
 
         var name = matcher.group("name");
         if (name != null) {
-            bindQQName(from, name, event.getSender().getId());
+            bindQQName(event, name, event.getSender().getId());
         }
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
@@ -89,8 +89,8 @@ public class BindService implements MessageService<Matcher> {
 
         var qqBindOpt = bindDao.getQQLiteFromQQ(event.getSender().getId());
         QQBindLite qqBindLite;
-        if (qqBindOpt.isPresent() && (qqBindLite =qqBindOpt.get()).getBinUser().isAuthorized()) {
-            user =  qqBindLite.getBinUser();
+        if (qqBindOpt.isPresent() && (qqBindLite = qqBindOpt.get()).getBinUser().isAuthorized()) {
+            user = qqBindLite.getBinUser();
             try {
                 var getUDate = osuGetService.getPlayerInfo(user, OsuMode.DEFAULT);
                 if (!getUDate.getUID().equals(user.getOsuID())) throw new RuntimeException();
@@ -170,7 +170,8 @@ public class BindService implements MessageService<Matcher> {
         }
     }
 
-    private void bindQQName(Contact from, String name, long qq) {
+    private void bindQQName(MessageEvent event, String name, long qq) {
+        Contact from = event.getSubject();
         var nuserOpt = bindDao.getQQLiteFromQQ(qq);
         if (nuserOpt.isPresent()) throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
 
@@ -184,10 +185,25 @@ public class BindService implements MessageService<Matcher> {
         var buser = bindDao.getQQLiteFromOsuId(osuUserId);
         if (buser.isPresent()) {
             from.sendMessage(name + " 已绑定 (" + buser.get().getQq() + ")，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
-        } else {
-            bindDao.bindQQ(qq, new BinUser(osuUserId, name));
-            from.sendMessage("已将 " + qq + " 绑定到 (" + osuUserId + ") " + name + " 上");
+            return;
         }
+
+        from.sendMessage("""
+                直接绑定osu用户名的方式即将删除, 请使用直接发送 '!ymbind' 不带任何参数的形式绑定
+                如果执意使用绑定用户名的方式, 请回答下面问题:
+                设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
+                """);
+        var lock = ASyncMessageUtil.getLock(event, 30000);
+        event = lock.get();
+        if (event == null) {
+            from.sendMessage("回答超时");
+            return;
+        } if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2")) {
+            from.sendMessage("回答错误");
+            return;
+        }
+        bindDao.bindQQ(qq, new BinUser(osuUserId, name));
+        from.sendMessage("已将 " + qq + " 绑定到 (" + osuUserId + ") " + name + " 上");
     }
 
     public record Bind(Long key, MessageReceipt receipt, Long QQ) {
@@ -226,4 +242,5 @@ public class BindService implements MessageService<Matcher> {
     private static void removeOldBind() {
         BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
     }
+
 }
