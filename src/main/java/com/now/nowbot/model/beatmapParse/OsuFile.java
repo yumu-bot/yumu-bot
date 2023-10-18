@@ -31,7 +31,7 @@ public class OsuFile {
 
     public static BeatMapFileLite parseInfo(BufferedReader read) throws IOException {
         var versionStr = read.readLine();
-        if (versionStr == null || !versionStr.startsWith("osu file format v")) {
+        if (versionStr == null || !versionStr.trim().startsWith("osu file format v")) {
             log.error("解析错误,文件无效 第一行为:[{}]", versionStr);
             throw new RuntimeException("解析错误,文件无效");
         }
