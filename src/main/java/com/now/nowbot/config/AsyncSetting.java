@@ -13,6 +13,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /***
@@ -23,11 +24,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class AsyncSetting implements AsyncConfigurer {
     private static final Logger log = LoggerFactory.getLogger(AsyncSetting.class);
+    public static final ThreadFactory V_THREAD_FACORY = Thread.ofVirtual().name("Bot").factory();
     static private final ThreadPoolTaskExecutor threadPool;
 
     static {
         threadPool = new ThreadPoolTaskExecutor();
-        threadPool.setThreadFactory(Thread.ofVirtual().name("NoBot").factory());
+        threadPool.setThreadFactory(V_THREAD_FACORY);
         threadPool.setCorePoolSize(1000);
         threadPool.setMaxPoolSize(Integer.MAX_VALUE);
         threadPool.setKeepAliveSeconds(5);
