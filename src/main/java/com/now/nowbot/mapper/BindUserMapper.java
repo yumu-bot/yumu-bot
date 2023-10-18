@@ -31,5 +31,20 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Modifying
     @Transactional
     @Query("delete OsuBindUserLite o where o.osuId = :uid ")
-    void deleteAllByOsuId(Long uid);
+    void deleteByOsuId(Long uid);
+    @Modifying
+    @Transactional
+    @Query("delete QQBindLite q where q.osuUser.osuId = :uid ")
+    void deleteQQByOsuId(Long uid);
+    @Modifying
+    @Transactional
+    @Query("delete DiscordBindLite d where d.osuUser.osuId = :uid ")
+    void deleteDCByOsuId(Long uid);
+
+    @Transactional
+    default void deleteAllByOsuId(Long uid){
+        deleteQQByOsuId(uid);
+        deleteDCByOsuId(uid);
+        deleteByOsuId(uid);
+    }
 }
