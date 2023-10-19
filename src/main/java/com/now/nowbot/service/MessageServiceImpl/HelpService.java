@@ -106,7 +106,7 @@ public class HelpService implements MessageService<Matcher> {
             } else if (!link.isEmpty() && link2.isEmpty()) {
                 msg = "请参阅：" + web + link + ".html";
             } else if (link.isEmpty()) {
-                msg = "请参阅功能介绍：" + web + link2 + ".html";
+                msg = "请参阅功能介绍：" + web + link2;
             }
 
             if (!msg.isEmpty()) {
