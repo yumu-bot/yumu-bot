@@ -69,6 +69,28 @@ public class SkiaImageUtil {
         }
     }
 
+    public static String getImageCachePath(String path) throws IOException {
+        if (MD == null) {
+            return null;
+        }
+        MD.update(path.getBytes());
+        java.nio.file.Path pt = java.nio.file.Path.of(NowbotConfig.IMGBUFFER_PATH + new BigInteger(1, MD.digest()).toString(16));
+
+        if (Files.isRegularFile(pt)) {
+            MD.reset();
+        } else {
+            URL url = new URL(path);
+            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+            httpConn.connect();
+            InputStream cin = httpConn.getInputStream();
+            byte[] date = cin.readAllBytes();
+            cin.close();
+            Files.createFile(pt);
+            Files.write(pt, date);
+        }
+        return pt.toAbsolutePath().toString();
+    }
+
     /**
      * 加载网络图片,无缓存
      *
