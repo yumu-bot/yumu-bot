@@ -27,7 +27,7 @@ public class HelpService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         boolean isSendLink = true; //这是防止web不能用，临时关闭的布尔值
         var from = event.getSubject();
-        String module = matcher.group("module").trim(); //传东西进来
+        String module = matcher.group("module").trim().toLowerCase(); //传东西进来
         String path = switch (module) {
             case "bot", "b" -> "help-bot.png";
             case "score", "s" -> "help-score.png";
@@ -37,29 +37,83 @@ public class HelpService implements MessageService<Matcher> {
             case "fun", "f" -> "help-fun.png";
             case "aid", "a" -> "help-aid.png";
             case "tournament", "t" -> "help-tournament.png";
-            default -> "help-default.png";
-        };
-
-        String web = "https://docs.365246692.xyz/help/";
-        String html = ".html";
-        String link = switch (module) {
-            case "bot", "b" -> "bot" + html;
-            case "score", "s" -> "score" + html;
-            case "player", "p" -> "player" + html;
-            case "map", "m" -> "map" + html;
-            case "chat", "c" -> "chat" + html;
-            case "fun", "f" -> "fun" + html;
-            case "aid", "a" -> "aid" + html;
-            case "tournament", "t" -> "tournament" + html;
+            case "" -> "help-default.png";
             default -> "";
         };
 
-        QQMsgUtil.sendImage(from, Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/" + path)));
+        boolean isSendPic = !path.isEmpty();
+
+        String web = "https://docs.365246692.xyz/help/";
+        String link = switch (module) {
+            case "bot", "b" -> "bot";
+            case "score", "s" -> "score";
+            case "player", "p" -> "player";
+            case "map", "m" -> "map";
+            case "chat", "c" -> "chat";
+            case "fun", "f" -> "fun";
+            case "aid", "a" -> "aid";
+            case "tournament", "t" -> "tournament";
+            default -> "";
+        };
+
+        //这个是细化的功能
+        String link2 = switch (module) {
+            case "help", "h" -> "bot.html#help";
+            case "ping", "pi" -> "bot.html#ping";
+            case "bind", "bi" -> "bot.html#bind";
+            case "ban", "bq", "bu", "bg" -> "bot.html#ban";
+            case "switch", "sw" -> "bot.html#switch";
+            case "antispam", "as" -> "bot.html#antispam";
+
+            case "mode", "setmode", "sm", "mo" -> "score.html#mode";
+            case "pass", "pr" -> "score.html#pass";
+            case "recent", "re" -> "score.html#recent";
+            case "score", "s" -> ""; //这个会和上面重复
+            case "bestperformance", "bp" -> "score.html#bestperformance";
+            case "todaybp", "tbp" -> "score.html#todaybp";
+            case "bpanalysis", "bpa", "ba" -> "score.html#bpanalysis";
+
+            case "information", "info", "i" -> "player.html#info";
+            case "immapper", "imapper", "im" -> "player.html#immapper";
+            case "friend", "friends", "fr" -> "player.html#friend";
+            case "mutual", "mu" -> "player.html#mutual";
+            case "ppminus", "ppm", "pm" -> "player.html#ppminus";
+            case "ppplus", "ppp" -> "player.html#ppplus";
+
+            case "map", "m" -> ""; //这个会和上面重复
+            case "audio", "song", "au" -> "map.html#audio";
+            case "search", "sh" -> "map.html#search";
+            case "course", "c" -> "map.html#course";
+            case "danacc", "da" -> "map.html#danacc";
+            case "qualified", "q" -> "map.html#qualified";
+            case "leader", "l" -> "map.html#leader";
+
+            case "match", "ma" -> "tournament.html#match";
+            case "rating", "mra", "ra" -> "tournament.html#rating";
+            case "monitornow", "mn" -> "tournament.html#monitornow";
+            default -> "";
+        };
+        
+        if (isSendPic) {
+            QQMsgUtil.sendImage(from, Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/" + path)));
+        }
 
         if (isSendLink) {
-            var receipt = from.sendMessage("请参阅：" + web + link);
-            //默认110秒后撤回
-            from.recallIn(receipt, 110 * 1000);
+            String msg = "";
+
+            if (link.isEmpty() && link2.isEmpty()) {
+                msg =  "请参阅：" + web;
+            } else if (!link.isEmpty() && link2.isEmpty()) {
+                msg = "请参阅：" + web + link + ".html";
+            } else if (link.isEmpty()) {
+                msg = "请参阅功能介绍：" + web + link2 + ".html";
+            }
+
+            if (!msg.isEmpty()) {
+                var receipt = from.sendMessage(msg);
+                //默认110秒后撤回
+                from.recallIn(receipt, 110 * 1000);
+            }
         }
     }
 }
