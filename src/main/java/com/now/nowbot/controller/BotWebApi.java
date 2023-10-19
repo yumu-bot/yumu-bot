@@ -21,6 +21,7 @@ import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.SkiaImageUtil;
 import io.github.humbleui.skija.EncodeJPEGOptions;
 import io.github.humbleui.skija.EncoderJPEG;
 import io.github.humbleui.skija.Image;
@@ -513,9 +514,11 @@ public class BotWebApi {
 
         var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         if (fopt.isEmpty()) {
-            var finfo = osuGetService.getMapInfoFromDB(bid);
-            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
-            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+            var fInfo = osuGetService.getMapInfoFromDB(bid);
+            SkiaImageUtil.getImageCachePath(fInfo.getBeatMapSet().getCovers().getCover2x());
+//            var finfo = osuGetService.getMapInfoFromDB(bid);
+//            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
+//            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         }
         if (fopt.isEmpty()) throw new IOException("download error");
         var fileInfo = fopt.get();
