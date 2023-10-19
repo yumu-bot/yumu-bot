@@ -6,7 +6,6 @@ import com.now.nowbot.entity.bind.QQBindLite;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
@@ -19,6 +18,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,9 +62,11 @@ public class BindService implements MessageService<Matcher> {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
             if (matcher.group("un") != null && at != null) {
                 unbindQQ(at.getTarget());
+                return;
             }
             if (at != null) {
                 bindQQAt(event, at.getTarget());
+                return;
             }
         }
 
@@ -76,6 +78,7 @@ public class BindService implements MessageService<Matcher> {
         var name = matcher.group("name");
         if (name != null) {
             bindQQName(event, name, event.getSender().getId());
+            return;
         }
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
@@ -103,9 +106,14 @@ public class BindService implements MessageService<Matcher> {
                     return;
                 }
             } catch (Exception e) {
-                // 已失效, 直接允许绑定
+                if (e instanceof HttpClientErrorException.Unauthorized unauthorized) {
+                    // 已失效, 直接允许绑定
+                } else {
+                    throw e;
+                }
             }
         }
+
         // 需要绑定
         String state = event.getSender().getId() + "+" + timeMillis;
         //将消息回执作为 value
@@ -198,7 +206,8 @@ public class BindService implements MessageService<Matcher> {
         if (event == null) {
             from.sendMessage("回答超时");
             return;
-        } if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2")) {
+        }
+        if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2")) {
             from.sendMessage("回答错误");
             return;
         }
