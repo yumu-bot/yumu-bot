@@ -58,18 +58,21 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa)(?![a-hj-zA-HJ-Z_]))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-    Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
+    //Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
 
         //旧功能指引
+        /*
         var matcher2 = pattern2.matcher(event.getRawMessage().trim());
         if (Strings.isNotBlank(matcher2.group("bpht"))) {
             data.setValue(new BPHeadTailParam(
                     null, false));
             return true;
         }
+
+         */
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
