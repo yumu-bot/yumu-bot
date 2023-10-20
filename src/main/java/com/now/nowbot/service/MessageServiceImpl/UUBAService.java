@@ -19,6 +19,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -61,14 +62,14 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
+    public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) throws BPAnalysisException {
+
 
         //旧功能指引
         var matcher2 = pattern2.matcher(event.getRawMessage().trim());
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
-            data.setValue(new BPHeadTailParam(
-                    null, false));
-            return true;
+            // 直接在这里抛, 效果一样
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
         }
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
@@ -94,14 +95,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     @Override
-    //@CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws BPAnalysisException {
         var from = event.getSubject();
         BinUser binUser = null;
-
-        if (param.user() == null) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
-        }
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 是否为绑定用户
@@ -136,8 +132,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         try {
             bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
-        } catch (Exception e) {
+        } catch (HttpClientErrorException.BadRequest e) {
+            // 请求失败 超时/断网
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            // 未绑定
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
         }
 
         if (bps == null || bps.size() <= 5) {
