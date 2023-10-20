@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -7,8 +8,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
 import com.now.nowbot.util.Instructions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,6 @@ import java.util.regex.Pattern;
 
 @Service("AUDIO")
 public class AudioService implements MessageService<AudioService.AudioParam> {
-    private static final Logger log = LoggerFactory.getLogger(AudioService.class);
 
     @Autowired
     OsuGetService osuGetService;
@@ -137,7 +135,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         try {
             from.sendVoice(voiceData);
         } catch (Exception e) {
-            log.error("Audio:", e);
+            NowbotApplication.log.error("Audio:", e);
             throw new AudioException(AudioException.Type.SONG_Send_Error);
         }
     }

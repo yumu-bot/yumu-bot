@@ -7,14 +7,13 @@ public class BindException extends TipsRuntimeException{
         BIND_Client_RelieveBindSuccess("您已成功解绑。TuT"),//解绑_成功
         BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
         BIND_Client_BindingNoName("你叫啥名呀？告诉我吧。"),//绑定_玩家未输入用户名
-        BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑，请输入 !ymbind 重新绑定哦。"),//绑定_玩家早已绑定
-        BIND_Client_AlreadyBoundByName("禁止在使用name绑定的情况下再次绑定, 若要修改绑定请直接使用 !ymbind 不要带其它参数"),
+        BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑，请输入 !ymbind。"),//绑定_玩家早已绑定
+        BIND_Client_AlreadyBoundByName("禁止在仅绑定玩家名时，再次使用玩家名绑定。\n若要改绑请输入 !ymbind。"),
         BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
         BIND_Client_BindingRefused("已取消绑定。OwOb"),//绑定_取消绑定
 
-        BIND_Me_NoBind("您还没有绑定呢，请输入 !ymbind 点击链接登录，完成绑定吧。"),//查询自己_玩家未绑定
-        BIND_Me_NoAuthorization("您撤销了授权呢，请输入 !ymbind 点击链接登录，重新授权吧。"),//查询自己_玩家撤销授权
-        BIND_Me_Banned("哼哼，你号没了。"),//查询自己_玩家被封禁
+        BIND_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家未绑定
+        BIND_Me_Banned("你号没了。"),//查询自己_玩家被封禁
         BIND_Me_Blacklisted("本 Bot 根本不想理你。"),//查询自己_玩家黑名单
 
         BIND_Player_NoBind("对方还没有绑定呢，请提醒他输入 !ymbind 点击链接登录，完成绑定吧。"),//查询他人_玩家未绑定

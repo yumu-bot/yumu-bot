@@ -58,23 +58,18 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa)(?![a-hj-zA-HJ-Z_]))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-    //Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht|bpht-i))(\\w\\d)*");
-
+    Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
 
         //旧功能指引
-        /*
         var matcher2 = pattern2.matcher(event.getRawMessage().trim());
         if (Strings.isNotBlank(matcher2.group("bpht"))) {
-            String TIPS = "bpht 已移至 uuba。您也可以使用 !ba 来体验丰富版本。";
-            event.getSubject().sendMessage(TIPS);
-            return false;
-            //throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
+            data.setValue(new BPHeadTailParam(
+                    null, false));
+            return true;
         }
-
-         */
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
@@ -100,17 +95,22 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
     @Override
     //@CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, BPHeadTailParam parm) throws BPAnalysisException {
+    public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws BPAnalysisException {
         var from = event.getSubject();
         BinUser binUser = null;
+
+        if (param.user() == null) {
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
+        }
+
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 是否为绑定用户
 
-        if (Objects.nonNull(parm.user().qq())) {
-            binUser = bindDao.getUserFromQQ(parm.user().qq());
+        if (Objects.nonNull(param.user().qq())) {
+            binUser = bindDao.getUserFromQQ(param.user().qq());
         } else {
             //查询其他人 [name]
-            String name = parm.user().name();
+            String name = param.user().name();
             long id = 0;
             try {
                 id = osuGetService.getOsuId(name);
@@ -131,7 +131,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         //bp列表
         List<Score> bps;
         //分别处理mode
-        var mode = parm.user().mode();
+        var mode = param.user().mode();
         //处理默认mode
         if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         try {
@@ -141,11 +141,15 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         }
 
         if (bps == null || bps.size() <= 5) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+            if (!param.user().at() && Objects.isNull(param.user().name())) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
+            } else {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+            }
         }
 
         String[] Lines;
-        if (parm.info()) {
+        if (param.info()) {
             if (mode == null || mode == OsuMode.DEFAULT) {
                 Lines = getAllMsgI(bps, binUser.getOsuName(), OsuMode.DEFAULT);
             } else {
@@ -159,7 +163,6 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         }
         QQMsgUtil.sendImage(from, imageService.drawLine(Lines));
-//        from.sendMessage(dtbf.toString());
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {

@@ -127,7 +127,7 @@ public class UUPRService implements MessageService<Matcher> {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             }
         } catch (HttpClientErrorException e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+            throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
         if (scoreList == null || scoreList.isEmpty()) {

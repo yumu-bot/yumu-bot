@@ -62,7 +62,7 @@ public class ScoreService implements MessageService<Matcher> {
             try {
                 binUser = bindDao.getUserFromQQ(at.getTarget());
             } catch (Exception e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NoBind);
+                throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
             }
         } else if (name != null && !name.trim().isEmpty()) {
             binUser = new BinUser();
@@ -128,10 +128,10 @@ public class ScoreService implements MessageService<Matcher> {
                     try {
                         score = osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
                     } catch (Exception e2) {
-                        err = ScoreException.Type.SCORE_Mode_MainNotFound;
+                        err = ScoreException.Type.SCORE_Mode_NotFound;
                     }
                 } else {
-                    err = ScoreException.Type.SCORE_Mode_NotFound;
+                    err = ScoreException.Type.SCORE_Mode_SpecifiedNotFound;
                 }
             }
             if (err != null) throw new ScoreException(err);

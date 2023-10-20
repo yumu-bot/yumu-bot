@@ -94,7 +94,7 @@ public class BinUser {
                         .findValue("access_token")
                         .asText();
             } catch (Exception e) {
-                throw new BindException(BindException.Type.BIND_Me_NoAuthorization);
+                throw new BindException(BindException.Type.BIND_Me_TokenExpired);
             }
         }
 

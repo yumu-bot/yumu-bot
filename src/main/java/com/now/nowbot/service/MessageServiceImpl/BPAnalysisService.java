@@ -28,8 +28,6 @@ public class BPAnalysisService implements MessageService<UserParam> {
     BindDao bindDao;
     ImageService imageService;
 
-
-
     @Autowired
     public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
         this.osuGetService = osuGetService;
@@ -59,15 +57,15 @@ public class BPAnalysisService implements MessageService<UserParam> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, UserParam parm) throws Throwable {
+    public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
         var from = event.getSubject();
-        var mode = parm.mode();
+        var mode = param.mode();
 
         //bp列表
         List<Score> bps;
         OsuUser osuUser;
-        if (Objects.nonNull(parm.qq())) {
-            BinUser binUser = bindDao.getUserFromQQ(parm.qq());
+        if (Objects.nonNull(param.qq())) {
+            BinUser binUser = bindDao.getUserFromQQ(param.qq());
             try {
                 if (mode != OsuMode.DEFAULT) {
                     osuUser = osuGetService.getPlayerInfo(binUser, mode);
@@ -79,7 +77,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 }
             } catch (Exception e) {
                 BPAnalysisException.Type etype;
-                if (parm.at()) {
+                if (param.at()) {
                     etype = BPAnalysisException.Type.BPA_Player_FetchFailed;
                 } else {
                     etype = BPAnalysisException.Type.BPA_Me_FetchFailed;
@@ -87,7 +85,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 throw new BPAnalysisException(etype);
             }
         } else {
-            String name = parm.name().trim();
+            String name = param.name().trim();
             long id;
             try {
                 id = osuGetService.getOsuId(name);
@@ -109,7 +107,11 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
 
         if (bps == null || bps.size() <= 5) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+            if (!param.at() && Objects.isNull(param.name())) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
+            } else {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+            }
         }
 
         try {

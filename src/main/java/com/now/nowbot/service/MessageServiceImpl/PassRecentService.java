@@ -162,7 +162,7 @@ public class PassRecentService implements MessageService<Matcher> {
                     NowbotApplication.log.info("recent 退避成功");
                     return;
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 }
             }
         } catch (HttpClientErrorException e) {
@@ -171,7 +171,7 @@ public class PassRecentService implements MessageService<Matcher> {
                 NowbotApplication.log.info("recent 退避成功");
                 return;
             } else {
-                throw new ScoreException(ScoreException.Type.SCORE_Me_NoAuthorization);
+                throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
             }
         }
 
