@@ -47,14 +47,12 @@ public class MonitorNowService implements MessageService<Matcher> {
         }
 
         var from = event.getSubject();
+        var f = getImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
+
         try {
-            var f = getImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
             QQMsgUtil.sendImage(from, f);
         } catch (Exception e) {
             NowbotApplication.log.error("MonitorNow:", e);
-            throw new MonitorNowException(MonitorNowException.Type.MN_Send_Error);
-            //log.error("MonitorNow 数据请求失败。", e);
-            //from.sendMessage("MonitorNow 渲染图片超时，请重试，或者将问题反馈给开发者。");
         }
     }
 
@@ -63,7 +61,6 @@ public class MonitorNowService implements MessageService<Matcher> {
         try {
             match = osuGetService.getMatchInfo(matchID);
         } catch (Exception e) {
-            NowbotApplication.log.error("mn 请求异常", e);
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_NotFound);
         }
         int gameTime = 0;
@@ -92,6 +89,13 @@ public class MonitorNowService implements MessageService<Matcher> {
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_OutOfBoundsError);
         }
 
-        return imageService.getPanelF(match, osuGetService, skipRounds, deleteEnd, includingFail, includingRematch);
+        byte[] img;
+        try {
+            img = imageService.getPanelF(match, osuGetService, skipRounds, deleteEnd, includingFail, includingRematch);
+        } catch (Exception e) {
+            throw new MonitorNowException(MonitorNowException.Type.MN_Send_Error);
+        }
+
+        return img;
     }
 }

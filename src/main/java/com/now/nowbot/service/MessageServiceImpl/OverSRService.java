@@ -28,18 +28,14 @@ public class OverSRService implements MessageService<Matcher> {
         double SR;
         String message;
 
-        if (SRStr != null){
-            try {
-                SR = Double.parseDouble(SRStr);
-                message = OverSR(SR);
-            } catch (Exception e) {
-                throw new OverSRException(OverSRException.Type.OV_Parameter_Error);
-            }
-
-        } else {
-            throw new OverSRException(OverSRException.Type.OV_Parameter_Null);
+        try {
+            SR = Double.parseDouble(SRStr);
+        } catch (Exception e) {
+            if (e instanceof NullPointerException) throw new OverSRException(OverSRException.Type.OV_Parameter_Null);
+            else throw new OverSRException(OverSRException.Type.OV_Parameter_Error);
         }
 
+        message = OverSR(SR);
         event.getSubject().sendMessage(message);
     }
 

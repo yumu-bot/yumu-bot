@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -13,8 +14,6 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -24,7 +23,6 @@ import java.util.regex.Pattern;
 
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParm> {
-    private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Autowired
     RestTemplate template;
 
@@ -69,14 +67,13 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
     @Override
     public void HandleMessage(MessageEvent event, InfoParm parm) throws Throwable {
         var from = event.getSubject();
-        //from.sendMessage("正在查询您的信息");
         BinUser user;
         if (parm.name() != null) {
             long id;
             try {
                 id = osuGetService.getOsuId(parm.name().trim());
             } catch (Exception e) {
-                log.error("info: ", e);
+                //NowbotApplication.log.error("info: ", e);
                 throw new InfoException(InfoException.Type.INFO_Player_NotFound);
             }
             user = new BinUser();
@@ -98,7 +95,7 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
             osuUser = osuGetService.getPlayerInfo(user, mode);
             BPs = osuGetService.getBestPerformance(user, mode, 0, 100);
         } catch (Exception e) {
-            log.error("get info error:", e);
+            //NowbotApplication.log.error("get info error:", e);
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         }
 
@@ -108,8 +105,8 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
             var img = imageService.getPanelD(osuUser, BPs, Recents, mode, osuGetService);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            log.error("INFO 数据请求失败", e);
-            from.sendMessage("Info 渲染图片超时，请重试。");
+            NowbotApplication.log.error("INFO: ", e);
+            throw new InfoException(InfoException.Type.INFO_Send_Error);
         }
     }
 }

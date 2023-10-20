@@ -56,7 +56,7 @@ public class MiniPanelService implements MessageService<Matcher> {
             qqId = event.getSender().getId();
             user = bindDao.getUserFromQQ(qqId);
         } catch (BindException e) {
-            throw new MiniPanelException(MiniPanelException.Type.MINI_Me_LoseBind);
+            throw new MiniPanelException(MiniPanelException.Type.MINI_Me_TokenExpired);
         }
 
         var mode = user.getMode();

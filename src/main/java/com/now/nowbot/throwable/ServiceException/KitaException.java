@@ -4,7 +4,6 @@ import com.now.nowbot.throwable.TipsException;
 
 public class KitaException extends TipsException {
     public enum Type {
-        KITA_Player_NoBind ("对方还没有绑定呢，请提醒他输入 !bind 点击链接登录，完成绑定吧"),
         KITA_Parameter_NoBid("请输入 bid！"),
         KITA_Parameter_BidError("请输入正确的 bid！"),
         KITA_Parameter_ModError("请输入正确的模组及位置！(NM1)"),

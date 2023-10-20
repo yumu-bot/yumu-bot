@@ -85,7 +85,7 @@ public class TodayBPService implements MessageService<Matcher> {
                 ouMe = osuGetService.getPlayerInfo(buMe, mode);
                 bpAllList = osuGetService.getBestPerformance(buMe, mode, 0, 100);
             } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_Me_LoseBind);
+                throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
             }
         }
 

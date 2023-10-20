@@ -14,6 +14,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Panel.CardBuilder;
@@ -138,11 +139,13 @@ public class BotWebApi {
      */
     @GetMapping(value = "rating")
     @OpenResource(name = "ra", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
-    public ResponseEntity<byte[]> getRa(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
-                                        @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
-                                        @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
-                                        @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
-                                        @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) {
+    public ResponseEntity<byte[]> getRa(
+            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
+            @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
+            @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
+            @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+            @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r
+    ) throws MRAException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;

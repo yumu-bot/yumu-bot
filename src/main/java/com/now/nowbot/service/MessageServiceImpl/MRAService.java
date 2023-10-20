@@ -10,7 +10,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class MRAService implements MessageService<Matcher> {
 
     public record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -57,14 +56,14 @@ public class MRAService implements MessageService<Matcher> {
             throw new MRAException(MRAException.Type.RATING_Parameter_Error);
         }
 
-        int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
-        int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
+        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
+        int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("deletedendrounds"));
         boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
         boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
 
         var from = event.getSubject();
+        var img = getDataImage(matchID, skip, skipEnd, includingFail, includingRematch);
         try {
-            var img = getDataImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             NowbotApplication.log.error("MRA 数据请求失败", e);
@@ -72,14 +71,21 @@ public class MRAService implements MessageService<Matcher> {
         }
     }
 
-    public byte[] getDataImage (int matchID, int skipRounds, int deleteEnd, boolean includeFailed, boolean includingRepeat) {
+    public byte[] getDataImage (int matchID, int skip, int skipEnd, boolean includeFailed, boolean includingRepeat) throws MRAException {
 
-        //throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDNotFound);
-        Match match = osuGetService.getMatchInfo(matchID);
+        if (skip < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
+        if (skipEnd < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
+
+        Match match;
+        try {
+            match = osuGetService.getMatchInfo(matchID);
+        } catch (Exception e) {
+            throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDNotFound);
+        }
 
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
             var events = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID()).getEvents();
-            //if events.size == 0 throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDNotFound);
+            if (events.isEmpty()) throw new MRAException(MRAException.Type.RATING_Parameter_RoundNotFound);
             match.getEvents().addAll(0, events);
         }
 
@@ -91,8 +97,8 @@ public class MRAService implements MessageService<Matcher> {
 
         {
             games = games.stream()
-                    .limit(s - deleteEnd)
-                    .skip(skipRounds)
+                    .limit(s - skipEnd)
+                    .skip(skip)
                     .filter(gameInfo -> gameInfo.getEndTime() != null).collect(Collectors.toList());
             if (!includingRepeat) {
                 Collections.reverse(games);
@@ -127,7 +133,14 @@ public class MRAService implements MessageService<Matcher> {
 
         averageStar /= (rounds - noMapRounds);
 
-        return imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
+        byte[] img;
+        try {
+            img = imageService.getPanelC(redList, blueList, noneList, match.getMatchInfo(), sid, averageStar, rounds, data.red, data.blue, data.isTeamVs);
+        } catch (Exception e) {
+            throw new MRAException(MRAException.Type.RATING_MRA_Error);
+        }
+
+        return img;
     }
 
     //主计算方法

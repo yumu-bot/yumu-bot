@@ -57,7 +57,7 @@ public class IMapperService implements MessageService<Matcher> {
             try {
                 binUser = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (Exception e) {
-                throw new IMapperException(IMapperException.Type.IM_Me_LoseBind);
+                throw new IMapperException(IMapperException.Type.IM_Me_TokenExpired);
             }
 
             try {

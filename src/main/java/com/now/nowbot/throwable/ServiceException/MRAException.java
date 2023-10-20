@@ -4,13 +4,14 @@ import com.now.nowbot.throwable.TipsException;
 
 public class MRAException extends TipsException {
     public enum Type {
-        RATING_Parameter_None("欢迎使用Yumu Rating系统！\n指令食用方法：!ymrating / !ymra [matchid] (warmup) (delete) (r?) (f?)\nmatchid：这场比赛的房间号。\nwarmup：需要抛弃的前面场次（热手）数量，默认为0。\ndelete：需要抛弃的后面场次（表演赛）数量，默认为0。\nr?：是否清除重赛场次？\nf?：是否计算失败场次？"),//参数_无参数
+        RATING_Parameter_None("欢迎使用 Yumu Rating 系统！指令食用方法：\n!ymrating / !ymra [matchid] (warmup) (delete) (r?) (f?)\nmatchid：这场比赛的房间号。\nwarmup：需要抛弃的前面场次（热手）数量，默认为0。\ndelete：需要抛弃的后面场次（表演赛）数量，默认为0。\nr?：是否清除重赛场次？\nf?：是否计算失败场次？"),//参数_无参数
         RATING_Parameter_Error("输入的参数范围错误！"),//参数_参数错误
 
         RATING_Parameter_MatchIDNotFound("小沐找不到这场比赛哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_MRA模式_比赛未找到
+        RATING_Parameter_RoundNotFound("房间内没有对局呢..."),//参数_MRA模式_比赛未找到
         RATING_Parameter_SeriesIDNotFound("小沐找不到这一系列比赛中的“{}”比赛哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_SRA模式_比赛未找到
-        RATING_Parameter_WarmupError("你要在未来热手吗？"),//参数_热手数量负数或者小数
-        RATING_Parameter_TieBreakerError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数
+        RATING_Parameter_SkipError("你要在虚空中热手吗？"),//参数_热手数量负数或者小数
+        RATING_Parameter_SkipEndError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数
 
         RATING_Client_Calculating("正在全力计算中..."),//斗力_计算
         RATING_Client_CalculatingFailed("算不出来了，请重试..."),//斗力_计算失败
@@ -24,9 +25,9 @@ public class MRAException extends TipsException {
         RATING_Warning_InconsistentWinCondition("探测到计分条件冲突！\n"),//警告_计分冲突
         RATING_Warning_InconsistentWinConditionGuide("\n输入 !sudo ymra 强制忽略冲突并计算斗力！\n十分钟内有效"),//警告_计分冲突指引
 
-        RATING_Me_NoAuthorization("您撤销了授权呢，请输入 !bind 点击链接登录，重新授权吧"),//查询自己_玩家撤销授权
-        RATING_Me_Banned("哼哼，你号没了"),//查询自己_玩家被封禁
-        RATING_Me_Blacklisted("本 Bot 根本不想理你"),//查询自己_玩家黑名单
+        RATING_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家撤销授权
+        RATING_Me_Banned("你号没了。"),//查询自己_玩家被封禁
+        RATING_Me_Blacklisted("本 Bot 根本不想理你。"),//查询自己_玩家黑名单
 
         RATING_Default_NoToken("哼，你 Token 失效啦！看在我们关系的份上，就帮你这一次吧！"),//token不存在，使用本机AccessToken
 
@@ -34,8 +35,8 @@ public class MRAException extends TipsException {
         RATING_URA_Error("URA 输出失败，请重试。\n或尝试最新版渲染 !ra <mpid>。"),
         RATING_CRA_Error("CRA 输出失败，请重试。\n或尝试文字版渲染 !ura <mpid>。"),
 
-        RATING_CRA_MatchIDNotFound("CRA 请输入正确的房间号！"),
-        RATING_CRA_NotGroup("CRA 请在群聊中使用！"),
+        RATING_CRA_MatchIDNotFound("CRA：未找到此房间，请输入正确的房间号！"),
+        RATING_CRA_NotGroup("CRA：请在群聊中使用！"),
         ;//逗号分隔
         final String message;
         Type (String message) {
