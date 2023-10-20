@@ -94,7 +94,11 @@ public class ScoreService implements MessageService<Matcher> {
             List<Score> scoreall;
             try {
                 scoreall = osuGetService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
-            } catch (Exception e) {
+            } catch (HttpClientErrorException.NotFound e) {
+                // 未找到玩家
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
+            } catch (HttpClientErrorException.Unauthorized e) {
+                // 解绑了
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
             }
 
@@ -119,22 +123,18 @@ public class ScoreService implements MessageService<Matcher> {
                 score.setBeatMap(bm);
             }
         } else {
-            ScoreException.Type err = null;
             try {
                 score = osuGetService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
-            } catch (Exception e) {
+            } catch (HttpClientErrorException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
-                    try {
-                        score = osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
-                    } catch (Exception e2) {
-                        err = ScoreException.Type.SCORE_Mode_NotFound;
-                    }
+                    score = getStdScore(bid, binUser);
                 } else {
-                    err = ScoreException.Type.SCORE_Mode_SpecifiedNotFound;
+                    throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound);
                 }
+            } catch (HttpClientErrorException.Unauthorized e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
             }
-            if (err != null) throw new ScoreException(err);
         }
 
         //这里的mode必须用谱面传过来的
@@ -147,6 +147,14 @@ public class ScoreService implements MessageService<Matcher> {
             NowbotApplication.log.error("err", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
+        }
+    }
+
+    private Score getStdScore(long bid, BinUser binUser) throws ScoreException {
+        try {
+            return osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
         }
     }
 }
