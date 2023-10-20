@@ -58,21 +58,18 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa)(?![a-hj-zA-HJ-Z_]))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-    //Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
+    Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) {
 
         //旧功能指引
-        /*
         var matcher2 = pattern2.matcher(event.getRawMessage().trim());
-        if (Strings.isNotBlank(matcher2.group("bpht"))) {
+        if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
             data.setValue(new BPHeadTailParam(
                     null, false));
             return true;
         }
-
-         */
 
         var matcher = pattern.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
@@ -241,7 +238,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             BP1Length /= 0.75f;
             BP1BPM *= 0.75f;
         }
-        float star = 0;
+        float star = 0f;
         float maxBPM = BP1BPM;
         int maxCombo = 0;
         int maxComboValue = BP1.getMaxCombo();
@@ -254,12 +251,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         int minLength = 0;
         float minLengthValue = maxLengthValue;
 
-        int avgLength = 0;
+        float avgLength = 0f;
         int avgCombo = 0;
         int maxTimeToPp = 0;
-        float maxTimeToPpValue = 0;
-        float allPP = 0;
-        float nowPP = 0;
+        float maxTimeToPpValue = 0f;
+        float allPP = 0f;
+        float nowPP = 0f;
 
         TreeMap<String, modData> modSum = new TreeMap<>(); //各个mod的数量
 
@@ -280,7 +277,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var map = bp.getBeatMap();
-            int length = map.getTotalLength();
+            float length = map.getTotalLength();
             float bpm = map.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
@@ -291,7 +288,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             });
             if (bp.getMods().contains("DT") || bp.getMods().contains("NC")) {
                 length /= 1.5f;
-                bpm *= 1.5;
+                bpm *= 1.5f;
             } else if (bp.getMods().stream().anyMatch(r -> r.equals("HT"))) {
                 length /= 0.75f;
                 bpm *= 0.75f;
@@ -346,7 +343,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         avgLength /= bps.size();
         star /= bps.size();
 
-        sb.append("BP 平均长度: ").append(getTimeStr(avgLength)).append('\n');
+        sb.append("BP 平均长度: ").append(getTimeStr((int) avgLength)).append('\n');
         sb.append("最长是 BP").append(maxLength + 1).append(' ').append(getTimeStr((int) maxLengthValue)).append('\n');
         sb.append("最短是 BP").append(minLength + 1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
 
