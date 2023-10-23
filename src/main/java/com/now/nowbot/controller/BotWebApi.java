@@ -91,8 +91,8 @@ public class BotWebApi {
     @GetMapping(value = "ppmvs")
     public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
-        var info1 = osuGetService.getPlayerInfo(user1.trim());
-        var info2 = osuGetService.getPlayerInfo(user2.trim());
+        var info1 = osuGetService.getPlayerInfo(user1.trim(), mode);
+        var info2 = osuGetService.getPlayerInfo(user2.trim(), mode);
         if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
         var bplist1 = osuGetService.getBestPerformance(info1.getUID(), mode, 0, 100);
         var bplist2 = osuGetService.getBestPerformance(info2.getUID(), mode, 0, 100);
