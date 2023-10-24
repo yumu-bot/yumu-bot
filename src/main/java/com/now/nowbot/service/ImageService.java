@@ -618,7 +618,7 @@ public class ImageService {
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> o, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, _) -> o, LinkedHashMap::new));
         var mapperInfo = osuGetService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
@@ -642,9 +642,13 @@ public class ImageService {
                 .toList();
 
         var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
+
         var userPP = user.getPP();
         var bonusPP = SkiaUtil.getBonusPP(userPP, bpPPs);
-        Float rawPP = (float) (userPP - bonusPP);
+
+        //bpPP + remainPP (bp100之后的) = rawPP
+        var bpPP = (float) Arrays.stream(bpPPs).sum();
+        var rawPP = (float) (userPP - bonusPP);
 
         List<attr> modsAttr;
         {
@@ -659,21 +663,26 @@ public class ImageService {
 
         List<attr> rankAttr = new ArrayList<>(rankSum.size());
         {
-            final float rpp = rawPP;
             var fcList = rankSum.remove("FC");
             attr fc;
             if (CollectionUtils.isEmpty(fcList)) {
                 fc = new attr("FC", 0, 0, 0);
             } else {
                 float ppSum = fcList.stream().reduce(Float::sum).orElse(0F);
-                fc = new attr("FC", fcList.size(), ppSum, (ppSum / rpp));
+                fc = new attr("FC", fcList.size(), ppSum, (ppSum / bpPP));
             }
             rankAttr.add(fc);
             for (var rank : RANK_ARRAY) {
                 if (rankSum.containsKey(rank)) {
                     var value = rankSum.get(rank);
-                    float ppSum = value.stream().reduce(Float::sum).orElse(0F);
-                    attr attr = new attr(rank, value.size(), ppSum, (ppSum / rpp));
+                    float ppSum = 0f;
+                    if (value != null) {
+                        ppSum = value.stream().reduce(Float::sum).orElse(0F);
+                    }
+                    attr attr = null;
+                    if (value != null) {
+                        attr = new attr(rank, value.size(), ppSum, (ppSum / bpPP));
+                    }
                     rankAttr.add(attr);
                 }
             }
