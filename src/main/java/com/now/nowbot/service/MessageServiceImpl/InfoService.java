@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -14,8 +13,11 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.regex.Pattern;
 
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParm> {
+    Logger log = LoggerFactory.getLogger(InfoService.class);
     @Autowired
     RestTemplate template;
 
@@ -94,8 +97,11 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
         try {
             osuUser = osuGetService.getPlayerInfo(user, mode);
             BPs = osuGetService.getBestPerformance(user, mode, 0, 100);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("出现异常", e);
+            throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
         } catch (Exception e) {
-            //NowbotApplication.log.error("get info error:", e);
+            log.error("出现异常", e);
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         }
 
@@ -105,7 +111,7 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
             var img = imageService.getPanelD(osuUser, BPs, Recents, mode, osuGetService);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            NowbotApplication.log.error("INFO: ", e);
+            log.error("INFO: ", e);
             throw new InfoException(InfoException.Type.INFO_Send_Error);
         }
     }

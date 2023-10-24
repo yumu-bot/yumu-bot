@@ -3,9 +3,12 @@ package com.now.nowbot.model;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.HttpClientErrorException;
 
 public class BinUser {
+    Logger log = LoggerFactory.getLogger(BinUser.class);
     /**
      * osu name
      */
@@ -95,8 +98,10 @@ public class BinUser {
                         .findValue("access_token")
                         .asText();
             } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.NotFound e) {
+                log.info("更新令牌失败", e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpired);
             } catch (Exception e) {
+                log.error("更新令牌 其他异常", e);
                 throw new RuntimeException("更新失败");
             }
         }
