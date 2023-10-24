@@ -175,7 +175,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
         //绘制自己的卡片
-        var infoMe = osuGetService.getPlayerInfo(userName);
+        var infoMe = osuGetService.getPlayerInfo(userName, mode);
         List<Score> bps;
         if (type == null || type == 0) {
             bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, 100);

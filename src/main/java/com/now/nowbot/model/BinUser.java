@@ -3,6 +3,7 @@ package com.now.nowbot.model;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import org.springframework.web.client.HttpClientErrorException;
 
 public class BinUser {
     /**
@@ -93,8 +94,10 @@ public class BinUser {
                         .refreshToken(this)
                         .findValue("access_token")
                         .asText();
-            } catch (Exception e) {
+            } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.NotFound e) {
                 throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+            } catch (Exception e) {
+                throw new RuntimeException("更新失败");
             }
         }
 
