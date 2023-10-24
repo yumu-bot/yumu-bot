@@ -16,7 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <skipTests>true</skipTests>
-        <run.os>windows</run.os>
+        <run.os>linux</run.os>
     </properties>
 
     <dependencies>
