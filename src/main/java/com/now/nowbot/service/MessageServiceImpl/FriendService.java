@@ -11,9 +11,12 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.regex.Pattern;
 
 @Service("FRIEND")
 public class FriendService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(FriendService.class);
     BindDao bindDao;
     OsuGetService osuGetService;
 
@@ -49,8 +53,8 @@ public class FriendService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        BinUser binMe;
-        OsuUser osuMe;
+        BinUser binUser;
+        OsuUser osuUser;
 
         List<MicroUser> friends = new ArrayList<>();
 
@@ -77,23 +81,32 @@ public class FriendService implements MessageService<Matcher> {
         }
 
         try {
-            binMe = bindDao.getUserFromQQ(event.getSender().getId());
+            binUser = bindDao.getUserFromQQ(event.getSender().getId());
         } catch (Exception e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
         }
 
-        if (!binMe.isAuthorized()) {
+        if (binUser == null) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_NoBind);
+        } else if (!binUser.isAuthorized()) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
             //无权限
         }
 
         try {
-            osuMe = osuGetService.getPlayerInfo(binMe);
+            osuUser = osuGetService.getPlayerInfo(binUser);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_TokenExpired);
         } catch (Exception e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NotFound);
         }
 
-        var friendList = osuGetService.getFriendList(binMe);
+        List<MicroUser> friendList;
+        try {
+            friendList = osuGetService.getFriendList(binUser);
+        } catch (Exception e) {
+            throw new FriendException(FriendException.Type.FRIEND_Me_FetchFailed);
+        }
 
         int[] index = null;
         if (doRandom) {
@@ -119,7 +132,8 @@ public class FriendService implements MessageService<Matcher> {
                 try {
                     friends.add(friendList.get(i));
                 } catch (IndexOutOfBoundsException e) {
-                    NowbotApplication.log.error("Friend: 莫名其妙的数组越界", e);
+                    log.error("Friend: 莫名其妙的数组越界", e);
+                    throw new FriendException(FriendException.Type.FRIEND_Send_Error);
                 }
             }
         }
@@ -127,10 +141,10 @@ public class FriendService implements MessageService<Matcher> {
         if (CollectionUtils.isEmpty(friends)) throw new FriendException(FriendException.Type.FRIEND_Client_NoFriend);
 
         try {
-            var data = imageService.getPanelA1(osuMe, friends);
+            var data = imageService.getPanelA1(osuUser, friends);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("Friend: ", e);
+            log.error("Friend: ", e);
             throw new FriendException(FriendException.Type.FRIEND_Send_Error);
         }
     }

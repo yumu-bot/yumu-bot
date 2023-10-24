@@ -30,8 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("SCOREPR")
-public class PassRecentService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(PassRecentService.class);
+public class ScorePRService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
     RestTemplate template;
     OsuGetService osuGetService;
@@ -39,7 +39,7 @@ public class PassRecentService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Autowired
-    public PassRecentService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public ScorePRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
@@ -170,8 +170,13 @@ public class PassRecentService implements MessageService<Matcher> {
             if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
                 NowbotApplication.log.info("recent 退避成功");
                 return;
-            } else {
+            } else if (e instanceof HttpClientErrorException.Unauthorized) {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+            } else if (e instanceof HttpClientErrorException.NotFound) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
+            } else {
+                log.error("Score List 获取失败", e);
+                throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
             }
         }
 
@@ -214,10 +219,7 @@ public class PassRecentService implements MessageService<Matcher> {
 
     private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
         var s = getData(bindDao.getUserFromQQ(365246692L), mode, offset, limit, isRecent);
-        if (CollectionUtils.isEmpty(s)) {
-            //throw new RuntimeException("没打");
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-        }
+        if (CollectionUtils.isEmpty(s)) throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         return imageService.spInfo(s.get(0));
     }
 

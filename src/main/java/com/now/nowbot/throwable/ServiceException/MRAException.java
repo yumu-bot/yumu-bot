@@ -26,7 +26,7 @@ public class MRAException extends TipsException {
         RATING_Warning_InconsistentWinConditionGuide("\n输入 !sudo ymra 强制忽略冲突并计算斗力！\n十分钟内有效"),//警告_计分冲突指引
 
         RATING_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家撤销授权
-        RATING_Me_Banned("你号没了。"),//查询自己_玩家被封禁
+        RATING_Me_Banned("你号没了，或是 ppy API 无法访问。"),//查询自己_玩家被封禁
         RATING_Me_Blacklisted("本 Bot 根本不想理你。"),//查询自己_玩家黑名单
 
         RATING_Default_NoToken("哼，你 Token 失效啦！看在我们关系的份上，就帮你这一次吧！"),//token不存在，使用本机AccessToken

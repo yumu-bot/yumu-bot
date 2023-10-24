@@ -97,12 +97,19 @@ public class BinUser {
                         .refreshToken(this)
                         .findValue("access_token")
                         .asText();
-            } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.NotFound e) {
-                log.info("更新令牌失败", e);
+            } catch (HttpClientErrorException.Unauthorized e) {
+                log.info("更新令牌失败：令牌过期", e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+            } catch (HttpClientErrorException.NotFound e) {
+                log.info("更新令牌失败：账号封禁", e);
+                throw new BindException(BindException.Type.BIND_Me_Banned);
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                log.info("更新令牌失败：API 访问太频繁", e);
+                throw new BindException(BindException.Type.BIND_Me_TooManyRequests);
             } catch (Exception e) {
-                log.error("更新令牌 其他异常", e);
-                throw new RuntimeException("更新失败");
+                log.error("更新令牌失败：其他", e);
+                throw new BindException(BindException.Type.BIND_Default_DefaultException);
+                //throw new RuntimeException("更新失败");
             }
         }
 

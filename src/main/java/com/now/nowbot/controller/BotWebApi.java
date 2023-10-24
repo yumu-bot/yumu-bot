@@ -330,7 +330,7 @@ public class BotWebApi {
                     throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
                 } else {
                     var bm = new BeatMap();
-                    bm.setId(Long.valueOf(value));
+                    bm.setBID(Long.valueOf(value));
                     score.setBeatMap(bm);
                 }
             } else {

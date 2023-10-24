@@ -95,10 +95,8 @@ public class ScoreService implements MessageService<Matcher> {
             try {
                 scoreall = osuGetService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
             } catch (HttpClientErrorException.NotFound e) {
-                // 未找到玩家
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             } catch (HttpClientErrorException.Unauthorized e) {
-                // 解绑了
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
             }
 
@@ -118,9 +116,9 @@ public class ScoreService implements MessageService<Matcher> {
             if (score == null) {
                 throw new ScoreException(ScoreException.Type.SCORE_Mod_NotFound);
             } else {
-                var bm = new BeatMap();
-                bm.setId(bid);
-                score.setBeatMap(bm);
+                var beatMap = new BeatMap();
+                beatMap.setBID(bid);
+                score.setBeatMap(beatMap);
             }
         } else {
             try {
@@ -133,7 +131,11 @@ public class ScoreService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound);
                 }
             } catch (HttpClientErrorException.Unauthorized e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
+                if (name == null || name.trim().isEmpty() && at == null) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
+                }
             }
         }
 

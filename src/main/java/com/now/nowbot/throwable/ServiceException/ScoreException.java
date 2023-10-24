@@ -6,8 +6,10 @@ public class ScoreException extends TipsException {
     public enum Type {
         SCORE_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家撤销授权
         SCORE_Player_NotFound("找不到此玩家，请检查。"), //获取玩家失败
+        SCORE_Player_Banned("你号没了，或是 ppy API 无法访问。"), //获取玩家失败
         SCORE_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), //玩家_对方未绑定
         SCORE_Player_NoScore ("找不到此玩家的成绩，请检查。"), //玩家_找不到分数
+        SCORE_Score_FetchFailed ("成绩列表获取失败！"),
         SCORE_Score_RankError ("请输入正确的成绩编号！"),
         SCORE_Score_NotFound ("找不到这张谱面上的相应成绩，请检查。"), //分数_找不到分数
         SCORE_Score_OutOfRange ("超出查询范围！"), //分数_找不到分数

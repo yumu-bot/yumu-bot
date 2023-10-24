@@ -5,7 +5,8 @@ import com.now.nowbot.throwable.TipsException;
 public class BPException extends TipsException {
     public enum Type {
         BP_Me_NoBind("您还没有绑定呢，请输入 !ymbind 点击链接登录，完成绑定吧。"),//查询自己_玩家未绑定
-        BP_Me_LoseBind("您的绑定状态已经失效！\n请输入 !ymbind 重新绑定。"),//查询自己_绑定失效
+        BP_Me_TokenExpired("您的绑定状态已经失效！\n请输入 !ymbind 重新绑定。"),//查询自己_绑定失效
+        BP_Me_Banned("你号没了，或是 ppy API 无法访问。"),//查询他人_封号
         BP_Map_NoRank ("请输入 BP 编号！"),
         BP_Map_RankError ("请输入正确的 BP 编号！"),
         BP_Player_NotFound("这是谁呀，小沐找不到他哦"),//查询他人_未搜到玩家

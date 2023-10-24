@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -10,11 +10,13 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -120,8 +122,8 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
             try {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
-            } catch (Exception e) {
-                throw new BPException(BPException.Type.BP_Me_LoseBind);
+            } catch (BindException e) {
+                throw new BPException(BPException.Type.BP_Me_NoBind);
             }
         } else {
             try {
@@ -135,6 +137,22 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
 
         var mode = param.mode == OsuMode.DEFAULT ? user.getMode() : param.mode;
+        OsuUser osuUser;
+
+        try {
+            osuUser = osuGetService.getPlayerInfo(user, mode);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            throw new BPException(BPException.Type.BP_Me_TokenExpired);
+        } catch (HttpClientErrorException.NotFound e) {
+            if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
+                throw new BPException(BPException.Type.BP_Me_Banned);
+            } else {
+                throw new BPException(BPException.Type.BP_Player_NotFound);
+            }
+        } catch (Exception e) {
+            log.error("获取出错", e);
+            throw new BPException(BPException.Type.BP_Player_FetchFailed);
+        }
 
         try {
             bpList = osuGetService.getBestPerformance(user, mode, n, m);
@@ -142,22 +160,21 @@ public class BPService implements MessageService<BPService.BPParam> {
             log.error("请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
+
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
 
         try {
-            var ouMe = osuGetService.getPlayerInfo(user, mode);
-
             if (m > 1) {
                 for (int i = n; i <= (m + n); i++) rankList.add(i + 1);
-                var data = imageService.getPanelA4(ouMe, bpList, rankList);
+                var data = imageService.getPanelA4(osuUser, bpList, rankList);
                 QQMsgUtil.sendImage(from, data);
             } else {
                 var score = bpList.get(0);
-                var data = imageService.getPanelE(ouMe, score, osuGetService);
+                var data = imageService.getPanelE(osuUser, score, osuGetService);
                 QQMsgUtil.sendImage(from, data);
             }
         } catch (Exception e) {
-            NowbotApplication.log.error("BP Error: ", e);
+            log.error("BP 发送出错", e);
             throw new BPException(BPException.Type.BP_Send_Error);
         }
     }

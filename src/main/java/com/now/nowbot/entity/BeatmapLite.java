@@ -258,7 +258,7 @@ public class BeatmapLite {
 
     public BeatMap toBeatMap(){
         var b = new BeatMap();
-        b.setId(getId());
+        b.setBID(getId());
         b.setBeatmapsetId(getBeatmapsetId());
         b.setConvert(getConvert());
         b.setVersion(getVersion());
