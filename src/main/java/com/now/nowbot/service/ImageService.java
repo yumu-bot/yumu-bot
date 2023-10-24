@@ -850,8 +850,10 @@ public class ImageService {
             for (int i = 0; i < search.getBeatmapsets().size(); i++) {
                 var v = search.getBeatmapsets().get(i);
 
-                favorite += v.getFavourite();
-                playcount += v.getPlayCount();
+                if (v.getMapperUID() == user.getUID().intValue()) {
+                    favorite += v.getFavourite();
+                    playcount += v.getPlayCount();
+                }
             }
         }
 

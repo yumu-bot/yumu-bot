@@ -520,20 +520,19 @@ public class SkiaUtil {
             bpPP += PP * weight;//前 100 的bp上的 pp
         }
 
-        if (length < 100) { //如果bp没满100，那么bns直接可算得，remaining = 0
-            return (float) Math.min((playerPP - bpPP), 416.6667f);
+        double N = length - 50;
+        // Exiyi - Nxy__ / Ex2i - Nx_2
+        k = (xy - (x * y / N)) / (x2 - (Math.pow(x, 2f) / N));
+        b = (y / N) - k * (x / N);
+
+        //找零点
+        int expectedX = (k == 0f) ? -1 : (int) Math.floor(- b / k);
+
+        //这个预估的零点应该在很后面，不应该小于 100
+        //如果bp没满100，那么bns直接可算得，remainPP = 0
+        if (length < 100 || expectedX <= 100) {
+            bonusPP = playerPP - bpPP;
         } else {
-            double N = length - 50;
-            // Exiyi - Nxy__ / Ex2i - Nx_2
-            k = (xy - (x * y / N)) / (x2 - (Math.pow(x, 2f) / N));
-            b = (y / N) - k * (x / N);
-
-            //找零点
-            int expectedX = (k == 0f) ? -1 : (int) Math.floor(- b / k);
-            if (expectedX <= 100) {
-                return (float) Math.min((playerPP - bpPP), 416.6667f); //这个预估的零点应该在很后面
-            }
-
             //对离散数据求和
             for (int i = length; i <= expectedX; i++) {
                 double weight = Math.pow(0.95f, i);
@@ -541,9 +540,9 @@ public class SkiaUtil {
             }
 
             bonusPP = playerPP - bpPP - remainPP;
-
-            return (float) Math.min(bonusPP, 416.6667f);
         }
+
+        return (float) Math.max(Math.min(bonusPP, 416.6667f), 0f);
     }
     /*
     public static float getBonusPP (double playerPP, double[] rawPP){
