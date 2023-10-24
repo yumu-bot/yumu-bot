@@ -647,7 +647,7 @@ public class ImageService {
         var bonusPP = SkiaUtil.getBonusPP(userPP, bpPPs);
 
         //bpPP + remainPP (bp100之后的) = rawPP
-        var bpPP = (float) Arrays.stream(bpPPs).sum();
+        var bpPP = (float) bps.stream().mapToDouble(s -> s.getWeight().getPP()).sum();
         var rawPP = (float) (userPP - bonusPP);
 
         List<attr> modsAttr;

@@ -499,16 +499,16 @@ public class SkiaUtil {
      * 算法是最小二乘 y = kx + b
      * 输入的PP数组应该是加权之前的数组。
      */
-    public static float getBonusPP(double playerPP, double[] rawPP) {
+    public static float getBonusPP(double playerPP, double[] fullPP) {
         double bonusPP, remainPP = 0, k, b, bpPP = 0, x = 0, x2 = 0, xy = 0, y = 0;
 
-        if (rawPP == null || rawPP.length == 0d) return 0f;
+        if (fullPP == null || fullPP.length == 0d) return 0f;
 
-        int length = rawPP.length;
+        int length = fullPP.length;
 
         for (int i = 0; i < length; i++) {
             double weight = Math.pow(0.95f, i);
-            double PP = rawPP[i];
+            double PP = fullPP[i];
 
             //只拿最后50个bp来算，这样精准
             if (i >= 50) {
