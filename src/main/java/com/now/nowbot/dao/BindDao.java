@@ -210,6 +210,10 @@ public class BindDao {
                 refreshOldUserToken(fromLite(u), osuGetService);
                 refres++;
             }
+            try {
+                Thread.sleep(Duration.ofSeconds(30));
+            } catch (InterruptedException ignore) {
+            }
         }
         log.info("更新用户数量: [{}], 累计用时: {}s", refres, (System.currentTimeMillis() - now) / 1000);
     }
