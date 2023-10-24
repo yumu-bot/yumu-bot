@@ -618,7 +618,7 @@ public class ImageService {
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, _) -> o, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, e) -> o, LinkedHashMap::new));
         var mapperInfo = osuGetService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
