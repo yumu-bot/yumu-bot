@@ -52,13 +52,12 @@ public class RunTimeService implements SchedulingConfigurer, Run {
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
-    /*
-    @Scheduled(cron = "14 * * * * *")
-    public void happynewyear(){
-        biliApiService.check();
-    }
 
-    */
+    @Scheduled(cron = "0 0 6 * * *")
+    public void refreshToken() {
+        log.info("开始执行更新令牌任务");
+        bindDao.refreshOldUserToken(osuGetService);
+    }
 
 
     public void sayBp1() {

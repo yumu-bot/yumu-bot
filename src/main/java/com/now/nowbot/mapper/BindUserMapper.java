@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -39,6 +40,9 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Transactional
     @Query("delete DiscordBindLite d where d.osuUser.osuId = :uid ")
     void deleteDCByOsuId(Long uid);
+
+    @Query("select u from OsuBindUserLite u where u.time!=0 and u.time < :now order by u.time limit 50")
+    List<OsuBindUserLite> getOldBindUser(Long now);
 
     @Transactional
     default void deleteAllByOsuId(Long uid){

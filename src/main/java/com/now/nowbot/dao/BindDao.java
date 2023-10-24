@@ -4,18 +4,23 @@ import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.OsuNameToIdLite;
 import com.now.nowbot.entity.bind.DiscordBindLite;
 import com.now.nowbot.entity.bind.QQBindLite;
+import com.now.nowbot.mapper.BindDiscordMapper;
 import com.now.nowbot.mapper.BindQQMapper;
 import com.now.nowbot.mapper.BindUserMapper;
-import com.now.nowbot.mapper.BindDiscordMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -181,7 +186,6 @@ public class BindDao {
         if (osuBindUserLite == null) return null;
         var data = osuBindUserLite;
         var buser = new BinUser();
-//        buser.setQq(data.getQq());
         buser.setOsuID(data.getOsuId());
         buser.setOsuName(data.getOsuName());
         buser.setAccessToken(data.getAccessToken());
@@ -194,5 +198,43 @@ public class BindDao {
     public static OsuBindUserLite fromModel(BinUser user) {
         if (user == null) return null;
         return new OsuBindUserLite(user);
+    }
+
+    @Async
+    public void refreshOldUserToken(OsuGetService osuGetService) {
+        Long now = System.currentTimeMillis();
+        List<OsuBindUserLite> users;
+        int refres = 0;
+        while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
+            for (var u : users) {
+                refreshOldUserToken(fromLite(u), osuGetService);
+                refres++;
+            }
+        }
+        log.info("更新用户数量: [{}], 累计用时: {}s", refres, (System.currentTimeMillis() - now) / 1000);
+    }
+
+    private void refreshOldUserToken(BinUser u, OsuGetService osuGetService) {
+        int sleepSecond = 5;
+        int badRequest = 0;
+        while (true) {
+            try {
+                osuGetService.refreshToken(u);
+                Thread.sleep(Duration.ofSeconds(sleepSecond));
+                return;
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                sleepSecond *= 2;
+            } catch (HttpClientErrorException.Unauthorized e) {
+                log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
+                removeBind(u.getOsuID());
+            } catch (HttpClientErrorException.BadRequest e) {
+                badRequest++;
+                if (badRequest > 6) {
+                    log.error("更新 [{}] 令牌失败, 请求异常", u.getOsuName());
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
