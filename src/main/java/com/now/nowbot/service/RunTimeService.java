@@ -3,14 +3,10 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.dao.BindDao;
 import jakarta.annotation.Resource;
-import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.janino.ScriptEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
@@ -18,20 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-interface Run {
-    void alive();
-}
 
 /***
  * 统一设置定时任务
  */
 @Service
-public class RunTimeService implements SchedulingConfigurer, Run {
+public class RunTimeService implements SchedulingConfigurer {
     private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
 
     @Resource
@@ -138,7 +126,6 @@ public class RunTimeService implements SchedulingConfigurer, Run {
     /***
      * 白天输出内存占用信息
      */
-    @Async
     @Scheduled(cron = "0 0/30 8-18 * * *")
     public void alive() {
         var m = ManagementFactory.getMemoryMXBean();
@@ -166,7 +153,20 @@ public class RunTimeService implements SchedulingConfigurer, Run {
         }
     }
 
-    public void example() {
+
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        this.scheduledTaskRegistrar = taskRegistrar;
+    }
+
+    public void addTask(Runnable task, String cron) {
+        scheduledTaskRegistrar.addCronTask(() -> taskExecutor.execute(task), cron);
+    }
+
+    /*
+
+     public void example() {
         try {
             var code = """
                     jakarta.persistence.Query q = manager.createNativeQuery("$sql");
@@ -181,15 +181,6 @@ public class RunTimeService implements SchedulingConfigurer, Run {
             throw new RuntimeException(e);
         }
 
-    }
-
-    @Override
-    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        this.scheduledTaskRegistrar = taskRegistrar;
-    }
-
-    public void addTask(Runnable task, String cron) {
-        scheduledTaskRegistrar.addCronTask(() -> taskExecutor.execute(task), cron);
     }
 
     public void executeCode(String code, Map<Class, String> autowrite) {
@@ -212,4 +203,5 @@ public class RunTimeService implements SchedulingConfigurer, Run {
             throw new RuntimeException(e);
         }
     }
+    */
 }
