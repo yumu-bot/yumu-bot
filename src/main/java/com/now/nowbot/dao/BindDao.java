@@ -223,8 +223,8 @@ public class BindDao {
         int badRequest = 0;
         while (true) {
             try {
-                osuGetService.refreshToken(u);
                 Thread.sleep(Duration.ofSeconds(sleepSecond));
+                osuGetService.refreshToken(u);
                 return;
             } catch (HttpClientErrorException.TooManyRequests e) {
                 sleepSecond *= 2;
