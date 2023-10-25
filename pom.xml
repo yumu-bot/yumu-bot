@@ -13,12 +13,34 @@
     <version>linux</version>
     <name>nowbot</name>
     <description>Demo project for Spring Boot</description>
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <run.os>windows</run.os>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <run.os>linux</run.os>
+            </properties>
+        </profile>
+    </profiles>
     <properties>
         <java.version>21</java.version>
         <skipTests>true</skipTests>
-        <run.os>linux</run.os>
     </properties>
-
     <dependencies>
 
         <dependency>
@@ -150,25 +172,21 @@
             <artifactId>commons-compress</artifactId>
             <version>1.24.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.24.0</version>
-        </dependency>
-<!--        <dependency>-->
-<!--            <groupId>protocol</groupId>-->
-<!--            <artifactId>protocol</artifactId>-->
-<!--            <version>1.7.0</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${project.basedir}/lib/fix-protocol-version-1.7.0.mirai2.jar</systemPath>-->
-<!--        </dependency>-->
-<!--        mvn install:install-file -Dfile=jar包所在位置 -DgroupId=在pom中的groupId -DartifactId=在pom中的artifactId -Dversion=在pom中的version -Dpackaging=jar-->
 
-<!--        <dependency>-->
-<!--            <groupId>com.yurn</groupId>-->
-<!--            <artifactId>YurnSatoriFramework</artifactId>-->
-<!--            <version>0.0.2</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>protocol</groupId>-->
+        <!--            <artifactId>protocol</artifactId>-->
+        <!--            <version>1.7.0</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${project.basedir}/lib/fix-protocol-version-1.7.0.mirai2.jar</systemPath>-->
+        <!--        </dependency>-->
+        <!--        mvn install:install-file -Dfile=jar包所在位置 -DgroupId=在pom中的groupId -DartifactId=在pom中的artifactId -Dversion=在pom中的version -Dpackaging=jar-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>com.yurn</groupId>-->
+        <!--            <artifactId>YurnSatoriFramework</artifactId>-->
+        <!--            <version>0.0.2</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
