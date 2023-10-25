@@ -231,10 +231,12 @@ public class BindDao {
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
                 removeBind(u.getOsuID());
+                return;
             } catch (HttpClientErrorException.BadRequest e) {
                 badRequest++;
                 if (badRequest > 6) {
                     log.error("更新 [{}] 令牌失败, 请求异常", u.getOsuName());
+                    return;
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
