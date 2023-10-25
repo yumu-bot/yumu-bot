@@ -11,12 +11,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.Collectors;
 
 @Component
 public class OsuUserInfoDao {
@@ -36,13 +33,13 @@ public class OsuUserInfoDao {
         var all = users.stream()
                 .flatMap(microUser -> {
                     var osu = fromStatustucs(microUser.getRulesets().getOsu(), OsuMode.OSU);
-                    if (osu != null) osu.setOsuID(microUser.getId());
+                    if (osu != null) osu.setOsuID(microUser.getUID());
                     var taiko = fromStatustucs(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
-                    if (taiko != null) taiko.setOsuID(microUser.getId());
+                    if (taiko != null) taiko.setOsuID(microUser.getUID());
                     var fruits = fromStatustucs(microUser.getRulesets().getFruits(), OsuMode.CATCH);
-                    if (fruits != null) fruits.setOsuID(microUser.getId());
+                    if (fruits != null) fruits.setOsuID(microUser.getUID());
                     var mania = fromStatustucs(microUser.getRulesets().getMania(), OsuMode.OSU);
-                    if (mania != null) mania.setOsuID(microUser.getId());
+                    if (mania != null) mania.setOsuID(microUser.getUID());
 
                     return Stream.of(osu, taiko, fruits, mania);
                 })

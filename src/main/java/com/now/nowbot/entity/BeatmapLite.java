@@ -259,7 +259,7 @@ public class BeatmapLite {
     public BeatMap toBeatMap(){
         var b = new BeatMap();
         b.setBID(getId());
-        b.setBeatmapsetId(getBeatmapsetId());
+        b.setSID(getBeatmapsetId());
         b.setConvert(getConvert());
         b.setVersion(getVersion());
         b.setPlaycount(getPlaycount());
@@ -268,7 +268,7 @@ public class BeatmapLite {
         b.setCS(getCS());
         b.setAR(getAR());
         b.setHP(getHP());
-        b.setDifficultyRating(getDifficultyRating());
+        b.setStarRating(getDifficultyRating());
         b.setBpm(getBpm());
         b.setMaxCombo(getMaxCombo());
         b.setStatus(getStatus());

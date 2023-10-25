@@ -14,9 +14,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.throwable.ServiceException.MonitorNowException;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.Panel.CardBuilder;
 import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.Panel.TBPPanelBuilder;
@@ -98,8 +96,10 @@ public class BotWebApi {
         var bplist2 = osuGetService.getBestPerformance(info2.getUID(), mode, 0, 100);
         var ppm1 = Ppm.getInstance(mode, info1, bplist1);
         var ppm2 = Ppm.getInstance(mode, info2, bplist2);
-        if (ppm1 == null || ppm2 == null) {
-            throw new RuntimeException("ppm 请求失败：ppmMe/Other 不存在");
+        if (ppm1 == null) {
+            throw new RuntimeException(PPMinusException.Type.PPM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
+        } else if (ppm2 == null) {
+            throw new RuntimeException(PPMinusException.Type.PPM_Player_FetchFailed.message);
         } else {
             var data = imageService.getPanelB1(info1, info2, ppm1, ppm2, mode);
             return new ResponseEntity<>(data, getImageHeader(user1.trim() + " vs " + user2.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
@@ -116,8 +116,8 @@ public class BotWebApi {
     @GetMapping(value = "match")
     @OpenResource(name = "mn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
     public ResponseEntity<byte[]> getMatch(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
-                                           @OpenResource(name = "skip-starting-count", desp = "跳过开头") @Nullable Integer k,
-                                           @OpenResource(name = "ignore-ending-count", desp = "忽略结尾") @Nullable Integer d,
+                                           @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
+                                           @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
                                            @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
                                            @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
@@ -138,7 +138,7 @@ public class BotWebApi {
      * @return img
      */
     @GetMapping(value = "rating")
-    @OpenResource(name = "ra", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
+    @OpenResource(name = "ra", desp = "查看比赛评价 !ymrating (!ra)")
     public ResponseEntity<byte[]> getRa(
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
@@ -297,7 +297,7 @@ public class BotWebApi {
             } else {
                 scores = osuGetService.getAllRecentN(uid, mode, value, 1);
             }
-            if (scores.size() == 0) throw new RuntimeException("最近没玩过");
+            if (scores.isEmpty()) throw new RuntimeException(ScoreException.Type.SCORE_Recent_NotFound.message);
             score = scores.get(0);
 
         } else if (type == 1) {
@@ -305,7 +305,7 @@ public class BotWebApi {
             value = Math.min(99, value - 1);
             value = Math.max(0, value);
             var scores = osuGetService.getBestPerformance(uid, mode, value, 1);
-            if (scores.size() == 0) throw new RuntimeException("bp不够");
+            if (scores.isEmpty()) throw new RuntimeException(BPException.Type.BP_Player_FetchFailed.message);
             score = scores.get(0);
         } else if (type == 2) {
             if (value == null) throw new RuntimeException("value 参数错误");
@@ -315,10 +315,10 @@ public class BotWebApi {
                 try {
                     a = osuGetService.getScoreAll(value, uid, mode);
                 } catch (Exception e) {
-                    throw new RuntimeException("没打过");
+                    throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
                 }
                 for (var s : a) {
-                    if (s.getMods().size() == 0 && Mod.None.check(param)) {
+                    if (s.getMods().isEmpty() && Mod.None.check(param)) {
                         score = s;
                         break;
                     } else if (Mod.getModsValueFromStr(s.getMods()) == param) {
@@ -484,7 +484,7 @@ public class BotWebApi {
         var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         if (fopt.isEmpty()) {
             var finfo = osuGetService.getMapInfoFromDB(bid);
-            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
+            osuGetService.downloadAllFiles(finfo.getSID());
             fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         }
         if (fopt.isEmpty()) throw new IOException("download error");

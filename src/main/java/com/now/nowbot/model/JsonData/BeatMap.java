@@ -20,7 +20,7 @@ public class BeatMap {
     @JsonProperty("beatmapset_id")
     Integer beatmapsetId;
     @JsonProperty("difficulty_rating")
-    Float difficultyRating;
+    Float starRating;
     String mode;
     @JsonProperty("mode_int")
     Integer modeInt;
@@ -84,7 +84,7 @@ public class BeatMap {
         }
     }
 
-    public Long getId() {
+    public Long getBID() {
         return id;
     }
 
@@ -92,20 +92,20 @@ public class BeatMap {
         this.id = id;
     }
 
-    public Integer getBeatmapsetId() {
+    public Integer getSID() {
         return beatmapsetId;
     }
 
-    public void setBeatmapsetId(Integer beatmapsetId) {
+    public void setSID(Integer beatmapsetId) {
         this.beatmapsetId = beatmapsetId;
     }
 
-    public Float getDifficultyRating() {
-        return difficultyRating;
+    public Float getStarRating() {
+        return starRating;
     }
 
-    public void setDifficultyRating(Float difficultyRating) {
-        this.difficultyRating = difficultyRating;
+    public void setStarRating(Float difficultyRating) {
+        this.starRating = difficultyRating;
     }
 
     public String getMode() {
@@ -363,7 +363,7 @@ public class BeatMap {
         final StringBuilder sb = new StringBuilder("BeatMap{");
         sb.append("id=").append(id);
         sb.append(", beatmapsetId=").append(beatmapsetId);
-        sb.append(", difficultyRating=").append(difficultyRating);
+        sb.append(", difficultyRating=").append(starRating);
         sb.append(", mode='").append(mode).append('\'');
         sb.append(", modeInt=").append(modeInt);
         sb.append(", status='").append(status).append('\'');

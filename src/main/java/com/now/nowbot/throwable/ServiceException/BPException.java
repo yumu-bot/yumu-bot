@@ -14,7 +14,7 @@ public class BPException extends TipsException {
         BP_Player_NoBP("该玩家基本上没玩过，建议多练。"), //玩家_没有最好成绩
         BP_Send_Error("BP 发送失败。\n请耐心等待问题修复。") //发送_发送失败
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type(String message) {
             this.message = message;
         }

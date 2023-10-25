@@ -1,10 +1,8 @@
 package com.now.nowbot.model.match;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.MicroUser;
 
 import java.util.HashSet;
@@ -80,11 +78,11 @@ public class Match {
 
     public void addEventList(Match m){
         var nList = m.getEvents();
-        var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getId).toList());
+        var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getUID).toList());
         for (var mu : this.getUsers()){
-            nameSet.remove(mu.getId());
+            nameSet.remove(mu.getUID());
         }
-        getUsers().addAll(m.getUsers().stream().filter(u->nameSet.contains(u.getId())).toList());
+        getUsers().addAll(m.getUsers().stream().filter(u->nameSet.contains(u.getUID())).toList());
         this.getEvents().addAll(0, nList);
     }
 }

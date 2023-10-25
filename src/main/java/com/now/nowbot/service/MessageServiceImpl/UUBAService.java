@@ -271,7 +271,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore()));
+                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getBID(), s.getScore()));
         var changedStarMapAttrs = imageService.getMapAttr(mapAttrGet);
         var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
         for (int i = 0; i < bps.size(); i++) {
@@ -297,9 +297,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             avgLength += length;
 
             if (Mod.hasChangeRating(bp.getScore())) {
-                star += changedStarMap.get(bp.getBeatMap().getId()).getStars();
+                star += changedStarMap.get(bp.getBeatMap().getBID()).getStars();
             } else {
-                star += bp.getBeatMap().getDifficultyRating();
+                star += bp.getBeatMap().getStarRating();
             }
 
             if (bpm < minBPM) {
@@ -368,7 +368,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var mappersInfo = osuGetService.getUsers(mappersId);
         var mapperIdToInfo = new HashMap<Long, String>();
         for (var node : mappersInfo) {
-            mapperIdToInfo.put(node.getId(), node.getUserName());
+            mapperIdToInfo.put(node.getUID(), node.getUserName());
         }
         mappers.forEach(mapperDate -> {
             try {

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @Service("INFO")
-public class InfoService implements MessageService<InfoService.InfoParm> {
+public class InfoService implements MessageService<InfoService.InfoParam> {
     Logger log = LoggerFactory.getLogger(InfoService.class);
     @Autowired
     RestTemplate template;
@@ -35,16 +35,16 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
     BindDao       bindDao;
     @Autowired
     ImageService  imageService;
-    public record InfoParm(String name, Long qq, OsuMode mode){}
+    public record InfoParam(String name, Long qq, OsuMode mode){}
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?information|yminfo(?![a-zA-Z_])|(ym)?i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
     Pattern pattern4QQ = Pattern.compile("^[!！](?i)i\\s*qq=(?<qq>\\d+)");
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<InfoParm> data) {
+    public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) {
         var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
         if (m4qq.find()) {
-            data.setValue(new InfoParm(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
+            data.setValue(new InfoParam(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
             return true;
         }
         var matcher = pattern.matcher(event.getRawMessage().trim());
@@ -55,26 +55,26 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         if (at != null) {
-            data.setValue(new InfoParm(null, at.getTarget(), mode));
+            data.setValue(new InfoParam(null, at.getTarget(), mode));
             return true;
         }
         String name = matcher.group("name");
         if (Strings.isNotBlank(name)) {
-            data.setValue(new InfoParm(name, null, mode));
+            data.setValue(new InfoParam(name, null, mode));
             return true;
         }
-        data.setValue(new InfoParm(null, event.getSender().getId(), mode));
+        data.setValue(new InfoParam(null, event.getSender().getId(), mode));
         return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, InfoParm parm) throws Throwable {
+    public void HandleMessage(MessageEvent event, InfoParam param) throws Throwable {
         var from = event.getSubject();
         BinUser user;
-        if (parm.name() != null) {
+        if (param.name() != null) {
             long id;
             try {
-                id = osuGetService.getOsuId(parm.name().trim());
+                id = osuGetService.getOsuId(param.name().trim());
             } catch (Exception e) {
                 //NowbotApplication.log.error("info: ", e);
                 throw new InfoException(InfoException.Type.INFO_Player_NotFound);
@@ -83,11 +83,11 @@ public class InfoService implements MessageService<InfoService.InfoParm> {
             user.setOsuID(id);
             user.setMode(OsuMode.DEFAULT);
         } else {
-            user = bindDao.getUserFromQQ(parm.qq());
+            user = bindDao.getUserFromQQ(param.qq());
         }
 
         //处理默认mode
-        var mode = parm.mode();
+        var mode = param.mode();
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
         OsuUser osuUser;

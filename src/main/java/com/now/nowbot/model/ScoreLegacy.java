@@ -45,7 +45,7 @@ public class ScoreLegacy {
 
     public ScoreLegacy(Score score, OsuGetService osuGetService) {
         var user = score.getUser();
-        bid = Math.toIntExact(score.getBeatMap().getId());
+        bid = Math.toIntExact(score.getBeatMap().getBID());
 
         var beatMap = osuGetService.getBeatMapInfo(bid);
         var beatMapSet = beatMap.getBeatMapSet();
@@ -64,7 +64,7 @@ public class ScoreLegacy {
         max_combo = beatMap.getMaxCombo();
         difficulty_name = beatMap.getVersion();
 
-        star_rating = beatMap.getDifficultyRating();
+        star_rating = beatMap.getStarRating();
         map_length = beatMap.getTotalLength();
 
         int sr_floor = (int) Math.floor(star_rating);

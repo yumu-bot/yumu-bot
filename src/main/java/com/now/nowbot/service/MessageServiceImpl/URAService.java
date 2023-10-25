@@ -94,9 +94,9 @@ public class URAService implements MessageService<Matcher> {
         //获取所有user
         for (var jUser : JUsers) {
             try {
-                users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
+                users.put(jUser.getUID().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getUID())));
             } catch (Exception e) {
-                users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
+                users.put(jUser.getUID().intValue(), new UserMatchData(jUser.getUID().intValue(), "UID:" + jUser.getUID().intValue()));
             }
         }
 
@@ -120,7 +120,7 @@ public class URAService implements MessageService<Matcher> {
             } else {
                 games = streamTemp.collect(
                         Collectors.toMap(
-                                e -> e.getBeatmap().getId(),
+                                e -> e.getBeatmap().getBID(),
                                 v -> v,
                                 (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
                         )
@@ -131,7 +131,7 @@ public class URAService implements MessageService<Matcher> {
         int scoreNum = 0;
         //每一局单独计算
         for (var game : games) {
-            var scoreInfos = game.getScoreInfos();
+            var scoreInfos = game.getScoreInfoList();
 
             GameRound round = new GameRound();
             matchStatistics.getGameRounds().add(round);
@@ -160,7 +160,7 @@ public class URAService implements MessageService<Matcher> {
                     }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());
-                    round.getUserScores().put(user.getId(), scoreInfo.getScore());
+                    round.getUserScores().put(user.getUID(), scoreInfo.getScore());
                     //队伍总分
                     round.getTeamScores().put(team, round.getTeamScores().getOrDefault(team, 0L) + scoreInfo.getScore());
                 }

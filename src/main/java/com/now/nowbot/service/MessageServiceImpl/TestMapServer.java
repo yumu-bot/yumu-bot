@@ -46,7 +46,7 @@ public class TestMapServer implements MessageService<Matcher> {
 
         if (mod == null || mod.trim().isEmpty()){
 
-            sb.append(info.getDifficultyRating()).append(',')
+            sb.append(info.getStarRating()).append(',')
                     .append(info.getBPM()).append(',')
                     .append(String.format("%d", (int) (Math.floor(info.getTotalLength() / 60f))))
                     .append(':')

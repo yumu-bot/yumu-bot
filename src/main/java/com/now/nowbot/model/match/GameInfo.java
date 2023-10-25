@@ -2,7 +2,7 @@ package com.now.nowbot.model.match;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.now.nowbot.model.beatmap.BeatmapInfo4Match;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.score.MPScore;
 
 import java.time.OffsetDateTime;
@@ -28,9 +28,9 @@ public class GameInfo {
     @JsonProperty("team_type")
     String teamType;
     String[] mods;
-    BeatmapInfo4Match beatmap;
+    BeatMap beatmap;
     @JsonProperty("scores")
-    List<MPScore> scoreInfos;
+    List<MPScore> scoreInfoList;
 
     public String getTeamType() {
         return teamType;
@@ -96,27 +96,27 @@ public class GameInfo {
         this.mods = mods;
     }
 
-    public BeatmapInfo4Match getBeatmap() {
+    public BeatMap getBeatmap() {
         return beatmap;
     }
 
-    public void setBeatmap(BeatmapInfo4Match beatmap) {
+    public void setBeatmap(BeatMap beatmap) {
         this.beatmap = beatmap;
     }
 
-    public List<MPScore> getScoreInfos() {
-        return scoreInfos;
+    public List<MPScore> getScoreInfoList() {
+        return scoreInfoList;
     }
 
-    public void setScoreInfos(List<MPScore> scoreInfos) {
-        this.scoreInfos = scoreInfos;
+    public void setScoreInfoList(List<MPScore> scoreInfoList) {
+        this.scoreInfoList = scoreInfoList;
     }
 
-    public Long getBid() {
+    public Long getBID() {
         return bid;
     }
 
-    public void setBid(Long bid) {
+    public void setBID(Long bid) {
         this.bid = bid;
     }
 
@@ -132,7 +132,7 @@ public class GameInfo {
                 .add("teamType='" + teamType + "'")
                 .add("mods=" + Arrays.toString(mods))
                 .add("beatmap=" + beatmap)
-                .add("scoreInfos=" + scoreInfos)
+                .add("scoreInfos=" + scoreInfoList)
                 .toString();
     }
 }

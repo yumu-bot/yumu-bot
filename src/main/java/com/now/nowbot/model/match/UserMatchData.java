@@ -131,7 +131,7 @@ public class UserMatchData {
         this.team = team;
     }
 
-    public Integer getId() {
+    public Integer getUID() {
         return id;
     }
 

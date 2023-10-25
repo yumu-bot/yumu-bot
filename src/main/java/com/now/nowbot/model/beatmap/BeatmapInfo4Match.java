@@ -2,31 +2,27 @@ package com.now.nowbot.model.beatmap;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.now.nowbot.model.JsonData.BeatMapSet;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BeatmapInfo4Match {
 
-    Integer id;
+    @JsonProperty("id")
+    Integer BID;
     @JsonProperty("beatmapset_id")
-    Integer beatmapsetId;
+    Integer SID;
     @JsonProperty("difficulty_rating")
-    Double difficultyRating;
+    Double starRating;
     String mode;
     String status;
     @JsonProperty("total_length")
     Integer totalLength;
     @JsonProperty("user_id")
-    Integer userId;
+    Integer hostUID;
     String version;
 
-    @JsonProperty("accuracy")
-    Float od;
-    Float ar;
-    Float cs;
-    @JsonProperty("drain")
-
-    Float hp;
-    Float bpm;
+    @JsonProperty("beatmapset")
+    BeatMapSet beatMapSet;
 
     @JsonProperty("hit_length")
     Integer hitLength;
@@ -37,28 +33,28 @@ public class BeatmapInfo4Match {
 
     String checksum;
 
-    public Integer getId() {
-        return id;
+    public Integer getBID() {
+        return BID;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setBID(Integer bid) {
+        this.BID = bid;
     }
 
-    public Integer getBeatmapsetId() {
-        return beatmapsetId;
+    public Integer getSID() {
+        return SID;
     }
 
-    public void setBeatmapsetId(Integer beatmapsetId) {
-        this.beatmapsetId = beatmapsetId;
+    public void setSID(Integer sid) {
+        this.SID = sid;
     }
 
-    public Double getDifficultyRating() {
-        return difficultyRating;
+    public Double getStarRating() {
+        return starRating;
     }
 
-    public void setDifficultyRating(Double difficultyRating) {
-        this.difficultyRating = difficultyRating;
+    public void setStarRating(Double starRating) {
+        this.starRating = starRating;
     }
 
     public String getMode() {
@@ -85,12 +81,20 @@ public class BeatmapInfo4Match {
         this.totalLength = totalLength;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public Integer getHostUID() {
+        return hostUID;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setHostUID(Integer hostUID) {
+        this.hostUID = hostUID;
+    }
+
+    public BeatMapSet getBeatMapSet() {
+        return beatMapSet;
+    }
+
+    public void setBeatMapSet(BeatMapSet beatMapSet) {
+        this.beatMapSet = beatMapSet;
     }
 
     public String getVersion() {
