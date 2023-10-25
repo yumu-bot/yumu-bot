@@ -110,11 +110,11 @@ public class CRAService implements MessageService<Matcher> {
                     .append(game.getMode()).append(',')
                     .append(game.getScoringType()).append(',')
                     .append(game.getTeamType()).append(',')
-                    .append((game.getBeatmap().getStarRating())).append(',')
+                    .append((game.getBeatmap().getDifficultyRating())).append(',')
                     .append(game.getBeatmap().getTotalLength()).append(',')
                     .append(Arrays.toString(game.getMods()).replaceAll(", ", "|")).append(',')
-                    .append(game.getBeatmap().getBID()).append(',')
-                    .append(osuGetService.getBeatMapInfo(game.getBeatmap().getBID()).getMaxCombo())
+                    .append(game.getBeatmap().getId()).append(',')
+                    .append(osuGetService.getBeatMapInfo(game.getBeatmap().getId()).getMaxCombo())
                     .append('\n');
         } catch (Exception e) {
             sb.append(e.getMessage()).append('\n');//.append("  error---->")

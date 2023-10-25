@@ -66,7 +66,7 @@ public class MiniPanelService implements MessageService<Matcher> {
             Score score;
             try {
                 score = osuGetService.getAllRecentN(id, mode, 0, 1).get(0);
-                var map = osuGetService.getBeatMapInfo(score.getBeatMap().getBID());
+                var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
                 score.setBeatMap(map);
                 score.setBeatMapSet(map.getBeatMapSet());
             } catch (Exception e) {

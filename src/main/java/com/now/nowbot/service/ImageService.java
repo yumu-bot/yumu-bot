@@ -313,7 +313,7 @@ public class ImageService {
     }
 
     public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
-        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getBID());
+        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
 
@@ -358,7 +358,7 @@ public class ImageService {
 
         var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
         for (var u : match.getUsers()) {
-            uidMap.put(u.getUID(), u);
+            uidMap.put(u.getId(), u);
         }
         String firstBackground = null;
         var scores = new ArrayList<>(games.size());
@@ -381,7 +381,7 @@ public class ImageService {
                     .reduce(0, (a, i) -> a | i);
 
             if (g.getBeatmap() != null) {
-                var info = osuGetService.getMapInfoLite(g.getBeatmap().getBID());
+                var info = osuGetService.getMapInfoLite(g.getBeatmap().getId());
                 if (firstBackground == null) {
                     firstBackground = info.getMapSet().getList();
                 }
@@ -435,11 +435,11 @@ public class ImageService {
 
                 var r_user_list = r_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserID().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getUID().intValue()) + 1);
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 var b_user_list = b_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
                     var u = uidMap.get(s.getUserID().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getUID().intValue()) + 1);
+                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 if (r_user_list.isEmpty() || b_user_list.isEmpty()) continue;
                 scores.add(Map.of(
@@ -478,7 +478,7 @@ public class ImageService {
                                     -1
                             );
                         }
-                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getUID().intValue()) + 1);
+                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                     }).toList();
                     scores.add(Map.of(
                             "statistics", statistics,
@@ -531,7 +531,7 @@ public class ImageService {
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getBID(), Mod.getModsValueFromStr(s.getMods())));
+                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
         Map<Long, MapAttr> changedAttrsMap;
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
@@ -554,9 +554,9 @@ public class ImageService {
             var s = bps.get(i);
             {// 处理 mapList
                 var minfo = s.getBeatMap();
-                if (changedAttrsMap != null && changedAttrsMap.containsKey(s.getBeatMap().getBID())) {
-                    var attr = changedAttrsMap.get(s.getBeatMap().getBID());
-                    minfo.setStarRating(attr.getStars());
+                if (changedAttrsMap != null && changedAttrsMap.containsKey(s.getBeatMap().getId())) {
+                    var attr = changedAttrsMap.get(s.getBeatMap().getId());
+                    minfo.setDifficultyRating(attr.getStars());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
                         minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
                         minfo.setBpm(minfo.getBPM() * 1.5f);
@@ -570,7 +570,7 @@ public class ImageService {
                         minfo.getTotalLength(),
                         s.getMaxCombo(),
                         minfo.getBPM(),
-                        minfo.getStarRating(),
+                        minfo.getDifficultyRating(),
                         s.getRank(),
                         s.getBeatMapSet().getCovers().getList2x(),
                         s.getMods().toArray(new String[0])
@@ -653,7 +653,7 @@ public class ImageService {
                     String name = "";
                     String avatar = "";
                     for (var node : mapperInfo) {
-                        if (e.getKey().equals(node.getUID())) {
+                        if (e.getKey().equals(node.getId())) {
                             name = node.getUserName();
                             avatar = node.getAvatarUrl();
                             break;
@@ -711,10 +711,10 @@ public class ImageService {
         }
         if (changedAttrsMap != null) {
             java.util.function.Consumer<Score> f = (s) -> {
-                long id = s.getBeatMap().getBID();
+                long id = s.getBeatMap().getId();
                 if (changedAttrsMap.containsKey(id)) {
                     var attr = changedAttrsMap.get(id);
-                    s.getBeatMap().setStarRating(attr.getStars());
+                    s.getBeatMap().setDifficultyRating(attr.getStars());
                     s.getBeatMap().setBpm(attr.getBpm());
                     if (Mod.hasDt(attr.getMods())) {
                         s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 1.5f));
@@ -835,7 +835,7 @@ public class ImageService {
 
         var diffArr = new int[8];
         {
-            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getStarRating).toArray();
+            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
             var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
             for (var d : diffAll) {
                 for (int i = 0; i < 8; i++) {

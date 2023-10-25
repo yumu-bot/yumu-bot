@@ -18,9 +18,9 @@ import java.util.stream.StreamSupport;
 public class BeatMap {
     Long id;
     @JsonProperty("beatmapset_id")
-    Integer SID;
+    Integer beatmapsetId;
     @JsonProperty("difficulty_rating")
-    Float starRating;
+    Float difficultyRating;
     String mode;
     @JsonProperty("mode_int")
     Integer modeInt;
@@ -84,28 +84,28 @@ public class BeatMap {
         }
     }
 
-    public Long getBID() {
+    public Long getId() {
         return id;
     }
 
-    public void setBID(Long bid) {
-        this.id = bid;
+    public void setBID(Long id) {
+        this.id = id;
     }
 
-    public Integer getSID() {
-        return SID;
+    public Integer getBeatmapsetId() {
+        return beatmapsetId;
     }
 
-    public void setSID(Integer sid) {
-        this.SID = sid;
+    public void setBeatmapsetId(Integer beatmapsetId) {
+        this.beatmapsetId = beatmapsetId;
     }
 
-    public Float getStarRating() {
-        return starRating;
+    public Float getDifficultyRating() {
+        return difficultyRating;
     }
 
-    public void setStarRating(Float difficultyRating) {
-        this.starRating = difficultyRating;
+    public void setDifficultyRating(Float difficultyRating) {
+        this.difficultyRating = difficultyRating;
     }
 
     public String getMode() {
@@ -362,8 +362,8 @@ public class BeatMap {
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMap{");
         sb.append("id=").append(id);
-        sb.append(", beatmapsetId=").append(SID);
-        sb.append(", difficultyRating=").append(starRating);
+        sb.append(", beatmapsetId=").append(beatmapsetId);
+        sb.append(", difficultyRating=").append(difficultyRating);
         sb.append(", mode='").append(mode).append('\'');
         sb.append(", modeInt=").append(modeInt);
         sb.append(", status='").append(status).append('\'');

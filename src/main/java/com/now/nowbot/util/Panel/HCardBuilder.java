@@ -65,7 +65,7 @@ public class HCardBuilder extends PanelBuilder{
 
         //画谱面难度色标指示矩形
         canvas.save();
-        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(info.getBeatMap().getStarRating())));
+        canvas.drawRRect(RRect.makeXYWH(0,0,40,110,20,0,0,20),new Paint().setColor(SkiaUtil.getStartColor(info.getBeatMap().getDifficultyRating())));
         canvas.restore();
 
         //画主要缩略图

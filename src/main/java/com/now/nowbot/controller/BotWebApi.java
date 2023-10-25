@@ -484,7 +484,7 @@ public class BotWebApi {
         var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         if (fopt.isEmpty()) {
             var finfo = osuGetService.getMapInfoFromDB(bid);
-            osuGetService.downloadAllFiles(finfo.getSID());
+            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
             fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
         }
         if (fopt.isEmpty()) throw new IOException("download error");

@@ -121,11 +121,11 @@ public class MRAService implements MessageService<Matcher> {
         int noMapRounds = 0;
         for (var g : games) {
             if (sid == 0 && g.getBeatmap() != null) {
-                sid = g.getBeatmap().getSID();
+                sid = g.getBeatmap().getBeatmapsetId();
             }
 
             if (g.getBeatmap() != null) {
-                averageStar += g.getBeatmap().getStarRating();
+                averageStar += g.getBeatmap().getDifficultyRating();
             } else {
                 noMapRounds ++;
             }
@@ -154,25 +154,25 @@ public class MRAService implements MessageService<Matcher> {
         var uid4cover = new HashMap<Long, Cover>();
         int indexOfUser = 0;
         while (true) {
-            var l = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getUID).toList();
+            var l = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
             if (l.isEmpty()) break;
             var us = osuGetService.getUsers(l);
             for(var node: us) {
-                uid4cover.put(node.getUID(), node.getCover());
+                uid4cover.put(node.getId(), node.getCover());
             }
         }
         //获取所有user
         for (var jUser : userAll) {
             var u = new OsuUser();
-            u.setUID(jUser.getUID());
+            u.setUID(jUser.getId());
             u.setUsername(jUser.getUserName());
-            u.setCover(uid4cover.get(jUser.getUID()));
+            u.setCover(uid4cover.get(jUser.getId()));
             u.setAvatarUrl(jUser.getAvatarUrl());
             try {
-                users.put(jUser.getUID().intValue(), new UserMatchData(u));
+                users.put(jUser.getId().intValue(), new UserMatchData(u));
             } catch (Exception e) {
-                users.put(jUser.getUID().intValue(), new UserMatchData(jUser.getUID().intValue(), "UID:" + jUser.getUID().intValue()));
+                users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
             }
         }
 

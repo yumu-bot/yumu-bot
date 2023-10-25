@@ -141,7 +141,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         int noMapRounds = 0;
         for (var g : games) {
             if (g.getBeatmap() != null) {
-                averageStar += g.getBeatmap().getStarRating();
+                averageStar += g.getBeatmap().getDifficultyRating();
             } else {
                 noMapRounds ++;
             }
@@ -171,12 +171,12 @@ public class MatchRoundService implements MessageService<Matcher> {
         var UID2Cover = new HashMap<Long, Cover>();
         int indexOfUser = 0;
         while (true) {
-            var UIDList = userAll.stream().skip(indexOfUser * 50L).limit(50).map(MicroUser::getUID).toList();
+            var UIDList = userAll.stream().skip(indexOfUser * 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
             if (UIDList.isEmpty()) break;
             var microUserList = osuGetService.getUsers(UIDList);
             for (var m : microUserList) {
-                UID2Cover.put(m.getUID(), m.getCover());
+                UID2Cover.put(m.getId(), m.getCover());
             }
         }
 
@@ -184,16 +184,16 @@ public class MatchRoundService implements MessageService<Matcher> {
         for (var microUser : userAll) {
 
             var osuUser = new OsuUser();
-            osuUser.setUID(microUser.getUID());
+            osuUser.setUID(microUser.getId());
             osuUser.setUsername(microUser.getUserName());
-            osuUser.setCover(UID2Cover.get(microUser.getUID()));
+            osuUser.setCover(UID2Cover.get(microUser.getId()));
             osuUser.setAvatarUrl(microUser.getAvatarUrl());
 
             try {
-                userDataMap.put(microUser.getUID().intValue(), new UserMatchData(osuUser));
+                userDataMap.put(microUser.getId().intValue(), new UserMatchData(osuUser));
             } catch (Exception e) {
-                userDataMap.put(microUser.getUID().intValue(), new UserMatchData(microUser.getUID().intValue(),
-                        "UID:" + microUser.getUID().intValue()));
+                userDataMap.put(microUser.getId().intValue(), new UserMatchData(microUser.getId().intValue(),
+                        "UID:" + microUser.getId().intValue()));
             }
         }
 

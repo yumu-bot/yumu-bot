@@ -78,7 +78,7 @@ public class MicroUser {
         this.group = group;
     }
 
-    public Long getUID() {
+    public Long getId() {
         return id;
     }
 

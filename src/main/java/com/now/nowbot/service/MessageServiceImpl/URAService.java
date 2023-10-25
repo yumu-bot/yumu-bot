@@ -94,9 +94,9 @@ public class URAService implements MessageService<Matcher> {
         //获取所有user
         for (var jUser : JUsers) {
             try {
-                users.put(jUser.getUID().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getUID())));
+                users.put(jUser.getId().intValue(), new UserMatchData(osuGetService.getPlayerInfo(jUser.getId())));
             } catch (Exception e) {
-                users.put(jUser.getUID().intValue(), new UserMatchData(jUser.getUID().intValue(), "UID:" + jUser.getUID().intValue()));
+                users.put(jUser.getId().intValue(), new UserMatchData(jUser.getId().intValue(), "UID:" + jUser.getId().intValue()));
             }
         }
 
@@ -120,7 +120,7 @@ public class URAService implements MessageService<Matcher> {
             } else {
                 games = streamTemp.collect(
                         Collectors.toMap(
-                                e -> e.getBeatmap().getBID(),
+                                e -> e.getBeatmap().getId(),
                                 v -> v,
                                 (e, c) -> e.getStartTime().isBefore(c.getStartTime()) ? c : e
                         )

@@ -26,9 +26,9 @@ public class RecommendedMap {
 
     public static RecommendedMap getMap(BeatMap mapInfo){
         var data = new RecommendedMap();
-        data.bid = mapInfo.getBID();
+        data.bid = mapInfo.getId();
         data.bgUrl = mapInfo.getBeatMapSet().getCovers().getCover2x();
-        data.Star = mapInfo.getStarRating().floatValue();
+        data.Star = mapInfo.getDifficultyRating().floatValue();
         data.OD = mapInfo.getOD();
         data.AR = mapInfo.getAR();
         data.HP = mapInfo.getHP();

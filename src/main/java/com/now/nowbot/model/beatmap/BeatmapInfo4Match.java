@@ -7,18 +7,17 @@ import com.now.nowbot.model.JsonData.BeatMapSet;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BeatmapInfo4Match {
 
-    @JsonProperty("id")
-    Integer BID;
+    Integer id;
     @JsonProperty("beatmapset_id")
-    Integer SID;
+    Integer beatmapsetId;
     @JsonProperty("difficulty_rating")
-    Double starRating;
+    Double difficultyRating;
     String mode;
     String status;
     @JsonProperty("total_length")
     Integer totalLength;
     @JsonProperty("user_id")
-    Integer hostUID;
+    Integer userId;
     String version;
 
     @JsonProperty("beatmapset")
@@ -34,27 +33,27 @@ public class BeatmapInfo4Match {
     String checksum;
 
     public Integer getBID() {
-        return BID;
+        return id;
     }
 
     public void setBID(Integer bid) {
-        this.BID = bid;
+        this.id = bid;
     }
 
     public Integer getSID() {
-        return SID;
+        return beatmapsetId;
     }
 
     public void setSID(Integer sid) {
-        this.SID = sid;
+        this.beatmapsetId = sid;
     }
 
     public Double getStarRating() {
-        return starRating;
+        return difficultyRating;
     }
 
     public void setStarRating(Double starRating) {
-        this.starRating = starRating;
+        this.difficultyRating = starRating;
     }
 
     public String getMode() {
@@ -82,11 +81,11 @@ public class BeatmapInfo4Match {
     }
 
     public Integer getHostUID() {
-        return hostUID;
+        return userId;
     }
 
     public void setHostUID(Integer hostUID) {
-        this.hostUID = hostUID;
+        this.userId = hostUID;
     }
 
     public BeatMapSet getBeatMapSet() {
