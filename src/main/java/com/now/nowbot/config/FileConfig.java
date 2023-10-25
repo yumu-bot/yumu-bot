@@ -6,15 +6,27 @@ import org.springframework.context.annotation.Primary;
 @Primary
 @ConfigurationProperties(prefix = "botfile")
 public class FileConfig {
-    String root;
-    String bgdir;
-    String font;
-    String imgbuffer;
+    /**
+     * 运行的位置
+     */
+    String root = "/tmp/bot";
+    /**
+     * 素材资源文件
+     */
+    String bgdir = "/tmp/bot/bg";
+    /**
+     * 字体文件资源
+     */
+    String font = "/tmp/bot/font";
+    /**
+     * 资源缓存路径
+     */
+    String imgbuffer = "/tmp/bot/imgbuffer";
 
     /**
      * 缓存 .osu 文件的路径
      */
-    String osuFilePath = "/osufile";
+    String osuFilePath = "/tmp/bot/osufile";
 
     public String getRoot() {
         return root;

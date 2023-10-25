@@ -1,28 +1,21 @@
 #服务监听端口
 server:
   port: 8388
-#botfile 程序的运行路径
-botfile:
-  root: C:/bot #您想运行的位置
-  bgdir: ${botfile.root}bg/
-  font: ${botfile.root}font/
-  imgbuffer: ${botfile.root}imgbuffer/
-  osuFilePath: ${botfile.root}osufile/
+
 #数据源
 spring:
   profiles:
     include:
       discord,OSU
-
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url:
-    username:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
     password:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 1
-      connection-test-query: SELECT version()
+      connection-test-query: SELECT 1;
 #使用MySql数据库
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
@@ -61,8 +54,3 @@ shiro:
     enable-task-pool: false
   group-event-filter: true
   group-event-filter-time: 1000
-
-#log配置,可有可无,只是位置,详细设定请写在 logback.xml
-logging:
-  file:
-    name: ${botfile.root}botlog/bot.log

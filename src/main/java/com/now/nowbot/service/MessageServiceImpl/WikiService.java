@@ -7,6 +7,8 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.util.JacksonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,13 +21,14 @@ import java.util.regex.Pattern;
 
 @Service("WIKI")
 public class WikiService implements MessageService<Matcher> {
+    Logger log = LoggerFactory.getLogger(WikiService.class);
     static JsonNode WIKI;
     WikiService(){
         String datestr = "";
         try {
             datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH,"wiki.json"));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.info("未找到wiki文件路径, 加载失败");
         }
         WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
     }

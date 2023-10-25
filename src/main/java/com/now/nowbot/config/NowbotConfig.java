@@ -4,7 +4,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.neovisionaries.ws.client.WebSocketFactory;
+import com.now.nowbot.aop.OpenResource;
+import com.now.nowbot.controller.BotWebApi;
 import com.now.nowbot.throwable.RequestException;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -13,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +33,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
@@ -28,10 +41,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 
 @Component
 @Configuration
@@ -167,6 +186,73 @@ public class NowbotConfig {
                 .build();
     }
 
+    @Bean
+    @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
+    public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
+        WebSocketFactory factory = new WebSocketFactory();
+        var proy = factory.getProxySettings();
+        if (config.proxyPort != 0)
+            proy.setHost("localhost").setPort(config.proxyPort);
+        JDA jda;
+        try {
+            var scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(0, V_THREAD_FACORY);
+            jda = JDABuilder
+                    .createDefault(discordConfig.getToken())
+                    .setHttpClient(okHttpClient)
+                    .setWebsocketFactory(factory)
+                    .addEventListeners(listenerAdapters.toArray())
+                    .setCallbackPool(botAsyncExecutor.getThreadPoolExecutor())
+                    .setGatewayPool(scheduledThreadPoolExecutor)
+                    .setRateLimitPool(scheduledThreadPoolExecutor)
+                    .setEventPool(botAsyncExecutor.getThreadPoolExecutor())
+                    .setAudioPool(scheduledThreadPoolExecutor)
+                    .build();
+            jda.awaitReady();
+        } catch (Exception e) {
+            log.error("create jda error", e);
+            return null;
+        }
+
+        for (Command command : jda.retrieveCommands().complete()) {
+            command.delete().complete();
+        }
+        for (Method declaredMethod : BotWebApi.class.getDeclaredMethods()) {
+            OpenResource methodAnnotation = declaredMethod.getAnnotation(OpenResource.class);
+            if (methodAnnotation == null) {
+                continue;
+            }
+            String name = methodAnnotation.name();
+            SlashCommandData commandData = Commands.slash((discordConfig.getCommandSuffix() + name).toLowerCase(), methodAnnotation.desp());
+            for (Parameter parameter : declaredMethod.getParameters()) {
+                OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
+                if (parameterAnnotation == null) {
+                    continue;
+                }
+                OptionType optionType;
+                Class<?> type = parameter.getType();
+                if (type.equals(int.class) || type.equals(Integer.class)) {
+                    optionType = OptionType.INTEGER;
+                } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+                    optionType = OptionType.BOOLEAN;
+                } else {
+                    optionType = OptionType.STRING;
+                }
+                String parameterName = parameterAnnotation.name();
+                OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
+                if (parameterName.equals("mode")) {
+                    optionData.addChoice("OSU", "OSU");
+                    optionData.addChoice("TAIKO", "TAIKO");
+                    optionData.addChoice("CATCH", "CATCH");
+                    optionData.addChoice("MANIA", "MANIA");
+                }
+                optionData.setRequired(parameterAnnotation.required());
+                commandData.addOptions(optionData);
+            }
+            jda.upsertCommand(commandData).complete();
+        }
+
+        return jda;
+    }
 
     @Value("${server.port}")
     public void setPORT(Integer port) {

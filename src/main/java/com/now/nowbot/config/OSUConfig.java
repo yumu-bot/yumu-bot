@@ -8,11 +8,20 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "osu", ignoreInvalidFields = true)
 public class OSUConfig {
-    String url;
-    String callbackpath;
-    String callBackUrl;
-    Integer id;
-    String token;
+    /**
+     * 接口路径, 一般不用改
+     */
+    String url = "https://osu.ppy.sh/api/v2/";
+    /**
+     * 回调的api端口
+     */
+    String callBackUrl = "/bind";
+    /**
+     * 回调链接, ${osu.callbackpath} 用callBackUrl 替换
+     */
+    String callbackpath = "http://localhost:8388${osu.callbackpath}";
+    Integer id = 0;
+    String token = "*";
 
     public String getUrl() {
         return url;

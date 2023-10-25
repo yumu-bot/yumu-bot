@@ -39,7 +39,7 @@
     </profiles>
     <properties>
         <java.version>21</java.version>
-        <skipTests>true</skipTests>
+        <skipTests>false</skipTests>
     </properties>
     <dependencies>
 
@@ -139,6 +139,11 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
         <!--
 

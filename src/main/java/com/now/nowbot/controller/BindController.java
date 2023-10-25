@@ -11,9 +11,9 @@ import com.now.nowbot.util.UpdateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
+@ConditionalOnProperty(value = "osu.callbackpath")
 public class BindController {
     public static final boolean debug = false;
     static final Logger log = LoggerFactory.getLogger(BindController.class);
