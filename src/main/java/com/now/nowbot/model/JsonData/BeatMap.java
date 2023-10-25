@@ -18,7 +18,7 @@ import java.util.stream.StreamSupport;
 public class BeatMap {
     Long id;
     @JsonProperty("beatmapset_id")
-    Integer beatmapsetId;
+    Integer SID;
     @JsonProperty("difficulty_rating")
     Float starRating;
     String mode;
@@ -88,16 +88,16 @@ public class BeatMap {
         return id;
     }
 
-    public void setBID(Long id) {
-        this.id = id;
+    public void setBID(Long bid) {
+        this.id = bid;
     }
 
     public Integer getSID() {
-        return beatmapsetId;
+        return SID;
     }
 
-    public void setSID(Integer beatmapsetId) {
-        this.beatmapsetId = beatmapsetId;
+    public void setSID(Integer sid) {
+        this.SID = sid;
     }
 
     public Float getStarRating() {
@@ -362,7 +362,7 @@ public class BeatMap {
     public String toString() {
         final StringBuilder sb = new StringBuilder("BeatMap{");
         sb.append("id=").append(id);
-        sb.append(", beatmapsetId=").append(beatmapsetId);
+        sb.append(", beatmapsetId=").append(SID);
         sb.append(", difficultyRating=").append(starRating);
         sb.append(", mode='").append(mode).append('\'');
         sb.append(", modeInt=").append(modeInt);
