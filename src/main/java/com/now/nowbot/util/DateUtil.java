@@ -197,10 +197,11 @@ public class DateUtil {
         int ms;
 //      1800  -  1200  -  450  -  300
         if (Mod.hasHr(mod)){
-            ar *= 1.4;
+            ar *= 1.4f;
         } else if (Mod.hasEz(mod)) {
             ar /= 2;
         }
+        ar = Math.min(10f, ar);
         ms = AR2MS(ar);
         if (Mod.hasDt(mod)){
             ms /= (3d/2);
