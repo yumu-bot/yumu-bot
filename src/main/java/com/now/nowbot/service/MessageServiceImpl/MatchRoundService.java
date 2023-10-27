@@ -265,9 +265,12 @@ public class MatchRoundService implements MessageService<Matcher> {
             }
 
             if (keyword != null &&
-                    (b.getBeatMapSet().getTitle().toLowerCase().contains(keyword.trim().toLowerCase())
-                    || b.getBeatMapSet().getArtist().toLowerCase().contains(keyword.trim().toLowerCase())
-                    || b.getVersion().toLowerCase().contains(keyword.trim().toLowerCase()))) {
+                    (b.getBeatMapSet().getTitle().toLowerCase()
+                            .contains(keyword.trim().toLowerCase())
+                    || b.getBeatMapSet().getArtist().toLowerCase()
+                            .contains(keyword.trim().toLowerCase())
+                    || b.getVersion().toLowerCase()
+                            .contains(keyword.trim().toLowerCase()))) {
                 return i;
             }
         }
