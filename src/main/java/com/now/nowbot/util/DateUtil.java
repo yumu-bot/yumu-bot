@@ -194,20 +194,21 @@ public class DateUtil {
     }
 
     public static float AR(float ar, int mod){
-        int ms;
+        float ms;
 //      1800  -  1200  -  450  -  300
         if (Mod.hasHr(mod)){
-            ar *= 1.4;
+            ar *= 1.4f;
         } else if (Mod.hasEz(mod)) {
             ar /= 2;
         }
+        ar = Math.min(10f, ar);
         ms = AR2MS(ar);
         if (Mod.hasDt(mod)){
-            ms /= (3d/2);
+            ms /= (3f / 2f);
         } else if (Mod.hasHt(mod)) {
-            ms /= (3d/4);
+            ms /= (3f / 4f);
         }
-        ar = MS2AR(ms);
+        ar = MS2AR((int) ms);
         return (int)Math.ceil(ar * 100)/100f;
     }
 

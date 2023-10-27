@@ -1,7 +1,6 @@
 package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
@@ -146,8 +145,8 @@ public class Permission {
 
 
         //初始化暗杀名单(
-        supetList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
-        testerList = Set.of(1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+        supetList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+        testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
 
         log.info("名单初始化完成");
     }
