@@ -3,6 +3,9 @@ package com.now.nowbot.model.score;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.Statistics;
+import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.OffsetDateTime;
 
@@ -10,16 +13,24 @@ import java.time.OffsetDateTime;
 public class MPScore {
     Long id;
     @JsonProperty("user_id")
-    Integer userId;
+    Integer UID;
+    String userName;
     Double accuracy;
     String[] mods;
     Integer score;
     @JsonProperty("max_combo")
     Integer maxCombo;
+
+    String mode;
+    @JsonProperty("mode_int")
+    Integer modeInt;
+
     Boolean passed;
     Integer perfect;
-    //待实现
-//    Statistics statistics;
+
+    Statistics statistics;
+
+    // rank 默认是 F
     String rank;
     @JsonProperty("created_at")
     OffsetDateTime createdAt;
@@ -28,6 +39,33 @@ public class MPScore {
     Integer pp;
     //slot, team, pass
     JsonNode match;
+
+    OsuUser osuUser;
+    String team;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public OsuUser getOsuUser() {
+        return osuUser;
+    }
+
+    public void setOsuUser(OsuUser osuUser) {
+        this.osuUser = osuUser;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
 
     public JsonNode getMatch() {
         return match;
@@ -45,12 +83,12 @@ public class MPScore {
         this.id = id;
     }
 
-    public Integer getUserID() {
-        return userId;
+    public Integer getUID() {
+        return UID;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setUID(Integer uid) {
+        this.UID = uid;
     }
 
     public Double getAccuracy() {
@@ -85,6 +123,22 @@ public class MPScore {
         this.maxCombo = maxCombo;
     }
 
+    public OsuMode getMode() {
+        return OsuMode.getMode(mode);
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public Integer getModeInt() {
+        return modeInt;
+    }
+
+    public void setModeInt(Integer modeInt) {
+        this.modeInt = modeInt;
+    }
+
     public Boolean getPassed() {
         return passed;
     }
@@ -99,6 +153,14 @@ public class MPScore {
 
     public void setPerfect(Integer perfect) {
         this.perfect = perfect;
+    }
+
+    public Statistics getStatistics() {
+        return statistics;
+    }
+
+    public void setStatistics(Statistics statistics) {
+        this.statistics = statistics;
     }
 
     public String getRank() {

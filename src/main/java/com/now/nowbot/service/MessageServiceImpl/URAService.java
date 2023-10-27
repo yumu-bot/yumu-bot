@@ -24,7 +24,7 @@ public class URAService implements MessageService<Matcher> {
     @Autowired
     OsuGetService osuGetService;
 
-    public static record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
+    public record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
@@ -153,10 +153,10 @@ public class URAService implements MessageService<Matcher> {
                         matchStatistics.setTeamVs(false);
                     }
                     //填充用户队伍信息和总分信息
-                    var user = users.get(scoreInfo.getUserID());
+                    var user = users.get(scoreInfo.getUID());
                     if (user == null) {
-                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserID().longValue()));
-                        users.put(scoreInfo.getUserID(), user);
+                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUID().longValue()));
+                        users.put(scoreInfo.getUID(), user);
                     }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());

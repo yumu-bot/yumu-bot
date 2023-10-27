@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.match.*;
+import com.now.nowbot.model.score.MPScore;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -28,8 +29,6 @@ public class MatchRoundService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    public record RatingData(boolean isTeamVs, int red, int blue, String type, List<UserMatchData> allUsers) {
-    }
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?matchround(s)?|(ym)?round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|]+))?");
 
     @Override
@@ -95,7 +94,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getID())) {
-            var events = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID()).getEvents();
+            List<MatchEvent> events = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID()).getEvents();
             if (events.isEmpty()) throw new MatchRoundException(MatchRoundException.Type.MR_Round_Empty);
             match.getEvents().addAll(0, events);
         }
@@ -123,35 +122,62 @@ public class MatchRoundService implements MessageService<Matcher> {
             throw new MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound);
         }
 
-        var matchBeatmap = games.get(index).getBeatmap();
+        var scoreList = fetch(match.getUsers(), games, index, osuGetService);
+        var blueList = scoreList.stream().filter(
+                s -> s.getMatch().get("team").asText().equalsIgnoreCase("blue")).toList();
+        var redList = scoreList.stream().filter(
+                s -> s.getMatch().get("team").asText().equalsIgnoreCase("red")).toList();
+        var noneList = scoreList.stream().filter(
+                s -> s.getMatch().get("team").asText().equalsIgnoreCase("none")).toList();
 
-        var data = fetch(match.getUsers(), games, index, osuGetService);
 
-        List<UserMatchData> finalUsers = data.allUsers;
-        var blueList = finalUsers.stream().filter(
-                userMatchData -> userMatchData.getTeam().equalsIgnoreCase("blue")).toList();
-        var redList = finalUsers.stream().filter(
-                userMatchData -> userMatchData.getTeam().equalsIgnoreCase("red")).toList();
-        var noneList = finalUsers.stream().filter(
-                userMatchData -> userMatchData.getTeam().equalsIgnoreCase("none")).toList();
+        boolean isTeamVS;
+        try {
+            isTeamVS = match.getEvents().get(0).getGame().getScoringType().equalsIgnoreCase("team-vs");
+        } catch (Exception e) {
+            isTeamVS = false;
+        }
 
         //平均星数
         float averageStar = 0f;
         int rounds = games.size();
         int noMapRounds = 0;
+
+        int redWin = 0;
+        int blueWin = 0;
+
         for (var g : games) {
             if (g.getBeatmap() != null) {
                 averageStar += g.getBeatmap().getDifficultyRating();
             } else {
                 noMapRounds ++;
             }
+
+            //算红蓝总分
+            if (isTeamVS) {
+                int redTeamScore = 0;
+                int blueTeamScore = 0;
+
+                var scores = g.getScoreInfoList();
+                for (MPScore s : scores) {
+                    switch (s.getMatch().get("team").asText()) {
+                        case "red": redTeamScore += s.getScore(); break;
+                        case "blue": blueTeamScore += s.getScore(); break;
+                    }
+                }
+
+                if (redTeamScore > blueTeamScore) redWin++;
+                else if (redTeamScore < blueTeamScore) blueWin++;
+            }
         }
 
         averageStar /= (rounds - noMapRounds);
 
+        var beatMap = games.get(index).getBeatmap();
+
         byte[] img;
         try {
-            img = imageService.getPanelF2(redList, blueList, noneList, match.getMatchInfo(), matchBeatmap, averageStar, rounds, data.red, data.blue, data.isTeamVs);
+            img = imageService.getPanelF2(redList, blueList, noneList, match.getMatchInfo(), beatMap, averageStar, rounds, redWin, blueWin, isTeamVS);
         } catch (Exception e) {
             log.error("MR 图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
@@ -161,13 +187,14 @@ public class MatchRoundService implements MessageService<Matcher> {
     }
 
     //主获取方法
-    public static RatingData fetch(List<MicroUser> userAll, List<GameInfo> games, int index, OsuGetService osuGetService) {
+    public static List<MPScore> fetch(List<MicroUser> userAll, List<GameInfo> games, int index, OsuGetService osuGetService) {
         //存储计算信息
-        MatchStatistics matchStatistics = new MatchStatistics();
+        List<MPScore> scoreData = new ArrayList<>();
 
         //生成玩家哈希表
-        Map<Integer, UserMatchData> userDataMap = new HashMap<>();
-        matchStatistics.setUsers(userDataMap);
+        Map<Integer, OsuUser> osuUserMap = new HashMap<>();
+
+        //获取玩家背景图
         var UID2Cover = new HashMap<Long, Cover>();
         int indexOfUser = 0;
         while (true) {
@@ -184,87 +211,55 @@ public class MatchRoundService implements MessageService<Matcher> {
         for (var microUser : userAll) {
 
             var osuUser = new OsuUser();
-            osuUser.setUID(microUser.getId());
-            osuUser.setUsername(microUser.getUserName());
-            osuUser.setCover(UID2Cover.get(microUser.getId()));
-            osuUser.setAvatarUrl(microUser.getAvatarUrl());
-
             try {
-                userDataMap.put(microUser.getId().intValue(), new UserMatchData(osuUser));
+                osuUser.setUID(microUser.getId());
+                osuUser.setUsername(microUser.getUserName());
+                osuUser.setCover(UID2Cover.get(microUser.getId()));
+                osuUser.setAvatarUrl(microUser.getAvatarUrl());
+                osuUser.setCountry(microUser.getCountry());
             } catch (Exception e) {
-                userDataMap.put(microUser.getId().intValue(), new UserMatchData(microUser.getId().intValue(),
-                        "UID:" + microUser.getId().intValue()));
+                osuUser.setUID(microUser.getId());
+                osuUser.setUsername("UID:" + microUser.getId());
+                osuUser.setCover(null);
+                osuUser.setAvatarUrl(null);
+                osuUser.setCountry(null);
             }
+
+            osuUserMap.put(microUser.getId().intValue(), osuUser);
         }
 
 
         // 获取某一对局的信息
-        {
-            var roundInfo = games.get(index);
-            var scoreInfoList = roundInfo.getScoreInfoList();
+        var roundInfo = games.get(index);
+        var scoreInfoList = roundInfo.getScoreInfoList();
 
-            GameRound round = new GameRound();
-            matchStatistics.getGameRounds().add(round);
+        //剔除没参赛和小于1w的玩家
+        scoreInfoList.removeIf(score -> score.getScore() <= 10000);
 
-            //算对局内的总分
-            for (int i = 0; i < scoreInfoList.size(); i++) {
-                var scoreInfo = scoreInfoList.get(i);
-
-                //剔除低于10000分的成绩
-                if (scoreInfo.getScore() < 10000) {
-                    scoreInfoList.remove(i);
-                    i--;
-                } else {
-                    String team = scoreInfo.getMatch().get("team").asText();
-                    if (team.equals("none") && matchStatistics.isTeamVs()) {
-                        matchStatistics.setTeamVs(false);
-                    }
-
-                    //填充用户队伍信息和总分信息
-                    var userRoundData = userDataMap.get(scoreInfo.getUserID());
-                    if (userRoundData == null) {
-                        userRoundData = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserID().longValue()));
-                        userDataMap.put(scoreInfo.getUserID(), userRoundData);
-                    }
-                    userRoundData.setTeam(team);
-                    userRoundData.getScores().add(scoreInfo.getScore());
-                    round.getUserScores().put(userRoundData.getUID(), scoreInfo.getScore());
-
-                    //队伍总分
-                    round.getTeamScores().put(team, round.getTeamScores().getOrDefault(team, 0L) + scoreInfo.getScore());
-                }
-            }
-
-            //算RRA,算法score/average(score);
-            for (var scoreEntry : round.getUserScores().entrySet()) {
-                var user = userDataMap.get(scoreEntry.getKey());
-                user.getRRAs().add((((double) scoreEntry.getValue() / round.getTotalScore()) * scoreInfoList.size()));
-            }
-
-            matchStatistics.setScoreNum(games.isEmpty() ? 0 : games.size());
-
-            //剔除没参赛的用户
-            userDataMap.values().removeIf(user -> user.getRRAs().isEmpty());
+        // 给分数加头像
+        for (MPScore s: scoreInfoList) {
+            s.setOsuUser(osuUserMap.get(s.getUID()));
+            scoreData.add(s);
         }
 
-        //计算步骤封装
-        matchStatistics.calculate();
+        //按分数排序 也可以不排序
+        /*
+        scoreData = scoreData.stream()
+                .sorted(Comparator.comparing(MPScore::getScore).reversed())
+                .collect(Collectors.toList());
+         */
 
-        //不需要排序
-        List<UserMatchData> finalUsers = new ArrayList<>(userDataMap.values());
-        var teamPoint = matchStatistics.getTeamPoint();
-
-        return new RatingData(matchStatistics.isTeamVs(), teamPoint.getOrDefault("red", 0), teamPoint.getOrDefault("blue", 0), games.get(0).getTeamType(), finalUsers);
+        return scoreData;
     }
 
-    private static int getRoundIndexFromKeyWord (List<GameInfo> infos, @Nullable String keyword) {
-        int size = infos.size();
+    private static int getRoundIndexFromKeyWord (List<GameInfo> infoList, @Nullable String keyword) {
+        int size = infoList.size();
 
         for (int i = 0; i < size; i++) {
             BeatMap b;
 
             try {
-                b = infos.get(i).getBeatmap();
+                b = infoList.get(i).getBeatmap();
             } catch (NullPointerException ignored) {
                 continue;
             }

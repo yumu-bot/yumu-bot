@@ -154,12 +154,12 @@ public class MRAService implements MessageService<Matcher> {
         var uid4cover = new HashMap<Long, Cover>();
         int indexOfUser = 0;
         while (true) {
-            var l = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
+            var UIDList = userAll.stream().skip(indexOfUser* 50L).limit(50).map(MicroUser::getId).toList();
             indexOfUser++;
-            if (l.isEmpty()) break;
-            var us = osuGetService.getUsers(l);
-            for(var node: us) {
-                uid4cover.put(node.getId(), node.getCover());
+            if (UIDList.isEmpty()) break;
+            var microUsers = osuGetService.getUsers(UIDList);
+            for(var u: microUsers) {
+                uid4cover.put(u.getId(), u.getCover());
             }
         }
         //获取所有user
@@ -203,10 +203,10 @@ public class MRAService implements MessageService<Matcher> {
                         matchStatistics.setTeamVs(false);
                     }
                     //填充用户队伍信息和总分信息
-                    var user = users.get(scoreInfo.getUserID());
+                    var user = users.get(scoreInfo.getUID());
                     if (user == null) {
-                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUserID().longValue()));
-                        users.put(scoreInfo.getUserID(), user);
+                        user = new UserMatchData(osuGetService.getPlayerOsuInfo(scoreInfo.getUID().longValue()));
+                        users.put(scoreInfo.getUID(), user);
                     }
                     user.setTeam(team);
                     user.getScores().add(scoreInfo.getScore());

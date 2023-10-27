@@ -258,7 +258,7 @@ public class ImageService {
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelF2(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo,
+    public byte[] getPanelF2(List<MPScore> red, List<MPScore> blue, List<MPScore> none, MatchInfo matchInfo,
                              BeatMap beatMap, float averageStar, int rounds, int redwins, int bluewins, boolean isTeamVs) {
 
         HttpHeaders headers = getDefaultHeader();
@@ -404,7 +404,7 @@ public class ImageService {
                 statistics.put("delete", true);
                 statistics.put("bid", g.getBID());
             }
-            var scoreRankList = g.getScoreInfoList().stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(MPScore::getUserID).toList();
+            var scoreRankList = g.getScoreInfoList().stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(MPScore::getUID).toList();
             if ("team-vs".equals(g.getTeamType())) {
                 statistics.put("is_team_vs", true);
                 // 成绩分类
@@ -434,11 +434,11 @@ public class ImageService {
                 statistics.put("wins_team_blue_before", b_win);
 
                 var r_user_list = r_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUserID().longValue());
+                    var u = uidMap.get(s.getUID().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 var b_user_list = b_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUserID().longValue());
+                    var u = uidMap.get(s.getUID().longValue());
                     return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
                 }).toList();
                 if (r_user_list.isEmpty() || b_user_list.isEmpty()) continue;
@@ -469,7 +469,7 @@ public class ImageService {
                     }
 
                     user_list = stream.map(s -> {
-                        var u = uidMap.get(s.getUserID().longValue());
+                        var u = uidMap.get(s.getUID().longValue());
                         if (u == null) {
                             return getMatchScoreInfo("Unknown",
                                     "https://osu.ppy.sh/images/layout/avatar-guest.png",

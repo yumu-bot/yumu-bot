@@ -123,7 +123,7 @@ public class CRAService implements MessageService<Matcher> {
 
     private void getScoreStrings(StringBuilder sb, MPScore score){
         try {
-            sb.append(score.getUserID()).append(',')
+            sb.append(score.getUID()).append(',')
                     .append(String.format("%4.4f", score.getAccuracy())).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
                     .append(score.getScore()).append(',')
@@ -145,13 +145,13 @@ public class CRAService implements MessageService<Matcher> {
             String userName;
 
             try {
-                userName = osuGetService.getPlayerInfo((long) score.getUserID()).getUsername();
+                userName = osuGetService.getPlayerInfo((long) score.getUID()).getUsername();
             } catch (HttpClientErrorException e) {
-                userName = score.getUserID().toString();
+                userName = score.getUID().toString();
             }
 
             sb.append(score.getMatch().get("team").asText()).append(',')
-                    .append(score.getUserID()).append(',')
+                    .append(score.getUID()).append(',')
                     .append(userName).append(',')
                     .append(score.getScore()).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
