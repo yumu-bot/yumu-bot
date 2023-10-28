@@ -12,6 +12,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class ScoreService implements MessageService<Matcher> {
         imageService = image;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(score|s(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![a-zA-Z_])))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -74,7 +75,17 @@ public class ScoreService implements MessageService<Matcher> {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             }
         } else {
-            binUser = bindDao.getUserFromQQ(event.getSender().getId());
+            try {
+                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+            } catch (BindException e) {
+                //退避 !score
+                if (matcher.group("score").equalsIgnoreCase("score")) {
+                    NowbotApplication.log.info("score 退避成功");
+                    return;
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+                }
+            }
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"));
@@ -126,7 +137,7 @@ public class ScoreService implements MessageService<Matcher> {
             } catch (HttpClientErrorException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
-                    score = getStdScore(bid, binUser);
+                    score = getDefaultScore(bid, binUser);
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound);
                 }
@@ -146,16 +157,15 @@ public class ScoreService implements MessageService<Matcher> {
             var data = imageService.getPanelE(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("err", e);
+            NowbotApplication.log.error("SCORE：渲染和发送失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
         }
     }
 
-    private Score getStdScore(long bid, BinUser binUser) throws ScoreException {
+    private Score getDefaultScore(long bid, BinUser binUser) throws ScoreException {
         try {
             return osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (HttpClientErrorException e) {
             throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
         }
     }

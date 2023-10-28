@@ -45,8 +45,10 @@ public class BPService implements MessageService<BPService.BPParam> {
         String name;
         OsuMode mode;
         Exception err;
+
+        String command;
     }
-    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_])))\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
@@ -57,6 +59,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         var param = new BPParam();
         param.mode = OsuMode.getMode(matcher.group("mode"));
         param.name = matcher.group("name");
+        param.command = matcher.group("bp");
 
         //处理 n，m
         {
@@ -123,7 +126,13 @@ public class BPService implements MessageService<BPService.BPParam> {
             try {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
-                throw new BPException(BPException.Type.BP_Me_NoBind);
+                //退避 !bp
+                if (param.command.equalsIgnoreCase("bp")) {
+                    log.info("bp 退避成功");
+                    return;
+                } else {
+                    throw new BPException(BPException.Type.BP_Me_NoBind);
+                }
             }
         } else {
             try {
@@ -150,14 +159,14 @@ public class BPService implements MessageService<BPService.BPParam> {
                 throw new BPException(BPException.Type.BP_Player_NotFound);
             }
         } catch (Exception e) {
-            log.error("获取出错", e);
+            log.error("BP 获取出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 
         try {
             bpList = osuGetService.getBestPerformance(user, mode, n, m);
         } catch (Exception e) {
-            log.error("请求出错", e);
+            log.error("BP 请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 

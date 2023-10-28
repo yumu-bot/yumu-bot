@@ -13,6 +13,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class ScorePRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(ym)?(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass|p(?![a-zA-Z_]))|(ym)?(?<recent>(recent|r(?!\\w))))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -141,7 +142,17 @@ public class ScorePRService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
             } else {
-                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                try {
+                    binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                } catch (BindException e) {
+                    //退避 !recent
+                    if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
+                        NowbotApplication.log.info("recent 退避成功");
+                        return;
+                    } else {
+                        throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+                    }
+                }
             }
         }
 
@@ -157,13 +168,7 @@ public class ScorePRService implements MessageService<Matcher> {
             } else if (binUser != null) {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             } else {
-                //退避 !recent
-                if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                    NowbotApplication.log.info("recent 退避成功");
-                    return;
-                } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-                }
+                throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
             }
         } catch (HttpClientErrorException e) {
             //退避 !recent
