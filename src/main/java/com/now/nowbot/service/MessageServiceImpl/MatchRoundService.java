@@ -256,22 +256,27 @@ public class MatchRoundService implements MessageService<Matcher> {
         int size = infoList.size();
 
         for (int i = 0; i < size; i++) {
-            BeatMap b;
+            BeatMap beatMap;
+            String word = "";
+            if (keyword != null) {
+                word = keyword.trim().toLowerCase();
+            }
 
             try {
-                b = infoList.get(i).getBeatmap();
+                beatMap = infoList.get(i).getBeatmap();
             } catch (NullPointerException ignored) {
                 continue;
             }
 
-            if (keyword != null &&
-                    (b.getBeatMapSet().getTitle().toLowerCase()
-                            .contains(keyword.trim().toLowerCase())
-                    || b.getBeatMapSet().getArtist().toLowerCase()
-                            .contains(keyword.trim().toLowerCase())
-                    || b.getVersion().toLowerCase()
-                            .contains(keyword.trim().toLowerCase()))) {
-                return i;
+            try {
+                if (beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getArtist().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getMapperName().toLowerCase().contains(word) ||
+                        beatMap.getVersion().toLowerCase().contains(word)) {
+                    return i;
+                }
+            } catch (Exception ignored) {
+                return -1;
             }
         }
 
