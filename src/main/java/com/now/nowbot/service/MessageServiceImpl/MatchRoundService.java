@@ -275,9 +275,7 @@ public class MatchRoundService implements MessageService<Matcher> {
                         beatMap.getVersion().toLowerCase().contains(word)) {
                     return i;
                 }
-            } catch (Exception ignored) {
-                return -1;
-            }
+            } catch (Exception ignored) {}
         }
 
         return -1;
