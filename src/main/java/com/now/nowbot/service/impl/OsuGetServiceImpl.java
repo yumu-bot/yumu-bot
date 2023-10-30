@@ -38,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
@@ -191,12 +190,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         body.add("redirect_uri", redirectUrl);
 
         HttpEntity<?> httpEntity = new HttpEntity<>(body, headers);
-        JsonNode s;
-        try {
-            s = template.postForObject(url, httpEntity, JsonNode.class);
-        } catch (HttpClientErrorException.Unauthorized e) {
-            throw new BindException(BindException.Type.BIND_Me_AuthorizationRevoked);
-        }
+        JsonNode s = template.postForObject(url, httpEntity, JsonNode.class);
         bindDao.updateToken(binUser.getOsuID(), s.get("access_token").asText(), s.get("refresh_token").asText(), binUser.nextTime(s.get("expires_in").asLong()));
         return s;
     }
