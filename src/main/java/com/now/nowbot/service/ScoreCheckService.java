@@ -24,7 +24,7 @@ public class ScoreCheckService {
                 .filter(s -> s.canHandle(user, score)).toList();
 
 
-        if (dlist.size() == 0) {
+        if (dlist.isEmpty()) {
             return null;
         } else if (dlist.size() > 1) {
             dlist = dlist.stream().sorted((r1, r2) -> {
