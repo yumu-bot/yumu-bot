@@ -109,8 +109,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         try {
             osuUser = osuGetService.getPlayerInfo(user, mode);
         } catch (HttpClientErrorException.NotFound e) {
-            //log.error("出现异常", e);
             throw new InfoException(InfoException.Type.INFO_Me_NotFound);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
         } catch (Exception e) {
             log.error("Info 异常：获取玩家信息", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);

@@ -12,7 +12,9 @@ public class BindException extends TipsRuntimeException{
         BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
         BIND_Client_BindingRefused("已取消绑定。OwOb"),//绑定_取消绑定
 
+        BIND_Me_NotBind("您还从未绑定过呢，请授权。(!ymbind)"),//查询自己_玩家未绑定
         BIND_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家未绑定
+        BIND_Me_AuthorizationRevoked("您已撤销授权，请重新授权。(!ymbind)"),//查询自己_玩家撤销授权
         BIND_Me_Banned("你号没了，或是 ppy API 无法访问。"),//查询自己_玩家被封禁
         BIND_Me_TooManyRequests("ppy API 访问量超限，暂时不能绑定呢..."),//查询自己_大量请求
         BIND_Me_Blacklisted("本 Bot 根本不想理你。"),//查询自己_玩家黑名单

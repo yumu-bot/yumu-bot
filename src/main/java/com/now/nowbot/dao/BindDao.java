@@ -205,32 +205,32 @@ public class BindDao {
 
     @Async
     public void refreshOldUserToken(OsuGetService osuGetService) {
-        Long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         List<OsuBindUserLite> users;
-        int refres = 0;
-        int err = 0;
+        int succeedCount = 0;
+        int errCount = 0;
 
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             for (var u : users) {
                 try {
                     refreshOldUserToken(fromLite(u), osuGetService);
-                    err = 0;
+                    errCount= 0;
                 } catch (Exception e) {
-                    err++;
+                    errCount++;
                 }
-                if (err > 10) {
+                if (errCount > 10) {
                     // 连续失败10次, 终止本次更新
-                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", refres, (System.currentTimeMillis() - now) / 1000);
+                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
                     return;
                 }
-                refres++;
+                succeedCount++;
             }
             try {
                 Thread.sleep(Duration.ofSeconds(30));
             } catch (InterruptedException ignore) {
             }
         }
-        log.info("更新用户数量: [{}], 累计用时: {}s", refres, (System.currentTimeMillis() - now) / 1000);
+        log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
     private void refreshOldUserToken(BinUser u, OsuGetService osuGetService) {
@@ -247,6 +247,10 @@ public class BindDao {
                 log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
                 removeBind(u.getOsuID());
                 throw e;
+            } catch (HttpClientErrorException.NotFound e) {
+                log.info("更新 [{}] 令牌失败, 找不到玩家账号", u.getOsuName());
+                removeBind(u.getOsuID());
+                return;
             } catch (HttpClientErrorException.BadRequest e) {
                 badRequest++;
                 if (badRequest > 6) {

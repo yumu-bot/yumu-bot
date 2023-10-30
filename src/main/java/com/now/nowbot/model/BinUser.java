@@ -93,10 +93,11 @@ public class BinUser {
         } else if (isPassed()) {
 
             try {
-                accessToken = service
-                        .refreshToken(this)
-                        .findValue("access_token")
-                        .asText();
+                var node = service.refreshToken(this);
+
+                accessToken = node.findValue("access_token").asText();
+                refreshToken = node.findValue("refresh_token").asText();
+
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.info("更新令牌失败：令牌过期", e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpired);
