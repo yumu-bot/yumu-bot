@@ -25,9 +25,9 @@ import java.util.Optional;
 
 @Component
 public class BindDao {
-    Logger            log = LoggerFactory.getLogger(BindDao.class);
-    BindUserMapper    bindUserMapper;
-    BindQQMapper      bindQQMapper;
+    Logger log = LoggerFactory.getLogger(BindDao.class);
+    BindUserMapper bindUserMapper;
+    BindQQMapper bindQQMapper;
     BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper osuFindNameMapper;
 
@@ -247,10 +247,6 @@ public class BindDao {
                 log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
                 removeBind(u.getOsuID());
                 throw e;
-            } catch (HttpClientErrorException.NotFound e) {
-                log.info("更新 [{}] 令牌失败, 找不到玩家账号", u.getOsuName());
-                removeBind(u.getOsuID());
-                return;
             } catch (HttpClientErrorException.BadRequest e) {
                 badRequest++;
                 if (badRequest > 6) {
