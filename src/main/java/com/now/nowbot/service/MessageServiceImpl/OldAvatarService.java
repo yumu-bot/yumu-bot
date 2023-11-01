@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @Service("OLDAVATAR")
 public class OldAvatarService implements MessageService<UserParam> {
 
-    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ymoldavatar|((ym)?oa(?![a-zA-Z_])))\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ymoldavatar|((ym)?oa(?![a-zA-Z_])))\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     OsuGetService osuGetService;
     BindDao bindDao;
@@ -44,11 +44,19 @@ public class OldAvatarService implements MessageService<UserParam> {
             data.setValue(new UserParam(at.getTarget(), null, null, true));
             return true;
         }
+
+        String qq = matcher.group("qq");
+        if (Objects.nonNull(qq) && Strings.isNotBlank(qq)) {
+            data.setValue(new UserParam(Long.parseLong(qq), null, null, false));
+            return true;
+        }
+
         String name = matcher.group("name");
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
             data.setValue(new UserParam(null, name, null, false));
             return true;
         }
+
         data.setValue(new UserParam(event.getSender().getId(), null, null, false));
         return true;
     }
