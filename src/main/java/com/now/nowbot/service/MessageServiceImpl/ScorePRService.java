@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -220,12 +219,6 @@ public class ScorePRService implements MessageService<Matcher> {
                 getTextOutput(scoreList.get(0), from);
             }
         }
-    }
-
-    private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
-        var s = getData(bindDao.getUserFromQQ(365246692L), mode, offset, limit, isRecent);
-        if (CollectionUtils.isEmpty(s)) throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-        return imageService.spInfo(s.get(0));
     }
 
     private void getTextOutput(Score score, Contact from) {

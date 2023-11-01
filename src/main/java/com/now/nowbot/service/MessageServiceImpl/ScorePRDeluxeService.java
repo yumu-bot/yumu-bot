@@ -32,8 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("SCOREDELUXE")
-public class PassRecentForMeService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(PassRecentForMeService.class);
+public class ScorePRDeluxeService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
     RestTemplate template;
     OsuGetService osuGetService;
@@ -41,7 +41,7 @@ public class PassRecentForMeService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Autowired
-    public PassRecentForMeService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public ScorePRDeluxeService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;

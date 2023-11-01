@@ -44,7 +44,7 @@ public class BindService implements MessageService<Matcher> {
         this.taskExecutor = taskExecutor;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*qq=(?<qq>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -60,23 +60,34 @@ public class BindService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
+        boolean isSuper = Permission.isSuper(event.getSender().getId());
 
-        if (Permission.isSuper(event.getSender().getId())) {
+        //超级管理员的专属权利
+        if (isSuper) {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+            var qqStr = matcher.group("qq");
 
-            if (matcher.group("un") != null && at != null) {
-                unbindQQ(at.getTarget());
-                return;
+            if (matcher.group("un") != null){
+                if (at != null) {
+                    unbindQQ(at.getTarget());
+                    return;
+                } else if (qqStr != null && Long.parseLong(qqStr) > 0L) {
+                    unbindQQ(Long.parseLong(qqStr));
+                    return;
+                } else {
+                    unbindQQ(from.getId());
+                    return;
+                }
             } else if (at != null) {
                 bindQQAt(event, at.getTarget());
                 return;
             }
         }
 
+        //绑定权限下放。这个不应该是超级管理员的专属权利。
         if (matcher.group("un") != null) {
-            throw new BindException(BindException.Type.BIND_Client_Unbind);
-            //from.sendMessage("解绑请联系管理员");
-            //return;
+            unbindQQ(from.getId());
+            return;
         }
 
         var name = matcher.group("name");
