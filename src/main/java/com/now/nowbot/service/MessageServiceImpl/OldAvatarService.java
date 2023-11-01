@@ -13,14 +13,18 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Service("OLDAVATAR")
 public class OldAvatarService implements MessageService<UserParam> {
+    private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
 
     static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ymoldavatar|((ym)?oa(?![a-zA-Z_])))\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
@@ -67,15 +71,27 @@ public class OldAvatarService implements MessageService<UserParam> {
         OsuUser osuUser;
 
         if (Objects.nonNull(param.qq())) {
-            BinUser binUser = bindDao.getUserFromQQ(param.qq());
+            BinUser binUser;
+            try {
+                binUser = bindDao.getUserFromQQ(param.qq());
+            } catch (Exception e) {
+                if (event.getSender().getId() == param.qq()) {
+                    throw new OldAvatarException(OldAvatarException.Type.OA_Me_NotBind);
+                } else {
+                    throw new OldAvatarException(OldAvatarException.Type.OA_Player_TokenExpired);
+                }
+            }
             try {
                 osuUser = osuGetService.getPlayerInfo(binUser);
-            } catch (Exception e) {
+            } catch (HttpClientErrorException e) {
                 if (param.at()) {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
                 } else {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Me_FetchFailed);
                 }
+            } catch (Exception e) {
+                log.error("OA 获取玩家信息失败: ", e);
+                throw new OldAvatarException(OldAvatarException.Type.OA_Me_FetchFailed);
             }
         } else {
             String name = param.name().trim();
@@ -102,7 +118,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             var data = imageService.getPanelEpsilon(osuUser.getUsername(), osuUser.getUID());
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("OA Error: ", e);
+            NowbotApplication.log.error("OA 发送失败: ", e);
             throw new OldAvatarException(OldAvatarException.Type.OA_Send_Error);
         }
     }
