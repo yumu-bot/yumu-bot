@@ -91,6 +91,12 @@ public class HelpService implements MessageService<Matcher> {
             case "match", "ma" -> "tournament.html#match";
             case "rating", "mra", "ra" -> "tournament.html#rating";
             case "monitornow", "mn" -> "tournament.html#monitornow";
+            case "round", "ro", "mr" -> "tournament.html#round";
+
+            case "oldavatar", "oa" -> "aid.html#oldavatar";
+            case "overrating", "oversr", "or" -> "aid.html#overrating";
+            case "kita", "k" -> "aid.html#kita";
+
             default -> "";
         };
         
