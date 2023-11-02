@@ -56,20 +56,24 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         var keyword = matcher.group("keyword");
-        boolean hasNoKeyword = (keyword == null || keyword.isEmpty() || keyword.isBlank());
+        boolean noKeyword = (keyword == null || keyword.isEmpty() || keyword.isBlank());
 
         int round;
         var roundStr = matcher.group("round");
 
         if (roundStr == null || roundStr.isBlank()) {
-            if (hasNoKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
+            if (noKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
             else roundStr = "-1";
+        } else if (!noKeyword) {
+            //这里是把诸如 21st 类的东西全部匹配到 keyword 里
+            roundStr = "-1";
+            keyword = roundStr + keyword;
         }
 
         try {
             round = Integer.parseInt(roundStr);
         } catch (NumberFormatException e) {
-            if (hasNoKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError);
+            if (noKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError);
             else round = -1;
         }
 
