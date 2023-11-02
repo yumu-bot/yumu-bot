@@ -56,25 +56,34 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         var keyword = matcher.group("keyword");
-        boolean noKeyword = (keyword == null || keyword.isEmpty() || keyword.isBlank());
+        boolean hasKeyword = (keyword != null && !keyword.isEmpty() && !keyword.isBlank());
 
         int round;
         var roundStr = matcher.group("round");
+        boolean hasRound = (roundStr != null && !roundStr.isEmpty() && !roundStr.isBlank());
 
-        if (roundStr == null || roundStr.isBlank()) {
-            if (noKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
-            else roundStr = "-1";
-        } else if (!noKeyword) {
+        if (hasRound) {
+            if (hasKeyword) {
             //这里是把诸如 21st 类的东西全部匹配到 keyword 里
             roundStr = "-1";
             keyword = roundStr + keyword;
+            }
+        } else {
+            if (hasKeyword) {
+                roundStr = "-1";
+            } else {
+                throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
+            }
         }
 
         try {
             round = Integer.parseInt(roundStr);
         } catch (NumberFormatException e) {
-            if (noKeyword) throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError);
-            else round = -1;
+            if (hasKeyword) {
+                round = -1;
+            } else {
+                throw new MatchRoundException(MatchRoundException.Type.MR_Round_RangeError);
+            }
         }
 
         var from = event.getSubject();
@@ -88,7 +97,7 @@ public class MatchRoundService implements MessageService<Matcher> {
     }
 
     public byte[] getDataImage (int matchID, int index, @Nullable String keyword) throws MatchRoundException {
-        boolean hasNoKeyword = (keyword == null || keyword.isEmpty() || keyword.isBlank());
+        boolean hasKeyword = (keyword != null && !keyword.isEmpty() && !keyword.isBlank());
 
         Match match;
         try {
@@ -111,18 +120,18 @@ public class MatchRoundService implements MessageService<Matcher> {
                 .collect(Collectors.toList());
 
         if (index < 0 || index > match.getEvents().size()) {
-            if (hasNoKeyword){
+            if (hasKeyword) {
+                index = getRoundIndexFromKeyWord(games, keyword);
+            } else {
                 try {
                     index = getRoundIndexFromKeyWord(games, String.valueOf(index));
                 } catch (NumberFormatException e) {
                     throw new MatchRoundException(MatchRoundException.Type.MR_Round_NotFound);
                 }
-            } else {
-                index = getRoundIndexFromKeyWord(games, keyword);
             }
         }
 
-        if (index == -1){
+        if (index == -1 && hasKeyword) {
             throw new MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound);
         }
 
@@ -258,13 +267,16 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     private static int getRoundIndexFromKeyWord (List<GameInfo> infoList, @Nullable String keyword) {
         int size = infoList.size();
+        String word;
+
+        if (keyword != null && !keyword.isEmpty() && !keyword.isBlank()) {
+            word = keyword.trim().toLowerCase();
+        } else {
+            return -1;
+        }
 
         for (int i = 0; i < size; i++) {
             BeatMap beatMap;
-            String word = "";
-            if (keyword != null) {
-                word = keyword.trim().toLowerCase();
-            }
 
             try {
                 beatMap = infoList.get(i).getBeatmap();
@@ -273,13 +285,19 @@ public class MatchRoundService implements MessageService<Matcher> {
             }
 
             try {
-                if (beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
+                if (
+                        beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getArtist().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getTitleUTF().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getArtistUTF().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getMapperName().toLowerCase().contains(word) ||
-                        beatMap.getVersion().toLowerCase().contains(word)) {
+                        beatMap.getVersion().toLowerCase().contains(word)
+                ) {
                     return i;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                //continue;
+            }
         }
 
         return -1;
