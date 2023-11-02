@@ -65,8 +65,8 @@ public class MatchRoundService implements MessageService<Matcher> {
         if (hasRound) {
             if (hasKeyword) {
             //这里是把诸如 21st 类的东西全部匹配到 keyword 里
-            roundStr = "-1";
             keyword = roundStr + keyword;
+            roundStr = "-1";
             }
         } else {
             if (hasKeyword) {
