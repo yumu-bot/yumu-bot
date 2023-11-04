@@ -250,6 +250,7 @@ public class NowbotConfig {
             }
             jda.upsertCommand(commandData).complete();
         }
+        log.info("jda init ok");
 
         return jda;
     }
