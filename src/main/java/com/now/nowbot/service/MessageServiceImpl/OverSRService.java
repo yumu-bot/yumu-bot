@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 @Service("OVERSR")
 public class OverSRService implements MessageService<Matcher> {
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((oversr)|or(?![a-zA-Z_]))+(\\s+(?<SR>[0-9.]*))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![a-zA-Z_]))(\\s+(?<SR>[0-9.]*))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
