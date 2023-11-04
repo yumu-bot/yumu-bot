@@ -212,6 +212,7 @@ public class BindDao {
 
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             for (var u : users) {
+                log.info("更新用户 [{}]", u.getOsuName());
                 try {
                     refreshOldUserToken(fromLite(u), osuGetService);
                     errCount= 0;
