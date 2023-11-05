@@ -45,7 +45,7 @@ public class ScorePRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass|p(?![a-zA-Z_]))|(ym)?(?<recent>(recent|r(?!\\w))))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -60,6 +60,7 @@ public class ScorePRService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var name = matcher.group("name");
+        var s = matcher.group("s");
 
         int offset;
         int limit;
@@ -74,9 +75,9 @@ public class ScorePRService implements MessageService<Matcher> {
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
-        //处理 n，m
         // !p 45-55 offset/n = 44 limit/m = 11
         {
+            //处理 n，m
             int n;
             int m;
             var nStr = matcher.group("n");
@@ -93,7 +94,8 @@ public class ScorePRService implements MessageService<Matcher> {
             }
 
             //避免 !b lolol233 这样子被错误匹配
-            if (n < 1 || n > 100) {
+            boolean nNotFit = (n < 1 || n > 100);
+            if (nNotFit) {
                 name += nStr;
                 n = 1;
             }
@@ -107,7 +109,6 @@ public class ScorePRService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
             }
-
             //分流：正常，相等，相反
             if (m > n) {
                 offset = n - 1;
@@ -120,7 +121,13 @@ public class ScorePRService implements MessageService<Matcher> {
                 limit = n - m + 1;
             }
 
-            isMultipleScore = (limit != 1);
+            //如果匹配多成绩模式，则自动设置 offset 和 limit
+            if (!(s == null || s.isBlank()) && (nStr == null || nStr.isBlank() || nNotFit)) {
+                offset = 0;
+                limit = 50;
+            }
+
+            isMultipleScore = (limit > 1);
         }
 
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
