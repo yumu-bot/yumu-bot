@@ -122,10 +122,14 @@ public class ScorePRService implements MessageService<Matcher> {
             }
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
-            if ((!(s == null || s.isBlank()) || !(es == null || es.isBlank()))
-                    && (nStr == null || nStr.isBlank() || nNotFit)) {
+            if (!(s == null || s.isBlank()) || !(es == null || es.isBlank())) {
                 offset = 0;
-                limit = 20;
+
+                if (nStr == null || nStr.isBlank() || nNotFit) {
+                    limit = 20;
+                } else if (mStr == null || mStr.isBlank()) {
+                    limit = n;
+                }
             }
 
             isMultipleScore = (limit > 1);

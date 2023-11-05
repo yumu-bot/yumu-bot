@@ -77,7 +77,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         try {
-            round = Integer.parseInt(roundStr);
+            round = Integer.parseInt(roundStr) - 1;
         } catch (NumberFormatException e) {
             if (hasKeyword) {
                 round = -1;

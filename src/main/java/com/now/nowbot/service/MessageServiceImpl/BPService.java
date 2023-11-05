@@ -39,14 +39,15 @@ public class BPService implements MessageService<BPService.BPParam> {
         imageService = image;
     }
 
-    static class BPParam {
-        int n;
-        int m;
+    public static class BPParam {
+        String n;
+        String m;
         String name;
         OsuMode mode;
-        Exception err;
+
+        boolean s;
     }
-    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_])))\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
@@ -55,50 +56,13 @@ public class BPService implements MessageService<BPService.BPParam> {
             return false;
         }
         var param = new BPParam();
+
+        param.n = matcher.group("n");
+        param.m = matcher.group("m");
         param.mode = OsuMode.getMode(matcher.group("mode"));
         param.name = matcher.group("name");
+        param.s = (matcher.group("s") != null && !matcher.group("s").isBlank());
 
-        //处理 n，m
-        {
-            var nStr = matcher.group("n");
-            var mStr = matcher.group("m");
-
-            if (nStr == null || nStr.isBlank()) {
-                param.n = 0;
-            } else {
-                try {
-                    param.n = Integer.parseInt(nStr) - 1;
-                } catch (NumberFormatException e) {
-                    param.err = new BPException(BPException.Type.BP_Map_RankError);
-                }
-            }
-
-            //避免 !b lolol233 这样子被错误匹配
-            if (param.n < 0 || param.n > 99) {
-                param.name += nStr;
-                param.n = 0;
-            }
-
-            if (mStr == null || mStr.isBlank()) {
-                param.m = 1;
-                data.setValue(param);
-                return true;
-            }
-
-            param.m = Integer.parseInt(mStr);
-            if (param.m < param.n) {
-                int temp = param.m;
-                param.m = param.n;
-                param.n = temp;
-            } else if (param.m == param.n) {
-                param.err = new BPException(BPException.Type.BP_Map_RankError);
-            }
-            if (param.m > 100) {
-                param.m = 100 - param.n; //!bp 45-101
-            } else {
-                param.m = param.m - param.n;//正常
-            }
-        }
         data.setValue(param);
         return true;
     }
@@ -106,11 +70,68 @@ public class BPService implements MessageService<BPService.BPParam> {
     @Override
     public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
 
-        int n = param.n;
-        int m = param.m;
+        int n;
+        int m;
+        int offset;
+        int limit;
+        String name = param.name;
+        boolean isMultipleBP;
 
-        if (param.err != null) {
-            throw param.err;
+        //处理 n，m
+        {
+            var nStr = param.n;
+            var mStr = param.m;
+
+            if (nStr == null || nStr.isBlank()) {
+                n = 0;
+            } else {
+                try {
+                    n = Integer.parseInt(nStr) - 1;
+                } catch (NumberFormatException e) {
+                    throw new BPException(BPException.Type.BP_Map_RankError);
+                }
+            }
+
+            //避免 !b lolol233 这样子被错误匹配
+            boolean nNotFit = (n < 0 || n > 99);
+            if (nNotFit) {
+                name += nStr;
+                n = 0;
+            }
+
+            if (mStr == null || mStr.isBlank()) {
+                m = n;
+            } else {
+                try {
+                    m = Integer.parseInt(mStr);
+                } catch (NumberFormatException e) {
+                    throw new BPException(BPException.Type.BP_Map_RankError);
+                }
+            }
+            //分流：正常，相等，相反
+            if (m > n) {
+                offset = n - 1;
+                limit = m - n + 1;
+            } else if (m == n) {
+                offset = n - 1;
+                limit = 1;
+            } else {
+                offset = m - 1;
+                limit = n - m + 1;
+            }
+
+            //如果匹配多成绩模式，则自动设置 offset 和 limit
+            if (param.s) {
+                if (nStr == null || nStr.isBlank() || nNotFit) {
+                    offset = 0;
+                    limit = 20;
+                } else {
+                    limit = offset + 1;
+                    offset = 0;
+                }
+            }
+
+            isMultipleBP = (limit > 1);
         }
 
         var from = event.getSubject();
@@ -119,7 +140,8 @@ public class BPService implements MessageService<BPService.BPParam> {
         List<Score> bpList;
         ArrayList<Integer> rankList = new ArrayList<>();
 
-        if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
+        boolean hasName = (name == null || name.isEmpty() || name.isBlank());
+        if (hasName) {
             try {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
@@ -133,7 +155,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         } else {
             try {
-                long uid = osuGetService.getOsuId(param.name);
+                long uid = osuGetService.getOsuId(name);
                 user = new BinUser();
                 user.setOsuID(uid);
                 user.setMode(OsuMode.DEFAULT);
@@ -150,7 +172,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (HttpClientErrorException.NotFound e) {
-            if (param.name == null || param.name.isEmpty() || param.name.isBlank()) {
+            if (hasName) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {
                 throw new BPException(BPException.Type.BP_Player_NotFound);
@@ -161,7 +183,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
 
         try {
-            bpList = osuGetService.getBestPerformance(user, mode, n, m);
+            bpList = osuGetService.getBestPerformance(user, mode, offset, limit);
         } catch (Exception e) {
             log.error("BP 请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
@@ -170,8 +192,8 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
 
         try {
-            if (m > 1) {
-                for (int i = n; i <= (m + n); i++) rankList.add(i + 1);
+            if (isMultipleBP) {
+                for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
                 var data = imageService.getPanelA4(osuUser, bpList, rankList);
                 QQMsgUtil.sendImage(from, data);
             } else {
