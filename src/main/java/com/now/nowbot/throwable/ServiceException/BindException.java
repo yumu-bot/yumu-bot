@@ -22,7 +22,7 @@ public class BindException extends TipsRuntimeException{
 
         BIND_Player_NoBind("对方还没有绑定呢，请提醒他输入 !ymbind 点击链接登录，完成绑定吧。"),//查询他人_玩家未绑定
         BIND_Player_HadNotBind("对方还没有绑定。"),//查询他人_玩家未绑定
-        BIND_Player_NoAuthorization("他撤销了授权呢，请提醒他输入 !ymbind 点击链接登录，重新授权吧。"),//查询他人_玩家撤销授权
+        BIND_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),//查询他人_玩家撤销授权
         BIND_Player_NoData("你查的不会是我的机器人同类吧！"),//查询他人_玩家无数据
         BIND_Player_NoQQ("请输入正确的 QQ！"),//查询他人_未搜到QQ
         BIND_Player_NotFound("这是谁呀，小沐找不到他哦？"),//查询他人_未搜到玩家
