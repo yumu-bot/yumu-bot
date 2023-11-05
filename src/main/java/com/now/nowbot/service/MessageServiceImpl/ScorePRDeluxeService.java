@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
@@ -176,8 +175,8 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             } else {
                 //退避 !recent
-                if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                    NowbotApplication.log.info("recent 退避成功");
+                if (event.getRawMessage().toLowerCase().contains("recent")) {
+                    log.info("recent 退避成功");
                     return;
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
@@ -185,8 +184,8 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
             }
         } catch (HttpClientErrorException e) {
             //退避 !recent
-            if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                NowbotApplication.log.info("recent 退避成功");
+            if (event.getRawMessage().toLowerCase().contains("recent")) {
+                log.info("recent 退避成功");
                 return;
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
@@ -15,6 +14,8 @@ import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 
 @Service("SCORE")
 public class ScoreService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
     OsuGetService osuGetService;
     BindDao bindDao;
     RestTemplate template;
@@ -79,8 +81,8 @@ public class ScoreService implements MessageService<Matcher> {
                 binUser = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
                 //退避 !score
-                if (matcher.group("score").equalsIgnoreCase("score")) {
-                    NowbotApplication.log.info("score 退避成功");
+                if (event.getRawMessage().toLowerCase().contains("score")) {
+                    log.info("score 退避成功");
                     return;
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
@@ -157,7 +159,7 @@ public class ScoreService implements MessageService<Matcher> {
             var data = imageService.getPanelE(userInfo, score, osuGetService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("SCORE：渲染和发送失败", e);
+            log.error("SCORE：渲染和发送失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
     }

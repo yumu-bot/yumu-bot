@@ -45,8 +45,6 @@ public class BPService implements MessageService<BPService.BPParam> {
         String name;
         OsuMode mode;
         Exception err;
-
-        String command;
     }
     private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-zA-Z_])|b(?![a-zA-Z_])))\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
@@ -59,7 +57,6 @@ public class BPService implements MessageService<BPService.BPParam> {
         var param = new BPParam();
         param.mode = OsuMode.getMode(matcher.group("mode"));
         param.name = matcher.group("name");
-        param.command = matcher.group("bp");
 
         //处理 n，m
         {
@@ -127,7 +124,7 @@ public class BPService implements MessageService<BPService.BPParam> {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
                 //退避 !bp
-                if (param.command.equalsIgnoreCase("bp")) {
+                if (event.getRawMessage().toLowerCase().contains("bp")) {
                     log.info("bp 退避成功");
                     return;
                 } else {
