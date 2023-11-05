@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class DateUtil {
+public class DataUtil {
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
 
@@ -136,14 +136,14 @@ public class DateUtil {
         var hitObjects = bucket[bucket.length - 1].split("\\s+");
         var hitObjectStr = new ArrayList<String>();
         for (var x : hitObjects) {
-            if (!x.trim().equals("")) {
+            if (!x.trim().isEmpty()) {
                 hitObjectStr.add(x);
             }
         }
 
         var p = Pattern.compile("^\\d+,\\d+,(\\d+)");
 
-        var times = hitObjectStr.stream()
+        return hitObjectStr.stream()
                 .map((m) -> {
                     var m2 = p.matcher(m);
                     if (m2.find()) {
@@ -152,8 +152,6 @@ public class DateUtil {
                         return 0;
                     }
                 }).toList();
-
-        return times;
     }
 
     public static List<Integer> getGrouping26(List<Integer> x) {
@@ -231,11 +229,11 @@ public class DateUtil {
         ms = OD2MS(od);
 
         if (Mod.hasDt(mod)){
-            ms /= (3d/2);
+            ms /= (3f/2);
         } else if (Mod.hasHt(mod)) {
-            ms /= (3d/4);
+            ms /= (3f/4);
         }
-        return (int)Math.ceil(MS2OD(ms)*100) / 100f;
+        return (int) Math.ceil(MS2OD(ms) * 100) / 100f;
     }
 
 

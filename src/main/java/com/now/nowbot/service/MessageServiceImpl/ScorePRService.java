@@ -45,7 +45,7 @@ public class ScorePRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -61,6 +61,7 @@ public class ScorePRService implements MessageService<Matcher> {
         var from = event.getSubject();
         var name = matcher.group("name");
         var s = matcher.group("s");
+        var es = matcher.group("es");
 
         int offset;
         int limit;
@@ -122,9 +123,10 @@ public class ScorePRService implements MessageService<Matcher> {
             }
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
-            if (!(s == null || s.isBlank()) && (nStr == null || nStr.isBlank() || nNotFit)) {
+            if ((!(s == null || s.isBlank()) || !(es == null || es.isBlank()))
+                    && (nStr == null || nStr.isBlank() || nNotFit)) {
                 offset = 0;
-                limit = 50;
+                limit = 20;
             }
 
             isMultipleScore = (limit > 1);

@@ -3,7 +3,7 @@ package com.now.nowbot.util.Panel;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.util.DateUtil;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
@@ -68,12 +68,12 @@ public class J3CardBuilder extends PanelBuilder{
         double J6t = 0D;
         double Jru2t = 0D; //san
 
-        J1t = DateUtil.getRoundedNumber(J1t,2);
-        J2t = DateUtil.getRoundedNumber(J2t,2);
-        J3t = DateUtil.getRoundedNumber(J3t,2);
-        J4t = DateUtil.getRoundedNumber(J4t,2);
-        J5t = DateUtil.getRoundedNumber(J5t,2);
-        J6t = DateUtil.getRoundedNumber(J6t,2);
+        J1t = DataUtil.getRoundedNumber(J1t,2);
+        J2t = DataUtil.getRoundedNumber(J2t,2);
+        J3t = DataUtil.getRoundedNumber(J3t,2);
+        J4t = DataUtil.getRoundedNumber(J4t,2);
+        J5t = DataUtil.getRoundedNumber(J5t,2);
+        J6t = DataUtil.getRoundedNumber(J6t,2);
 
         String J1it = "accuracy";
         String J2it = "potential";
