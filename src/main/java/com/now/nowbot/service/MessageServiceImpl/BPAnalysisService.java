@@ -76,13 +76,11 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
                 }
             } catch (Exception e) {
-                BPAnalysisException.Type etype;
-                if (param.at()) {
-                    etype = BPAnalysisException.Type.BPA_Player_FetchFailed;
+                if (!param.at()) {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_FetchFailed);
                 } else {
-                    etype = BPAnalysisException.Type.BPA_Me_FetchFailed;
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
                 }
-                throw new BPAnalysisException(etype);
             }
         } else {
             String name = param.name().trim();
@@ -107,7 +105,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
 
         if (bps == null || bps.size() <= 5) {
-            if (!param.at() && Objects.isNull(param.name())) {
+            if (param.qq() == event.getSender().getId()) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
             } else {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
