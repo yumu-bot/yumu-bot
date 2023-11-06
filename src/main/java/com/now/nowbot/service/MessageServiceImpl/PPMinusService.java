@@ -70,6 +70,8 @@ public class PPMinusService implements MessageService<Matcher> {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
             } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            } catch (BindException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("PPM 获取失败：", e);
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_FetchFailed);
@@ -89,6 +91,8 @@ public class PPMinusService implements MessageService<Matcher> {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
             } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            } catch (BindException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("PPM 获取失败：", e);
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_FetchFailed);
@@ -104,6 +108,8 @@ public class PPMinusService implements MessageService<Matcher> {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
             } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_NotFound);
+            } catch (BindException e) {
+                throw e;
             } catch (Exception e) {
                 log.error("PPM 获取失败：", e);
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_FetchFailed);
