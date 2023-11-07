@@ -220,7 +220,7 @@ public class BindService implements MessageService<Matcher> {
                 如果您执意使用绑定用户名的方式, 请回答下面问题:
                 设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
                 """);
-        var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
+        var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
 
         if (event == null) {
