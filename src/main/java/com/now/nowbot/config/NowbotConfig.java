@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -186,8 +185,8 @@ public class NowbotConfig {
                 .build();
     }
 
-    @Bean
-    @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
+    //    @Bean
+//    @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
         log.info("jda loading");
         WebSocketFactory factory = new WebSocketFactory();
