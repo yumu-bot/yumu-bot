@@ -189,6 +189,7 @@ public class NowbotConfig {
     @Bean
     @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
+        log.info("jda loading");
         WebSocketFactory factory = new WebSocketFactory();
         var proy = factory.getProxySettings();
         if (config.proxyPort != 0)
