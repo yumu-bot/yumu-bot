@@ -59,7 +59,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                         sink.error(WebClientResponseException.create(404, "NOT FOUND", null, null, null));
                         return;
                     }
-                    sink.next(json.get("userId").asLong());
+                    sink.next(json.get("osuId").asLong());
                 })
                 .block();
     }
