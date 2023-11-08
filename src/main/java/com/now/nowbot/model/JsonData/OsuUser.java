@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class OsuUser{
+public class OsuUser extends MicroUser {
     Long id;
     Double pp;
     String username;
@@ -48,7 +49,7 @@ public class OsuUser{
     @JsonProperty("is_supporter")
     Boolean isSupporter;
     @JsonProperty("last_visit")
-    String lastTime;
+    LocalDateTime lastTime;
     @JsonProperty("pm_friends_only")
     Boolean pmFriendsOnly;
     @JsonProperty("username")
@@ -572,11 +573,11 @@ public class OsuUser{
         isSupporter = supporter;
     }
 
-    public String getLastTime() {
+    public LocalDateTime getLastTime() {
         return lastTime;
     }
 
-    public void setLastTime(String lastTime) {
+    public void setLastTime(LocalDateTime lastTime) {
         this.lastTime = lastTime;
     }
 
