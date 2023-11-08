@@ -152,7 +152,11 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
         StringBuilder sb = new StringBuilder("qq,id,name,pp,bp1\n");
 
-        users.entrySet().stream().sorted(Comparator.comparing(e -> e.getValue().getRulesets().getOsu().getPP()))
+        users.entrySet().stream()
+                .sorted(Comparator.comparing(e -> {
+                    if (Objects.isNull(e.getValue())) return 0D;
+                    return e.getValue().getRulesets().getOsu().getPP();
+                }))
                 .forEach(entry -> {
                     sb.append(entry.getKey()).append(',');
                     if (Objects.isNull(entry.getValue())) {
