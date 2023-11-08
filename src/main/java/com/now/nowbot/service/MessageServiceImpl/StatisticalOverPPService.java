@@ -120,7 +120,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 nowOsuId.put(id, qq);
                 usersBP1.put(qq, bp1);
                 log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
-            } catch (Exception ignore) {
+            } catch (Exception err) {
+                log.error("统计出现异常: {}", qq, err);
                 users.put(qq, null);
             }
             if (nowOsuId.size() >= 50) {
