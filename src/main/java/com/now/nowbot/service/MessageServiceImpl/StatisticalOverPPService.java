@@ -9,11 +9,16 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.transport.ProxyProvider;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +32,19 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private final OsuGetService osuGetService;
 
     public StatisticalOverPPService(WebClient.Builder webClient, BotContainer botContainer, OsuGetService osuGetService) {
-        client = webClient.build();
+        ConnectionProvider connectionProvider = ConnectionProvider.builder("connectionProvider")
+                .maxIdleTime(Duration.ofSeconds(30))
+                .build();
+        HttpClient httpClient = HttpClient.create(connectionProvider)
+                .proxy(proxy ->
+                        proxy.type(ProxyProvider.Proxy.SOCKS5)
+                                .host("127.0.0.1")
+                                .port(7890)
+                )
+                .followRedirect(true)
+                .responseTimeout(Duration.ofSeconds(30));
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
+        client = webClient.clientConnector(connector).build();
         bots = botContainer;
         this.osuGetService = osuGetService;
     }
