@@ -7,6 +7,8 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -19,6 +21,7 @@ import java.util.Objects;
 
 @Service("STATISTICAL")
 public class StatisticalOverPPService implements MessageService<Long> {
+    private static final Logger log = LoggerFactory.getLogger(StatisticalOverPPService.class);
     private final BotContainer bots;
     private final WebClient client;
     private final OsuGetService osuGetService;
@@ -91,6 +94,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
             event.getSubject().sendMessage("主bot未在线");
             return;
         }
+        event.getSubject().sendMessage("开始统计: " + group);
 
         var groupInfo = bot.getGroupMemberList(group).getData();
         groupInfo = groupInfo.stream().filter(r -> r.getRole().equalsIgnoreCase("member")).toList();
@@ -115,6 +119,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 float bp1 = getOsuBp1(qq);
                 nowOsuId.put(id, qq);
                 usersBP1.put(qq, bp1);
+                log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
             } catch (Exception ignore) {
                 users.put(qq, null);
             }
