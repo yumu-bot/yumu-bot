@@ -64,7 +64,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 .block();
     }
 
-    private float getOsuBp1(Long osuId) {
+    public float getOsuBp1(Long osuId) {
         return client.get()
                 .uri("https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1", osuId)
                 .retrieve()
@@ -76,7 +76,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                     }
                     var b1 = json.get(0);
 
-                    sink.next(json.get("pp").asDouble(0));
+                    sink.next(b1.get("pp").asDouble(0));
                 })
                 .block()
                 .floatValue();
