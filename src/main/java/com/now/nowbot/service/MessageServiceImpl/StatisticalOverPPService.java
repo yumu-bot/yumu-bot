@@ -31,6 +31,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private final WebClient client;
     private final OsuGetService osuGetService;
 
+    private static int[] lock = new int[]{0, 0, 0};
+
     public StatisticalOverPPService(WebClient.Builder webClient, BotContainer botContainer, OsuGetService osuGetService) {
         ConnectionProvider connectionProvider = ConnectionProvider.builder("connectionProvider")
                 .maxIdleTime(Duration.ofSeconds(30))
@@ -127,8 +129,9 @@ public class StatisticalOverPPService implements MessageService<Long> {
          * uid-qq
          */
         Map<Long, Long> nowOsuId = new HashMap<>(50);
+
+        int count = 0;
         for (var u : groupInfo) {
-            Thread.sleep(3000);
             long qq = u.getUserId();
             long id;
             try {
@@ -140,6 +143,10 @@ public class StatisticalOverPPService implements MessageService<Long> {
             } catch (Exception err) {
                 log.error("统计出现异常: {}", qq, err);
                 users.put(qq, null);
+            }
+            count++;
+            if (count % 50 == 0) {
+                event.getSubject().sendMessage(String.format("%d 统计进行到 %.2f%%", group, 1.0f * count / groupInfo.size()));
             }
             if (nowOsuId.size() >= 50) {
                 var result = osuGetService.getUsers(nowOsuId.keySet());
@@ -153,12 +160,12 @@ public class StatisticalOverPPService implements MessageService<Long> {
         StringBuilder sb = new StringBuilder("qq,id,name,pp,bp1\n");
 
         users.entrySet().stream()
-                .sorted(Comparator.comparing(e -> {
+                .sorted(Comparator.<Map.Entry<Long, MicroUser>, Double>comparing(e -> {
                     if (Objects.isNull(e.getValue())) return 0D;
                     return e.getValue().getRulesets().getOsu().getPP();
-                }))
+                }).reversed())
                 .forEach(entry -> {
-                    sb.append(entry.getKey()).append(',');
+                    sb.append('\'').append(entry.getKey()).append(',');
                     if (Objects.isNull(entry.getValue())) {
                         sb.append("加载失败").append('\n');
                         return;
