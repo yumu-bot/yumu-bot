@@ -34,7 +34,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
     private Long getOsuId(Long qq) {
         return client.get()
-                .uri("https://api.bleatingsheep.org/api/Binding/{qq}", qq)
+                .uri("https://api.bleatingsheep.org/api/Binding/" + qq)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .<Long>handle((json, sink) -> {
