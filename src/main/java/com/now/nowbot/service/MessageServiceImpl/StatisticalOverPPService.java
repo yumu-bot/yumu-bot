@@ -135,6 +135,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
             long qq = u.getUserId();
             long id;
             try {
+                Thread.sleep(1000);
                 id = getOsuId(qq);
                 float bp1 = getOsuBp1(id);
                 nowOsuId.put(id, qq);
