@@ -19,9 +19,9 @@ import java.util.Objects;
 
 @Service("STATISTICAL")
 public class StatisticalOverPPService implements MessageService<Long> {
-    private BotContainer bots;
-    private WebClient client;
-    private OsuGetService osuGetService;
+    private final BotContainer bots;
+    private final WebClient client;
+    private final OsuGetService osuGetService;
 
     public StatisticalOverPPService(WebClient.Builder webClient, BotContainer botContainer, OsuGetService osuGetService) {
         client = webClient.build();
@@ -86,7 +86,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
     @Override
     public void HandleMessage(MessageEvent event, Long group) throws Throwable {
-        com.mikuac.shiro.core.Bot bot = bots.robots.get(group);
+        com.mikuac.shiro.core.Bot bot = bots.robots.get(1563653406L);
         if (Objects.isNull(bot)) {
             event.getSubject().sendMessage("主bot未在线");
             return;
