@@ -121,7 +121,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Long> data) throws Throwable {
-        if (!(event.getSubject() instanceof Group) || lock == 0) {
+        if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }
         lock = 3;
