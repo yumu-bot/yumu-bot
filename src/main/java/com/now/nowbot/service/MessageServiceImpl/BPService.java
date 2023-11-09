@@ -83,20 +83,20 @@ public class BPService implements MessageService<BPService.BPParam> {
             var mStr = param.m;
 
             if (nStr == null || nStr.isBlank()) {
-                n = 0;
+                n = 1;
             } else {
                 try {
-                    n = Integer.parseInt(nStr) - 1;
+                    n = Integer.parseInt(nStr);
                 } catch (NumberFormatException e) {
                     throw new BPException(BPException.Type.BP_Map_RankError);
                 }
             }
 
             //避免 !b lolol233 这样子被错误匹配
-            boolean nNotFit = (n < 0 || n > 99);
+            boolean nNotFit = (n < 1 || n > 100);
             if (nNotFit) {
                 name += nStr;
-                n = 0;
+                n = 1;
             }
 
             if (mStr == null || mStr.isBlank()) {
