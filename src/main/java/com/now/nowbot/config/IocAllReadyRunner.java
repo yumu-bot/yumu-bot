@@ -76,6 +76,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
             ((ThreadPoolTaskExecutor)executor).shutdown();
         }, "endThread"));
         log.info("启动成功");
+        DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
+        log.info("dc conf: [{}]", discordConfig.getToken());
         /*
         if (NowbotConfig.QQ_LOGIN) {
             //登录

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -22,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -46,7 +44,7 @@ public class ScorePRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass|p(?![a-zA-Z_]))|(ym)?(?<recent>(recent|r(?!\\w))))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -61,6 +59,8 @@ public class ScorePRService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var name = matcher.group("name");
+        var s = matcher.group("s");
+        var es = matcher.group("es");
 
         int offset;
         int limit;
@@ -75,9 +75,9 @@ public class ScorePRService implements MessageService<Matcher> {
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
-        //处理 n，m
         // !p 45-55 offset/n = 44 limit/m = 11
         {
+            //处理 n，m
             int n;
             int m;
             var nStr = matcher.group("n");
@@ -94,7 +94,8 @@ public class ScorePRService implements MessageService<Matcher> {
             }
 
             //避免 !b lolol233 这样子被错误匹配
-            if (n < 1 || n > 100) {
+            boolean nNotFit = (n < 1 || n > 100);
+            if (nNotFit) {
                 name += nStr;
                 n = 1;
             }
@@ -108,7 +109,6 @@ public class ScorePRService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
             }
-
             //分流：正常，相等，相反
             if (m > n) {
                 offset = n - 1;
@@ -121,7 +121,18 @@ public class ScorePRService implements MessageService<Matcher> {
                 limit = n - m + 1;
             }
 
-            isMultipleScore = (limit != 1);
+            //如果匹配多成绩模式，则自动设置 offset 和 limit
+            if (!(s == null || s.isBlank()) || !(es == null || es.isBlank())) {
+                offset = 0;
+
+                if (nStr == null || nStr.isBlank() || nNotFit) {
+                    limit = 20;
+                } else if (mStr == null || mStr.isBlank()) {
+                    limit = n;
+                }
+            }
+
+            isMultipleScore = (limit > 1);
         }
 
         //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
@@ -146,8 +157,8 @@ public class ScorePRService implements MessageService<Matcher> {
                     binUser = bindDao.getUserFromQQ(event.getSender().getId());
                 } catch (BindException e) {
                     //退避 !recent
-                    if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                        NowbotApplication.log.info("recent 退避成功");
+                    if (event.getRawMessage().toLowerCase().contains("recent")) {
+                        log.info("recent 退避成功");
                         return;
                     } else {
                         throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
@@ -172,8 +183,8 @@ public class ScorePRService implements MessageService<Matcher> {
             }
         } catch (HttpClientErrorException e) {
             //退避 !recent
-            if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                NowbotApplication.log.info("recent 退避成功");
+            if (event.getRawMessage().toLowerCase().contains("recent")) {
+                log.info("recent 退避成功");
                 return;
             } else if (e instanceof HttpClientErrorException.Unauthorized) {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
@@ -220,12 +231,6 @@ public class ScorePRService implements MessageService<Matcher> {
                 getTextOutput(scoreList.get(0), from);
             }
         }
-    }
-
-    private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
-        var s = getData(bindDao.getUserFromQQ(365246692L), mode, offset, limit, isRecent);
-        if (CollectionUtils.isEmpty(s)) throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
-        return imageService.spInfo(s.get(0));
     }
 
     private void getTextOutput(Score score, Contact from) {

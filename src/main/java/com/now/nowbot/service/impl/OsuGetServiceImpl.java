@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
@@ -1200,10 +1201,15 @@ public class OsuGetServiceImpl implements OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         try {
             headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
-        } catch (BindException e) {
-            OsuGetServiceImpl.log.error("绑定丢失: [{}], 移除绑定信息", user.getOsuID());
-            bindDao.removeBind(user.getOsuID());
-            throw e;
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("令牌过期 绑定丢失: [{}], 移除绑定信息", user.getOsuID(), e);
+            throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+        } catch (HttpClientErrorException.NotFound e) {
+            log.info("更新令牌失败：账号封禁", e);
+            throw new BindException(BindException.Type.BIND_Me_Banned);
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            log.info("更新令牌失败：API 访问太频繁", e);
+            throw new BindException(BindException.Type.BIND_Me_TooManyRequests);
         }
         return headers;
     }

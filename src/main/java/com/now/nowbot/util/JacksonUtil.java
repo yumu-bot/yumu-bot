@@ -213,6 +213,17 @@ public class JacksonUtil {
         return null;
     }
 
+    public static <T> T parseObject(String body, TypeReference<T> obj) {
+        JsonNode node;
+        try {
+            node = mapper.readTree(body);
+            return mapper.convertValue(node, obj);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
     public static <T> T parseObject(JsonNode node, String field, Class<T> clazz) {
         try {
             node = node.get(field);

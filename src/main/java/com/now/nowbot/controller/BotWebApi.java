@@ -516,14 +516,15 @@ public class BotWebApi {
     private String getLocalFilePath(long bid, boolean isBg, boolean isFile) throws IOException {
 
         var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+        // 是否采用 sid 做背景
+        var flag = true;
         if (fopt.isEmpty()) {
             var fInfo = osuGetService.getMapInfoFromDB(bid);
-            SkiaImageUtil.getImageCachePath(fInfo.getBeatMapSet().getCovers().getCover2x());
-//            var finfo = osuGetService.getMapInfoFromDB(bid);
-//            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
-//            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
+            if (!flag) {
+                osuGetService.downloadAllFiles(fInfo.getBeatmapsetId());
+            }
+            return SkiaImageUtil.getImageCachePath(fInfo.getBeatMapSet().getCovers().getCover2x());
         }
-        if (fopt.isEmpty()) throw new IOException("download error");
         var fileInfo = fopt.get();
         Path path;
         if (isBg) {

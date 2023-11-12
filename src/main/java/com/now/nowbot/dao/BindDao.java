@@ -25,9 +25,9 @@ import java.util.Optional;
 
 @Component
 public class BindDao {
-    Logger            log = LoggerFactory.getLogger(BindDao.class);
-    BindUserMapper    bindUserMapper;
-    BindQQMapper      bindQQMapper;
+    Logger log = LoggerFactory.getLogger(BindDao.class);
+    BindUserMapper bindUserMapper;
+    BindQQMapper bindQQMapper;
     BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper osuFindNameMapper;
 
@@ -61,6 +61,7 @@ public class BindDao {
     public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
         return bindQQMapper.findByOsuId(osuId);
     }
+
     public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
         return bindQQMapper.findById(qq);
     }
@@ -87,8 +88,9 @@ public class BindDao {
     }
 
     public DiscordBindLite bindDiscord(String discordId, BinUser user) {
-        return bindDiscord(discordId,fromModel(user));
+        return bindDiscord(discordId, fromModel(user));
     }
+
     public DiscordBindLite bindDiscord(String discordId, OsuBindUserLite user) {
         var discordBind = new DiscordBindLite();
         discordBind.setId(discordId);
@@ -121,6 +123,7 @@ public class BindDao {
     public void update(QQBindLite user) {
         bindQQMapper.save(user);
     }
+
     public void update(DiscordBindLite user) {
         bindDiscordMapper.save(user);
     }
@@ -202,20 +205,33 @@ public class BindDao {
 
     @Async
     public void refreshOldUserToken(OsuGetService osuGetService) {
-        Long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         List<OsuBindUserLite> users;
-        int refres = 0;
+        int succeedCount = 0;
+        int errCount = 0;
+
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             for (var u : users) {
-                refreshOldUserToken(fromLite(u), osuGetService);
-                refres++;
+                log.info("更新用户 [{}]", u.getOsuName());
+                try {
+                    refreshOldUserToken(fromLite(u), osuGetService);
+                    errCount= 0;
+                } catch (Exception e) {
+                    errCount++;
+                }
+                if (errCount > 10) {
+                    // 连续失败10次, 终止本次更新
+                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                    return;
+                }
+                succeedCount++;
             }
             try {
                 Thread.sleep(Duration.ofSeconds(30));
             } catch (InterruptedException ignore) {
             }
         }
-        log.info("更新用户数量: [{}], 累计用时: {}s", refres, (System.currentTimeMillis() - now) / 1000);
+        log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
     private void refreshOldUserToken(BinUser u, OsuGetService osuGetService) {
@@ -224,19 +240,19 @@ public class BindDao {
         while (true) {
             try {
                 Thread.sleep(Duration.ofSeconds(sleepSecond));
-                osuGetService.refreshToken(u);
+                u.getAccessToken(osuGetService);
                 return;
             } catch (HttpClientErrorException.TooManyRequests e) {
                 sleepSecond *= 2;
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
                 removeBind(u.getOsuID());
-                return;
+                throw e;
             } catch (HttpClientErrorException.BadRequest e) {
                 badRequest++;
                 if (badRequest > 6) {
                     log.error("更新 [{}] 令牌失败, 请求异常", u.getOsuName());
-                    return;
+                    throw new RuntimeException("network error");
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);

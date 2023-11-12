@@ -4,7 +4,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.util.DateUtil;
+import com.now.nowbot.util.DataUtil;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
@@ -69,9 +69,9 @@ public class TestMapServer implements MessageService<Matcher> {
                 .append(info.getBPM()).append(',')
                 .append(info.getHitLength()).append('\n');
         sb.append(a.getMaxCombo()).append(',')
-                .append(DateUtil.CS(info.getCS(), modInt)).append(',')
+                .append(DataUtil.CS(info.getCS(), modInt)).append(',')
                 .append(a.getApproachRate()).append(',')
-                .append(DateUtil.OD(info.getOD(), modInt));
+                .append(DataUtil.OD(info.getOD(), modInt));
 
         event.getSubject().sendMessage(sb.toString());
     }

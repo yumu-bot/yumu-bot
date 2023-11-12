@@ -200,6 +200,10 @@ public enum Mod {
         return old | mod.value;
     }
 
+    public static int sub(int old, Mod mod) {
+        return old & ~mod.value;
+    }
+
     public int add(int old) {
         return old | this.value;
     }

@@ -6,6 +6,7 @@ public class BPAnalysisException extends TipsException {
     public enum Type {
         BPA_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)\n除此之外，还可以试试 !ba [username]"),//查询自己_绑定失效
         BPA_Me_FetchFailed("获取你的 BPA 失败，请重试。\n或者，重新绑定也是一种解决方法呢。"), //玩家_获取失败
+        BPA_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), //玩家_对方未绑定
         BPA_Player_NotFound("这是谁呀，小沐找不到他哦"),//查询他人_未搜到玩家
         BPA_Player_FetchFailed("获取对方的 BPA 失败，请重试。\n或者，让他重新绑定也是一种解决方法呢。"), //玩家_获取失败
         BPA_Me_NotEnoughBP("你的 BP 不足 5 个呢...\n灼热分析 EX"), //玩家_最好成绩范围错误

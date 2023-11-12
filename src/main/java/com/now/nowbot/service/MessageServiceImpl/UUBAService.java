@@ -95,15 +95,21 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws BPAnalysisException {
+    public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws Throwable {
         var from = event.getSubject();
-        BinUser binUser = null;
+        BinUser binUser;
 
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 是否为绑定用户
-
         if (Objects.nonNull(param.user().qq())) {
-            binUser = bindDao.getUserFromQQ(param.user().qq());
+            try {
+                binUser = bindDao.getUserFromQQ(param.user().qq());
+            } catch (BindException e) {
+                if (!param.user().at()) {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+                } else {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                }
+            }
         } else {
             //查询其他人 [name]
             String name = param.user().name();
@@ -112,15 +118,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 id = osuGetService.getOsuId(name);
                 binUser = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
-                // ignore
-            } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
-            }
-            if (binUser == null) {
-                //构建只有 name + id 的对象
+                //构建只有 name + id 的对象, binUser == null
                 binUser = new BinUser();
                 binUser.setOsuID(id);
                 binUser.setOsuName(name);
+            } catch (Exception e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
         }
 
@@ -134,7 +137,11 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
         } catch (HttpClientErrorException.BadRequest e) {
             // 请求失败 超时/断网
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+            if (param.user().qq() == event.getSender().getId()) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+            } else {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+            }
         } catch (HttpClientErrorException.Unauthorized e) {
             // 未绑定
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);

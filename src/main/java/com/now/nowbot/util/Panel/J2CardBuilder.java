@@ -1,7 +1,7 @@
 package com.now.nowbot.util.Panel;
 
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.util.DateUtil;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
 
@@ -139,18 +139,18 @@ public class J2CardBuilder extends PanelBuilder {
         String Jur2t = String.valueOf(user.getCountry());
         long Jur3t = user.getCountryRank();
 
-        Jl1t = DateUtil.getRoundedNumber(Jl1t, 1);
+        Jl1t = DataUtil.getRoundedNumber(Jl1t, 1);
         //Jl2t = DataUtil.getRoundedNumber(Jl2t, 1);
-        Jl3t = DateUtil.getRoundedNumber(Jl3t, 1);
+        Jl3t = DataUtil.getRoundedNumber(Jl3t, 1);
         //Jb1t = DataUtil.getRoundedNumber(Jb1t, 1); 这不可能需要取整，因为这天数本身就是整数啊
         //Jb2t = DataUtil.getRoundedNumber(Jb2t, 1);
         //Jb3t = DataUtil.getRoundedNumber(Jb3t, 1);
 
         TextLine Jlu1 = TextLine.make(Jlu1t, fontS36);
 
-        TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + DateUtil.getRoundedNumberUnit(Jl1t, 1), fontS24);
+        TextLine Jl1 = TextLine.make(String.valueOf(Jl1t) + DataUtil.getRoundedNumberUnit(Jl1t, 1), fontS24);
         //TextLine Jl2 = TextLine.make(String.valueOf(Jl2t) + DataUtil.getRoundedNumberUnit(Jl2t, 1), fontS24);
-        TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + DateUtil.getRoundedNumberUnit(Jl3t, 1), fontS24);
+        TextLine Jl3 = TextLine.make(String.valueOf(Jl3t) + DataUtil.getRoundedNumberUnit(Jl3t, 1), fontS24);
 
         TextLine Jb1 = TextLine.make(Jb1t + "D", fontS24);
         //TextLine Jb2 = TextLine.make(String.valueOf(Jb2t) + DataUtil.getRoundedNumberUnit(Jb2t, 1), fontS24);

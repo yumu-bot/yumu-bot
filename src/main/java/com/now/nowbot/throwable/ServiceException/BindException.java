@@ -4,22 +4,25 @@ import com.now.nowbot.throwable.TipsRuntimeException;
 
 public class BindException extends TipsRuntimeException{
     public enum Type {
-        BIND_Client_RelieveBindSuccess("您已成功解绑。TuT"),//解绑_成功
-        BIND_Client_RelieveBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
-        BIND_Client_BindingNoName("你叫啥名呀？告诉我吧。"),//绑定_玩家未输入用户名
+        BIND_Client_UnBindSuccess("您已成功解绑。TuT"),//解绑_成功
+        BIND_Client_UnBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
+        BIND_Client_NullName("你叫啥名呀？告诉我吧。"),//绑定_玩家未输入用户名
         BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑，请输入 !ymbind。"),//绑定_玩家早已绑定
         BIND_Client_AlreadyBoundByName("禁止在仅绑定玩家名时，再次使用玩家名绑定。\n若要改绑请输入 !ymbind。"),
-        BIND_Client_BindingOvertime("绑定超时！请重试。OwOb"),//绑定_绑定超时
-        BIND_Client_BindingRefused("已取消绑定。OwOb"),//绑定_取消绑定
+        BIND_Client_Overtime("绑定超时！请重试。OwOb"),//绑定_绑定超时
+        BIND_Client_Refused("已取消绑定。OwOb"),//绑定_取消绑定
+        BIND_Client_Unbind("解绑请联系管理员，\n或可以直接去个人主页撤销授权。"),//查询自己_玩家解绑
 
+        BIND_Me_NotBind("您还从未绑定过呢，请授权。(!ymbind)"),//查询自己_玩家未绑定
         BIND_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_玩家未绑定
+        BIND_Me_AuthorizationRevoked("您已撤销授权，请重新授权。(!ymbind)"),//查询自己_玩家撤销授权
         BIND_Me_Banned("你号没了，或是 ppy API 无法访问。"),//查询自己_玩家被封禁
         BIND_Me_TooManyRequests("ppy API 访问量超限，暂时不能绑定呢..."),//查询自己_大量请求
         BIND_Me_Blacklisted("本 Bot 根本不想理你。"),//查询自己_玩家黑名单
 
         BIND_Player_NoBind("对方还没有绑定呢，请提醒他输入 !ymbind 点击链接登录，完成绑定吧。"),//查询他人_玩家未绑定
         BIND_Player_HadNotBind("对方还没有绑定。"),//查询他人_玩家未绑定
-        BIND_Player_NoAuthorization("他撤销了授权呢，请提醒他输入 !ymbind 点击链接登录，重新授权吧。"),//查询他人_玩家撤销授权
+        BIND_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),//查询他人_玩家撤销授权
         BIND_Player_NoData("你查的不会是我的机器人同类吧！"),//查询他人_玩家无数据
         BIND_Player_NoQQ("请输入正确的 QQ！"),//查询他人_未搜到QQ
         BIND_Player_NotFound("这是谁呀，小沐找不到他哦？"),//查询他人_未搜到玩家

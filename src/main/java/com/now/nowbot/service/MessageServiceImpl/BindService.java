@@ -44,7 +44,7 @@ public class BindService implements MessageService<Matcher> {
         this.taskExecutor = taskExecutor;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*qq=(?<qq>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -52,26 +52,41 @@ public class BindService implements MessageService<Matcher> {
         if (m.find()) {
             data.setValue(m);
             return true;
-        } else return false;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        if (Permission.isSuper(event.getSender().getId())) {
+        boolean isSuper = Permission.isSuper(event.getSender().getId());
+
+        //超级管理员的专属权利
+        if (isSuper) {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-            if (matcher.group("un") != null && at != null) {
-                unbindQQ(at.getTarget());
-                return;
-            }
-            if (at != null) {
+            var qqStr = matcher.group("qq");
+
+            if (matcher.group("un") != null){
+                if (at != null) {
+                    unbindQQ(at.getTarget());
+                    return;
+                } else if (qqStr != null && Long.parseLong(qqStr) > 0L) {
+                    unbindQQ(Long.parseLong(qqStr));
+                    return;
+                } else {
+                    unbindQQ(from.getId());
+                    return;
+                }
+            } else if (at != null) {
                 bindQQAt(event, at.getTarget());
                 return;
             }
         }
 
+        //绑定权限下放。这个不应该是超级管理员的专属权利。
         if (matcher.group("un") != null) {
-            from.sendMessage("解绑请联系管理员");
+            unbindQQ(from.getId());
             return;
         }
 
@@ -82,23 +97,28 @@ public class BindService implements MessageService<Matcher> {
         }
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
+
         //验证是否已绑定
-        BinUser user = null;
+        BinUser binUser;
+        /*
         try {
-            user = bindDao.getUserFromQQ(event.getSender().getId());
+            binUser = bindDao.getUserFromQQ(event.getSender().getId());
         } catch (BindException ignore) {
             // do nothing
         }
+        */
 
-        var qqBindOpt = bindDao.getQQLiteFromQQ(event.getSender().getId());
+        var qqLiteFromQQ = bindDao.getQQLiteFromQQ(event.getSender().getId());
         QQBindLite qqBindLite;
-        if (qqBindOpt.isPresent() && (qqBindLite = qqBindOpt.get()).getBinUser().isAuthorized()) {
-            user = qqBindLite.getBinUser();
+        if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
+            binUser = qqBindLite.getBinUser();
             try {
-                var getUDate = osuGetService.getPlayerInfo(user, OsuMode.DEFAULT);
-                if (!getUDate.getUID().equals(user.getOsuID())) throw new RuntimeException();
-                from.sendMessage("您已绑定 (" + user.getOsuID() + ") " + user.getOsuName() + "。\n但您仍可以重新绑定。" +
-                        "\n若无必要请勿绑定, 多次绑定仍无法使用则大概率为bug, 请联系开发者" +
+                var osuUser = osuGetService.getPlayerInfo(binUser, OsuMode.DEFAULT);
+                if (!osuUser.getUID().equals(binUser.getOsuID())) {
+                    throw new RuntimeException();
+                }
+                from.sendMessage("您已绑定 (" + binUser.getOsuID() + ") " + binUser.getOsuName() + "。\n但您仍可以重新绑定。" +
+                        "\n若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。" +
                         "\n回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
@@ -106,11 +126,10 @@ public class BindService implements MessageService<Matcher> {
                     return;
                 }
             } catch (Exception e) {
-                if (e instanceof HttpClientErrorException.Unauthorized unauthorized) {
-                    // 已失效, 直接允许绑定
-                } else {
+                if (!(e instanceof HttpClientErrorException.Unauthorized)) {
                     throw e;
                 }
+                //如果符合，直接允许绑定
             }
         }
 
@@ -139,9 +158,9 @@ public class BindService implements MessageService<Matcher> {
         }
 
         if (bindDao.unBindQQ(user.get().getBinUser())) {
-            throw new BindException(BindException.Type.BIND_Client_RelieveBindSuccess);
+            throw new BindException(BindException.Type.BIND_Client_UnBindSuccess);
         } else {
-            throw new BindException(BindException.Type.BIND_Client_RelieveBindFailed);
+            throw new BindException(BindException.Type.BIND_Client_UnBindFailed);
         }
     }
 
@@ -152,7 +171,7 @@ public class BindService implements MessageService<Matcher> {
         var lock = ASyncMessageUtil.getLock(event);
         var s = lock.get();//阻塞,注意超时判空
         if (s == null) {
-            throw new BindException(BindException.Type.BIND_Client_BindingOvertime);
+            throw new BindException(BindException.Type.BIND_Client_Overtime);
         }
         String nameStr = s.getRawMessage();
         Long id;
@@ -161,27 +180,27 @@ public class BindService implements MessageService<Matcher> {
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
-        var buser = bindDao.getQQLiteFromOsuId(id);
-        if (buser.isEmpty()) {
+        var qqLiteFromID = bindDao.getQQLiteFromOsuId(id);
+        if (qqLiteFromID.isEmpty()) {
             from.sendMessage("正在将" + qq + "绑定到 (" + id + ")" + nameStr + "上");
             bindDao.bindQQ(qq, new BinUser(id, nameStr));
             throw new BindException(BindException.Type.BIND_Player_Success);
         }
-        var u = buser.get();
+        var u = qqLiteFromID.get();
         from.sendMessage(u.getOsuUser().getOsuName() + "绑定在 QQ " + qq + " 上，是否覆盖？回复 OK 生效");
         s = lock.get();
         if (s != null && s.getRawMessage().startsWith("OK")) {
             bindDao.bindQQ(qq, u.getOsuUser());
             throw new BindException(BindException.Type.BIND_Player_Success);
         } else {
-            throw new BindException(BindException.Type.BIND_Client_BindingRefused);
+            throw new BindException(BindException.Type.BIND_Client_Refused);
         }
     }
 
     private void bindQQName(MessageEvent event, String name, long qq) {
         Contact from = event.getSubject();
-        var nuserOpt = bindDao.getQQLiteFromQQ(qq);
-        if (nuserOpt.isPresent()) throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
+        var userFromQQ = bindDao.getQQLiteFromQQ(qq);
+        if (userFromQQ.isPresent()) throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
 
         long osuUserId;
         try {
@@ -190,27 +209,30 @@ public class BindService implements MessageService<Matcher> {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
 
-        var buser = bindDao.getQQLiteFromOsuId(osuUserId);
-        if (buser.isPresent()) {
-            from.sendMessage(name + " 已绑定 (" + buser.get().getQq() + ")，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
+        var userFromID = bindDao.getQQLiteFromOsuId(osuUserId);
+        if (userFromID.isPresent()) {
+            from.sendMessage(name + " 已绑定 (" + userFromID.get().getQq() + ")，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
             return;
         }
 
         from.sendMessage("""
-                直接绑定osu用户名的方式即将删除, 请使用直接发送 '!ymbind' 不带任何参数的形式绑定
-                如果执意使用绑定用户名的方式, 请回答下面问题:
+                将弃用直接绑定用户名的方法, 请直接发送 '!ymbind' 绑定，并且不带任何参数。
+                如果您执意使用绑定用户名的方式, 请回答下面问题:
                 设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
                 """);
         var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
+
         if (event == null) {
-            from.sendMessage("回答超时");
+            from.sendMessage("回答超时，撤回绑定请求。");
             return;
         }
-        if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2")) {
-            from.sendMessage("回答错误");
+
+        if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2") && !event.getRawMessage().contains("50%")) {
+            from.sendMessage("回答错误，请重试。");
             return;
         }
+
         bindDao.bindQQ(qq, new BinUser(osuUserId, name));
         from.sendMessage("已将 " + qq + " 绑定到 (" + osuUserId + ") " + name + " 上");
     }

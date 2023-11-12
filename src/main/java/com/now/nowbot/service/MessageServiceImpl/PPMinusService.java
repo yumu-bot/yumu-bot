@@ -66,12 +66,17 @@ public class PPMinusService implements MessageService<Matcher> {
                 var id = osuGetService.getOsuId(matcher.group("name").trim());
                 user = osuGetService.getPlayerInfo(id, mode);
                 bps = osuGetService.getBestPerformance(id, mode, 0, 100);
-            } catch (HttpClientErrorException e) {
+            } catch (HttpClientErrorException.Unauthorized e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
+            } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            } catch (BindException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("PPM 获取失败：", e);
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_FetchFailed);
             }
-            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-                throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
-            }
+
             //默认无主模式
             if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
 
@@ -81,25 +86,40 @@ public class PPMinusService implements MessageService<Matcher> {
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
                 user = osuGetService.getPlayerInfo(binUser, mode);
                 bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
-            } catch (Exception e) {
+
+            } catch (HttpClientErrorException.Unauthorized e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
+            } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+            } catch (BindException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("PPM 获取失败：", e);
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_FetchFailed);
             }
-            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-                throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
-            }
+
         } else {
             try {
                 var binUser = bindDao.getUserFromQQ(event.getSender().getId());//处理默认mode
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
                 user = osuGetService.getPlayerInfo(binUser, mode);
                 bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
-            } catch (Exception e) {
+            } catch (HttpClientErrorException.Unauthorized e) {
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
+            } catch (HttpClientErrorException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_NotFound);
-            }
-            if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-                throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
+            } catch (BindException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("PPM 获取失败：", e);
+                throw new PPMinusException(PPMinusException.Type.PPM_Me_FetchFailed);
             }
         }
+
+        if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
+        }
+
         ppm = Ppm.getInstance(mode, user, bps);
 
         try {
@@ -112,7 +132,7 @@ public class PPMinusService implements MessageService<Matcher> {
         }
     }
 
-    private void doVs(MessageEvent event, Matcher matcher) throws BindException, PPMinusException, NoSuchFieldException, ClassNotFoundException, IllegalAccessException {
+    private void doVs(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -129,21 +149,19 @@ public class PPMinusService implements MessageService<Matcher> {
         //处理默认mode
         if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
         //自己的信息
-        {
-
+        try {
             userMe = osuGetService.getPlayerInfo(userBin, mode);
             bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
-            ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
-            if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
-                throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
-            }
+        } catch (BindException e) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
         }
+        ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
 
         if (at != null) {//被对比人的信息
             // 包含有@
-            var OtherBin = bindDao.getUserFromQQ(at.getTarget());
-            userOther = osuGetService.getPlayerInfo(OtherBin, mode);
-            bpListOther = osuGetService.getBestPerformance(OtherBin, mode,0,100);
+            var b = bindDao.getUserFromQQ(at.getTarget());
+            userOther = osuGetService.getPlayerInfo(b, mode);
+            bpListOther = osuGetService.getBestPerformance(b, mode,0,100);
             ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
@@ -153,9 +171,16 @@ public class PPMinusService implements MessageService<Matcher> {
         } else {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
         }
+
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
+
+        if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
+        }
+
+        //你为啥不在数据库里存这些。。。
         if (userOther.getUID() == 17064371L){
             setUser(ppmOther, 999.99f);
         } else if (userOther.getUID().equals(19673275L)) {
@@ -167,16 +192,16 @@ public class PPMinusService implements MessageService<Matcher> {
     }
 
     static void setUser(Ppm ppmOther, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class clz =  Class.forName("com.now.nowbot.model.PPm.Ppm");
+        Class<?> PPMClass =  Class.forName("com.now.nowbot.model.PPm.Ppm");
         Field[] valueFiled = {
-                clz.getDeclaredField("value1"),
-                clz.getDeclaredField("value2"),
-                clz.getDeclaredField("value3"),
-                clz.getDeclaredField("value4"),
-                clz.getDeclaredField("value5"),
-                clz.getDeclaredField("value6"),
-                clz.getDeclaredField("value7"),
-                clz.getDeclaredField("value8"),
+                PPMClass.getDeclaredField("value1"),
+                PPMClass.getDeclaredField("value2"),
+                PPMClass.getDeclaredField("value3"),
+                PPMClass.getDeclaredField("value4"),
+                PPMClass.getDeclaredField("value5"),
+                PPMClass.getDeclaredField("value6"),
+                PPMClass.getDeclaredField("value7"),
+                PPMClass.getDeclaredField("value8"),
         };
         for (var i:valueFiled){
             i.setAccessible(true);

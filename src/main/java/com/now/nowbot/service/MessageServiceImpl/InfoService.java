@@ -36,16 +36,16 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     BindDao       bindDao;
     @Autowired
     ImageService  imageService;
-    public record InfoParam(String name, Long qq, OsuMode mode, String command){}
+    public record InfoParam(String name, Long qq, OsuMode mode){}
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<info>(ym)?(information|info(?![a-zA-Z_])|i(?![a-zA-Z_])))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-    Pattern pattern4QQ = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<info>(information|info(?![a-zA-Z_])|i(?![a-zA-Z_])))\\s*(qq=)\\s*(?<qq>\\d+)");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![a-zA-Z_])|i(?![a-zA-Z_]))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    Pattern pattern4QQ = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![a-zA-Z_])|i(?![a-zA-Z_]))\\s*(qq=)\\s*(?<qq>\\d+)");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) {
         var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
         if (m4qq.find()) {
-            data.setValue(new InfoParam(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT, "qq"));
+            data.setValue(new InfoParam(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
             return true;
         }
         var matcher = pattern.matcher(event.getRawMessage().trim());
@@ -55,18 +55,16 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        String command = matcher.group("info");
-
         if (at != null) {
-            data.setValue(new InfoParam(null, at.getTarget(), mode, command));
+            data.setValue(new InfoParam(null, at.getTarget(), mode));
             return true;
         }
         String name = matcher.group("name");
         if (Strings.isNotBlank(name)) {
-            data.setValue(new InfoParam(name, null, mode, command));
+            data.setValue(new InfoParam(name, null, mode));
             return true;
         }
-        data.setValue(new InfoParam(null, event.getSender().getId(), mode, command));
+        data.setValue(new InfoParam(null, event.getSender().getId(), mode));
         return true;
     }
 
@@ -89,7 +87,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                 user = bindDao.getUserFromQQ(param.qq());
             } catch (BindException e) {
                 //退避 !info
-                if (param.command.equalsIgnoreCase("info")) {
+                if (!event.getRawMessage().toLowerCase().contains("information") && event.getRawMessage().toLowerCase().contains("info")) {
                     log.info("info 退避成功");
                     return;
                 } else {
@@ -109,8 +107,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         try {
             osuUser = osuGetService.getPlayerInfo(user, mode);
         } catch (HttpClientErrorException.NotFound e) {
-            //log.error("出现异常", e);
             throw new InfoException(InfoException.Type.INFO_Me_NotFound);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
         } catch (Exception e) {
             log.error("Info 异常：获取玩家信息", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);

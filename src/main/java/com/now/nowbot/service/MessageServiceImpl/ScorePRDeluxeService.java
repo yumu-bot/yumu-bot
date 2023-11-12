@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
@@ -32,8 +31,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("SCOREDELUXE")
-public class PassRecentForMeService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(PassRecentForMeService.class);
+public class ScorePRDeluxeService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
     RestTemplate template;
     OsuGetService osuGetService;
@@ -41,7 +40,7 @@ public class PassRecentForMeService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Autowired
-    public PassRecentForMeService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public ScorePRDeluxeService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
@@ -176,8 +175,8 @@ public class PassRecentForMeService implements MessageService<Matcher> {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             } else {
                 //退避 !recent
-                if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                    NowbotApplication.log.info("recent 退避成功");
+                if (event.getRawMessage().toLowerCase().contains("recent")) {
+                    log.info("recent 退避成功");
                     return;
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
@@ -185,8 +184,8 @@ public class PassRecentForMeService implements MessageService<Matcher> {
             }
         } catch (HttpClientErrorException e) {
             //退避 !recent
-            if (isRecent && matcher.group("recent").equalsIgnoreCase("recent")) {
-                NowbotApplication.log.info("recent 退避成功");
+            if (event.getRawMessage().toLowerCase().contains("recent")) {
+                log.info("recent 退避成功");
                 return;
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
