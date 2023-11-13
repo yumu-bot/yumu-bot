@@ -58,7 +58,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         }
     }
 
-    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]{3,}))?");
+    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]{3,}))?");
     static final Pattern pattern2 = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     @Override
@@ -90,7 +90,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             return true;
         }
         data.setValue(new BPHeadTailParam(
-                new UserParam(event.getSender().getId(), null, mode, false), false));
+                new UserParam(event.getSender().getId(), null, mode, false), info));
         return true;
     }
 
