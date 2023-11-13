@@ -122,8 +122,10 @@ public class StatisticalOverPPService implements MessageService<Long> {
     public boolean isHandle(MessageEvent event, DataValue<Long> data) throws Throwable {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
+        } else {
+            lock = 3;
         }
-        lock = 3;
+
         String message = event.getRawMessage();
         if (message.startsWith("!统计超限")) {
             if (message.endsWith("新人群")) {
@@ -137,6 +139,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 return true;
             }
         }
+        lock = 0;
         return false;
 
     }
