@@ -6,6 +6,7 @@ import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
@@ -15,16 +16,10 @@ import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.*;
-import com.now.nowbot.util.Panel.CardBuilder;
-import com.now.nowbot.util.Panel.HCardBuilder;
-import com.now.nowbot.util.Panel.TBPPanelBuilder;
-import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
-import io.github.humbleui.skija.EncodeJPEGOptions;
-import io.github.humbleui.skija.EncoderJPEG;
-import io.github.humbleui.skija.Image;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -115,11 +110,11 @@ public class BotWebApi {
      */
     @GetMapping(value = "match")
     @OpenResource(name = "mn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
-    public ResponseEntity<byte[]> getMatch(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
-                                           @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
-                                           @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-                                           @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
-                                           @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
+    public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
+                                              @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
+                                              @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
+                                              @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+                                              @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
@@ -139,7 +134,7 @@ public class BotWebApi {
      */
     @GetMapping(value = "rating")
     @OpenResource(name = "ra", desp = "查看比赛评价 !ymrating (!ra)")
-    public ResponseEntity<byte[]> getRa(
+    public ResponseEntity<byte[]> getRating(
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
@@ -156,17 +151,131 @@ public class BotWebApi {
     }
 
     /**
-     * 多组成绩接口
+     * 多组成绩接口（当然单成绩也行，我把接口改了）
      *
      * @param userName 用户
      * @param playMode 模式,可为空
-     * @param type     不传 或 0: 近N天的bp,此时 value 参数为天数,且范围是0-999
-     *                 1: 前N个bp
-     *                 2: 最近N次游玩,不包含fail
-     *                 3: 最近N次游玩,包含fail
-     * @param value    不传默认为 1,具体含义取决于 type,范围在 1-100 之间
+     * @param type     0，null: todaybp，此时只需要输入 value1，介于 1-999
+     *                 1: bp，
+     *                 2: pass，
+     *                 3: recent，
+     * @param value1   不传默认为 1,具体含义取决于 type,范围在 1-100 之间
+     * @param value2   可以不传，具体含义取决于 type,范围在 1-100 之间
      * @return image
      */
+    public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
+                                           @Nullable @RequestParam("mode") String playMode,
+                                           @Nullable @RequestParam("type") Integer type,
+                                           @Nullable @RequestParam("value1") Integer value1,
+                                           @Nullable @RequestParam("value2") Integer value2
+    ) {
+        var mode = OsuMode.getMode(playMode);
+        userName = userName.trim();
+
+        var osuUser = osuGetService.getPlayerInfo(userName, mode);
+        List<Score> scoreList;
+
+        int offset;
+        int limit;
+        boolean isMultipleScore;
+
+        if (Objects.isNull(value1)) value1 = 1;
+
+        if (Objects.isNull(value2)) {
+            offset = value1 - 1;
+            limit = 1;
+        } else {
+            //分流：正常，相等，相反
+            if (value2 > value1) {
+                offset = value1 - 1;
+                limit = value2 - value1 + 1;
+            } else if (Objects.equals(value1, value2)) {
+                offset = value1 - 1;
+                limit = 1;
+            } else {
+                offset = value2 - 1;
+                limit = value1 - value2 + 1;
+            }
+        }
+
+        isMultipleScore = (limit > 1);
+
+        //渲染面板
+        byte[] data;
+        String suffix;
+
+        switch (type) {
+            // bp
+            case 1 -> {
+                scoreList = osuGetService.getBestPerformance(osuUser.getUID(), mode, offset, limit);
+
+                ArrayList<Integer> rankList = new ArrayList<>();
+                for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
+
+                if (isMultipleScore) {
+                    data = imageService.getPanelA4(osuUser, scoreList, rankList);
+                    suffix = "-bps.jpg";
+                } else {
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    suffix = "-bp.jpg";
+                }
+            }
+            // pass
+            case 2 -> {
+                scoreList = osuGetService.getRecentN(osuUser.getUID(), mode, offset, limit);
+
+                if (isMultipleScore) {
+                    data = imageService.getPanelA5(osuUser, scoreList);
+                    suffix = "-passes.jpg";
+                } else {
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    suffix = "-pass.jpg";
+                }
+            }
+
+            //recent
+            case 3 -> {
+                scoreList = osuGetService.getAllRecentN(osuUser.getUID(), mode, offset, limit);
+
+                if (isMultipleScore) {
+                    data = imageService.getPanelA5(osuUser, scoreList);
+                    suffix = "-recent.jpg";
+                } else {
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    suffix = "-recents.jpg";
+                }
+            }
+
+            // todaybp
+            case null, default -> {
+                // 时间计算
+                var BPList = osuGetService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
+                ArrayList<Integer> rankList = new ArrayList<>();
+
+                int day = Math.min(999, value1);
+                LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
+
+                //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
+                scoreList = new ArrayList<>();
+                for (int i = 0; i < BPList.size(); i++) {
+                    var s = BPList.get(i);
+                    if (dayBefore.isBefore(s.getCreateTime())) {
+                        scoreList.add(s);
+                        rankList.add(i + 1);
+                    }
+                }
+
+                data = imageService.getPanelA4(osuUser, scoreList, rankList);
+                suffix = "-tbp.jpg";
+            }
+        }
+
+        return new ResponseEntity<>(data, getImageHeader(userName + suffix, data.length), HttpStatus.OK);
+    }
+
+
+
+    /*
     public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
                                             @Nullable @RequestParam("mode") String playMode,
                                             @Nullable @RequestParam("type") Integer type,
@@ -209,65 +318,62 @@ public class BotWebApi {
         }
     }
 
+     */
+
     @GetMapping(value = "scores/bp-days")
-    public ResponseEntity<byte[]> getBpDay(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+    @OpenResource(name = "ppm", desp = "查询今日最好成绩 !ymtodaybp (!t)")
+    public ResponseEntity<byte[]> getTodayBP(
+            @OpenResource(name = "username", desp = "玩家名称", required = true) @RequestParam("u1") String userName,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "days", desp = "天数") @Nullable @RequestParam("n") Integer value
     ) {
         if (value == null) value = 1;
         if (value <= 0) value = 1;
         else if (value > 999) value = 999;
-        return getScores(userName, playMode, 0, value);
+        return getScore(userName, playMode, 0, value, null);
     }
 
     @GetMapping(value = "scores/bp-range")
-    public ResponseEntity<byte[]> getBpRange(
+    public ResponseEntity<byte[]> getBPScores(
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @Nullable @RequestParam("n") Integer value1,
+            @Nullable @RequestParam("m") Integer value2
     ) {
-        if (value == null) value = 1;
-        if (value <= 0) value = 1;
-        else if (value > 100) value = 100;
-        return getScores(userName, playMode, 1, value);
+        return getScore(userName, playMode, 1, value1, value2);
     }
 
     /**
      * 不计入 fail 成绩
      */
     @GetMapping(value = "scores/pr")
-    public ResponseEntity<byte[]> getPlayPassScores(
+    public ResponseEntity<byte[]> getPassedScores(
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @Nullable @RequestParam("n") Integer value1,
+            @Nullable @RequestParam("m") Integer value2
     ) {
-        if (value == null) value = 1;
-        if (value <= 0) value = 1;
-        else if (value > 100) value = 100;
-        return getScores(userName, playMode, 2, value);
+        return getScore(userName, playMode, 2, value1, value2);
     }
 
     /**
      * 计入 fail 成绩
      */
     @GetMapping(value = "scores/re")
-    public ResponseEntity<byte[]> getPlayAllScores(
+    public ResponseEntity<byte[]> getRecentScores(
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @Nullable @RequestParam("n") Integer value1,
+            @Nullable @RequestParam("m") Integer value2
     ) {
-        if (value == null) value = 1;
-        if (value <= 0) value = 1;
-        else if (value > 100) value = 100;
-        return getScores(userName, playMode, 3, value);
+        return getScore(userName, playMode, 3, value1, value2);
     }
 
 
-    /**
-     * 单个成绩接口
-     *
-     * @param userName 用户
+    /*
+      单个成绩接口
+
+      @param userName 用户
      * @param playMode 模式,可为空
      * @param type     请求类型,使用整数; 不传或者 0: 查询pr; 1: 查询bp; 2:查询谱面成绩;
      * @param value    查询pr: 前第N个成绩, 不传默认为最近一次,从 0 开始
@@ -277,6 +383,7 @@ public class BotWebApi {
      *                 查询bp: 无需此值
      *                 查询谱面成绩: 指定 mod_int, 不传默认谱面最高成绩
      */
+    /*
     public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
                                            @Nullable @RequestParam("mode") String playMode,
                                            @Nullable @RequestParam("type") Integer type,
@@ -344,37 +451,13 @@ public class BotWebApi {
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
-    /**
-     * n 从0开始, 不传默认为0
      */
-    @GetMapping(value = "score/pr")
-    public ResponseEntity<byte[]> getScorePr(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
-    ) {
-        if (value == null) value = 0;
-        return getScore(userName, playMode, 0, value, 0);
-    }
-
-    /**
-     * n 从0开始, 不传默认为0
-     */
-    @GetMapping(value = "score/re")
-    public ResponseEntity<byte[]> getScoreRe(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
-    ) {
-        if (value == null) value = 0;
-        return getScore(userName, playMode, 0, value, 1);
-    }
 
     /**
      * n 从0开始, 不传默认为0
      */
     @GetMapping(value = "score/bp")
-    public ResponseEntity<byte[]> getScoreBp(
+    public ResponseEntity<byte[]> getBPScore(
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
             @Nullable @RequestParam("n") Integer value
@@ -383,21 +466,85 @@ public class BotWebApi {
         return getScore(userName, playMode, 1, value, null);
     }
 
-    @GetMapping(value = "score")
-    public ResponseEntity<byte[]> getScore(
+    /**
+     * n 从0开始, 不传默认为0
+     */
+    @GetMapping(value = "score/pr")
+    public ResponseEntity<byte[]> getPassedScore(
             @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("bid") Integer value,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        return getScore(userName, playMode, 2, value, null);
+    }
+
+    /**
+     * n 从0开始, 不传默认为0
+     */
+    @GetMapping(value = "score/re")
+    public ResponseEntity<byte[]> getRecentScore(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("n") Integer value
+    ) {
+        return getScore(userName, playMode, 3, value, null);
+    }
+
+    @GetMapping(value = "score")
+    public ResponseEntity<byte[]> getBeatMapScore(
+            @NotNull @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode,
+            @NotNull @RequestParam("bid") Integer value,
             @Nullable @RequestParam("mods") String mods
     ) {
-        Integer modInt = null;
+        OsuUser osuUser;
+
+        OsuMode mode = OsuMode.getMode(playMode);
+        long UID;
+        int modInt = 0;
         if (mods != null) modInt = Mod.getModsValue(mods);
-        return getScore(userName, playMode, 2, value, modInt);
+
+        List<Score> scoreList;
+        Score score = null;
+
+        try {
+            osuUser = osuGetService.getPlayerInfo(userName);
+            UID = osuUser.getUID();
+        } catch (Exception e) {
+            throw new RuntimeException(ScoreException.Type.SCORE_Player_NotFound.message);
+        }
+
+        try {
+            scoreList = osuGetService.getScoreAll(value, UID, mode);
+        } catch (Exception e) {
+            throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
+        }
+
+        for (var s : scoreList) {
+            if (s.getMods().isEmpty() && Mod.None.check(modInt)) {
+                score = s;
+                break;
+            } else if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
+                score = s;
+                break;
+            }
+        }
+
+        if (score == null) {
+            throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
+        } else {
+            var beatMap = new BeatMap();
+            beatMap.setBID(Long.valueOf(value));
+            score.setBeatMap(beatMap);
+        }
+
+        var data = imageService.getPanelE(osuUser, score, osuGetService);
+        return new ResponseEntity<>(data, getImageHeader(userName + "-score.jpg", data.length), HttpStatus.OK);
     }
 
     @GetMapping(value = "bpa")
-    public ResponseEntity<byte[]> getBpa(@RequestParam("u1") String userName,
-                                         @Nullable @RequestParam("mode") String playMode
+    public ResponseEntity<byte[]> getBPAnalysis(@RequestParam("u1") String userName,
+                                                @Nullable @RequestParam("mode") String playMode
     ) {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
