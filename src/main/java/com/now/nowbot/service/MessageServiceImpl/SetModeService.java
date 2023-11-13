@@ -41,7 +41,7 @@ public class SetModeService implements MessageService<Matcher> {
             return;
         }
         user.setMode(mode);
-        bindDao.saveUser(user);
+        bindDao.updateMod(user.getOsuID(), mode);
         from.sendMessage("已修改主模式为:"+mode.getName());
     }
 }

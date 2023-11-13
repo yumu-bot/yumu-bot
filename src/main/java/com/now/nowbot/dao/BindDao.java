@@ -15,6 +15,7 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -75,7 +76,14 @@ public class BindDao {
         var qqBind = new QQBindLite();
         qqBind.setQq(qq);
         if (user.getRefreshToken() == null) {
-            var uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+            Optional<OsuBindUserLite> uLiteOpt = null;
+            try {
+                uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+            } catch (IncorrectResultSizeDataAccessException e) {
+                // 查出多个
+                bindUserMapper.deleteOldByOsuId(user.getOsuId());
+                uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+            }
             if (uLiteOpt.isPresent()) {
                 var uLite = uLiteOpt.get();
                 qqBind.setOsuUser(uLite);
