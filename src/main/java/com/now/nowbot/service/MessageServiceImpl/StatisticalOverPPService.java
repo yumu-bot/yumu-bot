@@ -3,12 +3,14 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mikuac.shiro.core.BotContainer;
+import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service("STATISTICAL")
 public class StatisticalOverPPService implements MessageService<Long> {
@@ -162,22 +161,30 @@ public class StatisticalOverPPService implements MessageService<Long> {
         if (Objects.isNull(bot)) {
             group.sendMessage("主bot未在线");
             return;
+        } else {
+            var targetGroup = bot.getGroupInfo(groupId, true).getData();
+            if (Objects.isNull(targetGroup) || targetGroup.getMemberCount() <= 0) {
+                throw new TipsException("获取群信息失败, 可能为未加入此群");
+            }
         }
         group.sendMessage("开始统计: " + groupId);
 
-        var groupInfo = bot.getGroupMemberList(groupId).getData();
+        List<GroupMemberInfoResp> groupInfo = null;
+        for (int i = 0; i < 5; i++) {
+            try {
+                groupInfo = bot.getGroupMemberList(groupId).getData();
+            } catch (Exception e) {
+                continue;
+            }
+            if (Objects.nonNull(groupInfo)) break;
+        }
+        if (Objects.isNull(groupInfo)) throw new TipsException("获取群成员失败");
         groupInfo = groupInfo.stream().filter(r -> r.getRole().equalsIgnoreCase("member")).toList();
-        /**
-         * qq-info
-         */
+        // qq-info
         Map<Long, MicroUser> users = new HashMap<>(groupInfo.size());
-        /**
-         * qq-bp1
-         */
+        // qq-bp1
         Map<Long, Float> usersBP1 = new HashMap<>(groupInfo.size());
-        /**
-         * uid-qq
-         */
+        // uid-qq
         Map<Long, Long> nowOsuId = new HashMap<>(50);
 
         int count = 0;
