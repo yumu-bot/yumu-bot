@@ -189,7 +189,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
         Map<Long, Float> usersBP1 = new HashMap<>(groupInfo.size());
         // uid-qq
         Map<Long, Long> nowOsuId = new HashMap<>(50);
-
+        // qq-err
         Map<Long, String> errMap = new HashMap<>();
 
         int count = 0;
@@ -246,7 +246,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 .forEach(entry -> {
                     sb.append('\'').append(entry.getKey()).append(',');
                     if (Objects.isNull(entry.getValue())) {
-                        sb.append("加载失败").append('\n');
+                        var s = errMap.get(entry.getKey());
+                        sb.append("加载失败").append(s).append('\n');
                         return;
                     }
                     sb.append(entry.getValue().getId()).append(',');
