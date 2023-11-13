@@ -122,8 +122,10 @@ public class StatisticalOverPPService implements MessageService<Long> {
     public boolean isHandle(MessageEvent event, DataValue<Long> data) throws Throwable {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
+        } else {
+            lock = 3;
         }
-        lock = 3;
+
         String message = event.getRawMessage();
         if (message.startsWith("!统计超限")) {
             if (message.endsWith("新人群")) {
@@ -137,6 +139,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 return true;
             }
         }
+        lock = 0;
         return false;
 
     }
@@ -187,6 +190,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
         // uid-qq
         Map<Long, Long> nowOsuId = new HashMap<>(50);
 
+        Map<Long, String> errMap = new HashMap<>();
+
         int count = 0;
         for (var u : groupInfo) {
             long qq = u.getUserId();
@@ -197,7 +202,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 float bp1 = getOsuBp1(id);
                 nowOsuId.put(id, qq);
                 usersBP1.put(qq, bp1);
-                log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
+                log.info("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1);
             } catch (WebClientResponseException.TooManyRequests err) {
                 Thread.sleep(20000);
                 id = getOsuId(qq);
@@ -205,8 +210,17 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 nowOsuId.put(id, qq);
                 usersBP1.put(qq, bp1);
                 log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
-            } catch (Exception err) {
-                log.error("统计出现异常: {}", qq, err);
+            } catch (WebClientResponseException.NotFound err) {
+                log.info("统计 [{}] 未找到: {}", qq, err.getMessage(), err);
+                if (err.getMessage().contains("bleatingsheep.org")) {
+                    errMap.put(qq, "未绑定");
+                } else {
+                    errMap.put(qq, "osu信息查询不到, 可能已删号");
+                }
+                users.put(qq, null);
+            } catch (Exception e) {
+                log.error("统计出现异常: {}", qq, e);
+                errMap.put(qq, e.getMessage());
                 users.put(qq, null);
             }
             count++;
