@@ -6,20 +6,186 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerData {
-    Match match;
-
     MicroUser player;
     String team;
 
-    List<Integer> scoreList = new ArrayList<>();
-
-    Integer totalScore = 0;
-
-    //标准化的单场个人得分，即标准分 = score/TotalScore
+    //最初的分数
+    List<Integer> scores = new ArrayList<>();
+    //totalScore
+    Integer TTS = 0;
+    //标准化的单场个人得分 RRAs，即标准分 = score/TotalScore
     List<Double> RRAs = new ArrayList<>();
-
+    //总得斗力点 TMG，也就是RRAs的和
+    Double TMG;
+    //场均标准分
+    Double AMG;
+    //AMG/Average(AMG) 场均标准分的相对值
+    Double MQ;
+    Double ERA;
+    //(TMG*playerNumber)/参赛人次
+    Double DRA;
+    //MRA = 0.7 * ERA + 0.3 * DRA
+    Double MRA;
     //平均每局胜利分配 RWS v3.4添加
     List<Double> RWSs = new ArrayList<>();
+    Double RWS;
 
+    //输入筛选好的对局，玩家名，这场比赛内所有玩家的数量（去重。
+    public PlayerData(MicroUser player) {
+        this.player = player;
+    }
 
+    public void calculateRRA(Integer playerScore, Integer scoreSize, Integer roundScore) {
+        this.scores.add(playerScore);
+        this.RRAs.add(1.0d * (playerScore * scoreSize) / roundScore);
+    }
+
+    public void calculateAMG() {
+        TMG = 0d;
+        AMG = 0d;
+
+        for (Double RRA : RRAs) {
+            TMG += RRA;
+        }
+
+        if (!RRAs.isEmpty()) {
+            AMG = TMG / RRAs.size();
+        }
+    }
+
+    //aAMG是AMG的平均值
+    public void calculateMQ(double aAMG) {
+        MQ = AMG / aAMG;
+    }
+
+    public void calculateERA(double minMQ, double ScalingFactor) {
+        ERA = (MQ - minMQ * ScalingFactor) / (1 - minMQ * ScalingFactor);
+    }
+
+    public void calculateDRA(int playerCount, int scoreCount) {
+        DRA = (TMG / scoreCount) * playerCount;
+    }
+
+    public void calculateMRA() {
+        MRA = 0.7 * ERA + 0.3 * DRA;
+    }
+
+    public void calculateRWS(int roundCount) {
+        var tRWS = 0d;
+
+        for (Double rRWS : RWSs) {
+            tRWS += rRWS;
+        }
+
+        if (RWSs.isEmpty()) {
+            RWS = 0d;
+        } else {
+            RWS = tRWS / roundCount;
+        }
+    }
+
+    // get set
+    public MicroUser getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(MicroUser player) {
+        this.player = player;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
+
+    public List<Integer> getScores() {
+        return scores;
+    }
+
+    public void setScores(List<Integer> scores) {
+        this.scores = scores;
+    }
+
+    public Integer getTTS() {
+        return TTS;
+    }
+
+    public void setTTS(Integer TTS) {
+        this.TTS = TTS;
+    }
+
+    public List<Double> getRRAs() {
+        return RRAs;
+    }
+
+    public void setRRAs(List<Double> RRAs) {
+        this.RRAs = RRAs;
+    }
+
+    public Double getTMG() {
+        return TMG;
+    }
+
+    public void setTMG(Double TMG) {
+        this.TMG = TMG;
+    }
+
+    public Double getAMG() {
+        return AMG;
+    }
+
+    public void setAMG(Double AMG) {
+        this.AMG = AMG;
+    }
+
+    public Double getMQ() {
+        return MQ;
+    }
+
+    public void setMQ(Double MQ) {
+        this.MQ = MQ;
+    }
+
+    public Double getERA() {
+        return ERA;
+    }
+
+    public void setERA(Double ERA) {
+        this.ERA = ERA;
+    }
+
+    public Double getDRA() {
+        return DRA;
+    }
+
+    public void setDRA(Double DRA) {
+        this.DRA = DRA;
+    }
+
+    public Double getMRA() {
+        return MRA;
+    }
+
+    public void setMRA(Double MRA) {
+        this.MRA = MRA;
+    }
+
+    public List<Double> getRWSs() {
+        return RWSs;
+    }
+
+    public void setRWSs(List<Double> RWSs) {
+        this.RWSs = RWSs;
+    }
+
+    public Double getRWS() {
+        return RWS;
+    }
+
+    public void setRWS(Double RWS) {
+        this.RWS = RWS;
+    }
 }

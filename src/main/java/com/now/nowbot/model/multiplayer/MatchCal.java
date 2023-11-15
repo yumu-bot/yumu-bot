@@ -12,20 +12,20 @@ public class MatchCal {
     Map<Long, MicroUser> users;
     // 这个流已经确认过滤为只包含对局
     // 原始 event 用 Match.getgetEvents()
-    Stream<MatchRound> gameEvents;
+    Stream<MatchRound> rounds;
 
     public MatchCal(Match match) {
         this.match = match;
         users = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, u -> u, (u1, u2) -> u2));
-        gameEvents = match.getEvents().stream().map(MatchEvent::getRound).filter(Objects::nonNull);
+        rounds = match.getEvents().stream().map(MatchEvent::getRound).filter(Objects::nonNull);
     }
 
     public MicroUser getUser(long id) {
         return users.get(id);
     }
 
-    public List<MatchRound> getAllRound() {
-        return gameEvents.collect(Collectors.toList());
+    public List<MatchRound> getAllRounds() {
+        return rounds.collect(Collectors.toList());
     }
 
     /**
@@ -33,8 +33,8 @@ public class MatchCal {
      * @param remove 是否删除低于 1w 的成绩
      * @return 对局 Round
      */
-    public List<MatchRound> getGameRoundWidthScore(boolean rematch, boolean remove) {
-        var result = gameEvents
+    public List<MatchRound> getRounds(boolean rematch, boolean remove) {
+        var result = rounds
                 .filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()));
         if (remove) {
             result = result.peek(matchRound -> matchRound.getScoreInfoList().removeIf(s -> s.getScore() <= 10000));

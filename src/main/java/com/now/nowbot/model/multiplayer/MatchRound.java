@@ -6,6 +6,7 @@ import com.now.nowbot.model.JsonData.BeatMap;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchRound {
