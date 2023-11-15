@@ -79,7 +79,7 @@ public class MonitorNowService implements MessageService<Matcher> {
             if (m != null) {
                 gameTime += m.intValue();
             }
-            match.addEventList(next);
+            match.parseNextData(next);
         }
 
         if (gameTime <= 0) {

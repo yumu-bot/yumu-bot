@@ -36,7 +36,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 import java.io.IOException;
@@ -176,13 +175,6 @@ public class NowbotConfig {
             log.error("代理不可用", e);
         }
         return false;
-    }
-
-    @Bean
-    public WebClient webCilent(WebClient.Builder builder) {
-        return builder
-                .baseUrl("https://osu.ppy.sh/")
-                .build();
     }
 
     //    @Bean

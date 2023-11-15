@@ -19,6 +19,18 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
 
     @Modifying
     @Transactional
+    @Query(value = """
+            with del as (
+                select id, row_number() over (partition by osu_id=:uid order by id desc ) as row_num
+                from osu_bind_user
+                where osu_id=:uid
+            )
+            delete from osu_bind_user using del where id = del.id and del.row_num >1;
+            """, nativeQuery = true)
+    void deleteOldByOsuId(Long uid);
+
+    @Modifying
+    @Transactional
     @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuId=:uid")
     void updateToken(Long uid, String accessToken, String refreshToken, Long time);
 
@@ -30,7 +42,7 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.refreshToken=null ,o.accessToken=null ,o.time=0 where o.osuId = :uid ")
+    @Query("delete OsuBindUserLite o where o.osuId = :uid ")
     void deleteByOsuId(Long uid);
     @Modifying
     @Transactional
@@ -50,4 +62,6 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
         deleteDCByOsuId(uid);
         deleteByOsuId(uid);
     }
+
+    int countAllByOsuId(long osuId);
 }

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.MicroUser;
@@ -20,6 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,7 +39,7 @@ public class FriendService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![a-zA-Z_]))+\\s*(?<n>\\d+)?(\\s*[:-]\\s*(?<m>\\d+))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?!\\S))\\s*(?<n>\\d+)?(\\s*[:-]\\s*(?<m>\\d+))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -61,9 +61,9 @@ public class FriendService implements MessageService<Matcher> {
         //拿到参数,默认1-24个
         int n1 = 0, n2;
         boolean doRandom = true;
-        if (matcher.group("m") == null) {
-            n2 = matcher.group("n") == null ? 12 : Integer.parseInt(matcher.group("n"));
-        } else {
+        String nStr = matcher.group("n");
+        String mStr = matcher.group("m");
+        if (Objects.nonNull(mStr) && Objects.nonNull(nStr)) {
             doRandom = false;
             n1 = Integer.parseInt(matcher.group("n"));
             n2 = Integer.parseInt(matcher.group("m"));
@@ -73,11 +73,16 @@ public class FriendService implements MessageService<Matcher> {
                 n1 ^= n2;
             }
             n1--;
+        } else {
+            if (Objects.isNull(mStr)) {
+                n2 = Objects.isNull(nStr) ? 12 : Integer.parseInt(nStr);
+            } else {
+                n2 = Integer.parseInt(mStr);
+            }
         }
         n2--;
         if (n2 == 0 || 100 < n2 - n1) {
             throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds);
-            //throw new TipsException("参数范围错误!");
         }
 
         try {

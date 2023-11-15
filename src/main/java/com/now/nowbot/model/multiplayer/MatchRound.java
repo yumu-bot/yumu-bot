@@ -1,16 +1,16 @@
-package com.now.nowbot.model.match;
+package com.now.nowbot.model.multiplayer;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.BeatMap;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GameInfo {
+public class MatchRound {
+
 
     @JsonProperty("beatmap_id")
     Long bid;
@@ -26,24 +26,24 @@ public class GameInfo {
     String scoringType;
     @JsonProperty("team_type")
     String teamType;
-    String[] mods;
+    List<String> mods;
     BeatMap beatmap;
     @JsonProperty("scores")
-    List<MPScore> scoreInfoList;
+    List<MatchScore> scoreInfoList;
 
-    public String getTeamType() {
-        return teamType;
+    public Long getBid() {
+        return bid;
     }
 
-    public void setTeamType(String teamType) {
-        this.teamType = teamType;
+    public void setBid(Long bid) {
+        this.bid = bid;
     }
 
-    public Integer getMatchID() {
+    public Integer getId() {
         return id;
     }
 
-    public void setMatchID(Integer id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -87,11 +87,19 @@ public class GameInfo {
         this.scoringType = scoringType;
     }
 
-    public String[] getMods() {
+    public String getTeamType() {
+        return teamType;
+    }
+
+    public void setTeamType(String teamType) {
+        this.teamType = teamType;
+    }
+
+    public List<String> getMods() {
         return mods;
     }
 
-    public void setMods(String[] mods) {
+    public void setMods(List<String> mods) {
         this.mods = mods;
     }
 
@@ -103,35 +111,11 @@ public class GameInfo {
         this.beatmap = beatmap;
     }
 
-    public List<MPScore> getScoreInfoList() {
+    public List<MatchScore> getScoreInfoList() {
         return scoreInfoList;
     }
 
-    public void setScoreInfoList(List<MPScore> scoreInfoList) {
+    public void setScoreInfoList(List<MatchScore> scoreInfoList) {
         this.scoreInfoList = scoreInfoList;
-    }
-
-    public Long getBID() {
-        return bid;
-    }
-
-    public void setBID(Long bid) {
-        this.bid = bid;
-    }
-
-    public String toString() {
-        return new StringJoiner(", ", GameInfo.class.getSimpleName() + "[", "]")
-                .add("bid=" + bid)
-                .add("id=" + id)
-                .add("startTime=" + startTime)
-                .add("endTime=" + endTime)
-                .add("mode='" + mode + "'")
-                .add("modInt=" + modInt)
-                .add("scoringType='" + scoringType + "'")
-                .add("teamType='" + teamType + "'")
-                .add("mods=" + Arrays.toString(mods))
-                .add("beatmap=" + beatmap)
-                .add("scoreInfos=" + scoreInfoList)
-                .toString();
     }
 }

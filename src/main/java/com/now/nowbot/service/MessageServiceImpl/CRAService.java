@@ -4,7 +4,7 @@ import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.match.GameInfo;
 import com.now.nowbot.model.match.Match;
-import com.now.nowbot.model.score.MPScore;
+import com.now.nowbot.model.match.MPScore;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;

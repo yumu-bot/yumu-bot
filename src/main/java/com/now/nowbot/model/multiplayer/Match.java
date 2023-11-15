@@ -1,26 +1,20 @@
-package com.now.nowbot.model.match;
+package com.now.nowbot.model.multiplayer;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.MicroUser;
 
-import java.util.HashSet;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Match {
+
     @JsonProperty("match")
-    MatchInfo matchInfo;
-    //    @JsonIgnore
+    MatchStat matchStat;
     List<MatchEvent> events;
-    //    @JsonProperty("events")
-//    public List<JsonNode> eventsrr;
-//    @JsonIgnore
-    List<MicroUser> users;
-//    @JsonProperty("users")
-//    public List<JsonNode> jsonNodes;
+    @JsonProperty("users")
+    List<MicroUser> players;
     @JsonProperty("first_event_id")
     Long firstEventId;
     @JsonProperty("latest_event_id")
@@ -28,12 +22,16 @@ public class Match {
     @JsonProperty("current_game_id")
     Long currentGameId;
 
-    public MatchInfo getMatchInfo() {
-        return matchInfo;
+    @JsonIgnoreProperties
+    // 这是啥, 为什么要忽略
+    boolean isMatchEnd;
+
+    public MatchStat getMatchStat() {
+        return matchStat;
     }
 
-    public void setMatchInfo(MatchInfo matchInfo) {
-        this.matchInfo = matchInfo;
+    public void setMatchStat(MatchStat matchStat) {
+        this.matchStat = matchStat;
     }
 
     public List<MatchEvent> getEvents() {
@@ -44,12 +42,12 @@ public class Match {
         this.events = events;
     }
 
-    public List<MicroUser> getUsers() {
-        return users;
+    public List<MicroUser> getPlayers() {
+        return players;
     }
 
-    public void setUsers(List<MicroUser> users) {
-        this.users = users;
+    public void setPlayers(List<MicroUser> players) {
+        this.players = players;
     }
 
     public Long getFirstEventId() {
@@ -76,13 +74,23 @@ public class Match {
         this.currentGameId = currentGameId;
     }
 
+    public boolean isMatchEnd() {
+        this.isMatchEnd = (this.matchStat.getStartTime() != null && this.matchStat.getEndTime() != null);
+        return isMatchEnd;
+    }
+
+    public void setMatchEnd(boolean matchEnd) {
+        this.isMatchEnd = matchEnd;
+    }
+
     public void parseNextData(Match m) {
-        var nList = m.getEvents();
-        var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getId).toList());
-        for (var mu : this.getUsers()){
-            nameSet.remove(mu.getId());
-        }
-        getUsers().addAll(m.getUsers().stream().filter(u->nameSet.contains(u.getId())).toList());
-        this.getEvents().addAll(0, nList);
+        // 合并事件
+        this.events.addAll(0, m.getEvents());
+        this.players.addAll(m.getPlayers());
+        //更新状态
+        this.matchStat = m.getMatchStat();
+        this.isMatchEnd = m.isMatchEnd();
+        this.latestEventId = m.getLatestEventId();
+        this.firstEventId = m.getFirstEventId();
     }
 }

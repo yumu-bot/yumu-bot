@@ -53,10 +53,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 
 // qnmd, 瞎 warning
@@ -69,10 +65,6 @@ public class OsuGetServiceImpl implements OsuGetService {
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    private static final ReentrantLock reentrantLock = new ReentrantLock();
-    private static final ConcurrentHashMap<Long, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, Condition> locks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, Boolean> results = new ConcurrentHashMap<>();
 
     BindDao bindDao;
     RestTemplate template;
@@ -107,7 +99,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
 
-    /***
+    /**
      * 拼合授权链接
      * @param state QQ[+群号]
      * @return
@@ -991,6 +983,30 @@ public class OsuGetServiceImpl implements OsuGetService {
             throw new TipsRuntimeException(exc.getMessage());
         }
         return data;
+    }
+
+    /**
+     * @param mid   房间 id
+     * @param limit 限制最大查询次数, 小于等于0只会请求一次
+     * @return 完整的房间记录, 受 limit 影响
+     * @throws HttpClientErrorException
+     */
+    public Match getMatchInfo(int mid, int limit) throws HttpClientErrorException {
+        Match match = null;
+        long eventId = 0;
+        do {
+            if (eventId == 0) {
+                match = getMatchInfo(mid);
+            } else {
+                match.parseNextData(getMatchInfo(
+                        mid,
+                        match.getEvents().getFirst().getID()
+                ));
+            }
+            eventId = match.getEvents().getFirst().getID();
+        }
+        while (!match.getFirstEventId().equals(eventId) && --limit >= 0);
+        return match;
     }
 
     @Override

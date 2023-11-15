@@ -247,6 +247,8 @@ public interface OsuGetService {
 
     Match getMatchInfo(int mid, long before) throws HttpClientErrorException;
 
+    Match getMatchInfo(int mid, int limit) throws HttpClientErrorException;
+
     BeatmapDifficultyAttributes getAttributes(Long id) throws HttpClientErrorException;
 
     BeatmapDifficultyAttributes getAttributes(Integer id) throws HttpClientErrorException;
