@@ -18,6 +18,10 @@ public class MatchCal {
         this.match = match;
         users = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, u -> u, (u1, u2) -> u2));
         rounds = match.getEvents().stream().map(MatchEvent::getRound).filter(Objects::nonNull);
+        Set<Long> playerUid = rounds.flatMap(r -> r.scoreInfoList.stream())
+                .filter(s -> s.getScore() > 1000)
+                .map(MatchScore::getUserId).collect(Collectors.toSet());
+        List<MicroUser> players = playerUid.stream().map(uid -> users.get(uid)).toList();
     }
 
     public MicroUser getUser(long id) {

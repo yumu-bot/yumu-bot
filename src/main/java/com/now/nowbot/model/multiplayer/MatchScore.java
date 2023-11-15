@@ -34,7 +34,7 @@ public class MatchScore {
     Statistics statistics;
     String type;
     @JsonProperty("user_id")
-    Integer userId;
+    Long userId;
 
     @JsonProperty("match")
     MatchPlayerStat matchPlayerStat;
@@ -169,11 +169,11 @@ public class MatchScore {
         this.type = type;
     }
 
-    public Integer getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
