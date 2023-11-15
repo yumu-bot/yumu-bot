@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class BinUser {
     Logger log = LoggerFactory.getLogger(BinUser.class);
+    Long baseId;
     /**
      * osu name
      */
@@ -35,6 +36,11 @@ public class BinUser {
 
     public BinUser() {
         reTime();
+    }
+
+    public BinUser(long base) {
+        this();
+        baseId = base;
     }
     public BinUser(long osuId, String osuName) {
         this.osuID = osuId;
@@ -130,6 +136,15 @@ public class BinUser {
 
     public void setMode(OsuMode mode) {
         this.mode = mode;
+    }
+
+    /**
+     * 记录在数据库中的 id, 非 uid
+     *
+     * @return base
+     */
+    public Long getBaseId() {
+        return baseId;
     }
 
     @Override

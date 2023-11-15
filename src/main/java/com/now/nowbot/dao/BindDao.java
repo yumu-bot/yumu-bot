@@ -12,6 +12,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import jakarta.persistence.NonUniqueResultException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +122,8 @@ public class BindDao {
             else {
                 throw new BindException(BindException.Type.BIND_Player_NotFound);
             }
+        } catch (NonUniqueResultException e) {
+            bindUserMapper.deleteByOsuId(user.getOsuID());
         } catch (Exception e) {
             // do nothing
         }

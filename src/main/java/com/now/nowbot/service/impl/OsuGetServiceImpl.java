@@ -53,10 +53,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 
 // qnmd, 瞎 warning
@@ -69,10 +65,6 @@ public class OsuGetServiceImpl implements OsuGetService {
     private final String redirectUrl;
     private final String oauthToken;
     private final String URL;
-    private static final ReentrantLock reentrantLock = new ReentrantLock();
-    private static final ConcurrentHashMap<Long, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, Condition> locks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, Boolean> results = new ConcurrentHashMap<>();
 
     BindDao bindDao;
     RestTemplate template;
@@ -107,7 +99,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
 
-    /***
+    /**
      * 拼合授权链接
      * @param state QQ[+群号]
      * @return

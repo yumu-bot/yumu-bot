@@ -2,9 +2,8 @@ package com.now.nowbot.entity;
 
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import org.hibernate.annotations.Type;
-
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,6 +47,9 @@ public class OsuBindUserLite {
         this.refreshToken = data.getRefreshToken();
         this.time = data.getTime();
         this.mainMode = data.getMode();
+        if (data.getBaseId() != null) {
+            this.id = data.getBaseId();
+        }
     }
 
     public OsuBindUserLite() {
