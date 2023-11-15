@@ -45,13 +45,13 @@ public enum Mod {
     ScoreV2(1 << 29, "V2"),
     Mirror(1 << 30, "MR"),
     //    keyMod(Key1.value | Key2.value | Key3.value | Key4.value | Key5.value | Key6.value | Key7.value | Key8.value | Key9.value | KeyCoop.value),
-    keyMod(521109504, "?"),
-    //    FreeModAllowed(NoFail.value | Easy.value | Hidden.value | HardRock.value | SuddenDeath.value | Flashlight.value | FadeIn.value | Relax.value | Relax2.value | SpunOut.value | keyMod.value),
+    keyMod(521109504, "KEY"),
+    //    FreeModAllowed(NoFail.value | Easy.value | Hidden.value | HardRock.value | SuddenDeath.value | Flashlight.value | FadeIn.value | Relax.value | Autopilot.value | SpunOut.value | keyMod.value),
     FreeModAllowed(522171579, "FM"),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
     ScoreIncreaseMods(1049688, "IM"),
     // 其他未上传的mod
-    Other(0, "?");
+    Other(-1, "OTHER");
     public final int value;
     public final String abbreviation;
 
@@ -209,10 +209,4 @@ public enum Mod {
     }
 
 
-    public static void main(String[] args) {
-        int t = SuddenDeath.value | Easy.value;
-        System.out.println(t);
-        System.out.println(Easy.check(t));
-        System.out.println(HardRock.check(t));
-    }
 }

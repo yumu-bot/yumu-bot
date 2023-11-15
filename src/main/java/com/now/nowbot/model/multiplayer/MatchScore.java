@@ -1,20 +1,22 @@
 package com.now.nowbot.model.multiplayer;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.Statistics;
 import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.lang.Nullable;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchScore {
 
     Double accuracy;
-    @Nullable
+
     @JsonProperty("best_id")
     Long bestId;
     OffsetDateTime timestamp;
-    @Nullable
+
     @JsonProperty("id")
     Long scoreId;
     @JsonProperty("max_combo")
@@ -23,11 +25,11 @@ public class MatchScore {
     @JsonProperty("mode_int")
     Integer modeInt;
     String[] mods;
-    boolean passed;
-    boolean perfect;
+    Boolean passed;
+    Boolean perfect;
     Double pp;
     String rank;
-    boolean replay;
+    Boolean replay;
     Integer score;
     Statistics statistics;
     String type;
@@ -103,19 +105,19 @@ public class MatchScore {
         this.mods = mods;
     }
 
-    public boolean isPassed() {
+    public Boolean isPassed() {
         return passed;
     }
 
-    public void setPassed(boolean passed) {
+    public void setPassed(Boolean passed) {
         this.passed = passed;
     }
 
-    public boolean isPerfect() {
+    public Boolean isPerfect() {
         return perfect;
     }
 
-    public void setPerfect(boolean perfect) {
+    public void setPerfect(Boolean perfect) {
         this.perfect = perfect;
     }
 
@@ -135,11 +137,11 @@ public class MatchScore {
         this.rank = rank;
     }
 
-    public boolean isReplay() {
+    public Boolean isReplay() {
         return replay;
     }
 
-    public void setReplay(boolean replay) {
+    public void setReplay(Boolean replay) {
         this.replay = replay;
     }
 

@@ -1,28 +1,24 @@
 package com.now.nowbot.model.multiplayer;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchEvent {
+    @JsonProperty("detail")
+    Detail detail;
     Long id;
     OffsetDateTime timestamp;
     @JsonProperty("user_id")
     Integer userId;
-    @Nullable
+
     @JsonProperty("game")
     MatchRound round;
 
-    public record Detail(String type, String text) {}
-
-    @JsonIgnore
-    Detail detail;
-    @JsonProperty("detail")
-    void setDetail(Map<String, String> detail) {
-        if (detail != null) this.detail = new Detail(detail.get("type"), detail.get("text"));
+    public record Detail(String type, String text) {
     }
 
     public Detail getDetail() {

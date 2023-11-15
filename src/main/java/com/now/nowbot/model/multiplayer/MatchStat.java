@@ -1,9 +1,11 @@
 package com.now.nowbot.model.multiplayer;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchStat {
     Integer id;
     @JsonProperty("start_time")

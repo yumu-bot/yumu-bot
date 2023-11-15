@@ -76,7 +76,7 @@ public class Match {
         this.currentGameId = currentGameId;
     }
 
-    public void addEventList(Match m){
+    public void parseNextData(Match m) {
         var nList = m.getEvents();
         var nameSet = new HashSet<>(m.getUsers().stream().map(MicroUser::getId).toList());
         for (var mu : this.getUsers()){

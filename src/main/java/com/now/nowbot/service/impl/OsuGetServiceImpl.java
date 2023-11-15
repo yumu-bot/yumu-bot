@@ -993,6 +993,30 @@ public class OsuGetServiceImpl implements OsuGetService {
         return data;
     }
 
+    /**
+     * @param mid   房间 id
+     * @param limit 限制最大查询次数, 小于等于0只会请求一次
+     * @return 完整的房间记录, 受 limit 影响
+     * @throws HttpClientErrorException
+     */
+    public Match getMatchInfo(int mid, int limit) throws HttpClientErrorException {
+        Match match = null;
+        long eventId = 0;
+        do {
+            if (eventId == 0) {
+                match = getMatchInfo(mid);
+            } else {
+                match.parseNextData(getMatchInfo(
+                        mid,
+                        match.getEvents().getFirst().getID()
+                ));
+            }
+            eventId = match.getEvents().getFirst().getID();
+        }
+        while (!match.getFirstEventId().equals(eventId) && --limit >= 0);
+        return match;
+    }
+
     @Override
     public BeatmapDifficultyAttributes getAttributes(Long id) {
         URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "beatmaps/" + id + "/attributes").build().encode().toUri();

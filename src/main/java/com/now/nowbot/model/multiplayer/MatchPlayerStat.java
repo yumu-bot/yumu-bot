@@ -1,9 +1,12 @@
 package com.now.nowbot.model.multiplayer;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchPlayerStat {
     Integer slot;
     String team;
-    boolean pass;
+    Boolean pass;
 
     public Integer getSlot() {
         return slot;

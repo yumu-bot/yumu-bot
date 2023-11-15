@@ -12,7 +12,6 @@ public class Match {
 
     @JsonProperty("match")
     MatchStat matchStat;
-
     List<MatchEvent> events;
     @JsonProperty("users")
     List<MicroUser> players;
@@ -24,6 +23,7 @@ public class Match {
     Long currentGameId;
 
     @JsonIgnoreProperties
+    // 这是啥, 为什么要忽略
     boolean isMatchEnd;
 
     public MatchStat getMatchStat() {
@@ -81,5 +81,16 @@ public class Match {
 
     public void setMatchEnd(boolean matchEnd) {
         this.isMatchEnd = matchEnd;
+    }
+
+    public void parseNextData(Match m) {
+        // 合并事件
+        this.events.addAll(0, m.getEvents());
+        this.players.addAll(m.getPlayers());
+        //更新状态
+        this.matchStat = m.getMatchStat();
+        this.isMatchEnd = m.isMatchEnd();
+        this.latestEventId = m.getLatestEventId();
+        this.firstEventId = m.getFirstEventId();
     }
 }
