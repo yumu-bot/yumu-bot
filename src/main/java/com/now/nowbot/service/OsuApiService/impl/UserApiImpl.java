@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.ActivityEvent;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -98,6 +99,11 @@ public class UserApiImpl implements OsuUserApiService {
                 .bodyToMono(OsuUser.class).block();
     }
 
+    /**
+     * 批量获取用户信息
+     *
+     * @param users 注意, 单次请求数量必须小于50
+     */
     @Override
     public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
         return base.osuApiWebClient.get()
@@ -122,5 +128,10 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve().bodyToFlux(MicroUser.class)
                 .collectList()
                 .block();
+    }
+
+    @Override
+    public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
+        return null;
     }
 }

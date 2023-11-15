@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -58,6 +59,7 @@ public class OsuApiBaseService {
 
         var s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
@@ -82,6 +84,7 @@ public class OsuApiBaseService {
         );
         var s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)

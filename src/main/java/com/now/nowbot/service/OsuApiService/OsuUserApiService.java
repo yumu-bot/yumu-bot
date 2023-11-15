@@ -1,6 +1,7 @@
 package com.now.nowbot.service.OsuApiService;
 
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.ActivityEvent;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -72,7 +73,14 @@ public interface OsuUserApiService {
         return getPlayerInfo(userId, OsuMode.MANIA);
     }
 
+    /**
+     * 批量获取用户信息
+     *
+     * @param users 注意, 单次请求数量必须小于50
+     */
     <T extends Number> List<MicroUser> getUsers(Collection<T> users) throws WebClientResponseException;
 
     List<MicroUser> getFriendList(BinUser user) throws WebClientResponseException;
+
+    List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
 }
