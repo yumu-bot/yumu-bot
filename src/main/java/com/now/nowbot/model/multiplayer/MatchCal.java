@@ -29,10 +29,15 @@ public class MatchCal {
 
     /**
      * @param rematch 是否包含重赛, true 为包含; false 为去重, 去重操作为保留最后一个
+     * @param remove 是否删除低于 1w 的成绩
      * @return 对局 Round
      */
-    public List<MatchRound> getGameRoundWidthScore(boolean rematch) {
-        var result = gameEvents.filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()));
+    public List<MatchRound> getGameRoundWidthScore(boolean rematch, boolean remove) {
+        var result = gameEvents
+                .filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()));
+        if (remove) {
+            result = result.peek(matchRound -> matchRound.getScoreInfoList().removeIf(s -> s.getScore() <= 10000));
+        }
         if (rematch) {
             return result.collect(Collectors.toList());
         } else {
