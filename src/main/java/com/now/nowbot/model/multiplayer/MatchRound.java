@@ -3,7 +3,6 @@ package com.now.nowbot.model.multiplayer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.score.MPScore;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,7 +28,7 @@ public class MatchRound {
     List<String> mods;
     BeatMap beatmap;
     @JsonProperty("scores")
-    List<MPScore> scoreInfoList;
+    List<MatchScore> scoreInfoList;
 
     public Long getBid() {
         return bid;
@@ -111,11 +110,11 @@ public class MatchRound {
         this.beatmap = beatmap;
     }
 
-    public List<MPScore> getScoreInfoList() {
+    public List<MatchScore> getScoreInfoList() {
         return scoreInfoList;
     }
 
-    public void setScoreInfoList(List<MPScore> scoreInfoList) {
+    public void setScoreInfoList(List<MatchScore> scoreInfoList) {
         this.scoreInfoList = scoreInfoList;
     }
 }

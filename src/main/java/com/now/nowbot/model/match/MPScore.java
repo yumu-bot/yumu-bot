@@ -1,4 +1,4 @@
-package com.now.nowbot.model.score;
+package com.now.nowbot.model.match;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

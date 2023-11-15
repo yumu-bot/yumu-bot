@@ -10,10 +10,11 @@ import java.util.stream.Stream;
 public class MatchCal {
     Match match;
     Map<Long, MicroUser> users;
+    // 这个流已经确认过滤为只包含对局
+    // 原始 event 用 Match.getgetEvents()
     Stream<MatchRound> gameEvents;
 
     public MatchCal(Match match) {
-        // 写了常用的, 别的有需要, 跟我说一声
         this.match = match;
         users = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, u -> u, (u1, u2) -> u2));
         gameEvents = match.getEvents().stream().map(MatchEvent::getRound).filter(Objects::nonNull);
@@ -23,7 +24,7 @@ public class MatchCal {
         return users.get(id);
     }
 
-    public List<MatchRound> getAllGameRound() {
+    public List<MatchRound> getAllRound() {
         return gameEvents.collect(Collectors.toList());
     }
 

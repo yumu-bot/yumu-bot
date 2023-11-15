@@ -9,7 +9,7 @@ import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.*;
 import com.now.nowbot.model.ppminus3.MapMinus;
-import com.now.nowbot.model.score.MPScore;
+import com.now.nowbot.model.match.MPScore;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
