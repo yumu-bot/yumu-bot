@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.match.*;
-import com.now.nowbot.model.score.MPScore;
+import com.now.nowbot.model.match.MPScore;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;

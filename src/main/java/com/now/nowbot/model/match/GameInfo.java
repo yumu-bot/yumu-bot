@@ -3,7 +3,6 @@ package com.now.nowbot.model.match;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.score.MPScore;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
