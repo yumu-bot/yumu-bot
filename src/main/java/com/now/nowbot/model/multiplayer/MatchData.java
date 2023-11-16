@@ -25,9 +25,9 @@ public class MatchData {
     Double minMQ = 100d;
 
     public MatchData(Match match, boolean rematch, boolean remove) {
-        var cal = new MatchCal(match);
+        var cal = new MatchCal(match, rematch, remove);
 
-        this.rounds = cal.getRounds(rematch, remove);
+        this.rounds = cal.getGameRounds();
         this.players = match.getPlayers(); //不准确，应该需要剔除掉某些玩家
 
         if (!rounds.isEmpty()) {
