@@ -46,6 +46,8 @@ public interface OsuScoreApiService {
 
     BeatmapUserScore getScore(long bid, long uid, OsuMode mode);
 
+    BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode);
+
     /**
      * 此接口 ppy 还没实现, 如果带 mod,单个数据结果是错误的
      */
@@ -58,9 +60,14 @@ public interface OsuScoreApiService {
 
     List<Score> getScoreAll(long bid, BinUser user, OsuMode mode);
 
+
     List<Score> getScoreAll(long bid, long uid, OsuMode mode);
 
     List<Score> getBeatmapScores(long bid, OsuMode mode);
 
-    byte[] getReplay(long id);
+    /**
+     * 此功能作废, ppy将其限定为 `Resource Owner` 权限
+     */
+    @Deprecated
+    byte[] getReplay(long id, OsuMode mode);
 }
