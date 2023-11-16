@@ -2,7 +2,7 @@ package com.now.nowbot.model.multiplayer;
 
 import io.github.humbleui.skija.Color;
 
-public enum PlayerClassification {
+public enum PlayerClassEnum {
     BC("Big Carry", "大爹", ClassColor.BC.color),
     CA("Carry", "大哥", ClassColor.CA.color),
     MF("Main Force", "主力", ClassColor.MF.color),
@@ -49,7 +49,7 @@ public enum PlayerClassification {
     LSP("Little Spark", "点点星火", FU.color),
     BDT("Burnt Dust", "湮灭尘埃", FU.color),
     ;
-    
+
     private enum ClassColor {
         BC(Color.makeRGB(255,241,0)),
         CA(Color.makeRGB(255,152,0)),
@@ -75,7 +75,7 @@ public enum PlayerClassification {
     public final String nameCN;
     public final int color;
 
-    PlayerClassification(String name, String nameCN, int color) {
+    PlayerClassEnum(String name, String nameCN, int color) {
         this.name = name;
         this.nameCN = nameCN;
         this.color = color;
@@ -86,50 +86,50 @@ public enum PlayerClassification {
      * @param DRA_index 输出的排名，0是第一，1是倒数第一
      * @return 第一版玩家分类
      */
-    public PlayerClassification getPlayerClassificationV1(Integer ERA_index, Integer DRA_index){
+    public static PlayerClassEnum getPlayerClassEnumV1(double ERA_index, double DRA_index){
         if (ERA_index < 1f/6) {
             if (DRA_index < 1f/6) {
-                return PlayerClassification.BC;
+                return PlayerClassEnum.BC;
             } else if (DRA_index < 2f/6) {
-                return PlayerClassification.CA;
+                return PlayerClassEnum.CA;
             } else if (DRA_index < 4f/6) {
-                return PlayerClassification.MF;
+                return PlayerClassEnum.MF;
             } else {
-                return PlayerClassification.SP;
+                return PlayerClassEnum.SP;
             }
         } else if (ERA_index < 2f/6) {
             if (DRA_index < 2f/6) {
-                return PlayerClassification.CA;
+                return PlayerClassEnum.CA;
             } else if (DRA_index < 4f/6) {
-                return PlayerClassification.MF;
+                return PlayerClassEnum.MF;
             } else {
-                return PlayerClassification.SP;
+                return PlayerClassEnum.SP;
             }
         } else if (ERA_index < 4f/6) {
             if (DRA_index < 2f/6) {
-                return PlayerClassification.WF;
+                return PlayerClassEnum.WF;
             } else if (DRA_index < 4f/6) {
-                return PlayerClassification.GE;
+                return PlayerClassEnum.GE;
             } else {
-                return PlayerClassification.GU;
+                return PlayerClassEnum.GU;
             }
         } else if (ERA_index < 5f/6) {
             if (DRA_index < 2f/6) {
-                return PlayerClassification.SU;
+                return PlayerClassEnum.SU;
             } else if (DRA_index < 4f/6) {
-                return PlayerClassification.SG;
+                return PlayerClassEnum.SG;
             } else {
-                return PlayerClassification.NO;
+                return PlayerClassEnum.NO;
             }
         } else {
             if (DRA_index < 2f/6) {
-                return PlayerClassification.SU;
+                return PlayerClassEnum.SU;
             } else if (DRA_index < 4f/6) {
-                return PlayerClassification.SG;
+                return PlayerClassEnum.SG;
             } else if (DRA_index < 5f/6) {
-                return PlayerClassification.NO;
+                return PlayerClassEnum.NO;
             } else {
-                return PlayerClassification.FU;
+                return PlayerClassEnum.FU;
             }
 
         }
@@ -140,70 +140,70 @@ public enum PlayerClassification {
      * @param ERA_index 效果的排名，0是第一，1是倒数第一
      * @param DRA_index 输出的排名，0是第一，1是倒数第一
      * @param RWS_index 胜利分配的排名，0是第一，1是倒数第一
-     * @return 第二版玩家分类
+     * @return 第二版 Extended 玩家分类
      */
-    public PlayerClassification getPlayerClassificationV2(Integer ERA_index, Integer DRA_index, Integer RWS_index) {
+    public static PlayerClassEnum getPlayerClassEnumV2(double ERA_index, double DRA_index, double RWS_index) {
 
-        var pc = getPlayerClassificationV1(ERA_index, DRA_index);
+        var pc = getPlayerClassEnumV1(ERA_index, DRA_index);
 
         switch (pc) {
             case BC -> {
-                if (RWS_index < 1f/9) return PlayerClassification.SMA;
-                else if (RWS_index < 3f/9) return PlayerClassification.CMA;
-                else return PlayerClassification.IMA;
+                if (RWS_index < 1f/9) return PlayerClassEnum.SMA;
+                else if (RWS_index < 3f/9) return PlayerClassEnum.CMA;
+                else return PlayerClassEnum.IMA;
             }
             case FU -> {
-                if (RWS_index < 6f/9) return PlayerClassification.LSS;
-                else if (RWS_index < 8f/9) return PlayerClassification.LSP;
-                else return PlayerClassification.BDT;
+                if (RWS_index < 6f/9) return PlayerClassEnum.LSS;
+                else if (RWS_index < 8f/9) return PlayerClassEnum.LSP;
+                else return PlayerClassEnum.BDT;
             }
             case CA -> {
-                if (RWS_index < 2f/9) return PlayerClassification.EGE;
-                else if (RWS_index < 4f/9) return PlayerClassification.AGE;
-                else return PlayerClassification.SGE;
+                if (RWS_index < 2f/9) return PlayerClassEnum.EGE;
+                else if (RWS_index < 4f/9) return PlayerClassEnum.AGE;
+                else return PlayerClassEnum.SGE;
             }
             case MF -> {
-                if (RWS_index < 2f/9) return PlayerClassification.BMF;
-                else if (RWS_index < 5f/9) return PlayerClassification.RMF;
-                else return PlayerClassification.SMF;
+                if (RWS_index < 2f/9) return PlayerClassEnum.BMF;
+                else if (RWS_index < 5f/9) return PlayerClassEnum.RMF;
+                else return PlayerClassEnum.SMF;
             }
             case SP -> {
-                if (RWS_index < 3f/9) return PlayerClassification.EAS;
-                else if (RWS_index < 6f/9) return PlayerClassification.NAS;
-                else return PlayerClassification.FAS;
+                if (RWS_index < 3f/9) return PlayerClassEnum.EAS;
+                else if (RWS_index < 6f/9) return PlayerClassEnum.NAS;
+                else return PlayerClassEnum.FAS;
             }
             case WF -> {
-                if (RWS_index < 2f/9) return PlayerClassification.GCW;
-                else if (RWS_index < 5f/9) return PlayerClassification.WCW;
-                else return PlayerClassification.BCW;
+                if (RWS_index < 2f/9) return PlayerClassEnum.GCW;
+                else if (RWS_index < 5f/9) return PlayerClassEnum.WCW;
+                else return PlayerClassEnum.BCW;
             }
             case GE -> {
-                if (RWS_index < 3f/9) return PlayerClassification.KPS;
-                else if (RWS_index < 6f/9) return PlayerClassification.CMN;
-                else return PlayerClassification.PSB;
+                if (RWS_index < 3f/9) return PlayerClassEnum.KPS;
+                else if (RWS_index < 6f/9) return PlayerClassEnum.CMN;
+                else return PlayerClassEnum.PSB;
             }
             case GU -> {
-                if (RWS_index < 4f/9) return PlayerClassification.MAC;
-                else if (RWS_index < 7f/9) return PlayerClassification.MIC;
-                else return PlayerClassification.FIG;
+                if (RWS_index < 4f/9) return PlayerClassEnum.MAC;
+                else if (RWS_index < 7f/9) return PlayerClassEnum.MIC;
+                else return PlayerClassEnum.FIG;
             }
             case SU -> {
-                if (RWS_index < 3f/9) return PlayerClassification.SAM;
-                else if (RWS_index < 6f/9) return PlayerClassification.HAS;
-                else return PlayerClassification.SIN;
+                if (RWS_index < 3f/9) return PlayerClassEnum.SAM;
+                else if (RWS_index < 6f/9) return PlayerClassEnum.HAS;
+                else return PlayerClassEnum.SIN;
             }
             case SG -> {
-                if (RWS_index < 4f/9) return PlayerClassification.ANI;
-                else if (RWS_index < 7f/9) return PlayerClassification.MNI;
-                else return PlayerClassification.LCS;
+                if (RWS_index < 4f/9) return PlayerClassEnum.ANI;
+                else if (RWS_index < 7f/9) return PlayerClassEnum.MNI;
+                else return PlayerClassEnum.LCS;
             }
             case NO -> {
-                if (RWS_index < 5f/9) return PlayerClassification.LKD;
-                else if (RWS_index < 7f/9) return PlayerClassification.QAP;
-                else return PlayerClassification.BGN;
+                if (RWS_index < 5f/9) return PlayerClassEnum.LKD;
+                else if (RWS_index < 7f/9) return PlayerClassEnum.QAP;
+                else return PlayerClassEnum.BGN;
             }
             case null, default -> {
-                return PlayerClassification.CMN;
+                return PlayerClassEnum.CMN;
             }
         }
     }

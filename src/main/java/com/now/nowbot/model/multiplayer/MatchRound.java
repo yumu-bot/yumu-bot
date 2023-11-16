@@ -118,4 +118,30 @@ public class MatchRound {
     public void setScoreInfoList(List<MatchScore> scoreInfoList) {
         this.scoreInfoList = scoreInfoList;
     }
+
+    public String getWinningTeam() {
+        if (!Objects.equals(teamType, "team-vs")) return "none";
+        int redTeamScore = 0;
+        int blueTeamScore = 0;
+
+        for (MatchScore s : scoreInfoList) {
+            String team = s.getMatchPlayerStat().getTeam();
+
+            switch (team) {
+                case "red" -> redTeamScore += s.getScore();
+                case "blue" -> blueTeamScore += s.getScore();
+            }
+        }
+
+        if (redTeamScore > blueTeamScore) return "red";
+        else if (redTeamScore < blueTeamScore) return "blue";
+        else return null; //平局
+    }
+
+    public Integer getWinningTeamScore() {
+        String WinningTeam = getWinningTeam();
+
+        return scoreInfoList.stream().filter(s -> Objects.equals(s.getMatchPlayerStat().getTeam(), WinningTeam))
+                .mapToInt(ms -> ms.score).reduce(Integer::sum).orElse(0);
+    }
 }

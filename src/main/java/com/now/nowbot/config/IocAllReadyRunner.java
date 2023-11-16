@@ -5,12 +5,8 @@ import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.MoliUtil;
-import com.now.nowbot.util.Panel.HCardBuilder;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.SkiaUtil;
-import io.github.humbleui.skija.Font;
-import io.github.humbleui.skija.TextLine;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,18 +86,4 @@ public class IocAllReadyRunner implements CommandLineRunner {
          */
 
     }
-
-    public static void initFountWidth() {
-        var face = SkiaUtil.getTorusSemiBold();
-        Font fontS48 = new Font(face, 48);
-        Font fontS24 = new Font(face, 24);
-        Font fontS36 = new Font(face, 36);
-        try (face; fontS48; fontS36; fontS24){
-            for (int i = 0; i < 254; i++) {
-                HCardBuilder.F24L.add(TextLine.make(String.valueOf((char) i), fontS24).getWidth());
-                HCardBuilder.F36L.add(TextLine.make(String.valueOf((char) i), fontS36).getWidth());
-            }
-        }
-    }
-
 }

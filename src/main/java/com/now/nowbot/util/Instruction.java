@@ -91,11 +91,14 @@ public enum Instruction {
     // #5 osu! 比赛指令
 
 
-    MRA(MRAService.class,
+    MRA(MuRatingService.class,
             Pattern.compile("^[!！]\\s*(?i)((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
 
+    /*
     URA(URAService.class,
             Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?")),
+
+     */
 
     CRA(CRAService.class,
             Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?")),

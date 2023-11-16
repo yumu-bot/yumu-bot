@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.match.*;
+import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.model.match.MPScore;
 import com.now.nowbot.util.SkiaUtil;
@@ -237,24 +238,10 @@ public class ImageService {
         return doPost("panel_B2", httpEntity);
     }
 
-    public byte[] getPanelC(List<UserMatchData> red, List<UserMatchData> blue, List<UserMatchData> none, MatchInfo matchInfo, int sid, float averageStar, int rounds, int redwins, int bluewins, boolean isTeamVs) {
-
+    public byte[] getPanelC(MatchData matchData) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of(
-                "redUsers", red,
-                "blueUsers", blue,
-                "noneUsers", none,
-                "matchInfo", matchInfo,
-                "sid", sid,
-                "rounds", rounds,
-                "averageStar", averageStar,
-                "redWins", redwins,
-                "blueWins", bluewins,
-                "isTeamVs", isTeamVs
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<MatchData> httpEntity = new HttpEntity<>(matchData, headers);
         return doPost("panel_C", httpEntity);
     }
 

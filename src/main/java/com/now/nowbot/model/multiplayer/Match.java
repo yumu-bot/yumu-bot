@@ -23,7 +23,7 @@ public class Match {
     Long currentGameId;
 
     @JsonIgnoreProperties
-    // 这是啥, 为什么要忽略
+    // 这玩意是自己算的
     boolean isMatchEnd;
 
     public MatchStat getMatchStat() {

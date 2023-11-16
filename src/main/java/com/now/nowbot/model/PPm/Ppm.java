@@ -2,18 +2,11 @@ package com.now.nowbot.model.PPm;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.action.Func2;
-import com.now.nowbot.model.PPm.action.Func3;
-import com.now.nowbot.model.PPm.action.Func4;
 import com.now.nowbot.model.PPm.impl.PpmCatch;
 import com.now.nowbot.model.PPm.impl.PpmMania;
 import com.now.nowbot.model.PPm.impl.PpmOsu;
 import com.now.nowbot.model.PPm.impl.PpmTaiko;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.util.Panel.PanelBuilder;
-import io.github.humbleui.skija.Image;
-import io.github.humbleui.skija.Paint;
-import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -126,50 +119,4 @@ public abstract class Ppm {
         out[5] = doAct.apply(value1);
         return out;
     }
-
-    /**
-     * 计算bonusPP
-     * 算法类似于通过 正态分布 "估算"超过bp100的pp数 此方法不严谨
-     */
-    public static float bonusPP(double[] pp, Long pc){
-        double bonus = 0;
-        double sumOxy = 0;
-        double sumOx2 = 0;
-        double avgX = 0;
-        double avgY = 0;
-        double sumX = 0;
-        for (int i = 1; i <= pp.length; i++) {
-            double weight = Math.log1p(i + 1);
-            sumX += weight;
-            avgX += i * weight;
-            avgY += pp[i - 1] * weight;
-        }
-        avgX /= sumX;
-        avgY /= sumX;
-        for(int n = 1; n <= pp.length; n++){
-            sumOxy += (n - avgX) * (pp[n - 1] - avgY) * Math.log1p(n + 1.0D);
-            sumOx2 += Math.pow(n - avgX, 2.0D) * Math.log1p(n + 1.0D);
-        }
-        double Oxy = sumOxy / sumX;
-        double Ox2 = sumOx2 / sumX;
-        for(int n = 100; n <= pc; n++){
-            double val = Math.pow(100.0D, (avgY - (Oxy / Ox2) * avgX) + (Oxy / Ox2) * n);
-            if(val <= 0.0D){
-                break;
-            }
-            bonus += val;
-        }
-        return (float) bonus;
-    }
-    public abstract void drawOverImage(Function<Image, PanelBuilder> doAct, @Nullable Image userImg);
-    public abstract void drawValueName(Func4<Integer, String, String, Paint, PanelBuilder> doAct);
-    public abstract void drawValue(Func3<Integer, String, String, PanelBuilder> doAct);
-
-    /**
-     * 评级
-     * @param doAct
-     */
-    public abstract void drawRank(Func2<Integer, Double, PanelBuilder> doAct);
-    public abstract void drawTitleName(Function<String , PanelBuilder> left, Function<String , PanelBuilder> right);
-    public abstract void drawTitleValue(Func2<String , String, PanelBuilder> left, Func2<String, String , PanelBuilder> right);
 }

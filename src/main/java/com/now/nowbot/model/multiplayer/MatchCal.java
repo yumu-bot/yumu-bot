@@ -15,10 +15,10 @@ public class MatchCal {
     List<MatchScore> cache;
 
     /**
-     * @param rematch 是否包含重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      * @param remove 是否删除低于 1w 的成绩，true 为删除，false 为保留
+     * @param rematch 是否包含重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
-    public MatchCal(Match match, boolean rematch, boolean remove) {
+    public MatchCal(Match match, int skip, int skipEnd, boolean remove, boolean rematch) {
         this.match = match;
         users = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, u -> u, (u1, u2) -> u2));
         var roundsStream = match.getEvents().stream()
@@ -38,6 +38,8 @@ public class MatchCal {
                     collect(Collectors.toMap(MatchRound::getBid, e -> e, (o, n) -> n, LinkedHashMap::new))
                     .values());
         }
+
+        skip(skip, skipEnd);
 
         cache = gameRounds.stream()
                 .flatMap(r -> r.scoreInfoList.stream())
@@ -60,16 +62,25 @@ public class MatchCal {
         return gameRounds;
     }
 
-    public void skip(int start, int end) {
-        int fullGameSize = gameRounds.size();
-        if (start < 0 || start >= fullGameSize || end < 0 || end >= fullGameSize || start + end >= fullGameSize) return;
+    public void skip(int skip, int skipEnd) {
+        int size = gameRounds.size();
+        int limit = size - skipEnd;
+
+        if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
         gameRounds = getGameRounds().stream()
-                .limit(fullGameSize - end)
-                .skip(start)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .limit(limit)
+                .skip(skip)
+                .collect(Collectors.toList());
     }
 
-    private List<MicroUser> getPlayers(String teamType) {
+    public List<MicroUser> getPlayers() {
+        return players;
+    }
+
+    /**
+     * @param teamType blue, red, none
+     */
+    public List<MicroUser> getPlayers(String teamType) {
         return cache
                 .stream()
                 .filter(s -> s.getMatchPlayerStat().getTeam().equals(teamType))
@@ -77,18 +88,8 @@ public class MatchCal {
                 .toList();
     }
 
-    public List<MicroUser> getRedPlayers() {
-        return getPlayers("red");
-    }
-
-
-    public List<MicroUser> getBluePlayers() {
-        return getPlayers("blue");
-    }
-
-
-    public List<MicroUser> getNonTeamPlayers() {
-        return getPlayers("none");
+    public void setPlayers(List<MicroUser> players) {
+        this.players = players;
     }
 
     /**
@@ -109,10 +110,10 @@ public class MatchCal {
      *
      * @return sid
      */
-    public long getFirstRoundBG() {
+    public long getFirstMapSID() {
         for (var r : gameRounds) {
             if (r.getBeatmap() != null) {
-                return r.getBid();
+                return r.getBeatmap().getBeatmapsetId();
             }
         }
         return 0;

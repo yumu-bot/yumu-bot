@@ -30,14 +30,33 @@ public class PlayerData {
     List<Double> RWSs = new ArrayList<>();
     Double RWS;
 
+    PlayerClass playerClass;
+
+    String className;
+    String classNameCN;
+    int classColor;
+
+    double ERAIndex;
+    double DRAIndex;
+    double RWSIndex;
+
+    int ranking;
+
+    //胜负场次
+    Integer win = 0;
+    Integer lose = 0;
+
     //输入筛选好的对局，玩家名，这场比赛内所有玩家的数量（去重。
     public PlayerData(MicroUser player) {
         this.player = player;
     }
 
-    public void calculateRRA(Integer playerScore, Integer scoreSize, Integer roundScore) {
-        this.scores.add(playerScore);
-        this.RRAs.add(1.0d * (playerScore * scoreSize) / roundScore);
+    public void calculateTTS() {
+        TTS = 0;
+
+        for (Integer score : scores) {
+            TTS += score;
+        }
     }
 
     public void calculateAMG() {
@@ -77,11 +96,15 @@ public class PlayerData {
             tRWS += rRWS;
         }
 
-        if (RWSs.isEmpty()) {
-            RWS = 0d;
-        } else {
+        if (!RWSs.isEmpty() && roundCount > 0) {
             RWS = tRWS / roundCount;
+        } else {
+            RWS = 0d;
         }
+    }
+
+    public void calculateClass() {
+        playerClass = new PlayerClass(ERAIndex, DRAIndex, RWSIndex);
     }
 
     // get set
@@ -187,5 +210,85 @@ public class PlayerData {
 
     public void setRWS(Double RWS) {
         this.RWS = RWS;
+    }
+
+    public PlayerClass getPlayerClass() {
+        return playerClass;
+    }
+
+    public void setPlayerClass(PlayerClass playerClass) {
+        this.playerClass = playerClass;
+    }
+
+    public double getERAIndex() {
+        return ERAIndex;
+    }
+
+    public void setERAIndex(double ERAIndex) {
+        this.ERAIndex = ERAIndex;
+    }
+
+    public double getDRAIndex() {
+        return DRAIndex;
+    }
+
+    public void setDRAIndex(double DRAIndex) {
+        this.DRAIndex = DRAIndex;
+    }
+
+    public double getRWSIndex() {
+        return RWSIndex;
+    }
+
+    public void setRWSIndex(double RWSIndex) {
+        this.RWSIndex = RWSIndex;
+    }
+
+    public int getRanking() {
+        return ranking;
+    }
+
+    public void setRanking(int ranking) {
+        this.ranking = ranking;
+    }
+
+    public Integer getWin() {
+        return win;
+    }
+
+    public void setWin(Integer win) {
+        this.win = win;
+    }
+
+    public Integer getLose() {
+        return lose;
+    }
+
+    public void setLose(Integer lose) {
+        this.lose = lose;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public String getClassNameCN() {
+        return classNameCN;
+    }
+
+    public void setClassNameCN(String classNameCN) {
+        this.classNameCN = classNameCN;
+    }
+
+    public int getClassColor() {
+        return classColor;
+    }
+
+    public void setClassColor(int classColor) {
+        this.classColor = classColor;
     }
 }

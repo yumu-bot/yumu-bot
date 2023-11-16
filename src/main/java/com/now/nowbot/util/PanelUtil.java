@@ -2,13 +2,10 @@ package com.now.nowbot.util;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.util.Panel.ACardBuilder;
-import com.now.nowbot.util.Panel.BCardBuilder;
-import com.now.nowbot.util.Panel.PPMPanelBuilder;
-import io.github.humbleui.types.Rect;
-import org.jetbrains.annotations.Nullable;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.skija.svg.*;
+import io.github.humbleui.types.Rect;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,30 +84,6 @@ public class PanelUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    /***
-     * 玩家卡片
-     * @return
-     */
-    public static ACardBuilder getA1Builder(Image bg) {
-        return new ACardBuilder(bg);
-    }
-
-    /***
-     * 谱面B成绩卡片
-     * @return
-     */
-    public static BCardBuilder getA2Builder(Image bg) {
-        return new BCardBuilder(bg);
-    }
-
-    /***
-     * PPA(P)面板
-     * @return
-     */
-    public static PPMPanelBuilder getPPMBulider() {
-        return new PPMPanelBuilder();
     }
 
     /**

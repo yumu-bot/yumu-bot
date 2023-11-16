@@ -12,10 +12,13 @@ import com.now.nowbot.model.PPm.Ppm;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageServiceImpl.MRAService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
+import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuGetService;
-import com.now.nowbot.throwable.ServiceException.*;
+import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.throwable.ServiceException.MonitorNowException;
+import com.now.nowbot.throwable.ServiceException.PPMinusException;
+import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import jakarta.annotation.Resource;
@@ -48,7 +51,7 @@ public class BotWebApi {
     @Lazy
     FileConfig fileConfig;
     @Resource
-    MRAService mraService;
+    MuRatingService mraService;
     @Resource
     MonitorNowService monitorNowService;
     @Resource
@@ -146,7 +149,7 @@ public class BotWebApi {
         if (f == null) f = true;
         if (r == null) r = true;
 
-        var data = mraService.getDataImage(matchId, k, d, f, r);
+        byte[] data = imageService.getPanelC(mraService.calculate(matchId, k, d, f, r));
         return new ResponseEntity<>(data, getImageHeader(matchId + "-mra.jpg", data.length), HttpStatus.OK);
     }
 

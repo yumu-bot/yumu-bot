@@ -59,15 +59,19 @@ public class MicroUser {
     @JsonProperty("statistics_rulesets")
     UserStatisticsRulesets rulesets;
 
-    public String getAvatar() {
-        return avatarUrl;
-    }
     public String getAvatarUrl() {
         return avatarUrl;
     }
-
-    public void setAvatar(String avatar) {
+    public void setAvatarUrl(String avatar) {
         this.avatarUrl = avatar;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
     }
 
     public String getGroup() {

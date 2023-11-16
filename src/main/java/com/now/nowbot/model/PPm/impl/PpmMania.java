@@ -1,23 +1,10 @@
 package com.now.nowbot.model.PPm.impl;
 
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.PPm.Ppm;
-import com.now.nowbot.model.PPm.action.Func2;
-import com.now.nowbot.model.PPm.action.Func3;
-import com.now.nowbot.model.PPm.action.Func4;
-import com.now.nowbot.util.Panel.PanelBuilder;
-import com.now.nowbot.util.PanelUtil;
-import com.now.nowbot.util.SkiaImageUtil;
-import io.github.humbleui.skija.Image;
-import io.github.humbleui.skija.Paint;
-import org.springframework.lang.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Function;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
@@ -310,61 +297,5 @@ public class PpmMania extends Ppm {
             value8 = check(value8, 0, 1.2);
             value8 *= 100;
         }
-    }
-
-    @Override
-    public void drawOverImage(Function<Image, PanelBuilder> doAct, @Nullable Image userImg) {
-        if (userImg != null) {
-            doAct.apply(userImg);
-            return;
-        }
-        try {
-            doAct.apply(SkiaImageUtil.getImage(Path.of(NowbotConfig.BG_PATH , "ExportFileV3/overlay-ppminus-maniaSP.png")));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void drawValueName(Func4<Integer, String, String, Paint, PanelBuilder> doAct) {
-        var p = new Paint().setARGB(255,161,161,161);
-        doAct.call(0, "FAC",null,p);
-        doAct.call(1, "PTT",null,p);
-        doAct.call(2, "STA",null,p);
-        doAct.call(3, "PRE",null,p);
-        doAct.call(4, "ENG",null,p);
-        doAct.call(5, "STH",null,p);
-    }
-
-    @Override
-    public void drawValue(Func3<Integer, String, String, PanelBuilder> doAct) {
-        doAct.call(0, String.valueOf((int) (value1 * 100)), PanelUtil.cutDecimalPoint(value1 * 100)/*<-小字部分*/);
-        doAct.call(1, String.valueOf((int) (value2 * 100)), PanelUtil.cutDecimalPoint(value2 * 100)/*<-小字部分*/);
-        doAct.call(2, String.valueOf((int) (value3 * 100)), PanelUtil.cutDecimalPoint(value3 * 100)/*<-小字部分*/);
-        doAct.call(3, String.valueOf((int) (value4 * 100)), PanelUtil.cutDecimalPoint(value4 * 100)/*<-小字部分*/);
-        doAct.call(4, String.valueOf((int) (value5 * 100)), PanelUtil.cutDecimalPoint(value5 * 100)/*<-小字部分*/);
-        doAct.call(5, String.valueOf((int) (value6 * 100)), PanelUtil.cutDecimalPoint(value6 * 100)/*<-小字部分*/);
-    }
-
-    @Override
-    public void drawRank(Func2<Integer, Double, PanelBuilder> doAct) {
-        doAct.call(0, value1);
-        doAct.call(1, value2);
-        doAct.call(2, value3);
-        doAct.call(3, value4);
-        doAct.call(4, value5);
-        doAct.call(5, value6);
-    }
-
-    @Override
-    public void drawTitleName(Function<String, PanelBuilder> left, Function<String, PanelBuilder> right) {
-        left.apply("Overall");
-        right.apply("Sanity");
-    }
-
-    @Override
-    public void drawTitleValue(Func2<String, String, PanelBuilder> left, Func2<String, String, PanelBuilder> right) {
-        left.call(String.valueOf((int) value7), PanelUtil.cutDecimalPoint(value7));
-        right.call(String.valueOf((int) value8), PanelUtil.cutDecimalPoint(value8));
     }
 }
