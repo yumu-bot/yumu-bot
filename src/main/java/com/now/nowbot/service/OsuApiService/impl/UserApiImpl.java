@@ -107,7 +107,9 @@ public class UserApiImpl implements OsuUserApiService {
     @Override
     public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
         return base.osuApiWebClient.get()
-                .uri(b -> b.path("users").queryParam("ids[]", users).build())
+                .uri(b -> b.path("users")
+                        .queryParam("ids[]", users).
+                        build())
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
@@ -132,6 +134,14 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
-        return null;
+        return base.osuApiWebClient.get()
+                .uri(b -> b.path("users/{userId}/recent_activity")
+                        .queryParam("offset", s)
+                        .queryParam("limit", e)
+                        .build(userId))
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToFlux(ActivityEvent.class)
+                .collectList().block();
     }
 }

@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -29,14 +30,16 @@ public class FriendService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(FriendService.class);
     BindDao bindDao;
     OsuGetService osuGetService;
+    OsuUserApiService userApiService;
 
     ImageService imageService;
 
     @Autowired
-    public FriendService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
+    public FriendService(OsuGetService osuGetService, OsuUserApiService osuUserApiService, BindDao bindDao, ImageService imageService) {
         this.osuGetService = osuGetService;
         this.bindDao = bindDao;
         this.imageService = imageService;
+        userApiService = osuUserApiService;
     }
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?!\\S))\\s*(?<n>\\d+)?(\\s*[:-]\\s*(?<m>\\d+))?");
@@ -108,7 +111,7 @@ public class FriendService implements MessageService<Matcher> {
 
         List<MicroUser> friendList;
         try {
-            friendList = osuGetService.getFriendList(binUser);
+            friendList = userApiService.getFriendList(binUser);
         } catch (Exception e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_FetchFailed);
         }

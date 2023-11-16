@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums;
 
+import java.util.Optional;
+
 public enum OsuMode {
     OSU("osu",0),
     TAIKO("taiko",1),
@@ -68,5 +70,12 @@ public enum OsuMode {
     }
     public static boolean isDefault (OsuMode mode) {
         return mode == null || mode == DEFAULT;
+    }
+
+    public static Optional<String> getName(OsuMode mode) {
+        if (DEFAULT.equals(mode)) {
+            return Optional.empty();
+        }
+        return Optional.of(mode.getName());
     }
 }
