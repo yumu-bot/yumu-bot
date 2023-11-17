@@ -182,9 +182,9 @@ public class BotWebApi {
         int limit;
         boolean isMultipleScore;
 
-        if (Objects.isNull(value1)) value1 = 1;
+        if (Objects.isNull(value1) || value1 < 1 || value1 > 100) value1 = 1;
 
-        if (Objects.isNull(value2)) {
+        if (Objects.isNull(value2) || value2 < 1 || value2 > 100) {
             offset = value1 - 1;
             limit = 1;
         } else {
@@ -242,10 +242,10 @@ public class BotWebApi {
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scoreList);
-                    suffix = "-recent.jpg";
+                    suffix = "-recents.jpg";
                 } else {
                     data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
-                    suffix = "-recents.jpg";
+                    suffix = "-recent.jpg";
                 }
             }
 

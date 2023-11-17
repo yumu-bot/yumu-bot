@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MatchCal {
-    static final String NAME = "MC";
     Match match;
     Map<Long, MicroUser> playerMap;
     List<MicroUser> players;
@@ -41,6 +40,7 @@ public class MatchCal {
                     collect(Collectors.toMap(MatchRound::getBid, e -> e, (o, n) -> n, LinkedHashMap::new))
                     .values());
         }
+
         skip(skip, skipEnd);
 
         scoreList = roundList.stream()
@@ -56,7 +56,7 @@ public class MatchCal {
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
         players = playerUIDSet.stream().map(userMap::get).toList();
-        playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));;
+        playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
     }
 
     public Match getMatch() {
