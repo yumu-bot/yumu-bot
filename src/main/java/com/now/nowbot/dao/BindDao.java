@@ -131,18 +131,6 @@ public class BindDao {
         bindUserMapper.save(data);
     }
 
-    public void update(QQBindLite user) {
-        bindQQMapper.save(user);
-    }
-
-    public void update(DiscordBindLite user) {
-        bindDiscordMapper.save(user);
-    }
-
-    public void update(OsuBindUserLite user) {
-        bindUserMapper.save(user);
-    }
-
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
         bindUserMapper.updateToken(uid, accessToken, refreshToken, time);
     }

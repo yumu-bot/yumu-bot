@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MatchCal {
+    static final String NAME = "MC";
     Match match;
     Map<Long, MicroUser> playerMap;
     List<MicroUser> players;
@@ -49,6 +50,8 @@ public class MatchCal {
 
         Set<Long> playerUIDSet = scoreList.stream().map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
         // 不需要get啊...他不是给你默认的microUser了吗？那个是现成的不用走 API，重复获取也太占用 API 了
+//        用来兜底的, 比如说ppy给的就不够(好像不太可能) 以及被删号的? 不需要也没事, 删了就行
+//        computeIfAbsent() 是如果 map 里不存在这个 key 或者 value 为 null 才执行查询函数, 并且将这个结果再插入到 map 里
         // 背景什么的我再想办法
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();

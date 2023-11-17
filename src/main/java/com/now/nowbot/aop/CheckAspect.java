@@ -1,18 +1,21 @@
 package com.now.nowbot.aop;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.onebot.contact.GroupContact;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.qq.enums.Role;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,20 @@ public class CheckAspect {
 
     @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
     public void restTemplate(){}
+
+    @Pointcut("execution(* com.now.nowbot.mapper.BindUserMapper.save(..))")
+    public void userSave() {
+    }
+
+    @Before(value = "userSave()")
+    public Object userSaveLogger(JoinPoint point) {
+        Object[] args = point.getArgs();
+        if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
+            var dobj = point.getSignature();
+            log.info("--*-**- 保存用户[{}] ({}), 调用者: {}", u.getOsuId(), u.getOsuName(), dobj.toString());
+        }
+        return args;
+    }
 
     /***
      * 注解权限切点
