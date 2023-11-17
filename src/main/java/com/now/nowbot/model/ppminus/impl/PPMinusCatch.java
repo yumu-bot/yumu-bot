@@ -1,24 +1,24 @@
-package com.now.nowbot.model.PPm.impl;
+package com.now.nowbot.model.ppminus.impl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
-public class PpmOsu extends Ppm {
-    public PpmOsu(OsuUser user, List<Score> bps) {
-        double[] bpPPs = new double[bps.size()];
+public class PPMinusCatch extends PPMinus {
+    public PPMinusCatch(OsuUser user, List<Score> bps){
+        double [] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = bp.getWeight().getPP();
             var bprPP = bp.getPP();
             bpPP += bpiPP;
-            bpPPs[i] = bprPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？
+            bpPPs[i] = bprPP;
 
-            switch (bp.getRank()) {
+            switch (bp.getRank()){
                 case "XH", "X" -> xx++;
                 case "SH", "S" -> xs++;
                 case "A" -> xa++;
@@ -26,16 +26,16 @@ public class PpmOsu extends Ppm {
                 case "C" -> xc++;
                 case "D" -> xd++;
             }
-            if (!bp.isPerfect()) notfc++;
-            if (i < 10) {
+            if (!bp.isPerfect()) notfc ++;
+            if(i < 10){
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
-            } else if (i >= 45 && i < 55) {
+            }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
-            } else if (i >= 90) {
+            }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
@@ -54,41 +54,34 @@ public class PpmOsu extends Ppm {
         lengv0 /= 10;
         lengv45 /= 10;
         lengv90 /= 10;
-        if (bps.size() < 90) {
-            ppv90 = 0;
-            accv90 = 0;
-            lengv90 = 0;
+        if (bps.size()<90) {
+            ppv90 = 0; accv90 = 0; lengv90 = 0;
         }
-        if (bps.size() < 45) {
-            ppv45 = 0;
-            accv45 = 0;
-            lengv45 = 0;
+        if (bps.size()<45) {
+            ppv45 = 0; accv45 = 0; lengv45 = 0;
         }
-        if (bps.size() < 10) {
-            ppv0 = 0;
-            accv0 = 0;
-            lengv0 = 0;
+        if (bps.size()<10) {
+            ppv0 = 0; accv0 = 0; lengv0 = 0;
         }
-        double pp = user.getPP();
-        double acc = user.getAccuracy();
-        double pc = user.getPlayCount();
-        double pt = user.getPlayTime();
-        double tth = user.getTotalHits();
+        double pp = user.getStatistics().getPP();
+        double acc = user.getStatistics().getAccuracy();
+        double pc = user.getStatistics().getPlayCount();
+        double pt = user.getStatistics().getPlayTime();
+        double tth = user.getStatistics().getTotalHits();
 
 
-        // 1.1 准度fACC formulaic accuracy 0-1.2
+        // 3.1 准度fACC formulaic accuracy 0-1.2
         {
             double rFA;
             if (acc == 100) {
                 rFA = 1;
             } else if (acc >= 60) {
-                rFA = Math.pow((acc / 100 - 0.6) / 0.4D, 1.776D);
+                rFA = Math.pow((acc / 100 - 0.6) / 0.4D, 5D);
             } else {
                 rFA = 0;
             }
 
             double PFB = ((xx + xs + xa + xb + xc + xd - notfc) * 1.0D) / 500; // 完美奖励
-
             value1 = rFA + PFB;
             value1 = check(value1, 0, 1.2);
         }
@@ -116,11 +109,9 @@ public class PpmOsu extends Ppm {
             if (rBPV >= 1.8) {
                 BPV = 1;
             } else if (rBPV >= 1.4) {
-                BPV = (rBPV - 1.4) * 0.25D + 0.9D;
-            } else if (rBPV >= 1.2) {
-                BPV = (rBPV - 1.2) * 1.5D + 0.6D;
-            } else if (rBPV >= 1.0) {
-                BPV = (rBPV - 1) * 3D;
+                BPV = (rBPV - 1.4) + 0.6D;
+            } else if (rBPV >= 1.3) {
+                BPV = (rBPV - 1.3) * 6D;
             } else {
                 BPV = 0;
             }
@@ -137,8 +128,7 @@ public class PpmOsu extends Ppm {
             value2 = Math.pow(BPD, 0.4D) * 0.2D + BPV * 0.8D * LPI + VWB;
             value2 = check(value2, 0, 1.2);
         }
-
-        // 1.3 耐力STA stamina 0-1.2
+        // 3.3 耐力STA stamina 0-1.2
         {
             double rSPT = pc == 0 ? 0 : (pt / pc);
             double SPT; // single play count time 单次游玩时长
@@ -172,8 +162,8 @@ public class PpmOsu extends Ppm {
             double VLB; // very long bonus 超长奖励
             if (rBPT >= 320) {
                 VLB = 0.2;
-            } else if (rBPT >= 240) {
-                VLB = (rBPT - 240) * 0.0025D;
+            } else if (rBPT >= 280) {
+                VLB = (rBPT - 280) * 0.005D;
             } else {
                 VLB = 0;
             }
@@ -181,11 +171,12 @@ public class PpmOsu extends Ppm {
             value3 = Math.pow((SPT * 0.4D + BPT * 0.6D), 0.8D) + VLB;
             value3 = check(value3, 0, 1.2);
         }
-        //1.4 稳定STB stability (-0.16)-1.2 stb
+
+        //3.4 稳定STB stability (-0.16)-1.2 stb
         {
             double FCN = (xx + xs) / 100D; // full-combo number 全连数量
 
-            double GRD = (xx * 1.0 + xs * 0.95 + xa * 0.9 + xb * 0.4 - xc * 0.2 - xd * 0.4) / bps.size(); // grade 评级分数
+            double GRD = (xx * 1.0 + xs * 0.95 + xa * 0.4 + xb * 0.2 - xc * 0.2 - xd * 0.4) / bps.size(); // grade 评级分数
             GRD = check(GRD, 0, 1);
 
             double PFB = ((bps.size() - notfc) * 1.0D) / 500; // 完美奖励
@@ -193,8 +184,7 @@ public class PpmOsu extends Ppm {
             value4 = Math.pow(FCN * 0.2D + GRD * 0.8D, 0.6D) + PFB;
             value4 = check(value4, 0, 1.2);
         }
-
-        // 1.5 肝力ENG energy 0-1.2
+        // 3.5 肝力ENG energy 0-1.2
 
         {
             double rLNT = Math.log1p(tth);
@@ -219,22 +209,12 @@ public class PpmOsu extends Ppm {
             value5 = Math.pow(LNT, 0.6D) + VEB;
             value5 = check(value5, 0, 1.2);
         }
-
-        // 1.6 实力STH strength 0-1.2
+        // 3.6 实力STH strength 0-1.2
         {
-            double rHPS = pt == 0 ? 0 : tth / pt; // raw hit per second 每秒击打初值
+            // rHPS raw hit per second 每秒击打初值 舍去
 
             double rLNB = Math.log1p(ppv0 * lengv0);
             // raw ln (the) best (performance multiplayer) 最好表现因子自然对数初值
-
-            double HPS;
-            if (rHPS >= 5) {
-                HPS = 1;
-            } else if (rHPS >= 0) {
-                HPS = rHPS / 5D;
-            } else {
-                HPS = 0;
-            }
 
             double LNB;
             if (rLNB >= 11.5) {
@@ -254,15 +234,14 @@ public class PpmOsu extends Ppm {
                 VHB = 0;
             }
 
-            value6 = Math.pow(HPS * 0.2 + LNB * 0.8, 0.4D) + VHB;
+            value6 = Math.pow(LNB, 0.4D) + VHB;
             value6 = check(value6, 0, 1.2);
-
         }
-        // 1.7 总计TTL Total / Overall 0-1.2
-        value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.2 + value5 * 0.1 + value6 * 0.2;
+        // 3.7 总计TTL Total / Overall 0-1.2
+        value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.25 + value5 * 0.05 + value6 * 0.2;
         value7 *= 100;
 
-        // 1.8 理智SAN sanity 0-1.2
+        // 3.8 理智SAN sanity 0-1.2
         {
             double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
 
@@ -281,4 +260,5 @@ public class PpmOsu extends Ppm {
             value8 *= 100;
         }
     }
+
 }

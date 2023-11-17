@@ -1,22 +1,22 @@
-package com.now.nowbot.model.PPm.impl;
+package com.now.nowbot.model.ppminus.impl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
-public class PpmTaiko extends Ppm {
-    public PpmTaiko(OsuUser user, List<Score> bps) {
+public class PPMinusOsu extends PPMinus {
+    public PPMinusOsu(OsuUser user, List<Score> bps) {
         double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = bp.getWeight().getPP();
             var bprPP = bp.getPP();
             bpPP += bpiPP;
-            bpPPs[i] = bprPP;
+            bpPPs[i] = bprPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？
 
             switch (bp.getRank()) {
                 case "XH", "X" -> xx++;
@@ -69,20 +69,20 @@ public class PpmTaiko extends Ppm {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getStatistics().getPP();
-        double acc = user.getStatistics().getAccuracy();
-        double pc = user.getStatistics().getPlayCount();
-        double pt = user.getStatistics().getPlayTime();
-        double tth = user.getStatistics().getTotalHits();
+        double pp = user.getPP();
+        double acc = user.getAccuracy();
+        double pc = user.getPlayCount();
+        double pt = user.getPlayTime();
+        double tth = user.getTotalHits();
 
 
         // 1.1 准度fACC formulaic accuracy 0-1.2
         {
             double rFA;
-            if (acc >= 97) {
+            if (acc == 100) {
                 rFA = 1;
             } else if (acc >= 60) {
-                rFA = Math.pow((acc / 100 - 0.6) / 0.37D, 1.432D);
+                rFA = Math.pow((acc / 100 - 0.6) / 0.4D, 1.776D);
             } else {
                 rFA = 0;
             }
@@ -92,7 +92,8 @@ public class PpmTaiko extends Ppm {
             value1 = rFA + PFB;
             value1 = check(value1, 0, 1.2);
         }
-        // 2.2 潜力PTT potential 0-1.2
+
+        // 1.2 潜力PTT potential 0-1.2
         {
             double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
@@ -112,21 +113,23 @@ public class PpmTaiko extends Ppm {
             }
 
             double BPV; // BP vitality BP活力
-            if (rBPV >= 1.4) {
+            if (rBPV >= 1.8) {
                 BPV = 1;
+            } else if (rBPV >= 1.4) {
+                BPV = (rBPV - 1.4) * 0.25D + 0.9D;
             } else if (rBPV >= 1.2) {
-                BPV = (rBPV - 1.2) * 2D + 0.6D;
-            } else if (rBPV >= 1) {
-                BPV = (rBPV - 1 * 3D);
+                BPV = (rBPV - 1.2) * 1.5D + 0.6D;
+            } else if (rBPV >= 1.0) {
+                BPV = (rBPV - 1) * 3D;
             } else {
                 BPV = 0;
             }
 
             double VWB; // very wide (bp) bonus 超活力奖励
-            if (rBPV >= 6.4) {
+            if (rBPV >= 6.8) {
                 VWB = 0.2;
-            } else if (rBPV >= 1.4) {
-                VWB = (rBPV - 1.4) / 25D;
+            } else if (rBPV >= 1.8) {
+                VWB = (rBPV - 1.8) / 25D;
             } else {
                 VWB = 0;
             }
@@ -134,7 +137,8 @@ public class PpmTaiko extends Ppm {
             value2 = Math.pow(BPD, 0.4D) * 0.2D + BPV * 0.8D * LPI + VWB;
             value2 = check(value2, 0, 1.2);
         }
-        // 2.3 耐力STA stamina 0-1.2
+
+        // 1.3 耐力STA stamina 0-1.2
         {
             double rSPT = pc == 0 ? 0 : (pt / pc);
             double SPT; // single play count time 单次游玩时长
@@ -168,8 +172,8 @@ public class PpmTaiko extends Ppm {
             double VLB; // very long bonus 超长奖励
             if (rBPT >= 320) {
                 VLB = 0.2;
-            } else if (rBPT >= 280) {
-                VLB = (rBPT - 280) * 0.005D;
+            } else if (rBPT >= 240) {
+                VLB = (rBPT - 240) * 0.0025D;
             } else {
                 VLB = 0;
             }
@@ -177,21 +181,21 @@ public class PpmTaiko extends Ppm {
             value3 = Math.pow((SPT * 0.4D + BPT * 0.6D), 0.8D) + VLB;
             value3 = check(value3, 0, 1.2);
         }
-
-        // 2.4 稳定STB stability 0-1.2
+        //1.4 稳定STB stability (-0.16)-1.2 stb
         {
             double FCN = (xx + xs) / 100D; // full-combo number 全连数量
 
-            double GRD = (xx * 1.0 + xs * 0.95 + xa * 0.9 + xb * 0.4 - xc * 0.2 - xd * 0.4) / (xx + xs + xa + xb + xc + xd); // grade 评级分数
+            double GRD = (xx * 1.0 + xs * 0.95 + xa * 0.9 + xb * 0.4 - xc * 0.2 - xd * 0.4) / bps.size(); // grade 评级分数
             GRD = check(GRD, 0, 1);
 
-            double PFB = ((xx + xs + xa + xb + xc + xd - notfc) * 1.0D) / 500; // 完美奖励
+            double PFB = ((bps.size() - notfc) * 1.0D) / 500; // 完美奖励
 
-            value4 = Math.pow(FCN * 0.1D + GRD * 0.9D, 0.6D) + PFB;
+            value4 = Math.pow(FCN * 0.2D + GRD * 0.8D, 0.6D) + PFB;
             value4 = check(value4, 0, 1.2);
         }
 
-        // 2.5 肝力ENG energy 0-1.2
+        // 1.5 肝力ENG energy 0-1.2
+
         {
             double rLNT = Math.log1p(tth);
             double LNT; // LNTTH 总击打自然对数分数
@@ -216,7 +220,7 @@ public class PpmTaiko extends Ppm {
             value5 = check(value5, 0, 1.2);
         }
 
-        // 2.6 实力STH strength 0-1.2
+        // 1.6 实力STH strength 0-1.2
         {
             double rHPS = pt == 0 ? 0 : tth / pt; // raw hit per second 每秒击打初值
 
@@ -224,10 +228,10 @@ public class PpmTaiko extends Ppm {
             // raw ln (the) best (performance multiplayer) 最好表现因子自然对数初值
 
             double HPS;
-            if (rHPS >= 8) {
+            if (rHPS >= 5) {
                 HPS = 1;
             } else if (rHPS >= 0) {
-                HPS = rHPS / 8D;
+                HPS = rHPS / 5D;
             } else {
                 HPS = 0;
             }
@@ -252,9 +256,9 @@ public class PpmTaiko extends Ppm {
 
             value6 = Math.pow(HPS * 0.2 + LNB * 0.8, 0.4D) + VHB;
             value6 = check(value6, 0, 1.2);
-        }
 
-        // 2.7 总计TTL Total / Overall 0-1.2
+        }
+        // 1.7 总计TTL Total / Overall 0-1.2
         value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.2 + value5 * 0.1 + value6 * 0.2;
         value7 *= 100;
 

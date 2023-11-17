@@ -1,17 +1,17 @@
-package com.now.nowbot.model.PPm;
+package com.now.nowbot.model.ppminus;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.impl.PpmCatch;
-import com.now.nowbot.model.PPm.impl.PpmMania;
-import com.now.nowbot.model.PPm.impl.PpmOsu;
-import com.now.nowbot.model.PPm.impl.PpmTaiko;
+import com.now.nowbot.model.ppminus.impl.PPMinusCatch;
+import com.now.nowbot.model.ppminus.impl.PPMinusMania;
+import com.now.nowbot.model.ppminus.impl.PPMinusOsu;
+import com.now.nowbot.model.ppminus.impl.PPMinusTaiko;
 import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class Ppm {
+public abstract class PPMinus {
     protected float ppv0 = 0;
     protected float ppv45 = 0;
     protected float ppv90 = 0;
@@ -44,16 +44,16 @@ public abstract class Ppm {
     protected double value7;
     protected double value8;
 
-    public static Ppm getInstance(OsuMode mode, OsuUser user, List<Score> bps){
-        Ppm ppm = null;
+    public static PPMinus getInstance(OsuMode mode, OsuUser user, List<Score> bps){
+        PPMinus PPMinus = null;
         if (OsuMode.isDefault(mode)) mode = user.getPlayMode();
         switch (mode) {
-            case OSU -> ppm = new PpmOsu(user, bps);
-            case TAIKO -> ppm = new PpmTaiko(user, bps);
-            case CATCH -> ppm = new PpmCatch(user, bps);
-            case MANIA -> ppm = new PpmMania(user, bps);
+            case OSU -> PPMinus = new PPMinusOsu(user, bps);
+            case TAIKO -> PPMinus = new PPMinusTaiko(user, bps);
+            case CATCH -> PPMinus = new PPMinusCatch(user, bps);
+            case MANIA -> PPMinus = new PPMinusMania(user, bps);
         }
-        return ppm;
+        return PPMinus;
     }
 
     public double getValue1(){

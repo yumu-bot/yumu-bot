@@ -1,15 +1,15 @@
-package com.now.nowbot.model.PPm.impl;
+package com.now.nowbot.model.ppminus.impl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
 
 import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
-public class PpmMania extends Ppm {
-    public PpmMania(OsuUser user, List<Score> bps){
+public class PPMinusMania extends PPMinus {
+    public PPMinusMania(OsuUser user, List<Score> bps){
         double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);

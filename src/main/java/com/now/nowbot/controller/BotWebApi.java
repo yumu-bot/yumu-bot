@@ -8,7 +8,7 @@ import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.ImageService;
@@ -75,7 +75,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         var info = osuGetService.getPlayerInfo(user1.trim(), mode);
         var bplist = osuGetService.getBestPerformance(info.getUID(), mode, 0, 100);
-        var ppm = Ppm.getInstance(mode, info, bplist);
+        var ppm = PPMinus.getInstance(mode, info, bplist);
         if (ppm == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
         } else {
@@ -92,8 +92,8 @@ public class BotWebApi {
         if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
         var bplist1 = osuGetService.getBestPerformance(info1.getUID(), mode, 0, 100);
         var bplist2 = osuGetService.getBestPerformance(info2.getUID(), mode, 0, 100);
-        var ppm1 = Ppm.getInstance(mode, info1, bplist1);
-        var ppm2 = Ppm.getInstance(mode, info2, bplist2);
+        var ppm1 = PPMinus.getInstance(mode, info1, bplist1);
+        var ppm2 = PPMinus.getInstance(mode, info2, bplist2);
         if (ppm1 == null) {
             throw new RuntimeException(PPMinusException.Type.PPM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
         } else if (ppm2 == null) {

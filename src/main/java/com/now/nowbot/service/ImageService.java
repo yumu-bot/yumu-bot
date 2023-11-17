@@ -2,7 +2,8 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.JsonData.*;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -145,7 +146,7 @@ public class ImageService {
         return doPost("panel_A4", httpEntity);
     }
 
-    public byte[] getPanelB1(OsuUser user, OsuMode mode, Ppm ppmMe) {
+    public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus PPMinusMe) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -153,18 +154,18 @@ public class ImageService {
         } else {
             STBPRE = "STB";
         }
-        //var Card_A = List.of(getPanelBUser(user));
+
         var Card_A = List.of(user);
 
         var cardB = Map.of(
-                "ACC", ppmMe.getValue1(),
-                "PTT", ppmMe.getValue2(),
-                "STA", ppmMe.getValue3(),
-                STBPRE, ppmMe.getValue4(),
-                "EFT", ppmMe.getValue5(),
-                "STH", ppmMe.getValue6(),
-                "OVA", ppmMe.getValue7(),
-                "SAN", ppmMe.getValue8()
+                "ACC", PPMinusMe.getValue1(),
+                "PTT", PPMinusMe.getValue2(),
+                "STA", PPMinusMe.getValue3(),
+                STBPRE, PPMinusMe.getValue4(),
+                "EFT", PPMinusMe.getValue5(),
+                "STH", PPMinusMe.getValue6(),
+                "OVA", PPMinusMe.getValue7(),
+                "SAN", PPMinusMe.getValue8()
         );
 
         var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
@@ -180,7 +181,7 @@ public class ImageService {
         return doPost("panel_B1", httpEntity);
     }
 
-    public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, Ppm ppmMe, Ppm ppmOther, OsuMode mode) {
+    public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, PPMinus PPMinusMe, PPMinus PPMinusOther, OsuMode mode) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -192,24 +193,24 @@ public class ImageService {
         var Card_A = List.of(userMe, userOther);
 
         var cardB1 = Map.of(
-                "ACC", ppmMe.getValue1(),
-                "PTT", ppmMe.getValue2(),
-                "STA", ppmMe.getValue3(),
-                STBPRE, ppmMe.getValue4(),
-                "EFT", ppmMe.getValue5(),
-                "STH", ppmMe.getValue6(),
-                "OVA", ppmMe.getValue7(),
-                "SAN", ppmMe.getValue8()
+                "ACC", PPMinusMe.getValue1(),
+                "PTT", PPMinusMe.getValue2(),
+                "STA", PPMinusMe.getValue3(),
+                STBPRE, PPMinusMe.getValue4(),
+                "EFT", PPMinusMe.getValue5(),
+                "STH", PPMinusMe.getValue6(),
+                "OVA", PPMinusMe.getValue7(),
+                "SAN", PPMinusMe.getValue8()
         );
         var cardB2 = Map.of(
-                "ACC", ppmOther.getValue1(),
-                "PTT", ppmOther.getValue2(),
-                "STA", ppmOther.getValue3(),
-                STBPRE, ppmOther.getValue4(),
-                "EFT", ppmOther.getValue5(),
-                "STH", ppmOther.getValue6(),
-                "OVA", ppmOther.getValue7(),
-                "SAN", ppmOther.getValue8()
+                "ACC", PPMinusOther.getValue1(),
+                "PTT", PPMinusOther.getValue2(),
+                "STA", PPMinusOther.getValue3(),
+                STBPRE, PPMinusOther.getValue4(),
+                "EFT", PPMinusOther.getValue5(),
+                "STH", PPMinusOther.getValue6(),
+                "OVA", PPMinusOther.getValue7(),
+                "SAN", PPMinusOther.getValue8()
         );
 
         var statistics = Map.of("isVS", true, "gameMode", mode.getModeValue());
@@ -245,22 +246,13 @@ public class ImageService {
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelF2(List<MPScore> red, List<MPScore> blue, List<MPScore> none, MatchInfo matchInfo,
-                             BeatMap beatMap, float averageStar, int rounds, int redwins, int bluewins, boolean isTeamVs) {
-
+    public byte[] getPanelF2(MatchRound round, Map<Long, String> playerNameMap, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "redUsers", red,
-                "blueUsers", blue,
-                "noneUsers", none,
-                "matchInfo", matchInfo,
-                "rounds", rounds,
-                "averageStar", averageStar,
-                "redWins", redwins,
-                "blueWins", bluewins,
-                "isTeamVs", isTeamVs,
-                "beatmap", beatMap
+                "MatchRound", round,
+                "players", playerNameMap,
+                "index", index
         );
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);

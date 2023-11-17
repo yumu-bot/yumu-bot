@@ -47,7 +47,7 @@ public class MatchData {
         averageStar = cal.getAverageStar();
         firstMapSID = cal.getFirstMapSID();
 
-        rounds = cal.getGameRounds();
+        rounds = cal.getRoundList();
         players = cal.getPlayers();
         roundCount = rounds.size();
         playerCount = players.size();

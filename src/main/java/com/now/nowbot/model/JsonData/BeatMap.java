@@ -163,6 +163,9 @@ public class BeatMap {
         this.userId = userId;
     }
 
+    /**
+     * getDifficulty
+     */
     public String getVersion() {
         return version;
     }

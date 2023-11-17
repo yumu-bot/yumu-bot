@@ -8,11 +8,11 @@ import java.util.stream.Collectors;
 
 public class MatchCal {
     Match match;
-    Map<Long, MicroUser> users;
+    Map<Long, MicroUser> playerMap;
     List<MicroUser> players;
-    // gameRounds 为只包含对局，其他 events 走 Match 那边取
-    List<MatchRound> gameRounds;
-    List<MatchScore> cache;
+    // gameRounds 只包含对局，其他 events 走 Match 那边取
+    List<MatchRound> roundList;
+    List<MatchScore> scoreList;
 
     /**
      * @param remove 是否删除低于 1w 的成绩，true 为删除，false 为保留
@@ -20,7 +20,9 @@ public class MatchCal {
      */
     public MatchCal(Match match, int skip, int skipEnd, boolean remove, boolean rematch) {
         this.match = match;
-        users = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, u -> u, (u1, u2) -> u2));
+
+        //包含所有玩家的映射表
+        var userMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p));
         var roundsStream = match.getEvents().stream()
                 .map(MatchEvent::getRound)
                 .filter(Objects::nonNull)
@@ -32,42 +34,74 @@ public class MatchCal {
         }
 
         if (rematch) {
-            gameRounds = roundsStream.collect(Collectors.toList());
+            roundList = roundsStream.collect(Collectors.toList());
         } else {
-            gameRounds = new ArrayList<>(roundsStream.
+            roundList = new ArrayList<>(roundsStream.
                     collect(Collectors.toMap(MatchRound::getBid, e -> e, (o, n) -> n, LinkedHashMap::new))
                     .values());
         }
-
         skip(skip, skipEnd);
 
-        cache = gameRounds.stream()
+        scoreList = roundList.stream()
                 .flatMap(r -> r.scoreInfoList.stream())
                 .filter(s -> s.getScore() > 10000)
-                .collect(Collectors.toList());
-        Set<Long> playerUid = cache.stream()
-                .map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
+                .toList();
+
+        Set<Long> playerUIDSet = scoreList.stream().map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
         // 不需要get啊...他不是给你默认的microUser了吗？那个是现成的不用走 API，重复获取也太占用 API 了
         // 背景什么的我再想办法
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
-        players = playerUid.stream().map(uid -> users.get(uid)).toList();
+        players = playerUIDSet.stream().map(userMap::get).toList();
+        playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));;
     }
 
-    public MicroUser getUser(long id) {
-        return users.get(id);
+    public Match getMatch() {
+        return match;
     }
 
-    public List<MatchRound> getGameRounds() {
-        return gameRounds;
+    public void setMatch(Match match) {
+        this.match = match;
+    }
+
+    public String getPlayerName(long id) {
+        return playerMap.get(id).getUserName();
+    }
+
+    public Map<Long, String> getPlayerNameMap() {
+        return playerMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getUserName()));
+    }
+
+    public Map<Long, MicroUser> getPlayerMap() {
+        return playerMap;
+    }
+
+    public void setPlayerMap(Map<Long, MicroUser> playerMap) {
+        this.playerMap = playerMap;
+    }
+
+    public List<MatchRound> getRoundList() {
+        return roundList;
+    }
+
+    public void setRoundList(List<MatchRound> roundList) {
+        this.roundList = roundList;
+    }
+
+    public List<MatchScore> getScoreList() {
+        return scoreList;
+    }
+
+    public void setScoreList(List<MatchScore> scoreList) {
+        this.scoreList = scoreList;
     }
 
     public void skip(int skip, int skipEnd) {
-        int size = gameRounds.size();
+        int size = roundList.size();
         int limit = size - skipEnd;
 
         if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
-        gameRounds = getGameRounds().stream()
+        roundList = getRoundList().stream()
                 .limit(limit)
                 .skip(skip)
                 .collect(Collectors.toList());
@@ -81,10 +115,10 @@ public class MatchCal {
      * @param teamType blue, red, none
      */
     public List<MicroUser> getPlayers(String teamType) {
-        return cache
+        return scoreList
                 .stream()
                 .filter(s -> s.getMatchPlayerStat().getTeam().equals(teamType))
-                .map(s -> users.get(s.getUserId()))
+                .map(s -> playerMap.get(s.getUserId()))
                 .toList();
     }
 
@@ -98,7 +132,7 @@ public class MatchCal {
      * @return 平均星级
      */
     public float getAverageStar() {
-        return (float) gameRounds.stream()
+        return (float) roundList.stream()
                 .filter(gameRounds -> gameRounds.getBeatmap() != null)
                 .mapToDouble(gameRounds -> gameRounds.getBeatmap().getDifficultyRating())
                 .average()
@@ -111,7 +145,7 @@ public class MatchCal {
      * @return sid
      */
     public long getFirstMapSID() {
-        for (var r : gameRounds) {
+        for (var r : roundList) {
             if (r.getBeatmap() != null) {
                 return r.getBeatmap().getBeatmapsetId();
             }

@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.PPm.Ppm;
+import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -55,7 +55,7 @@ public class PPMinusService implements MessageService<Matcher> {
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        Ppm ppm;
+        PPMinus ppMinus = null;
         OsuUser user;
         List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
@@ -120,10 +120,10 @@ public class PPMinusService implements MessageService<Matcher> {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
 
-        ppm = Ppm.getInstance(mode, user, bps);
+        ppMinus = PPMinus.getInstance(mode, user, bps);
 
         try {
-            var img = imageService.getPanelB1(user, mode, ppm);
+            var img = imageService.getPanelB1(user, mode, ppMinus);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
@@ -142,8 +142,8 @@ public class PPMinusService implements MessageService<Matcher> {
         List<Score> bpListMe;
         OsuUser userOther;
         List<Score> bpListOther;
-        Ppm ppmMe;
-        Ppm ppmOther;
+        PPMinus PPMinusMe;
+        PPMinus PPMinusOther;
 
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
@@ -155,19 +155,19 @@ public class PPMinusService implements MessageService<Matcher> {
         } catch (BindException e) {
             throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
         }
-        ppmMe = Ppm.getInstance(mode, userMe, bpListMe);
+        PPMinusMe = PPMinus.getInstance(mode, userMe, bpListMe);
 
         if (at != null) {//被对比人的信息
             // 包含有@
             var b = bindDao.getUserFromQQ(at.getTarget());
             userOther = osuGetService.getPlayerInfo(b, mode);
             bpListOther = osuGetService.getBestPerformance(b, mode,0,100);
-            ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
+            PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             var id = osuGetService.getOsuId(matcher.group("name").trim());
             userOther = osuGetService.getPlayerInfo(id, mode);
             bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
-            ppmOther = Ppm.getInstance(mode, userOther, bpListOther);
+            PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
         } else {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
         }
@@ -182,17 +182,17 @@ public class PPMinusService implements MessageService<Matcher> {
 
         //你为啥不在数据库里存这些。。。
         if (userOther.getUID() == 17064371L){
-            setUser(ppmOther, 999.99f);
+            setUser(PPMinusOther, 999.99f);
         } else if (userOther.getUID().equals(19673275L)) {
-            setUser(ppmOther, 0);
+            setUser(PPMinusOther, 0);
         }
 
-        var data = imageService.getPanelB1(userMe, userOther, ppmMe, ppmOther, mode);
+        var data = imageService.getPanelB1(userMe, userOther, PPMinusMe, PPMinusOther, mode);
         QQMsgUtil.sendImage(from, data);
     }
 
-    static void setUser(Ppm ppmOther, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class<?> PPMClass =  Class.forName("com.now.nowbot.model.PPm.Ppm");
+    static void setUser(PPMinus PPMinusOther, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class<?> PPMClass =  Class.forName("com.now.nowbot.model.ppminus.PPMinus");
         Field[] valueFiled = {
                 PPMClass.getDeclaredField("value1"),
                 PPMClass.getDeclaredField("value2"),
@@ -205,7 +205,7 @@ public class PPMinusService implements MessageService<Matcher> {
         };
         for (var i:valueFiled){
             i.setAccessible(true);
-            i.set(ppmOther,value);
+            i.set(PPMinusOther,value);
         }
     }
 }
