@@ -13,6 +13,8 @@ import java.util.Optional;
 
 
 public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
+
+
     Optional<OsuBindUserLite> getByOsuId(Long osuId);
 
     Optional<OsuBindUserLite> getByOsuNameLike(String osuName);
@@ -64,4 +66,6 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     }
 
     int countAllByOsuId(long osuId);
+
+    <S extends OsuBindUserLite> S save(S entity);
 }

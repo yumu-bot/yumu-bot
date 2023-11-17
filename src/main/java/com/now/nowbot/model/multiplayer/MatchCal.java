@@ -74,7 +74,7 @@ public class MatchCal {
         int size = gameRounds.size();
         int limit = size - skipEnd;
 
-        if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
+        if (skip < 0 || skip > size) return;
         gameRounds = getGameRounds().stream()
                 .limit(limit)
                 .skip(skip)

@@ -14,19 +14,14 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.resources.ConnectionProvider;
-import reactor.netty.transport.ProxyProvider;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.*;
 
 @Service("STATISTICAL")
@@ -41,24 +36,13 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private static int lock = 0;
     private final Path CachePath;
 
-    public StatisticalOverPPService(WebClient.Builder webClient,
+    public StatisticalOverPPService(
+            WebClient osuApiWebClient,
                                     BotContainer botContainer,
                                     OsuGetService osuGetService,
                                     FileConfig config
     ) {
-        ConnectionProvider connectionProvider = ConnectionProvider.builder("connectionProvider")
-                .maxIdleTime(Duration.ofSeconds(30))
-                .build();
-        HttpClient httpClient = HttpClient.create(connectionProvider)
-                .proxy(proxy ->
-                        proxy.type(ProxyProvider.Proxy.SOCKS5)
-                                .host("127.0.0.1")
-                                .port(7890)
-                )
-                .followRedirect(true)
-                .responseTimeout(Duration.ofSeconds(30));
-        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
-        client = webClient.clientConnector(connector).build();
+        client = osuApiWebClient;
         bots = botContainer;
         this.osuGetService = osuGetService;
 
@@ -188,7 +172,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
         // qq-bp1
         Map<Long, Float> usersBP1 = new HashMap<>(groupInfo.size());
         // uid-qq
-        Map<Long, Long> nowOsuId = new HashMap<>(50);
+        Map<Long, Long> nowOsuId = new HashMap<>(150);
         // qq-err
         Map<Long, String> errMap = new HashMap<>();
 
