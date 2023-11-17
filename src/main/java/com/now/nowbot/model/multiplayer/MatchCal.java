@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MatchCal {
+    static final String NAME = "MC";
     Match match;
     Map<Long, MicroUser> users;
     List<MicroUser> players;
@@ -27,27 +28,34 @@ public class MatchCal {
                 .filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()))
                 .filter(matchRound -> matchRound.getEndTime() != null);
 
+        skip(skip, skipEnd);
+
         if (remove) {
             roundsStream = roundsStream.peek(matchRound -> matchRound.getScoreInfoList().removeIf(s -> s.getScore() <= 10000));
         }
 
         if (rematch) {
-            gameRounds = roundsStream.collect(Collectors.toList());
-        } else {
             gameRounds = new ArrayList<>(roundsStream.
                     collect(Collectors.toMap(MatchRound::getBid, e -> e, (o, n) -> n, LinkedHashMap::new))
                     .values());
+            // 剔除成绩不足 1w 的玩家
+            cache = gameRounds.stream()
+                    .flatMap(r -> r.scoreInfoList.stream())
+                    .filter(s -> s.getScore() > 10000)
+                    .collect(Collectors.toList());
+        } else {
+            gameRounds = roundsStream.collect(Collectors.toList());
+            cache = gameRounds.stream()
+                    .flatMap(r -> r.scoreInfoList.stream())
+                    .collect(Collectors.toList());
         }
-
         skip(skip, skipEnd);
 
-        cache = gameRounds.stream()
-                .flatMap(r -> r.scoreInfoList.stream())
-                .filter(s -> s.getScore() > 10000)
-                .collect(Collectors.toList());
         Set<Long> playerUid = cache.stream()
                 .map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
         // 不需要get啊...他不是给你默认的microUser了吗？那个是现成的不用走 API，重复获取也太占用 API 了
+//        用来兜底的, 比如说ppy给的就不够(好像不太可能) 以及被删号的? 不需要也没事, 删了就行
+//        computeIfAbsent() 是如果 map 里不存在这个 key 或者 value 为 null 才执行查询函数, 并且将这个结果再插入到 map 里
         // 背景什么的我再想办法
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
