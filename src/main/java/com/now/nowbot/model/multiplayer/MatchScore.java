@@ -2,6 +2,7 @@ package com.now.nowbot.model.multiplayer;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.Statistics;
 import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.lang.Nullable;
@@ -42,6 +43,9 @@ public class MatchScore {
     //这个需要自己设定，在MatchCal里赋予
     @JsonProperty("user_name")
     String userName;
+
+    //这个需要自己设定，在MatchCal里赋予
+    MicroUser user;
 
     public Double getAccuracy() {
         return accuracy;
@@ -207,5 +211,13 @@ public class MatchScore {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public MicroUser getUser() {
+        return user;
+    }
+
+    public void setUser(MicroUser user) {
+        this.user = user;
     }
 }

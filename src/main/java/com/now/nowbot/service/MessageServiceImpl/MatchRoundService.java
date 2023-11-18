@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,6 +113,8 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         //获取所有轮的游戏
         var cal = new MatchCal(match, 0, 0, true, true);
+        cal.addMicroUser4MatchScore(); //方便取数据
+
         List<MatchRound> rounds = cal.getRoundList();
 
         if (index < 0 || index > match.getEvents().size()) {
@@ -132,11 +133,9 @@ public class MatchRoundService implements MessageService<Matcher> {
             throw new MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound);
         }
 
-        MatchRound round = rounds.get(index);
-
         byte[] img;
         try {
-            img = imageService.getPanelF2(round, index + 1);
+            img = imageService.getPanelF2(match.getMatchStat(), cal.getRoundList().get(index), index);
         } catch (Exception e) {
             log.error("MR 图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);

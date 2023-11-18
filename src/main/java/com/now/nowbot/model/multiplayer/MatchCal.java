@@ -56,10 +56,11 @@ public class MatchCal {
         players = playerUIDSet.stream().map(userMap::get).toList();
         playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
 
-        setPlayerName();
+        addPlayerName4MatchScore();
     }
 
-    public void skip(int skip, int skipEnd) {
+    //默认跳过
+    private void skip(int skip, int skipEnd) {
         int size = roundList.size();
         int limit = size - skipEnd;
 
@@ -70,11 +71,22 @@ public class MatchCal {
                 .collect(Collectors.toList());
     }
 
-    public void setPlayerName() {
+    //默认设置
+    private void addPlayerName4MatchScore() {
         for (MicroUser p: players) {
             for (MatchScore s: scoreList) {
                 if (Objects.equals(p.getId(), s.getUserId())) {
                     s.setUserName(p.getUserName());
+                }
+            }
+        }
+    }
+
+    public void addMicroUser4MatchScore() {
+        for (MicroUser p: players) {
+            for (MatchScore s: scoreList) {
+                if (Objects.equals(p.getId(), s.getUserId())) {
+                    s.setUser(p);
                 }
             }
         }

@@ -12,6 +12,7 @@ import com.now.nowbot.model.match.Match;
 import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -250,11 +251,12 @@ public class ImageService {
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelF2(MatchRound round, int index) {
+    public byte[] getPanelF2(MatchStat matchStat, MatchRound matchRound, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "MatchRound", round,
+                "MatchStat", matchStat,
+                "MatchRound", matchRound,
                 "index", index
         );
 
