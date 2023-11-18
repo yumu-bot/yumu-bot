@@ -1,7 +1,7 @@
 package com.now.nowbot.model;
 
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -43,7 +43,7 @@ public class ScoreLegacy {
         return url;
     }
 
-    public ScoreLegacy(Score score, OsuGetService osuGetService) {
+    public ScoreLegacy(Score score, OsuBeatmapApiService osuGetService) {
         var user = score.getUser();
         bid = Math.toIntExact(score.getBeatMap().getId());
 
@@ -102,7 +102,7 @@ public class ScoreLegacy {
         if (!passed) rank = "F";
     }
 
-    public static ScoreLegacy getInstance(Score score, OsuGetService osuGetService) {
+    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService osuGetService) {
         return new ScoreLegacy(score, osuGetService);
     }
 

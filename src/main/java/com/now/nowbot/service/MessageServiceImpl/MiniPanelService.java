@@ -7,7 +7,9 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MiniPanelException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -20,14 +22,23 @@ import java.util.regex.Pattern;
 
 @Service("MINI")
 public class MiniPanelService implements MessageService<Matcher> {
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public MiniPanelService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public MiniPanelService(OsuUserApiService userApiService,
+                            OsuScoreApiService scoreApiService,
+                            OsuBeatmapApiService beatmapApiService,
+                            BindDao bindDao,
+                            RestTemplate template,
+                            ImageService image) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
@@ -65,8 +76,8 @@ public class MiniPanelService implements MessageService<Matcher> {
         if (isScore) {
             Score score;
             try {
-                score = osuGetService.getAllRecentN(id, mode, 0, 1).get(0);
-                var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
+                score = scoreApiService.getRecentIncludingFail(id, mode, 0, 1).get(0);
+                var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
                 score.setBeatMap(map);
                 score.setBeatMapSet(map.getBeatMapSet());
             } catch (Exception e) {
@@ -82,7 +93,7 @@ public class MiniPanelService implements MessageService<Matcher> {
         } else if (isInfo) {
             OsuUser osuUser;
             try {
-                osuUser = osuGetService.getPlayerInfo(id, mode);
+                osuUser = userApiService.getPlayerInfo(id, mode);
             } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Me_NotFound);
             }

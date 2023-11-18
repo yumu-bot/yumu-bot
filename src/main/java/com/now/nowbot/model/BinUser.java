@@ -1,10 +1,12 @@
 package com.now.nowbot.model;
 
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 public class BinUser {
     Logger log = LoggerFactory.getLogger(BinUser.class);
@@ -89,19 +91,12 @@ public class BinUser {
     }
 
     public boolean isAuthorized() {
-        return (accessToken != null);
+        return (Objects.nonNull(accessToken) && Objects.nonNull(time) && time > 0);
     }
 
-    public String getAccessToken(OsuGetService service) throws BindException {
-        if (accessToken == null) {
-            return service.getToken();
-        } else if (isPassed()) {
-            accessToken = service
-                    .refreshToken(this)
-                    .findValue("access_token")
-                    .asText();
-        }
-
+    public String getAccessToken(OsuUserApiService service) throws BindException {
+        accessToken = service
+                .refreshUserToken(this);
         return accessToken;
     }
 

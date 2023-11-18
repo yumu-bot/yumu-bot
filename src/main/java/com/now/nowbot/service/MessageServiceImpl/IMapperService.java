@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -20,13 +21,14 @@ import java.util.regex.Pattern;
 @Service("IMMAPPER")
 public class IMapperService implements MessageService<Matcher> {
     OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public IMapperService (OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public IMapperService(OsuUserApiService userApiService, BindDao bindDao, RestTemplate template, ImageService image) {
+        this.userApiService = userApiService;
         this.template = template;
         this.bindDao = bindDao;
         imageService = image;
@@ -61,18 +63,18 @@ public class IMapperService implements MessageService<Matcher> {
             }
 
             try {
-                osuUser = osuGetService.getPlayerInfo(binUser);
+                osuUser = userApiService.getPlayerInfo(binUser);
             } catch (Exception e) {
                 throw new IMapperException(IMapperException.Type.IM_Me_NotFound);
             }
 
         } else {
             try {
-                osuUser = osuGetService.getPlayerInfo(name);
+                osuUser = userApiService.getPlayerInfo(name);
             } catch (Exception e) {
                 try {
                     var uid = Long.parseLong(matcher.group("name"));
-                    osuUser = osuGetService.getPlayerInfo(uid);
+                    osuUser = userApiService.getPlayerInfo(uid);
                 } catch (Exception e1) {
                     throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
                 }

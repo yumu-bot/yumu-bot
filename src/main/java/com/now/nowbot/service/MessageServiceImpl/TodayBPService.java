@@ -9,6 +9,8 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -26,11 +28,14 @@ import java.util.regex.Pattern;
 @Service("TODAYBP")
 public class TodayBPService implements MessageService<Matcher> {
     OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
     @Autowired
-    public TodayBPService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService){
-        this.osuGetService = osuGetService;
+    public TodayBPService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
@@ -66,15 +71,15 @@ public class TodayBPService implements MessageService<Matcher> {
             try {
                 var bUser = bindDao.getUserFromQQ(at.getTarget());
                 if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
-                ouMe = osuGetService.getPlayerInfo(bUser, mode);
-                bpAllList = osuGetService.getBestPerformance(bUser, mode, 0, 100);
+                ouMe = userApiService.getPlayerInfo(bUser, mode);
+                bpAllList = scoreApiService.getBestPerformance(bUser, mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_FetchFailed);
             }
         } else if (!name.isEmpty()) {
             try {
-                ouMe = osuGetService.getPlayerInfo(name, mode);
-                bpAllList = osuGetService.getBestPerformance(ouMe.getUID(), mode, 0, 100);
+                ouMe = userApiService.getPlayerInfo(name, mode);
+                bpAllList = scoreApiService.getBestPerformance(ouMe.getUID(), mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
             }
@@ -82,8 +87,8 @@ public class TodayBPService implements MessageService<Matcher> {
             try {
                 var buMe = bindDao.getUserFromQQ(event.getSender().getId());
                 if (mode == OsuMode.DEFAULT) mode = buMe.getMode();
-                ouMe = osuGetService.getPlayerInfo(buMe, mode);
-                bpAllList = osuGetService.getBestPerformance(buMe, mode, 0, 100);
+                ouMe = userApiService.getPlayerInfo(buMe, mode);
+                bpAllList = scoreApiService.getBestPerformance(buMe, mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
             }

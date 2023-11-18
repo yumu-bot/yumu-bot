@@ -37,12 +37,22 @@ public interface OsuScoreApiService {
     List<Score> getRecent(BinUser user, OsuMode mode, int s, int e);
 
     /**
+     * 获得成绩 不包含fail 共获取 e 条 [s, e)
+     *
+     * @param s 起始 从0开始
+     * @param e 数据是几条
+     */
+    List<Score> getRecent(long uid, OsuMode mode, int s, int e);
+
+    /**
      * 获得成绩 包含fail 共获取 e 条 [s, e)
      *
      * @param s 起始 从0开始
      * @param e 数据是几条
      */
     List<Score> getRecentIncludingFail(BinUser user, OsuMode mode, int s, int e);
+
+    List<Score> getRecentIncludingFail(long uid, OsuMode mode, int s, int e);
 
     BeatmapUserScore getScore(long bid, long uid, OsuMode mode);
 

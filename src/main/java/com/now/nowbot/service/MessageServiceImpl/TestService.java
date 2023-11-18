@@ -7,15 +7,15 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,8 +26,7 @@ import java.util.regex.Pattern;
 @Service("TEST")
 public class TestService implements MessageService<Matcher> {
     private final Logger log = LoggerFactory.getLogger(TestService.class);
-
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     QQMessageDao qqMessageDao;
     @Resource
     ImageService imageService;
@@ -36,8 +35,8 @@ public class TestService implements MessageService<Matcher> {
 
     private static final Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
     @Autowired
-    public TestService(OsuGetService osuGetService, QQMessageDao qqMessageDao){
-        this.osuGetService = osuGetService;
+    public TestService(OsuUserApiService userApiService, QQMessageDao qqMessageDao) {
+        this.userApiService = userApiService;
         this.qqMessageDao = qqMessageDao;
     }
 
@@ -79,7 +78,7 @@ public class TestService implements MessageService<Matcher> {
                for (var name:nameList){
                    Long id = 0L;
                    try {
-                        id = osuGetService.getOsuId(name);
+                       id = userApiService.getOsuId(name);
 
                    } catch (Exception e) {
                        // do nothing

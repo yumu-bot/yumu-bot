@@ -6,7 +6,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.service.MessageServiceImpl.BindService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.UpdateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +26,13 @@ public class BindController {
     public static final boolean debug = false;
     static final Logger log = LoggerFactory.getLogger(BindController.class);
     static final DateTimeFormatter format = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss");
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     private BotContainer botContainer;
     BindDao bindDao;
 
     @Autowired
-    public BindController(OsuGetService osuGetService, BindDao dao, BotContainer botContainer) {
-        this.osuGetService = osuGetService;
+    public BindController(OsuUserApiService userApiService, BindDao dao, BotContainer botContainer) {
+        this.userApiService = userApiService;
         bindDao = dao;
         this.botContainer = botContainer;
 //        WsController.getInstance(bot).setMsgController(this);
@@ -71,7 +71,7 @@ public class BindController {
                     }
                 }
                 BinUser bd = BinUser.create(code);
-                osuGetService.getToken(bd);
+                userApiService.refreshUserTokenFirst(bd);
                 bindDao.bindQQ(msg.QQ(), bd);
                 BindService.removeBind(key);
                 sb.append("成功绑定:\n")

@@ -3,19 +3,20 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -27,11 +28,13 @@ import java.util.regex.Pattern;
 @Service("PPMINUS")
 public class PPMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
-    @Autowired
-    OsuGetService osuGetService;
-    @Autowired
+    @Resource
+    OsuUserApiService userApiService;
+    @Resource
+    OsuScoreApiService scoreApiService;
+    @Resource
     BindDao bindDao;
-    @Autowired
+    @Resource
     ImageService imageService;
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(ppminus|(p?(pm))(?![a-rt-uw-zA-RT-UW-Z_]))\\s*(?<vs>vs)?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
@@ -63,9 +66,9 @@ public class PPMinusService implements MessageService<Matcher> {
         if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
             // 查他人
             try {
-                var id = osuGetService.getOsuId(matcher.group("name").trim());
-                user = osuGetService.getPlayerInfo(id, mode);
-                bps = osuGetService.getBestPerformance(id, mode, 0, 100);
+                var id = userApiService.getOsuId(matcher.group("name").trim());
+                user = userApiService.getPlayerInfo(id, mode);
+                bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
             } catch (HttpClientErrorException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
             } catch (HttpClientErrorException.NotFound e) {
@@ -84,8 +87,8 @@ public class PPMinusService implements MessageService<Matcher> {
             try {
                 var binUser = bindDao.getUserFromQQ(at.getTarget());//处理默认mode
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
-                user = osuGetService.getPlayerInfo(binUser, mode);
-                bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+                user = userApiService.getPlayerInfo(binUser, mode);
+                bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
 
             } catch (HttpClientErrorException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
@@ -102,8 +105,8 @@ public class PPMinusService implements MessageService<Matcher> {
             try {
                 var binUser = bindDao.getUserFromQQ(event.getSender().getId());//处理默认mode
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
-                user = osuGetService.getPlayerInfo(binUser, mode);
-                bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+                user = userApiService.getPlayerInfo(binUser, mode);
+                bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
             } catch (HttpClientErrorException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
             } catch (HttpClientErrorException.NotFound e) {
@@ -150,8 +153,8 @@ public class PPMinusService implements MessageService<Matcher> {
         if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
         //自己的信息
         try {
-            userMe = osuGetService.getPlayerInfo(userBin, mode);
-            bpListMe = osuGetService.getBestPerformance(userBin, mode,0,100);
+            userMe = userApiService.getPlayerInfo(userBin, mode);
+            bpListMe = scoreApiService.getBestPerformance(userBin, mode, 0, 100);
         } catch (BindException e) {
             throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
         }
@@ -160,13 +163,13 @@ public class PPMinusService implements MessageService<Matcher> {
         if (at != null) {//被对比人的信息
             // 包含有@
             var b = bindDao.getUserFromQQ(at.getTarget());
-            userOther = osuGetService.getPlayerInfo(b, mode);
-            bpListOther = osuGetService.getBestPerformance(b, mode,0,100);
+            userOther = userApiService.getPlayerInfo(b, mode);
+            bpListOther = scoreApiService.getBestPerformance(b, mode, 0, 100);
             PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
         } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
-            var id = osuGetService.getOsuId(matcher.group("name").trim());
-            userOther = osuGetService.getPlayerInfo(id, mode);
-            bpListOther = osuGetService.getBestPerformance(id, mode,0,100);
+            var id = userApiService.getOsuId(matcher.group("name").trim());
+            userOther = userApiService.getPlayerInfo(id, mode);
+            bpListOther = scoreApiService.getBestPerformance(id, mode, 0, 100);
             PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
         } else {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);

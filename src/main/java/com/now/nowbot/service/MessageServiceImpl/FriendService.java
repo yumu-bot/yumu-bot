@@ -102,7 +102,7 @@ public class FriendService implements MessageService<Matcher> {
         }
 
         try {
-            osuUser = osuGetService.getPlayerInfo(binUser);
+            osuUser = userApiService.getPlayerInfo(binUser);
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_TokenExpired);
         } catch (Exception e) {

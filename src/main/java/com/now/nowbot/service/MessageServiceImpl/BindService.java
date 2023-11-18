@@ -11,7 +11,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.QQMsgUtil;
@@ -30,16 +30,15 @@ public class BindService implements MessageService<Matcher> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
-
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
 
     BindDao bindDao;
 
     TaskExecutor taskExecutor;
 
     @Autowired
-    public BindService(OsuGetService osuGetService, BindDao bindDao, TaskExecutor taskExecutor) {
-        this.osuGetService = osuGetService;
+    public BindService(OsuUserApiService userApiService, BindDao bindDao, TaskExecutor taskExecutor) {
+        this.userApiService = userApiService;
         this.bindDao = bindDao;
         this.taskExecutor = taskExecutor;
     }
@@ -113,7 +112,7 @@ public class BindService implements MessageService<Matcher> {
         if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
             binUser = qqBindLite.getBinUser();
             try {
-                var osuUser = osuGetService.getPlayerInfo(binUser, OsuMode.DEFAULT);
+                var osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
                 if (!osuUser.getUID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
@@ -136,7 +135,7 @@ public class BindService implements MessageService<Matcher> {
         // 需要绑定
         String state = event.getSender().getId() + "+" + timeMillis;
         //将消息回执作为 value
-        state = osuGetService.getOauthUrl(state);
+        state = userApiService.getOauthUrl(state);
         var send = new MessageChain.MessageChainBuilder()
                 .addAt(event.getSender().getId())
                 .addText("\n")
@@ -176,7 +175,7 @@ public class BindService implements MessageService<Matcher> {
         String nameStr = s.getRawMessage();
         Long id;
         try {
-            id = osuGetService.getOsuId(nameStr);
+            id = userApiService.getOsuId(nameStr);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
@@ -204,7 +203,7 @@ public class BindService implements MessageService<Matcher> {
 
         long osuUserId;
         try {
-            osuUserId = osuGetService.getOsuId(name);
+            osuUserId = userApiService.getOsuId(name);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }

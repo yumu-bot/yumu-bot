@@ -9,17 +9,17 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -27,14 +27,13 @@ import java.util.regex.Pattern;
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParam> {
     Logger log = LoggerFactory.getLogger(InfoService.class);
-    @Autowired
-    RestTemplate template;
-
-    @Autowired
-    OsuGetService osuGetService;
-    @Autowired
+    @Resource
+    OsuUserApiService userApiService;
+    @Resource
+    OsuScoreApiService scoreApiService;
+    @Resource
     BindDao       bindDao;
-    @Autowired
+    @Resource
     ImageService  imageService;
     public record InfoParam(String name, Long qq, OsuMode mode){}
 
@@ -75,7 +74,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         if (param.name() != null) {
             long id;
             try {
-                id = osuGetService.getOsuId(param.name().trim());
+                id = userApiService.getOsuId(param.name().trim());
             } catch (HttpClientErrorException.NotFound e) {
                 throw new InfoException(InfoException.Type.INFO_Player_NotFound);
             }
@@ -105,7 +104,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         List<Score> Recents;
 
         try {
-            osuUser = osuGetService.getPlayerInfo(user, mode);
+            osuUser = userApiService.getPlayerInfo(user, mode);
         } catch (HttpClientErrorException.NotFound e) {
             throw new InfoException(InfoException.Type.INFO_Me_NotFound);
         } catch (HttpClientErrorException.Unauthorized e) {
@@ -116,7 +115,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         }
 
         try {
-            BPs = osuGetService.getBestPerformance(user, mode, 0, 100);
+            BPs = scoreApiService.getBestPerformance(user, mode, 0, 100);
         } catch (HttpClientErrorException.NotFound e) {
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         } catch (Exception e) {
@@ -124,10 +123,10 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
 
-        Recents = osuGetService.getRecentN(user, mode, 0, 3);
+        Recents = scoreApiService.getRecent(user, mode, 0, 3);
 
         try {
-            var img = imageService.getPanelD(osuUser, BPs, Recents, mode, osuGetService);
+            var img = imageService.getPanelD(osuUser, BPs, Recents, mode);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("Info 发送异常", e);

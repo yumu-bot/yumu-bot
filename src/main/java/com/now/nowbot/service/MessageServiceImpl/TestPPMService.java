@@ -7,7 +7,8 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +20,16 @@ import static com.now.nowbot.util.SkiaUtil.getBonusPP;
 
 @Service("TESTPPM")
 public class TestPPMService implements MessageService<Matcher> {
-    @Autowired
-    public TestPPMService(OsuGetService osuGetService,BindDao bindDao) {
-        this.osuGetService = osuGetService;
-        this.bindDao = bindDao;
-    }
+    private final OsuUserApiService userApiService;
 
     BindDao bindDao;
-    private final OsuGetService osuGetService;
+    private final OsuScoreApiService scoreApiService;
+    @Autowired
+    public TestPPMService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.bindDao = bindDao;
+    }
 
     Pattern pattern = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
 
@@ -47,13 +50,13 @@ public class TestPPMService implements MessageService<Matcher> {
         List<Score> bpList;
         var mode = OsuMode.getMode(matcher.group("mode"));
         if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
-            var id = osuGetService.getOsuId(matcher.group("name").trim());
-            user = osuGetService.getPlayerOsuInfo(id);
-            bpList = osuGetService.getBestPerformance(id, mode, 0, 100);
+            var id = userApiService.getOsuId(matcher.group("name").trim());
+            user = userApiService.getPlayerOsuInfo(id);
+            bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
         } else {
             var userBin = bindDao.getUserFromQQ(event.getSender().getId());
-            user = osuGetService.getPlayerOsuInfo(userBin);
-            bpList = osuGetService.getBestPerformance(userBin, mode, 0, 100);
+            user = userApiService.getPlayerInfo(userBin);
+            bpList = scoreApiService.getBestPerformance(userBin, mode, 0, 100);
         }
 
         var date = new ppmtest();

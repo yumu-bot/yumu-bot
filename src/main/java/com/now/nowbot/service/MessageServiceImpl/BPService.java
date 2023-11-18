@@ -8,6 +8,9 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -27,13 +30,23 @@ import java.util.regex.Pattern;
 public class BPService implements MessageService<BPService.BPParam> {
     private static final Logger log = LoggerFactory.getLogger(BPService.class);
     OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public BPService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public BPService(OsuUserApiService userApiService,
+                     OsuScoreApiService scoreApiService,
+                     OsuBeatmapApiService beatmapApiService,
+                     BindDao bindDao,
+                     RestTemplate template,
+                     ImageService image) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
@@ -155,7 +168,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         } else {
             try {
-                long uid = osuGetService.getOsuId(name);
+                long uid = userApiService.getOsuId(name);
                 user = new BinUser();
                 user.setOsuID(uid);
                 user.setMode(OsuMode.DEFAULT);
@@ -168,7 +181,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         OsuUser osuUser;
 
         try {
-            osuUser = osuGetService.getPlayerInfo(user, mode);
+            osuUser = userApiService.getPlayerInfo(user, mode);
         } catch (HttpClientErrorException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (HttpClientErrorException.NotFound e) {
@@ -183,7 +196,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
 
         try {
-            bpList = osuGetService.getBestPerformance(user, mode, offset, limit);
+            bpList = scoreApiService.getBestPerformance(user, mode, offset, limit);
         } catch (Exception e) {
             log.error("BP 请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
@@ -198,7 +211,7 @@ public class BPService implements MessageService<BPService.BPParam> {
                 QQMsgUtil.sendImage(from, data);
             } else {
                 var score = bpList.get(0);
-                var data = imageService.getPanelE(osuUser, score, osuGetService);
+                var data = imageService.getPanelE(osuUser, score, beatmapApiService);
                 QQMsgUtil.sendImage(from, data);
             }
         } catch (Exception e) {

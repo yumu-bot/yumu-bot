@@ -9,7 +9,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
@@ -27,13 +27,12 @@ public class OldAvatarService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
 
     static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ymoldavatar|((ym)?oa(?![a-zA-Z_])))\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     BindDao bindDao;
     ImageService imageService;
     @Autowired
-    public OldAvatarService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
-        this.osuGetService = osuGetService;
+    public OldAvatarService(OsuUserApiService userApiService, BindDao bindDao, ImageService imageService) {
+        this.userApiService = userApiService;
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
@@ -82,7 +81,7 @@ public class OldAvatarService implements MessageService<UserParam> {
                 }
             }
             try {
-                osuUser = osuGetService.getPlayerInfo(binUser);
+                osuUser = userApiService.getPlayerInfo(binUser);
             } catch (HttpClientErrorException e) {
                 if (param.at()) {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
@@ -98,7 +97,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             long id;
 
             try {
-                id = osuGetService.getOsuId(name);
+                id = userApiService.getOsuId(name);
             } catch (Exception ignored) {
                 try {
                     id = Long.parseLong(name);
@@ -108,7 +107,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             }
 
             try {
-                osuUser = osuGetService.getPlayerInfo(id);
+                osuUser = userApiService.getPlayerInfo(id);
             } catch (Exception e) {
                 throw new OldAvatarException(OldAvatarException.Type.OA_Player_NotFound);
             }

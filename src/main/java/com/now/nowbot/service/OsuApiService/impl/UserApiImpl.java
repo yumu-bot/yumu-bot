@@ -46,6 +46,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public String refreshUserToken(BinUser user) {
+        if (!user.isAuthorized()) return base.getBotToken();
         return base.refreshUserToken(user, false);
     }
 
@@ -97,6 +98,25 @@ public class UserApiImpl implements OsuUserApiService {
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(OsuUser.class).block();
+    }
+
+    @Override
+    public Long getOsuId(String name) {
+        Long id = bindDao.getOsuId(name);
+        if (id != null) {
+            return id;
+
+        }
+        var date = getPlayerInfo(name);
+        bindDao.removeOsuNameToId(date.getUID());
+        String[] names = new String[date.getPreviousName().size() + 1];
+        int i = 0;
+        names[i++] = date.getUsername().toUpperCase();
+        for (var nName : date.getPreviousName()) {
+            names[i++] = nName.toUpperCase();
+        }
+        bindDao.saveOsuNameToId(date.getUID(), names);
+        return date.getUID();
     }
 
     /**

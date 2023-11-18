@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +49,7 @@ public class OsuApiBaseService {
         return System.currentTimeMillis() > time;
     }
 
-    private String getBotToken() {
+    protected String getBotToken() {
         if (!isPassed()) {
             return accessToken;
         }
@@ -82,7 +84,8 @@ public class OsuApiBaseService {
                 "refresh_token", user.getRefreshToken(),
                 "redirect_uri", redirectUrl
         );
-        var s = osuApiWebClient.post()
+        JsonNode s = null;
+        s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(body)
@@ -117,7 +120,18 @@ public class OsuApiBaseService {
         if (Objects.isNull(user.getAccessToken())) {
             token = getBotToken();
         } else if (user.isPassed()) {
-            token = refreshUserToken(user, false);
+            try {
+                token = refreshUserToken(user, false);
+            } catch (WebClientResponseException.Unauthorized e) {
+                log.error("令牌过期 绑定丢失: [{}], 移除绑定信息", user.getOsuID(), e);
+                throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+            } catch (WebClientResponseException.NotFound e) {
+                log.info("更新令牌失败：账号封禁", e);
+                throw new BindException(BindException.Type.BIND_Me_Banned);
+            } catch (WebClientResponseException.TooManyRequests e) {
+                log.info("更新令牌失败：API 访问太频繁", e);
+                throw new BindException(BindException.Type.BIND_Me_TooManyRequests);
+            }
         } else {
             token = user.getAccessToken();
         }

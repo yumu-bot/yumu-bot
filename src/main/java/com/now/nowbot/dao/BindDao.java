@@ -10,7 +10,7 @@ import com.now.nowbot.mapper.BindUserMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import jakarta.persistence.NonUniqueResultException;
 import org.slf4j.Logger;
@@ -203,7 +203,7 @@ public class BindDao {
     }
 
     @Async
-    public void refreshOldUserToken(OsuGetService osuGetService) {
+    public void refreshOldUserToken(OsuUserApiService osuGetService) {
         long now = System.currentTimeMillis();
         List<OsuBindUserLite> users;
         int succeedCount = 0;
@@ -233,7 +233,7 @@ public class BindDao {
         log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
-    private void refreshOldUserToken(BinUser u, OsuGetService osuGetService) {
+    private void refreshOldUserToken(BinUser u, OsuUserApiService osuGetService) {
         int sleepSecond = 5;
         int badRequest = 0;
         while (true) {

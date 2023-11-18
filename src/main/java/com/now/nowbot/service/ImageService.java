@@ -2,16 +2,20 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.JsonData.*;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.match.*;
-import com.now.nowbot.model.multiplayer.MatchData;
-import com.now.nowbot.model.ppminus3.MapMinus;
+import com.now.nowbot.model.match.GameInfo;
 import com.now.nowbot.model.match.MPScore;
+import com.now.nowbot.model.match.Match;
+import com.now.nowbot.model.match.MatchEvent;
+import com.now.nowbot.model.multiplayer.MatchData;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.ppminus.PPMinus;
+import com.now.nowbot.model.ppminus3.MapMinus;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -260,7 +264,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, List<Score> BPs, List<Score> Recents, OsuMode mode, OsuGetService osuGetService) {
+    public byte[] getPanelD(OsuUser osuUser, List<Score> BPs, List<Score> Recents, OsuMode mode) {
 
         double bonus = 0f;
         if (!BPs.isEmpty()) {
@@ -291,8 +295,8 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelE(OsuUser user, Score score, OsuGetService osuGetService) {
-        var map = osuGetService.getBeatMapInfo(score.getBeatMap().getId());
+    public byte[] getPanelE(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) {
+        var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
 
@@ -500,7 +504,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuGetService osuGetService) {
+    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuUserApiService userApiService) {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, Math.min(bpSize, 5));
@@ -620,7 +624,7 @@ public class ImageService {
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, e) -> o, LinkedHashMap::new));
-        var mapperInfo = osuGetService.getUsers(mapperCount.keySet());
+        var mapperInfo = userApiService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
 //                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))

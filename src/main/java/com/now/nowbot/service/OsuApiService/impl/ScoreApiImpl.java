@@ -76,6 +76,32 @@ public class ScoreApiImpl implements OsuScoreApiService {
                 .block();
     }
 
+    public List<Score> getRecent(long uid, OsuMode mode, boolean includeF, int s, int e) {
+        return base.osuApiWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("users/{uid}/scores/recent")
+                        .queryParam("include_fails", includeF ? 1 : 0)
+                        .queryParam("offset", s)
+                        .queryParam("limit", e)
+                        .queryParam("mode", OsuMode.getName(mode))
+                        .build(uid))
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToFlux(Score.class)
+                .collectList()
+                .block();
+    }
+
+    @Override
+    public List<Score> getRecent(long uid, OsuMode mode, int s, int e) {
+        return getRecent(uid, mode, false, s, e);
+    }
+
+    @Override
+    public List<Score> getRecentIncludingFail(long uid, OsuMode mode, int s, int e) {
+        return getRecent(uid, mode, true, s, e);
+    }
+
     @Override
     public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) {
         return base.osuApiWebClient.get()

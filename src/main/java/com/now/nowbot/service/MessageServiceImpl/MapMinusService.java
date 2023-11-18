@@ -1,13 +1,13 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.beatmapParse.OsuFile;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,15 +19,14 @@ import java.util.regex.Pattern;
 
 @Service("MAPMINUS")
 public class MapMinusService implements MessageService<Matcher> {
-
-    OsuGetService osuGetService;
+    OsuBeatmapApiService beatmapApiService;
     RestTemplate template;
     ImageService imageService;
 
 
     @Autowired
-    public MapMinusService (OsuGetService osuGetService, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public MapMinusService(OsuBeatmapApiService beatmapApiService, RestTemplate template, ImageService image) {
+        this.beatmapApiService = beatmapApiService;
         this.template = template;
         imageService = image;
     }
@@ -57,8 +56,8 @@ public class MapMinusService implements MessageService<Matcher> {
         }
 
         try {
-            mode = OsuMode.getMode(osuGetService.getBeatMapInfo(bid).getModeInt());
-            fileStr = osuGetService.getBeatMapFile(bid);
+            mode = OsuMode.getMode(beatmapApiService.getBeatMapInfo(bid).getModeInt());
+            fileStr = beatmapApiService.getBeatMapFile(bid);
             //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
         } catch (Exception e) {
             throw new MapMinusException(MapMinusException.Type.MM_Map_NotFound);
@@ -78,7 +77,7 @@ public class MapMinusService implements MessageService<Matcher> {
             }
         }
 
-        var beatMap = osuGetService.getMapInfoFromDB(bid);
+        var beatMap = beatmapApiService.getMapInfoFromDB(bid);
         MapMinus mapMinus = null;
         if (file != null) {
             mapMinus = MapMinus.getInstance(file);

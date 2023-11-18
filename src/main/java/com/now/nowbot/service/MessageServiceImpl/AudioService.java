@@ -5,10 +5,10 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
 import com.now.nowbot.util.Instructions;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -22,9 +22,9 @@ import java.util.regex.Pattern;
 @Service("AUDIO")
 public class AudioService implements MessageService<AudioService.AudioParam> {
 
-    @Autowired
-    OsuGetService osuGetService;
-    @Autowired
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
     BindDao bindDao;
 
     Pattern reg = Instructions
@@ -91,7 +91,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         if (isBid) {
             BeatMap mapinfo;
             try {
-                mapinfo = osuGetService.getBeatMapInfo(id);
+                mapinfo = beatmapApiService.getBeatMapInfo(id);
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }

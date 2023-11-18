@@ -6,7 +6,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +25,13 @@ public class UUIService implements MessageService<Matcher> {
 
 
     RestTemplate template;
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     BindDao bindDao;
 
     @Autowired
-    public UUIService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao) {
+    public UUIService(RestTemplate restTemplate, OsuUserApiService userApiService, BindDao bindDao) {
         template = restTemplate;
-        this.osuGetService = osuGetService;
+        this.userApiService = userApiService;
         this.bindDao = bindDao;
     }
 
@@ -57,7 +57,7 @@ public class UUIService implements MessageService<Matcher> {
             user = bindDao.getUserFromQQ(at.getTarget());
         } else {
             if (name != null && !name.trim().isEmpty()) {
-                var id = osuGetService.getOsuId(matcher.group("name").trim());
+                var id = userApiService.getOsuId(matcher.group("name").trim());
                 user = new BinUser();
                 user.setOsuID(id);
             } else {
@@ -89,7 +89,7 @@ public class UUIService implements MessageService<Matcher> {
 
     //这是 v0.1.0 的 ymi 文字版本，移到这里
     private String getText(BinUser user, OsuMode mode) {
-        var data = osuGetService.getPlayerInfo(user, mode);
+        var data = userApiService.getPlayerInfo(user, mode);
 
         StringBuilder sb = new StringBuilder();
         var statistics = data.getStatistics();

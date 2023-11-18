@@ -9,6 +9,7 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
@@ -29,7 +30,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private static final Logger log = LoggerFactory.getLogger(StatisticalOverPPService.class);
     private final BotContainer bots;
     private final WebClient client;
-    private final OsuGetService osuGetService;
+    private final OsuUserApiService userApiService;
+    private OsuGetService osuGetService;
 
     private static final Map<Long, Long> UserCache = new HashMap<>();
 
@@ -38,13 +40,13 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
     public StatisticalOverPPService(
             WebClient osuApiWebClient,
-                                    BotContainer botContainer,
-                                    OsuGetService osuGetService,
-                                    FileConfig config
+            BotContainer botContainer,
+            OsuUserApiService userApiService,
+            FileConfig config
     ) {
         client = osuApiWebClient;
         bots = botContainer;
-        this.osuGetService = osuGetService;
+        this.userApiService = userApiService;
 
         CachePath = Path.of(config.getRoot(), "StatisticalOverPPService.json");
         try {
@@ -211,7 +213,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 group.sendMessage(String.format("%d 统计进行到 %.2f%%", groupId, 100f * count / groupInfo.size()));
             }
             if (nowOsuId.size() >= 50) {
-                var result = osuGetService.getUsers(nowOsuId.keySet());
+                var result = userApiService.getUsers(nowOsuId.keySet());
                 for (var uInfo : result) {
                     users.put(nowOsuId.get(uInfo.getId()), uInfo);
                 }

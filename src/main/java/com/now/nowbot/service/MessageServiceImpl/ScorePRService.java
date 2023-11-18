@@ -11,6 +11,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
@@ -34,13 +37,22 @@ public class ScorePRService implements MessageService<Matcher> {
 
     RestTemplate template;
     OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
     ImageService imageService;
 
     @Autowired
-    public ScorePRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao, ImageService image) {
+    public ScorePRService(RestTemplate restTemplate,
+                          OsuUserApiService userApiService,
+                          OsuScoreApiService scoreApiService,
+                          OsuBeatmapApiService beatmapApiService,
+                          BindDao bindDao, ImageService image) {
         template = restTemplate;
-        this.osuGetService = osuGetService;
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
         imageService = image;
     }
@@ -147,7 +159,7 @@ public class ScorePRService implements MessageService<Matcher> {
                 binUser = new BinUser();
                 Long id;
                 try {
-                    id = osuGetService.getOsuId(name.trim());
+                    id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
                 } catch (HttpClientErrorException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
@@ -201,7 +213,7 @@ public class ScorePRService implements MessageService<Matcher> {
         }
 
         try {
-            osuUser = osuGetService.getPlayerInfo(binUser, mode);
+            osuUser = userApiService.getPlayerInfo(binUser, mode);
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
@@ -224,7 +236,7 @@ public class ScorePRService implements MessageService<Matcher> {
         } else {
             //单成绩发送
             try {
-                var data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                var data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
@@ -234,7 +246,7 @@ public class ScorePRService implements MessageService<Matcher> {
     }
 
     private void getTextOutput(Score score, Contact from) {
-        var d = ScoreLegacy.getInstance(score, osuGetService);
+        var d = ScoreLegacy.getInstance(score, beatmapApiService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
@@ -244,15 +256,15 @@ public class ScorePRService implements MessageService<Matcher> {
 
     private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {
         if (isRecent)
-            return osuGetService.getAllRecentN(user, mode, offset, limit);
+            return scoreApiService.getRecentIncludingFail(user, mode, offset, limit);
         else
-            return osuGetService.getRecentN(user, mode, offset, limit);
+            return scoreApiService.getRecent(user, mode, offset, limit);
     }
 
     private List<Score> getData(Long id, OsuMode mode, int offset, int limit, boolean isRecent) {
         if (isRecent)
-            return osuGetService.getAllRecentN(id, mode, offset, limit);
+            return scoreApiService.getRecentIncludingFail(id, mode, offset, limit);
         else
-            return osuGetService.getRecentN(id, mode, offset, limit);
+            return scoreApiService.getRecent(id, mode, offset, limit);
     }
 }

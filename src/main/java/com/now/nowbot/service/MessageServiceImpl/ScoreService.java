@@ -10,7 +10,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -29,14 +31,23 @@ import java.util.regex.Pattern;
 @Service("SCORE")
 public class ScoreService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public ScoreService(OsuGetService osuGetService, BindDao bindDao, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public ScoreService(OsuUserApiService userApiService,
+                        OsuScoreApiService scoreApiService,
+                        OsuBeatmapApiService beatmapApiService,
+                        BindDao bindDao,
+                        RestTemplate template,
+                        ImageService image) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
         this.template = template;
         imageService = image;
@@ -71,7 +82,7 @@ public class ScoreService implements MessageService<Matcher> {
             binUser = new BinUser();
             Long id;
             try {
-                id = osuGetService.getOsuId(name.trim());
+                id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
             } catch (HttpClientErrorException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
@@ -106,7 +117,7 @@ public class ScoreService implements MessageService<Matcher> {
         if (mods != null && !mods.isEmpty()) {
             List<Score> scoreall;
             try {
-                scoreall = osuGetService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
+                scoreall = scoreApiService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
             } catch (HttpClientErrorException.NotFound e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             } catch (HttpClientErrorException.Unauthorized e) {
@@ -135,7 +146,7 @@ public class ScoreService implements MessageService<Matcher> {
             }
         } else {
             try {
-                score = osuGetService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
+                score = scoreApiService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
             } catch (HttpClientErrorException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
@@ -153,10 +164,10 @@ public class ScoreService implements MessageService<Matcher> {
         }
 
         //这里的mode必须用谱面传过来的
-        var userInfo = osuGetService.getPlayerInfo(binUser, score.getMode());
+        var userInfo = userApiService.getPlayerInfo(binUser, score.getMode());
 
         try {
-            var data = imageService.getPanelE(userInfo, score, osuGetService);
+            var data = imageService.getPanelE(userInfo, score, beatmapApiService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("SCORE：渲染和发送失败", e);
@@ -166,7 +177,7 @@ public class ScoreService implements MessageService<Matcher> {
 
     private Score getDefaultScore(long bid, BinUser binUser) throws ScoreException {
         try {
-            return osuGetService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
+            return scoreApiService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
         } catch (HttpClientErrorException e) {
             throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
         }

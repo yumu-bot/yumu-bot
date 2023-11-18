@@ -164,7 +164,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         return botUser.getAccessToken();
     }
 
-    /***
+    /*************************************************************************
      * 刷新令牌
      * @param binUser
      * @return
@@ -188,7 +188,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         return s;
     }
 
-    /***
+    /**************************************************************************************
      * 拿到osu id值
      * @param name
      * @return
@@ -501,7 +501,7 @@ public class OsuGetServiceImpl implements OsuGetService {
     }
 
 
-    /***
+    /***********************************************************************************************************
      * 获得score(最近游玩列表
      * @param user
      * @param offset
@@ -1216,7 +1216,7 @@ public class OsuGetServiceImpl implements OsuGetService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         try {
-            headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(this)));
+            headers.set("Authorization", "Bearer " + (user == null ? getToken() : user.getAccessToken(null)));
         } catch (HttpClientErrorException.Unauthorized e) {
             log.error("令牌过期 绑定丢失: [{}], 移除绑定信息", user.getOsuID(), e);
             throw new BindException(BindException.Type.BIND_Me_TokenExpired);

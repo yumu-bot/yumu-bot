@@ -5,10 +5,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
@@ -16,12 +15,14 @@ import java.util.regex.Pattern;
 
 @Service("MUTUAL")
 public class MutualFriendService implements MessageService<Matcher> {
-    private final OsuGetService osuGetService;
-    @Autowired
+    private final OsuUserApiService userApiService;
+
+
     BindDao bindDao;
-    @Autowired
-    MutualFriendService(OsuGetService osuGetService){
-        this.osuGetService = osuGetService;
+
+    MutualFriendService(OsuUserApiService userApiService, BindDao bindDao) {
+        this.userApiService = userApiService;
+        this.bindDao = bindDao;
     }
 
     Pattern pattern = Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?");
@@ -59,7 +60,7 @@ public class MutualFriendService implements MessageService<Matcher> {
             var names = s.split(",");
             StringBuilder sb = new StringBuilder();
             for (var name:names){
-                Long id = osuGetService.getOsuId(name);
+                Long id = userApiService.getOsuId(name);
                 sb.append(name).append(" : https://osu.ppy.sh/users/").append(id).append("\n");
             }
             event.getSubject().sendMessage(sb.toString());

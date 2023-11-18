@@ -3,11 +3,11 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.Resource;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 @Service("TESTMAP")
 public class TestMapServer implements MessageService<Matcher> {
     @Resource
-    OsuGetService osuGetService;
+    OsuBeatmapApiService beatmapApiService;
 
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?");
 
@@ -34,7 +34,7 @@ public class TestMapServer implements MessageService<Matcher> {
         String mod = matcher.group("mode");
 
 
-        var info = osuGetService.getBeatMapInfo(bid);
+        var info = beatmapApiService.getBeatMapInfo(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
@@ -63,7 +63,7 @@ public class TestMapServer implements MessageService<Matcher> {
 
         var mods = mod.split(",");
         int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
-        var a = osuGetService.getAttributes((long)bid, modInt);
+        var a = beatmapApiService.getAttributes((long) bid, modInt);
         sb.append('(').append(info.getBeatMapSet().getMapperUID()).append(')');
         sb.append(a.getStarRating()).append(',')
                 .append(info.getBPM()).append(',')

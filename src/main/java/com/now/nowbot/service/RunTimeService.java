@@ -2,6 +2,7 @@ package com.now.nowbot.service;
 
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class RunTimeService implements SchedulingConfigurer {
     @Resource
     RestTemplate restTemplate;
     @Resource
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     @Resource
     TaskExecutor taskExecutor;
 
@@ -44,7 +45,7 @@ public class RunTimeService implements SchedulingConfigurer {
 //    @Scheduled(cron = "0 0 6 * * *")
     public void refreshToken() {
         log.info("开始执行更新令牌任务");
-        bindDao.refreshOldUserToken(osuGetService);
+        bindDao.refreshOldUserToken(userApiService);
     }
 
 

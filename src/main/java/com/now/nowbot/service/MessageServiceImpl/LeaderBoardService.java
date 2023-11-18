@@ -7,7 +7,8 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,15 @@ import java.util.regex.Pattern;
 
 @Service("LEADER")
 public class LeaderBoardService implements MessageService<Matcher> {
-    OsuGetService osuGetService;
+    OsuBeatmapApiService beatmapApiService;
+    OsuScoreApiService scoreApiService;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public LeaderBoardService (OsuGetService osuGetService, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public LeaderBoardService(OsuBeatmapApiService beatmapApiService, OsuScoreApiService scoreApiService, RestTemplate template, ImageService image) {
+        this.beatmapApiService = beatmapApiService;
+        this.scoreApiService = scoreApiService;
         this.template = template;
         imageService = image;
     }
@@ -79,7 +82,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         boolean isRanked;
 
         try {
-            beatMap = osuGetService.getBeatMapInfo(BID);
+            beatMap = beatmapApiService.getBeatMapInfo(BID);
             isRanked = beatMap.isRanked();
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);
@@ -89,7 +92,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
             // Mode 新增一个默认处理,以后用这个
             // if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
             mode = OsuMode.getMode(matcher.group("mode"), beatMap.getMode());
-            scores = osuGetService.getBeatmapScores(BID, mode);
+            scores = scoreApiService.getBeatmapScores(BID, mode);
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed);
         }

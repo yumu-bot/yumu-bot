@@ -3,36 +3,31 @@ package com.now.nowbot.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
-import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.SkiaImageUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,12 +39,11 @@ import java.util.Objects;
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
     @Resource
-    BeatMapFileRepository beatMapFileRepository;
+    OsuScoreApiService scoreApiService;
     @Resource
-    @Lazy
-    FileConfig fileConfig;
+    OsuBeatmapApiService beatmapApiService;
     @Resource
     MuRatingService mraService;
     @Resource
@@ -73,8 +67,8 @@ public class BotWebApi {
             return getPPMVS(user1, user2, playMode);
         }
         var mode = OsuMode.getMode(playMode);
-        var info = osuGetService.getPlayerInfo(user1.trim(), mode);
-        var bplist = osuGetService.getBestPerformance(info.getUID(), mode, 0, 100);
+        var info = userApiService.getPlayerInfo(user1.trim(), mode);
+        var bplist = scoreApiService.getBestPerformance(info.getUID(), mode, 0, 100);
         var ppm = PPMinus.getInstance(mode, info, bplist);
         if (ppm == null) {
             throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
@@ -87,11 +81,11 @@ public class BotWebApi {
     @GetMapping(value = "ppmvs")
     public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
         var mode = OsuMode.getMode(playMode);
-        var info1 = osuGetService.getPlayerInfo(user1.trim(), mode);
-        var info2 = osuGetService.getPlayerInfo(user2.trim(), mode);
+        var info1 = userApiService.getPlayerInfo(user1.trim(), mode);
+        var info2 = userApiService.getPlayerInfo(user2.trim(), mode);
         if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
-        var bplist1 = osuGetService.getBestPerformance(info1.getUID(), mode, 0, 100);
-        var bplist2 = osuGetService.getBestPerformance(info2.getUID(), mode, 0, 100);
+        var bplist1 = scoreApiService.getBestPerformance(info1.getUID(), mode, 0, 100);
+        var bplist2 = scoreApiService.getBestPerformance(info2.getUID(), mode, 0, 100);
         var ppm1 = PPMinus.getInstance(mode, info1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, info2, bplist2);
         if (ppm1 == null) {
@@ -175,7 +169,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         userName = userName.trim();
 
-        var osuUser = osuGetService.getPlayerInfo(userName, mode);
+        var osuUser = userApiService.getPlayerInfo(userName, mode);
         List<Score> scoreList;
 
         int offset;
@@ -210,7 +204,7 @@ public class BotWebApi {
         switch (type) {
             // bp
             case 1 -> {
-                scoreList = osuGetService.getBestPerformance(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, offset, limit);
 
                 ArrayList<Integer> rankList = new ArrayList<>();
                 for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
@@ -219,32 +213,32 @@ public class BotWebApi {
                     data = imageService.getPanelA4(osuUser, scoreList, rankList);
                     suffix = "-bps.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
                     suffix = "-bp.jpg";
                 }
             }
             // pass
             case 2 -> {
-                scoreList = osuGetService.getRecentN(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-passes.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
                     suffix = "-pass.jpg";
                 }
             }
 
             //recent
             case 3 -> {
-                scoreList = osuGetService.getAllRecentN(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-recents.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), osuGetService);
+                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
                     suffix = "-recent.jpg";
                 }
             }
@@ -252,7 +246,7 @@ public class BotWebApi {
             // todaybp
             case null, default -> {
                 // 时间计算
-                var BPList = osuGetService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
+                var BPList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
                 ArrayList<Integer> rankList = new ArrayList<>();
 
                 int day = Math.min(999, value1);
@@ -511,14 +505,14 @@ public class BotWebApi {
         Score score = null;
 
         try {
-            osuUser = osuGetService.getPlayerInfo(userName);
+            osuUser = userApiService.getPlayerInfo(userName);
             UID = osuUser.getUID();
         } catch (Exception e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Player_NotFound.message);
         }
 
         try {
-            scoreList = osuGetService.getScoreAll(value, UID, mode);
+            scoreList = scoreApiService.getScoreAll(value, UID, mode);
         } catch (Exception e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
         }
@@ -541,7 +535,7 @@ public class BotWebApi {
             score.setBeatMap(beatMap);
         }
 
-        var data = imageService.getPanelE(osuUser, score, osuGetService);
+        var data = imageService.getPanelE(osuUser, score, beatmapApiService);
         return new ResponseEntity<>(data, getImageHeader(userName + "-score.jpg", data.length), HttpStatus.OK);
     }
 
@@ -551,11 +545,11 @@ public class BotWebApi {
     ) {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
-        long uid = osuGetService.getOsuId(userName);
-        var userInfo = osuGetService.getPlayerInfo(uid, mode);
+        long uid = userApiService.getOsuId(userName);
+        var userInfo = userApiService.getPlayerInfo(uid, mode);
         if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
-        var scores = osuGetService.getBestPerformance(uid, mode, 0, 100);
-        var data = imageService.getPanelJ(userInfo, scores, osuGetService);
+        var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
+        var data = imageService.getPanelJ(userInfo, scores, userApiService);
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 
@@ -588,103 +582,6 @@ public class BotWebApi {
         log.error("error");
 
         return "ok - " + l.levelStr;
-    }
-
-    @GetMapping("/background/{bid}")
-    public ResponseEntity<byte[]> getImage(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getFile(bid, true, false);
-    }
-
-    @GetMapping("/audio/{bid}")
-    public ResponseEntity<byte[]> getAudio(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getFile(bid, false, false);
-    }
-
-    @GetMapping("/osufile/{bid}")
-    public ResponseEntity<byte[]> getOsuFile(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getFile(bid, false, true);
-    }
-
-    @GetMapping("/l/background/{bid}")
-    @ResponseBody
-    public String getImagePath(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getLocalFilePath(bid, true, false);
-    }
-
-    @GetMapping("/l/audio/{bid}")
-    @ResponseBody
-    public String getAudioPath(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getLocalFilePath(bid, false, false);
-    }
-
-    @GetMapping("/l/osufile/{bid}")
-    @ResponseBody
-    public String getOsuFilePath(@PathVariable("bid") String bidStr) throws IOException {
-        long bid = Long.parseLong(bidStr);
-        return getLocalFilePath(bid, false, true);
-    }
-
-    private ResponseEntity<byte[]> getFile(long bid, boolean isBg, boolean isFile) throws IOException {
-
-        var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
-        if (fopt.isEmpty()) {
-            var finfo = osuGetService.getMapInfoFromDB(bid);
-            osuGetService.downloadAllFiles(finfo.getBeatmapsetId());
-            fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
-        }
-        if (fopt.isEmpty()) throw new IOException("download error");
-        var fileInfo = fopt.get();
-        HttpHeaders headers = new HttpHeaders();
-
-
-        Path path;
-        if (isBg) {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
-            headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getBackground()).build());
-        } else if (isFile) {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), bid + ".osu");
-            headers.setContentDisposition(ContentDisposition.inline().filename(bid + ".osu").build());
-        } else {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getAudio());
-            headers.setContentDisposition(ContentDisposition.inline().filename(fileInfo.getAudio()).build());
-        }
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        try {
-            byte[] data = Files.readAllBytes(path);
-            headers.setContentLength(Files.size(path));
-            return new ResponseEntity<>(data, headers, HttpStatus.OK);
-        } catch (IOException e) {
-            throw new RuntimeException("文件已失效...");
-        }
-    }
-
-    private String getLocalFilePath(long bid, boolean isBg, boolean isFile) throws IOException {
-
-        var fopt = beatMapFileRepository.findBeatMapFileRepositoriesByBid(bid);
-        // 是否采用 sid 做背景
-        var flag = true;
-        if (fopt.isEmpty()) {
-            var fInfo = osuGetService.getMapInfoFromDB(bid);
-            if (!flag) {
-                osuGetService.downloadAllFiles(fInfo.getBeatmapsetId());
-            }
-            return SkiaImageUtil.getImageCachePath(fInfo.getBeatMapSet().getCovers().getCover2x());
-        }
-        var fileInfo = fopt.get();
-        Path path;
-        if (isBg) {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getBackground());
-        } else if (isFile) {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), bid + ".osu");
-        } else {
-            path = Path.of(fileConfig.getOsuFilePath(), Long.toString(fileInfo.getSid()), fileInfo.getAudio());
-        }
-        return path.toAbsolutePath().toString();
     }
 
     private static HttpHeaders getImageHeader(String name, long length) {

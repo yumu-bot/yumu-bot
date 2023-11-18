@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
 import com.now.nowbot.model.enums.OsuMode;
@@ -11,7 +10,9 @@ import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +30,21 @@ import java.util.regex.Pattern;
 public class UUPRService implements MessageService<Matcher> {
 
     RestTemplate template;
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
 
     @Autowired
-    public UUPRService(RestTemplate restTemplate, OsuGetService osuGetService, BindDao bindDao) {
+    public UUPRService(RestTemplate restTemplate,
+                       OsuUserApiService userApiService,
+                       OsuScoreApiService scoreApiService,
+                       OsuBeatmapApiService beatmapApiService,
+                       BindDao bindDao) {
         template = restTemplate;
-        this.osuGetService = osuGetService;
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
+        this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
     }
 
@@ -94,7 +103,6 @@ public class UUPRService implements MessageService<Matcher> {
 
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser binUser;
-        OsuUser osuUser;
 
         if (at != null) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
@@ -103,7 +111,7 @@ public class UUPRService implements MessageService<Matcher> {
                 binUser = new BinUser();
                 Long id;
                 try {
-                    id = osuGetService.getOsuId(name.trim());
+                    id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
                 } catch (HttpClientErrorException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
@@ -134,12 +142,6 @@ public class UUPRService implements MessageService<Matcher> {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
 
-        try {
-            osuUser = osuGetService.getPlayerInfo(binUser, mode);
-        } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
-        }
-
         //单成绩发送
         try {
             getTextOutput(scoreList.get(0), from);
@@ -150,7 +152,7 @@ public class UUPRService implements MessageService<Matcher> {
     }
 
     private void getTextOutput(Score score, Contact from) {
-        var d = ScoreLegacy.getInstance(score, osuGetService);
+        var d = ScoreLegacy.getInstance(score, beatmapApiService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
@@ -160,16 +162,16 @@ public class UUPRService implements MessageService<Matcher> {
 
     private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {
         if (isRecent)
-            return osuGetService.getAllRecentN(user, mode, offset, limit);
+            return scoreApiService.getRecentIncludingFail(user, mode, offset, limit);
         else
-            return osuGetService.getRecentN(user, mode, offset, limit);
+            return scoreApiService.getRecent(user, mode, offset, limit);
     }
 
     private List<Score> getData(Long id, OsuMode mode, int offset, int limit, boolean isRecent) {
         if (isRecent)
-            return osuGetService.getAllRecentN(id, mode, offset, limit);
+            return scoreApiService.getRecentIncludingFail(id, mode, offset, limit);
         else
-            return osuGetService.getRecentN(id, mode, offset, limit);
+            return scoreApiService.getRecent(id, mode, offset, limit);
     }
 }
 

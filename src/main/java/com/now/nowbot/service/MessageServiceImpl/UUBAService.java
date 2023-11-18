@@ -12,7 +12,8 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -31,7 +32,8 @@ import java.util.stream.Collectors;
 
 @Service("UUBA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
 
@@ -39,8 +41,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     public record BPHeadTailParam(UserParam user, boolean info){}
 
     @Autowired
-    public UUBAService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
-        this.osuGetService = osuGetService;
+    public UUBAService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
@@ -115,7 +118,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             String name = param.user().name();
             long id = 0;
             try {
-                id = osuGetService.getOsuId(name);
+                id = userApiService.getOsuId(name);
                 binUser = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
                 //构建只有 name + id 的对象, binUser == null
@@ -134,7 +137,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         //处理默认mode
         if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         try {
-            bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+            bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
         } catch (HttpClientErrorException.BadRequest e) {
             // 请求失败 超时/断网
             if (param.user().qq() == event.getSender().getId()) {
@@ -372,7 +375,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 })
                 .limit(9).toList();
         var mappersId = mappers.stream().map(u -> u.uid).toList();
-        var mappersInfo = osuGetService.getUsers(mappersId);
+        var mappersInfo = userApiService.getUsers(mappersId);
         var mapperIdToInfo = new HashMap<Long, String>();
         for (var node : mappersInfo) {
             mapperIdToInfo.put(node.getId(), node.getUserName());

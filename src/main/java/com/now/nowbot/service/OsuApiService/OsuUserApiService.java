@@ -73,6 +73,8 @@ public interface OsuUserApiService {
         return getPlayerInfo(userId, OsuMode.MANIA);
     }
 
+    Long getOsuId(String name);
+
     /**
      * 批量获取用户信息
      *

@@ -11,7 +11,8 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
@@ -24,13 +25,15 @@ import java.util.regex.Pattern;
 
 @Service("BPANALYSIS")
 public class BPAnalysisService implements MessageService<UserParam> {
-    OsuGetService osuGetService;
+    OsuUserApiService userApiService;
+    OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
 
     @Autowired
-    public BPAnalysisService(OsuGetService osuGetService, BindDao bindDao, ImageService imageService) {
-        this.osuGetService = osuGetService;
+    public BPAnalysisService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
+        this.userApiService = userApiService;
+        this.scoreApiService = scoreApiService;
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
@@ -68,12 +71,12 @@ public class BPAnalysisService implements MessageService<UserParam> {
             BinUser binUser = bindDao.getUserFromQQ(param.qq());
             try {
                 if (mode != OsuMode.DEFAULT) {
-                    osuUser = osuGetService.getPlayerInfo(binUser, mode);
+                    osuUser = userApiService.getPlayerInfo(binUser, mode);
                     osuUser.setPlayMode(mode.getName());
-                    bps = osuGetService.getBestPerformance(binUser, mode, 0, 100);
+                    bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
                 } else {
-                    bps = osuGetService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
-                    osuUser = osuGetService.getPlayerInfo(binUser, binUser.getMode());
+                    bps = scoreApiService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
+                    osuUser = userApiService.getPlayerInfo(binUser, binUser.getMode());
                 }
             } catch (Exception e) {
                 if (!param.at()) {
@@ -86,18 +89,18 @@ public class BPAnalysisService implements MessageService<UserParam> {
             String name = param.name().trim();
             long id;
             try {
-                id = osuGetService.getOsuId(name);
+                id = userApiService.getOsuId(name);
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
             try {
                 if (mode != OsuMode.DEFAULT) {
-                    bps = osuGetService.getBestPerformance(id, mode, 0, 100);
-                    osuUser = osuGetService.getPlayerInfo(id, mode);
+                    bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
+                    osuUser = userApiService.getPlayerInfo(id, mode);
                     osuUser.setPlayMode(mode.getName());
                 } else {
-                    osuUser = osuGetService.getPlayerInfo(id);
-                    bps = osuGetService.getBestPerformance(id, osuUser.getPlayMode(), 0, 100);
+                    osuUser = userApiService.getPlayerInfo(id);
+                    bps = scoreApiService.getBestPerformance(id, osuUser.getPlayMode(), 0, 100);
                 }
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
@@ -113,7 +116,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
 
         try {
-            var data = imageService.getPanelJ(osuUser, bps, osuGetService);
+            var data = imageService.getPanelJ(osuUser, bps, userApiService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("BPA Error: ", e);
