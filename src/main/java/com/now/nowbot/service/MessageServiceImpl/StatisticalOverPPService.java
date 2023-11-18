@@ -81,7 +81,6 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 .block();
         UserCache.put(qq, id);
         return id;
-
     }
 
     public float getOsuBp1(Long osuId) {

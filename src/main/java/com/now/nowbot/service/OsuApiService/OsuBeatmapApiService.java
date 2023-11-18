@@ -5,6 +5,7 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -16,7 +17,7 @@ public interface OsuBeatmapApiService {
      * @param bid 谱面id
      * @return osu文件字符串
      */
-    String getBeatMapFile(long bid);
+    String getBeatMapFile(long bid) throws Exception;
 
     BeatMap getBeatMapInfo(long bid);
 
@@ -26,9 +27,17 @@ public interface OsuBeatmapApiService {
 
     BeatMap getMapInfoFromDB(long bid);
 
-    BeatmapDifficultyAttributes getAttributes(Long id);
+    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
 
-    BeatmapDifficultyAttributes getAttributes(Long id, int modsValue);
+    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue);
+
+    default BeatmapDifficultyAttributes getAttributes(Long id) {
+        return getAttributes(id, OsuMode.DEFAULT);
+    }
+
+    default BeatmapDifficultyAttributes getAttributes(Long id, int modsValue) {
+        return getAttributes(id, OsuMode.DEFAULT, modsValue);
+    }
 
     default BeatmapDifficultyAttributes getAttributes(Long id, Mod... mods) {
         int value = Arrays.stream(mods).mapToInt(m -> m.value).reduce(0, Integer::sum);
