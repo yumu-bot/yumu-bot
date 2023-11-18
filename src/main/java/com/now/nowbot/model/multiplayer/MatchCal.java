@@ -49,14 +49,35 @@ public class MatchCal {
                 .toList();
 
         Set<Long> playerUIDSet = scoreList.stream().map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
-        // 不需要get啊...他不是给你默认的microUser了吗？那个是现成的不用走 API，重复获取也太占用 API 了
-//        用来兜底的, 比如说ppy给的就不够(好像不太可能) 以及被删号的? 不需要也没事, 删了就行
-//        computeIfAbsent() 是如果 map 里不存在这个 key 或者 value 为 null 才执行查询函数, 并且将这个结果再插入到 map 里
-        // 背景什么的我再想办法
+
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
+
         players = playerUIDSet.stream().map(userMap::get).toList();
         playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
+
+        setPlayerName();
+    }
+
+    public void skip(int skip, int skipEnd) {
+        int size = roundList.size();
+        int limit = size - skipEnd;
+
+        if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
+        roundList = getRoundList().stream()
+                .limit(limit)
+                .skip(skip)
+                .collect(Collectors.toList());
+    }
+
+    public void setPlayerName() {
+        for (MicroUser p: players) {
+            for (MatchScore s: scoreList) {
+                if (Objects.equals(p.getId(), s.getUserId())) {
+                    s.setUserName(p.getUserName());
+                }
+            }
+        }
     }
 
     public Match getMatch() {
@@ -97,17 +118,6 @@ public class MatchCal {
 
     public void setScoreList(List<MatchScore> scoreList) {
         this.scoreList = scoreList;
-    }
-
-    public void skip(int skip, int skipEnd) {
-        int size = roundList.size();
-        int limit = size - skipEnd;
-
-        if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
-        roundList = getRoundList().stream()
-                .limit(limit)
-                .skip(skip)
-                .collect(Collectors.toList());
     }
 
     public List<MicroUser> getPlayers() {

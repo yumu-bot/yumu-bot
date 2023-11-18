@@ -250,12 +250,11 @@ public class ImageService {
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelF2(MatchRound round, Map<Long, String> playerNameMap, int index) {
+    public byte[] getPanelF2(MatchRound round, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
                 "MatchRound", round,
-                "players", playerNameMap,
                 "index", index
         );
 

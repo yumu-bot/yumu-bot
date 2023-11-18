@@ -1,10 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchCal;
-import com.now.nowbot.model.multiplayer.MatchEvent;
-import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -118,7 +115,6 @@ public class MatchRoundService implements MessageService<Matcher> {
         //获取所有轮的游戏
         var cal = new MatchCal(match, 0, 0, true, true);
         List<MatchRound> rounds = cal.getRoundList();
-        Map<Long, String> playerNameMap = cal.getPlayerNameMap();
 
         if (index < 0 || index > match.getEvents().size()) {
             if (hasKeyword) {
@@ -140,7 +136,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         byte[] img;
         try {
-            img = imageService.getPanelF2(round, playerNameMap, index + 1);
+            img = imageService.getPanelF2(round, index + 1);
         } catch (Exception e) {
             log.error("MR 图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);

@@ -96,7 +96,7 @@ public class CRAService implements MessageService<Matcher> {
                 getMatchStrings(sb, round);
                 for (var score : round.getScoreInfoList()) {
                     if (isLite) {
-                        getScoreStringsLite(sb, score, match.getPlayers());
+                        getScoreStringsLite(sb, score);
                     } else {
                         getScoreStrings(sb, score);
                     }
@@ -141,22 +141,12 @@ public class CRAService implements MessageService<Matcher> {
         }
     }
 
-    private void getScoreStringsLite(StringBuilder sb, MatchScore score, List<MicroUser> players){
-        Map<Long, String> playerMap = players.stream()
-                .collect(Collectors.toMap(MicroUser::getId, MicroUser::getUserName));
+    private void getScoreStringsLite(StringBuilder sb, MatchScore score){
 
         try {
-            String name;
-
-            try {
-                name = playerMap.get(score.getUserId());
-            } catch (NullPointerException e) {
-                name = score.getUserId().toString();
-            }
-
             sb.append(score.getMatchPlayerStat().getTeam()).append(',')
                     .append(score.getUserId()).append(',')
-                    .append(name).append(',')
+                    .append(score.getUserName()).append(',')
                     .append(score.getScore()).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
                     .append(score.getMaxCombo()).append(',')

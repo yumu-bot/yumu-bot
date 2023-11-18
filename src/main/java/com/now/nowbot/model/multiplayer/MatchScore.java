@@ -39,6 +39,10 @@ public class MatchScore {
     @JsonProperty("match")
     MatchPlayerStat matchPlayerStat;
 
+    //这个需要自己设定，在MatchCal里赋予
+    @JsonProperty("user_name")
+    String userName;
+
     public Double getAccuracy() {
         return accuracy;
     }
@@ -183,5 +187,25 @@ public class MatchScore {
 
     public void setMatchPlayerStat(MatchPlayerStat matchPlayerStat) {
         this.matchPlayerStat = matchPlayerStat;
+    }
+
+    public Boolean getPassed() {
+        return passed;
+    }
+
+    public Boolean getPerfect() {
+        return perfect;
+    }
+
+    public Boolean getReplay() {
+        return replay;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }
