@@ -7,7 +7,6 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.match.Match;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.web.client.HttpClientErrorException;
@@ -237,17 +236,6 @@ public interface OsuGetService {
      * @return
      */
     float[] ppPlus(float[] ppP) throws HttpClientErrorException;
-
-    /***
-     * 比赛信息
-     * @param mid
-     * @return
-     */
-    Match getMatchInfo(int mid) throws HttpClientErrorException;
-
-    Match getMatchInfo(int mid, long before) throws HttpClientErrorException;
-
-    Match getMatchInfo(int mid, int limit) throws HttpClientErrorException;
 
     BeatmapDifficultyAttributes getAttributes(Long id) throws HttpClientErrorException;
 

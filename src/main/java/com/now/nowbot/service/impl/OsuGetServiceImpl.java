@@ -16,7 +16,6 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.match.Match;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
@@ -945,68 +944,6 @@ public class OsuGetServiceImpl implements OsuGetService {
             if (date[i] > 1) date[i] = 1;
         }
         return date;
-    }
-
-
-    /***
-     * 比赛信息
-     * @param mid
-     * @return
-     */
-    @Override
-    public Match getMatchInfo(int mid) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid).build().encode().toUri();
-        HttpHeaders headers = getHeader();
-        HttpEntity httpEntity = new HttpEntity(headers);
-        Match data = null;
-        try {
-            data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
-        } catch (Exception exc) {
-            log.error("match error ", exc);
-
-            throw new TipsRuntimeException(exc.getMessage());
-        }
-        return data;
-    }
-
-    @Override
-    public Match getMatchInfo(int mid, long before) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(this.URL + "matches/" + mid).queryParam("before", before).queryParam("limit", 100).build().encode().toUri();
-        HttpHeaders headers = getHeader();
-        HttpEntity httpEntity = new HttpEntity(headers);
-        Match data = null;
-        try {
-            data = template.exchange(uri, HttpMethod.GET, httpEntity, Match.class).getBody();
-        } catch (Exception exc) {
-            log.error("match error ", exc);
-
-            throw new TipsRuntimeException(exc.getMessage());
-        }
-        return data;
-    }
-
-    /**
-     * @param mid   房间 id
-     * @param limit 限制最大查询次数, 小于等于0只会请求一次
-     * @return 完整的房间记录, 受 limit 影响
-     * @throws HttpClientErrorException
-     */
-    public Match getMatchInfo(int mid, int limit) throws HttpClientErrorException {
-        Match match = null;
-        long eventId = 0;
-        do {
-            if (eventId == 0) {
-                match = getMatchInfo(mid);
-            } else {
-                match.parseNextData(getMatchInfo(
-                        mid,
-                        match.getEvents().getFirst().getID()
-                ));
-            }
-            eventId = match.getEvents().getFirst().getID();
-        }
-        while (!match.getFirstEventId().equals(eventId) && --limit >= 0);
-        return match;
     }
 
     @Override

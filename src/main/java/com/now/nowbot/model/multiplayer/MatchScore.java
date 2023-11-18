@@ -47,6 +47,9 @@ public class MatchScore {
     //这个需要自己设定，在MatchCal里赋予
     MicroUser user;
 
+    //这个需要自己设定，在MatchCal里赋予
+    Integer ranking;
+
     public Double getAccuracy() {
         return accuracy;
     }
@@ -189,6 +192,18 @@ public class MatchScore {
         return matchPlayerStat;
     }
 
+    public Integer getSlot() {
+        return matchPlayerStat.getSlot();
+    }
+
+    public String getTeam() {
+        return matchPlayerStat.getTeam();
+    }
+
+    public boolean isPass() {
+        return matchPlayerStat.isPass();
+    }
+
     public void setMatchPlayerStat(MatchPlayerStat matchPlayerStat) {
         this.matchPlayerStat = matchPlayerStat;
     }
@@ -219,5 +234,13 @@ public class MatchScore {
 
     public void setUser(MicroUser user) {
         this.user = user;
+    }
+
+    public Integer getRanking() {
+        return ranking;
+    }
+
+    public void setRanking(Integer ranking) {
+        this.ranking = ranking;
     }
 }

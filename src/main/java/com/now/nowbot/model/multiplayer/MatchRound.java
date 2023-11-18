@@ -31,6 +31,10 @@ public class MatchRound {
     @JsonProperty("scores")
     List<MatchScore> scoreInfoList;
 
+    int redTeamScore = 0;
+    int blueTeamScore = 0;
+    int totalTeamScore = 0;
+
     public Long getBid() {
         return bid;
     }
@@ -119,19 +123,55 @@ public class MatchRound {
         this.scoreInfoList = scoreInfoList;
     }
 
-    public String getWinningTeam() {
-        if (!Objects.equals(teamType, "team-vs")) return "none";
-        int redTeamScore = 0;
-        int blueTeamScore = 0;
+    public int getRedTeamScore() {
+        initTeamScore();
+        return redTeamScore;
+    }
 
-        for (MatchScore s : scoreInfoList) {
-            String team = s.getMatchPlayerStat().getTeam();
+    public void setRedTeamScore(int redTeamScore) {
+        this.redTeamScore = redTeamScore;
+    }
 
-            switch (team) {
-                case "red" -> redTeamScore += s.getScore();
-                case "blue" -> blueTeamScore += s.getScore();
+    public int getBlueTeamScore() {
+        initTeamScore();
+        return blueTeamScore;
+    }
+
+    public void setBlueTeamScore(int blueTeamScore) {
+        this.blueTeamScore = blueTeamScore;
+    }
+
+    public int getTotalTeamScore() {
+        return totalTeamScore;
+    }
+
+    public void setTotalTeamScore(int totalTeamScore) {
+        this.totalTeamScore = totalTeamScore;
+    }
+
+    private void initTeamScore() {
+        if (totalTeamScore == 0 && redTeamScore == 0 && blueTeamScore == 0) {
+            if (Objects.equals(teamType, "team-vs")) {
+                for (MatchScore s : scoreInfoList) {
+                    String team = s.getTeam();
+                    switch (team) {
+                        case "red" -> redTeamScore += s.getScore();
+                        case "blue" -> blueTeamScore += s.getScore();
+                    }
+                }
+                totalTeamScore = redTeamScore + blueTeamScore;
+
+            } else {
+                for (MatchScore s : scoreInfoList) {
+                    totalTeamScore += s.getScore();
+                }
             }
         }
+    }
+
+    public String getWinningTeam() {
+        if (!Objects.equals(teamType, "team-vs")) return "none";
+        initTeamScore();
 
         if (redTeamScore > blueTeamScore) return "red";
         else if (redTeamScore < blueTeamScore) return "blue";
@@ -139,9 +179,8 @@ public class MatchRound {
     }
 
     public Integer getWinningTeamScore() {
-        String WinningTeam = getWinningTeam();
-
-        return scoreInfoList.stream().filter(s -> Objects.equals(s.getMatchPlayerStat().getTeam(), WinningTeam))
-                .mapToInt(ms -> ms.score).reduce(Integer::sum).orElse(0);
+        if (!Objects.equals(teamType, "team-vs")) return 0;
+        initTeamScore();
+        return Math.max(redTeamScore, blueTeamScore);
     }
 }

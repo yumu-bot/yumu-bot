@@ -2,8 +2,9 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchScore;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
@@ -14,12 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service("CRA")
 public class CRAService implements MessageService<Matcher> {
@@ -132,9 +130,9 @@ public class CRAService implements MessageService<Matcher> {
                     .append(score.getMaxCombo()).append(',')
                     .append(score.isPassed()).append(',')
                     .append(score.isPerfect()).append(',')
-                    .append(score.getMatchPlayerStat().getSlot()).append(',')
-                    .append(score.getMatchPlayerStat().getTeam()).append(',')
-                    .append(score.getMatchPlayerStat().isPass())
+                    .append(score.getSlot()).append(',')
+                    .append(score.getTeam()).append(',')
+                    .append(score.isPass())
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
@@ -144,7 +142,7 @@ public class CRAService implements MessageService<Matcher> {
     private void getScoreStringsLite(StringBuilder sb, MatchScore score){
 
         try {
-            sb.append(score.getMatchPlayerStat().getTeam()).append(',')
+            sb.append(score.getTeam()).append(',')
                     .append(score.getUserId()).append(',')
                     .append(score.getUserName()).append(',')
                     .append(score.getScore()).append(',')

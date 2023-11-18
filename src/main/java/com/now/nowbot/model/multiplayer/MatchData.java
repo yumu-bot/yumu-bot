@@ -122,7 +122,7 @@ public class MatchData {
                         player.getRRAs().add(RRA);
                         player.getScores().add(score.getScore());
                         if (player.getTeam() == null) {
-                            player.setTeam(score.getMatchPlayerStat().getTeam());
+                            player.setTeam(score.getTeam());
                         }
                         break;
                     }

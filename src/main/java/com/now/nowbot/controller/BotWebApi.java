@@ -116,7 +116,7 @@ public class BotWebApi {
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
-        var data = monitorNowService.getImage(mid, k, d, f, r);
+        var data = monitorNowService.getImage(mid, k, d, !f, r);
         return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
     }
 

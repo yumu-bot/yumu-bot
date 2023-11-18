@@ -1,27 +1,30 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.match.Match;
+import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service("MONITORNOW")
 public class MonitorNowService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(MonitorNowService.class);
     @Resource
-    OsuGetService osuGetService;
+    OsuMatchApiService osuMatchApiService;
     @Resource
     ImageService imageService;
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -35,10 +38,11 @@ public class MonitorNowService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         int matchID;
-        int skipedRounds = matcher.group("skipedrounds") == null ? 0 : Integer.parseInt(matcher.group("skipedrounds"));
-        int deletEndRounds = matcher.group("deletendrounds") == null ? 0 : Integer.parseInt(matcher.group("deletendrounds"));
-        boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
-        boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
+
+        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
+        int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
+        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
+        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
 
         try {
             matchID = Integer.parseInt(matcher.group("matchid"));
@@ -47,53 +51,64 @@ public class MonitorNowService implements MessageService<Matcher> {
         }
 
         var from = event.getSubject();
-        var f = getImage(matchID, skipedRounds, deletEndRounds, includingFail, includingRematch);
+
+        var f = getImage(matchID, skip, skipEnd, !keep, rematch);
 
         try {
             QQMsgUtil.sendImage(from, f);
         } catch (Exception e) {
             NowbotApplication.log.error("MonitorNow:", e);
+            throw new MonitorNowException(MonitorNowException.Type.MN_Send_Error);
         }
     }
 
-    public byte[] getImage(int matchID, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) throws MonitorNowException {
+    public byte[] getImage(int matchID, int skip, int skipEnd, boolean remove, boolean rematch) throws MonitorNowException {
         Match match;
         try {
-            match = osuGetService.getMatchInfo(matchID);
+            match = osuMatchApiService.getMatchInfo(matchID, 10);
         } catch (Exception e) {
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_NotFound);
         }
-        int gameTime = 0;
-        var m = match.getEvents().stream()
-                .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                .get(Boolean.FALSE);
-        if (m != null) {
-            gameTime = m.intValue();
+
+        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
+            var events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
+            if (events.isEmpty()) throw new MonitorNowException(MonitorNowException.Type.MN_Match_Empty);
+            match.getEvents().addAll(0, events);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getID()) && gameTime < 40) {
-            var next = osuGetService.getMatchInfo(matchID, match.getEvents().get(0).getID());
-            m = next.getEvents().stream()
-                    .collect(Collectors.groupingBy(e -> e.getGame() == null, Collectors.counting()))
-                    .get(Boolean.FALSE);
-            if (m != null) {
-                gameTime += m.intValue();
-            }
-            match.parseNextData(next);
-        }
-
-        if (gameTime <= 0) {
-            throw new MonitorNowException(MonitorNowException.Type.MN_Match_Empty);
-        }
-        if (gameTime - deleteEnd - skipRounds <= 0) {
+        if (match.getEvents().size() - skipEnd - skip <= 0) {
             throw new MonitorNowException(MonitorNowException.Type.MN_Match_OutOfBoundsError);
+        }
+
+        MatchCal cal;
+        try {
+            cal = new MatchCal(match, skip, skipEnd, remove, rematch);
+            cal.addMicroUser4MatchScore();
+            cal.addRanking4MatchScore();
+
+            for (MatchRound r : cal.getRoundList()) {
+                var scoreList = r.getScoreInfoList();
+
+                //如果只有一两个人，则不排序（slot 从小到大）
+                if (scoreList.size() > 2) {
+                    r.setScoreInfoList(scoreList.stream().sorted(
+                                    Comparator.comparingInt(MatchScore::getScore).reversed()).toList());
+                } else {
+                    r.setScoreInfoList(scoreList.stream().sorted(
+                            Comparator.comparingInt(MatchScore::getSlot)).toList());
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("MN Parse:", e);
+            throw new MonitorNowException(MonitorNowException.Type.MN_Match_ParseError);
         }
 
         byte[] img;
         try {
-            img = imageService.getPanelF(match, osuGetService, skipRounds, deleteEnd, includingFail, includingRematch);
+            img = imageService.getPanelF(match.getMatchStat(), cal.getRoundList());
         } catch (Exception e) {
-            throw new MonitorNowException(MonitorNowException.Type.MN_Send_Error);
+            throw new MonitorNowException(MonitorNowException.Type.MN_Render_Error);
         }
 
         return img;

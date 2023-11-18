@@ -4,6 +4,7 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class MatchCal {
@@ -43,10 +44,7 @@ public class MatchCal {
 
         skip(skip, skipEnd);
 
-        scoreList = roundList.stream()
-                .flatMap(r -> r.scoreInfoList.stream())
-                .filter(s -> s.getScore() > 10000)
-                .toList();
+        constructScoreList();
 
         Set<Long> playerUIDSet = scoreList.stream().map(MatchScore::getUserId).collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -57,6 +55,13 @@ public class MatchCal {
         playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
 
         addPlayerName4MatchScore();
+    }
+
+    private void constructScoreList() {
+        scoreList = roundList.stream()
+                .flatMap(r -> r.scoreInfoList.stream())
+                .filter(s -> s.getScore() > 10000)
+                .toList();
     }
 
     //默认跳过
@@ -90,6 +95,22 @@ public class MatchCal {
                 }
             }
         }
+    }
+
+    //不知道为什么，这里总是会筛出 10000 分以下的
+    public void addRanking4MatchScore() {
+        for (MatchRound r: roundList) {
+            AtomicInteger i = new AtomicInteger(1);
+
+            var scores = r.getScoreInfoList();
+            r.setScoreInfoList(scores.stream()
+                    .filter(s -> s.getScore() > 10000)
+                    .sorted(Comparator.comparing(MatchScore::getScore).reversed())
+                    .peek(s -> s.setRanking(i.getAndIncrement()))
+                    .toList());
+        }
+        //重置分数列表
+        constructScoreList();
     }
 
     public Match getMatch() {
@@ -142,7 +163,7 @@ public class MatchCal {
     public List<MicroUser> getPlayers(String teamType) {
         return scoreList
                 .stream()
-                .filter(s -> s.getMatchPlayerStat().getTeam().equals(teamType))
+                .filter(s -> s.getTeam().equals(teamType))
                 .map(s -> playerMap.get(s.getUserId()))
                 .toList();
     }

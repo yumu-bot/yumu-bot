@@ -6,10 +6,6 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.match.GameInfo;
-import com.now.nowbot.model.match.MPScore;
-import com.now.nowbot.model.match.Match;
-import com.now.nowbot.model.match.MatchEvent;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
@@ -35,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -320,186 +315,12 @@ public class ImageService {
         return doPost("panel_A5", httpEntity);
     }
 
-    public byte[] getPanelF(Match match, OsuGetService osuGetService, int skipRounds, int deleteEnd, boolean includingFail, boolean includingRematch) {
-        //scores
-        List<GameInfo> games = match.getEvents().stream()
-                .map(MatchEvent::getGame)
-                .filter(Objects::nonNull)
-                .filter(m -> m.getScoreInfoList() != null && !m.getScoreInfoList().isEmpty())
-                .toList();
-        {
-            final int rawSize = games.size();
-            games = games.stream().limit(rawSize - deleteEnd).skip(skipRounds).collect(Collectors.toList());
-
-            if (!includingRematch) {
-                // 保证顺序的情况下,去除重复
-                var bsit = new HashSet<Long>();
-                Collections.reverse(games);
-                games.removeIf((e) -> !bsit.add(e.getBID()));
-                Collections.reverse(games);
-            }
-        }
-
-        var uidMap = new HashMap<Long, MicroUser>(match.getUsers().size());
-        for (var u : match.getUsers()) {
-            uidMap.put(u.getId(), u);
-        }
-        String firstBackground = null;
-        var scores = new ArrayList<>(games.size());
-        int r_win = 0;
-        int b_win = 0;
-        int n_win = 0;
-        for (var g : games) {
-            var statistics = new HashMap<String, Object>();
-
-            var g_scores = g.getScoreInfoList().stream().filter(s -> (s.getPassed() || includingFail) && s.getScore() >= 10000).toList();
-            final int allScoreSize = g_scores.size();
-            var allUserModInt = g_scores.stream()
-                    .flatMap(m -> Arrays.stream(m.getMods()))
-                    .collect(Collectors.groupingBy(m -> m, Collectors.counting()))
-                    .entrySet()
-                    .stream().filter(a -> a.getValue() >= allScoreSize)
-                    .map(Map.Entry::getKey)
-                    .map(Mod::fromStr)
-                    .mapToInt(m -> m.value)
-                    .reduce(0, (a, i) -> a | i);
-
-            if (g.getBeatmap() != null) {
-                var info = osuGetService.getMapInfoLite(g.getBeatmap().getId());
-                if (firstBackground == null) {
-                    firstBackground = info.getMapSet().getList();
-                }
-                statistics.put("delete", false);
-                statistics.put("background", info.getMapSet().getList());
-                statistics.put("title", info.getMapSet().getTitle());
-                statistics.put("artist", info.getMapSet().getArtist());
-                statistics.put("mapper", info.getMapSet().getCreator());
-                statistics.put("difficulty", info.getVersion());
-                statistics.put("status", info.getMapSet().getStatus());
-                statistics.put("bid", g.getBID());
-                statistics.put("mode", g.getMode());
-//                if (gameItem.getModInt() != null) {
-//                    statistics.put("mod_int", gameItem.getModInt());
-//                } else {
-//                    statistics.put("mod_int", 0);
-//                }
-                statistics.put("mod_int", allUserModInt);
-            } else {
-                statistics.put("delete", true);
-                statistics.put("bid", g.getBID());
-            }
-            var scoreRankList = g.getScoreInfoList().stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(MPScore::getUID).toList();
-            if ("team-vs".equals(g.getTeamType())) {
-                statistics.put("is_team_vs", true);
-                // 成绩分类
-                var r_score = g_scores.stream().filter(s -> "red".equals(s.getMatch().get("team").asText())).toList();
-                var b_score = g_scores.stream().filter(s -> "blue".equals(s.getMatch().get("team").asText())).toList();
-                // 计算胜利(仅分数和
-                var b_score_sum = b_score.stream().mapToInt(MPScore::getScore).sum();
-                var r_score_sum = r_score.stream().mapToInt(MPScore::getScore).sum();
-                statistics.put("score_team_red", r_score_sum);
-                statistics.put("score_team_blue", b_score_sum);
-                statistics.put("score_total", r_score_sum + b_score_sum);
-
-                if (r_score_sum > b_score_sum) {
-                    statistics.put("is_team_red_win", true);
-                    statistics.put("is_team_blue_win", false);
-                    r_win++;
-                } else if (r_score_sum < b_score_sum) {
-                    statistics.put("is_team_red_win", false);
-                    statistics.put("is_team_blue_win", true);
-                    b_win++;
-                } else {
-                    statistics.put("is_team_red_win", false);
-                    statistics.put("is_team_blue_win", false);
-                }
-
-                statistics.put("wins_team_red_before", r_win);
-                statistics.put("wins_team_blue_before", b_win);
-
-                var r_user_list = r_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUID().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
-                }).toList();
-                var b_user_list = b_score.stream().sorted(Comparator.comparing(MPScore::getScore).reversed()).map(s -> {
-                    var u = uidMap.get(s.getUID().longValue());
-                    return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
-                }).toList();
-                if (r_user_list.isEmpty() || b_user_list.isEmpty()) continue;
-                scores.add(Map.of(
-                        "statistics", statistics,
-                        "red", r_user_list,
-                        "blue", b_user_list
-                ));
-            } else {
-                statistics.put("is_team_vs", false);
-                statistics.put("is_team_red_win", false);
-                statistics.put("is_team_blue_win", false);
-                statistics.put("score_team_red", 0);
-                statistics.put("score_team_blue", 0);
-                statistics.put("wins_team_red_before", 0);
-                statistics.put("wins_team_blue_before", 0);
-
-                statistics.put("score_total", g_scores.stream().mapToInt(MPScore::getScore).sum());
-
-                //如果只有一两个人，则不排序
-                List<Map<String, Object>> user_list;
-
-                {
-                    var stream = g_scores.stream();
-
-                    if (g_scores.size() > 2) {
-                        stream = stream.sorted(Comparator.comparing(MPScore::getScore).reversed());
-                    }
-
-                    user_list = stream.map(s -> {
-                        var u = uidMap.get(s.getUID().longValue());
-                        if (u == null) {
-                            return getMatchScoreInfo("Unknown",
-                                    "https://osu.ppy.sh/images/layout/avatar-guest.png",
-                                    0,
-                                    new String[0],
-                                    -1
-                            );
-                        }
-                        return getMatchScoreInfo(u.getUserName(), u.getAvatarUrl(), s.getScore(), s.getMods(), scoreRankList.indexOf(u.getId().intValue()) + 1);
-                    }).toList();
-                    scores.add(Map.of(
-                            "statistics", statistics,
-                            "none", user_list
-                    ));
-                }
-
-                n_win++;
-            }
-        }
-
-        // match
-        var matchInfo = match.getMatchInfo();
-        var format = DateTimeFormatter.ofPattern("HH:mm");
-        var info = new HashMap<String, Object>();
-        info.put("background", firstBackground);
-        info.put("match_title", matchInfo.getName());
-        info.put("match_round", games.size());
-        if (matchInfo.getEndTime() != null) {
-            info.put("match_time", matchInfo.getStartTime().format(format) + '-' + matchInfo.getEndTime().format(format));
-        } else {
-            info.put("match_time", matchInfo.getStartTime().format(format) + '-' + "now");
-        }
-        info.put("match_time_start", matchInfo.getStartTime());
-        info.put("match_time_end", matchInfo.getEndTime());
-        info.put("mpid", matchInfo.getId());
-        info.put("wins_team_red", r_win);
-        info.put("wins_team_blue", b_win);
-        info.put("wins_team_none", n_win);
-        info.put("is_team_vs", n_win == 0);
-
-
+    public byte[] getPanelF(MatchStat matchStat, List<MatchRound> rounds) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>();
-        body.put("match", info);
-        body.put("scores", scores);
+        body.put("matchStat", matchStat);
+        body.put("rounds", rounds);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_F", httpEntity);
     }

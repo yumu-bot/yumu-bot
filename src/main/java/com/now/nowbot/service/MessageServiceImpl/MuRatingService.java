@@ -27,7 +27,7 @@ public class MuRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![a-zA-Z_])))|(?<main>((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![a-zA-Z_])))|(?<main>((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -56,13 +56,13 @@ public class MuRatingService implements MessageService<Matcher> {
 
         int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
         int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
-        boolean includingRematch = matcher.group("excludingrematch") == null || !matcher.group("excludingrematch").equalsIgnoreCase("r");
-        boolean includingFail = matcher.group("excludingfail") == null || !matcher.group("excludingfail").equalsIgnoreCase("f");
+        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
+        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
 
         var from = event.getSubject();
         MatchData data;
         try {
-            data = calculate(matchID, skip, skipEnd, includingFail, includingRematch);
+            data = calculate(matchID, skip, skipEnd, keep, rematch);
         } catch (Exception e) {
             log.error("MRA 数据计算失败", e);
             throw new MRAException(MRAException.Type.RATING_Client_CalculatingFailed);
@@ -122,7 +122,7 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         //真正的计算封装，就两行
-        MatchData matchData = new MatchData(match, skip, skipEnd, rematch, !keep); //!keep = remove
+        MatchData matchData = new MatchData(match, skip, skipEnd, !keep, rematch); //!keep = remove
         matchData.calculate();
 
         return matchData;
