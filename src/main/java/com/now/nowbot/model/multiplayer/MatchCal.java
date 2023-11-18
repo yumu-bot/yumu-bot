@@ -22,7 +22,7 @@ public class MatchCal {
         this.match = match;
 
         //包含所有玩家的映射表
-        var userMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p));
+        var userMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2));
         var roundsStream = match.getEvents().stream()
                 .map(MatchEvent::getRound)
                 .filter(Objects::nonNull)
@@ -85,7 +85,7 @@ public class MatchCal {
     public void addMicroUser4MatchScore() {
         for (MicroUser p: players) {
             for (MatchScore s: scoreList) {
-                if (Objects.equals(p.getId(), s.getUserId())) {
+                if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
                     s.setUser(p);
                 }
             }
