@@ -659,7 +659,7 @@ public class ImageService {
             AtomicBoolean hasAnyGenre = new AtomicBoolean(false);
 
             //逻辑应该是先每张图然后再遍历12吧？
-            if (!search.getBeatmapsets().isEmpty()) {
+            if (!CollectionUtils.isEmpty(search.getBeatmapsets())) {
                 search.getBeatmapsets().forEach(m -> {
                     for (int i = 1; i < keywords.length; i++) {
                         var keyword = keywords[i];
@@ -682,7 +682,7 @@ public class ImageService {
 
         int favorite = 0;
         int playcount = 0;
-        if (!search.getBeatmapsets().isEmpty()) {
+        if (!CollectionUtils.isEmpty(search.getBeatmapsets())) {
             for (int i = 0; i < search.getBeatmapsets().size(); i++) {
                 var v = search.getBeatmapsets().get(i);
 

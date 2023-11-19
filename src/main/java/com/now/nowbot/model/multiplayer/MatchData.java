@@ -1,6 +1,7 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,7 +57,7 @@ public class MatchData {
             scoreCount += r.getScoreInfoList().size();
         }
 
-        if (!rounds.isEmpty()) {
+        if (!CollectionUtils.isEmpty(rounds)) {
             isTeamVS = Objects.equals(rounds.getFirst().getTeamType(), "team-vs");
         } else {
             isTeamVS = false;

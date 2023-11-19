@@ -20,9 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -114,7 +116,7 @@ public class ScoreService implements MessageService<Matcher> {
         }
 
         Score score = null;
-        if (mods != null && !mods.isEmpty()) {
+        if (!CollectionUtils.isEmpty(mods)) {
             List<Score> scoreall;
             try {
                 scoreall = scoreApiService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
@@ -125,7 +127,7 @@ public class ScoreService implements MessageService<Matcher> {
             }
 
             for (var s : scoreall) {
-                if (s.getMods().isEmpty() && mods.size() == 1 && mods.get(0) == Mod.None) {
+                if (CollectionUtils.isEmpty(s.getMods()) && mods.size() == 1 && mods.get(0) == Mod.None) {
                     score = s;
                     break;
                 }

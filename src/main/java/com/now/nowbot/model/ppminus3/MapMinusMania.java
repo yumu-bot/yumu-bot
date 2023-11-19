@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.now.nowbot.model.beatmapParse.HitObject;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +72,7 @@ public class MapMinusMania extends MapMinus{
         boolean hasMidColumn = (key % 2) != 0;
         int midColumn = hasMidColumn ? ((key - 1) / 2) : 0; //7K下，它是0123456的3
 
-        if (!hitObjects.isEmpty()) {
+        if (!CollectionUtils.isEmpty(hitObjects)) {
             map_start_time = hitObjects.get(0).getStartTime();
             map_end_time = hitObjects.get(hitObjects.size() - 1).getEndTime();
         }
