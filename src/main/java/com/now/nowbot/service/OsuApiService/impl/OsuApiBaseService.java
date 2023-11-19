@@ -17,10 +17,14 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriBuilder;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Service
 public class OsuApiBaseService {
@@ -80,14 +84,14 @@ public class OsuApiBaseService {
     String refreshUserToken(BinUser user, boolean first) {
         LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", String.valueOf(oauthId));
-        body.add("client_secret", oauthToken);
+        body.add("client_secret", getBotToken());
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
-        body.add("refresh_token", user.getRefreshToken());
+        body.add(first ? "code" : "refresh_token", user.getRefreshToken());
         body.add("redirect_uri", redirectUrl);
-        JsonNode s = null;
-        s = osuApiWebClient.post()
+        JsonNode s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
