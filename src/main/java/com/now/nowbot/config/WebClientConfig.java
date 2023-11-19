@@ -62,6 +62,7 @@ public class WebClientConfig implements WebFluxConfigurer {
                     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 })
                 .baseUrl("https://osu.ppy.sh/api/v2/")
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
                 .build();
     }
 
