@@ -6,7 +6,7 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.KitaException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +18,14 @@ import java.util.regex.Pattern;
 
 @Service("KITA")
 public class KitaService implements MessageService<Matcher> {
-    OsuGetService osuGetService;
-    RestTemplate template;
-    ImageService imageService;
+    RestTemplate         template;
+    OsuBeatmapApiService beatmapApiService;
+    ImageService         imageService;
 
     @Autowired
-    public KitaService (OsuGetService osuGetService, RestTemplate template, ImageService image) {
-        this.osuGetService = osuGetService;
+    public KitaService (OsuBeatmapApiService beatmapApiService,
+                        RestTemplate template, ImageService image) {
+        this.beatmapApiService = beatmapApiService;
         this.template = template;
         imageService = image;
     }
@@ -82,7 +83,7 @@ public class KitaService implements MessageService<Matcher> {
         }
 
         try {
-            beatMap = osuGetService.getBeatMapInfo(BID);
+            beatMap = beatmapApiService.getBeatMapInfo(BID);
         } catch (Exception e) {
             throw new KitaException(KitaException.Type.KITA_Map_FetchFailed);
         }

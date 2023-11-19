@@ -7,8 +7,8 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,15 +20,18 @@ import java.util.regex.Pattern;
 
 @Service("IMMAPPER")
 public class IMapperService implements MessageService<Matcher> {
-    OsuGetService osuGetService;
     OsuUserApiService userApiService;
+    OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
     RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public IMapperService(OsuUserApiService userApiService, BindDao bindDao, RestTemplate template, ImageService image) {
+    public IMapperService(OsuUserApiService userApiService,
+                          OsuBeatmapApiService beatmapApiService,
+                          BindDao bindDao, RestTemplate template, ImageService image) {
         this.userApiService = userApiService;
+        this.beatmapApiService = beatmapApiService;
         this.template = template;
         this.bindDao = bindDao;
         imageService = image;
@@ -80,9 +83,8 @@ public class IMapperService implements MessageService<Matcher> {
                 }
             }
         }
-
         try {
-            var data = imageService.getPanelM(osuUser, osuGetService);
+            var data = imageService.getPanelM(osuUser, userApiService, beatmapApiService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             NowbotApplication.log.error("IMapper", e);

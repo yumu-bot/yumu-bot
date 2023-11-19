@@ -556,7 +556,7 @@ public class ImageService {
     }
     //2023-07-12T12:42:37Z
 
-    public byte[] getPanelM(OsuUser user, OsuGetService osuGetService) {
+    public byte[] getPanelM(OsuUser user, OsuUserApiService userApiService, OsuBeatmapApiService beatmapApiService) {
         var page = 1;
         var query = new HashMap<String, Object>();
         query.put("q", "creator=" + user.getUID());
@@ -571,13 +571,13 @@ public class ImageService {
             int resultCount = 0;
             do {
                 if (search == null) {
-                    search = osuGetService.searchBeatmap(query);
+                    search = beatmapApiService.searchBeatmap(query);
                     resultCount += search.getBeatmapsets().size();
                     continue;
                 }
                 page ++;
                 query.put("page", page);
-                var result = osuGetService.searchBeatmap(query);
+                var result = beatmapApiService.searchBeatmap(query);
                 resultCount += result.getResultCount();
                 search.getBeatmapsets().addAll(result.getBeatmapsets());
             } while (resultCount < search.getTotal() && page < 10);
@@ -586,7 +586,7 @@ public class ImageService {
         List<ActivityEvent> activity;
         List<ActivityEvent> mappingActivity;
         try {
-            activity = osuGetService.getUserRecentActivity(user.getUID(), 0, 100);
+            activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
             mappingActivity = activity.stream().filter(ActivityEvent::isTypeMapping).toList();
                     /* 原设想是，这里把相近的同名同属性活动删去。但是不知道怎么写
                     .collect(collectingAndThen(
@@ -624,7 +624,7 @@ public class ImageService {
                 query1.put("s", "any");
                 query1.put("page", 1);
 
-                var search1 = osuGetService.searchBeatmap(query1);
+                var search1 = beatmapApiService.searchBeatmap(query1);
                 mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::isRanked).findFirst().orElse(null);
 
             } catch (Exception ignored) {}

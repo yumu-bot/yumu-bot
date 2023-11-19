@@ -14,7 +14,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -35,8 +34,7 @@ import java.util.regex.Pattern;
 public class ScorePRService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
-    RestTemplate template;
-    OsuGetService osuGetService;
+    RestTemplate      template;
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     OsuBeatmapApiService beatmapApiService;

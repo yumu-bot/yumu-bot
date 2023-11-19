@@ -11,7 +11,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.QQMsgUtil;
@@ -29,7 +28,6 @@ import java.util.regex.Pattern;
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
     private static final Logger log = LoggerFactory.getLogger(BPService.class);
-    OsuGetService osuGetService;
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     OsuBeatmapApiService beatmapApiService;

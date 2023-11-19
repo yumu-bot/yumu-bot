@@ -6,7 +6,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuGetService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -18,9 +18,9 @@ import java.util.regex.Pattern;
 @Service("QUALIFIEDMAP")
 public class QualifiedMapService implements MessageService<Matcher> {
     @Resource
-    OsuGetService osuGetService;
+    OsuBeatmapApiService beatmapApiService;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
     Pattern pattern = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![a-zA-Z_])|q(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
 
@@ -73,13 +73,13 @@ public class QualifiedMapService implements MessageService<Matcher> {
             int resultCount = 0;
             do {
                 if (data == null) {
-                    data = osuGetService.searchBeatmap(query);
+                    data = beatmapApiService.searchBeatmap(query);
                     resultCount += data.getBeatmapsets().size();
                     continue;
                 }
                 page ++;
                 query.put("page", page);
-                var result = osuGetService.searchBeatmap(query);
+                var result = beatmapApiService.searchBeatmap(query);
                 resultCount += result.getBeatmapsets().size();
                 data.getBeatmapsets().addAll(result.getBeatmapsets());
             } while (resultCount < data.getTotal() && page < page_aim);

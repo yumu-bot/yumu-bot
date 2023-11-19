@@ -10,7 +10,6 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private final BotContainer bots;
     private final WebClient client;
     private final OsuUserApiService userApiService;
-    private OsuGetService osuGetService;
 
     private static final Map<Long, Long> UserCache = new HashMap<>();
 

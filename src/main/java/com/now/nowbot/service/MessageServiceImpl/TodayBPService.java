@@ -11,7 +11,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,6 @@ import java.util.regex.Pattern;
 
 @Service("TODAYBP")
 public class TodayBPService implements MessageService<Matcher> {
-    OsuGetService osuGetService;
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     BindDao bindDao;

@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -23,12 +24,12 @@ import java.util.function.Consumer;
 
 @Service
 public class OsuApiBaseService {
-    private static final Logger log = LoggerFactory.getLogger(OsuApiBaseService.class);
-    private static String accessToken = null;
-    private static long time = System.currentTimeMillis();
-    protected final int oauthId;
-    protected final String redirectUrl;
-    protected final String oauthToken;
+    private static final Logger log         = LoggerFactory.getLogger(OsuApiBaseService.class);
+    private static       String accessToken = null;
+    private static       long   time        = System.currentTimeMillis();
+    protected final      int    oauthId;
+    protected final      String redirectUrl;
+    protected final      String oauthToken;
 
     @Lazy
     @Resource
@@ -62,7 +63,7 @@ public class OsuApiBaseService {
         var s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(body)
+                .bodyValue(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
@@ -77,18 +78,17 @@ public class OsuApiBaseService {
     }
 
     String refreshUserToken(BinUser user, boolean first) {
-        Map<String, String> body = Map.of(
-                "client_id", String.valueOf(oauthId),
-                "client_secret", oauthToken,
-                "grant_type", first ? "authorization_code" : "refresh_token",
-                "refresh_token", user.getRefreshToken(),
-                "redirect_uri", redirectUrl
-        );
+        LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", String.valueOf(oauthId));
+        body.add("client_secret", oauthToken);
+        body.add("grant_type", first ? "authorization_code" : "refresh_token");
+        body.add("refresh_token", user.getRefreshToken());
+        body.add("redirect_uri", redirectUrl);
         JsonNode s = null;
         s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(body)
+                .bodyValue(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
