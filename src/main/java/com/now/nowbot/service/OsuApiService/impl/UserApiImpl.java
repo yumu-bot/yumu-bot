@@ -9,6 +9,7 @@ import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
@@ -51,11 +52,22 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public String refreshUserTokenFirst(BinUser user) {
-        String access = base.refreshUserToken(user, true);
-        getPlayerInfo(user);
-        bindDao.saveUser(user);
-        return access;
+    public void refreshUserTokenFirst(BinUser user) {
+        base.refreshUserToken(user, true);
+        var osuInfo = getPlayerInfo(user);
+        var uid = osuInfo.getUID();
+        try {
+            bindDao.getUserFromOsuid(uid);
+            bindDao.updateToken(uid,
+                    user.getAccessToken(),
+                    user.getRefreshToken(),
+                    user.getTime());
+        } catch (BindException e) {
+            user.setOsuID(uid);
+            user.setOsuName(user.getOsuName());
+            user.setMode(user.getMode());
+            bindDao.saveUser(user);
+        }
     }
 
     @Override

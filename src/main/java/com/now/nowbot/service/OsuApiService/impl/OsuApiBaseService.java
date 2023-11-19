@@ -66,6 +66,7 @@ public class OsuApiBaseService {
 
         var s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
+                .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
                 .retrieve()
@@ -84,14 +85,14 @@ public class OsuApiBaseService {
     String refreshUserToken(BinUser user, boolean first) {
         LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", String.valueOf(oauthId));
-        body.add("client_secret", getBotToken());
+        body.add("client_secret", oauthToken);
+        body.add("redirect_uri", redirectUrl);
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
         body.add(first ? "code" : "refresh_token", user.getRefreshToken());
-        body.add("redirect_uri", redirectUrl);
         JsonNode s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
+                .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .accept(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)

@@ -21,7 +21,7 @@ public interface OsuUserApiService {
 
     String refreshUserToken(BinUser user) throws WebClientResponseException;
 
-    String refreshUserTokenFirst(BinUser user) throws WebClientResponseException;
+    void refreshUserTokenFirst(BinUser user) throws WebClientResponseException;
 
     OsuUser getPlayerInfo(BinUser user, OsuMode mode) throws WebClientResponseException;
 
