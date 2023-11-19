@@ -63,7 +63,7 @@ public class OsuApiBaseService {
         var s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(BodyInserters.fromFormData(body))
+                .body(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
@@ -88,7 +88,7 @@ public class OsuApiBaseService {
         s = osuApiWebClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(BodyInserters.fromFormData(body))
+                .body(BodyInserters.fromFormData(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
