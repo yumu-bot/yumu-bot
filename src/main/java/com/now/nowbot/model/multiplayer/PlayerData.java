@@ -92,15 +92,9 @@ public class PlayerData {
         MRA = 0.7 * ERA + 0.3 * DRA;
     }
 
-    public void calculateRWS(int roundCount) {
-        var tRWS = 0d;
-
-        for (Double rRWS : RWSs) {
-            tRWS += rRWS;
-        }
-
-        if (!RWSs.isEmpty() && roundCount > 0) {
-            RWS = tRWS / roundCount;
+    public void calculateRWS() {
+        if (!RWSs.isEmpty()) {
+            RWS = RWSs.stream().mapToDouble(Double::doubleValue).average().orElse(0d);
         } else {
             RWS = 0d;
         }

@@ -172,7 +172,7 @@ public class MatchData {
         }
 
         for (var player : playerDataList) {
-            player.calculateRWS(roundCount);
+            player.calculateRWS();
         }
     }
 

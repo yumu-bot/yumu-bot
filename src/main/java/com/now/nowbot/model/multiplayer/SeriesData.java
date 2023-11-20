@@ -140,7 +140,7 @@ public class SeriesData {
             player.calculateDRA(playerCount, scoreCount);
             player.calculateERA(minMQ, scalingFactor);
             player.calculateMRA();
-            player.calculateRWS(roundCount);
+            player.calculateRWS();
         }
 
         calculateIndex();
