@@ -5,11 +5,11 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.ActivityEvent;
+import com.now.nowbot.model.JsonData.KudosuHistory;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
@@ -56,18 +56,9 @@ public class UserApiImpl implements OsuUserApiService {
         base.refreshUserToken(user, true);
         var osuInfo = getPlayerInfo(user);
         var uid = osuInfo.getUID();
-        try {
-            bindDao.getUserFromOsuid(uid);
-            bindDao.updateToken(uid,
-                    user.getAccessToken(),
-                    user.getRefreshToken(),
-                    user.getTime());
-        } catch (BindException e) {
-            user.setOsuID(uid);
-            user.setOsuName(user.getOsuName());
-            user.setMode(user.getMode());
-            bindDao.saveUser(user);
-        }
+        user.setOsuID(uid);
+        user.setOsuName(user.getOsuName());
+        user.setMode(user.getMode());
     }
 
     @Override
@@ -175,5 +166,15 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToFlux(ActivityEvent.class)
                 .collectList().block();
+    }
+
+    @Override
+    public KudosuHistory getUserKudosu(BinUser user) {
+        return base.osuApiWebClient.get()
+                .uri("users/{uid}/kudosu")
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToMono(KudosuHistory.class)
+                .block();
     }
 }

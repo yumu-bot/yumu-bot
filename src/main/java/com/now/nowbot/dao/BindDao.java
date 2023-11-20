@@ -55,7 +55,13 @@ public class BindDao {
     }
 
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
-        var liteData = bindUserMapper.getByOsuId(osuId);
+        Optional<OsuBindUserLite> liteData = null;
+        try {
+            liteData = bindUserMapper.getByOsuId(osuId);
+        } catch (IncorrectResultSizeDataAccessException e) {
+            bindUserMapper.deleteOldByOsuId(osuId);
+            liteData = bindUserMapper.getByOsuId(osuId);
+        }
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
         return fromLite(liteData.get());
     }
@@ -80,7 +86,7 @@ public class BindDao {
             Optional<OsuBindUserLite> uLiteOpt = null;
             try {
                 uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
-            } catch (IncorrectResultSizeDataAccessException e) {
+            } catch (NonUniqueResultException e) {
                 // 查出多个
                 bindUserMapper.deleteOldByOsuId(user.getOsuId());
                 uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
@@ -92,7 +98,7 @@ public class BindDao {
             }
         }
 
-        qqBind.setOsuUser(bindUserMapper.save(user));
+        qqBind.setOsuUser(bindUserMapper.checkSave(user));
         return bindQQMapper.save(qqBind);
     }
 
@@ -112,23 +118,6 @@ public class BindDao {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return fromLite(data.orElseGet(null));
-    }
-
-    public void saveUser(BinUser user) {
-        var data = new OsuBindUserLite(user);
-        try {
-            var t = bindUserMapper.getByOsuId(user.getOsuID());
-            if (t.isPresent()) data.setId(t.get().getId());
-            else {
-                throw new BindException(BindException.Type.BIND_Player_NotFound);
-            }
-        } catch (NonUniqueResultException e) {
-            bindUserMapper.deleteByOsuId(user.getOsuID());
-        } catch (Exception e) {
-            // do nothing
-        }
-        if (data.getMainMode() == null) data.setMainMode(OsuMode.OSU);
-        bindUserMapper.save(data);
     }
 
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {

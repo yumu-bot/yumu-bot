@@ -2,6 +2,7 @@ package com.now.nowbot.service.OsuApiService;
 
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.ActivityEvent;
+import com.now.nowbot.model.JsonData.KudosuHistory;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -85,4 +86,6 @@ public interface OsuUserApiService {
     List<MicroUser> getFriendList(BinUser user) throws WebClientResponseException;
 
     List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
+
+    KudosuHistory getUserKudosu(BinUser user);
 }
