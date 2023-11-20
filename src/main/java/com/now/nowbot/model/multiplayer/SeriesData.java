@@ -133,8 +133,10 @@ public class SeriesData {
             if (player.getMQ() < minMQ) {
                 minMQ = player.getMQ();
             }
-            calculateSF();
+        }
 
+        for (var player : series.getPlayerDataList()) {
+            calculateSF();
             player.calculateDRA(playerCount, scoreCount);
             player.calculateERA(minMQ, scalingFactor);
             player.calculateMRA();
