@@ -31,7 +31,7 @@ public class MatchData {
     //分数数量
     Integer scoreCount = 0;
 
-    private Double roundAMG = 0d;
+    Double roundAMG = 0d;
     private Double minMQ = 100d;
     private double scalingFactor;
 
@@ -346,5 +346,13 @@ public class MatchData {
 
     public void setScoreCount(Integer scoreCount) {
         this.scoreCount = scoreCount;
+    }
+
+    public Double getRoundAMG() {
+        return roundAMG;
+    }
+
+    public void setRoundAMG(Double roundAMG) {
+        this.roundAMG = roundAMG;
     }
 }

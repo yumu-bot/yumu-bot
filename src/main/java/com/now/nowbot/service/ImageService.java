@@ -9,6 +9,7 @@ import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
+import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -181,6 +182,17 @@ public class ImageService {
         return doPost("panel_B1", httpEntity);
     }
 
+    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of(
+                "user", user,
+                "score", scores
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A5", httpEntity);
+    }
+
     public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, PPMinus PPMinusMe, PPMinus PPMinusOther, OsuMode mode) {
         String STBPRE;
 
@@ -246,17 +258,11 @@ public class ImageService {
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelF2(MatchStat matchStat, MatchRound matchRound, int index) {
+    public byte[] getPanelC2(SeriesData seriesData) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of(
-                "MatchStat", matchStat,
-                "MatchRound", matchRound,
-                "index", index
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_F2", httpEntity);
+        HttpEntity<SeriesData> httpEntity = new HttpEntity<>(seriesData, headers);
+        return doPost("panel_C2", httpEntity);
     }
 
 
@@ -304,17 +310,6 @@ public class ImageService {
         return doPost("panel_E", httpEntity);
     }
 
-    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "user", user,
-                "score", scores
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A5", httpEntity);
-    }
-
     public byte[] getPanelF(MatchStat matchStat, List<MatchRound> rounds) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -323,6 +318,19 @@ public class ImageService {
         body.put("rounds", rounds);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_F", httpEntity);
+    }
+
+    public byte[] getPanelF2(MatchStat matchStat, MatchRound matchRound, int index) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "MatchStat", matchStat,
+                "MatchRound", matchRound,
+                "index", index
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_F2", httpEntity);
     }
 
 
@@ -778,16 +786,6 @@ public class ImageService {
 
     public byte[] drawLine(StringBuilder sb) {
         return drawLine(sb.toString().split("\n"));
-    }
-
-    private Map<String, Object> getMatchScoreInfo(String name, String avatar, int score, String[] mods, int rank) {
-        return Map.of(
-                "player_name", name,
-                "player_avatar", avatar,
-                "player_score", score,
-                "player_mods", mods,
-                "player_rank", rank
-        );
     }
 
     private HttpHeaders getDefaultHeader() {

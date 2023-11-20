@@ -23,7 +23,7 @@ public class MatchCal {
         this.match = match;
 
         //包含所有玩家的映射表
-        var userMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2));
+        playerMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2));
         var roundsStream = match.getEvents().stream()
                 .map(MatchEvent::getRound)
                 .filter(Objects::nonNull)
@@ -51,7 +51,7 @@ public class MatchCal {
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
 
-        players = playerUIDSet.stream().map(userMap::get).toList();
+        players = playerUIDSet.stream().map(playerMap::get).toList();
         playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
 
         addPlayerName4MatchScore();
@@ -179,8 +179,8 @@ public class MatchCal {
      */
     public float getAverageStar() {
         return (float) roundList.stream()
-                .filter(gameRounds -> gameRounds.getBeatmap() != null)
-                .mapToDouble(gameRounds -> gameRounds.getBeatmap().getDifficultyRating())
+                .filter(round -> round.getBeatmap() != null)
+                .mapToDouble(round -> round.getBeatmap().getDifficultyRating())
                 .average()
                 .orElse(0d);
     }

@@ -58,7 +58,7 @@ public enum PlayerClassEnum {
         WF(Color.makeRGB(0,104,183)),
         GE(Color.makeRGB(189,189,189)),
         GU(Color.makeRGB(0,160,233)),
-        SU(Color.makeRGB(96,25,134)),
+        SU(Color.makeRGB(153,34,238)),
         SG(Color.makeRGB(228,0,127)),
         NO(Color.makeRGB(235,104,119)),
         FU(Color.makeRGB(211,47,47)),

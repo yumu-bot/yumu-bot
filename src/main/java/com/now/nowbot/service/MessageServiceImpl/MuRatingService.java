@@ -45,7 +45,7 @@ public class MuRatingService implements MessageService<Matcher> {
         var matchIDStr = matcher.group("matchid");
 
         if (matchIDStr == null || matchIDStr.isBlank()) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_None);
+            throw new MRAException(MRAException.Type.RATING_Parameter_MatchNone);
         }
 
         try {

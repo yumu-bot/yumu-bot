@@ -50,6 +50,9 @@ public class PlayerData {
     public PlayerData(MicroUser player) {
         this.player = player;
     }
+    public PlayerData() {
+        this.player = new MicroUser();
+    }
 
     public void calculateTTS() {
         TTS = 0;
@@ -105,6 +108,9 @@ public class PlayerData {
 
     public void calculateClass() {
         playerClass = new PlayerClass(ERAIndex, DRAIndex, RWSIndex);
+        this.className = playerClass.getName();
+        this.classNameCN = playerClass.getNameCN();
+        this.classColor = playerClass.getColor();
     }
 
     // get set
