@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,22 +58,22 @@ public class NowbotConfig {
     /**
      * bot 运行目录
      */
-    public static        String RUN_PATH;
+    public static String RUN_PATH;
     /**
      * 字体资源文件
      */
-    public static        String FONT_PATH;
+    public static String FONT_PATH;
     /**
      * 素材资源文件
      */
-    public static        String BG_PATH;
+    public static String BG_PATH;
     /**
      * 网络图片 本地缓存
      */
-    public static        String IMGBUFFER_PATH;
-    public static        int    PORT;
+    public static String IMGBUFFER_PATH;
+    public static int PORT;
     @Value("${spring.proxy.port:0}")
-    public               int    proxyPort;
+    public int proxyPort;
 
 
     @Autowired
@@ -87,7 +88,7 @@ public class NowbotConfig {
     public OkHttpClient httpClient() {
         var builder = new OkHttpClient.Builder();
         if (proxyPort != 0)
-            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost",proxyPort)));
+            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", proxyPort)));
         return builder.build();
     }
 
@@ -177,8 +178,8 @@ public class NowbotConfig {
         return false;
     }
 
-    //    @Bean
-//    @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
+    @Bean
+    @ConditionalOnExpression("#{!discordConfig.token.equals('*')}")
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
         log.info("jda loading");
         WebSocketFactory factory = new WebSocketFactory();
