@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 import java.util.List;
@@ -230,13 +230,13 @@ public class BindDao {
                 Thread.sleep(Duration.ofSeconds(sleepSecond));
                 u.getAccessToken(osuGetService);
                 return;
-            } catch (HttpClientErrorException.TooManyRequests e) {
+            } catch (WebClientResponseException.TooManyRequests e) {
                 sleepSecond *= 2;
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
                 removeBind(u.getOsuID());
                 throw e;
-            } catch (HttpClientErrorException.BadRequest e) {
+            } catch (WebClientResponseException.BadRequest e) {
                 badRequest++;
                 if (badRequest > 6) {
                     log.error("更新 [{}] 令牌失败, 请求异常", u.getOsuName());

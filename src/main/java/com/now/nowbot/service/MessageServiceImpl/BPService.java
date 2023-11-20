@@ -18,8 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,9 +180,9 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
-        } catch (HttpClientErrorException.Unauthorized e) {
+        } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (WebClientResponseException.NotFound e) {
             if (hasName) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {

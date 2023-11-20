@@ -25,8 +25,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -151,7 +151,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                 try {
                     id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
-                } catch (HttpClientErrorException e) {
+                } catch (WebClientResponseException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
             } else {
@@ -192,7 +192,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 }
             }
-        } catch (HttpClientErrorException e) {
+        } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
                 log.info("recent 退避成功");

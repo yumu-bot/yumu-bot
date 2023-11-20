@@ -18,7 +18,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -69,9 +69,9 @@ public class PPMinusService implements MessageService<Matcher> {
                 var id = userApiService.getOsuId(matcher.group("name").trim());
                 user = userApiService.getPlayerInfo(id, mode);
                 bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
             } catch (BindException e) {
                 throw e;
@@ -90,9 +90,9 @@ public class PPMinusService implements MessageService<Matcher> {
                 user = userApiService.getPlayerInfo(binUser, mode);
                 bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
 
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
             } catch (BindException e) {
                 throw e;
@@ -107,9 +107,9 @@ public class PPMinusService implements MessageService<Matcher> {
                 if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
                 user = userApiService.getPlayerInfo(binUser, mode);
                 bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Me_NotFound);
             } catch (BindException e) {
                 throw e;

@@ -19,7 +19,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -75,7 +75,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             long id;
             try {
                 id = userApiService.getOsuId(param.name().trim());
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new InfoException(InfoException.Type.INFO_Player_NotFound);
             }
             user = new BinUser();
@@ -105,9 +105,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (WebClientResponseException.NotFound e) {
             throw new InfoException(InfoException.Type.INFO_Me_NotFound);
-        } catch (HttpClientErrorException.Unauthorized e) {
+        } catch (WebClientResponseException.Unauthorized e) {
             throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
         } catch (Exception e) {
             log.error("Info 异常：获取玩家信息", e);
@@ -116,7 +116,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         try {
             BPs = scoreApiService.getBestPerformance(user, mode, 0, 100);
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (WebClientResponseException.NotFound e) {
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         } catch (Exception e) {
             log.error("Info 异常：获取玩家 BP", e);

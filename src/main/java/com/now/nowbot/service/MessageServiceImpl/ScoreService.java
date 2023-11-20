@@ -21,10 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -86,7 +85,7 @@ public class ScoreService implements MessageService<Matcher> {
             try {
                 id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
-            } catch (HttpClientErrorException e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             }
         } else {
@@ -120,9 +119,9 @@ public class ScoreService implements MessageService<Matcher> {
             List<Score> scoreall;
             try {
                 scoreall = scoreApiService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
             }
 
@@ -149,14 +148,14 @@ public class ScoreService implements MessageService<Matcher> {
         } else {
             try {
                 score = scoreApiService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (WebClientResponseException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     score = getDefaultScore(bid, binUser);
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound);
                 }
-            } catch (HttpClientErrorException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized e) {
                 if (name == null || name.trim().isEmpty() && at == null) {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 } else {
@@ -180,7 +179,7 @@ public class ScoreService implements MessageService<Matcher> {
     private Score getDefaultScore(long bid, BinUser binUser) throws ScoreException {
         try {
             return scoreApiService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
-        } catch (HttpClientErrorException e) {
+        } catch (WebClientResponseException e) {
             throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
         }
     }

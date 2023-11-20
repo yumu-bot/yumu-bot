@@ -20,7 +20,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -138,14 +138,14 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         try {
             bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
-        } catch (HttpClientErrorException.BadRequest e) {
+        } catch (WebClientResponseException.BadRequest e) {
             // 请求失败 超时/断网
             if (param.user().qq() == event.getSender().getId()) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
             } else {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
             }
-        } catch (HttpClientErrorException.Unauthorized e) {
+        } catch (WebClientResponseException.Unauthorized e) {
             // 未绑定
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
         }

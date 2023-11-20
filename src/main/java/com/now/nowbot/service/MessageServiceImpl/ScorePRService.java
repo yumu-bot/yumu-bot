@@ -23,8 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -159,7 +159,7 @@ public class ScorePRService implements MessageService<Matcher> {
                 try {
                     id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
-                } catch (HttpClientErrorException e) {
+                } catch (WebClientResponseException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
             } else {
@@ -191,14 +191,14 @@ public class ScorePRService implements MessageService<Matcher> {
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
             }
-        } catch (HttpClientErrorException e) {
+        } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
                 log.info("recent 退避成功");
                 return;
-            } else if (e instanceof HttpClientErrorException.Unauthorized) {
+            } else if (e instanceof WebClientResponseException.Unauthorized) {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-            } else if (e instanceof HttpClientErrorException.NotFound) {
+            } else if (e instanceof WebClientResponseException.NotFound) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
             } else {
                 log.error("Score List 获取失败", e);

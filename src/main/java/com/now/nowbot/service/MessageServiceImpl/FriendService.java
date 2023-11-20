@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +100,7 @@ public class FriendService implements MessageService<Matcher> {
 
         try {
             osuUser = userApiService.getPlayerInfo(binUser);
-        } catch (HttpClientErrorException.Unauthorized e) {
+        } catch (WebClientResponseException.Unauthorized e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_TokenExpired);
         } catch (Exception e) {
             throw new FriendException(FriendException.Type.FRIEND_Me_NotFound);
