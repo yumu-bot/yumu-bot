@@ -166,6 +166,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
         }
         if (Objects.isNull(groupInfo)) throw new TipsException("获取群成员失败");
         groupInfo = groupInfo.stream().filter(r -> r.getRole().equalsIgnoreCase("member")).toList();
+        int checkPoints = groupInfo.size() / 5;
         // qq-info
         Map<Long, MicroUser> users = new HashMap<>(groupInfo.size());
         // qq-bp1
@@ -207,7 +208,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 users.put(qq, null);
             }
             count++;
-            if (count % 50 == 0) {
+            if (count % checkPoints == 0) {
                 group.sendMessage(String.format("%d 统计进行到 %.2f%%", groupId, 100f * count / groupInfo.size()));
             }
             if (nowOsuId.size() >= 50) {
