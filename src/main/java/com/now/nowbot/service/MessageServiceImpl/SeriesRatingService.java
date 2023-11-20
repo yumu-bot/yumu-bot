@@ -158,7 +158,8 @@ public class SeriesRatingService implements MessageService<Matcher> {
                         .append("\n\n");
             }
             try {
-                from.sendMessage(sb.toString());
+                var receipt = from.sendMessage(sb.toString());
+                from.recallIn(receipt, 60000);
             } catch (Exception e) {
                 NowbotApplication.log.error("USA 发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_USA_Error);

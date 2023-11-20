@@ -94,7 +94,8 @@ public class MuRatingService implements MessageService<Matcher> {
                         .append("\n\n");
             }
             try {
-                from.sendMessage(sb.toString());
+                var receipt = from.sendMessage(sb.toString());
+                from.recallIn(receipt, 60000);
             } catch (Exception e) {
                 NowbotApplication.log.error("URA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_URA_Error);
