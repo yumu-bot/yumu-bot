@@ -146,13 +146,15 @@ public class SeriesRatingService implements MessageService<Matcher> {
         } else if (matcher.group("uu") != null) {
             //结果数据
             StringBuilder sb = new StringBuilder();
-            sb.append("Series").append("\n");
+
+            sb.append(data.getSeries().getSeriesStat().getName()).append("\n")
+                    .append("M").append(data.getMatchCount()).append(" R").append(data.getRoundCount()).append(" P").append(data.getPlayerCount()).append(" S").append(data.getScoreCount()).append("\n");
 
             for (PlayerData p : data.getSeries().getPlayerDataList()) {
                 sb.append(String.format("#%d [%.2f] %s", p.getRanking(), p.getMRA(), p.getPlayer().getUserName()))
                         .append("\n\n")
-                        .append(String.format("%dW-%dL %d%% (%.2fM)\n[%s | %s]", p.getWin(), p.getLose(),
-                                Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
+                        .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f]\n[%s | %s]", p.getWin(), p.getLose(),
+                                Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
                         .append("\n");
             }
             try {

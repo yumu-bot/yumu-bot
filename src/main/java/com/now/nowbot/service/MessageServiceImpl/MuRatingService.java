@@ -89,8 +89,8 @@ public class MuRatingService implements MessageService<Matcher> {
             for (PlayerData p : data.getPlayerDataList()) {
                 sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
                         .append("\n\n")
-                        .append(String.format("%dW-%dL %d%% (%.2fM)\n[%s | %s]", p.getWin(), p.getLose(),
-                                Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
+                        .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f]\n[%s | %s]", p.getWin(), p.getLose(),
+                                Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
                         .append("\n");
             }
             try {
