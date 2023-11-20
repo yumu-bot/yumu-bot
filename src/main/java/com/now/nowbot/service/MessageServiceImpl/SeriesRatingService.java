@@ -153,7 +153,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
             for (PlayerData p : data.getSeries().getPlayerDataList()) {
                 sb.append(String.format("#%d [%.2f] %s", p.getRanking(), p.getMRA(), p.getPlayer().getUserName()))
                         .append(" ")
-                        .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f]\n[%s | %s]", p.getWin(), p.getLose(),
+                        .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]", p.getWin(), p.getLose(),
                                 Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
                         .append("\n\n");
             }
