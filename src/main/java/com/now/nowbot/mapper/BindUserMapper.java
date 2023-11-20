@@ -27,7 +27,7 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
                 from osu_bind_user
                 where osu_id=:uid
             )
-            delete from osu_bind_user using del where id = del.id and del.row_num >1;
+            delete from osu_bind_user using del where osu_bind_user.id = del.id and del.row_num >1;
             """, nativeQuery = true)
     void deleteOldByOsuId(Long uid);
 
