@@ -32,7 +32,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
 
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(?<main>((ym)?seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_]))))\\s*(#(?<name>\\w+)\\s)?(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(?<main>((ym)?seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_]))))\\s*(#(?<name>[\\w\\s\\-_\\u4e00-\\u9fa5]+)#)?(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
