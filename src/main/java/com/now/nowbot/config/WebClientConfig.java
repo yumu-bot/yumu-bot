@@ -74,6 +74,7 @@ public class WebClientConfig implements WebFluxConfigurer {
 
         return builder
                 .clientConnector(connector)
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
                 .build();
     }
 }
