@@ -41,7 +41,7 @@ public class FileController {
         if ("info".equals(type)) {
             JsonNode data;
             try {
-                data = webClient.get().uri("{API_URL}/api/map/getBeatMapInfo/{bid}", API_URL, bid).headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t))).retrieve().bodyToMono(JsonNode.class).block();
+                data = webClient.get().uri(API_URL + "/api/map/getBeatMapInfo/{bid}", bid).headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t))).retrieve().bodyToMono(JsonNode.class).block();
             } catch (Exception e) {
                 return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(Map.of("code", 400, "message", e.getMessage()));
 
@@ -51,7 +51,7 @@ public class FileController {
         if ("background".equals(type)) {
             byte[] data;
             try {
-                data = webClient.get().uri("{API_URL}/api/file/map/bg/{bid}",API_URL , bid).headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t))).retrieve().bodyToMono(byte[].class).block();
+                data = webClient.get().uri(API_URL + "/api/file/map/bg/{bid}", bid).headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t))).retrieve().bodyToMono(byte[].class).block();
             } catch (Exception e) {
                 return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(Map.of("code", 400, "message", e.getMessage()));
             }
