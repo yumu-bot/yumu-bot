@@ -12,7 +12,7 @@ public class MatchData {
     boolean isMatchEnd;
     boolean hasCurrentGame;
 
-    List<PlayerData> playerDataList = new ArrayList<>();
+    Map<Long, PlayerData> playerData = new LinkedHashMap<>();
     List<MicroUser> players;
     List<MatchRound> rounds;
     Map<String, Integer> teamPoint = new HashMap<>();
@@ -23,16 +23,16 @@ public class MatchData {
     long firstMapSID = 0L;
 
     //对局次数，比如 3:5 就是 8 局
-    Integer roundCount = 0;
+    int roundCount = 0;
 
     //玩家数量
-    Integer playerCount = 0;
+    int playerCount = 0;
 
     //分数数量
-    Integer scoreCount = 0;
+    int scoreCount = 0;
 
-    Double roundAMG = 0d;
-    private Double minMQ = 100d;
+    double roundAMG = 0d;
+    private double minMQ = 100d;
     private double scalingFactor;
 
     /**
@@ -53,9 +53,7 @@ public class MatchData {
         roundCount = rounds.size();
         playerCount = players.size();
 
-        for (MatchRound r : rounds) {
-            scoreCount += r.getScoreInfoList().size();
-        }
+        rounds.forEach(r -> scoreCount += r.getScoreInfoList().size());
 
         if (!CollectionUtils.isEmpty(rounds)) {
             isTeamVS = Objects.equals(rounds.getFirst().getTeamType(), "team-vs");
@@ -63,9 +61,9 @@ public class MatchData {
             isTeamVS = false;
         }
 
-        for (MicroUser p: players) {
-            playerDataList.add(new PlayerData(p));
-        }
+        playerData = cal.getPlayerMap().entrySet().stream().collect(
+                Collectors.toMap(Map.Entry::getKey, e -> new PlayerData(e.getValue()), (a, b) -> b, LinkedHashMap::new)
+        );
     }
 
     public MatchData(List<MatchRound> rounds) {
@@ -83,6 +81,7 @@ public class MatchData {
         calculateRWS();
 
         //挨个用户计算AMG,并记录总AMG
+        //calculateTTS 与 calculateRWS 在这里同时进行
         calculateAMG();
 
         //挨个计算MQ,并记录最小的MQ
@@ -111,29 +110,21 @@ public class MatchData {
 
             int roundScore = scoreList.stream().mapToInt(MatchScore::getScore).reduce(Integer::sum).orElse(0);
             int roundScoreCount = scoreList.size();
+            if (roundScoreCount == 0) continue;
 
             //每一个分数
             for (MatchScore score: scoreList) {
-                for (var player : playerDataList) {
-                    var id = player.getPlayer().getId();
-
-                    if (Objects.equals(id, score.getUserId()) && roundScore > 0) {
-                        double RRA = 1.0d * score.getScore() * roundScoreCount / roundScore;
-
-                        player.getRRAs().add(RRA);
-                        player.getScores().add(score.getScore());
-                        if (player.getTeam() == null) {
-                            player.setTeam(score.getTeam());
-                        }
-                        break;
-                    }
+                var player = playerData.get(score.getUserId());
+                if (Objects.isNull(player)) continue;
+                double RRA = 1.0d * score.getScore() * roundScoreCount / roundScore;
+                player.getRRAs().add(RRA);
+                player.getScores().add(score.getScore());
+                if (Objects.isNull(player.getTeam())) {
+                    player.setTeam(score.getTeam());
                 }
             }
         }
-
-        for (var player : playerDataList) {
-            player.calculateTTS();
-        }
+        // 挨个计算放在外面在一个循环进行
     }
 
     public void calculateRWS() {
@@ -141,57 +132,50 @@ public class MatchData {
         for (MatchRound round : rounds) {
 
             String WinningTeam = round.getWinningTeam();
-            Integer WinningTeamScore = round.getWinningTeamScore();
+            int WinningTeamScore = round.getWinningTeamScore();
+            if (WinningTeamScore == 0) continue;
 
             //每一个分数
             for (MatchScore score: round.getScoreInfoList()) {
+                var player = playerData.get(score.getUserId());
+                if (Objects.isNull(player)) continue;
 
-                for (var player : playerDataList) {
-                    var id = player.getPlayer().getId();
-                    var team = player.getTeam();
-
-                    if (Objects.equals(id, score.getUserId()) && WinningTeamScore > 0) {
-                        double RWS;
-
-                        if (Objects.equals(WinningTeam, team)) {
-                            RWS = 1.0d * score.getScore() / WinningTeamScore;
-                            player.setWin(player.getWin() + 1);
-                        } else if (WinningTeam == null) {
-                            //平局
-                            RWS = 1.0d * score.getScore() / WinningTeamScore;
-                        } else {
-                            RWS = 0d;
-                            player.setLose(player.getLose() + 1);
-                        }
-
-                        player.getRWSs().add(RWS);
-                        break;
-                    }
+                var team = player.getTeam();
+                double RWS;
+                if (Objects.equals(WinningTeam, team)) {
+                    RWS = 1.0d * score.getScore() / WinningTeamScore;
+                    player.setWin(player.getWin() + 1);
+                } else if (WinningTeam == null) {
+                    //平局
+                    RWS = 1.0d * score.getScore() / WinningTeamScore;
+                } else {
+                    RWS = 0d;
+                    player.setLose(player.getLose() + 1);
                 }
+
+                player.getRWSs().add(RWS);
             }
         }
-
-        for (var player : playerDataList) {
-            player.calculateRWS();
-        }
+        // 挨个计算放在外面在一个循环进行
     }
 
     public void calculateAMG() {
-        for (var player : playerDataList) {
+        playerData.values().forEach(player -> {
+            player.calculateTTS();
+            player.calculateRWS();
             player.calculateAMG();
-
             roundAMG += player.getAMG();
-        }
+        });
     }
 
     public void calculateMQ() {
-        for (var player : playerDataList) {
+        playerData.values().forEach(player -> {
             player.calculateMQ(roundAMG / playerCount); //除以的是该玩家所有人数
 
             if (player.getMQ() < minMQ) {
                 minMQ = player.getMQ();
             }
-        }
+        });
     }
 
     //缩放因子 Scaling Factor
@@ -203,11 +187,11 @@ public class MatchData {
     }
 
     public void calculateMRA() {
-        for (var player : playerDataList) {
+        playerData.values().forEach(player -> {
             player.calculateERA(minMQ, scalingFactor);
             player.calculateDRA(playerCount, scoreCount);
             player.calculateMRA();
-        }
+        });
     }
 
     public void calculateIndex() {
@@ -216,22 +200,24 @@ public class MatchData {
         AtomicInteger ai3 = new AtomicInteger(1);
         AtomicInteger ai4 = new AtomicInteger(1);
 
-        playerDataList = playerDataList.stream()
-                .sorted(Comparator.comparing(PlayerData::getERA).reversed())
-                .peek(r -> r.setERAIndex(1D * ai1.getAndIncrement() / playerCount))
-                .sorted(Comparator.comparing(PlayerData::getDRA).reversed())
-                .peek(r -> r.setDRAIndex(1D * ai2.getAndIncrement() / playerCount))
-                .sorted(Comparator.comparing(PlayerData::getRWS).reversed())
-                .peek(r -> r.setRWSIndex(1D * ai3.getAndIncrement() / playerCount))
-                .sorted(Comparator.comparing(PlayerData::getMRA).reversed())
-                .peek(r -> r.setRanking(ai4.getAndIncrement()))
-                .collect(Collectors.toList());
+        var l = new ArrayList<>(playerData.values());
+        l.sort(Comparator.comparing(PlayerData::getERA).reversed());
+        l.forEach(r -> r.setERAIndex(1D * ai1.getAndIncrement() / playerCount));
+        l.sort(Comparator.comparing(PlayerData::getDRA).reversed());
+        l.forEach(r -> r.setDRAIndex(1D * ai2.getAndIncrement() / playerCount));
+        l.sort(Comparator.comparing(PlayerData::getRWS).reversed());
+        l.forEach(r -> r.setRWSIndex(1D * ai3.getAndIncrement() / playerCount));
+        l.sort(Comparator.comparing(PlayerData::getMRA).reversed());
+        l.forEach(r -> r.setRanking(ai4.getAndIncrement()));
+
+        playerData = playerData.entrySet()
+                .stream()
+                .sorted(Comparator.<Map.Entry<Long, PlayerData>>comparingDouble(e -> e.getValue().getMRA()).reversed())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
     }
 
     public void calculateClass() {
-        for (var player : playerDataList) {
-            player.calculateClass();
-        }
+        playerData.values().forEach(PlayerData::calculateClass);
     }
 
     public void calculateTeamPoint() {
@@ -269,11 +255,7 @@ public class MatchData {
     }
 
     public List<PlayerData> getPlayerDataList() {
-        return playerDataList;
-    }
-
-    public void setPlayerDataList(List<PlayerData> playerDataList) {
-        this.playerDataList = playerDataList;
+        return new ArrayList<>(playerData.values());
     }
 
     public List<MicroUser> getPlayers() {

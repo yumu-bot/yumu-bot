@@ -18,7 +18,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -125,7 +125,7 @@ public class BindService implements MessageService<Matcher> {
                     return;
                 }
             } catch (Exception e) {
-                if (!(e instanceof HttpClientErrorException.Unauthorized)) {
+                if (!(e instanceof WebClientResponseException.Unauthorized)) {
                     throw e;
                 }
                 //如果符合，直接允许绑定

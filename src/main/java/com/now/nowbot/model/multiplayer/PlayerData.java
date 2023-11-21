@@ -93,11 +93,7 @@ public class PlayerData {
     }
 
     public void calculateRWS() {
-        if (!RWSs.isEmpty()) {
-            RWS = RWSs.stream().mapToDouble(Double::doubleValue).average().orElse(0d);
-        } else {
-            RWS = 0d;
-        }
+        RWS = RWSs.stream().mapToDouble(Double::doubleValue).average().orElse(0d);
     }
 
     public void calculateClass() {
