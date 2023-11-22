@@ -100,7 +100,7 @@ public enum Instruction {
 
      */
 
-    CRA(CRAService.class,
+    CRA(CsvRatingService.class,
             Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?")),
 
     MONOW(MonitorNowService.class,
