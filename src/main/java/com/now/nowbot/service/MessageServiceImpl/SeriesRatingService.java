@@ -1,7 +1,10 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.PlayerData;
+import com.now.nowbot.model.multiplayer.Series;
+import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -18,8 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +108,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
             if (from instanceof Group group) {
                 try {
                     from.sendMessage("正在处理系列赛");
-                    group.sendFile(str.getBytes(StandardCharsets.UTF_8), LocalDateTime.now() + "-result.csv");
+                    group.sendFile(str.getBytes(StandardCharsets.UTF_8), data.getSeries().getMatches().get(0).getFirstEventId() + "-results.csv");
                 } catch (Exception e) {
                     NowbotApplication.log.error("CSA:", e);
                     throw new MRAException(MRAException.Type.RATING_Send_CSAFailed);
