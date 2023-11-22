@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,6 +127,9 @@ public class ScoreService implements MessageService<Matcher> {
             }
 
             for (var s : scoreall) {
+                if (Objects.isNull(s.getMods())) {
+                    continue;
+                }
                 if (CollectionUtils.isEmpty(s.getMods()) && mods.size() == 1 && mods.get(0) == Mod.None) {
                     score = s;
                     break;
