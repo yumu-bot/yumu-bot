@@ -3,7 +3,7 @@ package com.now.nowbot.model.multiplayer;
 public class PlayerClass {
     String name;
     String nameCN;
-    int color;
+    String color;
 
     public PlayerClass(double ERA_index, double DRA_index, double RWS_index) {
         var c = PlayerClassEnum.getPlayerClassEnumV2(ERA_index, DRA_index, RWS_index);
@@ -13,7 +13,7 @@ public class PlayerClass {
         this.color = c.color;
     }
 
-    public PlayerClass(String name, String nameCN, int color) {
+    public PlayerClass(String name, String nameCN, String color) {
         this.name = name;
         this.nameCN = nameCN;
         this.color = color;
@@ -35,11 +35,11 @@ public class PlayerClass {
         this.nameCN = nameCN;
     }
 
-    public int getColor() {
+    public String getColor() {
         return color;
     }
 
-    public void setColor(int color) {
+    public void setColor(String color) {
         this.color = color;
     }
 }

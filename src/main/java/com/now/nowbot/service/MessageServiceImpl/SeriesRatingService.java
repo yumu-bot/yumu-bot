@@ -103,11 +103,11 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 throw new MRAException(MRAException.Type.RATING_Send_USAFailed);
             }
         } else if (matcher.group("csv") != null) {
-            String str = parseCSA(data);
             //必须群聊
             if (from instanceof Group group) {
                 try {
                     from.sendMessage("正在处理系列赛");
+                    String str = parseCSA(data);
                     group.sendFile(str.getBytes(StandardCharsets.UTF_8), data.getSeries().getMatches().get(0).getFirstEventId() + "-results.csv");
                 } catch (Exception e) {
                     NowbotApplication.log.error("CSA:", e);
@@ -132,8 +132,8 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 .append('W').append(',')
                 .append('L').append(',')
                 .append('P').append(',')
-                .append("Player Classification").append(',')
                 .append("玩家分类").append(',')
+                .append("Player Classification").append(',')
                 .append("Class Color")
                 .append('\n');
 
@@ -161,10 +161,9 @@ public class SeriesRatingService implements MessageService<Matcher> {
                     .append(data.getWin()).append(',')
                     .append(data.getLose()).append(',')
                     .append(data.getWin() + data.getLose()).append(',')
-                    .append(data.getClassName()).append(',')
                     .append(data.getClassNameCN()).append(',')
-                    .append('#').append(
-                            String.format("%6s", Integer.toHexString((data.getClassColor() << 8) >>> 8)).replace(' ', '0').toUpperCase())
+                    .append(data.getClassName()).append(',')
+                    .append(data.getClassColor())
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----User Nullified---->").append(e.getMessage()).append('\n');

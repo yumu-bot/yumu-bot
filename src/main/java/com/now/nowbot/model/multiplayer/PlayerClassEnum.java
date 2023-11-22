@@ -1,19 +1,17 @@
 package com.now.nowbot.model.multiplayer;
 
-import io.github.humbleui.skija.Color;
-
 public enum PlayerClassEnum {
-    BC("Big Carry", "大爹", ClassColor.BC.color),
-    CA("Carry", "大哥", ClassColor.CA.color),
-    MF("Main Force", "主力", ClassColor.MF.color),
-    SP("Specialized", "专精", ClassColor.SP.color),
-    WF("Work Force", "打工", ClassColor.WF.color),
-    GE("General", "普通", ClassColor.GE.color),
-    GU("Guest", "客串", ClassColor.GU.color),
-    SU("Support", "抗压", ClassColor.SU.color),
-    SG("Scapegoat", "背锅", ClassColor.SG.color),
-    NO("Noob", "小弟", ClassColor.NO.color),
-    FU("Futile", "炮灰", ClassColor.FU.color),
+    BC("Big Carry", "大爹", "#FFF100"),
+    CA("Carry", "大哥", "#FF9800"),
+    MF("Main Force", "主力", "#22AC38"),
+    SP("Specialized", "专精", "#B3D465"),
+    WF("Work Force", "打工", "#0068B7"),
+    GE("General", "普通", "#BDBDBD"),
+    GU("Guest", "客串", "#00A0E9"),
+    SU("Support", "抗压", "#9922EE"),
+    SG("Scapegoat", "背锅", "#E4007F"),
+    NO("Noob", "小弟", "#EB6877"),
+    FU("Futile", "炮灰", "#D32F2F"),
 
     SMA("Strongest Marshal", "最强元帅", BC.color),
     CMA("Competent Marshal", "称职元帅", BC.color),
@@ -50,32 +48,11 @@ public enum PlayerClassEnum {
     BDT("Burnt Dust", "湮灭尘埃", FU.color),
     ;
 
-    private enum ClassColor {
-        BC(Color.makeRGB(255,241,0)),
-        CA(Color.makeRGB(255,152,0)),
-        MF(Color.makeRGB(34,172,56)),
-        SP(Color.makeRGB(179,212,101)),
-        WF(Color.makeRGB(0,104,183)),
-        GE(Color.makeRGB(189,189,189)),
-        GU(Color.makeRGB(0,160,233)),
-        SU(Color.makeRGB(153,34,238)),
-        SG(Color.makeRGB(228,0,127)),
-        NO(Color.makeRGB(235,104,119)),
-        FU(Color.makeRGB(211,47,47)),
-        ;
-        
-        public final int color;
-
-        ClassColor(int color) {
-            this.color = color;
-        }
-    }
-
     public final String name;
     public final String nameCN;
-    public final int color;
+    public final String color;
 
-    PlayerClassEnum(String name, String nameCN, int color) {
+    PlayerClassEnum(String name, String nameCN, String color) {
         this.name = name;
         this.nameCN = nameCN;
         this.color = color;

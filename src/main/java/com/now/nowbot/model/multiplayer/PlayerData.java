@@ -34,7 +34,7 @@ public class PlayerData {
 
     String className;
     String classNameCN;
-    int classColor;
+    String classColor;
 
     double ERAIndex;
     double DRAIndex;
@@ -291,11 +291,11 @@ public class PlayerData {
         this.classNameCN = classNameCN;
     }
 
-    public int getClassColor() {
+    public String getClassColor() {
         return classColor;
     }
 
-    public void setClassColor(int classColor) {
+    public void setClassColor(String classColor) {
         this.classColor = classColor;
     }
 }
