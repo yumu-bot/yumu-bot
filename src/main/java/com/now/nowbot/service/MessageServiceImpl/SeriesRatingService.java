@@ -154,19 +154,17 @@ public class SeriesRatingService implements MessageService<Matcher> {
             sb.append(data.getRanking()).append(',')
                     .append(data.getPlayer().getId()).append(',')
                     .append(data.getPlayer().getUserName()).append(',')
-                    .append(data.getMRA()).append(',')
-                    .append(String.format("%.2f", data.getRWS() * 100d)).append(',')
-                    .append(String.format("%.0f", winRate * 100d)).append(',')
-                    .append(String.format("%.0f", playRate * 100d)).append(',')
+                    .append(String.format("%.2f", Math.round(data.getMRA() * 100d) / 100d)).append(',')
+                    .append(String.format("%.2f", Math.round(data.getRWS() * 10000d) / 100d)).append(',')
+                    .append(String.format("%.0f", Math.round(winRate * 100d) * 1d)).append('%').append(',')
+                    .append(String.format("%.0f", Math.round(playRate * 100d) * 1d)).append('%').append(',')
                     .append(data.getWin()).append(',')
                     .append(data.getLose()).append(',')
                     .append(data.getWin() + data.getLose()).append(',')
                     .append(data.getClassName()).append(',')
                     .append(data.getClassNameCN()).append(',')
                     .append('#').append(
-                            String.format("%6s", Integer.toHexString((data.getClassColor() << 8) >>> 8)).replace(' ', '0')
-
-                    )
+                            String.format("%6s", Integer.toHexString((data.getClassColor() << 8) >>> 8)).replace(' ', '0').toUpperCase())
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----User Nullified---->").append(e.getMessage()).append('\n');
