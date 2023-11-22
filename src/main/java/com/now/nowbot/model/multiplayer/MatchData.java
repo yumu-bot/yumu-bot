@@ -134,6 +134,14 @@ public class MatchData {
             int WinningTeamScore = round.getWinningTeamScore();
             if (WinningTeamScore == 0) continue;
 
+            int roundMaxScore = 0;
+
+            if (!Objects.equals(round.getScoreInfoList().get(0).getType(), "team-vs")) {
+                for (MatchScore score: round.getScoreInfoList()) {
+                    roundMaxScore = Math.max(roundMaxScore, score.getScore());
+                }
+            }
+
             //每一个分数
             for (MatchScore score: round.getScoreInfoList()) {
                 var player = playerData.get(score.getUserId());
@@ -141,15 +149,25 @@ public class MatchData {
 
                 var team = player.getTeam();
                 double RWS;
-                if (Objects.equals(WinningTeam, team)) {
-                    RWS = 1.0d * score.getScore() / WinningTeamScore;
-                    player.setWin(player.getWin() + 1);
-                } else if (WinningTeam == null) {
-                    //平局
-                    RWS = 1.0d * score.getScore() / WinningTeamScore;
+                if (Objects.equals(score.getType(), "team-vs")) {
+                    if (Objects.equals(WinningTeam, team)) {
+                        RWS = 1.0d * score.getScore() / WinningTeamScore;
+                        player.setWin(player.getWin() + 1);
+                    } else if (WinningTeam == null) {
+                        //平局
+                        RWS = 1.0d * score.getScore() / WinningTeamScore;
+                    } else {
+                        RWS = 0d;
+                        player.setLose(player.getLose() + 1);
+                    }
                 } else {
-                    RWS = 0d;
-                    player.setLose(player.getLose() + 1);
+                    if (score.getScore() == roundMaxScore) {
+                        RWS = 1.0d;
+                        player.setWin(player.getWin() + 1);
+                    } else {
+                        RWS = 0d;
+                        player.setLose(player.getLose() + 1);
+                    }
                 }
 
                 player.getRWSs().add(RWS);
