@@ -131,16 +131,10 @@ public class MatchData {
         for (MatchRound round : rounds) {
 
             String WinningTeam = round.getWinningTeam();
-            int WinningTeamScore = round.getWinningTeamScore();
+            int WinningTeamScore = round.getWinningTeamScore(); //在单挑的时候给的是玩家的最高分
             if (WinningTeamScore == 0) continue;
 
-            int roundMaxScore = 0;
-
             boolean isTeamVS = Objects.equals(round.getTeamType(), "team-vs");
-
-            if (isTeamVS) {
-                roundMaxScore = round.getScoreInfoList().stream().mapToInt(MatchScore::getScore).reduce(Integer::max).orElse(0);
-            }
 
             //每一个分数
             for (MatchScore score: round.getScoreInfoList()) {
@@ -161,7 +155,7 @@ public class MatchData {
                         player.setLose(player.getLose() + 1);
                     }
                 } else {
-                    if (score.getScore() == roundMaxScore) {
+                    if (score.getScore() == WinningTeamScore) {
                         RWS = 1.0d;
                         player.setWin(player.getWin() + 1);
                     } else {

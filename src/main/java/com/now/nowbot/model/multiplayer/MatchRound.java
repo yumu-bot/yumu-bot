@@ -169,6 +169,7 @@ public class MatchRound {
         }
     }
 
+    //在单挑的时候给的是玩家的最高分
     public String getWinningTeam() {
         if (!Objects.equals(teamType, "team-vs")) return "none";
         initTeamScore();
@@ -179,8 +180,11 @@ public class MatchRound {
     }
 
     public Integer getWinningTeamScore() {
-        if (!Objects.equals(teamType, "team-vs")) return 0;
-        initTeamScore();
-        return Math.max(redTeamScore, blueTeamScore);
+        if (Objects.equals(teamType, "team-vs")) {
+            initTeamScore();
+            return Math.max(redTeamScore, blueTeamScore);
+        } else {
+            return this.getScoreInfoList().stream().mapToInt(MatchScore::getScore).reduce(Integer::max).orElse(0);
+        }
     }
 }
