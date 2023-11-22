@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +107,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
             if (from instanceof Group group) {
                 try {
                     from.sendMessage("正在处理系列赛");
-                    group.sendFile(str.getBytes(StandardCharsets.UTF_8), data.getSeries().getSeriesStat().getName() + "-result.csv");
+                    group.sendFile(str.getBytes(StandardCharsets.UTF_8), LocalDateTime.now() + "-result.csv");
                 } catch (Exception e) {
                     NowbotApplication.log.error("CSA:", e);
                     throw new MRAException(MRAException.Type.RATING_Send_CSAFailed);
