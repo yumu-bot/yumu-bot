@@ -122,6 +122,21 @@ public class SeriesRatingService implements MessageService<Matcher> {
     private String parseCSA(SeriesData data) {
         StringBuilder sb = new StringBuilder();
 
+        sb.append("#").append(',')
+                .append("UID").append(',')
+                .append("UserName").append(',')
+                .append("MRA").append(',')
+                .append("RWS").append(',')
+                .append("Win%").append(',')
+                .append("Play%").append(',')
+                .append('W').append(',')
+                .append('L').append(',')
+                .append('P').append(',')
+                .append("Player Classification").append(',')
+                .append("玩家分类").append(',')
+                .append("Class Color")
+                .append('\n');
+
         for (PlayerData p: data.getSeries().getPlayerDataList()) {
             sb.append(parsePlayer2CSA(p));
         }
@@ -147,7 +162,11 @@ public class SeriesRatingService implements MessageService<Matcher> {
                     .append(data.getLose()).append(',')
                     .append(data.getWin() + data.getLose()).append(',')
                     .append(data.getClassName()).append(',')
-                    .append(data.getClassNameCN())
+                    .append(data.getClassNameCN()).append(',')
+                    .append('#').append(
+                            String.format("%6s", Integer.toHexString((data.getClassColor() << 8) >>> 8)).replace(' ', '0')
+
+                    )
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----User Nullified---->").append(e.getMessage()).append('\n');
