@@ -21,6 +21,7 @@ public class MRAException extends TipsException {
         RATING_Series_TooManyRequest("API 调用达到上限。请稍后重试。\n当前已经查询到：%s"),//参数_SRA模式_比赛太多
         RATING_Series_NotFound("小沐找不到这一系列比赛中的 %s 哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_SRA模式_比赛未找到
         RATING_Series_FetchFailed("系列比赛获取失败！"),//参数_SRA模式_比赛未找到
+        RATING_Series_SleepingInterrupted("触发休眠时异常中断！请重试！"),//参数_SRA模式_休眠中断
 
         RATING_Client_Calculating("正在全力计算中..."),//斗力_计算
         RATING_Client_CalculatingFailed("算不出来了，请重试..."),//斗力_计算失败
@@ -40,15 +41,14 @@ public class MRAException extends TipsException {
 
         RATING_Default_NoToken("哼，你 Token 失效啦！看在我们关系的份上，就帮你这一次吧！"),//token不存在，使用本机AccessToken
 
+        RATING_Send_SRAFailed("SRA 渲染图片超时，请重试。\n请耐心等待问题修复。"),
+        RATING_Send_MRAFailed("MRA 渲染图片超时，请重试。\n请耐心等待问题修复。"),
+        RATING_Send_USAFailed("USA 输出失败，请重试。\n或尝试 !sa <mpids>。"),
+        RATING_Send_CSAFailed("CSA 输出失败，请重试。\n或尝试 !sa <mpids>。"),
+        RATING_Send_URAFailed("URA 输出失败，请重试。\n或尝试 !ra <mpid>。"),
+        RATING_Send_CRAFailed("CRA 输出失败，请重试。\n或尝试 !ura <mpid>。"),
 
-        RATING_SRA_Error("SRA 渲染图片超时，请重试。\n请耐心等待问题修复。"),
-        RATING_MRA_Error("MRA 渲染图片超时，请重试。\n请耐心等待问题修复。"),
-        RATING_USA_Error("USA 输出失败，请重试。\n或尝试 !sa <mpids>。"),
-        RATING_URA_Error("URA 输出失败，请重试。\n或尝试 !ra <mpid>。"),
-        RATING_CRA_Error("CRA 输出失败，请重试。\n或尝试 !ura <mpid>。"),
-
-        RATING_CRA_MatchIDNotFound("CRA：未找到此房间，请输入正确的房间号！"),
-        RATING_CRA_NotGroup("CRA：请在群聊中使用！"),
+        RATING_Send_NotGroup("请在群聊中使用这个功能！"),
         ;//逗号分隔
         final String message;
         Type (String message) {

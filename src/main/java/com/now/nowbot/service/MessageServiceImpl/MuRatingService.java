@@ -75,34 +75,38 @@ public class MuRatingService implements MessageService<Matcher> {
                 QQMsgUtil.sendImage(from, img);
             } catch (Exception e) {
                 NowbotApplication.log.error("MRA 数据请求失败", e);
-                throw new MRAException(MRAException.Type.RATING_MRA_Error);
+                throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
             }
         } else if (matcher.group("uu") != null) {
-            //结果数据
-            StringBuilder sb = new StringBuilder();
-            sb.append(data.getMatchStat().getName()).append("\n")
-                    .append(data.getTeamPoint().get("red")).append(" : ")
-                    .append(data.getTeamPoint().get("blue")).append("\n")
-                    .append("mp").append(data.getMatchStat().getId()).append(" ")
-                    .append(data.getRounds().get(0).getTeamType()).append("\n");
-
-            for (PlayerData p : data.getPlayerDataList()) {
-                sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
-                        .append(" ")
-                        .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]", p.getWin(), p.getLose(),
-                                Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
-                        .append("\n\n");
-            }
+            String str = parseCSA(data);
             try {
-                var receipt = from.sendMessage(sb.toString());
+                var receipt = from.sendMessage(str);
                 from.recallIn(receipt, 60000);
             } catch (Exception e) {
                 NowbotApplication.log.error("URA 数据请求失败", e);
-                throw new MRAException(MRAException.Type.RATING_URA_Error);
+                throw new MRAException(MRAException.Type.RATING_Send_URAFailed);
             }
         }
     }
 
+    private String parseCSA(MatchData data) {
+        //结果数据
+        StringBuilder sb = new StringBuilder();
+        sb.append(data.getMatchStat().getName()).append("\n")
+                .append(data.getTeamPoint().get("red")).append(" : ")
+                .append(data.getTeamPoint().get("blue")).append("\n")
+                .append("mp").append(data.getMatchStat().getId()).append(" ")
+                .append(data.getRounds().get(0).getTeamType()).append("\n");
+
+        for (PlayerData p : data.getPlayerDataList()) {
+            sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
+                    .append(" ")
+                    .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]", p.getWin(), p.getLose(),
+                            Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
+                    .append("\n\n");
+        }
+        return sb.toString();
+    }
 
     public MatchData calculate(int matchID, int skip, int skipEnd, boolean keep, boolean rematch) throws MRAException {
 

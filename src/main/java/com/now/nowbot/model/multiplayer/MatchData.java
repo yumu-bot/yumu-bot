@@ -80,7 +80,7 @@ public class MatchData {
         //挨个成绩赋予RWS，计算胜负
         calculateRWS();
 
-        //挨个用户计算AMG,并记录总AMG
+        //挨个用户计算AMG，并记录总AMG，顺便赋予对局的数量（有关联的对局数量）
         //calculateTTS 与 calculateRWS 在这里同时进行
         calculateAMG();
 
@@ -124,7 +124,6 @@ public class MatchData {
                 }
             }
         }
-        // 挨个计算放在外面在一个循环进行
     }
 
     public void calculateRWS() {
@@ -164,6 +163,7 @@ public class MatchData {
             player.calculateTTS();
             player.calculateRWS();
             player.calculateAMG();
+            player.setARC(rounds.size());
             roundAMG += player.getAMG();
         });
     }

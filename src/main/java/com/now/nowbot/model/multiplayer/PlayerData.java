@@ -46,6 +46,9 @@ public class PlayerData {
     Integer win = 0;
     Integer lose = 0;
 
+    //有关联的所有场次，注意不是参加的场次 AssociatedRoundCount
+    Integer ARC = 0;
+
     //输入筛选好的对局，玩家名，这场比赛内所有玩家的数量（去重。
     public PlayerData(MicroUser player) {
         this.player = player;
@@ -262,6 +265,14 @@ public class PlayerData {
 
     public void setLose(Integer lose) {
         this.lose = lose;
+    }
+
+    public Integer getARC() {
+        return ARC;
+    }
+
+    public void setARC(Integer ARC) {
+        this.ARC = ARC;
     }
 
     public String getClassName() {

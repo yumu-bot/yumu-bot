@@ -20,14 +20,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("CRA")
-public class CRAService implements MessageService<Matcher> {
+public class CsvRatingService implements MessageService<Matcher> {
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
 
     OsuMatchApiService osuMatchApiService;
 
     @Autowired
-    CRAService(OsuMatchApiService osuMatchApiService) {
+    CsvRatingService(OsuMatchApiService osuMatchApiService) {
         this.osuMatchApiService = osuMatchApiService;
     }
 
@@ -52,7 +52,7 @@ public class CRAService implements MessageService<Matcher> {
         try {
             id = Integer.parseInt(matcher.group("id"));
         } catch (NullPointerException e) {
-            throw new MRAException(MRAException.Type.RATING_CRA_MatchIDNotFound);
+            throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -65,11 +65,11 @@ public class CRAService implements MessageService<Matcher> {
                 group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
             } catch (Exception e) {
                 NowbotApplication.log.error("CRA:", e);
-                throw new MRAException(MRAException.Type.RATING_CRA_Error);
+                throw new MRAException(MRAException.Type.RATING_Send_CRAFailed);
                 //from.sendMessage(e.getMessage());
             }
         } else {
-            throw new MRAException(MRAException.Type.RATING_CRA_NotGroup);
+            throw new MRAException(MRAException.Type.RATING_Send_NotGroup);
         }
     }
 
@@ -79,7 +79,7 @@ public class CRAService implements MessageService<Matcher> {
         try {
             match = osuMatchApiService.getMatchInfo(matchID, 10);
         } catch (Exception e) {
-            throw new MRAException(MRAException.Type.RATING_CRA_MatchIDNotFound);
+            throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
         while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {

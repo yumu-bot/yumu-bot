@@ -108,6 +108,7 @@ public class SeriesData {
             p1.setWin(p1.getWin() + p2.getWin());
             p1.setLose(p1.getLose() + p2.getLose());
             p1.setTMG(p1.getTMG() + p2.getTMG());
+            p1.setARC(p1.getARC() + p2.getARC());
             p1.getScores().addAll(p2.getScores());
             p1.getRWSs().addAll(p2.getRWSs());
             p1.getRRAs().addAll(p2.getRRAs());
