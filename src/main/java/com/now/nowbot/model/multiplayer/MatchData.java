@@ -136,10 +136,10 @@ public class MatchData {
 
             int roundMaxScore = 0;
 
-            if (!Objects.equals(round.getScoreInfoList().get(0).getType(), "team-vs")) {
-                for (MatchScore score: round.getScoreInfoList()) {
-                    roundMaxScore = Math.max(roundMaxScore, score.getScore());
-                }
+            boolean isTeamVS = Objects.equals(round.getTeamType(), "team-vs");
+
+            if (isTeamVS) {
+                roundMaxScore = round.getScoreInfoList().stream().mapToInt(MatchScore::getScore).reduce(Integer::max).orElse(0);
             }
 
             //每一个分数
@@ -149,7 +149,7 @@ public class MatchData {
 
                 var team = player.getTeam();
                 double RWS;
-                if (Objects.equals(score.getType(), "team-vs")) {
+                if (isTeamVS) {
                     if (Objects.equals(WinningTeam, team)) {
                         RWS = 1.0d * score.getScore() / WinningTeamScore;
                         player.setWin(player.getWin() + 1);
