@@ -248,7 +248,7 @@ public class MatchData {
     }
 
     /**
-     * 根据房间所选 mod 来修正谱面星级, 注意, mode 不能是多个, 也就是所有的 MatchRound 都会仅计算一种 mode
+     * 根据房间所选 mod 来修正谱面星级与四维, 注意, mode 不能是多个, 也就是所有的 MatchRound 都会仅计算一种 mode
      * 如果需要计算多种 mode 请自行拆分 rounds
      *
      * @param mode         游戏模式
@@ -264,13 +264,17 @@ public class MatchData {
             }
         }
 
-        // 修改星级
+        // 修改星级, 四维
         var result = imageService.getMapAttr(getParm);
         for (var m : rounds) {
             MapAttr attr;
             if (Objects.nonNull(attr = result.get(m.getId().longValue()))) {
                 var beatmap = m.getBeatmap();
                 beatmap.setDifficultyRating(attr.getStars());
+                beatmap.setAR(attr.getAr());
+                beatmap.setOD(attr.getOd());
+                beatmap.setCS(attr.getCs());
+                beatmap.setHP(attr.getHp());
             }
         }
     }
