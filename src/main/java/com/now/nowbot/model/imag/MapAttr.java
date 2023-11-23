@@ -1,5 +1,6 @@
 package com.now.nowbot.model.imag;
 public class MapAttr {
+    Long id;
     Long bid;
     Integer mods;
 
@@ -14,6 +15,10 @@ public class MapAttr {
     Float stars;
     Float bpm;
     Integer combo;
+
+    public Long getId() {
+        return id;
+    }
 
     public Long getBid() {
         return bid;

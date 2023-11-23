@@ -70,13 +70,18 @@ public class ImageService {
         return doPost("md", httpEntity);
     }
 
-    public List<MapAttr> getMapAttr(MapAttrGet p) {
+    public Map<Long, MapAttr> getMapAttr(MapAttrGet p) {
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
         ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
         });
-        return s.getBody();
+        List<MapAttr> result = s.getBody();
+        if (CollectionUtils.isEmpty(result)) {
+            return new HashMap<>();
+        }
+
+        return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
     }
 
     public byte[] getCardH() {
@@ -344,12 +349,12 @@ public class ImageService {
         var mapAttrGet = new MapAttrGet(user.getPlayMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
         Map<Long, MapAttr> changedAttrsMap;
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
         } else {
-            changedAttrsMap = getMapAttr(mapAttrGet).stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+            changedAttrsMap = getMapAttr(mapAttrGet);
         }
 
         record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
@@ -367,15 +372,14 @@ public class ImageService {
             var s = bps.get(i);
             {// 处理 mapList
                 var minfo = s.getBeatMap();
-                if (changedAttrsMap != null && changedAttrsMap.containsKey(s.getBeatMap().getId())) {
-                    var attr = changedAttrsMap.get(s.getBeatMap().getId());
+                if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreId())) {
+                    var attr = changedAttrsMap.get(s.getScoreId());
                     minfo.setDifficultyRating(attr.getStars());
+                    minfo.setBpm(attr.getBpm());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
                         minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
-                        minfo.setBpm(minfo.getBPM() * 1.5f);
                     } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
                         minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
-                        minfo.setBpm(minfo.getBPM() * 0.75f);
                     }
                 }
                 var m = new map(
@@ -568,7 +572,7 @@ public class ImageService {
         var page = 1;
         var query = new HashMap<String, Object>();
         query.put("q", "creator=" + user.getUID());
-        query.put("sort","ranked_desc");
+        query.put("sort", "ranked_desc");
         query.put("s", "any");
         query.put("page", page);
 
@@ -583,7 +587,7 @@ public class ImageService {
                     resultCount += search.getBeatmapsets().size();
                     continue;
                 }
-                page ++;
+                page++;
                 query.put("page", page);
                 var result = beatmapApiService.searchBeatmap(query);
                 resultCount += result.getResultCount();
@@ -635,7 +639,8 @@ public class ImageService {
                 var search1 = beatmapApiService.searchBeatmap(query1);
                 mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::isRanked).findFirst().orElse(null);
 
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         var mostRecentRankedGuestDiff = search

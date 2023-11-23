@@ -5,15 +5,15 @@ import com.now.nowbot.model.enums.OsuMode;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 class MapAttrGetItem implements Serializable {
+    Long id;
     long bid;
     int mods;
 
-    public MapAttrGetItem(long b, int m) {
+    public MapAttrGetItem(long id, long b, int m) {
+        this.id = id;
         bid = b;
         mods = m;
     }
@@ -32,6 +32,10 @@ class MapAttrGetItem implements Serializable {
 
     public void setMods(int mods) {
         this.mods = mods;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     @Override
@@ -62,11 +66,8 @@ public class MapAttrGet {
         modeInt = m.getModeValue();
     }
 
-    public MapAttrGet() {
-    }
-
-    public boolean addMap(long bid, int mods) {
-        var c = new MapAttrGetItem(bid, mods);
+    public boolean addMap(long id, long bid, int mods) {
+        var c = new MapAttrGetItem(id, bid, mods);
         return maps.add(c);
     }
 

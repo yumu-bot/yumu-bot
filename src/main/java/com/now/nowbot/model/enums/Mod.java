@@ -196,6 +196,12 @@ public enum Mod {
                 HardRock.check(i) || DoubleTime.check(i) || Nightcore.check(i) || Flashlight.check(i);
     }
 
+    public static boolean hasChangeRating(List<String> mods) {
+        int i = getModsValueFromStr(mods);
+        return Easy.check(i) || HalfTime.check(i) ||
+                HardRock.check(i) || DoubleTime.check(i) || Nightcore.check(i) || Flashlight.check(i);
+    }
+
     public static int add(int old, Mod mod) {
         return old | mod.value;
     }

@@ -6,7 +6,6 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Service.UserParam;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service("UUBA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
@@ -281,9 +279,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> mapAttrGet.addMap(s.getBeatMap().getId(), s.getScore()));
-        var changedStarMapAttrs = imageService.getMapAttr(mapAttrGet);
-        var changedStarMap = changedStarMapAttrs.stream().collect(Collectors.toMap(MapAttr::getBid, s -> s));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), s.getScore()));
+        var changedStarMap = imageService.getMapAttr(mapAttrGet);
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var map = bp.getBeatMap();
@@ -306,8 +303,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
             avgLength += length;
 
-            if (Mod.hasChangeRating(bp.getScore())) {
-                star += changedStarMap.get(bp.getBeatMap().getId()).getStars();
+            if (changedStarMap.containsKey(bp.getScoreId())) {
+                star += changedStarMap.get(bp.getScoreId()).getStars();
             } else {
                 star += bp.getBeatMap().getDifficultyRating();
             }

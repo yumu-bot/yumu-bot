@@ -1,6 +1,11 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.imag.MapAttr;
+import com.now.nowbot.model.imag.MapAttrGet;
+import com.now.nowbot.service.ImageService;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -238,6 +243,34 @@ public class MatchData {
             String team = r.getWinningTeam();
             if (team != null) {
                 teamPoint.put(team, teamPoint.getOrDefault(team, 0) + 1);
+            }
+        }
+    }
+
+    /**
+     * 根据房间所选 mod 来修正谱面星级, 注意, mode 不能是多个, 也就是所有的 MatchRound 都会仅计算一种 mode
+     * 如果需要计算多种 mode 请自行拆分 rounds
+     *
+     * @param mode         游戏模式
+     * @param rounds       轮次
+     * @param imageService 用于请求结果
+     */
+    public void updateBeatmapAttr(OsuMode mode, List<MatchRound> rounds, ImageService imageService) {
+        final var getParm = new MapAttrGet(mode);
+        // 统计需要修改的轮次
+        for (var m : rounds) {
+            if (Mod.hasChangeRating(m.getModInt())) {
+                getParm.addMap(m.getId().longValue(), m.getBid(), m.getModInt());
+            }
+        }
+
+        // 修改星级
+        var result = imageService.getMapAttr(getParm);
+        for (var m : rounds) {
+            MapAttr attr;
+            if (Objects.nonNull(attr = result.get(m.getId().longValue()))) {
+                var beatmap = m.getBeatmap();
+                beatmap.setDifficultyRating(attr.getStars());
             }
         }
     }
