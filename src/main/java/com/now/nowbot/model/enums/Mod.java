@@ -50,7 +50,7 @@ public enum Mod {
     ScoreIncreaseMods(1049688, "IM", "#9922EE", 0),
 
     //给谱面用的 Mod
-    FreeMod(522171579, "FM", NoFail.color, 30),
+    FreeMod(522171579, "FM", ScoreIncreaseMods.color, 30),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
     LongNote(-1, "LN", NoFail.color, 20),
     NoMod(-1, "NM", Easy.color, 10),
