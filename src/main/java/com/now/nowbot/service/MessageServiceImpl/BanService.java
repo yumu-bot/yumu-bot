@@ -62,7 +62,7 @@ public class BanService implements MessageService<Matcher> {
                 for (Long id : groups) {
                     sb.append(id).append("\n");
                 }
-                QQMsgUtil.sendImage(event.getSubject(), imageService.drawLine(sb));
+                QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
 
             }
 //            我都忘了这个分支是做什么的

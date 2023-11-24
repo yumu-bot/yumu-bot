@@ -246,7 +246,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
             //throw new RuntimeException("没打");
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
-        return imageService.spInfo(s.get(0));
+        return imageService.getPanelBeta(s.get(0));
     }
 
     private void getTextOutput(Score score, Contact from) {

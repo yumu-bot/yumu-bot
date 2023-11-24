@@ -55,7 +55,7 @@ public class SwitchService implements MessageService<Matcher> {
                     """;
 
             //from.sendMessage(tips);
-            QQMsgUtil.sendImage(from, imageService.drawLine(tips.split("\n")));
+            QQMsgUtil.sendImage(from, imageService.getPanelAlpha(tips.split("\n")));
             // 等同于 case list
 
             StringBuilder sb = new StringBuilder();
@@ -64,7 +64,7 @@ public class SwitchService implements MessageService<Matcher> {
                 sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             //from.sendMessage(sb.toString());
-            QQMsgUtil.sendImage(from, imageService.drawLine(sb));
+            QQMsgUtil.sendImage(from, imageService.getPanelAlpha(sb));
             return;
         }
 
@@ -94,7 +94,7 @@ public class SwitchService implements MessageService<Matcher> {
                     sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
                 }
                 //from.sendMessage(sb.toString());
-                QQMsgUtil.sendImage(from, imageService.drawLine(sb));
+                QQMsgUtil.sendImage(from, imageService.getPanelAlpha(sb));
                 return;
             }
 

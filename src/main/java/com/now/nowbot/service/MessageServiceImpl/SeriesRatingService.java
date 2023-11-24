@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.PlayerData;
 import com.now.nowbot.model.multiplayer.Series;
@@ -12,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +36,6 @@ public class SeriesRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-
-
     Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(ym)?(?<main>(seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![a-zA-Z_])|cs(?![a-zA-Z_]))))\\s*(#(?<name>\\p{all})#)?(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
@@ -56,7 +54,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         var nameStr = matcher.group("name");
 
         if (dataStr == null || dataStr.isBlank()) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_SeriesNone);
+            throw new MapPoolException(MapPoolException.Type.PO_Parameter_None);
         }
 
         var parsed = parseDataString(dataStr);
@@ -68,6 +66,10 @@ public class SeriesRatingService implements MessageService<Matcher> {
         boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
 
         var from = event.getSubject();
+
+        if (matcher.group("csv") != null) {
+            from.sendMessage("正在处理系列赛");
+        }
 
         if (matchIDs.size() > 50) {
             from.sendMessage("一次性输入的对局太多！计算的时候可能会遇到 API 瓶颈。");
@@ -90,7 +92,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 img = imageService.getPanelC2(data);
                 QQMsgUtil.sendImage(from, img);
             } catch (Exception e) {
-                NowbotApplication.log.error("SRA 数据请求失败", e);
+                log.error("SRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_SRAFailed);
             }
         } else if (matcher.group("uu") != null) {
@@ -99,18 +101,17 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 var receipt = from.sendMessage(str);
                 from.recallIn(receipt, 60000);
             } catch (Exception e) {
-                NowbotApplication.log.error("USA 发送失败", e);
+                log.error("USA 发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_USAFailed);
             }
         } else if (matcher.group("csv") != null) {
             //必须群聊
             if (from instanceof Group group) {
                 try {
-                    from.sendMessage("正在处理系列赛");
                     String str = parseCSA(data);
                     group.sendFile(str.getBytes(StandardCharsets.UTF_8), data.getSeries().getMatches().get(0).getFirstEventId() + "-results.csv");
                 } catch (Exception e) {
-                    NowbotApplication.log.error("CSA:", e);
+                    log.error("CSA:", e);
                     throw new MRAException(MRAException.Type.RATING_Send_CSAFailed);
                 }
             } else {

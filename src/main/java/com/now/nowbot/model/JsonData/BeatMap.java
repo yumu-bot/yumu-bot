@@ -1,9 +1,6 @@
 package com.now.nowbot.model.JsonData;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
 
@@ -59,9 +56,9 @@ public class BeatMap {
     Integer spinners;
     @JsonProperty("count_circles")
     Integer circles;
-    @JsonProperty("fail")
+    @JsonIgnore
     List<Integer> retryList;
-    @JsonProperty("exit")
+    @JsonIgnore
     List<Integer> failedList;
 
     /**
@@ -78,7 +75,7 @@ public class BeatMap {
                     .collect(Collectors.toList());
         }
         if (data.hasNonNull("exit") && data.get("exit").isArray()) {
-            failedList  = StreamSupport.stream(data.get("exit").spliterator(), false)
+            failedList = StreamSupport.stream(data.get("exit").spliterator(), false)
                     .map(jsonNode -> jsonNode.asInt(0))
                     .collect(Collectors.toList());
         }
@@ -331,14 +328,9 @@ public class BeatMap {
     }
 
     public int getBeatMapRetryCount() {
-        List<Integer> fl = getBeatMapRetryList();
-        if (null == fl) return 0;
-        int sum = 0;
-
-        for (int i = 0; i < fl.size(); i++) {
-            sum = sum + fl.get(i);
-        }
-        return sum;
+        List<Integer> rl = getBeatMapRetryList();
+        if (rl == null || rl.isEmpty()) return 0;
+        return rl.stream().reduce(Integer::sum).orElse(0);
     }
 
     public List<Integer> getBeatMapFailedList() {return failedList;}
@@ -350,15 +342,11 @@ public class BeatMap {
     public int getBeatMapFailedCount() {
         List<Integer> fl = getBeatMapFailedList();
 
-        if (null == fl) {
+        if (fl == null || fl.isEmpty()) {
             return 0;
         }
 
-        int sum = 0;
-        for (int i = 0; i < fl.size(); i++) {
-            sum = sum + fl.get(i);
-        }
-        return sum;
+        return fl.stream().reduce(Integer::sum).orElse(0);
     }
     
 

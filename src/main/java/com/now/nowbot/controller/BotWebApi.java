@@ -518,6 +518,7 @@ public class BotWebApi {
         }
 
         for (var s : scoreList) {
+            if (Objects.isNull(s.getMods())) continue;
             if (s.getMods().isEmpty() && Mod.None.check(modInt)) {
                 score = s;
                 break;

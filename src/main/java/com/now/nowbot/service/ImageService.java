@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
+import com.now.nowbot.model.mappool.MapPool;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
@@ -336,6 +337,14 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_F2", httpEntity);
+    }
+
+
+    public byte[] getPanelH(MapPool mapPool) {
+        HttpHeaders headers = getDefaultHeader();
+
+        HttpEntity<MapPool> httpEntity = new HttpEntity<>(mapPool, headers);
+        return doPost("panel_H", httpEntity);
     }
 
 
@@ -736,12 +745,18 @@ public class ImageService {
         return doPost("panel_M", new HttpEntity<>(body, headers));
     }
 
-    public byte[] drawLine(String... lines) {
+    public byte[] getPanelAlpha(String... lines) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("strs", lines);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_Alpha", httpEntity);
+    }
+
+    public byte[] getPanelBeta(Score s) {
+        var headers = getDefaultHeader();
+        HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
+        return doPost("panel_Beta", httpEntity);
     }
 
     public byte[] getPanelGamma(Score score) {
@@ -783,14 +798,8 @@ public class ImageService {
         return doPost("panel_Epsilon", httpEntity);
     }
 
-    public byte[] spInfo(Score s) {
-        var headers = getDefaultHeader();
-        HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
-        return doPost("panel_Beta", httpEntity);
-    }
-
-    public byte[] drawLine(StringBuilder sb) {
-        return drawLine(sb.toString().split("\n"));
+    public byte[] getPanelAlpha(StringBuilder sb) {
+        return getPanelAlpha(sb.toString().split("\n"));
     }
 
     private HttpHeaders getDefaultHeader() {

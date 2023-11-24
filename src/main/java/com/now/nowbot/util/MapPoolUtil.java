@@ -1,6 +1,5 @@
 package com.now.nowbot.util;
 
-import com.now.nowbot.entity.BeatMap4Pool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
