@@ -1,12 +1,10 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.mappool.MapPool;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -27,7 +25,7 @@ public class MapPoolService implements MessageService<Matcher> {
     @Resource
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![a-zA-Z_]))\\s*(#(?<name>\\p{all})#)?(?<data>[\\w\\d\\s]+)?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![a-zA-Z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s]+)?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -60,7 +58,7 @@ public class MapPoolService implements MessageService<Matcher> {
             img = imageService.getPanelH(mapPool);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            NowbotApplication.log.error("SRA 数据请求失败", e);
+            log.error("PO 数据请求失败", e);
             throw new MapPoolException(MapPoolException.Type.PO_Send_Error);
         }
 

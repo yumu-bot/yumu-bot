@@ -36,7 +36,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(ym)?(?<main>(seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![a-zA-Z_])|cs(?![a-zA-Z_]))))\\s*(#(?<name>\\p{all})#)?(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
+    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(ym)?(?<main>(seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![a-zA-Z_])|cs(?![a-zA-Z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
