@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -518,8 +519,7 @@ public class BotWebApi {
         }
 
         for (var s : scoreList) {
-            if (Objects.isNull(s.getMods())) continue;
-            if (s.getMods().isEmpty() && Mod.None.check(modInt)) {
+            if ((s.getMods() == null || s.getMods().isEmpty()) && Mod.None.check(modInt)) {
                 score = s;
                 break;
             } else if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
