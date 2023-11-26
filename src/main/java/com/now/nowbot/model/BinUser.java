@@ -94,12 +94,6 @@ public class BinUser {
         return (Objects.nonNull(accessToken) && Objects.nonNull(time) && time > 0);
     }
 
-    public String getAccessToken(OsuUserApiService service) throws BindException {
-        accessToken = service
-                .refreshUserToken(this);
-        return accessToken;
-    }
-
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }

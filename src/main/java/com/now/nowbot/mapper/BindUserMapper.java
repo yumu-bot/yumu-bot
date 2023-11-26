@@ -46,6 +46,12 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Transactional
     @Query("delete OsuBindUserLite o where o.osuId = :uid ")
     void deleteByOsuId(Long uid);
+
+    @Modifying
+    @Transactional
+    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null where o.osuId = :uid ")
+    void backupBindByOsuId(Long uid);
+
     @Modifying
     @Transactional
     @Query("delete QQBindLite q where q.osuUser.osuId = :uid ")
@@ -55,7 +61,7 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Query("delete DiscordBindLite d where d.osuUser.osuId = :uid ")
     void deleteDCByOsuId(Long uid);
 
-    @Query("select u from OsuBindUserLite u where u.time!=0 and u.time < :now order by u.time limit 50")
+    @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now order by u.time limit 50")
     List<OsuBindUserLite> getOldBindUser(Long now);
 
     @Transactional

@@ -107,7 +107,7 @@ public class OsuApiBaseService {
             user.setRefreshToken(refreshToken);
             time = user.nextTime(s.get("expires_in").asLong());
         } else {
-            throw new RuntimeException("更新 Oauth 令牌 请求失败");
+            throw new RuntimeException("更新 Oauth 令牌, 接口格式错误");
         }
         if (!first) {
             // 第一次更新需要在外面更新去更新数据库
@@ -128,7 +128,8 @@ public class OsuApiBaseService {
             try {
                 token = refreshUserToken(user, false);
             } catch (WebClientResponseException.Unauthorized e) {
-                log.error("令牌过期 绑定丢失: [{}], 移除绑定信息", user.getOsuID(), e);
+                bindDao.backupBind(user.getOsuID());
+                log.error("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.getOsuID(), e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpired);
             } catch (WebClientResponseException.NotFound e) {
                 log.info("更新令牌失败：账号封禁", e);

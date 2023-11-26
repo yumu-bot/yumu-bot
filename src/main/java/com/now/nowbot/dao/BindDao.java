@@ -19,14 +19,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class BindDao {
+    private Set<Long> WAIT_UPDATE_USERS = new HashSet<>();
     Logger log = LoggerFactory.getLogger(BindDao.class);
     BindUserMapper bindUserMapper;
     BindQQMapper bindQQMapper;
@@ -46,8 +48,10 @@ public class BindDao {
         if (liteData.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Me_TokenExpired);
         }
-
-        return fromLite(liteData.get().getOsuUser());
+        var u = liteData.get().getOsuUser();
+        // 此处防止全局更新中再次被更新
+        WAIT_UPDATE_USERS.remove(u.getId());
+        return fromLite(u);
     }
 
     public BinUser getUserFromQQ(int qq) throws BindException {
@@ -62,8 +66,12 @@ public class BindDao {
             bindUserMapper.deleteOldByOsuId(osuId);
             liteData = bindUserMapper.getByOsuId(osuId);
         }
+
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
-        return fromLite(liteData.get());
+        var u = liteData.get();
+        // 此处防止全局更新中再次被更新
+        WAIT_UPDATE_USERS.remove(u.getId());
+        return fromLite(u);
     }
 
     public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
@@ -141,6 +149,10 @@ public class BindDao {
         bindUserMapper.deleteAllByOsuId(uid);
     }
 
+    public void backupBind(long uid) {
+        bindUserMapper.backupBindByOsuId(uid);
+    }
+
     public Long getQQ(Long uid) {
         var q = bindQQMapper.findByOsuId(uid);
         if (q.isPresent()) return q.get().getQq();
@@ -175,14 +187,13 @@ public class BindDao {
 
     public static BinUser fromLite(OsuBindUserLite osuBindUserLite) {
         if (osuBindUserLite == null) return null;
-        var data = osuBindUserLite;
         var buser = new BinUser();
-        buser.setOsuID(data.getOsuId());
-        buser.setOsuName(data.getOsuName());
-        buser.setAccessToken(data.getAccessToken());
-        buser.setRefreshToken(data.getRefreshToken());
-        buser.setTime(data.getTime());
-        buser.setMode(data.getMainMode());
+        buser.setOsuID(osuBindUserLite.getOsuId());
+        buser.setOsuName(osuBindUserLite.getOsuName());
+        buser.setAccessToken(osuBindUserLite.getAccessToken());
+        buser.setRefreshToken(osuBindUserLite.getRefreshToken());
+        buser.setTime(osuBindUserLite.getTime());
+        buser.setMode(osuBindUserLite.getMainMode());
         return buser;
     }
 
@@ -194,12 +205,23 @@ public class BindDao {
     @Async
     public void refreshOldUserToken(OsuUserApiService osuGetService) {
         long now = System.currentTimeMillis();
-        List<OsuBindUserLite> users;
         int succeedCount = 0;
         int errCount = 0;
-
+        List<OsuBindUserLite> users;
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
-            for (var u : users) {
+            OsuBindUserLite u;
+            synchronized (new Object()) {
+                WAIT_UPDATE_USERS = users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet());
+            }
+            while (!users.isEmpty()) {
+                u = users.removeLast();
+                synchronized (new Object()) {
+                    if (!WAIT_UPDATE_USERS.remove(u.getId())) continue;
+                }
+                if (ObjectUtils.isEmpty(u.getRefreshToken())) {
+                    bindUserMapper.backupBindByOsuId(u.getOsuId());
+                    continue;
+                }
                 log.info("更新用户 [{}]", u.getOsuName());
                 try {
                     refreshOldUserToken(fromLite(u), osuGetService);
@@ -228,13 +250,12 @@ public class BindDao {
         while (true) {
             try {
                 Thread.sleep(Duration.ofSeconds(sleepSecond));
-                u.getAccessToken(osuGetService);
+                osuGetService.refreshUserToken(u);
                 return;
             } catch (WebClientResponseException.TooManyRequests e) {
                 sleepSecond *= 2;
             } catch (WebClientResponseException.Unauthorized e) {
-                log.info("更新 [{}] 令牌失败, refresh token 失效", u.getOsuName());
-                removeBind(u.getOsuID());
+                log.info("更新 [{}] 令牌失败, refresh token 失效, 不做任何处理", u.getOsuName());
                 throw e;
             } catch (WebClientResponseException.BadRequest e) {
                 badRequest++;
