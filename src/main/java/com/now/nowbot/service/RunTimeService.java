@@ -45,7 +45,7 @@ public class RunTimeService implements SchedulingConfigurer {
     @Scheduled(cron = "0 0 6 * * *")
     public void refreshToken() {
         log.info("开始执行更新令牌任务");
-        bindDao.refreshOldUserToken(userApiService);
+        // bindDao.refreshOldUserToken(userApiService);
     }
 
 
