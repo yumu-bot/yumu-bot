@@ -201,22 +201,21 @@ public class CheckAspect {
         }
     }
 
+    private static final int retryTime = 4;
     @Around(value = "apiService()")
-    public Object doRetry(ProceedingJoinPoint joinPoint) {
-        return Mono.defer(() -> {
-                    try {
-                        return Mono.just(joinPoint.proceed());
-                    } catch (Throwable e) {
-                        return Mono.error(e);
-                    }
-                })
-                .retryWhen(Retry
-                        .backoff(3, Duration.ofSeconds(2))
-                        .jitter(0.1)
-                        .doAfterRetry(a -> log.warn("Retrying request"))
-                        .filter(e -> !(e instanceof WebClientResponseException.NotFound))
-                        .filter(e -> !(e instanceof WebClientResponseException.Unauthorized))
-                )
-                .block();
+    public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable{
+        int i = 0;
+        while (true) {
+            try {
+                return joinPoint.proceed();
+            } catch (WebClientResponseException.NotFound | WebClientResponseException.Unauthorized e) {
+                throw e;
+            } catch (Throwable e) {
+                if (++i > retryTime) {
+                    throw e;
+                }
+                Thread.sleep(Duration.ofSeconds(1L << i));
+            }
+        }
     }
 }
