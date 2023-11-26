@@ -212,9 +212,8 @@ public class CheckAspect {
                 })
                 .retryWhen(Retry
                         .backoff(3, Duration.ofSeconds(2))
-                        .jitter(0.75)
+                        .jitter(0.1)
                         .doAfterRetry(a -> log.warn("Retrying request"))
-                        .filter(e -> e instanceof WebClientException)
                         .filter(e -> !(e instanceof WebClientResponseException.NotFound))
                 )
                 .block();
