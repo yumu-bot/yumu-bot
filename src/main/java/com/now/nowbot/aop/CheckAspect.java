@@ -205,7 +205,7 @@ public class CheckAspect {
     public Object doRetry(ProceedingJoinPoint joinPoint) {
         return Mono.defer(() -> {
                     try {
-                        return Mono.just(joinPoint.proceed(joinPoint.getArgs()));
+                        return Mono.just(joinPoint.proceed());
                     } catch (Throwable e) {
                         return Mono.error(e);
                     }
@@ -215,6 +215,7 @@ public class CheckAspect {
                         .jitter(0.1)
                         .doAfterRetry(a -> log.warn("Retrying request"))
                         .filter(e -> !(e instanceof WebClientResponseException.NotFound))
+                        .filter(e -> !(e instanceof WebClientResponseException.Unauthorized))
                 )
                 .block();
     }
