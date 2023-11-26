@@ -12,6 +12,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import io.netty.util.internal.ConcurrentSet;
 import jakarta.persistence.NonUniqueResultException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +25,15 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 @Component
 public class BindDao {
     private Set<Long> WAIT_UPDATE_USERS = new HashSet<>();
-    Logger log = LoggerFactory.getLogger(BindDao.class);
-    BindUserMapper bindUserMapper;
-    BindQQMapper bindQQMapper;
+    Logger            log = LoggerFactory.getLogger(BindDao.class);
+    BindUserMapper    bindUserMapper;
+    BindQQMapper      bindQQMapper;
     BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper osuFindNameMapper;
 
@@ -210,14 +212,10 @@ public class BindDao {
         List<OsuBindUserLite> users;
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             OsuBindUserLite u;
-            synchronized (new Object()) {
-                WAIT_UPDATE_USERS = users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet());
-            }
+            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet()));
             while (!users.isEmpty()) {
                 u = users.removeLast();
-                synchronized (new Object()) {
-                    if (!WAIT_UPDATE_USERS.remove(u.getId())) continue;
-                }
+                if (!WAIT_UPDATE_USERS.remove(u.getId())) continue;
                 if (ObjectUtils.isEmpty(u.getRefreshToken())) {
                     bindUserMapper.backupBindByOsuId(u.getOsuId());
                     continue;
@@ -225,7 +223,7 @@ public class BindDao {
                 log.info("更新用户 [{}]", u.getOsuName());
                 try {
                     refreshOldUserToken(fromLite(u), osuGetService);
-                    errCount= 0;
+                    errCount = 0;
                 } catch (Exception e) {
                     errCount++;
                 }
