@@ -54,7 +54,7 @@ public class MatchData {
         firstMapSID = cal.getFirstMapSID();
 
         rounds = cal.getRoundList();
-        players = cal.getPlayers();
+        players = cal.getPlayerList();
         roundCount = rounds.size();
         playerCount = players.size();
 

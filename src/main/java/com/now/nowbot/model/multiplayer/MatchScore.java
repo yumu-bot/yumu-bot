@@ -221,7 +221,8 @@ public class MatchScore {
     }
 
     public String getUserName() {
-        return userName;
+        if (userName != null) return userName;
+        else return getUser().getUserName();
     }
 
     public void setUserName(String userName) {

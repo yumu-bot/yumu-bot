@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class MatchCal {
     Match match;
     Map<Long, MicroUser> playerMap;
-    List<MicroUser> players;
+    List<MicroUser> playerList;
     // gameRounds 只包含对局，其他 events 走 Match 那边取
     List<MatchRound> roundList;
     List<MatchScore> scoreList;
@@ -51,8 +51,8 @@ public class MatchCal {
 //        等OsuUserApiService接口实现写好了用注释的这个, 或者另外想办法搞个兜底的
 //        players = playerUid.stream().map(uid -> users.computeIfAbsent(uid, _uid -> userApiService.getPlayerInfo(_uid))).toList();
 
-        players = playerUIDSet.stream().map(playerMap::get).toList();
-        playerMap = players.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
+        playerList = playerUIDSet.stream().map(playerMap::get).toList();
+        playerMap = playerList.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
 
         addPlayerName4MatchScore();
     }
@@ -78,20 +78,22 @@ public class MatchCal {
 
     //默认设置
     private void addPlayerName4MatchScore() {
-        for (MicroUser p: players) {
-            for (MatchScore s: scoreList) {
+        for (MatchScore s: scoreList) {
+            for (MicroUser p: playerList) {
                 if (Objects.equals(p.getId(), s.getUserId())) {
                     s.setUserName(p.getUserName());
+                    break;
                 }
             }
         }
     }
 
     public void addMicroUser4MatchScore() {
-        for (MicroUser p: players) {
-            for (MatchScore s: scoreList) {
+        for (MatchScore s: scoreList) {
+            for (MicroUser p: playerList) {
                 if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
                     s.setUser(p);
+                    break;
                 }
             }
         }
@@ -153,8 +155,8 @@ public class MatchCal {
         this.scoreList = scoreList;
     }
 
-    public List<MicroUser> getPlayers() {
-        return players;
+    public List<MicroUser> getPlayerList() {
+        return playerList;
     }
 
     /**
@@ -168,8 +170,8 @@ public class MatchCal {
                 .toList();
     }
 
-    public void setPlayers(List<MicroUser> players) {
-        this.players = players;
+    public void setPlayerList(List<MicroUser> playerList) {
+        this.playerList = playerList;
     }
 
     /**
