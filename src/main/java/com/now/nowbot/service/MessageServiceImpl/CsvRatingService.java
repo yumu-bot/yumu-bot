@@ -1,8 +1,8 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchCal;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchScore;
 import com.now.nowbot.qq.contact.Group;
@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +24,7 @@ import java.util.regex.Pattern;
 public class CsvRatingService implements MessageService<Matcher> {
     Logger log = LoggerFactory.getLogger(CsvRatingService.class);
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
-    static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("hh:mm:ss");
+    static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     OsuMatchApiService osuMatchApiService;
 
@@ -78,50 +76,31 @@ public class CsvRatingService implements MessageService<Matcher> {
 
     public void CRACalculate(StringBuilder sb, int matchID, boolean isLite) throws MRAException {
         Match match;
-        List<MicroUser> players;
 
         try {
             match = osuMatchApiService.getMatchInfo(matchID, 10);
-            players = match.getPlayers();
         } catch (Exception e) {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
-            var events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
-            match.getEvents().addAll(0, events);
-        }
+        var cal = new MatchCal(match, 0, 0, true, true);
+        cal.addMicroUser4MatchScore();
+        var rounds = cal.getRoundList();
 
-        var events = match.getEvents();
-        for (var e : events) {
-            if (Objects.equals(e.getDetail().type(), "other") && e.getRound() != null && e.getRound().getScoreInfoList() != null) {
-                var round = e.getRound();
-                var scores = round.getScoreInfoList();
-                addPlayerName4MatchScore(players, scores);
-                getMatchStrings(sb, round);
-                for (var s : scores) {
-                    if (isLite) {
-                        getScoreStringsLite(sb, s);
-                    } else {
-                        getScoreStrings(sb, s);
-                    }
+        for (var r : rounds) {
+            var scores = r.getScoreInfoList();
+            getRoundStrings(sb, r);
+            for (var s : scores) {
+                if (isLite) {
+                    getScoreStringsLite(sb, s);
+                } else {
+                    getScoreStrings(sb, s);
                 }
             }
         }
     }
 
-    private void addPlayerName4MatchScore(List<MicroUser> players, List<MatchScore> scores) {
-        for (MicroUser p: players) {
-            for (MatchScore s: scores) {
-                if (Objects.equals(p.getId(), s.getUserId())) {
-                    s.setUserName(p.getUserName());
-                    break;
-                }
-            }
-        }
-    }
-
-    private void getMatchStrings(StringBuilder sb, MatchRound round){
+    private void getRoundStrings(StringBuilder sb, MatchRound round){
         try {
             sb.append(round.getStartTime().format(Date1)).append(',')
                     .append(round.getStartTime().format(Date2)).append(',')
