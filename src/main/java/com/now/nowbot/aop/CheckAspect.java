@@ -21,7 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,11 +50,17 @@ public class CheckAspect {
     public void servicePoint() {}
 
     @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
-    public void restTemplate(){}
+    public void restTemplate() {}
 
     @Pointcut("execution(* com.now.nowbot.mapper.BindUserMapper.save(..))")
-    public void userSave() {
-    }
+    public void userSave() {}
+
+    @Pointcut("execution(* com.now.nowbot.service.OsuApiService.OsuBeatmapApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.OsuApiService.OsuUserApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
+    public void apiService() {}
+
 
     @Before(value = "userSave()")
     public Object userSaveLogger(JoinPoint point) {
@@ -86,7 +97,7 @@ public class CheckAspect {
             }
         }
         if (CheckPermission.isSuperAdmin()) {
-                throw new PermissionException(servicename + "使用超管功能", event.getSender().getId() + " -> " + servicename);
+            throw new PermissionException(servicename + "使用超管功能", event.getSender().getId() + " -> " + servicename);
         }
         // test 功能
         if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
@@ -186,7 +197,26 @@ public class CheckAspect {
         pjp.proceed(pjp.getArgs());
         long end = System.currentTimeMillis();
         if (end - now > 3000) {
-            log.debug("[{}] 执行结束,用时:{}", name, end-now);
+            log.debug("[{}] 执行结束,用时:{}", name, end - now);
         }
+    }
+
+    @Around(value = "apiService()")
+    public Object doRetry(ProceedingJoinPoint joinPoint) {
+        return Mono.defer(() -> {
+                    try {
+                        return Mono.just(joinPoint.proceed(joinPoint.getArgs()));
+                    } catch (Throwable e) {
+                        return Mono.error(e);
+                    }
+                })
+                .retryWhen(Retry
+                        .backoff(3, Duration.ofSeconds(2))
+                        .jitter(0.75)
+                        .doAfterRetry(a -> log.warn("Retrying request"))
+                        .filter(e -> e instanceof WebClientException)
+                        .filter(e -> !(e instanceof WebClientResponseException.NotFound))
+                )
+                .block();
     }
 }
