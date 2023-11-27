@@ -153,8 +153,8 @@ public class ScoreApiImpl implements OsuScoreApiService {
                         .build(bid, user.getOsuID()))
                 .headers(base.insertHeader(user))
                 .retrieve()
-                .bodyToFlux(Score.class)
-                .collectList()
+                .bodyToMono(JsonNode.class)
+                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
                 .block();
     }
 
@@ -167,8 +167,8 @@ public class ScoreApiImpl implements OsuScoreApiService {
                         .build(bid, uid))
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(Score.class)
-                .collectList()
+                .bodyToMono(JsonNode.class)
+                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
                 .block();
     }
 
