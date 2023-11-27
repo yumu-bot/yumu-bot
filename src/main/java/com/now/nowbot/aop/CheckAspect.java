@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -202,7 +199,8 @@ public class CheckAspect {
     }
 
     private static final int retryTime = 4;
-    @Around(value = "apiService()")
+
+    //    @Around(value = "apiService()")
     public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable{
         int i = 0;
         while (true) {
