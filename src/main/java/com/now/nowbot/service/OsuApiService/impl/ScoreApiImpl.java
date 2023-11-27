@@ -1,10 +1,12 @@
 package com.now.nowbot.service.OsuApiService.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -179,8 +181,8 @@ public class ScoreApiImpl implements OsuScoreApiService {
                         .build(bid))
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(Score.class)
-                .collectList()
+                .bodyToMono(JsonNode.class)
+                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
                 .block();
     }
 
