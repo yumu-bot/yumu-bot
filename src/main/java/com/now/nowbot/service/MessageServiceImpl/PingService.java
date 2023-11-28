@@ -4,6 +4,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.SkiaImageUtil;
 import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
@@ -11,16 +12,13 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("PING")
 public class PingService implements MessageService<Matcher> {
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))+|yumu)");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.PING.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

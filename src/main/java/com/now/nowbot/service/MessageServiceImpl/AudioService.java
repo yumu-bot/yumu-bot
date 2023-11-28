@@ -1,13 +1,12 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 @Service("AUDIO")
 public class AudioService implements MessageService<AudioService.AudioParam> {
@@ -24,29 +22,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    BindDao bindDao;
-    @Resource
     WebClient osuApiWebClient;
-
-    Pattern reg = Instructions
-            .getRegexBuilder("[!！]\\s*(?i)(ym)?(song|audio|a(?!\\w))")
-
-            .groupStart()
-            .addColon()
-                .groupStart("type")
-                .addWord1P()
-                .groupEnd()
-            .i01()
-            .groupEnd()
-
-            .addSpace0P()
-                .groupStart("id")
-                .addNumber1P()
-                .groupEnd()
-            .i01()
-
-            .build();
-    Pattern p1 = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![a-zA-Z_]))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?");
 
     static class AudioParam {
         Boolean isBid;
@@ -56,7 +32,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<AudioParam> data) {
-        var matcher = p1.matcher(event.getRawMessage().trim());
+        var matcher = Pattern4ServiceImpl.AUDIO.matcher(event.getRawMessage().trim());
         if (!matcher.find()) {
             return false;
         }

@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("MRA2")
+@Service("MURATING")
 public class MuRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
 
@@ -27,11 +27,9 @@ public class MuRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![a-zA-Z_])))|(?<main>((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.MURATING.matcher(event.getRawMessage().trim());
 
         if (m.find()) {
             data.setValue(m);

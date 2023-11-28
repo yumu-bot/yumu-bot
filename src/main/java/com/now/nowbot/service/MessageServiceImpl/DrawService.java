@@ -9,6 +9,7 @@ import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
@@ -16,7 +17,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("DRAW")
 public class DrawService implements MessageService<Matcher> {
@@ -25,11 +25,9 @@ public class DrawService implements MessageService<Matcher> {
     @Resource
     private DrawLogLiteRepository drawLogLiteRepository;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.DRAW.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("UUI")
 public class UUIService implements MessageService<Matcher> {
@@ -34,12 +34,9 @@ public class UUIService implements MessageService<Matcher> {
         this.userApiService = userApiService;
         this.bindDao = bindDao;
     }
-
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![a-zA-Z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.UUINFO.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -52,7 +49,7 @@ public class UUIService implements MessageService<Matcher> {
         //from.sendMessage("正在查询您的信息");
         String name = matcher.group("name");
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        BinUser user = null;
+        BinUser user;
         if (at != null) {
             user = bindDao.getUserFromQQ(at.getTarget());
         } else {

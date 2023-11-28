@@ -10,15 +10,15 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("IMMAPPER")
+@Service("IMAPPER")
 public class IMapperService implements MessageService<Matcher> {
     OsuUserApiService userApiService;
     OsuBeatmapApiService beatmapApiService;
@@ -37,12 +37,9 @@ public class IMapperService implements MessageService<Matcher> {
         imageService = image;
     }
 
-
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![a-zA-Z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.IMAPPER.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

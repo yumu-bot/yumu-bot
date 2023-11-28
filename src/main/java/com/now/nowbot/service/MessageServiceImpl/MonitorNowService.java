@@ -7,6 +7,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("MONITORNOW")
 public class MonitorNowService implements MessageService<Matcher> {
@@ -24,11 +24,10 @@ public class MonitorNowService implements MessageService<Matcher> {
     OsuMatchApiService osuMatchApiService;
     @Resource
     ImageService imageService;
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.MONITORNOW.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

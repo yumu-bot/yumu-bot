@@ -14,6 +14,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
@@ -23,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("BIND")
 public class BindService implements MessageService<Matcher> {
@@ -43,11 +43,9 @@ public class BindService implements MessageService<Matcher> {
         this.taskExecutor = taskExecutor;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)(\\s*qq=(?<qq>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.BIND.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

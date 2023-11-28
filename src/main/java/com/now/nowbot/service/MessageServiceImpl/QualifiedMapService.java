@@ -8,12 +8,12 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("QUALIFIEDMAP")
 public class QualifiedMapService implements MessageService<Matcher> {
@@ -22,11 +22,9 @@ public class QualifiedMapService implements MessageService<Matcher> {
     @Resource
     ImageService         imageService;
 
-    Pattern pattern = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![a-zA-Z_])|q(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.QUALIFIEDMAP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

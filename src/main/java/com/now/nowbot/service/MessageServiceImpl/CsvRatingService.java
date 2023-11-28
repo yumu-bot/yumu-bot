@@ -10,6 +10,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("CRA")
 public class CsvRatingService implements MessageService<Matcher> {
@@ -33,11 +33,9 @@ public class CsvRatingService implements MessageService<Matcher> {
         this.osuMatchApiService = osuMatchApiService;
     }
 
-    Pattern pattern = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.CSVRATING.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

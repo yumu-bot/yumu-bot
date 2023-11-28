@@ -5,23 +5,21 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Service("TESTMAP")
-public class TestMapServer implements MessageService<Matcher> {
+public class TestMapService implements MessageService<Matcher> {
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.TESTMAP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -46,11 +44,11 @@ public class TestMapServer implements MessageService<Matcher> {
 
         if (mod == null || mod.trim().isEmpty()){
 
-            sb.append(info.getDifficultyRating()).append(',')
+            sb.append(String.format("%.2f", info.getDifficultyRating())).append(',')
                     .append(info.getBPM()).append(',')
-                    .append(String.format("%d", (int) (Math.floor(info.getTotalLength() / 60f))))
+                    .append(String.format("%d", Math.round(Math.floor(info.getTotalLength() / 60f))))
                     .append(':')
-                    .append(String.format("%02d", (int) (info.getTotalLength() % 60f)))
+                    .append(String.format("%02d", Math.round(info.getTotalLength() % 60f)))
                     .append(',');
             sb.append(info.getMaxCombo()).append(',')
                     .append(info.getCS()).append(',')
@@ -64,15 +62,29 @@ public class TestMapServer implements MessageService<Matcher> {
         var mods = mod.split(",");
         int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
-        sb.append('(').append(info.getBeatMapSet().getMapperUID()).append(')');
-        sb.append(a.getStarRating()).append(',')
+        float newTotalLength = getNewTotalLength (info.getTotalLength(), modInt);
+
+        sb.append(String.format("%.2f", a.getStarRating())).append(',')
                 .append(info.getBPM()).append(',')
-                .append(info.getHitLength()).append('\n');
+                .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
+                .append(':')
+                .append(String.format("%02d", Math.round(newTotalLength % 60f)))
+                .append(',');
         sb.append(a.getMaxCombo()).append(',')
-                .append(DataUtil.CS(info.getCS(), modInt)).append(',')
-                .append(a.getApproachRate()).append(',')
-                .append(DataUtil.OD(info.getOD(), modInt));
+                .append(String.format("%.2f", Math.round(DataUtil.CS(info.getCS(), modInt) * 100f) / 100f)).append(',')
+                .append(String.format("%.2f", (Math.round(a.getApproachRate()) * 100f) / 100f)).append(',')
+                .append(String.format("%.2f", Math.round(DataUtil.OD(info.getOD(), modInt) * 100f) / 100f));
 
         event.getSubject().sendMessage(sb.toString());
+    }
+
+    private Float getNewTotalLength(Integer totalLength, int modInt) {
+        if (Mod.hasDt(modInt)) {
+            return (totalLength / 1.5f);
+        } else if (Mod.hasHt(modInt)) {
+            return (totalLength * 1.5f);
+        } else {
+            return totalLength * 1f;
+        }
     }
 }

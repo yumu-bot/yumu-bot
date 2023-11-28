@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("SRA")
 public class SeriesRatingService implements MessageService<Matcher> {
@@ -36,11 +36,9 @@ public class SeriesRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(ym)?(?<main>(seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![a-zA-Z_])|cs(?![a-zA-Z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Pattern4ServiceImpl.SERIES.matcher(event.getRawMessage().trim());
 
         if (m.find()) {
             data.setValue(m);
@@ -191,7 +189,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
     }
 
     public Map<String, List<Integer>> parseDataString(String dataStr) throws MRAException {
-        String[] dataStrArray = dataStr.trim().split("\\s+|,+|，+|\\|+");
+        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
 
         List<Integer> matchIDs = new ArrayList<>();

@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -20,13 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 @Service("OLDAVATAR")
 public class OldAvatarService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
-
-    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ymoldavatar|((ym)?oa(?![a-zA-Z_])))\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
     OsuUserApiService userApiService;
     BindDao bindDao;
     ImageService imageService;
@@ -39,7 +37,7 @@ public class OldAvatarService implements MessageService<UserParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = pattern.matcher(event.getRawMessage().trim());
+        var matcher = Pattern4ServiceImpl.OLDAVATAR.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

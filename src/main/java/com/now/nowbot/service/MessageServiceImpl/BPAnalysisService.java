@@ -14,6 +14,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
+import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 @Service("BPANALYSIS")
 public class BPAnalysisService implements MessageService<UserParam> {
@@ -38,11 +38,9 @@ public class BPAnalysisService implements MessageService<UserParam> {
         this.imageService = imageService;
     }
 
-    static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![a-zA-Z_])|ba(?![a-zA-Z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = pattern.matcher(event.getRawMessage().trim());
+        var matcher = Pattern4ServiceImpl.BPANALYSIS.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
