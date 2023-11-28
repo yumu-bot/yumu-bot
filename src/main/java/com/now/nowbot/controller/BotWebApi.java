@@ -111,13 +111,13 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
                                               @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
                                               @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-                                              @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+                                              @OpenResource(name = "keep-low", desp = "保留低分成绩") @Nullable Boolean f,
                                               @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
-        var data = monitorNowService.getImage(mid, k, d, !f, r);
+        var data = monitorNowService.getImage(mid, k, d, f, r);
         return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
     }
 
@@ -136,8 +136,8 @@ public class BotWebApi {
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-            @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
-            @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r
+            @OpenResource(name = "keep-failed", desp = "保留低分成绩") @Nullable Boolean f,
+            @OpenResource(name = "remove-repeat", desp = "忽略重复对局") @Nullable Boolean r
     ) throws MRAException {
         if (k == null) k = 0;
         if (d == null) d = 0;

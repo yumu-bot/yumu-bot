@@ -66,7 +66,7 @@ public class Pattern4ServiceImpl {
 
     // #5 osu! 比赛指令
 
-    public static final Pattern MURATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?!\\w)))|(?<main>((ym)?rating|(ym)?ra(?!\\w)|mra(?!\\w))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
+    public static final Pattern MURATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?!\\w)))|(?<main>((ym)?rating|(ym)?ra(?!\\w)|mra(?!\\w))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     /*
     public static final Pattern URA(URAService.class,
@@ -74,14 +74,14 @@ public class Pattern4ServiceImpl {
 
      */
 
-    public static final Pattern SERIES = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?!\\w)|sa(?!\\w)))|(ym)?(?<main>(seriesrating|series|sa(?!\\w)|sra(?!\\w)))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?!\\w)|cs(?!\\w))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
+    public static final Pattern SERIES = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?!\\w)|sa(?!\\w)))|(ym)?(?<main>(seriesrating|series|sa(?!\\w)|sra(?!\\w)))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?!\\w)|cs(?!\\w))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     public static final Pattern CSVRATING = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?");
 
 
     public static final Pattern ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|]+))?");
 
-    public static final Pattern MONITORNOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?!\\w))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
+    public static final Pattern MONITORNOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?!\\w))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?!\\w))|(?<ymy>y(?!\\w)))+");
 

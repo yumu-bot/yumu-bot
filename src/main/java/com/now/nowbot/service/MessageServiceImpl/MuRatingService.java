@@ -55,12 +55,12 @@ public class MuRatingService implements MessageService<Matcher> {
         int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
         int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
         var from = event.getSubject();
         MatchData data;
         try {
-            data = calculate(matchID, skip, skipEnd, keep, rematch);
+            data = calculate(matchID, skip, skipEnd, failed, rematch);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -108,7 +108,7 @@ public class MuRatingService implements MessageService<Matcher> {
         return sb.toString();
     }
 
-    public MatchData calculate(int matchID, int skip, int skipEnd, boolean keep, boolean rematch) throws MRAException {
+    public MatchData calculate(int matchID, int skip, int skipEnd, boolean failed, boolean rematch) throws MRAException {
 
         if (skip < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
         if (skipEnd < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
@@ -127,7 +127,7 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         //真正的计算封装，就两行
-        MatchData matchData = new MatchData(match, skip, skipEnd, !keep, rematch); //!keep = remove
+        MatchData matchData = new MatchData(match, skip, skipEnd, failed, rematch); //!keep = remove
         matchData.calculate();
 
         return matchData;

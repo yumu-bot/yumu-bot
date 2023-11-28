@@ -16,10 +16,10 @@ public class MatchCal {
     List<MatchScore> scoreList;
 
     /**
-     * @param remove 是否删除低于 1w 的成绩，true 为删除，false 为保留
-     * @param rematch 是否包含重赛, true 为包含; false 为去重, 去重操作为保留最后一个
+     * @param failed 是否保留低于 1w 的成绩，true 为删除，false 为保留
+     * @param rematch 是否去重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
-    public MatchCal(Match match, int skip, int skipEnd, boolean remove, boolean rematch) {
+    public MatchCal(Match match, int skip, int skipEnd, boolean failed, boolean rematch) {
         this.match = match;
 
         //包含所有玩家的映射表
@@ -30,7 +30,7 @@ public class MatchCal {
                 .filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()))
                 .filter(matchRound -> matchRound.getEndTime() != null);
 
-        if (remove) {
+        if (failed) {
             roundsStream = roundsStream.peek(matchRound -> matchRound.getScoreInfoList().removeIf(s -> s.getScore() <= 10000));
         }
 

@@ -31,7 +31,7 @@ public class SeriesData {
     private double scalingFactor;
 
 
-    public SeriesData(Series s, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean remove, boolean rematch) {
+    public SeriesData(Series s, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean failed, boolean rematch) {
         series = s;
         series.getSeriesStat().setStartTime(OffsetDateTime.MAX);
         series.getSeriesStat().setEndTime(OffsetDateTime.MIN);
@@ -42,7 +42,7 @@ public class SeriesData {
 
         matchCount = s.getMatches().size();
         for (int i = 0; i < matchCount; i++) {
-            var matchData = new MatchData(s.getMatches().get(i), skips.get(i), skipEnds.get(i), remove, rematch);
+            var matchData = new MatchData(s.getMatches().get(i), skips.get(i), skipEnds.get(i), failed, rematch);
             matchData.calculate();
 
             firstMapSIDs.add(matchData.getFirstMapSID());

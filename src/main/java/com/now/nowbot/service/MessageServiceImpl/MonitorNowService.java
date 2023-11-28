@@ -41,7 +41,7 @@ public class MonitorNowService implements MessageService<Matcher> {
         int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
         int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
         try {
             matchID = Integer.parseInt(matcher.group("matchid"));
@@ -51,7 +51,7 @@ public class MonitorNowService implements MessageService<Matcher> {
 
         var from = event.getSubject();
 
-        var f = getImage(matchID, skip, skipEnd, !keep, rematch);
+        var f = getImage(matchID, skip, skipEnd, failed, rematch);
 
         try {
             QQMsgUtil.sendImage(from, f);
@@ -61,7 +61,7 @@ public class MonitorNowService implements MessageService<Matcher> {
         }
     }
 
-    public byte[] getImage(int matchID, int skip, int skipEnd, boolean remove, boolean rematch) throws MonitorNowException {
+    public byte[] getImage(int matchID, int skip, int skipEnd, boolean failed, boolean rematch) throws MonitorNowException {
         Match match;
         try {
             match = osuMatchApiService.getMatchInfo(matchID, 10);
@@ -81,7 +81,7 @@ public class MonitorNowService implements MessageService<Matcher> {
 
         MatchCal cal;
         try {
-            cal = new MatchCal(match, skip, skipEnd, remove, rematch);
+            cal = new MatchCal(match, skip, skipEnd, failed, rematch);
             cal.addMicroUser4MatchScore();
             cal.addRanking4MatchScore();
 

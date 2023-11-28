@@ -61,7 +61,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         List<Integer> skipEnds = parsed.get("skipEnds");
 
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
         var from = event.getSubject();
 
@@ -76,7 +76,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
         SeriesData data;
         try {
-            data = calculate(matchIDs, nameStr, skips, skipEnds, !keep, rematch, from);
+            data = calculate(matchIDs, nameStr, skips, skipEnds, failed, rematch, from);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -303,7 +303,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
     }
 
 
-    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean remove, boolean rematch, @Nullable Contact from) throws MRAException {
+    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean failed, boolean rematch, @Nullable Contact from) throws MRAException {
 
         List<Match> matches = new ArrayList<>();
         int fetchMapFail = 0;
@@ -341,7 +341,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         }
         //真正的计算封装，就两行
 
-        SeriesData data = new SeriesData(new Series(matches), name, skips, skipEnds, remove, rematch);
+        SeriesData data = new SeriesData(new Series(matches), name, skips, skipEnds, failed, rematch);
         data.calculate();
 
         return data;
