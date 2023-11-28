@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("SCOREDELUXE")
+//@Service("SCOREDELUXE")
 public class ScorePRDeluxeService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
