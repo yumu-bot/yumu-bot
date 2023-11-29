@@ -56,7 +56,7 @@ public class PPMinusService implements MessageService<Matcher> {
         var from = event.getSubject();
         // 获得可能的 at
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        PPMinus ppMinus = null;
+        PPMinus ppMinus;
         OsuUser user;
         List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
@@ -67,8 +67,6 @@ public class PPMinusService implements MessageService<Matcher> {
                 var id = userApiService.getOsuId(matcher.group("name").trim());
                 user = userApiService.getPlayerInfo(id, mode);
                 bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            } catch (WebClientResponseException.Unauthorized e) {
-                throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
             } catch (WebClientResponseException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
             } catch (BindException e) {
@@ -121,7 +119,13 @@ public class PPMinusService implements MessageService<Matcher> {
             throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
         }
 
-        ppMinus = PPMinus.getInstance(mode, user, bps);
+        try {
+            ppMinus = PPMinus.getInstance(mode, user, bps);
+        } catch (Exception e) {
+            log.error("PPM 数据计算失败", e);
+            throw new PPMinusException(PPMinusException.Type.PPM_Calculate_Error);
+        }
+
 
         try {
             var img = imageService.getPanelB1(user, mode, ppMinus);
@@ -139,7 +143,8 @@ public class PPMinusService implements MessageService<Matcher> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         OsuUser userMe;
-        var userBin = bindDao.getUserFromQQ(event.getSender().getId());
+        var binUser = bindDao.getUserFromQQ(event.getSender().getId());
+
         List<Score> bpListMe;
         OsuUser userOther;
         List<Score> bpListOther;
@@ -148,29 +153,43 @@ public class PPMinusService implements MessageService<Matcher> {
 
         var mode = OsuMode.getMode(matcher.group("mode"));
         //处理默认mode
-        if (mode == OsuMode.DEFAULT && userBin.getMode() != null) mode = userBin.getMode();
+        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
         //自己的信息
         try {
-            userMe = userApiService.getPlayerInfo(userBin, mode);
-            bpListMe = scoreApiService.getBestPerformance(userBin, mode, 0, 100);
+            userMe = userApiService.getPlayerInfo(binUser, mode);
+            bpListMe = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
         } catch (BindException e) {
             throw new PPMinusException(PPMinusException.Type.PPM_Me_TokenExpired);
         }
-        PPMinusMe = PPMinus.getInstance(mode, userMe, bpListMe);
+        try {
+            if (at != null) {//被对比人的信息
+                // 包含有@
+                var b = bindDao.getUserFromQQ(at.getTarget());
+                userOther = userApiService.getPlayerInfo(b, mode);
+                bpListOther = scoreApiService.getBestPerformance(b, mode, 0, 100);
+            } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
+                var id = userApiService.getOsuId(matcher.group("name").trim());
+                userOther = userApiService.getPlayerInfo(id, mode);
+                bpListOther = scoreApiService.getBestPerformance(id, mode, 0, 100);
+            } else {
+                throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
+            }
+        } catch (PPMinusException e) {
+            throw e;
+        } catch (WebClientResponseException.Unauthorized e) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_TokenExpired);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
+        } catch (Exception e) {
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_FetchFailed);
+        }
 
-        if (at != null) {//被对比人的信息
-            // 包含有@
-            var b = bindDao.getUserFromQQ(at.getTarget());
-            userOther = userApiService.getPlayerInfo(b, mode);
-            bpListOther = scoreApiService.getBestPerformance(b, mode, 0, 100);
+        try {
+            PPMinusMe = PPMinus.getInstance(mode, userMe, bpListMe);
             PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
-        } else if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
-            var id = userApiService.getOsuId(matcher.group("name").trim());
-            userOther = userApiService.getPlayerInfo(id, mode);
-            bpListOther = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            PPMinusOther = PPMinus.getInstance(mode, userOther, bpListOther);
-        } else {
-            throw new PPMinusException(PPMinusException.Type.PPM_Player_VSNotFound);
+        } catch (Exception e) {
+            log.error("PPM 数据计算失败", e);
+            throw new PPMinusException(PPMinusException.Type.PPM_Calculate_Error);
         }
 
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
