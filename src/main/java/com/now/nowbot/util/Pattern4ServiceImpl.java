@@ -14,7 +14,7 @@ public class Pattern4ServiceImpl {
     // #1 BOT 内部指令
     public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))|yumu\\?)");
     public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
-    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w)|operate|op(?!\\w))\\s*(?<operate>(black)?list|add|remove|(un)?ban|)?\\s*(qq=(?<qq>\\d+))\\s*(group=(?<group>\\d+))\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w)|operate|op(?!\\w))\\s*(?<operate>(black)?list|add|remove|(un)?ban|)?\\s*(qq=(?<qq>\\d+))?\\s*(group=(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
     public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
     public static final Pattern ECHO = Pattern.compile("^[!！#]\\s*(?i)echo\\s*(?<any>.*)");
 
