@@ -58,7 +58,8 @@ public class BanService implements MessageService<BanParam> {
             return true;
         }
 
-        return false;
+        data.setValue(new BanParam(null, null, operate, false));
+        return true;
     }
 
 

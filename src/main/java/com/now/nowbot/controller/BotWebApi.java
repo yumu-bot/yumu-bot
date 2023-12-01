@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
+import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -26,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -51,6 +51,8 @@ public class BotWebApi {
     MonitorNowService monitorNowService;
     @Resource
     ImageService imageService;
+    @Resource
+    BPAnalysisService bpAnalysisService;
 
 
     /**
@@ -250,8 +252,7 @@ public class BotWebApi {
                 var BPList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
                 ArrayList<Integer> rankList = new ArrayList<>();
 
-                int day = Math.min(999, value1);
-                LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
+                LocalDateTime dayBefore = LocalDateTime.now().minusDays(value1);
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
                 scoreList = new ArrayList<>();
@@ -270,53 +271,6 @@ public class BotWebApi {
 
         return new ResponseEntity<>(data, getImageHeader(userName + suffix, data.length), HttpStatus.OK);
     }
-
-
-
-    /*
-    public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
-                                            @Nullable @RequestParam("mode") String playMode,
-                                            @Nullable @RequestParam("type") Integer type,
-                                            @RequestParam("value") int value
-    ) {
-        var mode = OsuMode.getMode(playMode);
-        userName = userName.trim();
-        //绘制自己的卡片
-        var infoMe = osuGetService.getPlayerInfo(userName, mode);
-        List<Score> bps;
-        if (type == null || type == 0) {
-            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, 100);
-            // 时间计算
-            int dat = -Math.min(999, value);
-            LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
-            bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
-        } else if (type == 1) {
-            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, value);
-        } else if (type == 2) {
-            bps = osuGetService.getRecentN(infoMe.getUID(), mode, 0, value);
-        } else if (type == 3) {
-            bps = osuGetService.getAllRecentN(infoMe.getUID(), mode, 0, value);
-        } else {
-            throw new RuntimeException("type 参数错误");
-        }
-        var lines = new ArrayList<Image>(bps.size());
-        try {
-            var card = CardBuilder.getUserCard(infoMe);
-            for (int i = 0; i < bps.size(); i++) {
-                lines.add(new HCardBuilder(bps.get(i), i + 1).build());
-            }
-            var panel = new TBPPanelBuilder(lines.size());
-            panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            Image build = panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode);
-            var data = Objects.requireNonNull(EncoderJPEG.encode(build, EncodeJPEGOptions.DEFAULT.withQuality(80))).getBytes();
-            build.close();
-            return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-     */
 
     @GetMapping(value = "scores/bp-days")
     @OpenResource(name = "ppm", desp = "查询今日最好成绩 !ymtodaybp (!t)")
@@ -366,90 +320,6 @@ public class BotWebApi {
     ) {
         return getScore(userName, playMode, 3, value1, value2);
     }
-
-
-    /*
-      单个成绩接口
-
-      @param userName 用户
-     * @param playMode 模式,可为空
-     * @param type     请求类型,使用整数; 不传或者 0: 查询pr; 1: 查询bp; 2:查询谱面成绩;
-     * @param value    查询pr: 前第N个成绩, 不传默认为最近一次,从 0 开始
-     *                 查询bp: bp,从0开始, 不传默认为bp1(value == 0)
-     *                 查询谱面成绩: 谱面id, 不传报错
-     * @param param    查询pr: 0为不包含失败,1为包含失败,不传默认为0
-     *                 查询bp: 无需此值
-     *                 查询谱面成绩: 指定 mod_int, 不传默认谱面最高成绩
-     */
-    /*
-    public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
-                                           @Nullable @RequestParam("mode") String playMode,
-                                           @Nullable @RequestParam("type") Integer type,
-                                           @Nullable @RequestParam("value") Integer value,
-                                           @Nullable @RequestParam("param") Integer param
-    ) {
-        Score score = null;
-        userName = userName.trim();
-        var mode = OsuMode.getMode(playMode);
-        long uid = osuGetService.getOsuId(userName);
-        var userInfo = osuGetService.getPlayerInfo(uid, mode);
-        if (type == null || type == 0) {
-            if (value == null) value = 0;
-            value = Math.min(99, Math.max(0, value));
-            List<Score> scores;
-            if (param == null || param == 0) {
-                scores = osuGetService.getRecentN(uid, mode, value, 1);
-            } else {
-                scores = osuGetService.getAllRecentN(uid, mode, value, 1);
-            }
-            if (scores.isEmpty()) throw new RuntimeException(ScoreException.Type.SCORE_Recent_NotFound.message);
-            score = scores.get(0);
-
-        } else if (type == 1) {
-            if (value == null) value = 0;
-            value = Math.min(99, value - 1);
-            value = Math.max(0, value);
-            var scores = osuGetService.getBestPerformance(uid, mode, value, 1);
-            if (scores.isEmpty()) throw new RuntimeException(BPException.Type.BP_Player_FetchFailed.message);
-            score = scores.get(0);
-        } else if (type == 2) {
-            if (value == null) throw new RuntimeException("value 参数错误");
-
-            if (param != null) {
-                List<Score> a;
-                try {
-                    a = osuGetService.getScoreAll(value, uid, mode);
-                } catch (Exception e) {
-                    throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
-                }
-                for (var s : a) {
-                    if (s.getMods().isEmpty() && Mod.None.check(param)) {
-                        score = s;
-                        break;
-                    } else if (Mod.getModsValueFromStr(s.getMods()) == param) {
-                        score = s;
-                        break;
-                    }
-                }
-                if (score == null) {
-                    throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
-                } else {
-                    var bm = new BeatMap();
-                    bm.setBID(Long.valueOf(value));
-                    score.setBeatMap(bm);
-                }
-            } else {
-                score = osuGetService.getScore(value, uid, mode).getScore();
-            }
-        } else {
-            throw new RuntimeException("type 参数错误");
-        }
-
-        var data = imageService.getPanelE(userInfo, score, osuGetService);
-        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
-    }
-
-     */
 
     /**
      * n 从0开始, 不传默认为0
@@ -547,10 +417,12 @@ public class BotWebApi {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = userApiService.getOsuId(userName);
-        var userInfo = userApiService.getPlayerInfo(uid, mode);
-        if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
+        var osuUser = userApiService.getPlayerInfo(uid, mode);
+        if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
         var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
-        var data = imageService.getPanelJ(userInfo, scores, userApiService);
+
+        var d = bpAnalysisService.parseData(osuUser, scores, userApiService);
+        var data = imageService.getPanelJ(d);
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
     }
 

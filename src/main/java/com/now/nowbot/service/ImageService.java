@@ -2,7 +2,6 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.JsonData.*;
-import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
@@ -35,13 +34,11 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("NOWBOTIMAGE")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
-    private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
@@ -348,231 +345,9 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelJ(OsuUser user, List<Score> bps, OsuUserApiService userApiService) {
-        var bpSize = bps.size();
-        // top
-        var t5 = bps.subList(0, Math.min(bpSize, 5));
-        var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
-
-        // 提取星级变化的谱面 DT/HT 等
-        var mapAttrGet = new MapAttrGet(user.getPlayMode());
-        bps.stream()
-                .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
-        Map<Long, MapAttr> changedAttrsMap;
-        if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
-            changedAttrsMap = null;
-        } else {
-            changedAttrsMap = getMapAttr(mapAttrGet);
-        }
-
-        record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
-                   String[] mods) {
-        }
-
-        record attr(String index, int map_count, float pp_count, float percent) {
-        }
-
-        List<map> mapList = new ArrayList<>(bpSize);
-        MultiValueMap<String, Float> modsPPSum = new LinkedMultiValueMap<>();
-        MultiValueMap<String, Float> rankSum = new LinkedMultiValueMap<>();
-        int modsSum = 0;
-        for (int i = 0; i < bpSize; i++) {
-            var s = bps.get(i);
-            {// 处理 mapList
-                var minfo = s.getBeatMap();
-                if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreId())) {
-                    var attr = changedAttrsMap.get(s.getScoreId());
-                    minfo.setDifficultyRating(attr.getStars());
-                    minfo.setBpm(attr.getBpm());
-                    if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
-                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
-                    } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
-                    }
-                }
-                var m = new map(
-                        i + 1,
-                        minfo.getTotalLength(),
-                        s.getMaxCombo(),
-                        minfo.getBPM(),
-                        minfo.getDifficultyRating(),
-                        s.getRank(),
-                        s.getBeatMapSet().getCovers().getList2x(),
-                        s.getMods().toArray(new String[0])
-                );
-                mapList.add(m);
-            }
-
-            { // 统计 mods / rank
-                if (!CollectionUtils.isEmpty(s.getMods())) {
-                    s.getMods().forEach(m -> modsPPSum.add(m, s.getWeight().getPP()));
-                    modsSum += s.getMods().size();
-                } else {
-//                    modsPPSum.add("NM", s.getWeight().getPP());
-                    modsSum += 1;
-                }
-                if (s.isPerfect()) {
-                    rankSum.add("FC", s.getWeight().getPP());
-                }
-                rankSum.add(s.getRank(), s.getWeight().getPP());
-            }
-        }
-        // 0 length; 1 combo; 2 star; 3 bpm
-        ArrayList<map>[] mapStatistics = new ArrayList[4];
-        var bpListSortedByLength = mapList.stream().sorted(Comparator.comparingInt(map::length).reversed()).toList();
-        mapStatistics[0] = new ArrayList<>(3);
-        mapStatistics[0].add(bpListSortedByLength.get(0));
-        mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
-        mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
-
-        var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
-        mapStatistics[1] = new ArrayList<>(3);
-        mapStatistics[1].add(bpListSortedByCombo.get(0));
-        mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
-        mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
-
-        var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
-        mapStatistics[2] = new ArrayList<>(3);
-        mapStatistics[2].add(bpListSortedByStar.get(0));
-        mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
-        mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
-
-        var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
-        mapStatistics[3] = new ArrayList<>(3);
-        mapStatistics[3].add(bpListSortedByBpm.get(0));
-        mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
-        mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
-
-        //        var ppList = bps.stream().map(s -> s.getWeight().getPP());
-        var ppRawList = bps.stream().map(Score::getPP).toList();
-        var rankCount = bps.stream()
-                .map(Score::getRank)
-                .toList();
-        var rankSort = rankCount.stream()
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                .entrySet()
-                .stream()
-                .sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
-                .map(Map.Entry::getKey)
-                .toList();
-        record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
-        }
-        var bpMapperMap = bps.stream()
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()));
-        int mappers = bpMapperMap.size();
-        var mapperCount = bpMapperMap
-                .entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(8)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, e) -> o, LinkedHashMap::new));
-        var mapperInfo = userApiService.getUsers(mapperCount.keySet());
-        var mapperList = bps.stream()
-                .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
-//                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
-                .entrySet()
-                .stream()
-                .sorted(Comparator.<Map.Entry<Long, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
-                .map(e -> {
-                    String name = "";
-                    String avatar = "";
-                    for (var node : mapperInfo) {
-                        if (e.getKey().equals(node.getId())) {
-                            name = node.getUserName();
-                            avatar = node.getAvatarUrl();
-                            break;
-                        }
-                    }
-                    return new mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
-                })
-                .toList();
-
-        var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
-
-        var userPP = user.getPP();
-        var bonusPP = SkiaUtil.getBonusPP(userPP, bpPPs);
-
-        //bpPP + remainPP (bp100之后的) = rawPP
-        var bpPP = (float) bps.stream().mapToDouble(s -> s.getWeight().getPP()).sum();
-        var rawPP = (float) (userPP - bonusPP);
-
-        List<attr> modsAttr;
-        {
-            final int m = modsSum;
-            List<attr> modsAttrTmp = new ArrayList<>(modsPPSum.size());
-            modsPPSum.forEach((mod, value) -> {
-                attr attr = new attr(mod, value.size(), value.stream().reduce(Float::sum).orElse(0F), (1F * value.size() / m));
-                modsAttrTmp.add(attr);
-            });
-            modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(attr::pp_count).reversed()).toList();
-        }
-
-        List<attr> rankAttr = new ArrayList<>(rankSum.size());
-        {
-            var fcList = rankSum.remove("FC");
-            attr fc;
-            if (CollectionUtils.isEmpty(fcList)) {
-                fc = new attr("FC", 0, 0, 0);
-            } else {
-                float ppSum = fcList.stream().reduce(Float::sum).orElse(0F);
-                fc = new attr("FC", fcList.size(), ppSum, (ppSum / bpPP));
-            }
-            rankAttr.add(fc);
-            for (var rank : RANK_ARRAY) {
-                if (rankSum.containsKey(rank)) {
-                    var value = rankSum.get(rank);
-                    float ppSum = 0f;
-                    if (value != null) {
-                        ppSum = value.stream().reduce(Float::sum).orElse(0F);
-                    }
-                    attr attr = null;
-                    if (value != null) {
-                        attr = new attr(rank, value.size(), ppSum, (ppSum / bpPP));
-                    }
-                    rankAttr.add(attr);
-                }
-            }
-        }
-        if (changedAttrsMap != null) {
-            java.util.function.Consumer<Score> f = (s) -> {
-                long id = s.getBeatMap().getId();
-                if (changedAttrsMap.containsKey(id)) {
-                    var attr = changedAttrsMap.get(id);
-                    s.getBeatMap().setDifficultyRating(attr.getStars());
-                    s.getBeatMap().setBpm(attr.getBpm());
-                    if (Mod.hasDt(attr.getMods())) {
-                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 1.5f));
-                    } else if (Mod.hasHt(attr.getMods())) {
-                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 0.75f));
-                    }
-                }
-            };
-            b5.forEach(f);
-            t5.forEach(f);
-        }
+    public byte[] getPanelJ(Map<String, Object> data) {
         var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("card_A1", user);
-        body.put("bpTop5", t5);
-        body.put("bpLast5", b5);
-        body.put("bpLength", mapStatistics[0]);
-        body.put("bpCombo", mapStatistics[1]);
-        body.put("bpSR", mapStatistics[2]);
-        body.put("bpBpm", mapStatistics[3]);
-        body.put("favorite_mappers_count", mappers);
-        body.put("favorite_mappers", mapperList);
-        body.put("pp_raw_arr", ppRawList);
-        body.put("rank_arr", rankCount);
-        body.put("rank_elect_arr", rankSort);
-        body.put("bp_length_arr", mapList.stream().map(map::length).toList());
-        body.put("mods_attr", modsAttr);
-        body.put("rank_attr", rankAttr);
-        body.put("pp_raw", rawPP);
-        body.put("pp", userPP);
-        body.put("game_mode", bps.get(0).getMode());
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
         return doPost("panel_J", httpEntity);
     }
     //2023-07-12T12:42:37Z

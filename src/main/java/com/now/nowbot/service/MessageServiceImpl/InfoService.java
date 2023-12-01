@@ -27,7 +27,7 @@ import java.util.Objects;
 
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParam> {
-    Logger log = LoggerFactory.getLogger(InfoService.class);
+    private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Resource
     OsuUserApiService userApiService;
     @Resource
