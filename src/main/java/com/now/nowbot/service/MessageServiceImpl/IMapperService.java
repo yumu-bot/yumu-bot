@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -12,6 +11,8 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -20,6 +21,7 @@ import java.util.regex.Matcher;
 
 @Service("IMAPPER")
 public class IMapperService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(IMapperService.class);
     OsuUserApiService userApiService;
     OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
@@ -84,7 +86,7 @@ public class IMapperService implements MessageService<Matcher> {
             var data = imageService.getPanelM(osuUser, userApiService, beatmapApiService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("IMapper", e);
+            log.error("IMapper", e);
             throw new IMapperException(IMapperException.Type.IM_Send_Error);
         }
     }

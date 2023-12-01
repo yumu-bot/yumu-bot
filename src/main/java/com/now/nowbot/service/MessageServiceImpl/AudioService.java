@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
@@ -24,7 +23,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     @Resource
     WebClient osuApiWebClient;
 
-    static class AudioParam {
+    public static class AudioParam {
         Boolean isBid;
         Integer id;
         Exception err;
@@ -108,7 +107,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         try {
             from.sendVoice(voiceData);
         } catch (Exception e) {
-            NowbotApplication.log.error("Audio:", e);
+            log.error("Audio:", e);
             throw new AudioException(AudioException.Type.SONG_Send_Error);
         }
     }

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -14,6 +13,8 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -26,6 +27,7 @@ import java.util.regex.Matcher;
 
 @Service("TODAYBP")
 public class TodayBPService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     BindDao bindDao;
@@ -125,7 +127,7 @@ public class TodayBPService implements MessageService<Matcher> {
             var data = imageService.getPanelA4(ouMe, bpList, rankList);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("TBP Error: ", e);
+            log.error("TBP Error: ", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
         }
 

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -115,7 +114,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             var data = imageService.getPanelEpsilon(osuUser.getUsername(), osuUser.getUID());
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("OA 发送失败: ", e);
+            log.error("OA 发送失败: ", e);
             throw new OldAvatarException(OldAvatarException.Type.OA_Send_Error);
         }
     }

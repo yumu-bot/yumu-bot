@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -16,6 +15,8 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,7 @@ import java.util.regex.Matcher;
 
 @Service("UUPR")
 public class UUPRService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
     RestTemplate template;
     OsuUserApiService userApiService;
@@ -145,7 +147,7 @@ public class UUPRService implements MessageService<Matcher> {
             getTextOutput(scoreList.get(0), from);
         } catch (Exception e) {
             from.sendMessage("UUPR 发送失败，请重试");
-            NowbotApplication.log.error("UUPR 发送失败：", e);
+            log.error("UUPR 发送失败：", e);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
@@ -12,6 +11,8 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
 import com.now.nowbot.util.Pattern4ServiceImpl;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -22,6 +23,7 @@ import java.util.regex.Matcher;
 
 @Service("LEADER")
 public class LeaderBoardService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(LeaderBoardService.class);
     OsuBeatmapApiService beatmapApiService;
     OsuScoreApiService scoreApiService;
     RestTemplate template;
@@ -110,7 +112,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
             var data = imageService.getPanelA3(beatMap, subScores);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("Leader", e);
+            log.error("Leader", e);
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Send_Error);
         }
     }

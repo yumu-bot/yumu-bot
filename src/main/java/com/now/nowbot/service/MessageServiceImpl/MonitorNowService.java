@@ -1,7 +1,9 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchCal;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchScore;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -56,7 +58,7 @@ public class MonitorNowService implements MessageService<Matcher> {
         try {
             QQMsgUtil.sendImage(from, f);
         } catch (Exception e) {
-            NowbotApplication.log.error("MonitorNow:", e);
+            log.error("MonitorNow:", e);
             throw new MonitorNowException(MonitorNowException.Type.MN_Send_Error);
         }
     }

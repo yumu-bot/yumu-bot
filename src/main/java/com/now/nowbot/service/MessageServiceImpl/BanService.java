@@ -69,6 +69,8 @@ public class BanService implements MessageService<BanParam> {
             throw new TipsException("只有超级管理员可以使用此功能！");
         }
 
+        var from = event.getSubject();
+
         switch (param.operate()) {
             case "list" -> SendPic(event, Permission.getAllW().getGroupList(), "白名单包含：");
             case "blacklist" -> SendPic(event, Permission.getAllB().getGroupList(), "黑名单包含：");
@@ -76,14 +78,14 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
                     if (add) {
-                        event.getSender().sendMessage("成功添加用户进白名单");
+                        from.sendMessage("成功添加用户进白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     throw new TipsException("群组功能还在制作中");
                     /*
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
                     if (add) {
-                        event.getSender().sendMessage("成功添加群组");
+                        from.sendMessage("成功添加群组");
                     }
                      */
                 } else {
@@ -94,14 +96,14 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var remove = permission.removeUser4PermissionGroup(param.qq(), true);
                     if (remove) {
-                        event.getSender().sendMessage("成功移除用户出白名单");
+                        from.sendMessage("成功移除用户出白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     throw new TipsException("群组功能还在制作中");
                     /*
                     var add = permission.addUser2PerMissionGroup(param.qq(), false);
                     if (add) {
-                        event.getSender().sendMessage("成功添加群组");
+                        from.sendMessage("成功添加群组");
                     }
                      */
                 } else {
@@ -112,14 +114,14 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, true);
                     if (add) {
-                        event.getSender().sendMessage("成功拉黑用户");
+                        from.sendMessage("成功拉黑用户");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     throw new TipsException("群组功能还在制作中");
                     /*
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
                     if (add) {
-                        event.getSender().sendMessage("成功添加群组");
+                        from.sendMessage("成功添加群组");
                     }
                      */
                 } else {
@@ -131,14 +133,14 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.removeUser4PermissionGroup(param.qq(), true);
                     if (add) {
-                        event.getSender().sendMessage("成功恢复用户");
+                        from.sendMessage("成功恢复用户");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     throw new TipsException("群组功能还在制作中");
                     /*
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
                     if (add) {
-                        event.getSender().sendMessage("成功添加群组");
+                        from.sendMessage("成功添加群组");
                     }
                      */
                 } else {

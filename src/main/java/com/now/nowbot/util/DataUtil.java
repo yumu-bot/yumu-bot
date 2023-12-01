@@ -2,8 +2,9 @@ package com.now.nowbot.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.enums.Mod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class DataUtil {
+    private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
 
@@ -126,7 +128,7 @@ public class DataUtil {
         try {
             return mapper.readValue(new File(filepath), T);
         } catch (IOException e) {
-            NowbotApplication.log.error("读取json错误", e);
+            log.error("读取json错误", e);
             throw new RuntimeException("见上一条");
         }
     }

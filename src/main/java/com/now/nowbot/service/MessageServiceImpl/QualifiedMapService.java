@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -10,6 +9,8 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
 import com.now.nowbot.util.Pattern4ServiceImpl;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.regex.Matcher;
 
 @Service("QUALIFIEDMAP")
 public class QualifiedMapService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(QualifiedMapService.class);
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
@@ -90,7 +92,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
             var img = imageService.getPanelA2(data);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            NowbotApplication.log.error("QuaMap: ", e);
+            log.error("QuaMap: ", e);
             throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }

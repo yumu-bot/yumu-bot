@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.PlayerData;
@@ -74,7 +73,7 @@ public class MuRatingService implements MessageService<Matcher> {
                 img = imageService.getPanelC(data);
                 QQMsgUtil.sendImage(from, img);
             } catch (Exception e) {
-                NowbotApplication.log.error("MRA 数据请求失败", e);
+                log.error("MRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
             }
         } else if (matcher.group("uu") != null) {
@@ -83,7 +82,7 @@ public class MuRatingService implements MessageService<Matcher> {
                 var receipt = from.sendMessage(str);
                 from.recallIn(receipt, 60000);
             } catch (Exception e) {
-                NowbotApplication.log.error("URA 数据请求失败", e);
+                log.error("URA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_URAFailed);
             }
         }
