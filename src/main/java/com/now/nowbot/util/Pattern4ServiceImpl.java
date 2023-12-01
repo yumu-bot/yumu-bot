@@ -13,8 +13,8 @@ public class Pattern4ServiceImpl {
 
     // #1 BOT 内部指令
     public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?!\\w))|yumu\\?)");
-    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
-    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w)|operate|op(?!\\w))\\s*(?<operate>(black)?list|add|remove|(un)?ban|)?\\s*(qq=(?<qq>\\d+))?\\s*(group=(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w)|operate|op(?!\\w))\\s*([:：]?(?<operate>(black)?list|add|remove|(un)?ban|[lkarub]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
     public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
     public static final Pattern ECHO = Pattern.compile("^[!！#]\\s*(?i)echo\\s*(?<any>.*)");
 
@@ -40,7 +40,7 @@ public class Pattern4ServiceImpl {
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
-    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?!\\w)|i(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?\\*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?!\\w)|i(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?\\*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     public static final Pattern UUINFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
@@ -100,7 +100,7 @@ public class Pattern4ServiceImpl {
 
 
 
-    public static final Pattern OLDAVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?(oldavatar|oa(?!\\w))\\s*(qq=(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    public static final Pattern OLDAVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?(oldavatar|oa(?!\\w))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?");
 

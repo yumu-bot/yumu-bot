@@ -72,9 +72,9 @@ public class BanService implements MessageService<BanParam> {
         var from = event.getSubject();
 
         switch (param.operate()) {
-            case "list" -> SendPic(event, Permission.getAllW().getGroupList(), "白名单包含：");
-            case "blacklist" -> SendPic(event, Permission.getAllB().getGroupList(), "黑名单包含：");
-            case "add" -> {
+            case "list", "l" -> SendPic(event, Permission.getAllW().getGroupList(), "白名单包含：");
+            case "blacklist", "k" -> SendPic(event, Permission.getAllB().getGroupList(), "黑名单包含：");
+            case "add", "a" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
                     if (add) {
@@ -92,7 +92,7 @@ public class BanService implements MessageService<BanParam> {
                     throw new TipsException("add 操作必须输入 qq！\n格式：!sp add qq=114514 / group=1919810");
                 }
             }
-            case "remove" -> {
+            case "remove", "r" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var remove = permission.removeUser4PermissionGroup(param.qq(), true);
                     if (remove) {
@@ -110,7 +110,7 @@ public class BanService implements MessageService<BanParam> {
                     throw new TipsException("remove 操作必须输入 qq！\n格式：!sp remove qq=114514 / group=1919810");
                 }
             }
-            case "ban" -> {
+            case "ban", "b" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, true);
                     if (add) {
@@ -129,7 +129,7 @@ public class BanService implements MessageService<BanParam> {
                     throw new TipsException("ban 操作必须输入 qq！\n格式：!sp ban qq=114514 / group=1919810");
                 }
             }
-            case "unban" -> {
+            case "unban", "u" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.removeUser4PermissionGroup(param.qq(), true);
                     if (add) {
