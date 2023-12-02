@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -431,12 +432,20 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getPool(
             @RequestParam("name") @Nullable String nameStr,
             @RequestBody String dataStr
-    ) throws MapPoolException {
+    ) throws RuntimeException {
 
-        var d = mapPoolService.parseDataString(dataStr);
+        Map<String, List<Long>> d;
+        try {
+            d = mapPoolService.parseDataString(dataStr);
+        } catch (MapPoolException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(MapPoolException.Type.PO_Send_Error.message);
+        }
+
         var mapPool = new MapPool(nameStr, d, beatmapApiService);
 
-        if (mapPool.getModPools().isEmpty()) throw new RuntimeException("TNND，为什么一张谱面都没有？");
+        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.PO_Map_Empty.message);
 
         var data = imageService.getPanelH(mapPool);
         return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);
