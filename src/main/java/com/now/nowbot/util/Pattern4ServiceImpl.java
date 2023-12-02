@@ -40,7 +40,7 @@ public class Pattern4ServiceImpl {
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
-    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?!\\w)|i(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?\\*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?!\\w)|i(?!\\w))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     public static final Pattern UUINFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?!\\w))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
