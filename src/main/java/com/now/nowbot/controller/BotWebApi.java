@@ -8,18 +8,17 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.mappool.MapPool;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
+import com.now.nowbot.service.MessageServiceImpl.MapPoolService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.throwable.ServiceException.MonitorNowException;
-import com.now.nowbot.throwable.ServiceException.PPMinusException;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +52,8 @@ public class BotWebApi {
     ImageService imageService;
     @Resource
     BPAnalysisService bpAnalysisService;
+    @Resource
+    MapPoolService mapPoolService;
 
 
     /**
@@ -424,6 +425,21 @@ public class BotWebApi {
         var d = bpAnalysisService.parseData(osuUser, scores, userApiService);
         var data = imageService.getPanelJ(d);
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
+    }
+
+    @PostMapping(value = "pool")
+    public ResponseEntity<byte[]> getPool(
+            @RequestParam("name") @Nullable String nameStr,
+            @RequestBody String dataStr
+    ) throws MapPoolException {
+
+        var d = mapPoolService.parseDataString(dataStr);
+        var mapPool = new MapPool(nameStr, d, beatmapApiService);
+
+        if (mapPool.getModPools().isEmpty()) throw new RuntimeException("TNND，为什么一张谱面都没有？");
+
+        var data = imageService.getPanelH(mapPool);
+        return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);
     }
 
     /**
