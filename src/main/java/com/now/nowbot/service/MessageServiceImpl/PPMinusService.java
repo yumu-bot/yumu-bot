@@ -78,6 +78,10 @@ public class PPMinusService implements MessageService<Matcher> {
 
             //默认无主模式
             if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
+            // 在新人群管理群里查询则固定为 osu模式
+            if (event.getSubject().getId() == 695600319L) {
+                mode = OsuMode.OSU;
+            }
 
         } else if (at != null) {
             try {
