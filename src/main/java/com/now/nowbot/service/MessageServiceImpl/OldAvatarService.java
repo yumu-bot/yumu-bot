@@ -10,7 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class OldAvatarService implements MessageService<UserParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = Pattern4ServiceImpl.OLDAVATAR.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.OLDAVATAR.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

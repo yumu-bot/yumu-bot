@@ -16,7 +16,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.apache.logging.log4j.util.Strings;
@@ -51,7 +51,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = Pattern4ServiceImpl.BPANALYSIS.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.BPANALYSIS.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

@@ -16,7 +16,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,7 @@ public class ScorePRService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.SCOREPR.matcher(event.getRawMessage().trim());
+        var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

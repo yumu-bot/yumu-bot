@@ -7,7 +7,7 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,7 @@ public class MutualFriendService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.MUTUAL.matcher(event.getRawMessage().trim());
+        var m = Instructions.MUTUAL.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

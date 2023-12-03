@@ -7,7 +7,7 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class BanService implements MessageService<BanParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BanParam> data) {
-        var matcher = Pattern4ServiceImpl.BAN.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.BAN.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

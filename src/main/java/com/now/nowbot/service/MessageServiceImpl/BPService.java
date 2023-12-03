@@ -13,7 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class BPService implements MessageService<BPService.BPParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
-        var matcher = Pattern4ServiceImpl.BP.matcher(event.getRawMessage());
+        var matcher = Instructions.BP.matcher(event.getRawMessage());
         if (!matcher.find()) {
             return false;
         }

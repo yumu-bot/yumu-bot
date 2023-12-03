@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class TransService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.TRANS.matcher(event.getRawMessage().trim());
+        var m = Instructions.TRANS.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

@@ -10,7 +10,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ public class CsvRatingService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.CSVRATING.matcher(event.getRawMessage().trim());
+        var m = Instructions.CSVRATING.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

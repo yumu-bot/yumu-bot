@@ -11,7 +11,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public class TodayBPService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.TODAYBP.matcher(event.getRawMessage().trim());
+        var m = Instructions.TODAYBP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

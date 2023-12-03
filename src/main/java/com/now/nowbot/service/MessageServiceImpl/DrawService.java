@@ -9,7 +9,7 @@ import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
@@ -27,7 +27,7 @@ public class DrawService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.DRAW.matcher(event.getRawMessage().trim());
+        var m = Instructions.DRAW.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

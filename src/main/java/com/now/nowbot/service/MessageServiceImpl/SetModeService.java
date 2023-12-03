@@ -4,7 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,7 @@ public class SetModeService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.SETMODE.matcher(event.getRawMessage().trim());
+        var m = Instructions.SETMODE.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

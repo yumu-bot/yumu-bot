@@ -13,7 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class PPMinusService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.PPMINUS.matcher(event.getRawMessage().trim());
+        var m = Instructions.PPMINUS.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

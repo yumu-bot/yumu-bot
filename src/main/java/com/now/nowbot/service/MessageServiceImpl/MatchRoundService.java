@@ -10,7 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.ROUND.matcher(event.getRawMessage().trim());
+        var m = Instructions.ROUND.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

@@ -7,7 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +35,12 @@ public class CountQQMessageService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.COUNTMSG.matcher(event.getRawMessage().trim());
+        var m = Instructions.COUNTMSG.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
         } else {
-            m = Pattern4ServiceImpl.TESTCOUNTMSG.matcher(event.getRawMessage().trim());
+            m = Instructions.COUNTMSGLEGACY.matcher(event.getRawMessage().trim());
             if (m.find()) {
                 data.setValue(m);
                 return true;

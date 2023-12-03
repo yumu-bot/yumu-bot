@@ -4,7 +4,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -16,7 +16,7 @@ public class HelpService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.HELP.matcher(event.getRawMessage().trim());
+        var m = Instructions.HELP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

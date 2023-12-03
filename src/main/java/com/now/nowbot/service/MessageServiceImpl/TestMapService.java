@@ -5,7 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class TestMapService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.TESTMAP.matcher(event.getRawMessage().trim());
+        var m = Instructions.TESTMAP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

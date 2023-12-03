@@ -6,7 +6,7 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class SwitchService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.SWITCH.matcher(event.getRawMessage().trim());
+        var m = Instructions.SWITCH.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

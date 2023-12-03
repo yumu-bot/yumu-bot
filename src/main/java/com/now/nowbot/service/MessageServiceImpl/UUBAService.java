@@ -15,7 +15,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +64,13 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
 
         //旧功能指引
-        var matcher2 = Pattern4ServiceImpl.BPHT.matcher(event.getRawMessage().trim());
+        var matcher2 = Instructions.BPHT.matcher(event.getRawMessage().trim());
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
             // 直接在这里抛, 效果一样
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
         }
 
-        var matcher = Pattern4ServiceImpl.UUBA.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.UUBA.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));

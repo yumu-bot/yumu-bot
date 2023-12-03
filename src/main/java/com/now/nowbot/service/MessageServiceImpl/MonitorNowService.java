@@ -9,7 +9,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MonitorNowException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class MonitorNowService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Pattern4ServiceImpl.MONITORNOW.matcher(event.getRawMessage().trim());
+        var m = Instructions.MONITORNOW.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

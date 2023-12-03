@@ -5,7 +5,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 @Service("MAP4D")
@@ -15,7 +15,7 @@ public class Map4DCalculate implements MessageService<Map4DCalculate.param> {
     public boolean isHandle(MessageEvent event, DataValue<param> data) throws Throwable {
         String message = event.getRawMessage();
         if (!message.startsWith("#cal")) return false;
-        var matcher = Pattern4ServiceImpl.MAP4DCALCULATE.matcher(message);
+        var matcher = Instructions.MAP4DCALCULATE.matcher(message);
         if (matcher.find()) {
             var d = new param(
                     matcher.group("type"),

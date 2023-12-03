@@ -13,7 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
-import com.now.nowbot.util.Pattern4ServiceImpl;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
@@ -40,7 +40,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) {
-        var matcher = Pattern4ServiceImpl.INFO.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.INFO.matcher(event.getRawMessage().trim());
         if (!matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
