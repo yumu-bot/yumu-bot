@@ -5,12 +5,12 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class MatchListener {
     Match                            match;
     OsuMatchApiService               matchApiService;
-    List<Consumer<List<MatchEvent>>> consumerList = new ArrayList<>();
+    List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
     volatile boolean start = false;
 
     public MatchListener(Match match, OsuMatchApiService service) {
@@ -19,7 +19,7 @@ public class MatchListener {
 
     }
 
-    public void addEventListener(Consumer<List<MatchEvent>> doListener) {
+    public void addEventListener(BiConsumer<List<MatchEvent>, Match> doListener) {
         consumerList.add(doListener);
     }
 
@@ -46,7 +46,7 @@ public class MatchListener {
                 if (m.latestEventId == lastId) continue;
                 lastId = m.latestEventId;
                 match.parseNextData(m);
-                consumerList.forEach(c -> c.accept(m.getEvents()));
+                consumerList.forEach(c -> c.accept(m.getEvents(), match));
             }
         });
     }
