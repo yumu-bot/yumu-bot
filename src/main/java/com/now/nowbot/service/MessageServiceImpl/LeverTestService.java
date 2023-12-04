@@ -70,7 +70,7 @@ public class LeverTestService implements MessageService<BinUser> {
         return Math.max(0, Math.min(100, r));
     };
 
-    public double getLevel(List<Score> bp, BinUser user) {
+    public double getLevel(List<Score> bp, BinUser user) throws TipsException {
         var mapIdSet = new HashSet<Long>();
         bp.forEach(s ->s.setBeatMap(beatmapApiService.getMapInfoFromDB(s.getBeatMap().getId())));
         for (var index : testBpIndex) {
@@ -91,8 +91,12 @@ public class LeverTestService implements MessageService<BinUser> {
         var scores = AsyncMethodExecutor.AsyncSupplier(suppliers);
         double sum = 0;
 
-        for (var s : scores) {
-            sum += calculator.apply(s.getPosition());
+        try {
+            for (var s : scores) {
+                sum += calculator.apply(s.getPosition());
+            }
+        } catch (Exception e) {
+            throw new TipsException("哎呀计算出错了, 一会再试试");
         }
 
         return sum;
