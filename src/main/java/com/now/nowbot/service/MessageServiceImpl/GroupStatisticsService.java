@@ -28,7 +28,7 @@ import java.util.*;
 @Service("GROUPSTATISTICS")
 public class GroupStatisticsService implements MessageService<Long> {
     private static final Logger log = LoggerFactory.getLogger(GroupStatisticsService.class);
-    private static final String getBinding = "https://api.bleatingsheep.org/api/Binding/${qq}";
+    private static final String getBinding = "https://api.bleatingsheep.org/api/Binding/{qq}";
     public static final String getBP = "https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1";
 
     private final BotContainer bots;
