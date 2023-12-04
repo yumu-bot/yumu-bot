@@ -391,7 +391,7 @@ public class BotWebApi {
         }
 
         for (var s : scoreList) {
-            if ((s.getMods() == null || s.getMods().isEmpty()) && Mod.None.check(modInt)) {
+            if (modInt == 0 && (Objects.isNull(s.getMods()) || s.getMods().isEmpty())) {
                 score = s;
                 break;
             } else if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
@@ -400,7 +400,7 @@ public class BotWebApi {
             }
         }
 
-        if (score == null) {
+        if (Objects.isNull(score)) {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
