@@ -23,8 +23,8 @@ public class MatchListener {
         consumerList.add(doListener);
     }
 
-    private void onEvents(List<MatchEvent> events) {
-        consumerList.forEach(c -> c.accept(events));
+    private void onEvents(List<MatchEvent> events, Match match) {
+        consumerList.forEach(c -> c.accept(events, match));
     }
 
     public void startListener() {
@@ -46,7 +46,7 @@ public class MatchListener {
                 if (m.latestEventId == lastId) continue;
                 lastId = m.latestEventId;
                 match.parseNextData(m);
-                consumerList.forEach(c -> c.accept(m.getEvents(), match));
+                onEvents(m.getEvents(), match);
             }
         });
     }
