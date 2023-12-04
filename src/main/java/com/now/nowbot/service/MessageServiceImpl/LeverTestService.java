@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import jakarta.annotation.Resource;
@@ -25,6 +26,8 @@ public class LeverTestService implements MessageService<BinUser> {
     BindDao            bindDao;
     @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
 
     @Override
@@ -59,7 +62,7 @@ public class LeverTestService implements MessageService<BinUser> {
         double r;
 
         r = 1 + Math.exp((i - 4000D) / 1630);
-        r /= 112;
+        r = 112 / r;
         r -= 3;
 
         return Math.max(0, Math.min(100, r));
@@ -67,6 +70,7 @@ public class LeverTestService implements MessageService<BinUser> {
 
     public double getLevel(List<Score> bp, BinUser user) {
         var mapIdSet = new HashSet<Long>();
+        bp.forEach(s ->s.setBeatMap(beatmapApiService.getMapInfoFromDB(s.getBeatMap().getId())));
         for (var index : testBpIndex) {
             mapIdSet.add(bp.get(index).getBeatMap().getId());
         }

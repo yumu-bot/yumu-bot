@@ -45,6 +45,7 @@ public class BeatMapDao {
         var mapSet = fromMapsetLite(map.getMapSet());
         s.setBeatMapSet(mapSet);
         BeanUtils.copyProperties(map, s);
+        s.setBpm(map.getBpm());
         return s;
     }
 

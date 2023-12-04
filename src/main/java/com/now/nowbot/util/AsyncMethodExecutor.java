@@ -193,6 +193,8 @@ public class AsyncMethodExecutor {
                     } catch (Exception e) {
                         results.add(null);
                         log.error("AsyncSupplier error", e);
+                    } finally {
+                        lock.countDown();
                     }
                 })
                 .forEach(Thread::startVirtualThread);

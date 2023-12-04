@@ -88,6 +88,9 @@ public class BeatMap {
     public void setBID(Long id) {
         this.id = id;
     }
+    public void setId(Long id) { // 别动
+        this.id = id;
+    }
 
     public Integer getBeatmapsetId() {
         return beatmapsetId;

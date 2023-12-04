@@ -7,12 +7,15 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.util.JacksonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class ScoreApiImpl implements OsuScoreApiService {
+    private static final Logger log = LoggerFactory.getLogger(ScoreApiImpl.class);
     OsuApiBaseService base;
 
     public ScoreApiImpl(OsuApiBaseService baseService) {
