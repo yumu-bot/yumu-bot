@@ -13,6 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
@@ -22,11 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParam> {
-    Logger log = LoggerFactory.getLogger(InfoService.class);
+    private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Resource
     OsuUserApiService userApiService;
     @Resource
@@ -37,25 +38,21 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     ImageService  imageService;
     public record InfoParam(String name, Long qq, OsuMode mode){}
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![a-zA-Z_])|i(?![a-zA-Z_]))\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-    Pattern pattern4QQ = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![a-zA-Z_])|i(?![a-zA-Z_]))\\s*(qq=)\\s*(?<qq>\\d+)");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) {
-        var m4qq = pattern4QQ.matcher(event.getRawMessage().trim());
-        if (m4qq.find()) {
-            data.setValue(new InfoParam(null, Long.parseLong(m4qq.group("qq")), OsuMode.DEFAULT));
-            return true;
-        }
-        var matcher = pattern.matcher(event.getRawMessage().trim());
-        if (!matcher.find()) {
-            return false;
-        }
+        var matcher = Instructions.INFO.matcher(event.getRawMessage().trim());
+        if (!matcher.find()) return false;
+
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        var qq = matcher.group("qq");
 
-        if (at != null) {
+        if (Objects.nonNull(at)) {
             data.setValue(new InfoParam(null, at.getTarget(), mode));
+            return true;
+        }
+        if (Objects.nonNull(qq)) {
+            data.setValue(new InfoParam(null, Long.parseLong(qq), mode));
             return true;
         }
         String name = matcher.group("name");

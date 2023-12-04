@@ -2,176 +2,126 @@ package com.now.nowbot.util;
 
 import java.util.regex.Pattern;
 
-// * 正则
-// * (?:pattern) 匹配 pattern 但不捕获该匹配的子表达式,即它是一个非捕获匹配,不存储供以后使用的匹配.
-// * 例子: "industr(?:y|ies)" 是比 "industry|industries" 更经济的表达式.
-// * (?!pattern) 执行反向预测先行搜索的子表达式,该表达式匹配不处于匹配 pattern 的字符串的起始点的搜索字符串,不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
-// * (?<!pattern)执行正向预测先行搜索的子表达式,该表达式与上条相反,同时也不占用字符 (其实 (?!) 跟 (?<!) 作用相同,区别是下次匹配的指针位置)
-// * 例子: "(?<!ab)cd(?!ef)" 仅匹配非ab开头的,ef结尾的cd,且ab与ef仅作搜索用并不占用宽度,即例子对gcd中的cd也会被匹配
-// * (?=pattern) 也叫零宽度正预测先行断言,它断言被匹配的字符串以表达式pattern结尾但除了结尾以外的部分,预测先行不占用字符,即发生匹配后,下一匹配的搜索紧随上一匹配之后.
-// * (?<=pattern)也叫零宽度正回顾后发断言，它断言自身出现的位置的前面能匹配表达式pattern,回顾后发断言也不占用字符.
-// * 例子: "(?<=\d)(匹配位置)(?=(\d{4})+$)" 仅匹配开头为数字,且长度为4n的纯数字结尾,零宽度断言并不占用字符(即不包含自身),当匹配位置为空时满足匹配且宽度为0.
-// * (#正则注释) 仅作注释,会被匹配器忽略掉的文字
-// * p.s. 以上的不占用字符,可理解为允许这样的匹配格式,但是已匹配的内容可能之后被重复匹配,且无法被Matcher.group()获取到,通常情况下适用于 替换文本/匹配固定'指令及参数'想获得参数值但是不想获得指令本身
-
+/**
+ * 所有的指令都写在这里方便进行管理
+ **/
 public class Instructions {
-    static String COLON = "[:：]";
-    static String DELIMIT_WHAT = "#";
-    static String SPACE_0P = "\\s*";
-    static String SPACE_1P = "\\s+";
-    static String SPACE_01 = "\\s?";
-    static String WORD_0P = "\\w*";
-    static String WORD_1P = "\\w+";
-    static String WORD_01 = "\\w?";
-    static String NUMBER_0P = "\\d*";
-    static String NUMBER_1P = "\\d+";
-    static String NUMBER_01 = "\\d?";
-    static String NO_ADD_WORD = "(?![a-zA-Z_])";
-    static Pattern OSU_MODE = Pattern.compile("(?<mode>(?i)[0-3otcfm]|osu|taiko|catch|fruits|mania)");
-    static Pattern OSU_NAME = Pattern.compile("(?<name>[a-zA-Z0-9\\[\\]\\-_ ]{3,15})");
-    static Pattern OSU_UID = Pattern.compile("(?<uid>\\d{1,8})");
 
-    public static class RegexBuilder {
-        StringBuilder sb;
-        boolean hasAt;
+    // #0 调出帮助
+    public static final Pattern HELP = Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    public static final Pattern AUDIO = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![A-Za-z_]))+\\s*([:：](?<type>[\\w\\d]+))?\\s*(?<id>\\d+)?");
 
-        public RegexBuilder(String s) {
-            sb = new StringBuilder("^(?<start>").append(s).append(')');
-        }
+    // #1 BOT 内部指令
+    public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?![A-Za-z_]))|yumu\\?)");
+    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black)?list|add|remove|(un)?ban|[lkarub]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
+    public static final Pattern ECHO = Pattern.compile("^[!！#]\\s*(?i)echo\\s*(?<any>.*)");
 
-        public RegexBuilder addRegex(String reg) {
-            sb.append(reg);
-            return this;
-        }
-        public RegexBuilder addRegex(Pattern reg) {
-            sb.append(reg.pattern());
-            return this;
-        }
+    // #2 osu! 成绩指令
+    public static final Pattern SETMODE = Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![A-Za-z_])|mo(?![A-Za-z_]))+\\s*(?<mode>\\w+)");
 
-        public RegexBuilder addOsuName() {
-            sb.append(OSU_NAME.pattern());
-            return this;
-        }
+    public static final Pattern SCOREPR = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
-        public RegexBuilder addOsuMode() {
-            sb.append(OSU_MODE.pattern());
-            return this;
-        }
+    public static final Pattern UUPR = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![A-Za-z_])))|uu(?<recent>(recent|r(?![A-Za-z_]))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+))?$");
 
-        public RegexBuilder addOsuUid() {
-            sb.append(OSU_UID.pattern());
-            return this;
-        }
+    public static final Pattern SCORE = Pattern.compile("^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![A-Za-z_])))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
-        public RegexBuilder groupStart(String group) {
-            sb.append("(?<").append(group.trim()).append('>');
-            return this;
-        }
-        public RegexBuilder groupStart() {
-            sb.append('(');
-            return this;
-        }
+    // b ymb ymbp :0-3 name 1-100
+    public static final Pattern BP = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    public static final Pattern TODAYBP = Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|(tbp|tdp|t(?![A-Za-z_])))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$");
 
-        public RegexBuilder groupEnd() {
-            sb.append(')');
-            return this;
-        }
-
-        /**
-         * 就是正则后面加一个 ?
-         *
-         * @return this
-         */
-        public RegexBuilder i01() {
-            sb.append('?');
-            return this;
-        }
-
-        /**
-         * 就是正则后面加一个 +
-         *
-         * @return this
-         */
-        public RegexBuilder i1P() {
-            sb.append('+');
-            return this;
-        }
-
-        /**
-         * 就是正则后面加一个 *
-         *
-         * @return this
-         */
-        public RegexBuilder i0P() {
-            sb.append('*');
-            return this;
-        }
+    public static final Pattern BPANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))+(\\s*[:：](?<mode>\\w+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
 
-        public RegexBuilder addColon() {
-            sb.append(COLON);
-            return this;
-        }
+    public static final Pattern UUBA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]{3,}))?");
+    public static final Pattern BPHT = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
+    
+    // #3 osu! 玩家指令
 
-        public RegexBuilder addSpace0P() {
-            sb.append(SPACE_0P);
-            return this;
-        }
+    // i ymi yminfo :0-3 name
+    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-        public RegexBuilder addSpace1P() {
-            sb.append(SPACE_1P);
-            return this;
-        }
+    public static final Pattern UUINFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-        public RegexBuilder addSpace01() {
-            sb.append(SPACE_01);
-            return this;
-        }
+    public static final Pattern IMAPPER = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
-        public RegexBuilder addWord1P() {
-            sb.append(WORD_1P);
-            return this;
-        }
 
-        public RegexBuilder addWord0P() {
-            sb.append(WORD_0P);
-            return this;
-        }
+    public static final Pattern FRIEND = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?!\\S))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
 
-        public RegexBuilder addWord01() {
-            sb.append(WORD_01);
-            return this;
-        }
+    public static final Pattern MUTUAL = Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?");
 
-        public RegexBuilder addNumber1P() {
-            sb.append(NUMBER_1P);
-            return this;
-        }
+    public static final Pattern PPMINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(ppminus|(p?(pm))(?![a-rt-uw-zA-RT-UW-Z_]))\\s*(?<vs>vs)?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
-        public RegexBuilder addNumber0P() {
-            sb.append(NUMBER_0P);
-            return this;
-        }
 
-        public RegexBuilder addNumber01() {
-            sb.append(NUMBER_01);
-            return this;
-        }
+    // #4 osu! 谱面指令
 
-        public Pattern build() {
-            return Pattern.compile(sb.toString());
-        }
-    }
+    public static final Pattern QUALIFIEDMAP = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![A-Za-z_])|q(?![A-Za-z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
 
-    static class RegexResut {
+    public static final Pattern LEADERBOARD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![A-Za-z_])|list(?![A-Za-z_])|l(?![A-Za-z_]))+\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?");
 
-    }
+    public static final Pattern MAPMINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![A-Za-z_]))+\\s*(?<id>\\d+)?");
 
-    public static RegexBuilder getRegexBuilder(String start){
-        return new RegexBuilder(start);
-    }
-    public static RegexBuilder getRegexBuilder(Pattern start){
-        return new RegexBuilder(start.pattern());
-    }
+    public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))+(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
 
+    // #5 osu! 比赛指令
+
+    public static final Pattern MURATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![A-Za-z_])))|(?<main>((ym)?rating|(ym)?ra(?![A-Za-z_])|mra(?![A-Za-z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+
+    /*
+    public static final Pattern URA(URAService.class,
+            Pattern.compile("^[!！]\\s*(?i)(u{1,2})(rating|ra(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skipedrounds>\\d+))?(\\s*(?<deletendrounds>\\d+))?(\\s*(?<excludingrematch>[Rr]))?(\\s*(?<excludingfail>[Ff]))?");
+
+     */
+
+    public static final Pattern SERIES = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![A-Za-z_])|sa(?![A-Za-z_])))|(ym)?(?<main>(seriesrating|series|sa(?![A-Za-z_])|sra(?![A-Za-z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![A-Za-z_])|cs(?![A-Za-z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+
+    public static final Pattern CSVRATING = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-wy-zA-WY-Z_])|cra(?![a-wy-zA-WY-Z_])))+\\s*(?<x>[xX])?\\s*(?<id>\\d+)?");
+
+
+    public static final Pattern ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|]+))?");
+
+    public static final Pattern MONITORNOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|monow|mn(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+
+    public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?![A-Za-z_]))|(?<ymy>y(?![A-Za-z_])))+");
+
+    public static final Pattern MAPPOOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s]+)?");
+
+    /*
+    public static final Pattern START = Pattern.compile("^[!！]((积分)|(..积分))+.*");
+
+     */
+
+    public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
+
+    public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
+
+    public static final Pattern OVERSR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
+
+
+
+    public static final Pattern OLDAVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?(oldavatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+
+    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?");
+
+    public static final Pattern COUNTMSGLEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
+
+    public static final Pattern COUNTMSG = Pattern.compile("^[!！]\\s*(?i)(ym)?(cm(?![A-Za-z_])|countmessage|countmsg)\\s*(?<d>(n)|(a)|(h))");
+
+    public static final Pattern GROUPSTATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))");
+
+
+    /*
+    public static final Pattern TEST = Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
+
+     */
+
+
+    public static final Pattern TESTPPM = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
+
+
+    public static final Pattern MAP4DCALCULATE = Pattern.compile("#cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtr]{2})+)?");
+    public static final Pattern TESTTAIKOSRCALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
+
+    public static final Pattern TESTMAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?");
 }

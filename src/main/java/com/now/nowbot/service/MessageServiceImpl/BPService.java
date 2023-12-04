@@ -13,6 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
@@ -58,11 +58,10 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         boolean s;
     }
-    private static final Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?)?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
-        var matcher = pattern.matcher(event.getRawMessage());
+        var matcher = Instructions.BP.matcher(event.getRawMessage());
         if (!matcher.find()) {
             return false;
         }

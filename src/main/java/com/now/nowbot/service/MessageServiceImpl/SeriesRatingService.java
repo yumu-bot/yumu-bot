@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("SRA")
 public class SeriesRatingService implements MessageService<Matcher> {
@@ -36,11 +36,9 @@ public class SeriesRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![a-zA-Z_])|sa(?![a-zA-Z_])))|(ym)?(?<main>(seriesrating|series|sa(?![a-zA-Z_])|sra(?![a-zA-Z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![a-zA-Z_])|cs(?![a-zA-Z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\s]+)?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.SERIES.matcher(event.getRawMessage().trim());
 
         if (m.find()) {
             data.setValue(m);
@@ -63,7 +61,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         List<Integer> skipEnds = parsed.get("skipEnds");
 
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
         var from = event.getSubject();
 
@@ -78,7 +76,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
         SeriesData data;
         try {
-            data = calculate(matchIDs, nameStr, skips, skipEnds, !keep, rematch, from);
+            data = calculate(matchIDs, nameStr, skips, skipEnds, failed, rematch, from);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -191,7 +189,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
     }
 
     public Map<String, List<Integer>> parseDataString(String dataStr) throws MRAException {
-        String[] dataStrArray = dataStr.trim().split("\\s+|,+|，+|\\|+");
+        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
 
         List<Integer> matchIDs = new ArrayList<>();
@@ -305,7 +303,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
     }
 
 
-    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean remove, boolean rematch, @Nullable Contact from) throws MRAException {
+    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean failed, boolean rematch, @Nullable Contact from) throws MRAException {
 
         List<Match> matches = new ArrayList<>();
         int fetchMapFail = 0;
@@ -343,7 +341,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         }
         //真正的计算封装，就两行
 
-        SeriesData data = new SeriesData(new Series(matches), name, skips, skipEnds, remove, rematch);
+        SeriesData data = new SeriesData(new Series(matches), name, skips, skipEnds, failed, rematch);
         data.calculate();
 
         return data;

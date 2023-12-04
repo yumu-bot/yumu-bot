@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-@Service("STATISTICAL")
-public class StatisticalOverPPService implements MessageService<Long> {
-    private static final Logger log = LoggerFactory.getLogger(StatisticalOverPPService.class);
+@Service("GROUPSTATISTICS")
+public class GroupStatisticsService implements MessageService<Long> {
+    private static final Logger log = LoggerFactory.getLogger(GroupStatisticsService.class);
+    private static final String getBinding = "https://api.bleatingsheep.org/api/Binding/${qq}";
+    public static final String getBP = "https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1";
+
     private final BotContainer bots;
     private final WebClient client;
     private final OsuUserApiService userApiService;
@@ -36,7 +40,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
     private static int lock = 0;
     private final Path CachePath;
 
-    public StatisticalOverPPService(
+    public GroupStatisticsService(
             WebClient osuApiWebClient,
             BotContainer botContainer,
             OsuUserApiService userApiService,
@@ -50,7 +54,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
         try {
             if (Files.isRegularFile(CachePath)) {
                 String jsonStr = Files.readString(CachePath);
-                HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<HashMap<Long, Long>>() {
+                HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<>() {
                 });
                 if (Objects.nonNull(cache)) {
                     UserCache.putAll(cache);
@@ -68,7 +72,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
             return UserCache.get(qq);
         }
         Long id = client.get()
-                .uri("https://api.bleatingsheep.org/api/Binding/{qq}", qq)
+                .uri(getBinding, qq)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .<Long>handle((json, sink) -> {
@@ -85,7 +89,7 @@ public class StatisticalOverPPService implements MessageService<Long> {
 
     public float getOsuBp1(Long osuId) {
         return client.get()
-                .uri("https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1", osuId)
+                .uri(getBP, osuId)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .<Double>handle((json, sink) -> {
@@ -105,22 +109,18 @@ public class StatisticalOverPPService implements MessageService<Long> {
     public boolean isHandle(MessageEvent event, DataValue<Long> data) throws Throwable {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
-        } else {
-            lock = 3;
         }
 
-        String message = event.getRawMessage();
-        if (message.startsWith("!统计超限")) {
-            if (message.endsWith("新人群")) {
-                data.setValue(595985887L);
-                return true;
-            } else if (message.endsWith("进阶群")) {
-                data.setValue(928936255L);
-                return true;
-            } else if (message.endsWith("高阶群")) {
-                data.setValue(281624271L);
-                return true;
+        var m = Instructions.GROUPSTATISTICS.matcher(event.getRawMessage().trim());
+
+        if (m.find()) {
+            switch (m.group("group")) {
+                case "a", "进阶群" -> data.setValue(928936255L);
+                case "h", "高阶群" -> data.setValue(281624271L);
+                case null, default -> data.setValue(595985887L);
             }
+            lock = 3;
+            return true;
         }
         lock = 0;
         return false;
@@ -195,7 +195,8 @@ public class StatisticalOverPPService implements MessageService<Long> {
                 usersBP1.put(qq, bp1);
                 log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
             } catch (WebClientResponseException.NotFound err) {
-                log.info("统计 [{}] 未找到: {}", qq, err.getMessage(), err);
+                //这个err不需要记录下来
+                log.info("统计 [{}] 未找到: {}", qq, err.getMessage());
                 if (err.getMessage().contains("bleatingsheep.org")) {
                     errMap.put(qq, "未绑定");
                 } else {

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.PlayerData;
@@ -9,6 +8,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("MRA2")
+@Service("MURATING")
 public class MuRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
 
@@ -27,11 +26,9 @@ public class MuRatingService implements MessageService<Matcher> {
     @Autowired
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![a-zA-Z_])))|(?<main>((ym)?rating|(ym)?ra(?![a-zA-Z_])|mra(?![a-zA-Z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<keep>[Ff]))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.MURATING.matcher(event.getRawMessage().trim());
 
         if (m.find()) {
             data.setValue(m);
@@ -57,12 +54,12 @@ public class MuRatingService implements MessageService<Matcher> {
         int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
         int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean keep = matcher.group("keep") == null || !matcher.group("keep").equalsIgnoreCase("f");
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
         var from = event.getSubject();
         MatchData data;
         try {
-            data = calculate(matchID, skip, skipEnd, keep, rematch);
+            data = calculate(matchID, skip, skipEnd, failed, rematch);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -76,7 +73,7 @@ public class MuRatingService implements MessageService<Matcher> {
                 img = imageService.getPanelC(data);
                 QQMsgUtil.sendImage(from, img);
             } catch (Exception e) {
-                NowbotApplication.log.error("MRA 数据请求失败", e);
+                log.error("MRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
             }
         } else if (matcher.group("uu") != null) {
@@ -85,7 +82,7 @@ public class MuRatingService implements MessageService<Matcher> {
                 var receipt = from.sendMessage(str);
                 from.recallIn(receipt, 60000);
             } catch (Exception e) {
-                NowbotApplication.log.error("URA 数据请求失败", e);
+                log.error("URA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_URAFailed);
             }
         }
@@ -110,7 +107,7 @@ public class MuRatingService implements MessageService<Matcher> {
         return sb.toString();
     }
 
-    public MatchData calculate(int matchID, int skip, int skipEnd, boolean keep, boolean rematch) throws MRAException {
+    public MatchData calculate(int matchID, int skip, int skipEnd, boolean failed, boolean rematch) throws MRAException {
 
         if (skip < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
         if (skipEnd < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
@@ -129,7 +126,7 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         //真正的计算封装，就两行
-        MatchData matchData = new MatchData(match, skip, skipEnd, !keep, rematch); //!keep = remove
+        MatchData matchData = new MatchData(match, skip, skipEnd, failed, rematch); //!keep = remove
         matchData.calculate();
 
         return matchData;

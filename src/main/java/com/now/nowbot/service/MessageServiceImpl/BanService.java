@@ -1,30 +1,24 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.model.Service.BanParam;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
-//**************************** 吧net.mamoe.mirai.event.events 包换成
-//import net.mamoe.mirai.event.events.GroupMessageEvent;
-//import net.mamoe.mirai.event.events.MessageEvent;
-//import net.mamoe.mirai.message.data.At;
-//************************************  com.now.nowbot.QQ.下面的, 其中At 改成AtMessage
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("BAN")
-public class BanService implements MessageService<Matcher> {
-    Permission   permission;
+public class BanService implements MessageService<BanParam> {
+    Permission permission;
     ImageService imageService;
-
-    private Pattern p1 = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?!\\w))+");
 
     @Autowired
     public BanService(Permission permission, ImageService imageService) {
@@ -33,65 +27,137 @@ public class BanService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        //没想好怎么做
-        var m = p1.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
+    public boolean isHandle(MessageEvent event, DataValue<BanParam> data) {
+        var matcher = Instructions.BAN.matcher(event.getRawMessage().trim());
+        if (!matcher.find()) return false;
+
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
+        var qq = matcher.group("qq");
+        var group = matcher.group("group");
+        var name = matcher.group("name");
+        var operate = matcher.group("operate");
+
+        if (Objects.nonNull(at)) {
+            data.setValue(new BanParam(at.getTarget(), null, operate, true));
             return true;
         }
-        return false;
+
+        if (Objects.nonNull(qq)) {
+            data.setValue(new BanParam(Long.parseLong(qq), null, operate, true));
+            return true;
+        }
+
+        if (Objects.nonNull(group)) {
+            data.setValue(new BanParam(Long.parseLong(group), null, operate, false));
+            return true;
+        }
+
+        if (Objects.nonNull(name)) {
+            data.setValue(new BanParam(null, name, operate, true));
+            return true;
+        }
+
+        data.setValue(new BanParam(null, null, operate, false));
+        return true;
     }
 
+
     @Override
-    @CheckPermission
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        boolean ban = false;
-        long sendQQ = event.getSender().getId();
-        //*******************************************************************************************/
-        //消息改成 event.getMessage()
-        //String msg = event.getMessage().contentToString(); //原来
-        String msg = event.getRawMessage(); // 对
-        //*******************************************************************************************/
-        int index;
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        if ((index = msg.indexOf("list")) != -1) {
-            if (Permission.isSuper(sendQQ)) {
-                Set<Long> groups = Permission.getAllW().getGroupList();
-                StringBuilder sb = new StringBuilder("白名单包含:\n");
-                for (Long id : groups) {
-                    sb.append(id).append("\n");
-                }
-                QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
-
-            }
-//            我都忘了这个分支是做什么的
-//            else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){}
-        } else if ((index = msg.indexOf("add")) != -1) {
-            if (Permission.isSuper(sendQQ)) {
-                matcher = Pattern.compile("add\\s*(?<id>\\d+)").matcher(msg);
-                if (matcher.find()) {
-                    var add = permission.addGroup(Long.parseLong(matcher.group("id")), true, false);
-                    if (add) {
-                        /***********************************  消息改成相应的类  ************************************************/
-                        event.getSubject().sendText("添加成功");
-//                        如果是 复杂的消息 使用 com.now.nowbot.QQ.message.MessageChain 构造
-                        /*
-                        var aaa = new MessageChain.MessageChainBuilder()
-                                .addText("第1句话")
-                                .addImage("图图连接")
-                                .addText("第2句话")
-                                .addAt(112233L)
-                                .addAtAll()
-                                .build();
-                        event.getSender().sendMessage(aaa);
-
-                         */
-                        /*******************************************************************************************/
-                    }
-                }
-            }
-//            else if (event instanceof GroupMessageEvent groupMessageEvent && Permission.isGroupAdmin(groupMessageEvent.getGroup().getId(), sendQQ)){}
+    public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
+        if (!Permission.isSuper(event.getSender().getId())) {
+            throw new TipsException("只有超级管理员可以使用此功能！");
         }
+
+        var from = event.getSubject();
+
+        switch (param.operate()) {
+            case "list", "l" -> SendPic(event, Permission.getAllW().getGroupList(), "白名单包含：");
+            case "blacklist", "k" -> SendPic(event, Permission.getAllB().getGroupList(), "黑名单包含：");
+            case "add", "a" -> {
+                if (Objects.nonNull(param.qq()) && param.isUser()) {
+                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    if (add) {
+                        from.sendMessage("成功添加用户进白名单");
+                    }
+                } else if (Objects.nonNull(param.qq())) {
+                    throw new TipsException("群组功能还在制作中");
+                    /*
+                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    if (add) {
+                        from.sendMessage("成功添加群组");
+                    }
+                     */
+                } else {
+                    throw new TipsException("add 操作必须输入 qq！\n格式：!sp add qq=114514 / group=1919810");
+                }
+            }
+            case "remove", "r" -> {
+                if (Objects.nonNull(param.qq()) && param.isUser()) {
+                    var remove = permission.removeUser4PermissionGroup(param.qq(), true);
+                    if (remove) {
+                        from.sendMessage("成功移除用户出白名单");
+                    }
+                } else if (Objects.nonNull(param.qq())) {
+                    throw new TipsException("群组功能还在制作中");
+                    /*
+                    var add = permission.addUser2PerMissionGroup(param.qq(), false);
+                    if (add) {
+                        from.sendMessage("成功添加群组");
+                    }
+                     */
+                } else {
+                    throw new TipsException("remove 操作必须输入 qq！\n格式：!sp remove qq=114514 / group=1919810");
+                }
+            }
+            case "ban", "b" -> {
+                if (Objects.nonNull(param.qq()) && param.isUser()) {
+                    var add = permission.addUser2PerMissionGroup(param.qq(), true, true);
+                    if (add) {
+                        from.sendMessage("成功拉黑用户");
+                    }
+                } else if (Objects.nonNull(param.qq())) {
+                    throw new TipsException("群组功能还在制作中");
+                    /*
+                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    if (add) {
+                        from.sendMessage("成功添加群组");
+                    }
+                     */
+                } else {
+                    //ban 玩家名也可以吧？
+                    throw new TipsException("ban 操作必须输入 qq！\n格式：!sp ban qq=114514 / group=1919810");
+                }
+            }
+            case "unban", "u" -> {
+                if (Objects.nonNull(param.qq()) && param.isUser()) {
+                    var add = permission.removeUser4PermissionGroup(param.qq(), true);
+                    if (add) {
+                        from.sendMessage("成功恢复用户");
+                    }
+                } else if (Objects.nonNull(param.qq())) {
+                    throw new TipsException("群组功能还在制作中");
+                    /*
+                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    if (add) {
+                        from.sendMessage("成功添加群组");
+                    }
+                     */
+                } else {
+                    //ban 玩家名也可以吧？
+                    throw new TipsException("unban 操作必须输入 qq！\n格式：!sp unban qq=114514 / group=1919810");
+                }
+            }
+
+            case null, default -> throw new TipsException("请输入 super 操作！超管可用的操作有：\nlist：查询白名单\nblacklist：查询黑名单\nadd：添加用户至白名单\nremove：移除用户出白名单\nban：添加用户至黑名单\nunban：移除用户出黑名单");
+        }
+    }
+
+    private void SendPic(MessageEvent event, Set<Long> groups, String introduction) {
+        StringBuilder sb = new StringBuilder(introduction + "\n");
+        for (Long qq : groups) {
+            sb.append(qq).append("\n");
+        }
+        QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
     }
 }

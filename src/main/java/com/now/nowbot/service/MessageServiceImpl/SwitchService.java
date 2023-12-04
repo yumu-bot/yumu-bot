@@ -6,13 +6,13 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 @Service("SWITCH") //修改service名 "switch" 一定要修改 Permission
@@ -25,11 +25,9 @@ public class SwitchService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?!\\w))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.SWITCH.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

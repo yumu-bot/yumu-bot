@@ -12,9 +12,8 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.*;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
@@ -67,22 +66,28 @@ public class WebClientConfig implements WebFluxConfigurer {
                 })
                 .baseUrl("https://osu.ppy.sh/api/v2/")
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
+                .filter(this::doRetryFilter)
                 .build();
     }
 
-    private ExchangeFilterFunction buildRetryExchangeFilterFunction() {
-        return (request, next) -> next
+    private Mono<ClientResponse> doRetryFilter(ClientRequest request, ExchangeFunction next) {
+        return next
                 .exchange(request)
-                .flatMap(clientResponse -> Mono.just(clientResponse)
-                        .filter(response -> clientResponse.statusCode().isError())
-                        .flatMap(response -> clientResponse.createException())
-                        .flatMap(Mono::error)
-                        .thenReturn(clientResponse))
+                .flatMap(response -> switch (response.statusCode().value()) {
+                    case 504, 503, 502, 429, 408 -> response.createException().flatMap(Mono::error);
+                    default -> Mono.just(response);
+                })
                 .retryWhen(Retry
                         .backoff(3, Duration.ofSeconds(2))
-                        .jitter(0.75)
-                        .doAfterRetry(a -> log.warn("Retrying request"))
-                );
+                        .jitter(0.1)
+                        .doBeforeRetry(a -> log.warn("Retrying request {}", request.url()))
+                )
+                .onErrorResume(RuntimeException.class, e -> {
+                    if (Exceptions.isRetryExhausted(e)) {
+                        return Mono.error(e.getCause());
+                    }
+                    return Mono.error(e);
+                });
     }
 
     @Bean("webClient")

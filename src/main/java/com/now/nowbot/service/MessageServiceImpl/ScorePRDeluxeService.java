@@ -17,22 +17,21 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("SCOREDELUXE")
+//@Service("SCOREDELUXE")
 public class ScorePRDeluxeService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
@@ -56,12 +55,11 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
         this.bindDao = bindDao;
         imageService = image;
     }
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)((ym)?(?<pass>(pass|p(?![a-zA-Z_])))|(ym)?(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
         if (event.getSender().getId() != 365246692L) return false;
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             Permission.stopListener();

@@ -3,22 +3,20 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("TRANS")
 public class TransService implements MessageService<Matcher> {
     static int[] c1 = {0,2,4,5,7,9,11};
     static List<String> d1 = List.of("null","C","C#","D","D#","E","F","F#","G","G#","A","A#","B");
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![a-zA-Z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.TRANS.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

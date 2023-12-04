@@ -41,14 +41,14 @@ public class MatchData {
     private double scalingFactor;
 
     /**
-     * @param remove 是否删除低于 1w 的成绩，true 为删除，false 为保留
-     * @param rematch 是否包含重赛, true 为包含; false 为去重, 去重操作为保留最后一个
+     * @param failed 是否保留低于 1w 的成绩，true 为删除，false 为保留
+     * @param rematch 是否去重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
-    public MatchData(Match match, int skip, int skipEnd, boolean remove, boolean rematch) {
+    public MatchData(Match match, int skip, int skipEnd, boolean failed, boolean rematch) {
         matchStat = match.getMatchStat();
         isMatchEnd = match.isMatchEnd();
         hasCurrentGame = match.getCurrentGameId() != null;
-        var cal = new MatchCal(match, skip, skipEnd, remove, rematch);
+        var cal = new MatchCal(match, skip, skipEnd, failed, rematch);
 
         averageStar = cal.getAverageStar();
         firstMapSID = cal.getFirstMapSID();
@@ -58,7 +58,7 @@ public class MatchData {
         roundCount = rounds.size();
         playerCount = players.size();
 
-        rounds.forEach(r -> scoreCount += r.getScoreInfoList().size());
+        rounds.forEach(r -> scoreCount += r.getScoreInfoList().stream().filter(s -> s.getScore() > 0).toList().size());
 
         if (!CollectionUtils.isEmpty(rounds)) {
             isTeamVS = Objects.equals(rounds.getFirst().getTeamType(), "team-vs");
@@ -87,6 +87,12 @@ public class MatchData {
 
         //挨个用户计算AMG，并记录总AMG，顺便赋予对局的数量（有关联的对局数量）
         //calculateTTS 与 calculateRWS 在这里同时进行
+
+        calculateTTS();
+
+        //自己想想，TotalScore是需要遍历第一遍然后算得的一个最终值
+        //AMG需要这个最终值。
+        //如果同时进行，TotalScore 不完整！！！！！！！！！！！
         calculateAMG();
 
         //挨个计算MQ,并记录最小的MQ
@@ -114,13 +120,14 @@ public class MatchData {
             List<MatchScore> scoreList = round.getScoreInfoList();
 
             int roundScore = scoreList.stream().mapToInt(MatchScore::getScore).reduce(Integer::sum).orElse(0);
-            int roundScoreCount = scoreList.size();
-            if (roundScoreCount == 0) continue;
+            int roundScoreCount = scoreList.stream().filter(s -> s.getScore() > 0).toList().size();
+            if (roundScore == 0) continue;
 
             //每一个分数
             for (MatchScore score: scoreList) {
                 var player = playerData.get(score.getUserId());
-                if (Objects.isNull(player)) continue;
+                if (Objects.isNull(player) || score.getScore() == 0) continue;
+
                 double RRA = 1.0d * score.getScore() * roundScoreCount / roundScore;
                 player.getRRAs().add(RRA);
                 player.getScores().add(score.getScore());
@@ -175,9 +182,12 @@ public class MatchData {
         // 挨个计算放在外面在一个循环进行
     }
 
+    public void calculateTTS() {
+        playerData.values().forEach(PlayerData::calculateTTS);
+    }
+
     public void calculateAMG() {
         playerData.values().forEach(player -> {
-            player.calculateTTS();
             player.calculateRWS();
             player.calculateAMG();
             player.setARC(rounds.size());

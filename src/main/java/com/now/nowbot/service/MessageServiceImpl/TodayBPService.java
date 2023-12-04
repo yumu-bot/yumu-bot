@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -12,7 +11,10 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -22,10 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("TODAYBP")
 public class TodayBPService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     BindDao bindDao;
@@ -38,11 +40,9 @@ public class TodayBPService implements MessageService<Matcher> {
         this.imageService = imageService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(todaybp|(tbp|tdp|t(?![a-zA-Z_])))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?(?!#))?\\s*(#?\\s*(?<day>\\d*)\\s*)$");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.TODAYBP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -127,7 +127,7 @@ public class TodayBPService implements MessageService<Matcher> {
             var data = imageService.getPanelA4(ouMe, bpList, rankList);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("TBP Error: ", e);
+            log.error("TBP Error: ", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
         }
 

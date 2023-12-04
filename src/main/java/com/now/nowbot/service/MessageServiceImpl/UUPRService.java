@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -14,7 +13,10 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -24,10 +26,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("UUPR")
 public class UUPRService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
     RestTemplate template;
     OsuUserApiService userApiService;
@@ -48,11 +50,9 @@ public class UUPRService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![a-zA-Z_])))|uu(?<recent>(recent|r(?!\\w))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*?))?\\s*(#?(?<n>\\d+))?$");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.UUPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -147,7 +147,7 @@ public class UUPRService implements MessageService<Matcher> {
             getTextOutput(scoreList.get(0), from);
         } catch (Exception e) {
             from.sendMessage("UUPR 发送失败，请重试");
-            NowbotApplication.log.error("UUPR 发送失败：", e);
+            log.error("UUPR 发送失败：", e);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -8,16 +7,19 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.KitaException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("KITA")
 public class KitaService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(KitaService.class);
     RestTemplate         template;
     OsuBeatmapApiService beatmapApiService;
     ImageService         imageService;
@@ -30,11 +32,9 @@ public class KitaService implements MessageService<Matcher> {
         imageService = image;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))+(?<noBG>([xX](?![a-zA-Z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.KITA.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -93,7 +93,7 @@ public class KitaService implements MessageService<Matcher> {
                 var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
-                NowbotApplication.log.error("KITA", e);
+                log.error("KITA", e);
                 throw new KitaException(KitaException.Type.KITA_Send_Error);
                 //from.sendMessage("出错了出错了,问问管理员");
             }
@@ -103,7 +103,7 @@ public class KitaService implements MessageService<Matcher> {
                     var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
                     group.sendFile(data, matcher.group("bid") + ' ' + mod + position + ".png");
                 } catch (Exception e) {
-                    NowbotApplication.log.error("KITA-X", e);
+                    log.error("KITA-X", e);
                     throw new KitaException(KitaException.Type.KITA_Send_Error);
                     //from.sendMessage("出错了出错了,问问管理员");
                 }

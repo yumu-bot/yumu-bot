@@ -182,22 +182,26 @@ public class Permission {
         return p.hasFriend(id);
     }
 
-    public boolean addGroup(String sName, Long id, boolean isSuper) {
+    public boolean addUser2PerMissionGroup(String sName, Long id, boolean isSuper) {
         var perm = PERMISSIONS.get(sName);
-        return addGroup(sName, id, isSuper, perm);
+        return addUser2PerMissionGroup(sName, id, isSuper, perm);
     }
 
 
-    public boolean addGroup(Long id, boolean isSuper, boolean isBlack) {
+    public boolean addUser2PerMissionGroup(Long id, boolean isSuper, boolean isBlack) {
         var perm = isBlack ? ALL_B : ALL_W;
-        return addGroup(PERMISSION_ALL, id, isSuper, perm);
+        return addUser2PerMissionGroup(PERMISSION_ALL, id, isSuper, perm);
     }
 
     public static PermissionData getAllW() {
         return ALL_W;
     }
 
-    private boolean addGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
+    public static PermissionData getAllB() {
+        return ALL_B;
+    }
+
+    private boolean addUser2PerMissionGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
         if (perm == null || (!isSuper && perm.isSupper())) {
             return false;
         }
@@ -218,17 +222,17 @@ public class Permission {
         }
     }
 
-    public boolean addFriend(String sName, Long id) {
+    public boolean addUser2FriendGroup(String sName, Long id) {
         var perm = PERMISSIONS.get(sName);
-        return addFriend(id, perm, sName);
+        return addUser2FriendGroup(id, perm, sName);
     }
 
-    public boolean addFriend(Long id) {
+    public boolean addUser2FriendGroup(Long id) {
         var perm = ALL_B;
-        return addFriend(id, perm, PERMISSION_ALL);
+        return addUser2FriendGroup(id, perm, PERMISSION_ALL);
     }
 
-    private boolean addFriend(Long id, PermissionData perm, String sName) {
+    private boolean addUser2FriendGroup(Long id, PermissionData perm, String sName) {
         if (perm == null) {
             return false;
         }
@@ -249,15 +253,15 @@ public class Permission {
 
     public boolean deleteFriend(String sName, Long id) {
         var perm = PERMISSIONS.get(sName);
-        return delFriend(id, perm, sName);
+        return deleteFriend(id, perm, sName);
     }
 
     public boolean deleteFriend(Long id) {
         var perm = ALL_B;
-        return delFriend(id, perm, PERMISSION_ALL);
+        return deleteFriend(id, perm, PERMISSION_ALL);
     }
 
-    private boolean delFriend(Long id, PermissionData perm, String sName) {
+    private boolean deleteFriend(Long id, PermissionData perm, String sName) {
         if (perm == null) {
             return false;
         }
@@ -276,17 +280,17 @@ public class Permission {
         }
     }
 
-    public boolean deleteGroup(String sName, Long id, boolean isSuper) {
+    public boolean removeUser4PermissionGroup(String sName, Long id, boolean isSuper) {
         var perm = PERMISSIONS.get(sName);
-        return deletGroup(sName, id, isSuper, perm);
+        return removeUser4PermissionGroup(sName, id, isSuper, perm);
     }
 
-    public boolean deleteGroup(Long id, boolean isSuper) {
+    public boolean removeUser4PermissionGroup(Long id, boolean isSuper) {
         var perm = ALL_B;
-        return deletGroup(PERMISSION_ALL, id, isSuper, perm);
+        return removeUser4PermissionGroup(PERMISSION_ALL, id, isSuper, perm);
     }
 
-    private boolean deletGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
+    private boolean removeUser4PermissionGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
         if (perm == null || (!isSuper && perm.isSupper())) {
             return false;
         }
@@ -305,7 +309,7 @@ public class Permission {
         }
     }
 
-    public boolean allIsWhite() {
+    public boolean isAllWhite() {
         return isAllWhite;
     }
 

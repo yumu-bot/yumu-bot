@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,6 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("WIKI")
 public class WikiService implements MessageService<Matcher> {
@@ -33,11 +33,9 @@ public class WikiService implements MessageService<Matcher> {
         WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![a-zA-Z_]))+(\\s*(?<key>\\s*))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.WIKI.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

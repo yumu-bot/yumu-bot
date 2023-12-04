@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -8,25 +7,26 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
+import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("QUALIFIEDMAP")
 public class QualifiedMapService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(QualifiedMapService.class);
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
     ImageService         imageService;
 
-    Pattern pattern = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![a-zA-Z_])|q(?![a-zA-Z_]))+\\s*([:：](?<mode>\\w+))?\\s*(#+(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.QUALIFIEDMAP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -92,7 +92,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
             var img = imageService.getPanelA2(data);
             event.getSubject().sendImage(img);
         } catch (Exception e) {
-            NowbotApplication.log.error("QuaMap: ", e);
+            log.error("QuaMap: ", e);
             throw new QualifiedMapException(QualifiedMapException.Type.Q_Send_Error);
         }
     }

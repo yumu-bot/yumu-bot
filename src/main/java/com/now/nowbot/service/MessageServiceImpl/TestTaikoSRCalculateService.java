@@ -2,15 +2,15 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("TESTTAIKOCALCSR")
-public class TestMt4 implements MessageService<Matcher> {
+public class TestTaikoSRCalculateService implements MessageService<Matcher> {
     private static final char CHAR_X = 'x';
     private static final char CHAR_O = 'o';
     private static final char CHAR_NONE = '-';
@@ -34,11 +34,9 @@ public class TestMt4 implements MessageService<Matcher> {
         }
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.TESTTAIKOSRCALCULATE.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

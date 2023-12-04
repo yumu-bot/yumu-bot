@@ -3,19 +3,17 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.OverSRException;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("OVERSR")
 public class OverSRService implements MessageService<Matcher> {
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![a-zA-Z_]))(\\s+(?<SR>[0-9.]*))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.OVERSR.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

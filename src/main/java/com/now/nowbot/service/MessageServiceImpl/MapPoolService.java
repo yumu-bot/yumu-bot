@@ -6,6 +6,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("MAPPOOL")
 public class MapPoolService implements MessageService<Matcher> {
@@ -25,17 +25,14 @@ public class MapPoolService implements MessageService<Matcher> {
     @Resource
     ImageService imageService;
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![a-zA-Z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s]+)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.MAPPOOL.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
         } else return false;
     }
-
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -65,7 +62,7 @@ public class MapPoolService implements MessageService<Matcher> {
     }
 
     public Map<String, List<Long>> parseDataString(String dataStr) throws MapPoolException {
-        String[] dataStrArray = dataStr.trim().split("\\s+|,+|，+|\\|+");
+        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
 
         var output = new LinkedHashMap<String, List<Long>>();

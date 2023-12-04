@@ -72,12 +72,18 @@ public class BindController {
 
             BinUser bd = BinUser.create(code);
             userApiService.refreshUserTokenFirst(bd);
-            bindDao.bindQQ(msg.QQ(), bd);
+            var u = bindDao.bindQQ(msg.QQ(), bd);
             BindService.removeBind(key);
-            sb.append("成功绑定:\n")
+            sb.append("成功绑定:\n<br/>")
                     .append(msg.QQ())
                     .append('>')
-                    .append(bd.getOsuName());
+                    .append(bd.getOsuName())
+                    .append("\n<br/>")
+                    .append("已经默认绑定为[")
+                    .append(u.getOsuUser().getMainMode().getName()).append("]模式")
+                    .append("\n<br/>")
+                    .append("可以使用 `!ymmode [mode]` 来修改默认模式")
+            ;
         } catch (Exception e) {
             log.error("绑定时异常", e);
             sb.append("出现异常,请截图给开发者让他抓紧修bug\n")

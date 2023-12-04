@@ -3,14 +3,16 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 @Service("ECHO")
 public class EchoService implements MessageService<String> {
     @Override
     public boolean isHandle(MessageEvent event, DataValue<String> data) {
-        if (event.getRawMessage().startsWith("#echo")) {
-            data.setValue(event.getRawMessage().substring(5).trim());
+        var m = Instructions.ECHO.matcher(event.getRawMessage());
+        if (m.find()) {
+            data.setValue(m.group("any"));
             return true;
         }
         return false;

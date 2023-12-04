@@ -4,11 +4,11 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instructions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("SETMODE")
 public class SetModeService implements MessageService<Matcher> {
@@ -18,11 +18,9 @@ public class SetModeService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![a-zA-Z_]))+\\s*(?<mode>\\w+)");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.SETMODE.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

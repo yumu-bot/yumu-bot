@@ -11,7 +11,7 @@ public class MapPoolException extends TipsException {
         PO_Send_Error("图片发送失败。") //发送_发送失败
 
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type(String message) {
             this.message = message;
         }

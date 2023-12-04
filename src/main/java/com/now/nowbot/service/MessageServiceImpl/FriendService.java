@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("FRIEND")
 public class FriendService implements MessageService<Matcher> {
@@ -39,11 +39,9 @@ public class FriendService implements MessageService<Matcher> {
         userApiService = osuUserApiService;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?!\\S))\\s*(?<n>\\d+)?(\\s*[:-]\\s*(?<m>\\d+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.FRIEND.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

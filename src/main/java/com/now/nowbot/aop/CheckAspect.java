@@ -135,7 +135,7 @@ public class CheckAspect {
                 //超管无视任何限制
                 return args;
             }
-            if (permission.allIsWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
+            if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
                 return args;
             }
             // 群跟人的id进行全局黑名单校验
@@ -199,7 +199,8 @@ public class CheckAspect {
     }
 
     private static final int retryTime = 4;
-    @Around(value = "apiService()")
+
+    //    @Around(value = "apiService()")
     public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable{
         int i = 0;
         while (true) {

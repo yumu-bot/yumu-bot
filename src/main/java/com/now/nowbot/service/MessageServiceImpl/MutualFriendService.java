@@ -7,11 +7,11 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("MUTUAL")
 public class MutualFriendService implements MessageService<Matcher> {
@@ -25,11 +25,9 @@ public class MutualFriendService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
 
-    Pattern pattern = Pattern.compile("[!！]\\s*(?i)(test)?mu\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.MUTUAL.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

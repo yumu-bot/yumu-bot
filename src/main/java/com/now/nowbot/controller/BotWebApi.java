@@ -8,17 +8,17 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.mappool.MapPool;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
+import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
+import com.now.nowbot.service.MessageServiceImpl.MapPoolService;
 import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.throwable.ServiceException.MonitorNowException;
-import com.now.nowbot.throwable.ServiceException.PPMinusException;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -51,6 +51,10 @@ public class BotWebApi {
     MonitorNowService monitorNowService;
     @Resource
     ImageService imageService;
+    @Resource
+    BPAnalysisService bpAnalysisService;
+    @Resource
+    MapPoolService mapPoolService;
 
 
     /**
@@ -111,13 +115,13 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
                                               @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
                                               @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-                                              @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
+                                              @OpenResource(name = "keep-low", desp = "保留低分成绩") @Nullable Boolean f,
                                               @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
-        var data = monitorNowService.getImage(mid, k, d, !f, r);
+        var data = monitorNowService.getImage(mid, k, d, f, r);
         return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
     }
 
@@ -136,8 +140,8 @@ public class BotWebApi {
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-            @OpenResource(name = "ignore-failed", desp = "忽略失败成绩") @Nullable Boolean f,
-            @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r
+            @OpenResource(name = "keep-failed", desp = "保留低分成绩") @Nullable Boolean f,
+            @OpenResource(name = "remove-repeat", desp = "忽略重复对局") @Nullable Boolean r
     ) throws MRAException {
         if (k == null) k = 0;
         if (d == null) d = 0;
@@ -250,8 +254,7 @@ public class BotWebApi {
                 var BPList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
                 ArrayList<Integer> rankList = new ArrayList<>();
 
-                int day = Math.min(999, value1);
-                LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
+                LocalDateTime dayBefore = LocalDateTime.now().minusDays(value1);
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
                 scoreList = new ArrayList<>();
@@ -270,53 +273,6 @@ public class BotWebApi {
 
         return new ResponseEntity<>(data, getImageHeader(userName + suffix, data.length), HttpStatus.OK);
     }
-
-
-
-    /*
-    public ResponseEntity<byte[]> getScores(@RequestParam("u1") String userName,
-                                            @Nullable @RequestParam("mode") String playMode,
-                                            @Nullable @RequestParam("type") Integer type,
-                                            @RequestParam("value") int value
-    ) {
-        var mode = OsuMode.getMode(playMode);
-        userName = userName.trim();
-        //绘制自己的卡片
-        var infoMe = osuGetService.getPlayerInfo(userName, mode);
-        List<Score> bps;
-        if (type == null || type == 0) {
-            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, 100);
-            // 时间计算
-            int dat = -Math.min(999, value);
-            LocalDateTime dayBefore = LocalDateTime.now().plusDays(dat);
-            bps = bps.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
-        } else if (type == 1) {
-            bps = osuGetService.getBestPerformance(infoMe.getUID(), mode, 0, value);
-        } else if (type == 2) {
-            bps = osuGetService.getRecentN(infoMe.getUID(), mode, 0, value);
-        } else if (type == 3) {
-            bps = osuGetService.getAllRecentN(infoMe.getUID(), mode, 0, value);
-        } else {
-            throw new RuntimeException("type 参数错误");
-        }
-        var lines = new ArrayList<Image>(bps.size());
-        try {
-            var card = CardBuilder.getUserCard(infoMe);
-            for (int i = 0; i < bps.size(); i++) {
-                lines.add(new HCardBuilder(bps.get(i), i + 1).build());
-            }
-            var panel = new TBPPanelBuilder(lines.size());
-            panel.drawBanner(PanelUtil.getBanner(null)).mainCrawCard(card.build()).drawBp(lines);
-            Image build = panel.build(mode == OsuMode.DEFAULT ? infoMe.getPlayMode() : mode);
-            var data = Objects.requireNonNull(EncoderJPEG.encode(build, EncodeJPEGOptions.DEFAULT.withQuality(80))).getBytes();
-            build.close();
-            return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-     */
 
     @GetMapping(value = "scores/bp-days")
     @OpenResource(name = "ppm", desp = "查询今日最好成绩 !ymtodaybp (!t)")
@@ -366,90 +322,6 @@ public class BotWebApi {
     ) {
         return getScore(userName, playMode, 3, value1, value2);
     }
-
-
-    /*
-      单个成绩接口
-
-      @param userName 用户
-     * @param playMode 模式,可为空
-     * @param type     请求类型,使用整数; 不传或者 0: 查询pr; 1: 查询bp; 2:查询谱面成绩;
-     * @param value    查询pr: 前第N个成绩, 不传默认为最近一次,从 0 开始
-     *                 查询bp: bp,从0开始, 不传默认为bp1(value == 0)
-     *                 查询谱面成绩: 谱面id, 不传报错
-     * @param param    查询pr: 0为不包含失败,1为包含失败,不传默认为0
-     *                 查询bp: 无需此值
-     *                 查询谱面成绩: 指定 mod_int, 不传默认谱面最高成绩
-     */
-    /*
-    public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
-                                           @Nullable @RequestParam("mode") String playMode,
-                                           @Nullable @RequestParam("type") Integer type,
-                                           @Nullable @RequestParam("value") Integer value,
-                                           @Nullable @RequestParam("param") Integer param
-    ) {
-        Score score = null;
-        userName = userName.trim();
-        var mode = OsuMode.getMode(playMode);
-        long uid = osuGetService.getOsuId(userName);
-        var userInfo = osuGetService.getPlayerInfo(uid, mode);
-        if (type == null || type == 0) {
-            if (value == null) value = 0;
-            value = Math.min(99, Math.max(0, value));
-            List<Score> scores;
-            if (param == null || param == 0) {
-                scores = osuGetService.getRecentN(uid, mode, value, 1);
-            } else {
-                scores = osuGetService.getAllRecentN(uid, mode, value, 1);
-            }
-            if (scores.isEmpty()) throw new RuntimeException(ScoreException.Type.SCORE_Recent_NotFound.message);
-            score = scores.get(0);
-
-        } else if (type == 1) {
-            if (value == null) value = 0;
-            value = Math.min(99, value - 1);
-            value = Math.max(0, value);
-            var scores = osuGetService.getBestPerformance(uid, mode, value, 1);
-            if (scores.isEmpty()) throw new RuntimeException(BPException.Type.BP_Player_FetchFailed.message);
-            score = scores.get(0);
-        } else if (type == 2) {
-            if (value == null) throw new RuntimeException("value 参数错误");
-
-            if (param != null) {
-                List<Score> a;
-                try {
-                    a = osuGetService.getScoreAll(value, uid, mode);
-                } catch (Exception e) {
-                    throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
-                }
-                for (var s : a) {
-                    if (s.getMods().isEmpty() && Mod.None.check(param)) {
-                        score = s;
-                        break;
-                    } else if (Mod.getModsValueFromStr(s.getMods()) == param) {
-                        score = s;
-                        break;
-                    }
-                }
-                if (score == null) {
-                    throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
-                } else {
-                    var bm = new BeatMap();
-                    bm.setBID(Long.valueOf(value));
-                    score.setBeatMap(bm);
-                }
-            } else {
-                score = osuGetService.getScore(value, uid, mode).getScore();
-            }
-        } else {
-            throw new RuntimeException("type 参数错误");
-        }
-
-        var data = imageService.getPanelE(userInfo, score, osuGetService);
-        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
-    }
-
-     */
 
     /**
      * n 从0开始, 不传默认为0
@@ -547,11 +419,36 @@ public class BotWebApi {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
         long uid = userApiService.getOsuId(userName);
-        var userInfo = userApiService.getPlayerInfo(uid, mode);
-        if (mode != OsuMode.DEFAULT) userInfo.setPlayMode(mode.getName());
+        var osuUser = userApiService.getPlayerInfo(uid, mode);
+        if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
         var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
-        var data = imageService.getPanelJ(userInfo, scores, userApiService);
+
+        var d = bpAnalysisService.parseData(osuUser, scores, userApiService);
+        var data = imageService.getPanelJ(d);
         return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
+    }
+
+    @PostMapping(value = "pool")
+    public ResponseEntity<byte[]> getPool(
+            @RequestParam("name") @Nullable String nameStr,
+            @RequestBody String dataStr
+    ) throws RuntimeException {
+
+        Map<String, List<Long>> d;
+        try {
+            d = mapPoolService.parseDataString(dataStr);
+        } catch (MapPoolException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(MapPoolException.Type.PO_Send_Error.message);
+        }
+
+        var mapPool = new MapPool(nameStr, d, beatmapApiService);
+
+        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.PO_Map_Empty.message);
+
+        var data = imageService.getPanelH(mapPool);
+        return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);
     }
 
     /**

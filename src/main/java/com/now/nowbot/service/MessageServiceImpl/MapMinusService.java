@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.ppminus3.MapMinus;
@@ -9,16 +8,19 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("MAPMINUS")
 public class MapMinusService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(MapMinusService.class);
     OsuBeatmapApiService beatmapApiService;
     RestTemplate template;
     ImageService imageService;
@@ -31,11 +33,9 @@ public class MapMinusService implements MessageService<Matcher> {
         imageService = image;
     }
 
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(friendlegacy|fl(?![a-zA-Z_]))+(\\s*(?<n>\\d+))?(\\s*[:-]\\s*(?<m>\\d+))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.MAPMINUS.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -87,7 +87,7 @@ public class MapMinusService implements MessageService<Matcher> {
             var data = imageService.getPanelB2(beatMap, mapMinus);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("MapMinus", e);
+            log.error("MapMinus", e);
             throw new MapMinusException(MapMinusException.Type.MM_Send_Error);
             //from.sendMessage("出错了出错了,问问管理员");
         }

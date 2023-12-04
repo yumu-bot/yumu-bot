@@ -4,20 +4,19 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("HELP")
 public class HelpService implements MessageService<Matcher> {
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.HELP.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;

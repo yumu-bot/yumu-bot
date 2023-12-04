@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -10,16 +9,19 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@Service("IMMAPPER")
+@Service("IMAPPER")
 public class IMapperService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(IMapperService.class);
     OsuUserApiService userApiService;
     OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
@@ -37,12 +39,9 @@ public class IMapperService implements MessageService<Matcher> {
         imageService = image;
     }
 
-
-    Pattern pattern = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![a-zA-Z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = pattern.matcher(event.getRawMessage().trim());
+        var m = Instructions.IMAPPER.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -87,7 +86,7 @@ public class IMapperService implements MessageService<Matcher> {
             var data = imageService.getPanelM(osuUser, userApiService, beatmapApiService);
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
-            NowbotApplication.log.error("IMapper", e);
+            log.error("IMapper", e);
             throw new IMapperException(IMapperException.Type.IM_Send_Error);
         }
     }
