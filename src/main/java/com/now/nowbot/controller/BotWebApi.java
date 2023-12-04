@@ -364,14 +364,14 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getBeatMapScore(
             @NotNull @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @NotNull @RequestParam("bid") Integer value,
+            @NotNull @RequestParam("bid") Integer BID,
             @Nullable @RequestParam("mods") String mods
     ) {
         OsuUser osuUser;
 
         OsuMode mode = OsuMode.getMode(playMode);
         long UID;
-        int modInt = 0;
+        Integer modInt = null;
         if (mods != null) modInt = Mod.getModsValue(mods);
 
         List<Score> scoreList;
@@ -385,12 +385,16 @@ public class BotWebApi {
         }
 
         try {
-            scoreList = scoreApiService.getScoreAll(value, UID, mode);
+            scoreList = scoreApiService.getScoreAll(BID, UID, mode);
         } catch (Exception e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
         }
 
         for (var s : scoreList) {
+            if (Objects.isNull(modInt)) {
+                score = scoreList.get(0);
+                break;
+            }
             if (modInt == 0 && (Objects.isNull(s.getMods()) || s.getMods().isEmpty())) {
                 score = s;
                 break;
@@ -404,7 +408,7 @@ public class BotWebApi {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
-            beatMap.setBID(Long.valueOf(value));
+            beatMap.setBID(Long.valueOf(BID));
             score.setBeatMap(beatMap);
         }
 
