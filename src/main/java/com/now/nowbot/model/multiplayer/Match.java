@@ -85,7 +85,18 @@ public class Match {
 
     public void parseNextData(Match m) {
         // 合并事件
-        this.events.addAll(0, m.getEvents());
+        if (events.getFirst().getId() > m.getEvents().getLast().getId()) {
+            this.events.addAll(0, m.getEvents());
+        } else if (events.getLast().getId() < m.getEvents().getFirst().getId()){
+            this.events.addAll(m.getEvents());
+        } else if (events.getFirst().getId() > m.getEvents().getFirst().getId()) {
+            events.removeIf(e -> e.getId() <= m.getEvents().getLast().getId());
+            this.events.addAll(0, m.getEvents());
+        } else if (events.getLast().getId() < m.getEvents().getLast().getId()){
+            events.removeIf(e -> e.getId() >= m.getEvents().getFirst().getId());
+            this.events.addAll(m.getEvents());
+        }
+
         this.players.addAll(m.getPlayers());
         //更新状态
         this.matchStat = m.getMatchStat();

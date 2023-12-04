@@ -3,6 +3,9 @@ package com.now.nowbot.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -42,10 +45,10 @@ public class AsyncMethodExecutor {
         }
     }
 
-    private static final ReentrantLock reentrantLock = new ReentrantLock();
+    private static final ReentrantLock                             reentrantLock  = new ReentrantLock();
     private static final ConcurrentHashMap<Object, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Object, Condition> locks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Object, Object> results = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Object, Condition>      locks          = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Object, Object>         results        = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unused")
     public static <T> T execute(Supplier<T> supplier, Object key, T defaultValue) throws Exception {
@@ -164,5 +167,40 @@ public class AsyncMethodExecutor {
             Integer count = conditionCount.remove(lock);
             return Objects.nonNull(count) ? count : 0;
         }
+    }
+
+    public static void AsyncRunnable(Collection<Runnable> works) {
+        works.stream()
+                .<java.lang.Runnable>map(w -> (() -> {
+                    try {
+                        w.run();
+                    } catch (Throwable e) {
+                        log.error("Async error", e);
+                    }
+                }))
+                .forEach(Thread::startVirtualThread);
+    }
+
+    public static <T> List<T> AsyncSupplier(Collection<Supplier<T>> works) {
+        int size = works.size();
+        var lock = new CountDownLatch(size);
+        final List<T> results = new LinkedList<>();
+        works.stream()
+                .<java.lang.Runnable>map(w -> () -> {
+                    try {
+                        T result = w.get();
+                        results.add(result);
+                    } catch (Exception e) {
+                        results.add(null);
+                        log.error("AsyncSupplier error", e);
+                    }
+                })
+                .forEach(Thread::startVirtualThread);
+        try {
+            lock.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.error("lock error", e);
+        }
+        return results;
     }
 }
