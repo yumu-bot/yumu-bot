@@ -10,6 +10,7 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -49,7 +50,7 @@ public class LeverTestService implements MessageService<BinUser> {
         var bp = scoreApiService.getBestPerformance(user, OsuMode.OSU, 0, 100);
         var lastBp = bp.getLast();
         if (lastBp.getPP() < 130 || bp.size() != 100) {
-            throw new RuntimeException("你太菜了, 不好评价");
+            throw new TipsException("你太菜了, 不好评价");
         }
         double data = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
