@@ -199,7 +199,7 @@ public class AsyncMethodExecutor {
                 })
                 .forEach(Thread::startVirtualThread);
         try {
-            lock.await(30, TimeUnit.SECONDS);
+            lock.await(120, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             log.error("lock error", e);
         }
