@@ -56,19 +56,6 @@ public class CsvMatchService implements MessageService<Matcher> {
 
         if (isMultiple) {
             try {
-                id = Integer.parseInt(matcher.group("data"));
-                from.sendMessage("正在处理" + id);
-                parseCRA(sb, id);
-            } catch (NullPointerException e) {
-                throw new MRAException(MRAException.Type.RATING_Match_NotFound);
-            } catch (MRAException e) {
-                throw e;
-            } catch (Exception e) {
-                log.error("CSV-Round (Rating) 获取失败");
-                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
-            }
-        } else {
-            try {
                 ids = parseDataString(matcher.group("data"));
                 from.sendMessage("正在处理系列赛");
                 parseCRAs(sb, ids);
@@ -78,17 +65,30 @@ public class CsvMatchService implements MessageService<Matcher> {
                 log.error("CSV-Series 获取失败");
                 throw new MRAException(MRAException.Type.RATING_Parameter_Error);
             }
+        } else {
+            try {
+                id = Integer.parseInt(matcher.group("data"));
+                from.sendMessage("正在处理" + id);
+                parseCRA(sb, id);
+            } catch (NullPointerException e) {
+                throw new MRAException(MRAException.Type.RATING_Match_NotFound);
+            } catch (MRAException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("CSV-Round (Rating) 获取失败", e);
+                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
+            }
         }
 
         //必须群聊
         if (from instanceof Group group) {
             try {
                 if (isMultiple) {
-                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
-                } else {
                     if (Objects.nonNull(ids)) {
                         group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + "s.csv");
                     }
+                } else {
+                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
                 }
             } catch (Exception e) {
                 log.error("CSV: 发送失败", e);
