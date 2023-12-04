@@ -41,13 +41,14 @@ public class LeverTestService implements MessageService<BinUser> {
         if (user.getMode() != OsuMode.OSU) {
             event.getSubject().sendMessage("本功能仅支持osu!");
         }
+        user.setMode(OsuMode.OSU);
         data.setValue(user);
         return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, BinUser user) throws Throwable {
-        var bp = scoreApiService.getBestPerformance(user, OsuMode.OSU, 0, 100);
+        var bp = scoreApiService.getBestPerformance(user, user.getMode(), 0, 100);
         var lastBp = bp.getLast();
         if (lastBp.getPP() < 130 || bp.size() != 100) {
             throw new TipsException("你太菜了, 不好评价");
