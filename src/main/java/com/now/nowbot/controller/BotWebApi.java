@@ -27,7 +27,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -364,43 +366,39 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getBeatMapScore(
             @NotNull @RequestParam("u1") String userName,
             @Nullable @RequestParam("mode") String playMode,
-            @NotNull @RequestParam("bid") Integer BID,
+            @NotNull @RequestParam("bid") Integer bid,
             @Nullable @RequestParam("mods") String mods
     ) {
         OsuUser osuUser;
 
         OsuMode mode = OsuMode.getMode(playMode);
-        long UID;
-        Integer modInt = null;
-        if (mods != null) modInt = Mod.getModsValue(mods);
+        long uid;
+        int modInt = 0;
+        if (Objects.nonNull(mods)) modInt = Mod.getModsValue(mods);
 
         List<Score> scoreList;
         Score score = null;
 
         try {
             osuUser = userApiService.getPlayerInfo(userName);
-            UID = osuUser.getUID();
-        } catch (Exception e) {
-            throw new RuntimeException(ScoreException.Type.SCORE_Player_NotFound.message);
-        }
-
-        try {
-            scoreList = scoreApiService.getScoreAll(BID, UID, mode);
-        } catch (Exception e) {
+            uid = osuUser.getUID();
+        } catch (WebClientResponseException.NotFound e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
         }
 
-        for (var s : scoreList) {
-            if (Objects.isNull(modInt)) {
-                score = scoreList.get(0);
-                break;
-            }
-            if (modInt == 0 && (Objects.isNull(s.getMods()) || s.getMods().isEmpty())) {
-                score = s;
-                break;
-            } else if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
-                score = s;
-                break;
+        if (Objects.isNull(mods)) {
+            score = scoreApiService.getScore(bid, uid, mode).getScore();
+        } else {
+            try {
+                scoreList = scoreApiService.getScoreAll(bid, uid, mode);
+                for (var s : scoreList) {
+                    if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
+                        score = s;
+                        break;
+                    }
+                }
+            } catch (WebClientResponseException.NotFound e) {
+                throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
             }
         }
 
@@ -408,7 +406,7 @@ public class BotWebApi {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
-            beatMap.setBID(Long.valueOf(BID));
+            beatMap.setBID(Long.valueOf(bid));
             score.setBeatMap(beatMap);
         }
 
