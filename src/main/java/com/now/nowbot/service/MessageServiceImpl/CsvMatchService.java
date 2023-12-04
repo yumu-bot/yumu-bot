@@ -23,22 +23,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("CRA")
-public class CsvRatingService implements MessageService<Matcher> {
-    Logger log = LoggerFactory.getLogger(CsvRatingService.class);
+@Service("CSV")
+public class CsvMatchService implements MessageService<Matcher> {
+    Logger log = LoggerFactory.getLogger(CsvMatchService.class);
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     OsuMatchApiService osuMatchApiService;
 
     @Autowired
-    CsvRatingService(OsuMatchApiService osuMatchApiService) {
+    CsvMatchService(OsuMatchApiService osuMatchApiService) {
         this.osuMatchApiService = osuMatchApiService;
     }
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.CSVRATING.matcher(event.getRawMessage().trim());
+        var m = Instructions.CSVMATCH.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -87,7 +87,7 @@ public class CsvRatingService implements MessageService<Matcher> {
                     group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
                 } else {
                     if (Objects.nonNull(ids)) {
-                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + ".csv");
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + "s.csv");
                     }
                 }
             } catch (Exception e) {
