@@ -50,8 +50,8 @@ public class CsvRatingService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var isMultiple = matcher.group("x") != null;
-        int id;
-        List<Integer> ids;
+        int id = 0;
+        List<Integer> ids = null;
         StringBuilder sb = new StringBuilder();
 
         if (isMultiple) {
@@ -83,7 +83,13 @@ public class CsvRatingService implements MessageService<Matcher> {
         //必须群聊
         if (from instanceof Group group) {
             try {
-                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
+                if (isMultiple) {
+                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
+                } else {
+                    if (Objects.nonNull(ids)) {
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + ".csv");
+                    }
+                }
             } catch (Exception e) {
                 log.error("CSV: 发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_CRAFailed);
