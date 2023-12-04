@@ -18,24 +18,27 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("CRA")
-public class CsvRatingService implements MessageService<Matcher> {
-    Logger log = LoggerFactory.getLogger(CsvRatingService.class);
+@Service("CSV")
+public class CsvMatchService implements MessageService<Matcher> {
+    Logger log = LoggerFactory.getLogger(CsvMatchService.class);
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     OsuMatchApiService osuMatchApiService;
 
     @Autowired
-    CsvRatingService(OsuMatchApiService osuMatchApiService) {
+    CsvMatchService(OsuMatchApiService osuMatchApiService) {
         this.osuMatchApiService = osuMatchApiService;
     }
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.CSVRATING.matcher(event.getRawMessage().trim());
+        var m = Instructions.CSVMATCH.matcher(event.getRawMessage().trim());
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -46,25 +49,49 @@ public class CsvRatingService implements MessageService<Matcher> {
     @CheckPermission(isGroupAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        var isLite = matcher.group("x") != null;
-        int id;
-
-        try {
-            id = Integer.parseInt(matcher.group("id"));
-        } catch (NullPointerException e) {
-            throw new MRAException(MRAException.Type.RATING_Match_NotFound);
-        }
-
+        var isMultiple = matcher.group("x") != null;
+        int id = 0;
+        List<Integer> ids = null;
         StringBuilder sb = new StringBuilder();
-        from.sendMessage("正在处理" + id);
-        CRACalculate(sb, id, isLite);
+
+        if (isMultiple) {
+            try {
+                id = Integer.parseInt(matcher.group("data"));
+                from.sendMessage("正在处理" + id);
+                parseCRA(sb, id);
+            } catch (NullPointerException e) {
+                throw new MRAException(MRAException.Type.RATING_Match_NotFound);
+            } catch (MRAException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("CSV-Round (Rating) 获取失败");
+                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
+            }
+        } else {
+            try {
+                ids = parseDataString(matcher.group("data"));
+                from.sendMessage("正在处理系列赛");
+                parseCRAs(sb, ids);
+            } catch (MRAException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("CSV-Series 获取失败");
+                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
+            }
+        }
 
         //必须群聊
         if (from instanceof Group group) {
             try {
-                group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), matcher.group("id") + ".csv");
+                if (isMultiple) {
+                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
+                } else {
+                    if (Objects.nonNull(ids)) {
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + "s.csv");
+                    }
+                }
             } catch (Exception e) {
-                log.error("CRA:", e);
+                log.error("CSV: 发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_CRAFailed);
             }
         } else {
@@ -72,7 +99,7 @@ public class CsvRatingService implements MessageService<Matcher> {
         }
     }
 
-    public void CRACalculate(StringBuilder sb, int matchID, boolean isLite) throws MRAException {
+    public void parseCRA(StringBuilder sb, int matchID) throws MRAException {
         Match match;
 
         try {
@@ -89,14 +116,54 @@ public class CsvRatingService implements MessageService<Matcher> {
             var scores = r.getScoreInfoList();
             getRoundStrings(sb, r);
             for (var s : scores) {
-                if (isLite) {
-                    getScoreStringsLite(sb, s);
-                } else {
-                    getScoreStrings(sb, s);
-                }
+                getScoreStrings(sb, s);
             }
         }
     }
+
+    public void parseCRAs(StringBuilder sb, List<Integer> matchIDs) throws MRAException {
+        if (Objects.isNull(matchIDs) || matchIDs.isEmpty()) throw new MRAException(MRAException.Type.RATING_Series_FetchFailed);
+
+        for (Integer matchID: matchIDs) {
+            Match match;
+
+            try {
+                match = osuMatchApiService.getMatchInfo(matchID, 10);
+            } catch (Exception e) {
+                throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
+            }
+
+            var cal = new MatchCal(match, 0, 0, true, true);
+            cal.addMicroUser4MatchScore();
+            var rounds = cal.getRoundList();
+
+            //多比赛
+            getMatchStrings(sb, match);
+            for (var r : rounds) {
+                var scores = r.getScoreInfoList();
+                getRoundStrings(sb, r);
+                for (var s : scores) {
+                    getScoreStringsLite(sb, s);
+                }
+            }
+
+            //多比赛分隔符
+            sb.append('\n');
+        }
+    }
+
+    private void getMatchStrings(StringBuilder sb, Match match){
+        try {
+            sb.append(match.getMatchStat().getStartTime().format(Date1)).append(',')
+                    .append(match.getMatchStat().getStartTime().format(Date2)).append(',')
+                    .append(match.getMatchStat().getId()).append(',')
+                    .append(match.getMatchStat().getName()).append(',')
+                    .append('\n');
+        } catch (Exception e) {
+            sb.append(e.getMessage()).append('\n');//.append("  error---->")
+        }
+    }
+
 
     private void getRoundStrings(StringBuilder sb, MatchRound round){
         try {
@@ -148,5 +215,25 @@ public class CsvRatingService implements MessageService<Matcher> {
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
         }
+    }
+
+    private List<Integer> parseDataString(String dataStr) throws MRAException {
+        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
+        if (dataStr.isBlank() || dataStrArray.length == 0) return null;
+
+        var matches = new ArrayList<Integer>();
+
+        for (String s: dataStrArray) {
+            int id;
+
+            try {
+                id = Integer.parseInt(s);
+                matches.add(id);
+            } catch (NumberFormatException e) {
+                throw new MRAException(MRAException.Type.RATING_Series_NotFound, s);
+            }
+        }
+
+        return matches;
     }
 }
