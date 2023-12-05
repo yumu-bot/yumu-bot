@@ -83,7 +83,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         MatchListener listener = null;
 
         if (Objects.equals(param.operate, "start")) {
-            from.sendMessage("开始监听比赛" + param.id);
+            from.sendMessage("开始监听比赛 " + param.id);
             listener = new MatchListener(match, osuMatchApiService);
             listener.startListener();
         }
@@ -106,7 +106,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         var b = eventL.getRound().getBeatmap();
                         var s = b.getBeatMapSet();
 
-                        String mapInfo = s.getArtist() + " - " + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
+                        String mapInfo = '(' + b.getId() + ") "+ s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
                         from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
                     } else {
                         //比赛结束，发送成绩
