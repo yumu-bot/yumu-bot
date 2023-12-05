@@ -42,11 +42,11 @@ public class MatchListener {
                     throw new RuntimeException(e);
                 }
                 System.out.println("post");
-                var m = matchApiService.getMatchInfoAfter(mid, lastId);
-                if (m.latestEventId == lastId) continue;
-                lastId = m.latestEventId;
-                match.parseNextData(m);
-                onEvents(m.getEvents(), match);
+                var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
+                if (newMatch.latestEventId == lastId) continue;
+                lastId = newMatch.latestEventId;
+                match.parseNextData(newMatch);
+                onEvents(newMatch.getEvents(), match);
             }
         });
     }
