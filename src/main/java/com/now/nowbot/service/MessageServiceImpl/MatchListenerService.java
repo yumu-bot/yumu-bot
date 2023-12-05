@@ -147,10 +147,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
             // 重新判断指令
             var result = new DataValue<ListenerParam>();
             if (!isHandle(unlockEvent, result)) continue;
-            param = result.getValue();
+            var newParam = result.getValue();
             // 如果是收到 stop <match id> 就停止
-            if (Objects.equals(param.operate, "stop") && Objects.nonNull(listener)) {
-                from.sendMessage("停止监听" + param.id);
+            if (Objects.equals(newParam.operate, "stop") && Objects.nonNull(listener)) {
+                from.sendMessage("停止监听" + newParam.id);
                 listener.stopListener();
                 break;
             }
