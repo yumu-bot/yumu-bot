@@ -54,7 +54,8 @@ public class GroupStatisticsService implements MessageService<Long> {
         try {
             if (Files.isRegularFile(CachePath)) {
                 String jsonStr = Files.readString(CachePath);
-                @SuppressWarnings("all")
+
+                //noinspection Convert2Diamond
                 HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<HashMap<Long, Long>>() {
                 });
                 if (Objects.nonNull(cache)) {
