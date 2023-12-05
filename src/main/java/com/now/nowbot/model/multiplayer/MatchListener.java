@@ -41,11 +41,15 @@ public class MatchListener {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                System.out.println("post");
                 var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
                 if (newMatch.latestEventId == lastId) continue;
                 lastId = newMatch.latestEventId;
-                match.parseNextData(newMatch);
+                var lastEvent = newMatch.getEvents().getLast();
+                if (lastEvent.getDetail().type().equals("other")) {
+                    --lastId;
+                } else {
+                    match.parseNextData(newMatch);
+                }
                 onEvents(newMatch.getEvents(), match);
             }
         });
