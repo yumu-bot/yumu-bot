@@ -96,13 +96,15 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         if (Objects.nonNull(listener)) {
             listener.addEventListener((eventList, newMatch) -> {
+                var gameList = eventList.stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getId() != null).toList();
+                MatchEvent eventL = null;
+                if (!gameList.isEmpty()) eventL = gameList.getLast();
+
                 // 发送新比赛
-                if (!eventList.isEmpty() && Objects.equals(eventList.getLast().getDetail().type(), "other")
-                        && Objects.nonNull(eventList.getLast().getRound())) {
-                    var eventL = eventList.getLast();
+                if (Objects.nonNull(eventL) && Objects.equals(eventL.getDetail().type(), "other") && Objects.nonNull(eventL.getRound())) {
                     var scores = eventL.getRound().getScoreInfoList();
                     //刚开始比赛，没分
-                    if (Objects.isNull(scores) || scores.isEmpty()) {
+                    if (scores.isEmpty()) {
                         var b = eventL.getRound().getBeatmap();
                         var s = b.getBeatMapSet();
 
@@ -148,18 +150,18 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         while (true) {
             lockEvent = lock.get();
-            // 线程锁只能用一次, 记得重复取锁
-            lock = ASyncMessageUtil.getLock(lockEvent, 6 * 3600 * 1000);
-
-            // 超时
-            if (lockEvent == null) {
+            // 超时，但是只能在玩家用指令的时候才能触发。能做个定时功能码？
+            if (Objects.isNull(lockEvent)) {
                 throw new MatchListenerException(MatchListenerException.Type.ML_Match_OverTime, param.id);
             }
+            // 线程锁只能用一次, 记得重复取锁
+            lock = ASyncMessageUtil.getLock(lockEvent, 6 * 3600 * 1000);
 
             // 重新判断指令
             var dataValue2 = new DataValue<ListenerParam>();
             if (!isHandle(lockEvent, dataValue2)) continue;
             var param2 = dataValue2.getValue();
+
             // 如果是收到 stop <match id> 就停止
             if (Objects.equals(param2.operate, "stop") && Objects.nonNull(listener)) {
                 from.sendMessage("停止监听 " + param.id + "：调用者关闭");

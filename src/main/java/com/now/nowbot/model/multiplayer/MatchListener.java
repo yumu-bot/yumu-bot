@@ -5,6 +5,7 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -38,8 +39,9 @@ public class MatchListener {
             long recordID;
             //recordID = match.latestEventId;
             try {
-                recordID = match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getId() != null).toList().getLast().getId();
-            } catch (NullPointerException e) {
+                var games = match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getId() != null).toList();
+                recordID = games.getLast().getId() - 1;
+            } catch (NoSuchElementException e) {
                 recordID = match.latestEventId;
             }
 
@@ -50,15 +52,25 @@ public class MatchListener {
                     throw new RuntimeException(e);
                 }
                 var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
-                if (newMatch.latestEventId == recordID) continue;
+
+                long newID;
+                try {
+                    var newGames = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getId() != null).toList();
+                    newID = newGames.getLast().getId();
+                } catch (NoSuchElementException e) {
+                    newID = newMatch.latestEventId;
+                }
+
+                if (newID == recordID) continue;
+
                 if (Objects.nonNull(newMatch.getCurrentGameId())) {
-                    if (recordID != newMatch.latestEventId - 1) {
-                        recordID = newMatch.latestEventId - 1;
+                    if (recordID != newID - 1) {
+                        recordID = newID - 1;
                         onEvents(newMatch.getEvents(), match);
                     }
                     continue;
                 }
-                recordID = newMatch.latestEventId;
+                recordID = newID;
                 match.parseNextData(newMatch);
                 onEvents(newMatch.getEvents(), match);
             }
