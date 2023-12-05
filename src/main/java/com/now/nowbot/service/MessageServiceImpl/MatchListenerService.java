@@ -1,6 +1,9 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchListener;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -14,7 +17,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
 
@@ -71,17 +74,18 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         try {
             match = osuMatchApiService.getMatchInfo(param.id, 10);
-        } catch (HttpClientErrorException e) {
+        } catch (WebClientResponseException.NotFound e) {
             throw new MatchListenerException(MatchListenerException.Type.ML_MatchID_NotFound);
         }
 
-        if (Objects.equals(match.getEvents().getLast().getDetail().type(), "match-disbanded")) {
+        if (Objects.equals(match.getEvents().getLast().getDetail().type(), "match-disbanded") || match.isMatchEnd()) {
             throw new MatchListenerException(MatchListenerException.Type.MR_Match_End);
         }
 
         MatchListener listener = null;
 
         if (Objects.equals(param.operate, "start")) {
+            from.sendMessage("开始监听比赛" + param.id);
             listener = new MatchListener(match, osuMatchApiService);
             listener.startListener();
         }
@@ -111,7 +115,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         while (true) {
             unlockEvent = threadLock.get();
             // 线程锁只能用一次, 记得重复取锁
-            threadLock = ASyncMessageUtil.getLock(unlockEvent);
+            threadLock = ASyncMessageUtil.getLock(unlockEvent, 6 * 3600 * 1000);
             // 如果是收到 stop <match id> 就停止
             if (Objects.equals(param.operate, "stop") && Objects.nonNull(listener)) {
                 from.sendMessage("停止监听" + param.id);
