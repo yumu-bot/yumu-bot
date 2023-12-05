@@ -29,10 +29,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public boolean isHandle(MessageEvent event, DataValue<ListenerParam> data) throws Throwable {
         var matcher = Instructions.LISTENER.matcher(event.getRawMessage().trim());
         var param = new MatchListenerService.ListenerParam();
-        var id = matcher.group("matchid");
-        var op = matcher.group("operate");
 
         if (matcher.find()) {
+            var id = matcher.group("matchid");
+            var op = matcher.group("operate");
+
             if (Objects.nonNull(id) && !id.isBlank()) {
                 try {
                     param.id = Integer.parseInt(matcher.group("matchid"));
@@ -51,9 +52,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             data.setValue(param);
             return true;
+        } else {
+            return false;
         }
-
-        return false;
     }
 
     @Override
