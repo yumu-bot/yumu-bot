@@ -11,6 +11,7 @@ public class MatchListenerException extends TipsException {
         ML_Match_End("比赛已经结束..."),
         ML_Match_NotListen("您还没有监听比赛呢！请使用 !ml [matchid] start 开始监听！"),
         ML_Match_OverTime("停止监听 %s：超时。"),
+        ML_Send_Error("对局信息发送失败。\n请耐心等待问题修复。") //发送_发送失败
 
         ;//逗号分隔
         public final String message;

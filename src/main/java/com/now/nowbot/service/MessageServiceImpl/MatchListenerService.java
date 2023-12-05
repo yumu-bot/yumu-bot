@@ -128,8 +128,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                             var img = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1 , imageService);
 
                             QQMsgUtil.sendImage(from, img);
-                        } catch (MatchRoundException e) {
+                        } catch (Exception e) {
+                            log.error("图片发送失败", e);
                             throw new RuntimeException(e);
+                            //throw new MatchListenerException(MatchListenerException.Type.ML_Send_Error);
                         }
                     }
                 }
