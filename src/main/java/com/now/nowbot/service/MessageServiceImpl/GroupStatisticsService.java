@@ -11,8 +11,8 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,7 +54,8 @@ public class GroupStatisticsService implements MessageService<Long> {
         try {
             if (Files.isRegularFile(CachePath)) {
                 String jsonStr = Files.readString(CachePath);
-                HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<>() {
+                @SuppressWarnings("all")
+                HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<HashMap<Long, Long>>() {
                 });
                 if (Objects.nonNull(cache)) {
                     UserCache.putAll(cache);
@@ -110,14 +111,15 @@ public class GroupStatisticsService implements MessageService<Long> {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }
-
         var m = Instructions.GROUPSTATISTICS.matcher(event.getRawMessage().trim());
-
         if (m.find()) {
             switch (m.group("group")) {
                 case "a", "进阶群" -> data.setValue(928936255L);
                 case "h", "高阶群" -> data.setValue(281624271L);
-                case null, default -> data.setValue(595985887L);
+                case "n", "新人群" -> data.setValue(595985887L);
+                case null, default -> {
+                    return false;
+                }
             }
             lock = 3;
             return true;
@@ -186,17 +188,10 @@ public class GroupStatisticsService implements MessageService<Long> {
                 float bp1 = getOsuBp1(id);
                 nowOsuId.put(id, qq);
                 usersBP1.put(qq, bp1);
-                log.info("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1);
-            } catch (WebClientResponseException.TooManyRequests err) {
-                Thread.sleep(20000);
-                id = getOsuId(qq);
-                float bp1 = getOsuBp1(id);
-                nowOsuId.put(id, qq);
-                usersBP1.put(qq, bp1);
-                log.info("统计 [{}] 信息获取成功. {}pp", qq, bp1);
+                log.debug("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1);
             } catch (WebClientResponseException.NotFound err) {
-                //这个err不需要记录下来
-                log.info("统计 [{}] 未找到: {}", qq, err.getMessage());
+                //这个err不需要记录下来 修改了日志等级, 默认不记录
+                log.debug("统计 [{}] 未找到: {}", qq, err.getMessage());
                 if (err.getMessage().contains("bleatingsheep.org")) {
                     errMap.put(qq, "未绑定");
                 } else {

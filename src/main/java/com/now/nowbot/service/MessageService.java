@@ -2,14 +2,7 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.qq.event.MessageEvent;
 
-import java.util.Optional;
-import java.util.regex.Matcher;
-
 public interface MessageService<T> {
-
-    static DataValue<?> createData() {
-        return new DataValue();
-    }
 
     default boolean isHandle(MessageEvent event, DataValue<T> data) throws Throwable {
         return false;

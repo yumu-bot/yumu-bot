@@ -5,16 +5,16 @@ import com.now.nowbot.entity.PermissionLite;
 import com.now.nowbot.entity.QQID;
 import com.now.nowbot.mapper.PermissionMapper;
 import com.now.nowbot.mapper.QQIDMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
 public class PermissionDao {
-    @Autowired
+    @Resource
     PermissionMapper permMapper;
-    @Autowired
+    @Resource
     QQIDMapper qqMapper;
 
     public List<Long> getQQList(String service, PermissionType type){
