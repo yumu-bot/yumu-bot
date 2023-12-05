@@ -77,7 +77,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         if (Objects.equals(match.getEvents().getLast().getDetail().type(), "match-disbanded") || match.isMatchEnd()) {
-            throw new MatchListenerException(MatchListenerException.Type.MR_Match_End);
+            throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
         }
 
         MatchListener listener = null;
@@ -107,7 +107,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         var s = b.getBeatMapSet();
 
                         String mapInfo = s.getArtist() + '-' + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                        from.sendMessage("比赛" + param.id + "已开始！谱面：\n" + mapInfo);
+                        from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
                     } else {
                         //比赛结束，发送成绩
                         try {
@@ -133,28 +133,31 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 // 比赛结束
                 if ((!eventList.isEmpty() && Objects.equals(eventList.getLast().getDetail().type(), "match-disbanded"))
                         || newMatch.isMatchEnd()) {
-                    from.sendMessage("停止监听" + param.id + "：比赛结束");
+                    from.sendMessage("停止监听 " + param.id + "：比赛结束");
                 }
             });
-        } else if (Objects.equals(param.operate, "stop")) {
-            throw new MatchListenerException(MatchListenerException.Type.MR_Match_NotListen);
         }
 
-        var threadLock = ASyncMessageUtil.getLock(event);
-        MessageEvent unlockEvent;
+        var lock = ASyncMessageUtil.getLock(event);
+        MessageEvent lockEvent;
 
         while (true) {
-            unlockEvent = threadLock.get();
+            lockEvent = lock.get();
             // 线程锁只能用一次, 记得重复取锁
-            threadLock = ASyncMessageUtil.getLock(unlockEvent, 6 * 3600 * 1000);
+            lock = ASyncMessageUtil.getLock(lockEvent, 6 * 3600 * 1000);
+
+            // 超时
+            if (lockEvent == null) {
+                throw new MatchListenerException(MatchListenerException.Type.ML_Match_OverTime, param.id);
+            }
 
             // 重新判断指令
-            var result = new DataValue<ListenerParam>();
-            if (!isHandle(unlockEvent, result)) continue;
-            var newParam = result.getValue();
+            var dataValue2 = new DataValue<ListenerParam>();
+            if (!isHandle(lockEvent, dataValue2)) continue;
+            var param2 = dataValue2.getValue();
             // 如果是收到 stop <match id> 就停止
-            if (Objects.equals(newParam.operate, "stop") && Objects.nonNull(listener)) {
-                from.sendMessage("停止监听" + newParam.id);
+            if (Objects.equals(param2.operate, "stop") && Objects.nonNull(listener)) {
+                from.sendMessage("停止监听 " + param.id + "：调用者关闭");
                 listener.stopListener();
                 break;
             }

@@ -8,8 +8,9 @@ public class MatchListenerException extends TipsException {
         ML_MatchID_RangeError("输入的房间号范围错误！"),
         ML_MatchID_NotFound("小沐找不到这场比赛..."),
 
-        MR_Match_End("比赛已经结束..."),
-        MR_Match_NotListen("您还没有监听比赛呢！请使用 !ml [matchid] start 开始监听！"),
+        ML_Match_End("比赛已经结束..."),
+        ML_Match_NotListen("您还没有监听比赛呢！请使用 !ml [matchid] start 开始监听！"),
+        ML_Match_OverTime("停止监听 %s：超时。"),
 
         ;//逗号分隔
         public final String message;
@@ -19,5 +20,8 @@ public class MatchListenerException extends TipsException {
     }
     public MatchListenerException(MatchListenerException.Type type){
         super(type.message);
+    }
+    public MatchListenerException(MatchListenerException.Type type, Object... args){
+        super(String.format(type.message, args));
     }
 }
