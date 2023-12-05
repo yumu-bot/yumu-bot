@@ -34,24 +34,31 @@ public class MatchListener {
         }
         start = true;
         Thread.startVirtualThread(() -> {
-            long mid = match.getMatchStat().getId();
-            long lastId = match.latestEventId;
+            long matchID = match.getMatchStat().getId();
+            long recordID;
+            //recordID = match.latestEventId;
+            try {
+                recordID = match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getId() != null).toList().getLast().getId();
+            } catch (NullPointerException e) {
+                recordID = match.latestEventId;
+            }
+
             while (start && !match.isMatchEnd()) {
                 try {
                     Thread.sleep(Duration.ofSeconds(10));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
-                if (newMatch.latestEventId == lastId) continue;
+                var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
+                if (newMatch.latestEventId == recordID) continue;
                 if (Objects.nonNull(newMatch.getCurrentGameId())) {
-                    if (lastId != newMatch.latestEventId - 1) {
-                        lastId = newMatch.latestEventId - 1;
+                    if (recordID != newMatch.latestEventId - 1) {
+                        recordID = newMatch.latestEventId - 1;
                         onEvents(newMatch.getEvents(), match);
                     }
                     continue;
                 }
-                lastId = newMatch.latestEventId;
+                recordID = newMatch.latestEventId;
                 match.parseNextData(newMatch);
                 onEvents(newMatch.getEvents(), match);
             }
