@@ -123,9 +123,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                                 }
                             }
 
-                            var img = getDataImage(round, newMatch.getMatchStat(),
-                                    (int) newMatch.getEvents().stream().filter(s -> Objects.nonNull(s.getRound())).filter(s -> Objects.nonNull(s.getRound().getScoreInfoList())).count() - 1
-                                    , imageService);
+                            int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
+
+                            var img = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1 , imageService);
+
                             QQMsgUtil.sendImage(from, img);
                         } catch (MatchRoundException e) {
                             throw new RuntimeException(e);
