@@ -56,8 +56,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
             }
 
             switch (op) {
-                case "start", "s" -> param.operate = "start";
-                case null, default -> param.operate = "end";
+                case "stop", "p", "end", "e" -> param.operate = "stop";
+                case null, default -> param.operate = "start";
             }
 
             data.setValue(param);
@@ -90,6 +90,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
             listener.startListener();
         }
 
+        if (Objects.equals(param.operate, "stop") && Objects.isNull(listener)) {
+            throw new MatchListenerException(MatchListenerException.Type.MR_Match_NotListen);
+        }
+
         if (Objects.nonNull(listener)) {
             listener.addEventListener((eventList, newMatch) -> {
                 // 发送新比赛
@@ -100,7 +104,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         var s = b.getBeatMapSet();
 
                         String mapInfo = s.getArtist() + '-' + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                        from.sendMessage("比赛" + param.id + "已开始！谱面：" + mapInfo);
+                        from.sendMessage("比赛" + param.id + "已开始！谱面：\n" + mapInfo);
                     } else {
                         //比赛结束，发送成绩
                         try {
