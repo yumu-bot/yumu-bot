@@ -1,9 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchListener;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.multiplayer.MatchStat;
+import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -19,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service("MATCHLISTENER")
@@ -97,11 +96,13 @@ public class MatchListenerService implements MessageService<MatchListenerService
         if (Objects.nonNull(listener)) {
             listener.addEventListener((eventList, newMatch) -> {
                 // 发送新比赛
-                if (!eventList.isEmpty() && Objects.equals(eventList.getFirst().getDetail().type(), "other") && Objects.nonNull(eventList.getFirst().getRound())) {
-                    var scores = eventList.getFirst().getRound().getScoreInfoList();
+                if (!eventList.isEmpty() && Objects.equals(eventList.getLast().getDetail().type(), "other")
+                        && Objects.nonNull(eventList.getLast().getRound())) {
+                    var eventL = eventList.getLast();
+                    var scores = eventL.getRound().getScoreInfoList();
                     //刚开始比赛，没分
                     if (Objects.isNull(scores) || scores.isEmpty()) {
-                        var b = eventList.getFirst().getRound().getBeatmap();
+                        var b = eventL.getRound().getBeatmap();
                         var s = b.getBeatMapSet();
 
                         String mapInfo = s.getArtist() + '-' + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
@@ -109,7 +110,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     } else {
                         //比赛结束，发送成绩
                         try {
-                            var img = getDataImage(eventList.getFirst().getRound(), newMatch.getMatchStat(), imageService);
+                            //要自己加MicroUser
+                            addMicroUser4MatchScore(eventL.getRound().getScoreInfoList(), match.getPlayers());
+
+                            var img = getDataImage(eventL.getRound(), newMatch.getMatchStat(), imageService);
                             QQMsgUtil.sendImage(from, img);
                         } catch (MatchRoundException e) {
                             throw new RuntimeException(e);
@@ -117,7 +121,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     }
                 }
                 // 比赛结束
-                if ((!eventList.isEmpty() && Objects.equals(eventList.getFirst().getDetail().type(), "match-disbanded"))
+                if ((!eventList.isEmpty() && Objects.equals(eventList.getLast().getDetail().type(), "match-disbanded"))
                         || newMatch.isMatchEnd()) {
                     from.sendMessage("停止监听" + param.id + "：比赛结束");
                 }
@@ -141,6 +145,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     public byte[] getDataImage(MatchRound round, MatchStat stat, ImageService imageService) throws MatchRoundException {
+
         byte[] img;
         try {
             img = imageService.getPanelF2(stat, round, 0);
@@ -151,4 +156,15 @@ public class MatchListenerService implements MessageService<MatchListenerService
         return img;
     }
 
+    private void addMicroUser4MatchScore(List<MatchScore> scoreList, List<MicroUser> playerList) {
+            for (MatchScore s: scoreList) {
+                for (MicroUser p: playerList) {
+                    if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
+                        s.setUser(p);
+                        s.setUserName(p.getUserName());
+                    break;
+                }
+            }
+        }
+    }
 }
