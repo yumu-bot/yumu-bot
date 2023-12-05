@@ -3,7 +3,6 @@ package com.now.nowbot.util;
 
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ASyncMessageUtil{
 
-    private static final Long OFF_TIME = 120*1000L;
+    private static final Long OFF_TIME = 60 * 60 * 1000L;
     private static final ReentrantLock reentrantLock = new ReentrantLock();
     public static class Lock{
 

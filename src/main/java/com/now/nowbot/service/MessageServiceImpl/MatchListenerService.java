@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchListenerException;
+import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -70,9 +71,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
         if (Objects.equals(match.getEvents().getLast().getDetail().type(), "match-disbanded")) {
             throw new MatchListenerException(MatchListenerException.Type.MR_Match_End);
         }
-
+        MatchListener listener = null;
         if (Objects.equals(param.operate, "start")) {
-            var listener = new MatchListener(match, osuMatchApiService);
+            listener = new MatchListener(match, osuMatchApiService);
 
             listener.addEventListener((eventList, newMatch) -> {
                 // 这里是在其他线程里调用的
@@ -80,6 +81,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 eventList.forEach(e -> System.out.println(e.getDetail().type()));
                 // 使用 newMatch
                 System.out.println(newMatch.getMatchStat().getName());
+
+                // 这里换成发送你生成的图
+                if (!eventList.isEmpty()) event.getSubject().sendMessage("比赛信息更新了 [图片]");
             });
 
             listener.startListener();
@@ -87,6 +91,19 @@ public class MatchListenerService implements MessageService<MatchListenerService
             // 过一段时间或者其他线程来停止监听
             listener.stopListener();
         }
+
+        var threadLock = ASyncMessageUtil.getLock(event);
+        MessageEvent newEvent;
+        while (true) {
+            newEvent = threadLock.get();
+            // 线程锁只能用一次, 记得重复取锁
+            threadLock = ASyncMessageUtil.getLock(newEvent);
+            // 如果是收到 stop <match id> 就停止 这里只是做个示范
+            if (newEvent.getRawMessage().equals("stop " + param.id) && Objects.nonNull(listener)) {
+                listener.stopListener();
+            }
+        }
+
     }
 
     public void getMatchRound () {
