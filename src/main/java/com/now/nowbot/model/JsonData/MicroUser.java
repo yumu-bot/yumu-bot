@@ -188,6 +188,19 @@ public class MicroUser {
     }
 
     @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (! (o instanceof MicroUser microUser)) return false;
+
+        return getId().equals(microUser.getId());
+    }
+
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("MicroUser{");
         sb.append("avatar='").append(avatarUrl).append('\'');

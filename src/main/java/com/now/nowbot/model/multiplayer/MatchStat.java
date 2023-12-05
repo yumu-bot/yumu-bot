@@ -7,18 +7,18 @@ import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchStat {
-    Integer id;
+    Long id;
     @JsonProperty("start_time")
     OffsetDateTime startTime;
     @JsonProperty("end_time")
     OffsetDateTime endTime;
     String name;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
