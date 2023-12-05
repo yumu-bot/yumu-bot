@@ -93,12 +93,22 @@ public class MatchListenerService implements MessageService<MatchListenerService
         if (Objects.nonNull(listener)) {
             listener.addEventListener((eventList, newMatch) -> {
                 // 发送新比赛
-                if (!eventList.isEmpty() && Objects.equals(eventList.getFirst().getDetail().type(), "other")) {
-                    try {
-                        var img = getDataImage(eventList.getFirst().getRound(), newMatch.getMatchStat(), imageService);
-                        QQMsgUtil.sendImage(from, img);
-                    } catch (MatchRoundException e) {
-                        throw new RuntimeException(e);
+                if (!eventList.isEmpty() && Objects.equals(eventList.getFirst().getDetail().type(), "other") && Objects.nonNull(eventList.getFirst().getRound())) {
+                    //刚开始比赛，没分
+                    if (Objects.isNull(eventList.getFirst().getRound().getScoreInfoList())) {
+                        var b = eventList.getFirst().getRound().getBeatmap();
+                        var s = b.getBeatMapSet();
+
+                        String mapInfo = s.getArtist() + '-' + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
+                        from.sendMessage("比赛" + param.id + "已开始！谱面：" + mapInfo);
+                    } else {
+                        //比赛结束，发送成绩
+                        try {
+                            var img = getDataImage(eventList.getFirst().getRound(), newMatch.getMatchStat(), imageService);
+                            QQMsgUtil.sendImage(from, img);
+                        } catch (MatchRoundException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
                 // 比赛结束
