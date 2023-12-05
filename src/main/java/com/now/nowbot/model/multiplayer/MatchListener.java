@@ -43,11 +43,12 @@ public class MatchListener {
                 }
                 var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
                 if (newMatch.latestEventId == lastId) continue;
-                lastId = newMatch.latestEventId;
                 var lastEvent = newMatch.getEvents().getLast();
                 if (lastEvent.getDetail().type().equals("other")) {
-                    --lastId;
+                    if (newMatch.latestEventId - 1 == lastId) continue;
+                    lastId = newMatch.latestEventId - 1;
                 } else {
+                    lastId = newMatch.latestEventId;
                     match.parseNextData(newMatch);
                 }
                 onEvents(newMatch.getEvents(), match);
