@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
 import java.util.Objects;
 
 @Service("MATCHLISTENER")
@@ -110,10 +109,19 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     } else {
                         //比赛结束，发送成绩
                         try {
+                            var round = eventL.getRound();
                             //要自己加MicroUser
-                            addMicroUser4MatchScore(eventL.getRound().getScoreInfoList(), match.getPlayers());
+                            for (MatchScore s: round.getScoreInfoList()) {
+                                for (MicroUser p : match.getPlayers()) {
+                                    if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
+                                        s.setUser(p);
+                                        s.setUserName(p.getUserName());
+                                        break;
+                                    }
+                                }
+                            }
 
-                            var img = getDataImage(eventL.getRound(), newMatch.getMatchStat(), imageService);
+                            var img = getDataImage(round, newMatch.getMatchStat(), imageService);
                             QQMsgUtil.sendImage(from, img);
                         } catch (MatchRoundException e) {
                             throw new RuntimeException(e);
@@ -154,17 +162,5 @@ public class MatchListenerService implements MessageService<MatchListenerService
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
         }
         return img;
-    }
-
-    private void addMicroUser4MatchScore(List<MatchScore> scoreList, List<MicroUser> playerList) {
-            for (MatchScore s: scoreList) {
-                for (MicroUser p: playerList) {
-                    if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
-                        s.setUser(p);
-                        s.setUserName(p.getUserName());
-                    break;
-                }
-            }
-        }
     }
 }
