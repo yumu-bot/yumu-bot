@@ -45,14 +45,15 @@ public class MatchListener {
                 var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
                 if (newMatch.latestEventId == lastId) continue;
                 var lastEvent = newMatch.getEvents().getLast();
-                if (lastId == newMatch.latestEventId && Objects.nonNull(lastEvent.getRound()) && Objects.isNull(lastEvent.getRound().getEndTime())) {
+                if (lastId == newMatch.latestEventId - 1 && Objects.nonNull(lastEvent.getRound()) && Objects.isNull(lastEvent.getRound().getEndTime())) {
                     continue;
                 } else {
                     if (!lastEvent.getDetail().type().equals("other") || Objects.isNull(lastEvent.getRound().getEndTime())) {
                         match.parseNextData(newMatch);
-                    }
+                        lastId = newMatch.latestEventId;
+                    } else lastId = newMatch.latestEventId;
                 }
-                lastId = newMatch.latestEventId;
+
                 onEvents(newMatch.getEvents(), match);
             }
         });
