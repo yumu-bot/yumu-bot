@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.MessageChain;
@@ -50,7 +51,7 @@ public class LeverTestService implements MessageService<BinUser> {
     public void HandleMessage(MessageEvent event, BinUser user) throws Throwable {
         var bp = scoreApiService.getBestPerformance(user, user.getMode(), 0, 100);
         var lastBp = bp.getLast();
-        if (lastBp.getPP() < 130 || bp.size() != 100) {
+        if (lastBp.getPP() < 100 || bp.size() != 100) {
             throw new TipsException("你太菜了, 不好评价");
         }
         double data = getLevel(bp, user);
@@ -93,8 +94,16 @@ public class LeverTestService implements MessageService<BinUser> {
 
         try {
             for (var s : scores) {
-                sum += calculator.apply(s.getPosition());
+                double score = calculator.apply(s.getPosition());
+                // 严查 mod
+                if (Mod.hasChangeRating(s.getScore().getMods())) {
+                    score *= 0.8;
+                }
+                // acc 修正
+                score *= 2 - s.getScore().getAccuracy();
+                sum += score;
             }
+            sum /= 5;
         } catch (Exception e) {
             throw new TipsException("哎呀计算出错了, 一会再试试");
         }
