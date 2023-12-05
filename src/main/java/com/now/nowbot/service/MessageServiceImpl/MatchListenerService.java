@@ -98,8 +98,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
             listener.addEventListener((eventList, newMatch) -> {
                 // 发送新比赛
                 if (!eventList.isEmpty() && Objects.equals(eventList.getFirst().getDetail().type(), "other") && Objects.nonNull(eventList.getFirst().getRound())) {
+                    var scores = eventList.getFirst().getRound().getScoreInfoList();
                     //刚开始比赛，没分
-                    if (Objects.isNull(eventList.getFirst().getRound().getScoreInfoList())) {
+                    if (Objects.isNull(scores) || scores.isEmpty()) {
                         var b = eventList.getFirst().getRound().getBeatmap();
                         var s = b.getBeatMapSet();
 
