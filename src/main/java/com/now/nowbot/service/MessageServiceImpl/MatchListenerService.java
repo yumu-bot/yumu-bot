@@ -106,7 +106,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         var b = eventL.getRound().getBeatmap();
                         var s = b.getBeatMapSet();
 
-                        String mapInfo = s.getArtist() + '-' + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
+                        String mapInfo = s.getArtist() + " - " + s.getTitle() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
                         from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
                     } else {
                         //比赛结束，发送成绩
@@ -114,7 +114,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                             var round = eventL.getRound();
                             //要自己加MicroUser
                             for (MatchScore s: round.getScoreInfoList()) {
-                                for (MicroUser p : match.getPlayers()) {
+                                for (MicroUser p : newMatch.getPlayers()) {
                                     if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
                                         s.setUser(p);
                                         s.setUserName(p.getUserName());
@@ -123,7 +123,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                                 }
                             }
 
-                            var img = getDataImage(round, newMatch.getMatchStat(), imageService);
+                            var img = getDataImage(round, newMatch.getMatchStat(),
+                                    (int) newMatch.getEvents().stream().filter(s -> Objects.nonNull(s.getRound())).filter(s -> Objects.nonNull(s.getRound().getScoreInfoList())).count() - 1
+                                    , imageService);
                             QQMsgUtil.sendImage(from, img);
                         } catch (MatchRoundException e) {
                             throw new RuntimeException(e);
@@ -164,11 +166,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    public byte[] getDataImage(MatchRound round, MatchStat stat, ImageService imageService) throws MatchRoundException {
+    public byte[] getDataImage(MatchRound round, MatchStat stat, int index, ImageService imageService) throws MatchRoundException {
 
         byte[] img;
         try {
-            img = imageService.getPanelF2(stat, round, 0);
+            img = imageService.getPanelF2(stat, round, index);
         } catch (Exception e) {
             log.error("MR 图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
