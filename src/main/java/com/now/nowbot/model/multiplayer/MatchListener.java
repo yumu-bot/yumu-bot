@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class MatchListener {
-    Match match;
-    OsuMatchApiService matchApiService;
+    Match                                     match;
+    OsuMatchApiService                        matchApiService;
     List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
     volatile boolean start = false;
 
@@ -44,16 +44,15 @@ public class MatchListener {
                 }
                 var newMatch = matchApiService.getMatchInfoAfter(mid, lastId);
                 if (newMatch.latestEventId == lastId) continue;
-                var lastEvent = newMatch.getEvents().getLast();
-                if (lastId == newMatch.latestEventId - 1 && Objects.nonNull(lastEvent.getRound()) && Objects.isNull(lastEvent.getRound().getEndTime())) {
+                if (Objects.nonNull(newMatch.getCurrentGameId())) {
+                    if (lastId != newMatch.latestEventId - 1) {
+                        lastId = newMatch.latestEventId - 1;
+                        onEvents(newMatch.getEvents(), match);
+                    }
                     continue;
-                } else {
-                    if (!lastEvent.getDetail().type().equals("other") || Objects.isNull(lastEvent.getRound().getEndTime())) {
-                        match.parseNextData(newMatch);
-                        lastId = newMatch.latestEventId;
-                    } else lastId = newMatch.latestEventId;
                 }
-
+                lastId = newMatch.latestEventId;
+                match.parseNextData(newMatch);
                 onEvents(newMatch.getEvents(), match);
             }
         });
