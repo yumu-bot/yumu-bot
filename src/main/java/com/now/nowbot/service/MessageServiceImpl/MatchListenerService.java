@@ -54,7 +54,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             }
 
             switch (op) {
-                case "stop", "p", "end", "e" -> param.operate = "stop";
+                case "stop", "p", "end", "e", "off", "f" -> param.operate = "stop";
                 case null, default -> param.operate = "start";
             }
 
@@ -88,9 +88,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
             listener.startListener();
         }
 
+        /*
         if (Objects.equals(param.operate, "stop") && Objects.isNull(listener)) {
             throw new MatchListenerException(MatchListenerException.Type.MR_Match_NotListen);
         }
+         */
 
         if (Objects.nonNull(listener)) {
             listener.addEventListener((eventList, newMatch) -> {
@@ -134,6 +136,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     from.sendMessage("停止监听" + param.id + "：比赛结束");
                 }
             });
+        } else if (Objects.equals(param.operate, "stop")) {
+            throw new MatchListenerException(MatchListenerException.Type.MR_Match_NotListen);
         }
 
         var threadLock = ASyncMessageUtil.getLock(event);

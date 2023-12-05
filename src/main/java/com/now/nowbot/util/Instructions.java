@@ -66,7 +66,7 @@ public class Instructions {
 
     // #5 osu! 比赛指令
 
-    public static final Pattern LISTENER = Pattern.compile("^[!！]\\s*(?i)((ym)?listen(er)?|(ym)?ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?(\\s*(?<operate>start|s|stop|p|end|e))?");
+    public static final Pattern LISTENER = Pattern.compile("^[!！]\\s*(?i)((ym)?listen(er)?|(ym)?ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?\\s*(?<operate>start|s|stop|p|end|e|off|f|on|o)?");
     public static final Pattern MURATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![A-Za-z_])))|(?<main>((ym)?rating|(ym)?ra(?![A-Za-z_])|mra(?![A-Za-z_]))))\\s*(?<matchid>\\d+)?(\\s*(?<skip>-?\\d+))?(\\s*(?<skipend>-?\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     /*
