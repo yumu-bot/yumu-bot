@@ -112,8 +112,9 @@ public class MatchListener {
             if (newMatch.getLatestEventId() == recordID) return;
 
             if (Objects.nonNull(newMatch.getCurrentGameId())) {
-                if (newMatch.getLatestEventId() - 1 != recordID) {
-                    recordID = newMatch.getLatestEventId() - 1;
+                // 如果正在进行, newMatch.getFirstEventId() 一定是当前开始的对局
+                if (newMatch.getFirstEventId() - 1 != recordID) {
+                    recordID = newMatch.getFirstEventId() - 1;
                     onEvents(newMatch.getEvents(), match);
                 }
                 return;

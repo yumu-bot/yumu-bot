@@ -225,12 +225,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         static void cancel(long qq, long group, long mid) {
-            listeners.compute(mid, (m, v) -> {
-                if (v == null) throw new TipsRuntimeException("没听过");
-                v.forEach(MatchListener::stopListener);
-                return null;
-            });
-
             BiFunction<Long, List<Long>, List<Long>> func = (id, list) -> {
                 if (list == null || ! list.contains(mid)) throw new TipsRuntimeException("没听过");
                 list.remove(mid);
@@ -238,6 +232,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
             };
             userListeners.compute(qq, func);
             groupListeners.compute(group, func);
+
+            listeners.compute(mid, (m, v) -> {
+                if (v == null) throw new TipsRuntimeException("没听过");
+                v.forEach(MatchListener::stopListener);
+                return null;
+            });
 
         }
     }
