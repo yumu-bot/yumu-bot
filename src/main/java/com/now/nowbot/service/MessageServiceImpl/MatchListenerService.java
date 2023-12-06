@@ -106,6 +106,137 @@ public class MatchListenerService implements MessageService<MatchListenerService
         return img;
     }
 
+    @Override
+    public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
+        if (Objects.equals(param.operate, "stop")) {
+            if (event instanceof GroupMessageEvent groupEvent) {
+                event.getSubject().sendMessage(
+                        String.format(MatchListenerException.Type.ML_Listen_StopRequest.message, param.id.toString())
+                );
+                ListenerCheck.cancel(groupEvent.getGroup().getId(),
+                        groupEvent.getSender().getId(),
+                        Permission.isSuper(event.getSender().getId()),
+                        param.id);
+            } else {
+                throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
+            }
+            return;
+        }
+        var from = event.getSubject();
+        Match match;
+
+        try {
+            match = osuMatchApiService.getMatchInfo(param.id, 10);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new MatchListenerException(MatchListenerException.Type.ML_MatchID_NotFound);
+        }
+
+        if (match.isMatchEnd()) {
+            throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
+        }
+
+        MatchListener listener = new MatchListener(match, osuMatchApiService);
+        if (event instanceof GroupMessageEvent groupEvent) {
+            var sender = groupEvent.getSender().getId();
+            // 检查有没有重复, 重复直接抛错终止
+            ListenerCheck.add(groupEvent.getGroup().getId(), sender, Permission.isSuper(sender), listener);
+        } else {
+            throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
+        }
+        from.sendMessage(
+                String.format(MatchListenerException.Type.ML_Listen_Start.message, param.id)
+        );
+
+        // 监听房间结束
+        listener.addStopListener((m, type) -> {
+            from.sendMessage(
+                    String.format(
+                            MatchListenerException.Type.ML_Listen_Stop.message,
+                            param.id,
+                            type.getTips()
+                    ));
+        });
+
+        listener.addEventListener((eventList, newMatch) -> {
+
+            Optional<MatchEvent> matchEventOpt = eventList.stream()
+                    .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
+                    .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
+
+            if (matchEventOpt.isEmpty()) {
+                // 当前变动没有 game
+                return;
+            }
+
+            var matchEvent = matchEventOpt.get();
+
+            @SuppressWarnings("all")
+            var scores = matchEvent.getRound().getScoreInfoList();
+
+            //刚开始比赛，没分
+            //以后可以做个提示或者面板之类的，也可能和现在的面板互换
+            if (CollectionUtils.isEmpty(scores)) {
+                var b = matchEvent.getRound().getBeatmap();
+                var s = b.getBeatMapSet();
+
+                String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
+                from.sendMessage(
+                        String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, mapInfo)
+                );
+                return;
+            }
+            //比赛结束，发送成绩
+            try {
+                var round = insertUser(matchEvent, newMatch);
+                int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
+
+                var img = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1, imageService);
+
+                QQMsgUtil.sendImage(from, img);
+            } catch (TipsException tipsException) {
+                // 注意 在监听器里为多线程环境, 无法通过向上 throw 来抛出错误
+                // 手动处理提示
+                from.sendMessage(tipsException.getMessage());
+            } catch (Exception e) {
+                log.error("图片发送失败", e);
+                //throw new MatchListenerException(MatchListenerException.Type.ML_Send_Error);
+            }
+
+        });
+
+        listener.startListener();
+    }
+
+    record QQ_GroupRecord(long qq, long group, long mid) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (! (o instanceof QQ_GroupRecord that)) return false;
+
+            if (qq != that.qq) return false;
+            if (group != that.group) return false;
+            return mid == that.mid;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (qq ^ (qq >>> 32));
+            result = 31 * result + (int) (group ^ (group >>> 32));
+            result = 31 * result + (int) (mid ^ (mid >>> 32));
+            return result;
+        }
+    }
+
+    static BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> getDeleteFunc(QQ_GroupRecord key) {
+        return (id, list) -> {
+            if (list == null || ! list.contains(key)) {
+                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
+            }
+            list.remove(key);
+            return CollectionUtils.isEmpty(list) ? null : list;
+        };
+    }
+
     private static class ListenerCheck {
         private final static int                                USER_MAX       = 3;
         private final static int                                GROUP_MAX      = 3;
@@ -161,6 +292,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
             });
 
             listeners.put(key, listener);
+
+            listener.addStopListener((ignore1, ignore2) -> {
+                if (listeners.remove(key) != null) {
+                    removeKey(key);
+                }
+            });
         }
 
         static void cancel(long qq, long group, boolean isSupper, long mid) {
@@ -189,149 +326,17 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     if (k.mid == mid) keySet.add(k);
                 });
                 keySet.forEach(nKey -> {
-                    var nFunc = getDeleteFunc(nKey);
-                    userListeners.compute(nKey.qq, nFunc);
-                    groupListeners.compute(nKey.group, nFunc);
+                    removeKey(nKey);
                     listeners.remove(nKey).stopListener(MatchListener.StopType.SUPER_STOP);
                 });
-
-
             }
-
         }
 
-        static BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> getDeleteFunc(QQ_GroupRecord key) {
-            return (id, list) -> {
-                if (list == null || ! list.contains(key)) {
-                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
-                }
-                list.remove(key);
-                return CollectionUtils.isEmpty(list) ? null : list;
-            };
-        }
-
-        record QQ_GroupRecord(long qq, long group, long mid) {
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (! (o instanceof QQ_GroupRecord that)) return false;
-
-                if (qq != that.qq) return false;
-                if (group != that.group) return false;
-                return mid == that.mid;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = (int) (qq ^ (qq >>> 32));
-                result = 31 * result + (int) (group ^ (group >>> 32));
-                result = 31 * result + (int) (mid ^ (mid >>> 32));
-                return result;
-            }
+        static void removeKey(QQ_GroupRecord key) {
+            var nFunc = getDeleteFunc(key);
+            userListeners.compute(key.qq, nFunc);
+            groupListeners.compute(key.group, nFunc);
         }
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
-        if (Objects.equals(param.operate, "stop")) {
-            if (event instanceof GroupMessageEvent groupEvent) {
-                event.getSubject().sendMessage(
-                        String.format(MatchListenerException.Type.ML_Listen_StopRequest.message, param.id.toString())
-                );
-                ListenerCheck.cancel(groupEvent.getGroup().getId(),
-                        groupEvent.getSender().getId(),
-                        Permission.isSuper(event.getSender().getId()),
-                        param.id);
-            } else {
-                throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
-            }
-            return;
-        }
-        var from = event.getSubject();
-        Match match;
-
-        try {
-            match = osuMatchApiService.getMatchInfo(param.id, 10);
-        } catch (WebClientResponseException.NotFound e) {
-            throw new MatchListenerException(MatchListenerException.Type.ML_MatchID_NotFound);
-        }
-
-        if (match.isMatchEnd()) {
-            throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
-        }
-
-        MatchListener listener = new MatchListener(match, osuMatchApiService);
-        if (event instanceof GroupMessageEvent groupEvent) {
-            var sender = groupEvent.getSender().getId();
-            // 检查有没有重复, 重复直接抛错终止
-            ListenerCheck.add(groupEvent.getGroup().getId(), sender, Permission.isSuper(sender), listener);
-        } else {
-            throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
-        }
-        from.sendMessage(
-                String.format(MatchListenerException.Type.ML_Listen_Start.message, param.id)
-        );
-
-        // 监听房间结束
-        listener.addStopListener((m, type) -> {
-            var reason = switch (type) {
-                case MATCH_END -> "：比赛正常结束";
-                case USER_STOP -> "：调用者关闭";
-                case SUPER_STOP -> "：超级管理员关闭";
-                case SERVICE_STOP -> "：服务器重启";
-            };
-            from.sendMessage(
-                    String.format(MatchListenerException.Type.ML_Listen_Stop.message, param.id, reason)
-            );
-        });
-
-        listener.addEventListener((eventList, newMatch) -> {
-
-            Optional<MatchEvent> matchEventOpt = eventList.stream()
-                    .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
-                    .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
-
-            if (matchEventOpt.isEmpty()) {
-                // 当前变动没有 game
-                return;
-            }
-
-            var matchEvent = matchEventOpt.get();
-
-            @SuppressWarnings("all")
-            var scores = matchEvent.getRound().getScoreInfoList();
-
-            //刚开始比赛，没分
-            //以后可以做个提示或者面板之类的，也可能和现在的面板互换
-            if (CollectionUtils.isEmpty(scores)) {
-                var b = matchEvent.getRound().getBeatmap();
-                var s = b.getBeatMapSet();
-
-                String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage(
-                        String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, mapInfo)
-                );
-                return;
-            }
-            //比赛结束，发送成绩
-            try {
-                var round = insertUser(matchEvent, newMatch);
-                int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
-
-                var img = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1, imageService);
-
-                QQMsgUtil.sendImage(from, img);
-            } catch (TipsException tipsException) {
-                // 注意 在监听器里为多线程环境, 无法通过向上 throw 来抛出错误
-                // 手动处理提示
-                from.sendMessage(tipsException.getMessage());
-            } catch (Exception e) {
-                log.error("图片发送失败", e);
-                //throw new MatchListenerException(MatchListenerException.Type.ML_Send_Error);
-            }
-
-        });
-
-        listener.startListener();
-    }
 }

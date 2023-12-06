@@ -36,6 +36,7 @@ public class MatchListener {
     long                                      matchID;
     long                                      recordID;
     private ScheduledFuture<?> future;
+    private ScheduledFuture<?> kill;
 
     public MatchListener(Match match, OsuMatchApiService service) {
         this.match = match;
@@ -77,6 +78,11 @@ public class MatchListener {
         startListner.forEach(c -> c.accept(match));
 
         future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS);
+        kill = executorService.schedule(()-> {
+            if (this.isStart()) {
+                this.stopListener(StopType.TIME_OUT);
+            }
+        }, 6, TimeUnit.HOURS);
     }
 
     private void onEvents(List<MatchEvent> events, Match match) {
@@ -130,17 +136,29 @@ public class MatchListener {
 
     public void stopListener(StopType type) {
         if (isStart()) {
+            if (!Objects.equals(type, StopType.TIME_OUT)) {
+                kill.cancel(true);
+            }
             future.cancel(true);
             endListner.forEach(c -> c.accept(match, type));
         }
     }
 
     public enum StopType {
-        MATCH_END,
-        USER_STOP,
-        SUPER_STOP,
-        SERVICE_STOP,
+        MATCH_END("比赛正常结束"),
+        USER_STOP("调用者关闭"),
+        SUPER_STOP("超级管理员关闭"),
+        SERVICE_STOP("服务器重启"),
+        TIME_OUT("超时了"),
+        ;
+        final String tips;
+        StopType(String t) {
+            tips = t;
+        }
 
+        public String getTips() {
+            return tips;
+        }
     }
 
     public long getMatchID() {
