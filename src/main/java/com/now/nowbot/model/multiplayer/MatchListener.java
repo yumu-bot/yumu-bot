@@ -139,6 +139,8 @@ public class MatchListener {
         MATCH_END,
         USER_STOP,
         SUPER_STOP,
+        SERVICE_STOP,
+
     }
 
     public long getMatchID() {
