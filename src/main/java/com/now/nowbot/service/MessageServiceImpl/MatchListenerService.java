@@ -234,7 +234,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             groupListeners.compute(group, func);
 
             listeners.compute(mid, (m, v) -> {
-                if (v == null) throw new TipsRuntimeException("没听过");
+                if (v == null) throw new TipsRuntimeException("没监听过");
                 v.forEach(MatchListener::stopListener);
                 return null;
             });

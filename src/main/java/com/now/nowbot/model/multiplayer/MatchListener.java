@@ -75,9 +75,6 @@ public class MatchListener {
             Optional<MatchEvent> gameOpt = getLastRound(match.getEvents());
             var game = gameOpt.orElseThrow();
             recordID = game.getId() - 1;
-            // 刚开始时如果有正在进行的对局, 额外提前触发一次开始事件
-            var nowPlaying = List.of(game);
-            onEvents(nowPlaying, match);
         }
 
         startListner.forEach(c -> c.accept(match));
