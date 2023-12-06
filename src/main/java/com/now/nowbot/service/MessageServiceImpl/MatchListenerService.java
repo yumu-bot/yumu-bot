@@ -73,7 +73,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent g) {
-                event.getSubject().sendMessage("停止监听: " + param.id);
+                event.getSubject().sendMessage(param.id + " 停止");
                 ListenerCheck.cancel(g.getGroup().getId(),
                         g.getSender().getId(),
                         Permission.isSuper(event.getSender().getId()),
@@ -107,7 +107,14 @@ public class MatchListenerService implements MessageService<MatchListenerService
         from.sendMessage("开始监听比赛 " + param.id);
 
         // 监听房间结束
-        listener.addStopListener((m) -> from.sendMessage("停止监听 " + param.id + "：比赛结束"));
+        listener.addStopListener((m, type) -> {
+            var s = switch (type) {
+                case MATCH_END -> ": 比赛结束";
+                case USER_STOP -> "";
+                case SUPER_STOP -> ": 管理员终止";
+            };
+            from.sendMessage("停止监听 " + param.id + s);
+        });
 
         listener.addEventListener((eventList, newMatch) -> {
 
@@ -242,7 +249,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
                 listeners.compute(key, (m, v) -> {
                     if (v == null) throw new TipsRuntimeException("没监听过");
-                    v.stopListener();
+                    v.stopListener(MatchListener.StopType.USER_STOP);
                     return null;
                 });
             } catch (TipsRuntimeException e) {
@@ -258,7 +265,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     var nFunc = getDeleteFunc(nKey);
                     userListeners.compute(nKey.qq, nFunc);
                     groupListeners.compute(nKey.group, nFunc);
-                    listeners.remove(nKey).stopListener();
+                    listeners.remove(nKey).stopListener(MatchListener.StopType.SUPER_STOP);
                 });
 
 
