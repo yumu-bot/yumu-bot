@@ -2,7 +2,7 @@ package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
 
-public class MonitorNowException extends TipsException {
+public class MatchNowException extends TipsException {
     public enum Type {
         MN_MatchId_Error("请输入正确的 MatchID！"),
         MN_Match_NotFound("找不到这场比赛！\n也许是这场比赛已经被众人遗忘了。"),
@@ -17,7 +17,7 @@ public class MonitorNowException extends TipsException {
             this.message = message;
         }
     }
-    public MonitorNowException(MonitorNowException.Type type){
+    public MatchNowException(MatchNowException.Type type){
         super(type.message);
     }
 }

@@ -18,8 +18,8 @@ public class MatchData {
     boolean hasCurrentGame;
 
     Map<Long, PlayerData> playerData = new LinkedHashMap<>();
-    List<MicroUser> players;
-    List<MatchRound> rounds;
+    List<MicroUser> playerList;
+    List<MatchRound> roundList;
     Map<String, Integer> teamPoint = new HashMap<>();
     boolean isTeamVS = true;
 
@@ -53,15 +53,15 @@ public class MatchData {
         averageStar = cal.getAverageStar();
         firstMapSID = cal.getFirstMapSID();
 
-        rounds = cal.getRoundList();
-        players = cal.getPlayerList();
-        roundCount = rounds.size();
-        playerCount = players.size();
+        roundList = cal.getRoundList();
+        playerList = cal.getPlayerList();
+        roundCount = roundList.size();
+        playerCount = playerList.size();
 
-        rounds.forEach(r -> scoreCount += r.getScoreInfoList().stream().filter(s -> s.getScore() > 0).toList().size());
+        roundList.forEach(r -> scoreCount += r.getScoreInfoList().stream().filter(s -> s.getScore() > 0).toList().size());
 
-        if (!CollectionUtils.isEmpty(rounds)) {
-            isTeamVS = Objects.equals(rounds.getFirst().getTeamType(), "team-vs");
+        if (!CollectionUtils.isEmpty(roundList)) {
+            isTeamVS = Objects.equals(roundList.getFirst().getTeamType(), "team-vs");
         } else {
             isTeamVS = false;
         }
@@ -72,7 +72,7 @@ public class MatchData {
     }
 
     public MatchData(List<MatchRound> rounds) {
-        this.rounds = rounds;
+        this.roundList = rounds;
     }
 
     public MatchData() {}
@@ -116,7 +116,7 @@ public class MatchData {
 
     public void calculateRRA() {
         //每一局
-        for (MatchRound round : rounds) {
+        for (MatchRound round : roundList) {
             List<MatchScore> scoreList = round.getScoreInfoList();
 
             int roundScore = scoreList.stream().mapToInt(MatchScore::getScore).reduce(Integer::sum).orElse(0);
@@ -140,7 +140,7 @@ public class MatchData {
 
     public void calculateRWS() {
         //每一局
-        for (MatchRound round : rounds) {
+        for (MatchRound round : roundList) {
 
             String WinningTeam = round.getWinningTeam();
             int WinningTeamScore = round.getWinningTeamScore(); //在单挑的时候给的是玩家的最高分
@@ -190,7 +190,7 @@ public class MatchData {
         playerData.values().forEach(player -> {
             player.calculateRWS();
             player.calculateAMG();
-            player.setARC(rounds.size());
+            player.setARC(roundList.size());
             roundAMG += player.getAMG();
         });
     }
@@ -249,7 +249,7 @@ public class MatchData {
 
     public void calculateTeamPoint() {
         //每一局
-        for (MatchRound r : rounds) {
+        for (MatchRound r : roundList) {
             String team = r.getWinningTeam();
             if (team != null) {
                 teamPoint.put(team, teamPoint.getOrDefault(team, 0) + 1);
@@ -317,20 +317,20 @@ public class MatchData {
         return new ArrayList<>(playerData.values());
     }
 
-    public List<MicroUser> getPlayers() {
-        return players;
+    public List<MicroUser> getPlayerList() {
+        return playerList;
     }
 
-    public void setPlayers(List<MicroUser> players) {
-        this.players = players;
+    public void setPlayerList(List<MicroUser> playerList) {
+        this.playerList = playerList;
     }
 
-    public List<MatchRound> getRounds() {
-        return rounds;
+    public List<MatchRound> getRoundList() {
+        return roundList;
     }
 
-    public void setRounds(List<MatchRound> rounds) {
-        this.rounds = rounds;
+    public void setRoundList(List<MatchRound> roundList) {
+        this.roundList = roundList;
     }
 
     public Map<String, Integer> getTeamPoint() {

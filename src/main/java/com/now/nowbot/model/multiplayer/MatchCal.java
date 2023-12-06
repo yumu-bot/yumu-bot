@@ -55,6 +55,8 @@ public class MatchCal {
         playerMap = playerList.stream().collect(Collectors.toMap(MicroUser::getId, m -> m));
 
         addPlayerName4MatchScore();
+        addMicroUser4MatchScore();
+        addRanking4MatchScore();
     }
 
     private void constructScoreList() {
@@ -88,6 +90,7 @@ public class MatchCal {
         }
     }
 
+    //默认设置
     public void addMicroUser4MatchScore() {
         for (MatchScore s: scoreList) {
             for (MicroUser p: playerList) {
@@ -99,6 +102,7 @@ public class MatchCal {
         }
     }
 
+    //默认设置
     //不知道为什么，这里总是会筛出 10000 分以下的
     public void addRanking4MatchScore() {
         for (MatchRound r: roundList) {

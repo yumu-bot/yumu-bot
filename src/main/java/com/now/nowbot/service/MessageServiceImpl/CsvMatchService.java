@@ -85,7 +85,7 @@ public class CsvMatchService implements MessageService<Matcher> {
             try {
                 if (isMultiple) {
                     if (Objects.nonNull(ids)) {
-                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.get(0) + "s.csv");
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.getFirst() + "s.csv");
                     }
                 } else {
                     group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
@@ -109,7 +109,6 @@ public class CsvMatchService implements MessageService<Matcher> {
         }
 
         var cal = new MatchCal(match, 0, 0, true, true);
-        cal.addMicroUser4MatchScore();
         var rounds = cal.getRoundList();
 
         for (var r : rounds) {
@@ -134,7 +133,6 @@ public class CsvMatchService implements MessageService<Matcher> {
             }
 
             var cal = new MatchCal(match, 0, 0, true, true);
-            cal.addMicroUser4MatchScore();
             var rounds = cal.getRoundList();
 
             //多比赛

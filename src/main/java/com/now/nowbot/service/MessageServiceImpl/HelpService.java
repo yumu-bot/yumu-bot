@@ -68,6 +68,7 @@ public class HelpService implements MessageService<Matcher> {
             case "pass", "pr" -> "score.html#pass";
             case "recent", "re" -> "score.html#recent";
             case "score", "s" -> ""; //这个会和上面重复
+            case "scorehelp" -> "score.html#score";
             case "bestperformance", "bp" -> "score.html#bestperformance";
             case "todaybp", "tbp" -> "score.html#todaybp";
             case "bpanalysis", "bpa", "ba" -> "score.html#bpanalysis";
@@ -80,6 +81,7 @@ public class HelpService implements MessageService<Matcher> {
             case "ppplus", "ppp" -> "player.html#ppplus";
 
             case "map", "m" -> ""; //这个会和上面重复
+            case "maphelp" -> "map.html#map";
             case "audio", "song", "au" -> "map.html#audio";
             case "search", "sh" -> "map.html#search";
             case "course", "c" -> "map.html#course";
@@ -89,11 +91,15 @@ public class HelpService implements MessageService<Matcher> {
 
             case "match", "ma" -> "tournament.html#match";
             case "rating", "mra", "ra" -> "tournament.html#rating";
-            case "monitornow", "mn" -> "tournament.html#monitornow";
-            case "round", "ro", "mr" -> "tournament.html#round";
+            case "series", "sra", "sa" -> "tournament.html#series";
+            case "matchlisten", "listen", "ml", "li" -> "tournament.html#listen";
+            case "matchnow", "now", "mn" -> "tournament.html#matchnow";
+            case "matchround", "round", "ro", "mr" -> "tournament.html#round";
+            case "mappool", "pool", "po" -> "tournament.html#pool";
 
             case "oldavatar", "oa" -> "aid.html#oldavatar";
             case "overrating", "oversr", "or" -> "aid.html#overrating";
+            case "trans", "tr" -> "aid.html#trans";
             case "kita", "k" -> "aid.html#kita";
 
             default -> "";

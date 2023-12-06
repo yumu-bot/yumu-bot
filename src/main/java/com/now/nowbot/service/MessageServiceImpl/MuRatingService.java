@@ -95,7 +95,7 @@ public class MuRatingService implements MessageService<Matcher> {
                 .append(data.getTeamPoint().get("red")).append(" : ")
                 .append(data.getTeamPoint().get("blue")).append("\n")
                 .append("mp").append(data.getMatchStat().getId()).append(" ")
-                .append(data.getRounds().get(0).getTeamType()).append("\n");
+                .append(data.getRoundList().getFirst().getTeamType()).append("\n");
 
         for (PlayerData p : data.getPlayerDataList()) {
             sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
@@ -119,7 +119,7 @@ public class MuRatingService implements MessageService<Matcher> {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
+        while (!match.getFirstEventId().equals(match.getEvents().getFirst().getId())) {
             var events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
             if (events.isEmpty()) throw new MRAException(MRAException.Type.RATING_Round_Empty);
             match.getEvents().addAll(0, events);

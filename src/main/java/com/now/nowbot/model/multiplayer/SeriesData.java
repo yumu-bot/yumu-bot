@@ -61,7 +61,7 @@ public class SeriesData {
             playerDataFullList.addAll(pd);
 
             //包含所有玩家的映射表
-            playerMap.putAll(matchData.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2)));
+            playerMap.putAll(matchData.getPlayerList().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2)));
 
             //设定早晚时间
             if (matchData.getMatchStat().getStartTime()
@@ -75,7 +75,7 @@ public class SeriesData {
 
             //导入名字
             if (name == null || name.isBlank()) {
-                name = series.getMatches().get(0).getMatchStat().getName() + "...";
+                name = series.getMatches().getFirst().getMatchStat().getName() + "...";
             }
         }
 

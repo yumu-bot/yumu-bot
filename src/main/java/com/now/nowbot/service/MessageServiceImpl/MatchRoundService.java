@@ -106,7 +106,7 @@ public class MatchRoundService implements MessageService<Matcher> {
             throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().get(0).getId())) {
+        while (!match.getFirstEventId().equals(match.getEvents().getFirst().getId())) {
             List<MatchEvent> events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
             if (events.isEmpty()) throw new MatchRoundException(MatchRoundException.Type.MR_Round_Empty);
             match.getEvents().addAll(0, events);
@@ -114,7 +114,6 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         //获取所有轮的游戏
         var cal = new MatchCal(match, 0, 0, true, true);
-        cal.addMicroUser4MatchScore(); //方便取数据
 
         List<MatchRound> rounds = cal.getRoundList();
 

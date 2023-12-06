@@ -13,7 +13,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
 import com.now.nowbot.service.MessageServiceImpl.MapPoolService;
-import com.now.nowbot.service.MessageServiceImpl.MonitorNowService;
+import com.now.nowbot.service.MessageServiceImpl.MatchNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
@@ -49,7 +49,7 @@ public class BotWebApi {
     @Resource
     MuRatingService mraService;
     @Resource
-    MonitorNowService monitorNowService;
+    MatchNowService monitorNowService;
     @Resource
     ImageService imageService;
     @Resource
@@ -113,17 +113,25 @@ public class BotWebApi {
      */
     @GetMapping(value = "match")
     @OpenResource(name = "mn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
-    public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int mid,
+    public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
                                               @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
                                               @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
                                               @OpenResource(name = "keep-low", desp = "保留低分成绩") @Nullable Boolean f,
-                                              @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MonitorNowException {
+                                              @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MatchNowException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
-        var data = monitorNowService.getImage(mid, k, d, f, r);
-        return new ResponseEntity<>(data, getImageHeader(mid + "-match.jpg", data.length), HttpStatus.OK);
+        var data = monitorNowService.parseData(matchID, k, d, f, r);
+
+        byte[] img;
+        try {
+            img = imageService.getPanelF(data);
+        } catch (Exception e) {
+            throw new MatchNowException(MatchNowException.Type.MN_Render_Error);
+        }
+
+        return new ResponseEntity<>(img, getImageHeader(matchID + "-match.jpg", img.length), HttpStatus.OK);
     }
 
     /***
@@ -219,7 +227,7 @@ public class BotWebApi {
                     data = imageService.getPanelA4(osuUser, scoreList, rankList);
                     suffix = "-bps.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
                     suffix = "-bp.jpg";
                 }
             }
@@ -231,7 +239,7 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-passes.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
                     suffix = "-pass.jpg";
                 }
             }
@@ -244,7 +252,7 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-recents.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
                     suffix = "-recent.jpg";
                 }
             }

@@ -313,13 +313,10 @@ public class ImageService {
         return doPost("panel_E", httpEntity);
     }
 
-    public byte[] getPanelF(MatchStat matchStat, List<MatchRound> rounds) {
+    public byte[] getPanelF(MatchData matchData) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = new HashMap<String, Object>();
-        body.put("matchStat", matchStat);
-        body.put("rounds", rounds);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<MatchData> httpEntity = new HttpEntity<>(matchData, headers);
         return doPost("panel_F", httpEntity);
     }
 
