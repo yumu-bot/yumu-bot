@@ -73,7 +73,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent g) {
-                ListenerCheck.cancel(g.getGroup().getId(), g.getSender().getId(), Permission.isSuper(event.getSender().getId()), param.id);
+                event.getSubject().sendMessage("停止监听: " + param.id);
+                ListenerCheck.cancel(g.getGroup().getId(),
+                        g.getSender().getId(),
+                        Permission.isSuper(event.getSender().getId()),
+                        param.id);
             } else {
                 throw new TipsException("不支持的方式");
             }
@@ -132,7 +136,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var s = b.getBeatMapSet();
 
                 String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
+                from.sendMessage(matchEvent.getId() + "|比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
                 return;
             }
             //比赛结束，发送成绩
@@ -140,7 +144,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var b = matchEvent.getRound().getBeatmap();
                 var s1 = b.getBeatMapSet();
                 String mapInfo = "(" + b.getId() + ") " + s1.getArtistUTF() + " - " + s1.getTitleUTF() + " (" + s1.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage("比赛 " + param.id + " 结束！谱面：\n" + mapInfo);
+                from.sendMessage(matchEvent.getId() + "|比赛 " + param.id + " 结束！谱面：\n" + mapInfo);
 
                 var round = insertUser(matchEvent, newMatch);
                 int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
