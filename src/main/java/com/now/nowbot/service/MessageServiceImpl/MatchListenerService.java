@@ -13,7 +13,6 @@ import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -215,6 +214,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 if (uList == null) uList = new ArrayList<>(USER_MAX);
                 if (uList.size() > USER_MAX && notSuper) throw new TipsRuntimeException("你已经监听已达最大个数");
                 if (uList.contains(key) && notSuper) throw new TipsRuntimeException("你已经监听过了");
+                for (var k : uList) {
+                    if (k.mid == mid) throw new TipsRuntimeException("你已经监听过这张图了");
+                }
                 uList.add(key);
                 return uList;
             });
@@ -223,6 +225,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 if (gList == null) gList = new ArrayList<>(GROUP_MAX);
                 if (gList.size() > GROUP_MAX && notSuper) throw new TipsRuntimeException("这个群监听已达最大个数");
                 if (gList.contains(key) && notSuper) throw new TipsRuntimeException("此群已经监听过了");
+                for (var k : gList) {
+                    if (k.mid == mid) throw new TipsRuntimeException("此群已经监听过这张图了");
+                }
                 gList.add(key);
                 return gList;
             });
@@ -232,12 +237,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         static void cancel(long qq, long group, boolean isSupper, long mid) {
             var key = new QQ_GroupRecord(qq, group, mid);
-            if (isSupper) {
-//                return;
-            }
-
-            MatchListenerService.log.info(JacksonUtil.objectToJsonPretty(userListeners));
-            MatchListenerService.log.info(JacksonUtil.objectToJsonPretty(groupListeners));
 
             BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> func = (id, list) -> {
                 if (list == null || ! list.contains(key)) throw new TipsRuntimeException("没听过");
@@ -245,13 +244,18 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 return CollectionUtils.isEmpty(list) ? null : list;
             };
 
-            userListeners.compute(qq, func);
-            groupListeners.compute(group, func);
+            try {
+                userListeners.compute(qq, func);
+                groupListeners.compute(group, func);
 
-            listeners.compute(key, (m, v) -> {
-                if (v == null) throw new TipsRuntimeException("没监听过");
-                return null;
-            });
+                listeners.compute(key, (m, v) -> {
+                    if (v == null) throw new TipsRuntimeException("没监听过");
+                    return null;
+                });
+            } catch (TipsRuntimeException e) {
+                if (! isSupper) throw e;
+
+            }
 
         }
 

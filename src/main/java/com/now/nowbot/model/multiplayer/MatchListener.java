@@ -36,6 +36,7 @@ public class MatchListener {
     public MatchListener(Match match, OsuMatchApiService service) {
         this.match = match;
         this.matchApiService = service;
+        matchID = match.getMatchStat().getId();
     }
 
     public void addEventListener(BiConsumer<List<MatchEvent>, Match> doListener) {
@@ -68,7 +69,6 @@ public class MatchListener {
             return;
         }
 
-        matchID = match.getMatchStat().getId();
         recordID = match.getLatestEventId();
 
         if (Objects.nonNull(match.getCurrentGameId())) {
