@@ -25,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 @Service("MATCHLISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
@@ -72,7 +73,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent g) {
-                event.getSubject().sendMessage("停止监听: " + param.id);
+                event.getSubject().sendMessage(param.id + " 停止");
                 ListenerCheck.cancel(g.getGroup().getId(),
                         g.getSender().getId(),
                         Permission.isSuper(event.getSender().getId()),
@@ -106,7 +107,14 @@ public class MatchListenerService implements MessageService<MatchListenerService
         from.sendMessage("开始监听比赛 " + param.id);
 
         // 监听房间结束
-        listener.addStopListener((m) -> from.sendMessage("停止监听 " + param.id + "：比赛结束"));
+        listener.addStopListener((m, type) -> {
+            var s = switch (type) {
+                case MATCH_END -> ": 比赛结束";
+                case USER_STOP -> "";
+                case SUPER_STOP -> ": 管理员终止";
+            };
+            from.sendMessage("停止监听 " + param.id + s);
+        });
 
         listener.addEventListener((eventList, newMatch) -> {
 
@@ -135,16 +143,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var s = b.getBeatMapSet();
 
                 String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage(matchEvent.getId() + "|比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
+                from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
                 return;
             }
             //比赛结束，发送成绩
             try {
-                var b = matchEvent.getRound().getBeatmap();
-                var s1 = b.getBeatMapSet();
-                String mapInfo = "(" + b.getId() + ") " + s1.getArtistUTF() + " - " + s1.getTitleUTF() + " (" + s1.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage(matchEvent.getId() + "|比赛 " + param.id + " 结束！谱面：\n" + mapInfo);
-
                 var round = insertUser(matchEvent, newMatch);
                 int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
 
@@ -199,11 +202,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     private static class ListenerCheck {
-        private final static int                            USER_MAX       = 3;
-        private final static int                            GROUP_MAX      = 3;
-        private final static Map<QQ_GroupRecord, MatchListener> listeners  = new ConcurrentHashMap<>();
-        private final static Map<Long, List<QQ_GroupRecord>> userListeners = new ConcurrentHashMap<>();
-        private final static Map<Long, List<QQ_GroupRecord>> groupListeners = new ConcurrentHashMap<>();
+        private final static int                                USER_MAX       = 3;
+        private final static int                                GROUP_MAX      = 3;
+        private final static Map<QQ_GroupRecord, MatchListener> listeners      = new ConcurrentHashMap<>();
+        private final static Map<Long, List<QQ_GroupRecord>>    userListeners  = new ConcurrentHashMap<>();
+        private final static Map<Long, List<QQ_GroupRecord>>    groupListeners = new ConcurrentHashMap<>();
 
         static void add(long qq, long group, boolean isSuper, MatchListener listener) {
             long mid = listener.getMatchID();
@@ -238,11 +241,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         static void cancel(long qq, long group, boolean isSupper, long mid) {
             var key = new QQ_GroupRecord(qq, group, mid);
 
-            BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> func = (id, list) -> {
-                if (list == null || ! list.contains(key)) throw new TipsRuntimeException("没听过");
-                list.remove(key);
-                return CollectionUtils.isEmpty(list) ? null : list;
-            };
+            var func = getDeleteFunc(key);
 
             try {
                 userListeners.compute(qq, func);
@@ -250,13 +249,36 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
                 listeners.compute(key, (m, v) -> {
                     if (v == null) throw new TipsRuntimeException("没监听过");
+                    v.stopListener(MatchListener.StopType.USER_STOP);
                     return null;
                 });
             } catch (TipsRuntimeException e) {
                 if (! isSupper) throw e;
+                var keySet = new HashSet<QQ_GroupRecord>();
+                Stream.concat(
+                        userListeners.values().stream().flatMap(Collection::stream),
+                        groupListeners.values().stream().flatMap(Collection::stream)
+                ).forEach(k -> {
+                    if (k.mid == mid) keySet.add(k);
+                });
+                keySet.forEach(nKey -> {
+                    var nFunc = getDeleteFunc(nKey);
+                    userListeners.compute(nKey.qq, nFunc);
+                    groupListeners.compute(nKey.group, nFunc);
+                    listeners.remove(nKey).stopListener(MatchListener.StopType.SUPER_STOP);
+                });
+
 
             }
 
+        }
+
+        static BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> getDeleteFunc(QQ_GroupRecord key) {
+            return (id, list) -> {
+                if (list == null || ! list.contains(key)) throw new TipsRuntimeException("没听过");
+                list.remove(key);
+                return CollectionUtils.isEmpty(list) ? null : list;
+            };
         }
 
         record QQ_GroupRecord(long qq, long group, long mid) {

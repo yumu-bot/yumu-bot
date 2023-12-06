@@ -16,6 +16,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class MatchListener {
+    List<BiConsumer<Match, StopType>>         endListner   = new ArrayList<>();
     private static final Logger log = LoggerFactory.getLogger(MatchListener.class);
     private static final ScheduledExecutorService executorService;
 
@@ -27,7 +28,10 @@ public class MatchListener {
     Match                                     match;
     OsuMatchApiService                        matchApiService;
     List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
-    List<Consumer<Match>>                     endListner   = new ArrayList<>();
+
+    public void addStopListener(BiConsumer<Match, StopType> listener) {
+        endListner.add(listener);
+    }
     List<Consumer<Match>>                     startListner = new ArrayList<>();
     long                                      matchID;
     long                                      recordID;
@@ -50,14 +54,6 @@ public class MatchListener {
         startListner.add(listener);
     }
 
-    public void addStopListener(Consumer<Match> listener) {
-        endListner.add(listener);
-    }
-
-    private void onEvents(List<MatchEvent> events, Match match) {
-        consumerList.forEach(c -> c.accept(events, match));
-    }
-
     public synchronized void startListener() {
         if (isStart()) {
             return;
@@ -65,7 +61,7 @@ public class MatchListener {
 
         if (match.isMatchEnd()) {
             startListner.forEach(c -> c.accept(match));
-            endListner.forEach(c -> c.accept(match));
+            endListner.forEach(c -> c.accept(match, StopType.MATCH_END));
             return;
         }
 
@@ -75,11 +71,44 @@ public class MatchListener {
             Optional<MatchEvent> gameOpt = getLastRound(match.getEvents());
             var game = gameOpt.orElseThrow();
             recordID = game.getId() - 1;
+            onEvents(List.of(game), match);
         }
 
         startListner.forEach(c -> c.accept(match));
 
         future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS);
+    }
+
+    private void onEvents(List<MatchEvent> events, Match match) {
+        consumerList.forEach(c -> c.accept(events, match));
+    }
+
+    private void listen() {
+        try {
+            if (match.isMatchEnd()) {
+                this.stopListener(StopType.MATCH_END);
+            }
+            var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
+
+            if (newMatch.getLatestEventId() == recordID) return;
+
+            if (Objects.nonNull(newMatch.getCurrentGameId())) {
+                // 如果正在进行, newMatch.getEvents().getFirst() 一定是当前开始的对局
+                var m = newMatch.getEvents().getFirst();
+                if (m.getId() - 1 != recordID) {
+                    recordID = m.getId() - 1;
+                    onEvents(newMatch.getEvents(), match);
+                }
+                return;
+            } else {
+                recordID = newMatch.getLatestEventId();
+            }
+
+            match.parseNextData(newMatch);
+            onEvents(newMatch.getEvents(), match);
+        } catch (Exception e) {
+            log.error("监听比赛期间出现错误: ", e);
+        }
     }
 
     public boolean isStart() {
@@ -99,41 +128,17 @@ public class MatchListener {
         return Optional.ofNullable(e);
     }
 
-    private void listen() {
-        try {
-            log.info("-----------------" + recordID);
-
-            if (match.isMatchEnd()) {
-                this.stopListener();
-            }
-            var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
-            log.info("size {}", match.events.size());
-
-            if (newMatch.getLatestEventId() == recordID) return;
-
-            if (Objects.nonNull(newMatch.getCurrentGameId())) {
-                // 如果正在进行, newMatch.getFirstEventId() 一定是当前开始的对局
-                if (newMatch.getFirstEventId() - 1 != recordID) {
-                    recordID = newMatch.getFirstEventId() - 1;
-                    onEvents(newMatch.getEvents(), match);
-                }
-                return;
-            } else {
-                recordID = newMatch.getLatestEventId();
-            }
-
-            match.parseNextData(newMatch);
-            onEvents(newMatch.getEvents(), match);
-        } catch (Exception e) {
-            log.error("监听比赛期间出现错误: ", e);
+    public void stopListener(StopType type) {
+        if (isStart()) {
+            future.cancel(true);
+            endListner.forEach(c -> c.accept(match, type));
         }
     }
 
-    public void stopListener() {
-        if (isStart()) {
-            future.cancel(true);
-            endListner.forEach(c -> c.accept(match));
-        }
+    public enum StopType {
+        MATCH_END,
+        USER_STOP,
+        SUPER_STOP,
     }
 
     public long getMatchID() {
