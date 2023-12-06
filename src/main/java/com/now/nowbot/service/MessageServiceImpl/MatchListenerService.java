@@ -94,25 +94,25 @@ public class MatchListenerService implements MessageService<MatchListenerService
         MatchListener listener = new MatchListener(match, osuMatchApiService);
         if (event instanceof GroupMessageEvent g) {
             var sender = g.getSender().getId();
+            // 检查有没有重复, 重复直接抛错终止
             ListenerCheck.add(g.getGroup().getId(), sender, Permission.isSuper(sender), listener);
         } else {
             throw new TipsException("不支持的方式");
         }
         from.sendMessage("开始监听比赛 " + param.id);
 
+        // 监听房间结束
         listener.addStopListener((m) -> from.sendMessage("停止监听 " + param.id + "：比赛结束"));
 
         listener.addEventListener((eventList, newMatch) -> {
 
             Optional<MatchEvent> matchEventOpt = eventList.stream()
-//                                                                这里为啥要判断getRound().getId(), 应该都有吧
+//                                                      这里为啥要判断getRound().getId(), 应该都有吧
                     .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
-                    .sorted(Comparator.reverseOrder())
-                    .findAny();
+                    .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
 
-            // 发送新比赛                                                                                            你都在上面过滤了, 不用在这判断
-//            if (Objects.nonNull(matchEvent) && Objects.equals(matchEvent.getDetail().type(), "other") && Objects.nonNull(matchEvent.getRound()))
             if (matchEventOpt.isEmpty()) {
+                // 当前变动没有 game
                 return;
             }
 
@@ -144,7 +144,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
                 QQMsgUtil.sendImage(from, img);
             } catch (TipsException tipsException) {
-                // 注意 此处为多线程环境, 无法通过向上 throw 来抛出错误
+                // 注意 在监听器里为多线程环境, 无法通过向上 throw 来抛出错误
                 // 手动处理提示
                 from.sendMessage(tipsException.getMessage());
             } catch (Exception e) {
