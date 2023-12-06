@@ -29,7 +29,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -433,20 +432,9 @@ public class BotWebApi {
     @PostMapping(value = "pool")
     public ResponseEntity<byte[]> getPool(
             @RequestParam("name") @Nullable String nameStr,
-            @RequestBody String dataStr
+            @RequestBody Map<String, List<Long>> dataMap
     ) throws RuntimeException {
-
-        Map<String, List<Long>> d;
-        try {
-            d = mapPoolService.parseDataString(dataStr);
-        } catch (MapPoolException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(MapPoolException.Type.PO_Send_Error.message);
-        }
-
-        var mapPool = new MapPool(nameStr, d, beatmapApiService);
-
+        var mapPool = new MapPool(nameStr, dataMap, beatmapApiService);
         if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.PO_Map_Empty.message);
 
         var data = imageService.getPanelH(mapPool);

@@ -120,10 +120,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             userListeners.compute(qq, (q, uList) -> {
                 if (uList == null) uList = new ArrayList<>(USER_MAX);
-                if (uList.size() > USER_MAX && notSuper) throw new TipsRuntimeException("你已经监听已达最大个数");
-                if (uList.contains(key) && notSuper) throw new TipsRuntimeException("你已经监听过了");
+                if (uList.size() > USER_MAX && notSuper) {
+                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstance.message);
+                }
+                if (uList.contains(key) && notSuper) {
+                    throw new TipsRuntimeException(
+                            String.format(MatchListenerException.Type.ML_Listen_AlreadyInListening.message, mid)
+                    );
+                }
                 for (var k : uList) {
-                    if (k.mid == mid) throw new TipsRuntimeException("你已经监听过这张图了");
+                    if (k.mid == mid) {
+                        throw new TipsRuntimeException(
+                                String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningOthers.message, mid)
+                        );
+                    }
                 }
                 uList.add(key);
                 return uList;
@@ -131,10 +141,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             groupListeners.compute(group, (g, gList) -> {
                 if (gList == null) gList = new ArrayList<>(GROUP_MAX);
-                if (gList.size() > GROUP_MAX && notSuper) throw new TipsRuntimeException("这个群监听已达最大个数");
-                if (gList.contains(key) && notSuper) throw new TipsRuntimeException("此群已经监听过了");
+                if (gList.size() > GROUP_MAX && notSuper) {
+                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message);
+                }
+                if (gList.contains(key) && notSuper) {
+                    throw new TipsRuntimeException(
+                            String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningGroup.message, mid)
+                    );
+                }
                 for (var k : gList) {
-                    if (k.mid == mid) throw new TipsRuntimeException("此群已经监听过这张图了");
+                    if (k.mid == mid) {
+                        throw new TipsRuntimeException(
+                                String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningOthers.message, mid)
+                        );
+                    }
                 }
                 gList.add(key);
                 return gList;
@@ -153,7 +173,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 groupListeners.compute(group, func);
 
                 listeners.compute(key, (m, v) -> {
-                    if (v == null) throw new TipsRuntimeException("没监听过");
+                    if (v == null) {
+                        throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
+                    }
                     v.stopListener(MatchListener.StopType.USER_STOP);
                     return null;
                 });
@@ -180,7 +202,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         static BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> getDeleteFunc(QQ_GroupRecord key) {
             return (id, list) -> {
-                if (list == null || ! list.contains(key)) throw new TipsRuntimeException("没听过");
+                if (list == null || ! list.contains(key)) {
+                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
+                }
                 list.remove(key);
                 return CollectionUtils.isEmpty(list) ? null : list;
             };
@@ -210,14 +234,16 @@ public class MatchListenerService implements MessageService<MatchListenerService
     @Override
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
-            if (event instanceof GroupMessageEvent g) {
-                event.getSubject().sendMessage(param.id + " 停止");
-                ListenerCheck.cancel(g.getGroup().getId(),
-                        g.getSender().getId(),
+            if (event instanceof GroupMessageEvent groupEvent) {
+                event.getSubject().sendMessage(
+                        String.format(MatchListenerException.Type.ML_Listen_StopRequest.message, param.id.toString())
+                );
+                ListenerCheck.cancel(groupEvent.getGroup().getId(),
+                        groupEvent.getSender().getId(),
                         Permission.isSuper(event.getSender().getId()),
                         param.id);
             } else {
-                throw new TipsException("不支持的方式");
+                throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
             }
             return;
         }
@@ -235,30 +261,33 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         MatchListener listener = new MatchListener(match, osuMatchApiService);
-        if (event instanceof GroupMessageEvent g) {
-            var sender = g.getSender().getId();
+        if (event instanceof GroupMessageEvent groupEvent) {
+            var sender = groupEvent.getSender().getId();
             // 检查有没有重复, 重复直接抛错终止
-            ListenerCheck.add(g.getGroup().getId(), sender, Permission.isSuper(sender), listener);
+            ListenerCheck.add(groupEvent.getGroup().getId(), sender, Permission.isSuper(sender), listener);
         } else {
-            throw new TipsException("不支持的方式");
+            throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
         }
-        from.sendMessage("开始监听比赛 " + param.id);
+        from.sendMessage(
+                String.format(MatchListenerException.Type.ML_Listen_Start.message, param.id)
+        );
 
         // 监听房间结束
         listener.addStopListener((m, type) -> {
-            var s = switch (type) {
-                case MATCH_END -> ": 比赛结束";
-                case USER_STOP -> "";
-                case SUPER_STOP -> ": 管理员终止";
-                case SERVICE_STOP -> "服务器重启";
+            var reason = switch (type) {
+                case MATCH_END -> "：比赛正常结束";
+                case USER_STOP -> "：调用者关闭";
+                case SUPER_STOP -> "：超级管理员关闭";
+                case SERVICE_STOP -> "：服务器重启";
             };
-            from.sendMessage("停止监听 " + param.id + s);
+            from.sendMessage(
+                    String.format(MatchListenerException.Type.ML_Listen_Stop.message, param.id, reason)
+            );
         });
 
         listener.addEventListener((eventList, newMatch) -> {
 
             Optional<MatchEvent> matchEventOpt = eventList.stream()
-//                                                      这里为啥要判断getRound().getId(), 应该都有吧
                     .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
                     .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
 
@@ -268,21 +297,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
             }
 
             var matchEvent = matchEventOpt.get();
-            // 比赛结束 已经有结束的事件监听了
-//            if (newMatch.isMatchEnd()) {
-//                from.sendMessage("停止监听 " + param.id + "：比赛结束");
-//            }
 
             @SuppressWarnings("all")
             var scores = matchEvent.getRound().getScoreInfoList();
 
             //刚开始比赛，没分
+            //以后可以做个提示或者面板之类的，也可能和现在的面板互换
             if (CollectionUtils.isEmpty(scores)) {
                 var b = matchEvent.getRound().getBeatmap();
                 var s = b.getBeatMapSet();
 
                 String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage("比赛 " + param.id + " 已开始！谱面：\n" + mapInfo);
+                from.sendMessage(
+                        String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, mapInfo)
+                );
                 return;
             }
             //比赛结束，发送成绩

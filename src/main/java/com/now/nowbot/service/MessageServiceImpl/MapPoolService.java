@@ -62,7 +62,7 @@ public class MapPoolService implements MessageService<Matcher> {
     }
 
     public Map<String, List<Long>> parseDataString(String dataStr) throws MapPoolException {
-        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
+        String[] dataStrArray = dataStr.trim().split("[\"\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
 
         var output = new LinkedHashMap<String, List<Long>>();
