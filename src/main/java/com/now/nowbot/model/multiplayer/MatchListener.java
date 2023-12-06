@@ -128,6 +128,7 @@ public class MatchListener {
     }
 
     public void stopListener() {
+        log.info("[{}] listener stop", matchID);
         if (isStart()) {
             future.cancel(true);
             endListner.forEach(c -> c.accept(match));

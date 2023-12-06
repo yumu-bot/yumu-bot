@@ -242,6 +242,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
                 listeners.compute(key, (m, v) -> {
                     if (v == null) throw new TipsRuntimeException("没监听过");
+                    v.stopListener();
                     return null;
                 });
             } catch (TipsRuntimeException e) {
