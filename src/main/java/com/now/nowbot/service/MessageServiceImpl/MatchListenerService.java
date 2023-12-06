@@ -13,6 +13,7 @@ import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ import java.util.function.BiFunction;
 
 @Service("MATCHLISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
-    Logger log = LoggerFactory.getLogger(MatchListenerService.class);
+    static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 
     @Resource
     OsuMatchApiService osuMatchApiService;
@@ -72,7 +73,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent g) {
-                ListenerCheck.cancel(g.getGroup().getId(), g.getSender().getId(), param.id);
+                ListenerCheck.cancel(g.getGroup().getId(), g.getSender().getId(), Permission.isSuper(event.getSender().getId()), param.id);
             } else {
                 throw new TipsException("不支持的方式");
             }
@@ -136,6 +137,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
             }
             //比赛结束，发送成绩
             try {
+                var b = matchEvent.getRound().getBeatmap();
+                var s1 = b.getBeatMapSet();
+                String mapInfo = "(" + b.getId() + ") " + s1.getArtistUTF() + " - " + s1.getTitleUTF() + " (" + s1.getMapperName() + ") [" + b.getVersion() + "]";
+                from.sendMessage("比赛 " + param.id + " 结束！谱面：\n" + mapInfo);
 
                 var round = insertUser(matchEvent, newMatch);
                 int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
@@ -193,52 +198,77 @@ public class MatchListenerService implements MessageService<MatchListenerService
     private static class ListenerCheck {
         private final static int                            USER_MAX       = 3;
         private final static int                            GROUP_MAX      = 3;
-        private final static Map<Long, List<MatchListener>> listeners      = new ConcurrentHashMap<>();
-        private final static Map<Long, List<Long>>          userListeners  = new ConcurrentHashMap<>();
-        private final static Map<Long, List<Long>>          groupListeners = new ConcurrentHashMap<>();
+        private final static Map<QQ_GroupRecord, MatchListener> listeners  = new ConcurrentHashMap<>();
+        private final static Map<Long, List<QQ_GroupRecord>> userListeners = new ConcurrentHashMap<>();
+        private final static Map<Long, List<QQ_GroupRecord>> groupListeners = new ConcurrentHashMap<>();
 
         static void add(long qq, long group, boolean isSuper, MatchListener listener) {
             long mid = listener.getMatchID();
             boolean notSuper = ! isSuper;
+            var key = new QQ_GroupRecord(qq, group, mid);
 
             userListeners.compute(qq, (q, uList) -> {
                 if (uList == null) uList = new ArrayList<>(USER_MAX);
                 if (uList.size() > USER_MAX && notSuper) throw new TipsRuntimeException("你已经监听已达最大个数");
-                if (uList.contains(mid) && notSuper) throw new TipsRuntimeException("你已经监听过了");
-                uList.add(mid);
+                if (uList.contains(key) && notSuper) throw new TipsRuntimeException("你已经监听过了");
+                uList.add(key);
                 return uList;
             });
 
             groupListeners.compute(group, (g, gList) -> {
                 if (gList == null) gList = new ArrayList<>(GROUP_MAX);
                 if (gList.size() > GROUP_MAX && notSuper) throw new TipsRuntimeException("这个群监听已达最大个数");
-                if (gList.contains(mid) && notSuper) throw new TipsRuntimeException("此群已经监听过了");
-                gList.add(mid);
+                if (gList.contains(key) && notSuper) throw new TipsRuntimeException("此群已经监听过了");
+                gList.add(key);
                 return gList;
             });
 
-            listeners.compute(mid, (m, l) -> {
-                if (Objects.isNull(l)) l = new ArrayList<>();
-                l.add(listener);
-                return l;
-            });
+            listeners.put(key, listener);
         }
 
-        static void cancel(long qq, long group, long mid) {
-            BiFunction<Long, List<Long>, List<Long>> func = (id, list) -> {
-                if (list == null || ! list.contains(mid)) throw new TipsRuntimeException("没听过");
-                list.remove(mid);
+        static void cancel(long qq, long group, boolean isSupper, long mid) {
+            var key = new QQ_GroupRecord(qq, group, mid);
+            if (isSupper) {
+//                return;
+            }
+
+            MatchListenerService.log.info(JacksonUtil.objectToJsonPretty(userListeners));
+            MatchListenerService.log.info(JacksonUtil.objectToJsonPretty(groupListeners));
+
+            BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> func = (id, list) -> {
+                if (list == null || ! list.contains(key)) throw new TipsRuntimeException("没听过");
+                list.remove(key);
                 return CollectionUtils.isEmpty(list) ? null : list;
             };
+
             userListeners.compute(qq, func);
             groupListeners.compute(group, func);
 
-            listeners.compute(mid, (m, v) -> {
+            listeners.compute(key, (m, v) -> {
                 if (v == null) throw new TipsRuntimeException("没监听过");
-                v.forEach(MatchListener::stopListener);
                 return null;
             });
 
+        }
+
+        record QQ_GroupRecord(long qq, long group, long mid) {
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (! (o instanceof QQ_GroupRecord that)) return false;
+
+                if (qq != that.qq) return false;
+                if (group != that.group) return false;
+                return mid == that.mid;
+            }
+
+            @Override
+            public int hashCode() {
+                int result = (int) (qq ^ (qq >>> 32));
+                result = 31 * result + (int) (group ^ (group >>> 32));
+                result = 31 * result + (int) (mid ^ (mid >>> 32));
+                return result;
+            }
         }
     }
 }
