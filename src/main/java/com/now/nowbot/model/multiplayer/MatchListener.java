@@ -101,10 +101,13 @@ public class MatchListener {
 
     private void listen() {
         try {
+            log.info("-----------------" + recordID);
+
             if (match.isMatchEnd()) {
                 this.stopListener();
             }
             var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
+            log.info("size {}", match.events.size());
 
             if (newMatch.getLatestEventId() == recordID) return;
 
