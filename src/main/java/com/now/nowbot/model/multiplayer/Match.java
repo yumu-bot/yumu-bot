@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.MicroUser;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -84,6 +85,7 @@ public class Match {
     }
 
     public void parseNextData(Match m) {
+        if (CollectionUtils.isEmpty(m.getEvents())) return;
         // 合并事件
         if (events.getFirst().getId() > m.getEvents().getLast().getId()) {
             this.events.addAll(0, m.getEvents());

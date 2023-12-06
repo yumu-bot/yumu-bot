@@ -2,12 +2,13 @@ package com.now.nowbot.model.multiplayer;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MatchEvent {
+public class MatchEvent implements Comparable<MatchEvent> {
     @JsonProperty("detail")
     Detail detail;
     Long id;
@@ -17,6 +18,11 @@ public class MatchEvent {
 
     @JsonProperty("game")
     MatchRound round;
+
+    @Override
+    public int compareTo(@NotNull MatchEvent o) {
+        return (int) (o.id - id);
+    }
 
     public record Detail(String type, String text) {
     }
