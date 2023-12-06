@@ -4,6 +4,7 @@ import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
@@ -70,6 +71,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
             ((ThreadPoolTaskExecutor)executor).shutdown();
+            MatchListenerService.stopAllListener();
         }, "endThread"));
         log.info("启动成功");
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
