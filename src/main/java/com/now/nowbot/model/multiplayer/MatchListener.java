@@ -82,7 +82,7 @@ public class MatchListener {
             if (this.isStart()) {
                 this.stopListener(StopType.TIME_OUT);
             }
-        }, 10, TimeUnit.MINUTES);
+        }, 6, TimeUnit.HOURS);
     }
 
     private void onEvents(List<MatchEvent> events, Match match) {
