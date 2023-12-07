@@ -19,6 +19,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
@@ -60,8 +61,12 @@ public class PPMinusService implements MessageService<Matcher> {
         OsuUser user;
         List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
+        // 在新人群管理群里查询则固定为 osu模式
+        if (event.getSubject().getId() == 695600319L) {
+            mode = OsuMode.OSU;
+        }
             // 不包含@ 分为查自身/查他人
-        if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
+        if (StringUtils.hasText(matcher.group("name"))) {
             // 查他人
             try {
                 var id = userApiService.getOsuId(matcher.group("name").trim());
@@ -78,10 +83,6 @@ public class PPMinusService implements MessageService<Matcher> {
 
             //默认无主模式
             if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
-            // 在新人群管理群里查询则固定为 osu模式
-            if (event.getSubject().getId() == 695600319L) {
-                mode = OsuMode.OSU;
-            }
 
         } else if (at != null) {
             try {
@@ -205,6 +206,7 @@ public class PPMinusService implements MessageService<Matcher> {
         }
 
         //你为啥不在数据库里存这些。。。
+        // 就两个
         if (userOther.getUID() == 17064371L){
             setUser(PPMinusOther, 999.99f);
         } else if (userOther.getUID().equals(19673275L)) {
