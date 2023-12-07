@@ -62,7 +62,7 @@ public class PPMinusService implements MessageService<Matcher> {
         List<Score> bps;
         var mode = OsuMode.getMode(matcher.group("mode"));
         // 在新人群管理群里查询则固定为 osu模式
-        if (event.getSubject().getId() == 695600319L) {
+        if (event.getSubject().getId() == 695600319L && OsuMode.DEFAULT.equals(mode)) {
             mode = OsuMode.OSU;
         }
             // 不包含@ 分为查自身/查他人
