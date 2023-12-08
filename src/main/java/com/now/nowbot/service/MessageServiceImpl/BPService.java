@@ -199,7 +199,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 
-        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP);
+        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, mode.getName());
 
         try {
             if (isMultipleBP) {
