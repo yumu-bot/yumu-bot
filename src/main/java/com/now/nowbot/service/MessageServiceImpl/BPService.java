@@ -199,7 +199,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 
-        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, OsuMode.getName(mode));
+        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, osuUser.getPlayMode().getName());
 
         try {
             if (isMultipleBP) {
