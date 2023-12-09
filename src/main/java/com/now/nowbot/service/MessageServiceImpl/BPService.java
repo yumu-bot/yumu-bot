@@ -181,10 +181,10 @@ public class BPService implements MessageService<BPService.BPParam> {
         OsuUser osuUser;
 
         try {
-            log.info("bef {}", mode);
             osuUser = userApiService.getPlayerInfo(user, mode);
-            mode = osuUser.getPlayMode();
-            log.info("aft {}", mode);
+            if (OsuMode.isDefault(mode)) {
+                mode = osuUser.getPlayMode();
+            }
         } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (WebClientResponseException.NotFound e) {
