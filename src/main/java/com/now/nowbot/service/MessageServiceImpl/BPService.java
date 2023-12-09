@@ -70,7 +70,6 @@ public class BPService implements MessageService<BPService.BPParam> {
         param.n = matcher.group("n");
         param.m = matcher.group("m");
         param.mode = OsuMode.getMode(matcher.group("mode"));
-        log.info("查询bp mode参数: {}", matcher.group("mode"));
         param.name = matcher.group("name");
         param.s = (matcher.group("s") != null && !matcher.group("s").isBlank());
 
@@ -182,8 +181,10 @@ public class BPService implements MessageService<BPService.BPParam> {
         OsuUser osuUser;
 
         try {
+            log.info("bef {}", mode);
             osuUser = userApiService.getPlayerInfo(user, mode);
             mode = osuUser.getPlayMode();
+            log.info("aft {}", mode);
         } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (WebClientResponseException.NotFound e) {
