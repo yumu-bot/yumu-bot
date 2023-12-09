@@ -70,6 +70,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         param.n = matcher.group("n");
         param.m = matcher.group("m");
         param.mode = OsuMode.getMode(matcher.group("mode"));
+        log.info("查询bp mode参数: {}", matcher.group("mode"));
         param.name = matcher.group("name");
         param.s = (matcher.group("s") != null && !matcher.group("s").isBlank());
 
@@ -174,7 +175,10 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var mode = OsuMode.isDefault(param.mode) ? user.getMode() : param.mode;
+        var mode = param.mode;
+        if (OsuMode.isDefault(mode)) {
+            mode = user.getMode();
+        }
         OsuUser osuUser;
 
         try {
