@@ -174,11 +174,12 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var mode = param.mode == OsuMode.DEFAULT ? user.getMode() : param.mode;
+        var mode = OsuMode.isDefault(param.mode) ? user.getMode() : param.mode;
         OsuUser osuUser;
 
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
+            mode = osuUser.getPlayMode();
         } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (WebClientResponseException.NotFound e) {
@@ -199,8 +200,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 
-        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP,
-                OsuMode.isDefault(mode) ? osuUser.getPlayMode() : mode);
+        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
 
         try {
             if (isMultipleBP) {
