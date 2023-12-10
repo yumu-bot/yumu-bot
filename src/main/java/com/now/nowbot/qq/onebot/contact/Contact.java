@@ -2,13 +2,18 @@ package com.now.nowbot.qq.onebot.contact;
 
 import com.mikuac.shiro.common.utils.MsgUtils;
 import com.mikuac.shiro.core.Bot;
+import com.mikuac.shiro.dto.action.common.ActionData;
+import com.mikuac.shiro.dto.action.common.MsgId;
+import com.now.nowbot.config.OneBotConfig;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
 import com.now.nowbot.util.QQMsgUtil;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class Contact implements com.now.nowbot.qq.contact.Contact {
     String name;
-    final Bot  bot;
+    Bot  bot;
     final long id;
 
     public Contact(Bot bot, long id) {
@@ -32,23 +37,54 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
 
     @Override
     public OneBotMessageReceipt sendMessage(MessageChain msg) {
+        getIfNewBot();
+        int id = 0;
+        ActionData<MsgId> d;
         if (this instanceof Group g) {
-            return g.sendMessage(msg);
+            d = bot.sendGroupMsg(g.getId(), getMsg4Chain(msg), false);
         } else if (this instanceof GroupContact g) {
-            int id = 0;
-            var d = bot.sendPrivateMsg(g.groupId, g.getId(), getMsg4Chain(msg), false);
-            if (d != null && d.getData() != null) {
-                id = d.getData().getMessageId();
-            }
-            return OneBotMessageReceipt.create(bot, id, this);
+            d = bot.sendPrivateMsg(g.getGroupId(), g.getId(), getMsg4Chain(msg), false);
         } else {
-            int id = 0;
-            var d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
-            if (d != null && d.getData() != null) {
-                id = d.getData().getMessageId();
-            }
-            return OneBotMessageReceipt.create(bot, id, this);
+            d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
         }
+        if (d != null && d.getData() != null) {
+            id = d.getData().getMessageId();
+        }
+        return OneBotMessageReceipt.create(bot, id, this);
+    }
+
+    private void getIfNewBot(){
+        if (bot.getStatus().getGood()) {
+            return;
+        }
+        for (var botEntry : OneBotConfig.getBotContainer().robots.entrySet()) {
+            var newBot = botEntry.getValue();
+            if (!newBot.getStatus().getGood()) continue;
+            if (this instanceof Group g) {
+                var groups = newBot.getGroupInfo(g.getId(), false).getData();
+                if (groups.getMemberCount() > 0) {
+                    this.bot = newBot;
+                    return;
+                }
+            } else if (this instanceof GroupContact c) {
+                var groups = newBot.getGroupInfo(c.getGroupId(), false).getData();
+                if (groups.getMemberCount() > 0) {
+                    this.bot = newBot;
+                    return;
+                }
+            } else {
+                var friends = newBot.getFriendList().getData();
+                AtomicBoolean has = new AtomicBoolean(false);
+                friends.forEach(f -> {
+                    if (f.getUserId() == getId()) has.set(true);
+                });
+                if (has.get()) {
+                    this.bot = newBot;
+                    return;
+                }
+            }
+        }
+        throw new RuntimeException("当前bot离线, 且未找到代替bot");
     }
 
     protected static String getMsg4Chain(MessageChain messageChain) {

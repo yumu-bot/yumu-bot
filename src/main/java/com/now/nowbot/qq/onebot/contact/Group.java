@@ -35,16 +35,6 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     }
 
     @Override
-    public OneBotMessageReceipt sendMessage(MessageChain msg) {
-        int id = 0;
-        var d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
-        if (d != null && d.getData() != null) {
-            id = d.getData().getMessageId();
-        }
-        return OneBotMessageReceipt.create(bot, id, this);
-    }
-
-    @Override
     public boolean isAdmin() {
         var data = bot.getGroupMemberInfo(getId(), bot.getSelfId(), false).getData();
         return data.getRole().equals("owner") || data.getRole().equals("admin");

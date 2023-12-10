@@ -24,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -34,7 +35,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     @Resource
     OsuMatchApiService osuMatchApiService;
     @Resource
-    ImageService imageService;
+    ImageService       imageService;
 
 
     @Override
@@ -42,7 +43,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         var matcher = Instructions.LISTENER.matcher(event.getRawMessage().trim());
         var param = new MatchListenerService.ListenerParam();
 
-        if (! matcher.find()) return false;
+        if (!matcher.find()) return false;
 
         var id = matcher.group("matchid");
         var op = matcher.group("operate");
@@ -179,7 +180,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var b = matchEvent.getRound().getBeatmap();
                 var s = b.getBeatMapSet();
 
-                String info = STR."(\{b.getId()}) \{s.getArtistUTF()} - (\{s.getTitleUTF()}) [\{b.getVersion()}]";
+                String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
                 var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
                 QQMsgUtil.sendImage(from, i);
                 return;
@@ -210,7 +211,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (! (o instanceof QQ_GroupRecord that)) return false;
+            if (!(o instanceof QQ_GroupRecord that)) return false;
 
             if (qq != that.qq) return false;
             if (group != that.group) return false;
@@ -226,104 +227,58 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    static BiFunction<Long, List<QQ_GroupRecord>, List<QQ_GroupRecord>> getDeleteFunc(QQ_GroupRecord key) {
-        return (id, list) -> {
-            if (list == null || ! list.contains(key)) {
-                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
-            }
-            list.remove(key);
-            return CollectionUtils.isEmpty(list) ? null : list;
-        };
-    }
-
     private static class ListenerCheck {
-        private final static int                                USER_MAX       = 3;
-        private final static int                                GROUP_MAX      = 3;
-        private final static Map<QQ_GroupRecord, MatchListener> listeners      = new ConcurrentHashMap<>();
-        private final static Map<Long, List<QQ_GroupRecord>>    userListeners  = new ConcurrentHashMap<>();
-        private final static Map<Long, List<QQ_GroupRecord>>    groupListeners = new ConcurrentHashMap<>();
+        private final static int                                USER_MAX  = 3;
+        private final static int                                GROUP_MAX = 3;
+        private final static Map<QQ_GroupRecord, MatchListener> listeners = new ConcurrentHashMap<>();
 
         static void add(long qq, long group, boolean isSuper, MatchListener listener) {
             long mid = listener.getMatchID();
-            boolean notSuper = ! isSuper;
+            boolean notSuper = !isSuper;
             var key = new QQ_GroupRecord(qq, group, mid);
 
-            userListeners.compute(qq, (q, uList) -> {
-                if (uList == null) uList = new ArrayList<>(USER_MAX);
-                if (uList.size() > USER_MAX && notSuper) {
-                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstance.message);
-                }
-                if (uList.contains(key) && notSuper) {
-                    throw new TipsRuntimeException(
-                            String.format(MatchListenerException.Type.ML_Listen_AlreadyInListening.message, mid)
-                    );
-                }
+            if (listeners.containsKey(key)) {
+                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_AlreadyInListening.message);
+            }
 
-                return uList;
+            AtomicInteger qqSum = new AtomicInteger();
+            AtomicInteger groupSum = new AtomicInteger();
+            listeners.keySet().forEach(k -> {
+                if (k.mid == mid) {
+                    if (k.qq == qq) qqSum.getAndIncrement();
+                    if (k.group == group) groupSum.getAndIncrement();
+                }
             });
 
-            groupListeners.compute(group, (g, gList) -> {
-                if (gList == null) gList = new ArrayList<>(GROUP_MAX);
-                if (gList.size() > GROUP_MAX && notSuper) {
-                    throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message);
-                }
-                if (gList.contains(key) && notSuper) {
-                    throw new TipsRuntimeException(
-                            String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningGroup.message, mid)
-                    );
-                }
+            if (qqSum.get() >= USER_MAX && notSuper)
+                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstance.message);
+            if (groupSum.get() >= GROUP_MAX && notSuper)
+                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message);
 
-                return gList;
-            });
-
-            userListeners.get(qq).add(key);
-            groupListeners.get(group).add(key);
             listeners.put(key, listener);
 
-            listener.addStopListener((ignore1, ignore2) -> {
-                if (listeners.remove(key) != null) {
-                    removeKey(key);
+            listener.addStopListener((ignore1, type) -> {
+                // 防止在迭代 map 时删除报错
+                if (!MatchListener.StopType.USER_STOP.equals(type)) {
+                    listeners.remove(key);
                 }
             });
         }
 
         static void cancel(long qq, long group, boolean isSupper, long mid) {
             var key = new QQ_GroupRecord(qq, group, mid);
-
-            var func = getDeleteFunc(key);
-
-            try {
-                userListeners.compute(qq, func);
-                groupListeners.compute(group, func);
-
-                listeners.compute(key, (m, v) -> {
-                    if (v == null) {
-                        throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_NotListen.message);
+            var l = listeners.get(key);
+            if (Objects.nonNull(l)) {
+                l.stopListener(MatchListener.StopType.USER_STOP);
+            } else if (isSupper) {
+                listeners.entrySet().removeIf((entry) -> {
+                    if (entry.getKey().mid() == mid) {
+                        entry.getValue().stopListener(MatchListener.StopType.USER_STOP);
+                        return true;
                     }
-                    v.stopListener(MatchListener.StopType.USER_STOP);
-                    return null;
-                });
-            } catch (TipsRuntimeException e) {
-                if (! isSupper) throw e;
-                var keySet = new HashSet<QQ_GroupRecord>();
-                Stream.concat(
-                        userListeners.values().stream().flatMap(Collection::stream),
-                        groupListeners.values().stream().flatMap(Collection::stream)
-                ).forEach(k -> {
-                    if (k.mid == mid) keySet.add(k);
-                });
-                keySet.forEach(nKey -> {
-                    removeKey(nKey);
-                    listeners.remove(nKey).stopListener(MatchListener.StopType.SUPER_STOP);
+                    return false;
                 });
             }
         }
-
-        static void removeKey(QQ_GroupRecord key) {
-            var nFunc = getDeleteFunc(key);
-            userListeners.compute(key.qq, nFunc);
-            groupListeners.compute(key.group, nFunc);
-        }
     }
-
 }
