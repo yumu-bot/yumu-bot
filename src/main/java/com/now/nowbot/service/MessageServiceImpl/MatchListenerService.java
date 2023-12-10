@@ -266,7 +266,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         );
                     }
                 }
-                uList.add(key);
+
                 return uList;
             });
 
@@ -287,10 +287,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         );
                     }
                 }
-                gList.add(key);
+
                 return gList;
             });
 
+            userListeners.get(qq).add(key);
+            groupListeners.get(group).add(key);
             listeners.put(key, listener);
 
             listener.addStopListener((ignore1, ignore2) -> {

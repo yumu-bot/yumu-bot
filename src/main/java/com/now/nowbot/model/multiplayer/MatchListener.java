@@ -16,8 +16,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class MatchListener {
-    List<BiConsumer<Match, StopType>>         endListner   = new ArrayList<>();
-    private static final Logger log = LoggerFactory.getLogger(MatchListener.class);
+    private static final Logger                   log = LoggerFactory.getLogger(MatchListener.class);
     private static final ScheduledExecutorService executorService;
 
     static {
@@ -32,9 +31,11 @@ public class MatchListener {
     public void addStopListener(BiConsumer<Match, StopType> listener) {
         endListner.add(listener);
     }
-    List<Consumer<Match>>                     startListner = new ArrayList<>();
-    long                                      matchID;
-    long                                      recordID;
+
+    List<Consumer<Match>>             startListner = new ArrayList<>();
+    List<BiConsumer<Match, StopType>> endListner   = new ArrayList<>();
+    long                              matchID;
+    long                              recordID;
     private ScheduledFuture<?> future;
     private ScheduledFuture<?> kill;
 
@@ -61,8 +62,8 @@ public class MatchListener {
         }
 
         if (match.isMatchEnd()) {
-            startListner.forEach(c -> c.accept(match));
-            endListner.forEach(c -> c.accept(match, StopType.MATCH_END));
+            doStart();
+            doStop();
             return;
         }
 
@@ -75,10 +76,10 @@ public class MatchListener {
             onEvents(List.of(game), match);
         }
 
-        startListner.forEach(c -> c.accept(match));
+        doStart();
 
         future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS);
-        kill = executorService.schedule(()-> {
+        kill = executorService.schedule(() -> {
             if (this.isStart()) {
                 this.stopListener(StopType.TIME_OUT);
             }
@@ -117,8 +118,28 @@ public class MatchListener {
         }
     }
 
+    private void doStart() {
+        startListner.forEach(c -> {
+            try {
+                c.accept(this.match);
+            } catch (Exception e) {
+                log.error("监听比赛启动回调出现错误: ", e);
+            }
+        });
+    }
+
+    private void doStop() {
+        endListner.forEach(c -> {
+            try {
+                c.accept(this.match, StopType.MATCH_END);
+            } catch (Exception e) {
+                log.error("监听比赛结束回调出现错误: ", e);
+            }
+        });
+    }
+
     public boolean isStart() {
-        return Objects.nonNull(future) && ! future.isDone();
+        return Objects.nonNull(future) && !future.isDone();
     }
 
     private Optional<MatchEvent> getLastRound(List<MatchEvent> events) {
@@ -140,7 +161,7 @@ public class MatchListener {
                 kill.cancel(true);
             }
             future.cancel(true);
-            endListner.forEach(c -> c.accept(match, type));
+            doStop();
         }
     }
 
@@ -152,6 +173,7 @@ public class MatchListener {
         TIME_OUT("超时了"),
         ;
         final String tips;
+
         StopType(String t) {
             tips = t;
         }
