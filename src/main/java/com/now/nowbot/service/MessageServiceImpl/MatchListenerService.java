@@ -232,13 +232,13 @@ public class MatchListenerService implements MessageService<MatchListenerService
         private final static int                                GROUP_MAX = 3;
         private final static Map<QQ_GroupRecord, MatchListener> listeners = new ConcurrentHashMap<>();
 
-        static void add(long qq, long group, boolean isSuper, MatchListener listener) {
+        static void add(long qq, long group, boolean isSuper, MatchListener listener) throws MatchListenerException {
             long mid = listener.getMatchID();
             boolean notSuper = !isSuper;
             var key = new QQ_GroupRecord(qq, group, mid);
 
             if (listeners.containsKey(key)) {
-                throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_AlreadyInListening.message);
+                throw new MatchListenerException(MatchListenerException.Type.ML_Listen_AlreadyInListening, mid);
             }
 
             AtomicInteger qqSum = new AtomicInteger();
