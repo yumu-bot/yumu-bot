@@ -63,7 +63,7 @@ public class MatchListener {
 
         if (match.isMatchEnd()) {
             doStart();
-            doStop();
+            doStop(StopType.MATCH_END);
             return;
         }
 
@@ -128,10 +128,10 @@ public class MatchListener {
         });
     }
 
-    private void doStop() {
+    private void doStop(StopType type) {
         endListner.forEach(c -> {
             try {
-                c.accept(this.match, StopType.MATCH_END);
+                c.accept(this.match, type);
             } catch (Exception e) {
                 log.error("监听比赛结束回调出现错误: ", e);
             }
@@ -161,7 +161,7 @@ public class MatchListener {
                 kill.cancel(true);
             }
             future.cancel(true);
-            doStop();
+            doStop(type);
         }
     }
 

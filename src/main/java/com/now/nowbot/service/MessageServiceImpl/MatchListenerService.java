@@ -258,13 +258,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
                             String.format(MatchListenerException.Type.ML_Listen_AlreadyInListening.message, mid)
                     );
                 }
-                for (var k : uList) {
-                    if (k.mid == mid) {
-                        throw new TipsRuntimeException(
-                                String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningOthers.message, mid)
-                        );
-                    }
-                }
 
                 return uList;
             });
@@ -278,13 +271,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     throw new TipsRuntimeException(
                             String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningGroup.message, mid)
                     );
-                }
-                for (var k : gList) {
-                    if (k.mid == mid) {
-                        throw new TipsRuntimeException(
-                                String.format(MatchListenerException.Type.ML_Listen_AlreadyInListeningOthers.message, mid)
-                        );
-                    }
                 }
 
                 return gList;
