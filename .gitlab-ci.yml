@@ -12,6 +12,8 @@ stages:
 job-build:
   stage: update
   needs: []
+  variables:
+    MAVEN_OPTS: --enable-preview
   script:
     - cd ~/nowbot
     - git fetch --all
