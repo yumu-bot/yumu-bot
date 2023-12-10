@@ -56,6 +56,9 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
     private void getIfNewBot(){
         if (bot.getStatus().getGood()) {
             return;
+        } else if (OneBotConfig.getBotContainer().robots.containsKey(bot.getSelfId())) {
+            bot = OneBotConfig.getBotContainer().robots.get(bot.getSelfId());
+            if (bot.getStatus().getGood()) return;
         }
         for (var botEntry : OneBotConfig.getBotContainer().robots.entrySet()) {
             var newBot = botEntry.getValue();
