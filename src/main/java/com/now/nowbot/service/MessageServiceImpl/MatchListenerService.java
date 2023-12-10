@@ -179,10 +179,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var b = matchEvent.getRound().getBeatmap();
                 var s = b.getBeatMapSet();
 
-                String mapInfo = "(" + b.getId() + ") " + s.getArtistUTF() + " - " + s.getTitleUTF() + " (" + s.getMapperName() + ") [" + b.getVersion() + "]";
-                from.sendMessage(
-                        String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, mapInfo)
-                );
+                String info = STR."(\{b.getId()}) \{s.getArtistUTF()} - (\{s.getTitleUTF()}) [\{b.getVersion()}]";
+                var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
+                QQMsgUtil.sendImage(from, i);
                 return;
             }
             //比赛结束，发送成绩
