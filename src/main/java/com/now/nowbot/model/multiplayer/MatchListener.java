@@ -177,6 +177,7 @@ public class MatchListener {
     public enum StopType {
         MATCH_END("比赛正常结束"),
         USER_STOP("调用者关闭"),
+        USER_STOP_LAST("调用者关闭"),
         SUPER_STOP("超级管理员关闭"),
         SERVICE_STOP("服务器重启"),
         TIME_OUT("超时了"),

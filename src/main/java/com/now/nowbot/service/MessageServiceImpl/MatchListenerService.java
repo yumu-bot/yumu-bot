@@ -107,8 +107,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent groupEvent) {
-                ListenerCheck.cancel(groupEvent.getGroup().getId(),
+                ListenerCheck.cancel(
                         groupEvent.getSender().getId(),
+                        groupEvent.getGroup().getId(),
                         Permission.isSuper(event.getSender().getId()),
                         param.id);
             } else {
@@ -194,8 +195,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         };
 
-        var key = ListenerCheck.add(groupEvent.getGroup().getId(),
+        var key = ListenerCheck.add(
                 senderId,
+                groupEvent.getGroup().getId(),
                 param.id,
                 Permission.isSuper(senderId),
                 (e) -> {
@@ -301,7 +303,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 }
                 if (lCount == 1) {
                     listener.stopListener(MatchListener.StopType.USER_STOP);
-                    log.info("***********//del \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
+                    log.info("***********//del end qq\n{}\nlistener{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
                     return;
                 }
 
@@ -313,7 +315,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             } else if (isSupper) {
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
-            log.info("***********//del \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
+            log.info("***********//del qq\n{}\nlistener{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
         }
     }
 }
