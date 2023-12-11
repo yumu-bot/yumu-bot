@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-@Service("MATCHLISTENER")
+//@Service("MATCHLISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 
