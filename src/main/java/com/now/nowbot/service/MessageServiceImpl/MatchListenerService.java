@@ -13,7 +13,6 @@ import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -276,7 +275,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
             var listener = listenerMap.computeIfAbsent(mid, (k) -> new MatchListener(match, matchApiService));
             BiConsumer<Match, MatchListener.StopType> nStop = (m, type) -> {
                 listeners.remove(key);
-                listenerMap.remove(mid);
+                if (! MatchListener.StopType.USER_STOP.equals(type)) {
+                    listenerMap.remove(mid);
+                }
             };
             var handlers = new Handlers(start, event, nStop.andThen(stop));
             listeners.put(key, handlers);
@@ -285,7 +286,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
             listener.addStopListener(handlers.stop());
 
             listener.startListener();
-            log.info("***********//add \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
             return key;
         }
 
@@ -295,27 +295,26 @@ public class MatchListenerService implements MessageService<MatchListenerService
             var listener = listenerMap.get(mid);
             if (Objects.isNull(listener)) return;
             if (Objects.nonNull(l)) {
+                listener.removeListener(l.start());
+                listener.removeListener(l.event());
+                listener.removeListener(l.stop(), MatchListener.StopType.USER_STOP);
+                listeners.remove(key);
+
+                // 如果没有其他群在监听则停止监听
                 int lCount = 0;
                 for (var nk : listeners.keySet()) {
                     if (nk.mid == mid) {
                         lCount++;
                     }
                 }
-                if (lCount == 1) {
+                if (lCount == 0) {
                     listener.stopListener(MatchListener.StopType.USER_STOP);
-                    log.info("***********//del end qq\n{}\nlistener{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
-                    return;
+                    listenerMap.remove(mid);
                 }
 
-                listener.removeListener(l.start());
-                listener.removeListener(l.event());
-                listener.removeListener(l.stop(), MatchListener.StopType.USER_STOP);
-
-                listeners.remove(key);
             } else if (isSupper) {
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
-            log.info("***********//del qq\n{}\nlistener{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
         }
     }
 }
