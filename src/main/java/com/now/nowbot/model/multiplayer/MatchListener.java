@@ -1,13 +1,13 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -26,16 +26,16 @@ public class MatchListener {
 
     Match                                     match;
     OsuMatchApiService                        matchApiService;
-    List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
 
     public void addStopListener(BiConsumer<Match, StopType> listener) {
         endListner.add(listener);
     }
 
+    List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
     List<Consumer<Match>>             startListner = new ArrayList<>();
     List<BiConsumer<Match, StopType>> endListner   = new ArrayList<>();
     long                              matchID;
-    long                              recordID;
+    volatile long recordID;
     private ScheduledFuture<?> future;
     private ScheduledFuture<?> kill;
 
@@ -47,47 +47,35 @@ public class MatchListener {
 
     public void addEventListener(BiConsumer<List<MatchEvent>, Match> doListener) {
         consumerList.add(doListener);
+        if (isStart() && Objects.nonNull(match.getCurrentGameId())) {
+            doListener.accept(getLastRound(match.getEvents()), match);
+        }
     }
 
-    /**
-     * 如果在 .startListener() 之后添加, 则无效
-     */
+    private List<MatchEvent> getLastRound(List<MatchEvent> events) {
+        MatchEvent e = null;
+        var iter = events.listIterator(events.size());
+        while (iter.hasPrevious()) {
+            var event = iter.previous();
+            if (Objects.nonNull(event.getRound())) {
+                e = event;
+                break;
+            }
+        }
+        if (Objects.isNull(e)) {
+            throw new TipsRuntimeException("查询状态异常");
+        }
+        if (recordID == e.getId()) {
+            recordID = e.getId() - 1;
+        }
+        return List.of(e);
+    }
+
     public void addStartListener(Consumer<Match> listener) {
         startListner.add(listener);
-    }
-
-    public synchronized void startListener() {
         if (isStart()) {
-            return;
+            listener.accept(match);
         }
-
-        if (match.isMatchEnd()) {
-            doStart();
-            doStop(StopType.MATCH_END);
-            return;
-        }
-
-        recordID = match.getLatestEventId();
-
-        if (Objects.nonNull(match.getCurrentGameId())) {
-            Optional<MatchEvent> gameOpt = getLastRound(match.getEvents());
-            var game = gameOpt.orElseThrow();
-            recordID = game.getId() - 1;
-            onEvents(List.of(game), match);
-        }
-
-        doStart();
-
-        future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS);
-        kill = executorService.schedule(() -> {
-            if (this.isStart()) {
-                this.stopListener(StopType.TIME_OUT);
-            }
-        }, 6, TimeUnit.HOURS);
-    }
-
-    private void onEvents(List<MatchEvent> events, Match match) {
-        consumerList.forEach(c -> c.accept(events, match));
     }
 
     private void listen() {
@@ -118,41 +106,48 @@ public class MatchListener {
         }
     }
 
-    private void doStart() {
-        startListner.forEach(c -> {
-            try {
-                c.accept(this.match);
-            } catch (Exception e) {
-                log.error("监听比赛启动回调出现错误: ", e);
+    public synchronized void startListener() {
+        if (isStart()) {
+            return;
+        }
+
+        if (match.isMatchEnd()) {
+            onStart();
+            onStop(StopType.MATCH_END);
+            return;
+        }
+
+        recordID = match.getLatestEventId();
+
+        if (Objects.nonNull(match.getCurrentGameId())) {
+            List<MatchEvent> gameOpt = getLastRound(match.getEvents());
+            onEvents(gameOpt, match);
+        }
+
+        onStart();
+
+        future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS);
+        kill = executorService.schedule(() -> {
+            if (this.isStart()) {
+                this.stopListener(StopType.TIME_OUT);
             }
-        });
+        }, 6, TimeUnit.HOURS);
     }
 
-    private void doStop(StopType type) {
-        endListner.forEach(c -> {
-            try {
-                c.accept(this.match, type);
-            } catch (Exception e) {
-                log.error("监听比赛结束回调出现错误: ", e);
-            }
-        });
+    private void onStart() {
+        startListner.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match)));
+    }
+
+    private void onStop(StopType type) {
+        endListner.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match, type)));
     }
 
     public boolean isStart() {
         return Objects.nonNull(future) && !future.isDone();
     }
 
-    private Optional<MatchEvent> getLastRound(List<MatchEvent> events) {
-        MatchEvent e = null;
-        var iter = events.listIterator(events.size());
-        while (iter.hasPrevious()) {
-            var event = iter.previous();
-            if (Objects.nonNull(event.getRound())) {
-                e = event;
-                break;
-            }
-        }
-        return Optional.ofNullable(e);
+    private void onEvents(List<MatchEvent> events, Match match) {
+        consumerList.forEach(c -> Thread.startVirtualThread(() -> c.accept(events, match)));
     }
 
     public void stopListener(StopType type) {
@@ -161,8 +156,22 @@ public class MatchListener {
                 kill.cancel(true);
             }
             future.cancel(true);
-            doStop(type);
+            onStop(type);
         }
+    }
+
+    public void removeListener(BiConsumer<List<MatchEvent>, Match> consumer) {
+        consumerList.remove(consumer);
+    }
+
+    public void removeListener(Consumer<Match> start) {
+
+        startListner.remove(start);
+    }
+
+    public void removeListener(BiConsumer<Match, StopType> consumer, StopType type) {
+        consumer.accept(match, type);
+        endListner.remove(consumer);
     }
 
     public enum StopType {

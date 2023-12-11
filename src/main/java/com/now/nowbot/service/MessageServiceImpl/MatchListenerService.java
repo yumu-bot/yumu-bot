@@ -25,10 +25,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-//@Service("MATCHLISTENER")
+@Service("MATCHLISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 
@@ -38,40 +38,35 @@ public class MatchListenerService implements MessageService<MatchListenerService
     ImageService       imageService;
 
 
+    public static void stopAllListener() {
+        ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
+    }
+
     @Override
     public boolean isHandle(MessageEvent event, DataValue<ListenerParam> data) throws Throwable {
         var matcher = Instructions.LISTENER.matcher(event.getRawMessage().trim());
         var param = new MatchListenerService.ListenerParam();
 
-        if (!matcher.find()) return false;
+        if (! matcher.find()) return false;
 
         var id = matcher.group("matchid");
         var op = matcher.group("operate");
 
         if (StringUtils.hasText(id)) {
             param.id = Integer.parseInt(matcher.group("matchid"));
-                /* 如果你正则捕获组只有 \\d, 且把空字符串的可能排除掉了, 除了数据溢出 不可能会出现 NumberFormatException (另外感觉match id考虑用long了)
-                try {
-                    param.id = Integer.parseInt(matcher.group("matchid"));
-                } catch (NumberFormatException e) {
-                    throw new MatchListenerException(MatchListenerException.Type.ML_MatchID_RangeError);
-                }
-                 */
         } else {
             throw new MatchListenerException(MatchListenerException.Type.ML_Parameter_None);
         }
 
-        switch (op) {
-            case "stop", "p", "end", "e", "off", "f" -> param.operate = "stop";
-            case null, default -> param.operate = "start";
-        }
+        param.operate = switch (op) {
+            case "stop", "p", "end", "e", "off", "f" -> "stop";
+            case "s", "start" -> "start";
+            case null -> "start";
+            default -> throw new MatchListenerException(MatchListenerException.Type.ML_Parameter_None);
+        };
 
         data.setValue(param);
         return true;
-    }
-
-    public static void stopAllListener() {
-        ListenerCheck.listeners.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
     }
 
     @SuppressWarnings("all")
@@ -111,9 +106,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
     public void HandleMessage(MessageEvent event, ListenerParam param) throws Throwable {
         if (Objects.equals(param.operate, "stop")) {
             if (event instanceof GroupMessageEvent groupEvent) {
-                event.getSubject().sendMessage(
-                        String.format(MatchListenerException.Type.ML_Listen_StopRequest.message, param.id.toString())
-                );
                 ListenerCheck.cancel(groupEvent.getGroup().getId(),
                         groupEvent.getSender().getId(),
                         Permission.isSuper(event.getSender().getId()),
@@ -136,29 +128,27 @@ public class MatchListenerService implements MessageService<MatchListenerService
             throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
         }
 
-        MatchListener listener = new MatchListener(match, osuMatchApiService);
-        if (event instanceof GroupMessageEvent groupEvent) {
-            var sender = groupEvent.getSender().getId();
-            // 检查有没有重复, 重复直接抛错终止
-            ListenerCheck.add(groupEvent.getGroup().getId(), sender, Permission.isSuper(sender), listener);
-        } else {
+        if (! (event instanceof GroupMessageEvent)) {
             throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
         }
+
+        var groupEvent = (GroupMessageEvent) event;
+        var senderId = groupEvent.getSender().getId();
+
         from.sendMessage(
                 String.format(MatchListenerException.Type.ML_Listen_Start.message, param.id)
         );
 
         // 监听房间结束
-        listener.addStopListener((m, type) -> {
-            from.sendMessage(
-                    String.format(
-                            MatchListenerException.Type.ML_Listen_Stop.message,
-                            param.id,
-                            type.getTips()
-                    ));
-        });
+        BiConsumer<Match, MatchListener.StopType> handleStop = (m, type) -> from.sendMessage(
+                String.format(
+                        MatchListenerException.Type.ML_Listen_Stop.message,
+                        m.getMatchStat().getId(),
+                        type.getTips()
+                )
+        );
 
-        listener.addEventListener((eventList, newMatch) -> {
+        BiConsumer<List<MatchEvent>, Match> handleEvent = (eventList, newMatch) -> {
 
             Optional<MatchEvent> matchEventOpt = eventList.stream()
                     .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
@@ -199,19 +189,29 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 from.sendMessage(tipsException.getMessage());
             } catch (Exception e) {
                 log.error("图片发送失败", e);
-                //throw new MatchListenerException(MatchListenerException.Type.ML_Send_Error);
             }
 
-        });
+        };
 
-        listener.startListener();
+        var key = ListenerCheck.add(groupEvent.getGroup().getId(),
+                senderId,
+                param.id,
+                Permission.isSuper(senderId),
+                (e) -> {
+                },
+                handleEvent,
+                handleStop,
+                match,
+                osuMatchApiService
+        );
+
     }
 
     record QQ_GroupRecord(long qq, long group, long mid) {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof QQ_GroupRecord that)) return false;
+            if (! (o instanceof QQ_GroupRecord that)) return false;
 
             if (qq != that.qq) return false;
             if (group != that.group) return false;
@@ -227,14 +227,29 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    private static class ListenerCheck {
-        private final static int                                USER_MAX  = 3;
-        private final static int                                GROUP_MAX = 3;
-        private final static Map<QQ_GroupRecord, MatchListener> listeners = new ConcurrentHashMap<>();
+    record Handlers(Consumer<Match> start,
+                    BiConsumer<List<MatchEvent>, Match> event,
+                    BiConsumer<Match, MatchListener.StopType> stop) {
+    }
 
-        static void add(long qq, long group, boolean isSuper, MatchListener listener) throws MatchListenerException {
-            long mid = listener.getMatchID();
-            boolean notSuper = !isSuper;
+    private static class ListenerCheck {
+        private final static int                           USER_MAX    = 3;
+        private final static int                           GROUP_MAX   = 3;
+        private final static Map<QQ_GroupRecord, Handlers> listeners   = new ConcurrentHashMap<>();
+        private final static Map<Long, MatchListener>      listenerMap = new ConcurrentHashMap<>();
+
+        static QQ_GroupRecord add(
+                long qq,
+                long group,
+                long mid,
+                boolean isSuper,
+                Consumer<Match> start,
+                BiConsumer<List<MatchEvent>, Match> event,
+                BiConsumer<Match, MatchListener.StopType> stop,
+                Match match,
+                OsuMatchApiService matchApiService
+        ) throws MatchListenerException {
+            boolean notSuper = ! isSuper;
             var key = new QQ_GroupRecord(qq, group, mid);
 
             if (listeners.containsKey(key)) {
@@ -255,29 +270,45 @@ public class MatchListenerService implements MessageService<MatchListenerService
             if (groupSum.get() >= GROUP_MAX && notSuper)
                 throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message);
 
-            listeners.put(key, listener);
+            var listener = listenerMap.computeIfAbsent(mid, (k) -> new MatchListener(match, matchApiService));
+            BiConsumer<Match, MatchListener.StopType> nStop = (m, type) -> {
+                listeners.remove(key);
+                listenerMap.remove(mid);
+            };
+            var handlers = new Handlers(start, event, nStop.andThen(stop));
+            listeners.put(key, handlers);
+            listener.addStartListener(handlers.start());
+            listener.addEventListener(handlers.event());
+            listener.addStopListener(handlers.stop());
 
-            listener.addStopListener((ignore1, type) -> {
-                // 防止在迭代 map 时删除报错
-                if (!MatchListener.StopType.USER_STOP.equals(type)) {
-                    listeners.remove(key);
-                }
-            });
+            listener.startListener();
+            return key;
         }
 
         static void cancel(long qq, long group, boolean isSupper, long mid) {
             var key = new QQ_GroupRecord(qq, group, mid);
             var l = listeners.get(key);
+            var listener = listenerMap.get(mid);
+            if (Objects.isNull(listener)) return;
             if (Objects.nonNull(l)) {
-                l.stopListener(MatchListener.StopType.USER_STOP);
-            } else if (isSupper) {
-                listeners.entrySet().removeIf((entry) -> {
-                    if (entry.getKey().mid() == mid) {
-                        entry.getValue().stopListener(MatchListener.StopType.USER_STOP);
-                        return true;
+                int lCount = 0;
+                for (var nk : listeners.keySet()) {
+                    if (nk.mid == mid) {
+                        lCount++;
                     }
-                    return false;
-                });
+                }
+                if (lCount == 1) {
+                    listener.stopListener(MatchListener.StopType.USER_STOP);
+                    return;
+                }
+
+                listener.removeListener(l.start());
+                listener.removeListener(l.event());
+                listener.removeListener(l.stop(), MatchListener.StopType.USER_STOP);
+
+                listeners.remove(key);
+            } else if (isSupper) {
+                listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
         }
     }

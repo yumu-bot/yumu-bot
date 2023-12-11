@@ -1,7 +1,5 @@
 package com.now.nowbot.qq.message;
 
-import com.mikuac.shiro.common.utils.MsgUtils;
-
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,8 +66,9 @@ public class MessageChain {
     }
 
     public String getRawMessage() {
-        // todo
-        return "";
+        var sb = new StringBuilder();
+        messageList.forEach(m -> sb.append(m.toString()));
+        return sb.toString();
     }
 
     public LinkedList<Message> getMessageList() {

@@ -37,6 +37,10 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
 
     @Override
     public OneBotMessageReceipt sendMessage(MessageChain msg) {
+//        if (msg != null) {
+//            log.info("send: [{}]", msg.getRawMessage());
+//            return null;
+//        }
         getIfNewBot();
         int id = 0;
         ActionData<MsgId> d;
@@ -54,11 +58,11 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
     }
 
     private void getIfNewBot(){
-        if (bot.getStatus().getGood()) {
+        if (testBot()) {
             return;
         } else if (OneBotConfig.getBotContainer().robots.containsKey(bot.getSelfId())) {
             bot = OneBotConfig.getBotContainer().robots.get(bot.getSelfId());
-            if (bot.getStatus().getGood()) return;
+            if (testBot()) return;
         }
         for (var botEntry : OneBotConfig.getBotContainer().robots.entrySet()) {
             var newBot = botEntry.getValue();
@@ -88,6 +92,16 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             }
         }
         throw new RuntimeException("当前bot离线, 且未找到代替bot");
+    }
+
+    private boolean testBot() {
+        try {
+            bot.getLoginInfo().getData();
+            return true;
+        } catch (Exception e) {
+            log.error("test bot only", e);
+            return false;
+        }
     }
 
     protected static String getMsg4Chain(MessageChain messageChain) {
