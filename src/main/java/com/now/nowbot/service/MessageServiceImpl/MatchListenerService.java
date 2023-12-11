@@ -13,6 +13,7 @@ import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -282,6 +283,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             listener.addStopListener(handlers.stop());
 
             listener.startListener();
+            log.info("***********//add \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
             return key;
         }
 
@@ -299,6 +301,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 }
                 if (lCount == 1) {
                     listener.stopListener(MatchListener.StopType.USER_STOP);
+                    log.info("***********//del \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
                     return;
                 }
 
@@ -310,6 +313,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             } else if (isSupper) {
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
+            log.info("***********//del \n{}\n{}", JacksonUtil.objectToJsonPretty(listeners), JacksonUtil.objectToJsonPretty(listenerMap));
         }
     }
 }
