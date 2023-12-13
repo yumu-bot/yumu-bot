@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -31,7 +32,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.regex.Matcher;
 
-//@Service("SCOREDELUXE")
+@Service("SCORE_DELUXE")
 public class ScorePRDeluxeService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
@@ -47,7 +48,8 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                                 OsuUserApiService userApiService,
                                 OsuScoreApiService scoreApiService,
                                 OsuBeatmapApiService beatmapApiService,
-                                BindDao bindDao, ImageService image) {
+                                BindDao bindDao,
+                                ImageService image) {
         template = restTemplate;
         this.userApiService = userApiService;
         this.scoreApiService = scoreApiService;

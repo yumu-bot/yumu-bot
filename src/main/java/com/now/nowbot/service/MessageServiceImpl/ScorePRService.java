@@ -14,6 +14,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -31,7 +33,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("SCOREPR")
-public class ScorePRService implements MessageService<Matcher> {
+public class ScorePRService implements MessageService<ScorePRService.PrParm> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
     RestTemplate template;
@@ -56,17 +58,15 @@ public class ScorePRService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, DataValue<PrParm> data) throws ScoreException {
         var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
-            data.setValue(m);
+            getData(m, event, data);
             return true;
         } else return false;
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
+    private void getData(Matcher matcher, MessageEvent event, DataValue<PrParm> data) throws ScoreException {
         var name = matcher.group("name");
         var s = matcher.group("s");
         var es = matcher.group("es");
@@ -76,16 +76,7 @@ public class ScorePRService implements MessageService<Matcher> {
         boolean isRecent;
         boolean isMultipleScore;
 
-        if (matcher.group("recent") != null) {
-            isRecent = true;
-        } else if (matcher.group("pass") != null) {
-            isRecent = false;
-        } else {
-            throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
-        }
-
-        // !p 45-55 offset/n = 44 limit/m = 11
-        {
+        {   // !p 45-55 offset/n = 44 limit/m = 11
             //处理 n，m
             int n;
             int m;
@@ -131,28 +122,31 @@ public class ScorePRService implements MessageService<Matcher> {
             }
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
-            if (!(s == null || s.isBlank()) || !(es == null || es.isBlank())) {
+            if (StringUtils.hasText(s) || StringUtils.hasText(es)) {
                 offset = 0;
-
-                if (nStr == null || nStr.isBlank() || nNotFit) {
+                if (! StringUtils.hasText(s) || nNotFit) {
                     limit = 20;
-                } else if (mStr == null || mStr.isBlank()) {
+                } else if (! StringUtils.hasText(mStr)) {
                     limit = n;
                 }
             }
-
             isMultipleScore = (limit > 1);
         }
 
-        //from.sendMessage(isAll?"正在查询24h内的所有成绩":"正在查询24h内的pass成绩");
+        if (matcher.group("recent") != null) {
+            isRecent = true;
+        } else if (matcher.group("pass") != null) {
+            isRecent = false;
+        } else {
+            throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
+        }
+
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser binUser;
-        OsuUser osuUser;
-
         if (at != null) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
         } else {
-            if (name != null && !name.trim().isEmpty()) {
+            if (name != null && ! name.trim().isEmpty()) {
                 binUser = new BinUser();
                 Long id;
                 try {
@@ -167,8 +161,7 @@ public class ScorePRService implements MessageService<Matcher> {
                 } catch (BindException e) {
                     //退避 !recent
                     if (event.getRawMessage().toLowerCase().contains("recent")) {
-                        log.info("recent 退避成功");
-                        return;
+                        throw new LogException("recent 退避成功", null);
                     } else {
                         throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                     }
@@ -176,8 +169,23 @@ public class ScorePRService implements MessageService<Matcher> {
             }
         }
 
+        data.setValue(new PrParm(binUser, offset, limit, isRecent, isMultipleScore, OsuMode.getMode(matcher.group("mode"))));
+    }
+
+    @Override
+    public void HandleMessage(MessageEvent event, PrParm parm) throws Throwable {
+        var from = event.getSubject();
+
+        int offset = parm.offset();
+        int limit = parm.limit();
+        boolean isRecent = parm.isRe();
+        boolean isMultipleScore = parm.isMultipleScore();
+
+        BinUser binUser = parm.user();
+        OsuUser osuUser;
+
         //处理默认mode
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        var mode = parm.mode();
         if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
 
         List<Score> scoreList;
@@ -240,6 +248,9 @@ public class ScorePRService implements MessageService<Matcher> {
                 getTextOutput(scoreList.get(0), from);
             }
         }
+    }
+
+    record PrParm(BinUser user, int offset, int limit, boolean isRe, boolean isMultipleScore, OsuMode mode) {
     }
 
     private void getTextOutput(Score score, Contact from) {
