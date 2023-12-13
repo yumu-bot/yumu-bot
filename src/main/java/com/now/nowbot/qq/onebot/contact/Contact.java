@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Contact implements com.now.nowbot.qq.contact.Contact {
     String name;
-    Bot  bot;
+    Bot bot;
     final long id;
 
     public Contact(Bot bot, long id) {
@@ -57,7 +57,39 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         return OneBotMessageReceipt.create(bot, id, this);
     }
 
-    private void getIfNewBot(){
+    protected static String getMsg4Chain(MessageChain messageChain) {
+        var builder = MsgUtils.builder();
+        for (var msg : messageChain.getMessageList()) {
+            switch (msg) {
+                case ImageMessage img -> {
+                    if (img.isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(img.getData()));
+                    else builder.img(img.getPath());
+                }
+                case VoiceMessage voice -> builder.voice("base64://" + QQMsgUtil.byte2str(voice.getData()));
+                case AtMessage at -> {
+                    if (! at.isAll()) builder.at(at.getQQ());
+                    else builder.atAll();
+                }
+                case TextMessage text -> builder.text(text.toString());
+                case ReplayMessage re -> builder.reply(Long.toString(re.getId()));
+                case null, default -> {
+                }
+            }
+        }
+        return builder.build();
+    }
+
+    private boolean testBot() {
+        try {
+            bot.getLoginInfo().getData();
+            return true;
+        } catch (Exception e) {
+            log.error("test bot only", e);
+            return false;
+        }
+    }
+
+    private void getIfNewBot() {
         if (testBot()) {
             return;
         } else if (OneBotConfig.getBotContainer().robots.containsKey(bot.getSelfId())) {
@@ -66,7 +98,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         }
         for (var botEntry : OneBotConfig.getBotContainer().robots.entrySet()) {
             var newBot = botEntry.getValue();
-            if (!newBot.getStatus().getGood()) continue;
+            if (! newBot.getStatus().getGood()) continue;
             if (this instanceof Group g) {
                 var groups = newBot.getGroupInfo(g.getId(), false).getData();
                 if (groups.getMemberCount() > 0) {
@@ -92,36 +124,5 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             }
         }
         throw new RuntimeException("当前bot离线, 且未找到代替bot");
-    }
-
-    private boolean testBot() {
-        try {
-            bot.getLoginInfo().getData();
-            return true;
-        } catch (Exception e) {
-            log.error("test bot only", e);
-            return false;
-        }
-    }
-
-    protected static String getMsg4Chain(MessageChain messageChain) {
-        var builder = MsgUtils.builder();
-        for (var msg : messageChain.getMessageList()) {
-            switch (msg) {
-                case ImageMessage img -> {
-                    if (img.isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(img.getData()));
-                    else builder.img(img.getPath());
-                }
-                case VoiceMessage voice -> builder.voice("base64://" + QQMsgUtil.byte2str(voice.getData()));
-                case AtMessage at -> {
-                    if (!at.isAll()) builder.at(at.getQQ());
-                    else builder.atAll();
-                }
-                case TextMessage text -> builder.text(text.toString());
-                case ReplayMessage re -> builder.reply(Long.toString(re.getId()));
-                case null, default -> {}
-            }
-        }
-        return builder.build();
     }
 }

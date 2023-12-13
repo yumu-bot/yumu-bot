@@ -2,6 +2,7 @@ package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.OsuBindUserLite;
+import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
@@ -34,10 +36,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CheckAspect {
     private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
     Permission permission;
+    ServiceCallRepository serviceCall;
 
     @Autowired
-    public CheckAspect(Permission permission) {
+    public CheckAspect(Permission permission, ServiceCallRepository serviceCallRepository) {
         this.permission = permission;
+        serviceCall = serviceCallRepository;
     }
 
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
@@ -90,31 +94,31 @@ public class CheckAspect {
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
             if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
-                throw new PermissionException(servicename + "非管理员使用管理功能", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(STR."\{servicename}非管理员使用管理功能", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
         if (CheckPermission.isSuperAdmin()) {
-            throw new PermissionException(servicename + "使用超管功能", event.getSender().getId() + " -> " + servicename);
+            throw new PermissionException(STR."\{servicename}使用超管功能", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         // test 功能
         if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
-            throw new PermissionException(servicename + "有人使用测试功能 ", event.getSender().getId() + " -> " + servicename);
+            throw new PermissionException(STR."\{servicename}有人使用测试功能 ", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
             if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())) {
-                throw new PermissionException(servicename + " 白名单过滤(个人)", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(servicename + " 白名单过滤(群组)", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(STR."\{servicename} 白名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         } else {
             if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())) {
-                throw new PermissionException(servicename + " 黑名单过滤(个人)", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(STR."\{servicename} 黑名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(servicename + " 黑名单过滤(群组)", event.getSender().getId() + " -> " + servicename);
+                throw new PermissionException(STR."\{servicename} 黑名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
         return args;
@@ -142,7 +146,7 @@ public class CheckAspect {
             else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())) {
                 return args;
             }
-            throw new PermissionException("权限禁止", "禁止的权限,请求功能: " + servicename + " ,请求人: " + event.getSender().getId());
+            throw new PermissionException("权限禁止", STR."禁止的权限,请求功能: \{servicename} ,请求人: \{event.getSender().getId()}");
         } finally {
 //            workList.add(event);
         }
@@ -158,14 +162,15 @@ public class CheckAspect {
 
     public void doEnd() {
         sended = new HashSet<>();
-        if (workList.size() > 0) {
-            var s = workList.get(0).getBot().getFriend(2480557535L);
+        if (! CollectionUtils.isEmpty(workList)) {
+            var s = workList.getFirst().getBot().getFriend(2480557535L);
             if (s != null) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("work").append('\n');
-                workList.forEach((event) -> {
-                    sb.append(event.getSender().getName()).append("(->)").append(event.getMessage()).append('\n');
-                });
+                workList.forEach((event) -> sb
+                        .append(event.getSender().getName())
+                        .append("(->)")
+                        .append(event.getMessage()).append('\n'));
                 s.sendMessage(sb.toString());
             }
         }
@@ -193,8 +198,10 @@ public class CheckAspect {
         }
         pjp.proceed(pjp.getArgs());
         long end = System.currentTimeMillis();
-        if (end - now > 3000) {
-            log.debug("[{}] 执行结束,用时:{}", name, end - now);
+        long work = end - now;
+        serviceCall.saveCall(name, work);
+        if (work > 3000) {
+            log.debug("[{}] 执行结束,用时:{}", name, work);
         }
     }
 

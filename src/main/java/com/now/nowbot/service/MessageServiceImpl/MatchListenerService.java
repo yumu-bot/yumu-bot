@@ -275,6 +275,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             var listener = listenerMap.computeIfAbsent(mid, (k) -> new MatchListener(match, matchApiService));
             BiConsumer<Match, MatchListener.StopType> nStop = (m, type) -> {
                 listeners.remove(key);
+                // 用户停止可能会多次调用, 不直接删除
                 if (! MatchListener.StopType.USER_STOP.equals(type)) {
                     listenerMap.remove(mid);
                 }
