@@ -45,7 +45,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qq = matcher.group("user");
+        var qq = matcher.group("qq");
 
         if (Objects.nonNull(at)) {
             data.setValue(new InfoParam(
