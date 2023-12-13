@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.Instructions;
@@ -33,64 +34,69 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     @Resource
     OsuScoreApiService scoreApiService;
     @Resource
-    BindDao       bindDao;
+    BindDao           bindDao;
     @Resource
-    ImageService  imageService;
-    public record InfoParam(String name, Long qq, OsuMode mode){}
+    ImageService      imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) {
+    public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) throws InfoException {
         var matcher = Instructions.INFO.matcher(event.getRawMessage().trim());
-        if (!matcher.find()) return false;
+        if (! matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qq = matcher.group("qq");
+        var qq = matcher.group("user");
 
         if (Objects.nonNull(at)) {
-            data.setValue(new InfoParam(null, at.getTarget(), mode));
+            data.setValue(new InfoParam(
+                    getBinUser(at.getTarget(), event.getRawMessage().toLowerCase()),
+                    mode));
             return true;
         }
         if (Objects.nonNull(qq)) {
-            data.setValue(new InfoParam(null, Long.parseLong(qq), mode));
+            data.setValue(new InfoParam(
+                    getBinUser(Long.parseLong(qq), event.getRawMessage().toLowerCase()),
+                    mode));
             return true;
         }
         String name = matcher.group("name");
         if (Strings.isNotBlank(name)) {
-            data.setValue(new InfoParam(name, null, mode));
-            return true;
-        }
-        data.setValue(new InfoParam(null, event.getSender().getId(), mode));
-        return true;
-    }
-
-    @Override
-    public void HandleMessage(MessageEvent event, InfoParam param) throws Throwable {
-        var from = event.getSubject();
-        BinUser user;
-        if (param.name() != null) {
             long id;
+            BinUser user;
             try {
-                id = userApiService.getOsuId(param.name().trim());
+                id = userApiService.getOsuId(name);
             } catch (WebClientResponseException.NotFound e) {
                 throw new InfoException(InfoException.Type.INFO_Player_NotFound);
             }
             user = new BinUser();
             user.setOsuID(id);
             user.setMode(OsuMode.DEFAULT);
-        } else {
-            try {
-                user = bindDao.getUserFromQQ(param.qq());
-            } catch (BindException e) {
-                //退避 !info
-                if (!event.getRawMessage().toLowerCase().contains("information") && event.getRawMessage().toLowerCase().contains("info")) {
-                    log.info("info 退避成功");
-                    return;
-                } else {
-                    throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
-                }
+            data.setValue(new InfoParam(user, mode));
+            return true;
+        }
+        data.setValue(new InfoParam(
+                getBinUser(event.getSender().getId(), event.getRawMessage().toLowerCase()),
+                mode));
+        return true;
+    }
+
+    private BinUser getBinUser(long qq, String cmd) throws InfoException {
+
+        try {
+            return bindDao.getUserFromQQ(qq);
+        } catch (BindException e) {
+            if (! cmd.contains("information") && cmd.contains("info")) {
+                throw new LogException("info 退避成功", null);
+            } else {
+                throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
             }
         }
+    }
+
+    @Override
+    public void HandleMessage(MessageEvent event, InfoParam param) throws Throwable {
+        var from = event.getSubject();
+        BinUser user = param.user;
 
         //处理默认mode
         var mode = param.mode();
@@ -129,5 +135,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             log.error("Info 发送异常", e);
             throw new InfoException(InfoException.Type.INFO_Send_Error);
         }
+    }
+
+    public record InfoParam(BinUser user, OsuMode mode) {
     }
 }
