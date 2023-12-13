@@ -43,7 +43,7 @@ public class ServiceCallCountService implements MessageService<Object> {
                 .append('|').append(r.getMinTime())
                 .append("|\n");
         result.forEach(work);
-        var s = imageService.getPanelAlpha(sb);
+        var s = imageService.getMarkdownImage(sb.toString(), 600);
         QQMsgUtil.sendImage(event.getSubject(), s);
     }
 }
