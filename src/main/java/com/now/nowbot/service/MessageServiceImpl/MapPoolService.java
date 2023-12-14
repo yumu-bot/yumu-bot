@@ -30,7 +30,7 @@ public class MapPoolService implements MessageService<String> {
     private static Pattern pattern = Pattern.compile("^!pool\\s*(?<name>\\w+)");
     @Resource
     ImageService imageService;
-    @Resource(lookup = "webClient")
+    @Resource
     WebClient webClient;
 
     @Override
