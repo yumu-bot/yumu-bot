@@ -6,6 +6,10 @@ public class LogException extends RuntimeException{
         super(msg);
         x = throwable;
     }
+
+    public LogException(String msg) {
+        super(msg);
+    }
     public Throwable getThrowable(){
         return x;
     }

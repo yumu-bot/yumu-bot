@@ -86,7 +86,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             return bindDao.getUserFromQQ(qq);
         } catch (BindException e) {
             if (! cmd.contains("information") && cmd.contains("info")) {
-                throw new LogException("info 退避成功", null);
+                throw new LogException("info 退避成功");
             } else {
                 throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
             }

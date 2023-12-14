@@ -6,8 +6,8 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.LogException;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -70,7 +70,7 @@ public class WikiService implements MessageService<Matcher> {
         }else {
             key = key.toUpperCase();
             String r = WIKI.findValue(key).asText();
-            if (r == null) throw new LogException("没有找到"+key,null);
+            if (r == null) throw new LogException(STR."没有找到\{key}");
             sb.append(key).append(':').append('\n');
             sb.append(r);
         }

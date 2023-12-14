@@ -161,7 +161,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
                 } catch (BindException e) {
                     //退避 !recent
                     if (event.getRawMessage().toLowerCase().contains("recent")) {
-                        throw new LogException("recent 退避成功", null);
+                        throw new LogException("recent 退避成功");
                     } else {
                         throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                     }

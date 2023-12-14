@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
@@ -22,16 +23,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
 
 @Service("SCORE")
-public class ScoreService implements MessageService<Matcher> {
+public class ScoreService implements MessageService<ScoreService.ScoreParam> {
     private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
@@ -56,29 +57,23 @@ public class ScoreService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.SCORE.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
-    }
-
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-        var name = matcher.group("name");
+    public boolean isHandle(MessageEvent event, DataValue<ScoreParam> data) throws ScoreException {
+        var matcher = Instructions.SCORE.matcher(event.getRawMessage().trim());
+        if (! matcher.find()) {
+            return false;
+        }
         BinUser binUser;
-
+        OsuMode mode;
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-
-        if (at != null) {
+        boolean isOther = true;
+        var name = matcher.group("name");
+        if (Objects.nonNull(at)) {
             try {
                 binUser = bindDao.getUserFromQQ(at.getTarget());
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
             }
-        } else if (name != null && !name.trim().isEmpty()) {
+        } else if (StringUtils.hasText(name)) {
             binUser = new BinUser();
             Long id;
             try {
@@ -90,34 +85,50 @@ public class ScoreService implements MessageService<Matcher> {
         } else {
             try {
                 binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                isOther = false;
             } catch (BindException e) {
                 //退避 !score
                 if (event.getRawMessage().toLowerCase().contains("score")) {
-                    log.info("score 退避成功");
-                    return;
+                    throw new LogException("score 退避成功");
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 }
             }
         }
 
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        boolean isDefault = (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null);
-
+        mode = OsuMode.getMode(matcher.group("mode"));
+        boolean isDefault = OsuMode.DEFAULT.equals(mode);
+        if (isDefault && Objects.nonNull(binUser.getMode())) {
+            mode = binUser.getMode();
+        }
         var bid = Long.parseLong(matcher.group("bid"));
+        var modsStr = matcher.group("mod");
+        var result = new ScoreParam(binUser, mode, bid, modsStr, isDefault, isOther);
+        data.setValue(result);
+        return true;
+    }
+
+    @Override
+    public void HandleMessage(MessageEvent event, ScoreParam param) throws Throwable {
+        var from = event.getSubject();
+        var mode = param.mode();
+        var binUser = param.user();
+        boolean isDefault = param.isDefault();
+
+        var bid = param.bid();
 
         // 处理 mods
-        var modsStr = matcher.group("mod");
+        var modsStr = param.modsStr();
         List<Mod> mods = null;
-        if (modsStr != null) {
-            mods = Mod.getModsList(matcher.group("mod"));
+        if (Objects.nonNull(modsStr)) {
+            mods = Mod.getModsList(modsStr);
         }
 
         Score score = null;
         if (!CollectionUtils.isEmpty(mods)) {
             List<Score> scoreall;
             try {
-                scoreall = scoreApiService.getScoreAll(bid, binUser, isDefault ? binUser.getMode() : mode);
+                scoreall = scoreApiService.getScoreAll(bid, binUser, mode);
             } catch (WebClientResponseException.NotFound e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
             } catch (WebClientResponseException.Unauthorized e) {
@@ -128,7 +139,7 @@ public class ScoreService implements MessageService<Matcher> {
                 if (Objects.isNull(s.getMods())) {
                     continue;
                 }
-                if (CollectionUtils.isEmpty(s.getMods()) && mods.size() == 1 && mods.get(0) == Mod.None) {
+                if (CollectionUtils.isEmpty(s.getMods()) && mods.size() == 1 && mods.getFirst() == Mod.None) {
                     score = s;
                     break;
                 }
@@ -149,7 +160,7 @@ public class ScoreService implements MessageService<Matcher> {
             }
         } else {
             try {
-                score = scoreApiService.getScore(bid, binUser, isDefault ? binUser.getMode() : mode).getScore();
+                score = scoreApiService.getScore(bid, binUser, mode).getScore();
             } catch (WebClientResponseException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
@@ -158,7 +169,7 @@ public class ScoreService implements MessageService<Matcher> {
                     throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound);
                 }
             } catch (WebClientResponseException.Unauthorized e) {
-                if (name == null || name.trim().isEmpty() && at == null) {
+                if (param.isOther()) {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
@@ -176,6 +187,9 @@ public class ScoreService implements MessageService<Matcher> {
             log.error("SCORE：渲染和发送失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
+    }
+
+    public record ScoreParam(BinUser user, OsuMode mode, long bid, String modsStr, boolean isDefault, boolean isOther) {
     }
 
     private Score getDefaultScore(long bid, BinUser binUser) throws ScoreException {

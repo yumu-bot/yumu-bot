@@ -11,6 +11,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Instructions;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -50,49 +52,30 @@ public class BPService implements MessageService<BPService.BPParam> {
         imageService = image;
     }
 
-    public static class BPParam {
-        String n;
-        String m;
-        String name;
-        OsuMode mode;
-
-        boolean s;
-    }
-
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BPParam> data) {
+    public boolean isHandle(MessageEvent event, DataValue<BPParam> data) throws BPException {
         var matcher = Instructions.BP.matcher(event.getRawMessage());
         if (!matcher.find()) {
             return false;
         }
-        var param = new BPParam();
-
-        param.n = matcher.group("n");
-        param.m = matcher.group("m");
-        param.mode = OsuMode.getMode(matcher.group("mode"));
-        param.name = matcher.group("name");
-        param.s = (matcher.group("s") != null && !matcher.group("s").isBlank());
-
-        data.setValue(param);
-        return true;
-    }
-
-    @Override
-    public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
-
-        int n;
-        int m;
         int offset;
         int limit;
-        String name = param.name;
         boolean isMultipleBP;
+        boolean hasName;
+        BinUser user;
+        OsuMode mode;
+
+        var nStr = matcher.group("n");
+        var mStr = matcher.group("m");
+        var name = matcher.group("name");
+        hasName = StringUtils.hasText(name);
+        var s = matcher.group("s");
 
         //处理 n，m
         {
-            var nStr = param.n;
-            var mStr = param.m;
-
-            if (nStr == null || nStr.isBlank()) {
+            int n;
+            int m;
+            if (! StringUtils.hasText(nStr)) {
                 n = 1;
             } else {
                 try {
@@ -131,8 +114,8 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
-            if (param.s) {
-                if (nStr == null || nStr.isBlank() || nNotFit) {
+            if (StringUtils.hasText(s)) {
+                if (! StringUtils.hasText(nStr) || nNotFit) {
                     offset = 0;
                     limit = 20;
                 } else {
@@ -144,21 +127,13 @@ public class BPService implements MessageService<BPService.BPParam> {
             isMultipleBP = (limit > 1);
         }
 
-        var from = event.getSubject();
-
-        BinUser user;
-        List<Score> bpList;
-        ArrayList<Integer> rankList = new ArrayList<>();
-
-        boolean hasName = (name == null || name.isEmpty() || name.isBlank());
         if (hasName) {
             try {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
                 //退避 !bp
                 if (event.getRawMessage().toLowerCase().contains("bp")) {
-                    log.info("bp 退避成功");
-                    return;
+                    throw new LogException("bp 退避成功");
                 } else {
                     throw new BPException(BPException.Type.BP_Me_NoBind);
                 }
@@ -174,21 +149,36 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var mode = param.mode;
+        mode = OsuMode.getMode(matcher.group("mode"));
         if (OsuMode.isDefault(mode)) {
             mode = user.getMode();
         }
-        OsuUser osuUser;
+        var param = new BPParam(user, offset, limit, mode, isMultipleBP, hasName);
+        data.setValue(param);
+        return true;
+    }
 
+    @Override
+    public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
+        int offset = param.offset();
+        int limit = param.limit();
+
+        var from = event.getSubject();
+
+        List<Score> bpList;
+        ArrayList<Integer> rankList = new ArrayList<>();
+
+        var mode = param.mode();
+        OsuUser osuUser;
         try {
-            osuUser = userApiService.getPlayerInfo(user, mode);
+            osuUser = userApiService.getPlayerInfo(param.user(), mode);
             if (OsuMode.isDefault(mode)) {
                 mode = osuUser.getPlayMode();
             }
         } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (WebClientResponseException.NotFound e) {
-            if (hasName) {
+            if (param.hasName()) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {
                 throw new BPException(BPException.Type.BP_Player_NotFound);
@@ -199,7 +189,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
 
         try {
-            bpList = scoreApiService.getBestPerformance(user, mode, offset, limit);
+            bpList = scoreApiService.getBestPerformance(param.user(), mode, offset, limit);
         } catch (Exception e) {
             log.error("BP 请求出错", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
@@ -208,12 +198,12 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
 
         try {
-            if (isMultipleBP) {
+            if (param.isMultipleBP()) {
                 for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
                 var data = imageService.getPanelA4(osuUser, bpList, rankList);
                 QQMsgUtil.sendImage(from, data);
             } else {
-                var score = bpList.get(0);
+                var score = bpList.getFirst();
                 var data = imageService.getPanelE(osuUser, score, beatmapApiService);
                 QQMsgUtil.sendImage(from, data);
             }
@@ -221,5 +211,17 @@ public class BPService implements MessageService<BPService.BPParam> {
             log.error("BP 发送出错", e);
             throw new BPException(BPException.Type.BP_Send_Error);
         }
+    }
+
+    public static class BPParam1 {
+        String n;
+        String m;
+        String name;
+        OsuMode mode;
+
+        boolean s;
+    }
+
+    public record BPParam(BinUser user, int offset, int limit, OsuMode mode, boolean isMultipleBP, boolean hasName) {
     }
 }
