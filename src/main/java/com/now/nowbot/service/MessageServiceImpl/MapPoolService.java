@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
 import java.util.*;
@@ -154,7 +155,7 @@ public class MapPoolService implements MessageService<String> {
     private Optional<JsonNode> searchById(int id) {
         try {
             return webClient.get()
-                    .uri(u -> u.path(STR."\{api}/api/public/searchPool").queryParam("poolId", id).build())
+                    .uri(u -> UriComponentsBuilder.fromHttpUrl(api).path("/api/public/searchPool").queryParam("poolId", id).build().toUri())
                     .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
                     .retrieve()
                     .bodyToMono(JsonNode.class)
@@ -164,9 +165,9 @@ public class MapPoolService implements MessageService<String> {
         }
     }
 
-    private JsonNode searchByName(String name) {
+    public JsonNode searchByName(String name) {
         var nodeOpt = webClient.get()
-                .uri(u -> u.path(STR."\{api}/api/public/searchPool").queryParam("poolName", name).build())
+                .uri(u -> UriComponentsBuilder.fromHttpUrl(api).path("/api/public/searchPool").queryParam("poolName", name).build().toUri())
                 .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
