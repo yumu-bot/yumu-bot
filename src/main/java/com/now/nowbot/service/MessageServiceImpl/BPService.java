@@ -127,7 +127,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             isMultipleBP = (limit > 1);
         }
 
-        if (hasName) {
+        if (! hasName) {
             try {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
