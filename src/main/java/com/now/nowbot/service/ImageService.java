@@ -5,7 +5,6 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.mappool.MapPool;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
@@ -334,10 +333,10 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelH(MapPool mapPool) {
+    public byte[] getPanelH(Object mapPool) {
         HttpHeaders headers = getDefaultHeader();
 
-        HttpEntity<MapPool> httpEntity = new HttpEntity<>(mapPool, headers);
+        HttpEntity<Object> httpEntity = new HttpEntity<>(mapPool, headers);
         return doPost("panel_H", httpEntity);
     }
 

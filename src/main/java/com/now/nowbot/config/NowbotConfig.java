@@ -47,6 +47,7 @@ import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
@@ -54,7 +55,15 @@ import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 @Component
 @Configuration
 public class NowbotConfig {
-    private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
+    public static final  String           BS_API_URL = "http://127.0.0.1:47150";
+    public static final  Optional<String> BS_TOKEN;
+    private static final Logger           log        = LoggerFactory.getLogger(NowbotConfig.class);
+
+    static {
+        var s = System.getenv("API_TOKEN");
+        BS_TOKEN = Optional.ofNullable(s);
+    }
+
     /**
      * bot 运行目录
      */
@@ -73,7 +82,7 @@ public class NowbotConfig {
     public static String IMGBUFFER_PATH;
     public static int PORT;
     @Value("${spring.proxy.port:0}")
-    public int proxyPort;
+    public        int proxyPort;
 
 
     @Autowired
@@ -151,7 +160,7 @@ public class NowbotConfig {
 
     public String createDir(String path) {
         Path pt = Path.of(path);
-        if (!Files.isDirectory(pt)) {
+        if (! Files.isDirectory(pt)) {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {

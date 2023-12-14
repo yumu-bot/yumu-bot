@@ -1,41 +1,70 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.mappool.MapPool;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.util.*;
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service("MAPPOOL")
-public class MapPoolService implements MessageService<Matcher> {
+public class MapPoolService implements MessageService<String> {
     private static final Logger log = LoggerFactory.getLogger(MapPoolService.class);
-
+    private static String           api   = NowbotConfig.BS_API_URL;
+    private static Optional<String> token = NowbotConfig.BS_TOKEN;
     @Resource
     OsuBeatmapApiService osuBeatmapApiService;
+    private static Pattern pattern = Pattern.compile("^!pool\\s*(?<name>\\w+)");
     @Resource
     ImageService imageService;
+    @Resource(lookup = "webClient")
+    WebClient webClient;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.MAPPOOL.matcher(event.getRawMessage().trim());
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+    public boolean isHandle(MessageEvent event, DataValue<String> data) {
+//        var m = Instructions.MAPPOOL.matcher(event.getRawMessage().trim());
+        var m = pattern.matcher(event.getRawMessage().trim());
+        if (! m.find()) {
+            return false;
+        }
+        data.setValue(m.group("name"));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, String param) throws Throwable {
+        final int id;
+        byte[] img;
+        try {
+            id = Integer.parseInt(param);
+            var p = searchById(id);
+            img = imageService.getPanelH(p.orElseThrow(() -> new TipsException(STR."未找到id为 \{id} 的图池")));
+        } catch (NumberFormatException formatException) {
+            var result = searchByName(param);
+            if (! result.isArray() || result.isEmpty()) throw new TipsException(STR."未找到名称包含 \{param} 的图池");
+            if (result.size() == 1) {
+                img = imageService.getPanelH(result.get(0));
+            } else {
+                throw new TipsException("查到了多个图池, 请确结果保唯一");
+            }
+        }
+
+        QQMsgUtil.sendImage(event.getSubject(), img);
+
+        /*
         var dataStr = matcher.group("data");
         var nameStr = matcher.group("name");
 
@@ -58,7 +87,7 @@ public class MapPoolService implements MessageService<Matcher> {
             log.error("PO 数据请求失败", e);
             throw new MapPoolException(MapPoolException.Type.PO_Send_Error);
         }
-
+*/
     }
 
     public Map<String, List<Long>> parseDataString(String dataStr) throws MapPoolException {
@@ -120,5 +149,28 @@ public class MapPoolService implements MessageService<Matcher> {
         }
 
         return output;
+    }
+
+    private Optional<JsonNode> searchById(int id) {
+        try {
+            return webClient.get()
+                    .uri(u -> u.path(STR."\{api}/api/public/searchPool").queryParam("poolId", id).build())
+                    .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .blockOptional(Duration.ofSeconds(30));
+        } catch (WebClientResponseException.NotFound e) {
+            return Optional.empty();
+        }
+    }
+
+    private JsonNode searchByName(String name) {
+        var nodeOpt = webClient.get()
+                .uri(u -> u.path(STR."\{api}/api/public/searchPool").queryParam("poolName", name).build())
+                .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .blockOptional(Duration.ofSeconds(30));
+        return nodeOpt.map(node -> node.get("data")).orElseThrow();
     }
 }
