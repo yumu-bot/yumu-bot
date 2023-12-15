@@ -9,13 +9,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public class MapPool {
+public class MapPoolDto {
     Integer id = 0;
     String name = "MapPool";
     Long firstMapSID = 0L;
     List<ModPool> modPools = new ArrayList<>();
 
-    public MapPool(@Nullable String name, Map<String, List<Long>> modBIDMap, OsuBeatmapApiService osuBeatmapApiService) {
+    public MapPoolDto(@Nullable String name, Map<String, List<Long>> modBIDMap, OsuBeatmapApiService osuBeatmapApiService) {
         if (!(name == null || name.isBlank())) this.name = name;
 
         modBIDMap.forEach((key, value) -> {
@@ -31,10 +31,10 @@ public class MapPool {
 
         });
 
-        if (!modPools.isEmpty() && !modPools.get(0).getBeatMaps().isEmpty()) {
+        if (! modPools.isEmpty() && ! modPools.getFirst().getBeatMaps().isEmpty()) {
             firstMapSID = Long.valueOf(
-                    modPools.get(0).getBeatMaps()
-                            .get(0).getBeatMapSet().getSID());
+                    modPools.getFirst().getBeatMaps()
+                            .getFirst().getBeatMapSet().getSID());
         }
     }
 
