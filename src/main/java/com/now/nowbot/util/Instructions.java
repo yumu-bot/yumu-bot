@@ -14,7 +14,7 @@ public class Instructions {
     // #1 BOT 内部指令
     public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?![A-Za-z_]))|yumu\\?)");
     public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
-    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black)?list|add|remove|(un)?ban|[lkarub]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BAN  = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black)?list|add|remove|(un)?ban|[lkarub]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
     public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))+(\\s+(?<p1>[\\w\\-]+))?(\\s+(?<p2>\\w+))?(\\s+(?<p3>\\w+))?(\\s+(?<p4>\\w+))?");
     public static final Pattern ECHO = Pattern.compile("^[!！#]\\s*(?i)echo\\s*(?<any>.*)");
 
@@ -36,7 +36,7 @@ public class Instructions {
 
     public static final Pattern UUBA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]{3,}))?");
     public static final Pattern BPHT = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
-    
+
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
@@ -85,7 +85,8 @@ public class Instructions {
 
     public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?![A-Za-z_]))|(?<ymy>y(?![A-Za-z_])))+");
 
-    public static final Pattern MAPPOOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
+    public static final Pattern MAP_POOL     = Pattern.compile("^!pool\\s*((?<id>-i)\\s*)?(?<name>\\w+)");
+    public static final Pattern MAP_POOL_OLD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
 
     /*
     public static final Pattern START = Pattern.compile("^[!！]((积分)|(..积分))+.*");
@@ -97,7 +98,6 @@ public class Instructions {
     public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
 
     public static final Pattern OVERSR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
-
 
 
     public static final Pattern OLDAVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?(oldavatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");

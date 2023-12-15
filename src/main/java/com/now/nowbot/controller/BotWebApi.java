@@ -8,7 +8,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.mappool.MapPool;
+import com.now.nowbot.model.mappool.MapPoolDto;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
@@ -442,7 +442,7 @@ public class BotWebApi {
             @RequestParam("name") @Nullable String nameStr,
             @RequestBody Map<String, List<Long>> dataMap
     ) throws RuntimeException {
-        var mapPool = new MapPool(nameStr, dataMap, beatmapApiService);
+        var mapPool = new MapPoolDto(nameStr, dataMap, beatmapApiService);
         if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.PO_Map_Empty.message);
 
         var data = imageService.getPanelH(mapPool);
