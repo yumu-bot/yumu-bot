@@ -86,7 +86,7 @@ public class Instructions {
     public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?![A-Za-z_]))|(?<ymy>y(?![A-Za-z_])))+");
 
     public static final Pattern MAP_POOL     = Pattern.compile("^!pool\\s*((?<id>-i)\\s*)?(?<name>\\w+)");
-    public static final Pattern MAP_POOL_OLD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|pool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
+    public static final Pattern MAP_POOL_OLD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
 
     /*
     public static final Pattern START = Pattern.compile("^[!！]((积分)|(..积分))+.*");

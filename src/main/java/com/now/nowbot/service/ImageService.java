@@ -13,6 +13,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -334,8 +335,8 @@ public class ImageService {
 
 
     public byte[] getPanelH(Object mapPool) {
+        log.debug(JacksonUtil.objectToJsonPretty(mapPool));
         HttpHeaders headers = getDefaultHeader();
-
         HttpEntity<Object> httpEntity = new HttpEntity<>(mapPool, headers);
         return doPost("panel_H", httpEntity);
     }
