@@ -3,9 +3,11 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.mappool.now.Pool;
+import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
@@ -28,9 +30,11 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
     private static final String           api   = NowbotConfig.BS_API_URL;
     private static final Optional<String> token = NowbotConfig.BS_TOKEN;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
     @Resource
-    WebClient webClient;
+    OsuBeatmapApiService osuBeatmapApiService;
+    @Resource
+    WebClient            webClient;
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<PoolParam> data) throws TipsException {
@@ -59,7 +63,7 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
             if (result.isEmpty())
                 throw new TipsException(STR."未找到名称包含 \{param.name()} 的图池");
             if (result.size() == 1) {
-                img = imageService.getPanelH(result.getFirst());
+                img = imageService.getPanelH(new MapPoolDto(result.getFirst(), osuBeatmapApiService));
             } else {
                 StringBuilder sb = new StringBuilder("查到了多个图池, 请确认结果:\n");
                 for (int i = 0; i < result.size(); i++) {
@@ -77,11 +81,11 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
                 }
                 if (n < 1 || n > result.size()) throw new TipsException("输入错误");
 
-                img = imageService.getPanelH(result.get(n - 1));
+                img = imageService.getPanelH(new MapPoolDto(result.get(n - 1), osuBeatmapApiService));
             }
         } else {
             var p = searchById(param.id());
-            img = imageService.getPanelH(p.orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")));
+            img = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")));
         }
 
         QQMsgUtil.sendImage(event.getSubject(), img);
