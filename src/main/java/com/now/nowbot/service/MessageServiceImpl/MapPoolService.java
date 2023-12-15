@@ -2,12 +2,14 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.mappool.now.Pool;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Service("MAP_POOL")
@@ -50,18 +53,17 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
 
     @Override
     public void HandleMessage(MessageEvent event, PoolParam param) throws Throwable {
-        final int id;
         byte[] img;
         if (StringUtils.hasText(param.name())) {
             var result = searchByName(param.name());
-            if (! result.isArray() || result.isEmpty())
+            if (result.isEmpty())
                 throw new TipsException(STR."未找到名称包含 \{param.name()} 的图池");
             if (result.size() == 1) {
-                img = imageService.getPanelH(result.get(0));
+                img = imageService.getPanelH(result.getFirst());
             } else {
                 StringBuilder sb = new StringBuilder("查到了多个图池, 请确认结果:\n");
                 for (int i = 0; i < result.size(); i++) {
-                    sb.append(i + 1).append(": ").append(result.get(i).get("name").asText()).append('\n');
+                    sb.append(i + 1).append(": ").append(result.get(i).getName()).append('\n');
                 }
                 sb.append("p.s. 请直接发送选项对应的数字");
                 QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
@@ -88,26 +90,27 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
     public record PoolParam(int id, String name) {
     }
 
-    private Optional<JsonNode> searchById(int id) {
-        try {
-            return webClient.get()
-                    .uri(u -> UriComponentsBuilder.fromHttpUrl(api).path("/api/public/searchPool").queryParam("poolId", id).build().toUri())
-                    .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .blockOptional(Duration.ofSeconds(30));
-        } catch (WebClientResponseException.NotFound e) {
-            return Optional.empty();
-        }
-    }
-
-    public JsonNode searchByName(String name) {
+    public List<Pool> searchByName(String name) {
         var nodeOpt = webClient.get()
                 .uri(u -> UriComponentsBuilder.fromHttpUrl(api).path("/api/public/searchPool").queryParam("poolName", name).build().toUri())
                 .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .blockOptional(Duration.ofSeconds(30));
-        return nodeOpt.map(node -> node.get("data")).orElseThrow();
+        return nodeOpt.map(node -> JacksonUtil.parseObjectList(node.get("data"), Pool.class)).orElseThrow();
+    }
+
+    public Optional<Pool> searchById(int id) {
+        try {
+            return webClient.get()
+                    .uri(u -> UriComponentsBuilder.fromHttpUrl(api).path("/api/public/searchPool").queryParam("poolId", id).build().toUri())
+                    .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .<Optional<Pool>>map(json -> json.has("data") ? Optional.ofNullable(JacksonUtil.parseObject(json.get("data"), Pool.class)) : Optional.empty())
+                    .block(Duration.ofSeconds(30));
+        } catch (WebClientResponseException.NotFound e) {
+            return Optional.empty();
+        }
     }
 }

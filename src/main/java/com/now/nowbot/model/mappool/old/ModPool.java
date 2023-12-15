@@ -1,4 +1,4 @@
-package com.now.nowbot.model.mappool;
+package com.now.nowbot.model.mappool.old;
 
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.Mod;

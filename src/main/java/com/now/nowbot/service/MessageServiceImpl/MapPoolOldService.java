@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.mappool.MapPoolDto;
+import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;

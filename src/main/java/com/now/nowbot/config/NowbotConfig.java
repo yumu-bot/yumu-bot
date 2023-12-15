@@ -55,7 +55,8 @@ import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 @Component
 @Configuration
 public class NowbotConfig {
-    public static final  String           BS_API_URL = "http://127.0.0.1:47150";
+    //    public static final  String           BS_API_URL = "http://127.0.0.1:47150";
+    public static final String BS_API_URL = "https://sp.365246692.xyz";
     public static final  Optional<String> BS_TOKEN;
     private static final Logger           log        = LoggerFactory.getLogger(NowbotConfig.class);
 

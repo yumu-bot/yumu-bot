@@ -1,13 +1,11 @@
-package com.now.nowbot.model.mappool;
+package com.now.nowbot.model.mappool.old;
 
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.mappool.now.Pool;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import org.springframework.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MapPoolDto {
     Integer id = 0;
@@ -36,6 +34,23 @@ public class MapPoolDto {
                     modPools.getFirst().getBeatMaps()
                             .getFirst().getBeatMapSet().getSID());
         }
+    }
+
+    public MapPoolDto(Pool pool, OsuBeatmapApiService osuBeatmapApiService) {
+        this(pool.getName(), getModMapFromPool(pool), osuBeatmapApiService);
+        this.id = pool.getId();
+    }
+
+    private static Map<String, List<Long>> getModMapFromPool(Pool pool) {
+        Map<String, List<Long>> modBidMap = new LinkedHashMap<>();
+        pool.getCategoryList().forEach(group -> {
+            var mList = new ArrayList<Long>();
+            group.getCategory().forEach(category -> {
+                mList.add(category.bid());
+            });
+            modBidMap.put(group.getName(), mList);
+        });
+        return modBidMap;
     }
 
     public void sortModPools() {
