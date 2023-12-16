@@ -220,8 +220,6 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
             }
         }
-        serviceCall.saveCall("pr-getScoreList", System.currentTimeMillis() - t);
-        t = System.currentTimeMillis();
         if (scoreList == null || scoreList.isEmpty()) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
@@ -231,6 +229,9 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
+
+        serviceCall.saveCall("pr-getScoreList", System.currentTimeMillis() - t);
+        t = System.currentTimeMillis();
 
         //成绩发送
         if (isMultipleScore) {
@@ -258,8 +259,8 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
                 t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
-                log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
-                getTextOutput(scoreList.get(0), from);
+                log.error("绘图出错", e);
+                getTextOutput(scoreList.getFirst(), from);
             }
             serviceCall.saveCall("pr-singleScore", System.currentTimeMillis() - t);
         }
