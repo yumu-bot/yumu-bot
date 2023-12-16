@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -36,24 +37,27 @@ import java.util.regex.Matcher;
 public class ScorePRService implements MessageService<ScorePRService.PrParm> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
-    RestTemplate template;
-    OsuUserApiService userApiService;
-    OsuScoreApiService scoreApiService;
-    OsuBeatmapApiService beatmapApiService;
-    BindDao bindDao;
-    ImageService imageService;
+    RestTemplate          template;
+    OsuUserApiService     userApiService;
+    OsuScoreApiService    scoreApiService;
+    OsuBeatmapApiService  beatmapApiService;
+    BindDao               bindDao;
+    ImageService          imageService;
+    ServiceCallRepository serviceCall;
 
     @Autowired
     public ScorePRService(RestTemplate restTemplate,
                           OsuUserApiService userApiService,
                           OsuScoreApiService scoreApiService,
                           OsuBeatmapApiService beatmapApiService,
-                          BindDao bindDao, ImageService image) {
+                          BindDao bindDao, ImageService image,
+                          ServiceCallRepository serviceCall) {
         template = restTemplate;
         this.userApiService = userApiService;
         this.scoreApiService = scoreApiService;
         this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
+        this.serviceCall = serviceCall;
         imageService = image;
     }
 
@@ -61,7 +65,9 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
     public boolean isHandle(MessageEvent event, DataValue<PrParm> data) throws ScoreException {
         var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
+            long t = System.currentTimeMillis();
             getData(m, event, data);
+            serviceCall.saveCall("pr-isHandle", System.currentTimeMillis() - t);
             return true;
         } else return false;
     }
@@ -175,6 +181,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
     @Override
     public void HandleMessage(MessageEvent event, PrParm parm) throws Throwable {
         var from = event.getSubject();
+        long t = System.currentTimeMillis();
 
         int offset = parm.offset();
         int limit = parm.limit();
@@ -198,6 +205,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
             }
+
         } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
@@ -212,7 +220,8 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
             }
         }
-
+        serviceCall.saveCall("pr-getScoreList", System.currentTimeMillis() - t);
+        t = System.currentTimeMillis();
         if (scoreList == null || scoreList.isEmpty()) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
@@ -237,6 +246,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
+            serviceCall.saveCall("pr-multipleScore", System.currentTimeMillis() - t);
 
         } else {
             //单成绩发送
@@ -247,10 +257,11 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
                 log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
                 getTextOutput(scoreList.get(0), from);
             }
+            serviceCall.saveCall("pr-singleScore", System.currentTimeMillis() - t);
         }
     }
 
-    record PrParm(BinUser user, int offset, int limit, boolean isRe, boolean isMultipleScore, OsuMode mode) {
+    public record PrParm(BinUser user, int offset, int limit, boolean isRe, boolean isMultipleScore, OsuMode mode) {
     }
 
     private void getTextOutput(Score score, Contact from) {
