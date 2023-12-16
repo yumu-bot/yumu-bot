@@ -242,6 +242,8 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
 
             try {
                 var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                serviceCall.saveCall("pr-getImage", System.currentTimeMillis() - t);
+                t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
@@ -251,7 +253,9 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
         } else {
             //单成绩发送
             try {
-                var data = imageService.getPanelE(osuUser, scoreList.get(0), beatmapApiService);
+                var data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                serviceCall.saveCall("pr-getImage", System.currentTimeMillis() - t);
+                t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
