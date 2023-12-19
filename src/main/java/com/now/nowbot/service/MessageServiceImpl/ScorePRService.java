@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("SCOREPR")
-public class ScorePRService implements MessageService<ScorePRService.PrParm> {
+public class ScorePRService implements MessageService<ScorePRService.ScorePrParam> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
     RestTemplate          template;
@@ -62,17 +62,17 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<PrParm> data) throws ScoreException {
+    public boolean isHandle(MessageEvent event, DataValue<ScorePrParam> data) throws ScoreException {
         var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
             long t = System.currentTimeMillis();
             getData(m, event, data);
-            serviceCall.saveCall("pr-isHandle", System.currentTimeMillis() - t);
+            serviceCall.saveCall("SCOREPR-HANDLE", System.currentTimeMillis() - t);
             return true;
         } else return false;
     }
 
-    private void getData(Matcher matcher, MessageEvent event, DataValue<PrParm> data) throws ScoreException {
+    private void getData(Matcher matcher, MessageEvent event, DataValue<ScorePrParam> data) throws ScoreException {
         var name = matcher.group("name");
         var s = matcher.group("s");
         var es = matcher.group("es");
@@ -130,7 +130,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s) || StringUtils.hasText(es)) {
                 offset = 0;
-                if (! StringUtils.hasText(s) || nNotFit) {
+                if (! StringUtils.hasText(nStr) || nNotFit) {
                     limit = 20;
                 } else if (! StringUtils.hasText(mStr)) {
                     limit = n;
@@ -175,24 +175,24 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
             }
         }
 
-        data.setValue(new PrParm(binUser, offset, limit, isRecent, isMultipleScore, OsuMode.getMode(matcher.group("mode"))));
+        data.setValue(new ScorePrParam(binUser, offset, limit, isRecent, isMultipleScore, OsuMode.getMode(matcher.group("mode"))));
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, PrParm parm) throws Throwable {
+    public void HandleMessage(MessageEvent event, ScorePrParam param) throws Throwable {
         var from = event.getSubject();
         long t = System.currentTimeMillis();
 
-        int offset = parm.offset();
-        int limit = parm.limit();
-        boolean isRecent = parm.isRe();
-        boolean isMultipleScore = parm.isMultipleScore();
+        int offset = param.offset();
+        int limit = param.limit();
+        boolean isRecent = param.isRecent();
+        boolean isMultipleScore = param.isMultipleScore();
 
-        BinUser binUser = parm.user();
+        BinUser binUser = param.user();
         OsuUser osuUser;
 
         //处理默认mode
-        var mode = parm.mode();
+        var mode = param.mode();
         if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
 
         List<Score> scoreList;
@@ -230,7 +230,7 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
 
-        serviceCall.saveCall("pr-getScoreList", System.currentTimeMillis() - t);
+        serviceCall.saveCall("SCOREPR-LIST", System.currentTimeMillis() - t);
         t = System.currentTimeMillis();
 
         //成绩发送
@@ -243,30 +243,30 @@ public class ScorePRService implements MessageService<ScorePRService.PrParm> {
 
             try {
                 var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                serviceCall.saveCall("pr-getImage", System.currentTimeMillis() - t);
+                serviceCall.saveCall("SCOREPR-S-IMAGE", System.currentTimeMillis() - t);
                 t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
-            serviceCall.saveCall("pr-multipleScore", System.currentTimeMillis() - t);
+            serviceCall.saveCall("SCOREPR-S-SEND", System.currentTimeMillis() - t);
 
         } else {
             //单成绩发送
             try {
                 var data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
-                serviceCall.saveCall("pr-getImage", System.currentTimeMillis() - t);
+                serviceCall.saveCall("SCOREPR-SP-IMAGE", System.currentTimeMillis() - t);
                 t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 log.error("绘图出错", e);
                 getTextOutput(scoreList.getFirst(), from);
             }
-            serviceCall.saveCall("pr-singleScore", System.currentTimeMillis() - t);
+            serviceCall.saveCall("SCOREPR-P-SEND", System.currentTimeMillis() - t);
         }
     }
 
-    public record PrParm(BinUser user, int offset, int limit, boolean isRe, boolean isMultipleScore, OsuMode mode) {
+    public record ScorePrParam(BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
     }
 
     private void getTextOutput(Score score, Contact from) {
