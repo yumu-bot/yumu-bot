@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.regex.Matcher;
 
-@Service("MAP_POOL_OLD")
-public class MapPoolOldService implements MessageService<Matcher> {
+@Service("GETPOOL")
+public class GetPoolService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MapPoolService.class);
     @Resource
     ImageService         imageService;
@@ -26,7 +26,7 @@ public class MapPoolOldService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.MAP_POOL_OLD.matcher(event.getRawMessage().trim());
+        var m = Instructions.GETPOOL.matcher(event.getRawMessage().trim());
         if (! m.find()) {
             return false;
         }

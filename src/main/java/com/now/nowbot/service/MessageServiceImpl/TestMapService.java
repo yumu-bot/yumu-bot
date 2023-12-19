@@ -28,8 +28,8 @@ public class TestMapService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        int bid = Integer.parseInt(matcher.group("d"));
-        String mod = matcher.group("mode");
+        int bid = Integer.parseInt(matcher.group("id"));
+        String mod = matcher.group("mod");
 
 
         var info = beatmapApiService.getBeatMapInfo(bid);
@@ -59,7 +59,7 @@ public class TestMapService implements MessageService<Matcher> {
             return;
         }
 
-        var mods = mod.split(",");
+        var mods = mod.split("[\"\\s,，\\-|:]+");
         int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
         float newTotalLength = getNewTotalLength (info.getTotalLength(), modInt);

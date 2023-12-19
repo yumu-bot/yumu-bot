@@ -85,8 +85,9 @@ public class Instructions {
 
     public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?![A-Za-z_]))|(?<ymy>y(?![A-Za-z_])))+");
 
-    public static final Pattern MAP_POOL     = Pattern.compile("^!pool\\s*((?<id>-i)\\s*)?(?<name>\\w+)");
-    public static final Pattern MAP_POOL_OLD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
+    public static final Pattern MAPPOOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*((?<id>-i)\\s*)?(?<name>\\w+)");
+    public static final Pattern ADDPOOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(addpool|ap(?![A-Za-z_]))\\s*((?<id>-i)\\s*)?(?<name>\\w+)");
+    public static final Pattern GETPOOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(getpool|gp(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
 
     /*
     public static final Pattern START = Pattern.compile("^[!！]((积分)|(..积分))+.*");
@@ -123,5 +124,5 @@ public class Instructions {
     public static final Pattern MAP4DCALCULATE = Pattern.compile("[!！#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>(ez|hd|dt|hr|nc|ht)+)?");
     public static final Pattern TESTTAIKOSRCALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
-    public static final Pattern TESTMAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<d>\\d+)(\\s*(?<mode>[\\w\\d,]+))?");
+    public static final Pattern TESTMAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\d\\s,，|\\-]+))?");
 }

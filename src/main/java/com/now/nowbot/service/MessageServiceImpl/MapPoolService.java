@@ -38,11 +38,11 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<PoolParam> data) throws TipsException {
-        var m = Instructions.MAP_POOL.matcher(event.getRawMessage().trim());
+        var m = Instructions.MAPPOOL.matcher(event.getRawMessage().trim());
         if (! m.find()) {
             return false;
         }
-        ;
+
         if (StringUtils.hasText(m.group("id"))) {
             try {
                 int id = Integer.parseInt(m.group("name"));
