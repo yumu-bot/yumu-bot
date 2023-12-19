@@ -87,7 +87,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
             body.put("ruleset_id", mode.getModeValue());
         }
         return base.osuApiWebClient.post()
-                .uri("beatmaps/{id}/attributes")
+                .uri("beatmaps/{id}/attributes", id)
                 .headers(base::insertHeader)
                 .bodyValue(body)
                 .retrieve()
@@ -106,7 +106,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
             body.put("mods", modsValue);
         }
         return base.osuApiWebClient.post()
-                .uri("beatmaps/{id}/attributes")
+                .uri("beatmaps/{id}/attributes", id)
                 .headers(base::insertHeader)
                 .bodyValue(body)
                 .retrieve()
