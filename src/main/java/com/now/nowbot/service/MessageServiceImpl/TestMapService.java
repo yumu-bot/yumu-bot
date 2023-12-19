@@ -45,7 +45,7 @@ public class TestMapService implements MessageService<Matcher> {
         if (mod == null || mod.trim().isEmpty()){
 
             sb.append(String.format("%.2f", info.getDifficultyRating())).append(',')
-                    .append(info.getBPM()).append(',')
+                    .append(String.format("%d", Math.round(info.getBPM()))).append(',')
                     .append(String.format("%d", Math.round(Math.floor(info.getTotalLength() / 60f))))
                     .append(':')
                     .append(String.format("%02d", Math.round(info.getTotalLength() % 60f)))
@@ -65,7 +65,7 @@ public class TestMapService implements MessageService<Matcher> {
         float newTotalLength = getNewTotalLength (info.getTotalLength(), modInt);
 
         sb.append(String.format("%.2f", a.getStarRating())).append(',')
-                .append(info.getBPM()).append(',')
+                .append(String.format("%d", getNewBPM(info.getBPM(), modInt))).append(',')
                 .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
                 .append(':')
                 .append(String.format("%02d", Math.round(newTotalLength % 60f)))
@@ -85,6 +85,16 @@ public class TestMapService implements MessageService<Matcher> {
             return (totalLength * 1.5f);
         } else {
             return totalLength * 1f;
+        }
+    }
+
+    private Integer getNewBPM(Float bpm, int modInt) {
+        if (Mod.hasDt(modInt)) {
+            return Math.round(bpm * 1.5f);
+        } else if (Mod.hasHt(modInt)) {
+            return Math.round(bpm / 1.5f);
+        } else {
+            return Math.round(bpm);
         }
     }
 }
