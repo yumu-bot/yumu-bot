@@ -19,6 +19,7 @@ import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
     OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
-
+    @Resource
     UUBAService uubaService;
 
     @Autowired

@@ -33,6 +33,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.regex.Matcher;
 
+//UUPR，Multiple Score也合并进来了
+
 @Service("SCOREPR")
 public class ScorePRService implements MessageService<ScorePRService.ScorePrParam> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
