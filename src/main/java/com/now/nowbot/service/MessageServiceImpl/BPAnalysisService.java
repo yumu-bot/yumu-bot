@@ -27,8 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
     OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
+
+    UUBAService uubaService;
 
     @Autowired
     public BPAnalysisService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
@@ -124,12 +128,28 @@ public class BPAnalysisService implements MessageService<UserParam> {
             }
         }
 
+        byte[] image = new byte[0];
+
         try {
             var data = parseData(osuUser, bps, userApiService);
-            var image = imageService.getPanelJ(data);
+            image = imageService.getPanelJ(data);
+        } catch (HttpServerErrorException.InternalServerError e) {
+            try {
+                var data2 = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode().getName());
+                QQMsgUtil.sendImage(from, imageService.getPanelAlpha(data2));
+            } catch (Exception e1) {
+                log.error("BPA Error (to UUBA): ", e1);
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
+            }
+
+        } catch (Exception e) {
+            log.error("BPA Error (other than HTTP 500): ", e);
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
+        }
+
+        try {
             QQMsgUtil.sendImage(from, image);
         } catch (Exception e) {
-            log.error("BPA Error: ", e);
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
         }
     }
@@ -322,7 +342,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             }
         }
         if (changedAttrsMap != null) {
-            java.util.function.Consumer<Score> f = (s) -> {
+            Consumer<Score> f = (s) -> {
                 long id = s.getBeatMap().getId();
                 if (changedAttrsMap.containsKey(id)) {
                     var attr = changedAttrsMap.get(id);
