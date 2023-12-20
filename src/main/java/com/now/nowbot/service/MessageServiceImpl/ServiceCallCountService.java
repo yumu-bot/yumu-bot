@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 public class ServiceCallCountService implements MessageService<Integer> {
     private final ServiceCallRepository serviceCallRepository;
     private final ImageService          imageService;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd:HH");
 
     public ServiceCallCountService(ServiceCallRepository serviceCallRepository,
                                    ImageService imageService) {
@@ -53,7 +53,7 @@ public class ServiceCallCountService implements MessageService<Integer> {
         } else {
             var now = LocalDateTime.now();
             var bef = now.minusHours(hours);
-            event.getSubject().sendMessage(STR."处理 \{bef.format(dateTimeFormatter)} - \{now.format(dateTimeFormatter)}}");
+            event.getSubject().sendMessage(STR."处理 [\{bef.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
             result = serviceCallRepository.countBetwen(bef, now);
         }
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb

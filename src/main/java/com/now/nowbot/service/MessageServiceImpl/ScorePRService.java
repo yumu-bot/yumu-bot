@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -45,21 +44,18 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
     OsuBeatmapApiService  beatmapApiService;
     BindDao               bindDao;
     ImageService          imageService;
-    ServiceCallRepository serviceCall;
 
     @Autowired
     public ScorePRService(RestTemplate restTemplate,
                           OsuUserApiService userApiService,
                           OsuScoreApiService scoreApiService,
                           OsuBeatmapApiService beatmapApiService,
-                          BindDao bindDao, ImageService image,
-                          ServiceCallRepository serviceCall) {
+                          BindDao bindDao, ImageService image) {
         template = restTemplate;
         this.userApiService = userApiService;
         this.scoreApiService = scoreApiService;
         this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
-        this.serviceCall = serviceCall;
         imageService = image;
     }
 
@@ -67,9 +63,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
     public boolean isHandle(MessageEvent event, DataValue<ScorePrParam> data) throws ScoreException {
         var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
         if (m.find()) {
-            long t = System.currentTimeMillis();
             getData(m, event, data);
-            serviceCall.saveCall("SCOREPR-HANDLE", System.currentTimeMillis() - t);
             return true;
         } else return false;
     }
@@ -183,7 +177,6 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
     @Override
     public void HandleMessage(MessageEvent event, ScorePrParam param) throws Throwable {
         var from = event.getSubject();
-        long t = System.currentTimeMillis();
 
         int offset = param.offset();
         int limit = param.limit();
@@ -232,8 +225,6 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
 
-        serviceCall.saveCall("SCOREPR-LIST", System.currentTimeMillis() - t);
-        t = System.currentTimeMillis();
 
         //成绩发送
         if (isMultipleScore) {
@@ -245,26 +236,20 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
             try {
                 var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                serviceCall.saveCall("SCOREPR-S-IMAGE", System.currentTimeMillis() - t);
-                t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
-            serviceCall.saveCall("SCOREPR-S-SEND", System.currentTimeMillis() - t);
 
         } else {
             //单成绩发送
             try {
                 var data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
-                serviceCall.saveCall("SCOREPR-SP-IMAGE", System.currentTimeMillis() - t);
-                t = System.currentTimeMillis();
                 QQMsgUtil.sendImage(from, data);
             } catch (Exception e) {
                 log.error("绘图出错", e);
                 getTextOutput(scoreList.getFirst(), from);
             }
-            serviceCall.saveCall("SCOREPR-P-SEND", System.currentTimeMillis() - t);
         }
     }
 
