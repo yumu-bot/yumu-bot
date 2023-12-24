@@ -87,6 +87,9 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
     public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
         var from = event.getSubject();
 
+        if (param.bid == 0)
+            throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_None);
+
         BinUser binUser;
         OsuUser osuUser;
 
@@ -113,6 +116,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         }
 
         var beatMap = new BeatMap();
+
         try {
             beatMap = beatmapApiService.getBeatMapInfo(param.bid);
         } catch (Exception e) {
