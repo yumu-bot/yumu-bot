@@ -132,7 +132,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             if (param.combo > 0 && param.combo <= 1) {
                 combo = Math.toIntExact(Math.round(maxCombo * param.combo));
             } else if (param.combo > 1) {
-                combo = Math.max(Math.toIntExact(Math.round(param.combo)), maxCombo);
+                combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
             } else {
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_ComboError);
             }
