@@ -11,6 +11,7 @@ import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
+import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.JacksonUtil;
@@ -311,6 +312,17 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E", httpEntity);
+    }
+
+    public byte[] getPanelE2(OsuUser user, BeatMap beatMap, MapStatisticsService.Expected expected) {
+
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of("user", user,
+                "beatmap", beatMap,
+                "expected", expected
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E2", httpEntity);
     }
 
     public byte[] getPanelF(MatchData matchData) {
