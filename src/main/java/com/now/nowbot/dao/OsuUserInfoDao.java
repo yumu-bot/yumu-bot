@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -49,21 +50,71 @@ public class OsuUserInfoDao {
         osuUserInfoMapper.saveAllAndFlush(all);
     }
 
-    public Optional<OsuUserInfoArchiveLite> getLast(Long uid, LocalDate date) {
-        return osuUserInfoMapper.selectDayLast(uid, date);
+    public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
+        OsuUser user = new OsuUser();
+        user.setPlayMode(archive.getMode().getName());
+        user.setUID(archive.getOsuID());
+
+        Statistics statistics = new Statistics();
+        statistics.setA(statistics.getA());
+        statistics.setS(statistics.getS());
+        statistics.setSS(statistics.getSS());
+        statistics.setSH(statistics.getSH());
+        statistics.setSSH(statistics.getSSH());
+
+        statistics.setTotalScore(statistics.getTotalScore());
+        statistics.setRankedScore(statistics.getRankedScore());
+        statistics.setAccuracy(archive.getHit_accuracy());
+        statistics.setPlayCount(archive.getPlay_count());
+        statistics.setPlayTime(archive.getPlay_time());
+        statistics.setLevelCurrent(archive.getLevel_current());
+        statistics.setLevelProgress(archive.getLevel_progress());
+        statistics.setMaxCombo(archive.getMaximum_combo());
+        statistics.setPp(archive.getPP());
+
+        user.setStatistics(statistics);
+        return user;
     }
 
-    public Optional<OsuUserInfoArchiveLite> getLast(Long uid) {
-        return osuUserInfoMapper.selectLast(uid);
+    /**
+     * 取那一天最后的数据
+     *
+     * @param date 当天
+     * @return
+     */
+    public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode, LocalDate date) {
+        return osuUserInfoMapper.selectDayLast(uid, mode, date);
+    }
+
+    /**
+     * 取 到那一天为止 最后的数据 (默认向前取一年)
+     *
+     * @param date 那一天
+     * @return
+     */
+    public Optional<OsuUserInfoArchiveLite> getLastFrom(Long uid, OsuMode mode, LocalDate date) {
+        var time = LocalDateTime.of(date, LocalTime.MAX);
+        return osuUserInfoMapper.selectDayLast(uid, mode, time.minusYears(1), time);
     }
 
     public static OsuUserInfoArchiveLite fromModel(OsuUser data) {
         var out = new OsuUserInfoArchiveLite();
         var statistics = data.getStatistics();
         out.setOsuID(data.getUID());
+        setOut(out, statistics);
+
+        out.setPlay_count(data.getPlayCount());
+        out.setPlay_time(data.getPlayTime());
+        out.setMode(data.getPlayMode());
+        out.setTime(LocalDateTime.now());
+        return out;
+    }
+
+    private static void setOut(OsuUserInfoArchiveLite out, Statistics statistics) {
         out.setGlobal_rank(statistics.getGlobalRank());
         out.setCountry_rank(statistics.getCountryRank());
         out.setTotal_score(statistics.getTotalScore());
+        out.setRanked_score(statistics.getRankedScore());
         out.setGrade_counts_a(statistics.getA());
         out.setGrade_counts_s(statistics.getS());
         out.setGrade_counts_sh(statistics.getSH());
@@ -76,13 +127,8 @@ public class OsuUserInfoDao {
         out.setLevel_progress(statistics.getLevelProgress());
         out.setIs_ranked(statistics.getRanked());
         out.setMaximum_combo(statistics.getMaxCombo());
-
-        out.setPlay_count(data.getPlayCount());
-        out.setPlay_time(data.getPlayTime());
-        out.setMode(data.getPlayMode());
-        out.setTime(LocalDateTime.now());
-        return out;
     }
+
     private static OsuUserInfoArchiveLite fromStatustucs(Statistics s, OsuMode mode){
         if (s == null) return null;
         var out = new OsuUserInfoArchiveLite();
@@ -90,22 +136,12 @@ public class OsuUserInfoDao {
         out.setPlay_time(s.getPlayTime());
         out.setMode(mode);
         out.setTime(LocalDateTime.now());
-        out.setGlobal_rank(s.getGlobalRank());
-        out.setCountry_rank(s.getCountryRank());
-        out.setTotal_score(s.getTotalScore());
-        out.setGrade_counts_a(s.getA());
-        out.setGrade_counts_s(s.getS());
-        out.setGrade_counts_sh(s.getSH());
-        out.setGrade_counts_ss(s.getSS());
-        out.setGrade_counts_ssh(s.getSSH());
-
-        out.setHit_accuracy(s.getAccuracy());
-        out.setPP(s.getPP());
-        out.setLevel_current(s.getLevelCurrent());
-        out.setLevel_progress(s.getLevelProgress());
-        out.setIs_ranked(s.getRanked());
-        out.setMaximum_combo(s.getMaxCombo());
+        setOut(out, s);
 
         return out;
+    }
+
+    public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode) {
+        return osuUserInfoMapper.selectLast(uid, mode);
     }
 }

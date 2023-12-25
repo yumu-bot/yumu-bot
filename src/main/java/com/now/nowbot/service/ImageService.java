@@ -270,7 +270,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, List<Score> BPs, List<Score> Recents, OsuMode mode) {
+    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, List<Score> Recents, OsuMode mode) {
 
         double bonus = 0f;
         if (!BPs.isEmpty()) {
@@ -289,14 +289,15 @@ public class ImageService {
 
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of("user", osuUser,
+        var body = new HashMap<>(Map.of("user", osuUser,
                 "bp-time", bpTimes,
                 "bp-list", BPs.subList(0, Math.min(BPs.size(), 8)),
                 "re-list", Recents,
                 "bonus_pp", bonus,
                 "mode", mode.getName(),
                 "ranked_map_play_count", SkiaUtil.getPlayedRankedMapCount(bonus)
-        );
+        ));
+        historyUser.ifPresent(user -> body.put("historyUser", user));
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_D", httpEntity);
     }

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -23,8 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service("INFO")
 public class InfoService implements MessageService<InfoService.InfoParam> {
@@ -35,6 +38,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     OsuScoreApiService scoreApiService;
     @Resource
     BindDao           bindDao;
+    @Resource
+    OsuUserInfoDao    infoDao;
     @Resource
     ImageService      imageService;
 
@@ -104,7 +109,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         OsuUser osuUser;
         List<Score> BPs;
-        List<Score> Recents;
+        List<Score> recents;
 
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
@@ -125,11 +130,16 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             log.error("Info 异常：获取玩家 BP", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
-
-        Recents = scoreApiService.getRecent(user, mode, 0, 3);
-
+        Optional<OsuUser> infoOpt;
+        recents = scoreApiService.getRecent(user, mode, 0, 3);
+        if (OsuMode.DEFAULT.equals(mode)) {
+            infoOpt = Optional.empty();
+        } else {
+            infoOpt = infoDao.getLastFrom(user.getOsuID(), mode, LocalDate.now().minusDays(1))
+                    .map(OsuUserInfoDao::fromArchive);
+        }
         try {
-            var img = imageService.getPanelD(osuUser, BPs, Recents, mode);
+            var img = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
             log.error("Info 发送异常", e);
