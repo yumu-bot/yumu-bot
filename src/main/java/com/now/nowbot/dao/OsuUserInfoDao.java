@@ -101,9 +101,20 @@ public class OsuUserInfoDao {
         var out = new OsuUserInfoArchiveLite();
         var statistics = data.getStatistics();
         out.setOsuID(data.getUID());
+        setOut(out, statistics);
+
+        out.setPlay_count(data.getPlayCount());
+        out.setPlay_time(data.getPlayTime());
+        out.setMode(data.getPlayMode());
+        out.setTime(LocalDateTime.now());
+        return out;
+    }
+
+    private static void setOut(OsuUserInfoArchiveLite out, Statistics statistics) {
         out.setGlobal_rank(statistics.getGlobalRank());
         out.setCountry_rank(statistics.getCountryRank());
         out.setTotal_score(statistics.getTotalScore());
+        out.setRanked_score(statistics.getRankedScore());
         out.setGrade_counts_a(statistics.getA());
         out.setGrade_counts_s(statistics.getS());
         out.setGrade_counts_sh(statistics.getSH());
@@ -116,13 +127,8 @@ public class OsuUserInfoDao {
         out.setLevel_progress(statistics.getLevelProgress());
         out.setIs_ranked(statistics.getRanked());
         out.setMaximum_combo(statistics.getMaxCombo());
-
-        out.setPlay_count(data.getPlayCount());
-        out.setPlay_time(data.getPlayTime());
-        out.setMode(data.getPlayMode());
-        out.setTime(LocalDateTime.now());
-        return out;
     }
+
     private static OsuUserInfoArchiveLite fromStatustucs(Statistics s, OsuMode mode){
         if (s == null) return null;
         var out = new OsuUserInfoArchiveLite();
@@ -130,21 +136,7 @@ public class OsuUserInfoDao {
         out.setPlay_time(s.getPlayTime());
         out.setMode(mode);
         out.setTime(LocalDateTime.now());
-        out.setGlobal_rank(s.getGlobalRank());
-        out.setCountry_rank(s.getCountryRank());
-        out.setTotal_score(s.getTotalScore());
-        out.setGrade_counts_a(s.getA());
-        out.setGrade_counts_s(s.getS());
-        out.setGrade_counts_sh(s.getSH());
-        out.setGrade_counts_ss(s.getSS());
-        out.setGrade_counts_ssh(s.getSSH());
-
-        out.setHit_accuracy(s.getAccuracy());
-        out.setPP(s.getPP());
-        out.setLevel_current(s.getLevelCurrent());
-        out.setLevel_progress(s.getLevelProgress());
-        out.setIs_ranked(s.getRanked());
-        out.setMaximum_combo(s.getMaxCombo());
+        setOut(out, s);
 
         return out;
     }
