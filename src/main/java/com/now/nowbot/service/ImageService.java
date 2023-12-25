@@ -28,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -315,13 +316,18 @@ public class ImageService {
         return doPost("panel_E", httpEntity);
     }
 
-    public byte[] getPanelE2(OsuUser user, BeatMap beatMap, MapStatisticsService.Expected expected) {
+    public byte[] getPanelE2(Optional<OsuUser> user, BeatMap beatMap, MapStatisticsService.Expected expected) {
 
         HttpHeaders headers = getDefaultHeader();
-        var body = Map.of("user", user,
+        var body = new HashMap<>(Map.of(
                 "beatmap", beatMap,
                 "expected", expected
-        );
+        ));
+
+        if (user.isPresent()) {
+            body.put("user", user);
+        }
+
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E2", httpEntity);
     }

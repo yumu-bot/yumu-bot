@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service("MAP")
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
@@ -97,24 +98,26 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_None);
 
         BinUser binUser;
-        OsuUser osuUser;
+        Optional<OsuUser> osuUser;
 
         var qq = event.getSender().getId();
         try {
             binUser = bindDao.getUserFromQQ(qq);
             try {
-                osuUser = osuUserApiService.getPlayerInfo(binUser);
+                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser));
             } catch (WebClientResponseException e) {
+                osuUser = Optional.empty();
+                /*
                 osuUser = new OsuUser();
                 osuUser.setBot(true);
                 osuUser.setUsername("YumuBot");
+
+                 */
                 //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_NotFound);
             }
         } catch (BindException e) {
             //传null过去，让面板生成一个默认的 card A1
-            osuUser = new OsuUser();
-            osuUser.setBot(true);
-            osuUser.setUsername("YumuBot");
+            osuUser = Optional.empty();
             //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_TokenExpired);
         } catch (Exception e) {
             log.error("M：", e);
