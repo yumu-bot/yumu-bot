@@ -133,17 +133,15 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         }
         Optional<OsuUser> infoOpt;
         recents = scoreApiService.getRecent(user, mode, 0, 3);
-        if (OsuMode.DEFAULT.equals(mode)) {
-            infoOpt = Optional.empty();
-        } else {
-            infoOpt = infoDao.getLastFrom(osuUser.getUID(), mode, LocalDate.now().minusDays(1))
-                    .map(arch -> {
-                        log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
-                        return arch;
-                    })
-                    .map(OsuUserInfoDao::fromArchive);
-            log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
-        }
+
+        infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getPlayMode() : mode, LocalDate.now().minusDays(1))
+                .map(arch -> {
+                    log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
+                    return arch;
+                })
+                .map(OsuUserInfoDao::fromArchive);
+        log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
+
         try {
             var img = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
             QQMsgUtil.sendImage(from, img);

@@ -1,8 +1,8 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.enums.OsuMode;
-
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,6 +38,7 @@ public class OsuUserInfoArchiveLite {
 
     private Long ranked_score;
     private Long total_score;
+    private Long total_hits;
 
     private Integer maximum_combo;
     private Boolean is_ranked;
@@ -222,5 +223,13 @@ public class OsuUserInfoArchiveLite {
 
     public void setTime(LocalDateTime time) {
         this.time = time;
+    }
+
+    public Long getTotal_hits() {
+        return total_hits;
+    }
+
+    public void setTotal_hits(Long total_hits) {
+        this.total_hits = total_hits;
     }
 }

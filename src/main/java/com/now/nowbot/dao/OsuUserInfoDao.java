@@ -63,6 +63,7 @@ public class OsuUserInfoDao {
         statistics.setSSH(statistics.getSSH());
 
         statistics.setTotalScore(statistics.getTotalScore());
+        statistics.setTotalHits(statistics.getTotalHits());
         statistics.setRankedScore(statistics.getRankedScore());
         statistics.setAccuracy(archive.getHit_accuracy());
         statistics.setPlayCount(archive.getPlay_count());
@@ -127,6 +128,7 @@ public class OsuUserInfoDao {
         out.setLevel_progress(statistics.getLevelProgress());
         out.setIs_ranked(statistics.getRanked());
         out.setMaximum_combo(statistics.getMaxCombo());
+        out.setTotal_hits(statistics.getTotalHits());
     }
 
     private static OsuUserInfoArchiveLite fromStatustucs(Statistics s, OsuMode mode){

@@ -52,14 +52,13 @@ public class AsyncSetting implements AsyncConfigurer {
 
     /**
      * 自定义异常处理
-     * @return
      */
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return (throwable, method, obj) -> {
             log.info("Method name - {}", method.getName(), throwable);
             for (Object param : obj) {
-                log.info("Parameter value - " + param.toString());
+                log.info("Parameter value - {}", param.toString());
             }
         };
     }
