@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
@@ -135,8 +136,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         if (OsuMode.DEFAULT.equals(mode)) {
             infoOpt = Optional.empty();
         } else {
-            infoOpt = infoDao.getLastFrom(user.getOsuID(), mode, LocalDate.now().minusDays(1))
+            infoOpt = infoDao.getLastFrom(osuUser.getUID(), mode, LocalDate.now().minusDays(1))
                     .map(OsuUserInfoDao::fromArchive);
+            log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
         }
         try {
             var img = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
