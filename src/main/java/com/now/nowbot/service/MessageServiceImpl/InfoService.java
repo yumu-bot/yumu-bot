@@ -137,6 +137,10 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             infoOpt = Optional.empty();
         } else {
             infoOpt = infoDao.getLastFrom(osuUser.getUID(), mode, LocalDate.now().minusDays(1))
+                    .map(arch -> {
+                        log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
+                        return arch;
+                    })
                     .map(OsuUserInfoDao::fromArchive);
             log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
         }
