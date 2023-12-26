@@ -44,7 +44,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
     }
 
-    public record Expected (Double accuracy, Integer combo, Integer miss, List<String> mods) {
+    public record Expected (OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
 
     }
 
@@ -135,7 +135,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         // 标准化 acc 和 combo
         int combo;
         double acc;
-        int miss = param.miss;
+        OsuMode mode;
 
         {
             var maxCombo = beatMap.getMaxCombo();
@@ -160,12 +160,21 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             }
         }
 
+        //只有转谱才能赋予游戏模式
+        {
+            if (! (param.osuMode.equals(OsuMode.DEFAULT)) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
+                mode = param.osuMode;
+            } else {
+                mode = OsuMode.getMode(beatMap.getMode());
+            }
+        }
+
         List<String> mods = null;
         if (Objects.nonNull(param.modStr)) {
             mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
         }
 
-        var expected = new Expected(acc, combo, miss, mods);
+        var expected = new Expected(mode, acc, combo, param.miss, mods);
 
         try {
             var data = imageService.getPanelE2(osuUser, beatMap, expected);

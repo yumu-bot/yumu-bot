@@ -170,10 +170,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
             //刚开始比赛，没分
             //以后可以做个提示或者面板之类的，也可能和现在的面板互换
             if (CollectionUtils.isEmpty(scores)) {
-                var b = matchEvent.getRound().getBeatmap();
+                var r = matchEvent.getRound();
+                var b = r.getBeatmap();
                 var s = b.getBeatMapSet();
                 var p = new MapStatisticsService.MapParam(
-                        b.getId(), OsuMode.getMode(b.getMode()), 1d, 1d, 0, Mod.getModsStr(matchEvent.getRound().getModInt())
+                        b.getId(), OsuMode.getMode(r.getMode()), 1d, 1d, 0, Mod.getModsStr(r.getModInt())
                         );
                 try {
                     mapStatisticsService.HandleMessage(event, p);
