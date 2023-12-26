@@ -2,6 +2,8 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -35,8 +37,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
     @Resource
     OsuMatchApiService osuMatchApiService;
     @Resource
-    ImageService       imageService;
-
+    ImageService imageService;
+    @Resource
+    MapStatisticsService mapStatisticsService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
@@ -129,11 +132,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
             throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
         }
 
-        if (! (event instanceof GroupMessageEvent)) {
+        if (! (event instanceof GroupMessageEvent groupEvent)) {
             throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
         }
 
-        var groupEvent = (GroupMessageEvent) event;
         var senderId = groupEvent.getSender().getId();
 
         from.sendMessage(
@@ -170,10 +172,16 @@ public class MatchListenerService implements MessageService<MatchListenerService
             if (CollectionUtils.isEmpty(scores)) {
                 var b = matchEvent.getRound().getBeatmap();
                 var s = b.getBeatMapSet();
-
-                String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
-                var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
-                QQMsgUtil.sendImage(from, i);
+                var p = new MapStatisticsService.MapParam(
+                        b.getId(), OsuMode.getMode(b.getMode()), 1d, 1d, 0, Mod.getModsStr(matchEvent.getRound().getModInt())
+                        );
+                try {
+                    mapStatisticsService.HandleMessage(event, p);
+                } catch (Throwable e) {
+                    String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
+                    var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
+                    QQMsgUtil.sendImage(from, i);
+                }
                 return;
             }
             //比赛结束，发送成绩
@@ -290,10 +298,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
             return key;
         }
 
-        static void cancel(long qq, long group, boolean isSupper, long mid) {
-            var key = new QQ_GroupRecord(qq, group, mid);
+        static void cancel(long qq, long group, boolean isSuper, long matchID) {
+            var key = new QQ_GroupRecord(qq, group, matchID);
             var l = listeners.get(key);
-            var listener = listenerMap.get(mid);
+            var listener = listenerMap.get(matchID);
             if (Objects.isNull(listener)) return;
             if (Objects.nonNull(l)) {
                 listener.removeListener(l.start());
@@ -304,16 +312,16 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 // 如果没有其他群在监听则停止监听
                 int lCount = 0;
                 for (var nk : listeners.keySet()) {
-                    if (nk.mid == mid) {
+                    if (nk.mid == matchID) {
                         lCount++;
                     }
                 }
                 if (lCount == 0) {
                     listener.stopListener(MatchListener.StopType.USER_STOP);
-                    listenerMap.remove(mid);
+                    listenerMap.remove(matchID);
                 }
 
-            } else if (isSupper) {
+            } else if (isSuper) {
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
         }

@@ -4,6 +4,7 @@ import com.now.nowbot.throwable.ModsCatchException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public enum Mod {
     None(0, "", "#22AC38", 10),
@@ -102,6 +103,13 @@ public enum Mod {
         var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
         check(mList);
         return mList;
+    }
+
+    public static String getModsStr(Integer mods) {
+        if (Objects.isNull(mods)) return "";
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        check(mList);
+        return String.join("", mList.stream().map(Mod::getAbbreviation).toList());
     }
 
     public static int getModsValue(String modsStr) {
