@@ -97,33 +97,6 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         if (param.bid == 0)
             throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_None);
 
-        BinUser binUser;
-        Optional<OsuUser> osuUser;
-
-        var qq = event.getSender().getId();
-        try {
-            binUser = bindDao.getUserFromQQ(qq);
-            try {
-                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser));
-            } catch (WebClientResponseException e) {
-                osuUser = Optional.empty();
-                /*
-                osuUser = new OsuUser();
-                osuUser.setBot(true);
-                osuUser.setUsername("YumuBot");
-
-                 */
-                //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_NotFound);
-            }
-        } catch (BindException e) {
-            //传null过去，让面板生成一个默认的 card A1
-            osuUser = Optional.empty();
-            //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_TokenExpired);
-        } catch (Exception e) {
-            log.error("M：", e);
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
-        }
-
         var beatMap = new BeatMap();
 
         try {
@@ -175,6 +148,33 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         List<String> mods = null;
         if (Objects.nonNull(param.modStr)) {
             mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
+        }
+
+        BinUser binUser;
+        Optional<OsuUser> osuUser;
+
+        var qq = event.getSender().getId();
+        try {
+            binUser = bindDao.getUserFromQQ(qq);
+            try {
+                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser, mode));
+            } catch (WebClientResponseException e) {
+                osuUser = Optional.empty();
+                /*
+                osuUser = new OsuUser();
+                osuUser.setBot(true);
+                osuUser.setUsername("YumuBot");
+
+                 */
+                //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_NotFound);
+            }
+        } catch (BindException e) {
+            //传null过去，让面板生成一个默认的 card A1
+            osuUser = Optional.empty();
+            //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_TokenExpired);
+        } catch (Exception e) {
+            log.error("M：", e);
+            throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
 
         var expected = new Expected(mode, acc, combo, param.miss, mods);
