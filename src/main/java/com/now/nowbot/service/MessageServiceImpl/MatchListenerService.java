@@ -38,8 +38,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
     OsuMatchApiService osuMatchApiService;
     @Resource
     ImageService imageService;
-    @Resource
-    MapStatisticsService mapStatisticsService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
@@ -173,11 +171,21 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var r = matchEvent.getRound();
                 var b = r.getBeatmap();
                 var s = b.getBeatMapSet();
+                /*
                 var p = new MapStatisticsService.MapParam(
                         b.getId(), OsuMode.getMode(r.getMode()), 1d, 1d, 0, Mod.getModsStr(r.getModInt())
-                        );
+                );
+
+                 */
                 try {
+                    /*
                     mapStatisticsService.HandleMessage(event, p);
+
+                     */
+                    var e = new MapStatisticsService.Expected(
+                            OsuMode.getMode(r.getMode()), 1d, 1, 0, Mod.getModsList(r.getModInt()).stream().map(Mod::getAbbreviation).toList());
+
+                    var i = imageService.getPanelE2(Optional.empty(), b, e);
                 } catch (Throwable e) {
                     String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
                     var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));

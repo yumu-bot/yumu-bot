@@ -138,8 +138,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         OsuMode mode;
 
         {
-            var maxCombo = beatMap.getMaxCombo();
-            if (param.combo > 0 && param.combo <= 1) {
+            Integer maxCombo = beatMap.getMaxCombo();
+
+            if (Objects.isNull(maxCombo)) {
+                combo = (int) Math.round(param.combo);
+            } else if (param.combo > 0 && param.combo <= 1) {
                 combo = Math.toIntExact(Math.round(maxCombo * param.combo));
             } else if (param.combo > 1) {
                 combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
