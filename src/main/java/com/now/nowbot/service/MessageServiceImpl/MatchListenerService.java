@@ -186,6 +186,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
                             OsuMode.getMode(r.getMode()), 1d, 1, 0, Mod.getModsList(r.getModInt()).stream().map(Mod::getAbbreviation).toList());
 
                     var i = imageService.getPanelE2(Optional.empty(), b, e);
+                    QQMsgUtil.sendImage(from, i);
+
                 } catch (Throwable e) {
                     String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
                     var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
