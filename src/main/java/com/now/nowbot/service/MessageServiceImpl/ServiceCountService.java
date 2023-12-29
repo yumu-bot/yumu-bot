@@ -6,6 +6,7 @@ import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
@@ -15,28 +16,43 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-@Service("SERVICE_CALL_COUNT")
-public class ServiceCallCountService implements MessageService<Integer> {
+@Service("SERVICECOUNT")
+public class ServiceCountService implements MessageService<Integer> {
     private final ServiceCallRepository serviceCallRepository;
-    private final ImageService          imageService;
+    private final ImageService imageService;
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd:HH");
 
-    public ServiceCallCountService(ServiceCallRepository serviceCallRepository,
-                                   ImageService imageService) {
+    public ServiceCountService(ServiceCallRepository serviceCallRepository, ImageService imageService) {
         this.serviceCallRepository = serviceCallRepository;
         this.imageService = imageService;
     }
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Integer> data) throws Throwable {
-        if (! event.getRawMessage().startsWith("统计服务调用")) return false;
-        var s = event.getRawMessage().split("\\s+");
-        if (s.length == 2) {
-            try {
-                data.setValue(Integer.parseInt(s[1]));
-            } catch (NumberFormatException ignore) {
+        var matcher = Instructions.SERVICECOUNT.matcher(event.getRawMessage().trim());
+        if (! matcher.find()) return false;
+
+        //if (! event.getRawMessage().startsWith("统计服务调用")) return false;
+        var d = matcher.group("days");
+        var h = matcher.group("hours");
+        int hours = 0;
+        boolean hasDays = true;
+
+        try {
+            hours += 24 * Integer.parseInt(d);
+        } catch (NumberFormatException ignored) {
+            hasDays = false;
+        }
+
+        try {
+            hours += Integer.parseInt(h);
+        } catch (NumberFormatException e) {
+            if (! hasDays) {
+                hours = 7 * 24;
             }
         }
+
+        data.setValue(hours);
         return true;
     }
 
@@ -48,13 +64,13 @@ public class ServiceCallCountService implements MessageService<Integer> {
                 |-------|--------|---------|---------|---------|
                 """);
         List<ServiceCallLite.ServiceCallResult> result;
-        if (Objects.isNull(hours)) {
+        if (Objects.isNull(hours) || hours == 0) {
             result = serviceCallRepository.countAll();
         } else {
             var now = LocalDateTime.now();
-            var bef = now.minusHours(hours);
-            event.getSubject().sendMessage(STR."处理 [\{bef.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
-            result = serviceCallRepository.countBetwen(bef, now);
+            var before = now.minusHours(hours);
+            event.getSubject().sendMessage(STR."处理 [\{before.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
+            result = serviceCallRepository.countBetwen(before, now);
         }
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
                 .append('|').append(r.getService())
