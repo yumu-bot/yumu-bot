@@ -182,8 +182,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     mapStatisticsService.HandleMessage(event, p);
 
                      */
+                    Integer c = Objects.nonNull(b.getMaxCombo()) ? b.getMaxCombo() : 0;
+
                     var e = new MapStatisticsService.Expected(
-                            OsuMode.getMode(r.getMode()), 1d, 0, 0, Mod.getModsStrList(r.getModInt()));
+                            OsuMode.getMode(r.getMode()), 1d, c, 0, Mod.getModsStrList(r.getModInt()));
 
                     var i = imageService.getPanelE2(Optional.empty(), b, e);
                     QQMsgUtil.sendImage(from, i);
