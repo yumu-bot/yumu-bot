@@ -16,7 +16,6 @@ import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
@@ -135,10 +134,13 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         recents = scoreApiService.getRecent(user, mode, 0, 3);
 
         infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getPlayMode() : mode, LocalDate.now().minusDays(1))
+                /*
                 .map(arch -> {
                     log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
                     return arch;
                 })
+
+                 */
                 .map(OsuUserInfoDao::fromArchive);
         /*
         log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));

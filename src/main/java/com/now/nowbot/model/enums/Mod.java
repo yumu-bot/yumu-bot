@@ -2,6 +2,7 @@ package com.now.nowbot.model.enums;
 
 import com.now.nowbot.throwable.ModsCatchException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -103,6 +104,13 @@ public enum Mod {
         var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
         check(mList);
         return mList;
+    }
+
+    public static List<String> getModsStrList(Integer mods) {
+        if (Objects.isNull(mods)) return new ArrayList<>();
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        check(mList);
+        return mList.stream().map(Mod::getAbbreviation).toList();
     }
 
     public static String getModsStr(Integer mods) {
