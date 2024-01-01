@@ -38,6 +38,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
     OsuMatchApiService osuMatchApiService;
     @Resource
     ImageService imageService;
+    @Resource
+    MatchMapService matchMapService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
@@ -171,17 +173,22 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var r = matchEvent.getRound();
                 var b = r.getBeatmap();
                 var s = b.getBeatMapSet();
+
                 /*
                 var p = new MapStatisticsService.MapParam(
                         b.getId(), OsuMode.getMode(r.getMode()), 1d, 1d, 0, Mod.getModsStr(r.getModInt())
-                );
 
                  */
+                var d = new MatchData(newMatch, 0, 0, true, true);
+
+                var p = new MatchMapService.MatchMapParam(
+                        b.getId(), OsuMode.getMode(r.getMode()), d, Mod.getModsStr(r.getModInt())
+                );
+
                 try {
+                    matchMapService.HandleMessage(event, p);
                     /*
                     mapStatisticsService.HandleMessage(event, p);
-
-                     */
                     Integer c = Objects.nonNull(b.getMaxCombo()) ? b.getMaxCombo() : 0;
 
                     var e = new MapStatisticsService.Expected(
@@ -189,6 +196,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
                     var i = imageService.getPanelE2(Optional.empty(), b, e);
                     QQMsgUtil.sendImage(from, i);
+                     */
 
                 } catch (Throwable e) {
                     String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
