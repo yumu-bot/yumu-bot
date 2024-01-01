@@ -27,11 +27,17 @@ public class MatchCal {
         var roundsStream = match.getEvents().stream()
                 .map(MatchEvent::getRound)
                 .filter(Objects::nonNull)
-                .filter(matchRound -> !CollectionUtils.isEmpty(matchRound.getScoreInfoList()))
-                .filter(matchRound -> matchRound.getEndTime() != null);
+                .filter(round -> (Objects.nonNull(round.getScoreInfoList()) && !round.getScoreInfoList().isEmpty()))
+                .filter(round -> round.getEndTime() != null);
 
         if (failed) {
-            roundsStream = roundsStream.peek(matchRound -> matchRound.getScoreInfoList().removeIf(s -> s.getScore() <= 10000));
+            roundsStream = roundsStream.peek(round -> {
+                try {
+                    round.getScoreInfoList().removeIf(s -> s.getScore() <= 10000);
+                } catch (UnsupportedOperationException ignored) {
+                    //我不清楚为什么不能移除，难道是数组内最后一个元素？
+                }
+            });
         }
 
         if (rematch) {

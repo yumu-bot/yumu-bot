@@ -179,7 +179,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                         b.getId(), OsuMode.getMode(r.getMode()), 1d, 1d, 0, Mod.getModsStr(r.getModInt())
 
                  */
-                var d = new MatchData(newMatch, 0, 0, true, true);
+                var m = newMatch.clone(); //这个 newMatch 貌似无法更改？
+
+                var d = new MatchData(m, 0, 0, false, true); //看来这里的 failed 只能算 false，否则有问题
 
                 var p = new MatchMapService.MatchMapParam(
                         b.getId(), OsuMode.getMode(r.getMode()), d, Mod.getModsStr(r.getModInt())

@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -21,7 +22,7 @@ import java.util.Objects;
 
 @Service("MATCHMAP")
 public class MatchMapService implements MessageService<MatchMapService.MatchMapParam> {
-    static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
+    static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
 
     @Resource
     OsuBeatmapApiService beatmapApiService;
@@ -42,22 +43,21 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     @Override
     public boolean isHandle(MessageEvent event, DataValue<MatchMapService.MatchMapParam> data) throws Throwable {
         //这个只能通过父服务 MatchListenerService 调用得到
-        return MessageService.super.isHandle(event, data);
+        return false;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, MatchMapService.MatchMapParam param) throws Throwable {
         var from = event.getSubject();
 
-        if (param.bid == 0)
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_None);
+        if (param.bid == 0) from.sendMessage(MapStatisticsException.Type.M_Parameter_None.message);
 
         var beatMap = new BeatMap();
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(param.bid);
         } catch (Exception e) {
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
+            from.sendMessage(MapStatisticsException.Type.M_Map_NotFound.message);
         }
 
         // 标准化 combo
@@ -96,7 +96,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
             QQMsgUtil.sendImage(from, data);
         } catch (Exception e) {
             log.error("Map 发送失败: ", e);
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
+            from.sendMessage(MapStatisticsException.Type.M_Send_Error.message);
         }
     }
 }

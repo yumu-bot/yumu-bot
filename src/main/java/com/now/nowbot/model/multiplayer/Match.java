@@ -9,7 +9,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class Match {
+public class Match implements Cloneable {
 
     @JsonProperty("match")
     MatchStat matchStat;
@@ -82,6 +82,15 @@ public class Match {
 
     public void setMatchEnd(boolean matchEnd) {
         this.isMatchEnd = matchEnd;
+    }
+
+    @Override
+    public Match clone() {
+        try {
+            return (Match) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void parseNextData(Match m) {

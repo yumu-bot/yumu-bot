@@ -13,7 +13,7 @@ public class MapStatisticsException extends TipsException {
         M_Fetch_Error("谱面获取数据失败。"),
         M_Send_Error("谱面渲染图片超时，请重试，或者将问题反馈给开发者。")
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type(String message) {
             this.message = message;
         }

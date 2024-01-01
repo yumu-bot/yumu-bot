@@ -5,10 +5,7 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.multiplayer.MatchData;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.multiplayer.MatchStat;
-import com.now.nowbot.model.multiplayer.SeriesData;
+import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
@@ -339,7 +336,7 @@ public class ImageService {
         );
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E2", httpEntity);
+        return doPost("panel_E3", httpEntity);
     }
 
     public byte[] getPanelF(MatchData matchData) {
