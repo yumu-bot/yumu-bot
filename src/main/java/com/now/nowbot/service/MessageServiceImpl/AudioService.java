@@ -36,36 +36,37 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
             return false;
         }
         var param = new AudioParam();
-        try {
-            var id_str = matcher.group("id");
-            var type = matcher.group("type");
+        var id_str = matcher.group("id");
+        var type = matcher.group("type");
 
-            if (id_str == null) throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+        if (Objects.isNull(id_str)) param.err = new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+
+
+        try {
             param.id = Integer.parseInt(id_str);
-            if (Objects.equals(type, "s") || Objects.equals(type, "sid")) param.isBid = false;
         } catch (NumberFormatException e) {
             param.err = new AudioException(AudioException.Type.SONG_Parameter_BidError);
-        } catch (Exception e) {
-            param.err = e;
         }
+
+        param.isBid = Objects.equals(type, "b") || Objects.equals(type, "bid");
+
         data.setValue(param);
         return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, AudioParam param) throws Throwable {
-
         var from = event.getSubject();
-        //BinUser user = bindDao.getUser(event.getSender().getId());
+
         if (param.err != null) {
             throw param.err;
         }
-        boolean isBid = Boolean.TRUE.equals(param.isBid);
+
         int id = param.id;
 
         String url;
 
-        if (isBid) {
+        if (param.isBid) {
             BeatMap b;
             try {
                 b = beatmapApiService.getBeatMapInfo(id);
@@ -89,8 +90,6 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         } catch (Exception e) {
             log.error("下载音频出现错误", e);
             throw new AudioException(AudioException.Type.SONG_Download_Error);
-            //log.error("voice download failed", e);
-            //throw new TipsException("下载失败!");
         }
 
         /*
