@@ -19,12 +19,15 @@ public class MRAException extends TipsException {
         RATING_Match_NotFound("小沐找不到这场比赛哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_MRA模式_比赛未找到
         RATING_Series_TooManyMatch("一次性输入的对局太多！计算的时候可能会遇到 API 瓶颈。"),//参数_SRA模式_比赛太多
         RATING_Series_TooManyRequest("API 调用达到上限。请稍后重试。\n当前已经查询到：%s"),//参数_SRA模式_比赛太多
+        RATING_Series_ReachThreshold("遇到 API 瓶颈！等待 10 秒后再次尝试获取！"),//参数_SRA模式_比赛太多
         RATING_Series_NotFound("小沐找不到这一系列比赛中的 %s 哦！\n请检查房间号是否正确、房间记录是否过期！"),//参数_SRA模式_比赛未找到
         RATING_Series_FetchFailed("系列比赛获取失败！"),//参数_SRA模式_比赛未找到
         RATING_Series_SleepingInterrupted("触发休眠时异常中断！请重试！"),//参数_SRA模式_休眠中断
 
-        RATING_Client_Calculating("正在全力计算中..."),//斗力_计算
-        RATING_Client_CalculatingFailed("算不出来了，请重试..."),//斗力_计算失败
+        RATING_Series_Progressing("正在处理系列赛"),//斗力_计算
+
+        RATING_Rating_Calculating("正在全力计算中..."),//斗力_计算
+        RATING_Rating_CalculatingFailed("算不出来了，请重试..."),//斗力_计算失败
 
         RATING_Warning_MatchNotFinished("探测到当前比赛尚未结束！\n"),//警告_比赛未结束
         RATING_Warning_MatchNotFinishedGuide("输入 !sudo ymra 强制忽略冲突并计算斗力！\n十分钟内有效"),//警告_比赛未结束指引
@@ -50,7 +53,7 @@ public class MRAException extends TipsException {
 
         RATING_Send_NotGroup("请在群聊中使用这个功能！"),
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type (String message) {
             this.message = message;
         }

@@ -64,7 +64,7 @@ public class MuRatingService implements MessageService<Matcher> {
             throw e;
         } catch (Exception e) {
             log.error("MRA 数据计算失败", e);
-            throw new MRAException(MRAException.Type.RATING_Client_CalculatingFailed);
+            throw new MRAException(MRAException.Type.RATING_Rating_CalculatingFailed);
         }
 
         if (matcher.group("main") != null) {

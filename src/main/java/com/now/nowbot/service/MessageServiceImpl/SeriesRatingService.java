@@ -11,7 +11,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
-import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -52,7 +51,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         var nameStr = matcher.group("name");
 
         if (dataStr == null || dataStr.isBlank()) {
-            throw new MapPoolException(MapPoolException.Type.PO_Parameter_None);
+            throw new MRAException(MRAException.Type.RATING_Parameter_SeriesNone);
         }
 
         var parsed = parseDataString(dataStr);
@@ -66,12 +65,11 @@ public class SeriesRatingService implements MessageService<Matcher> {
         var from = event.getSubject();
 
         if (matcher.group("csv") != null) {
-            from.sendMessage("正在处理系列赛");
+            from.sendMessage(MRAException.Type.RATING_Series_Progressing.message);
         }
 
         if (matchIDs.size() > 50) {
-            from.sendMessage("一次性输入的对局太多！计算的时候可能会遇到 API 瓶颈。");
-            //from.sendMessage(String.valueOf(MRAException.Type.RATING_Series_TooManyMatches));
+            from.sendMessage(MRAException.Type.RATING_Series_TooManyMatch.message);
         }
 
         SeriesData data;
@@ -81,7 +79,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
             throw e;
         } catch (Exception e) {
             log.error("SRA 数据计算失败", e);
-            throw new MRAException(MRAException.Type.RATING_Client_CalculatingFailed);
+            throw new MRAException(MRAException.Type.RATING_Rating_CalculatingFailed);
         }
 
         if (matcher.group("main") != null) {
@@ -107,7 +105,8 @@ public class SeriesRatingService implements MessageService<Matcher> {
             if (from instanceof Group group) {
                 try {
                     String str = parseCSA(data);
-                    group.sendFile(str.getBytes(StandardCharsets.UTF_8), data.getSeries().getMatches().get(0).getFirstEventId() + "-results.csv");
+                    group.sendFile(str.getBytes(StandardCharsets.UTF_8),
+                            STR."\{data.getSeries().getMatches().getFirst().getFirstEventId()}-results.csv");
                 } catch (Exception e) {
                     log.error("CSA:", e);
                     throw new MRAException(MRAException.Type.RATING_Send_CSAFailed);
@@ -319,7 +318,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 }
 
                 if (from != null) {
-                    from.sendMessage("遇到 API 瓶颈！等待 10 秒后再次尝试获取！");
+                    from.sendMessage(MRAException.Type.RATING_Series_ReachThreshold.message);
                 }
 
                 try {
@@ -330,13 +329,14 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 }
             } catch (HttpClientErrorException.NotFound e) {
                 log.error("SRA 对局找不到", e);
+
                 if (from != null) {
-                    from.sendMessage(String.format("小沐找不到这一系列比赛中的 %s 哦！\n请检查房间号是否正确、房间记录是否过期！", m));
+                    from.sendMessage(String.format(MRAException.Type.RATING_Series_NotFound.message, m));
                 }
-                //throw new MRAException(MRAException.Type.RATING_Series_NotFound, String.valueOf(m));
-            } catch (HttpClientErrorException e) {
+
+            } catch (Exception e) {
                 log.error("SRA 对局获取失败", e);
-                throw new MRAException(MRAException.Type.RATING_Series_FetchFailed, String.valueOf(m));
+                throw new MRAException(MRAException.Type.RATING_Series_FetchFailed);
             }
         }
         //真正的计算封装，就两行
