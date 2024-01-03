@@ -167,47 +167,47 @@ public class BeatMapSetInfoLite {
         this.title = title;
     }
 
-    public static BeatMapSetInfoLite from(BeatMapSet mapSet) {
+    public static BeatMapSetInfoLite from(BeatMapSet s) {
         var t = new BeatMapSetInfoLite();
-        t.sid = mapSet.getSID();
+        t.sid = Math.toIntExact(s.getSID());
 
-        t.artistUnicode = mapSet.getArtistUTF();
-        t.artist = mapSet.getArtist();
-        t.title = mapSet.getTitle();
+        t.artistUnicode = s.getArtistUnicode();
+        t.artist = s.getArtist();
+        t.title = s.getTitle();
 
-        t.mapper = mapSet.getMapperName();
-        t.mapperId = mapSet.getMapperUID();
+        t.mapper = s.getCreator();
+        t.mapperId = Math.toIntExact(s.getCreatorID());
 
-        t.nsfw = mapSet.getNsfw();
-        t.video = mapSet.getVideo();
-        t.status = mapSet.getStatus();
+        t.nsfw = s.getNsfw();
+        t.video = s.getVideo();
+        t.status = s.getStatus();
 
-        String url = mapSet.getCovers().getCover2x();
-        if (url != null && !url.equals("")) {
+        String url = s.getCovers().getCover2x();
+        if (url != null && !url.isEmpty()) {
             t.cover = url;
         } else {
-            t.cover = mapSet.getCovers().getCover();
+            t.cover = s.getCovers().getCover();
         }
 
-        url = mapSet.getCovers().getCard2x();
-        if (url != null && !url.equals("")) {
+        url = s.getCovers().getCard2x();
+        if (url != null && !url.isEmpty()) {
             t.card = url;
         } else {
-            t.card = mapSet.getCovers().getCard();
+            t.card = s.getCovers().getCard();
         }
 
-        url = mapSet.getCovers().getList2x();
-        if (url != null && !url.equals("")) {
+        url = s.getCovers().getList2x();
+        if (url != null && !url.isEmpty()) {
             t.list = url;
         } else {
-            t.list = mapSet.getCovers().getList();
+            t.list = s.getCovers().getList();
         }
 
-        url = mapSet.getCovers().getSlimcover2x();
-        if (url != null && !url.equals("")) {
+        url = s.getCovers().getSlimcover2x();
+        if (url != null && !url.isEmpty()) {
             t.slimcover = url;
         } else {
-            t.slimcover = mapSet.getCovers().getSlimcover();
+            t.slimcover = s.getCovers().getSlimcover();
         }
         return t;
     }

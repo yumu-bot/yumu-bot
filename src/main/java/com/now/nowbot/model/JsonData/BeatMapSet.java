@@ -3,108 +3,178 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BeatMapSet {
-    @JsonProperty("id")
-    Integer id;
-    @JsonProperty("user_id")
-    Integer mapperId;
-    @JsonProperty("bpm")
-    Float bpm;
-    @JsonProperty("artist")
     String artist;
-    @JsonProperty("artist_unicode")
-    String artistUTF;
-    @JsonProperty("title")
-    String title;
-    @JsonProperty("title_unicode")
-    String titleUTF;
-    @JsonProperty("creator")
-    String creator;
-    @JsonProperty("favourite_count")
-    Integer favourite;
-    @JsonProperty("nsfw")
-    Boolean nsfw;
-    @JsonProperty("play_count")
-    Long playCount;
-    @JsonProperty("preview_url")
-    String musicUrl;
-    @JsonProperty("source")
-    String source;
-    @JsonProperty("status")
-    String status;
-    @JsonProperty("legacy_thread_url")
-    String legacyUrl;
-    @JsonProperty("tags")
-    String tags;
-    @JsonProperty("storyboard")
-    Boolean storyboard;
 
-    Boolean video;
-    @JsonProperty("covers")
+    @JsonProperty("artist_unicode")
+    String artistUnicode;
+
     Covers covers;
 
-    @JsonProperty("ratings")
-    List<Integer> ratings;
+    String creator;
 
-    @JsonProperty("spotlight")
+    @JsonProperty("favourite_count")
+    Integer favouriteCount;
+
+    Boolean hype;
+
+
+    @JsonProperty("id")
+    Long SID;
+
+    Boolean nsfw;
+
+    Integer offset;
+
+    @JsonProperty("play_count")
+    Long playCount;
+
+    @JsonProperty("preview_url")
+    String previewUrl;
+
+    String source;
+
     Boolean spotlight;
 
-    // 目前只存在于 search 里
-    @JsonProperty("beatmaps")
-    List<BeatMap> beatmaps;
+    String status;
+
+    String title;
+
+    @JsonProperty("title_unicode")
+    String titleUnicode;
+
+    @JsonProperty("track_id")
+    Integer trackID;
+
+    @JsonProperty("user_id")
+    Long creatorID;
+
+    Boolean video;
+
+    @JsonProperty("bpm")
+    Double BPM;
+
+    @JsonProperty("can_be_hyped")
+    Boolean canBeHyped;
+
+    @JsonProperty("deleted_at")
+    OffsetDateTime deletedAt;
+
+    //已经弃用 Deprecated, all beatmapsets now have discussion enabled.
+    //@JsonProperty("discussion_enabled")
+    //Boolean discussionEnabled;
+
+    @JsonProperty("discussion_locked")
+    Boolean discussionLocked;
+
+    @JsonProperty("is_scoreable")
+    Boolean scoreable;
 
     @JsonProperty("last_updated")
-    OffsetDateTime updatedTime;
+    OffsetDateTime lastUpdated;
+
+    @JsonProperty("legacy_thread_url")
+    String legacyThreadUrl;
+
+    @JsonProperty("nominations_summary")
+    NominationsSummary nominationsSummary;
+
+    public record NominationsSummary (
+        Integer current,
+        Integer required
+    ) {}
+
+    Integer ranked;
 
     @JsonProperty("ranked_date")
-    OffsetDateTime rankedTime;
+    OffsetDateTime rankedDate;
 
-    @JsonIgnoreProperties
-    Boolean availabilityDownloadDisable;
-    @JsonIgnoreProperties
-    @Nullable
-    String availabilityInformation;
+    Boolean storyboard;
+
+    @JsonProperty("submitted_date")
+    OffsetDateTime submittedDate;
+
+    String tags;
+
     @JsonProperty("availability")
-    public void setAvt(HashMap<String, String> map){
-        availabilityDownloadDisable = Boolean.valueOf(map.get("download_disabled"));
-        availabilityInformation = map.get("more_information");
-    }
+    Availability availability;
 
-    @JsonIgnoreProperties
-    boolean fromDatabases = false;
+    public record Availability (
+            @JsonProperty("download_disabled")
+            Boolean downloadDisabled,
 
-    public Integer getSID() {
-        return id;
-    }
+            @JsonProperty("more_information")
+            String moreInformation
+    ) {}
 
-    public void setSID(Integer id) {
-        this.id = id;
-    }
+    @JsonProperty("beatmaps")
+    List<BeatMap> beatMaps;
 
-    public Integer getMapperUID() {
-        return mapperId;
-    }
+    List<BeatMap> converts;
 
-    public void setMapperUID(Integer mapperId) {
-        this.mapperId = mapperId;
-    }
+    @JsonProperty("current_nominations")
+    List<CurrentNominations> currentNominations;
 
-    public Float getBpm() {
-        return bpm;
-    }
+    public record CurrentNominations (
+            @JsonProperty("beatmapset_id")
+            Long SID,
 
-    public void setBpm(Float bpm) {
-        this.bpm = bpm;
-    }
+            List<String> rulesets,
+
+            Boolean reset,
+
+            @JsonProperty("user_id")
+            Long nominatorID
+    ) {}
+    Description description;
+
+    public record Description (
+            String description
+    ) {}
+
+    Genre genre;
+
+    public record Genre (Integer id, String name) {}
+
+    Language language;
+
+    public record Language (Integer id, String name) {}
+
+    @JsonProperty("pack_tags")
+    List<String> packTags;
+
+    List<Integer> ratings;
+
+    @JsonProperty("recent_favourites")
+    List<OsuUser> recentFavourites;
+
+    @JsonProperty("related_users")
+    List<OsuUser> relatedUsers;
+
+    @JsonProperty("user")
+    OsuUser creatorData;
+
+    //自己算
+    List<OsuUser> mappers = new ArrayList<>();
+
+    //自己算
+    List<OsuUser> nominators = new ArrayList<>();
+
+    //自己算
+    Double publicRating;
+
+    //自己算
+    Boolean isRanked;
+
+    Boolean fromDatabase;
 
     public String getArtist() {
         return artist;
@@ -114,112 +184,12 @@ public class BeatMapSet {
         this.artist = artist;
     }
 
-    public String getArtistUTF() {
-        return artistUTF;
+    public String getArtistUnicode() {
+        return artistUnicode;
     }
 
-    public void setArtistUTF(String artistUTF) {
-        this.artistUTF = artistUTF;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getTitleUTF() {
-        return titleUTF;
-    }
-
-    public void setTitleUTF(String titleUTF) {
-        this.titleUTF = titleUTF;
-    }
-
-    public String getMapperName() {
-        return creator;
-    }
-
-    public void setMapperName(String creator) {
-        this.creator = creator;
-    }
-
-    public Integer getFavourite() {
-        return favourite;
-    }
-
-    public void setFavourite(Integer favourite) {
-        this.favourite = favourite;
-    }
-
-    public Boolean getNsfw() {
-        return nsfw;
-    }
-
-    public void setNsfw(Boolean nsfw) {
-        this.nsfw = nsfw;
-    }
-
-    public Long getPlayCount() {
-        return playCount;
-    }
-
-    public void setPlayCount(Long playCount) {
-        this.playCount = playCount;
-    }
-
-    public String getMusicUrl() {
-        return musicUrl;
-    }
-
-    public void setMusicUrl(String musicUrl) {
-        this.musicUrl = musicUrl;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public boolean isRanked() {
-        return (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
-    }
-
-    public String getLegacyUrl() {
-        return legacyUrl;
-    }
-
-    public void setLegacyUrl(String legacyUrl) {
-        this.legacyUrl = legacyUrl;
-    }
-
-    public String getTags() {
-        return tags;
-    }
-
-    public void setTags(String tags) {
-        this.tags = tags;
-    }
-
-    public Boolean getStoryboard() {
-        return storyboard;
-    }
-
-    public void setStoryboard(Boolean storyboard) {
-        this.storyboard = storyboard;
+    public void setArtistUnicode(String artistUnicode) {
+        this.artistUnicode = artistUnicode;
     }
 
     public Covers getCovers() {
@@ -230,59 +200,76 @@ public class BeatMapSet {
         this.covers = covers;
     }
 
-    public Boolean getAvailabilityDownloadDisable() {
-        return availabilityDownloadDisable;
+    public String getCreator() {
+        return creator;
     }
 
-    public void setAvailabilityDownloadDisable(Boolean availabilityDownloadDisable) {
-        this.availabilityDownloadDisable = availabilityDownloadDisable;
+    public void setCreator(String creator) {
+        this.creator = creator;
     }
 
-    @Nullable
-    public String getAvailabilityInformation() {
-        return availabilityInformation;
+    public Integer getFavouriteCount() {
+        return favouriteCount;
     }
 
-    public boolean isFromDatabases() {
-        return fromDatabases;
+    public void setFavouriteCount(Integer favouriteCount) {
+        this.favouriteCount = favouriteCount;
     }
 
-    public void FromDatabases() {
-        this.fromDatabases = true;
+    public Boolean getHype() {
+        return hype;
     }
 
-    public Boolean getVideo() {
-        return video;
+    public void setHype(Boolean hype) {
+        this.hype = hype;
     }
 
-    public void setVideo(Boolean video) {
-        this.video = video;
+    public Long getSID() {
+        return SID;
     }
 
-    public List<Integer> getRatingList() {
-        return ratings;
+    public void setSID(Long SID) {
+        this.SID = SID;
     }
 
-    public double getRating() {
-        List<Integer> rl = ratings;
-        if (null == rl) return 0D;
-        double r = 0;
-        double sum = 0;
-        int i;
-
-        for (i = 0; i < rl.size(); i++) {
-            sum = sum + rl.get(i);
-        }
-
-        for (int j = 0; j <= 10; j++) {
-            r = r + j / 10D * rl.get(j) / sum;
-        }
-        return r;
+    public Boolean getNsfw() {
+        return nsfw;
     }
 
+    public void setNsfw(Boolean nsfw) {
+        this.nsfw = nsfw;
+    }
 
-    public void setRatings(List<Integer> ratings) {
-        this.ratings = ratings;
+    public Integer getOffset() {
+        return offset;
+    }
+
+    public void setOffset(Integer offset) {
+        this.offset = offset;
+    }
+
+    public Long getPlayCount() {
+        return playCount;
+    }
+
+    public void setPlayCount(Long playCount) {
+        this.playCount = playCount;
+    }
+
+    public String getPreviewUrl() {
+        return previewUrl;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        this.previewUrl = previewUrl;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public Boolean getSpotlight() {
@@ -293,63 +280,331 @@ public class BeatMapSet {
         this.spotlight = spotlight;
     }
 
-    public List<BeatMap> getBeatmaps() {
-        return beatmaps;
+    public String getStatus() {
+        return status;
     }
 
-    public void setBeatmaps(List<BeatMap> beatmaps) {
-        this.beatmaps = beatmaps;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    public OffsetDateTime getUpdatedTime() {
-        return updatedTime;
+    public String getTitle() {
+        return title;
     }
 
-    public void setUpdatedTime(OffsetDateTime updatedTime) {
-        this.updatedTime = updatedTime;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public OffsetDateTime getRankedTime() {
-        return rankedTime;
+    public String getTitleUnicode() {
+        return titleUnicode;
     }
 
-    public void setRankedTime(OffsetDateTime rankedTime) {
-        this.rankedTime = rankedTime;
+    public void setTitleUnicode(String titleUnicode) {
+        this.titleUnicode = titleUnicode;
     }
 
-    public void setAvailabilityInformation(@Nullable String availabilityInformation) {
-        this.availabilityInformation = availabilityInformation;
+    public Integer getTrackID() {
+        return trackID;
     }
 
-
-
-    public void setFromDatabases(boolean fromDatabases) {
-        this.fromDatabases = fromDatabases;
+    public void setTrackID(Integer trackID) {
+        this.trackID = trackID;
     }
 
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("BeatMapSet{");
-        sb.append("id=").append(id);
-        sb.append(", userId=").append(mapperId);
-        sb.append(", bpm=").append(bpm);
-        sb.append(", artist='").append(artist).append('\'');
-        sb.append(", artistUTF='").append(artistUTF).append('\'');
-        sb.append(", title='").append(title).append('\'');
-        sb.append(", titleUTF='").append(titleUTF).append('\'');
-        sb.append(", creator='").append(creator).append('\'');
-        sb.append(", favourite=").append(favourite);
-        sb.append(", nsfw=").append(nsfw);
-        sb.append(", playCount=").append(playCount);
-        sb.append(", musicUrl='").append(musicUrl).append('\'');
-        sb.append(", source='").append(source).append('\'');
-        sb.append(", status='").append(status).append('\'');
-        sb.append(", legacyUrl='").append(legacyUrl).append('\'');
-        sb.append(", tags='").append(tags).append('\'');
-        sb.append(", storyboard=").append(storyboard);
-        sb.append(", covers=").append(covers);
-        sb.append(", availabilityDownloadDisable=").append(availabilityDownloadDisable);
-        sb.append(", availabilityInformation='").append(availabilityInformation).append('\'');
-        sb.append('}');
-        return sb.toString();
+    public Long getCreatorID() {
+        return creatorID;
+    }
+
+    public void setCreatorID(Long creatorID) {
+        this.creatorID = creatorID;
+    }
+
+    public Boolean getVideo() {
+        return video;
+    }
+
+    public void setVideo(Boolean video) {
+        this.video = video;
+    }
+
+    public Double getBPM() {
+        return BPM;
+    }
+
+    public void setBPM(Double BPM) {
+        this.BPM = BPM;
+    }
+
+    public Boolean getCanBeHyped() {
+        return canBeHyped;
+    }
+
+    public void setCanBeHyped(Boolean canBeHyped) {
+        this.canBeHyped = canBeHyped;
+    }
+
+    public OffsetDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(OffsetDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public Boolean getDiscussionLocked() {
+        return discussionLocked;
+    }
+
+    public void setDiscussionLocked(Boolean discussionLocked) {
+        this.discussionLocked = discussionLocked;
+    }
+
+    public Boolean getScoreable() {
+        return scoreable;
+    }
+
+    public void setScoreable(Boolean scoreable) {
+        this.scoreable = scoreable;
+    }
+
+    public OffsetDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(OffsetDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public String getLegacyThreadUrl() {
+        return legacyThreadUrl;
+    }
+
+    public void setLegacyThreadUrl(String legacyThreadUrl) {
+        this.legacyThreadUrl = legacyThreadUrl;
+    }
+
+    public NominationsSummary getNominationsSummary() {
+        return nominationsSummary;
+    }
+
+    public void setNominationsSummary(NominationsSummary nominationsSummary) {
+        this.nominationsSummary = nominationsSummary;
+    }
+
+    public Integer getRanked() {
+        return ranked;
+    }
+
+    public void setRanked(Integer ranked) {
+        this.ranked = ranked;
+    }
+
+    public OffsetDateTime getRankedDate() {
+        return rankedDate;
+    }
+
+    public void setRankedDate(OffsetDateTime rankedDate) {
+        this.rankedDate = rankedDate;
+    }
+
+    public Boolean getStoryboard() {
+        return storyboard;
+    }
+
+    public void setStoryboard(Boolean storyboard) {
+        this.storyboard = storyboard;
+    }
+
+    public OffsetDateTime getSubmittedDate() {
+        return submittedDate;
+    }
+
+    public void setSubmittedDate(OffsetDateTime submittedDate) {
+        this.submittedDate = submittedDate;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public Availability getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(Availability availability) {
+        this.availability = availability;
+    }
+
+    public List<BeatMap> getBeatMaps() {
+        return beatMaps;
+    }
+
+    public void setBeatMaps(List<BeatMap> beatMaps) {
+        this.beatMaps = beatMaps;
+    }
+
+    public List<BeatMap> getConverts() {
+        return converts;
+    }
+
+    public void setConverts(List<BeatMap> converts) {
+        this.converts = converts;
+    }
+
+    public List<CurrentNominations> getCurrentNominations() {
+        return currentNominations;
+    }
+
+    public void setCurrentNominations(List<CurrentNominations> currentNominations) {
+        this.currentNominations = currentNominations;
+    }
+
+    public Description getDescription() {
+        return description;
+    }
+
+    public void setDescription(Description description) {
+        this.description = description;
+    }
+
+    public Genre getGenre() {
+        return genre;
+    }
+
+    public void setGenre(Genre genre) {
+        this.genre = genre;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
+    public List<String> getPackTags() {
+        return packTags;
+    }
+
+    public void setPackTags(List<String> packTags) {
+        this.packTags = packTags;
+    }
+
+    public List<Integer> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(List<Integer> ratings) {
+        this.ratings = ratings;
+    }
+
+    public List<OsuUser> getRecentFavourites() {
+        return recentFavourites;
+    }
+
+    public void setRecentFavourites(List<OsuUser> recentFavourites) {
+        this.recentFavourites = recentFavourites;
+    }
+
+    public List<OsuUser> getRelatedUsers() {
+        return relatedUsers;
+    }
+
+    public void setRelatedUsers(List<OsuUser> relatedUsers) {
+        this.relatedUsers = relatedUsers;
+    }
+
+    public OsuUser getCreatorData() {
+        return creatorData;
+    }
+
+    public void setCreatorData(OsuUser creatorData) {
+        this.creatorData = creatorData;
+    }
+
+    public List<OsuUser> getMappers() {
+        int nominatorsCount = 0;
+        if (Objects.nonNull(currentNominations)) nominatorsCount = currentNominations.size();
+
+        if (Objects.nonNull(relatedUsers)) {
+            mappers = relatedUsers.subList(nominatorsCount, relatedUsers.size());
+        }
+
+        return mappers;
+    }
+
+    public void setMappers(List<OsuUser> mappers) {
+        this.mappers = mappers;
+    }
+
+    public List<OsuUser> getNominators() {
+        int nominatorsCount = 0;
+        if (Objects.nonNull(currentNominations)) nominatorsCount = currentNominations.size();
+
+        if (Objects.nonNull(relatedUsers)) {
+            nominators = relatedUsers.subList(0, nominatorsCount);
+        }
+
+        return nominators;
+    }
+
+    public void setNominators(List<OsuUser> nominators) {
+        this.nominators = nominators;
+    }
+
+    public double getPublicRating() {
+        if (Objects.isNull(ratings)) return 0D;
+
+        double r = 0;
+        double sum = 0;
+        int i;
+
+        for (i = 0; i < ratings.size(); i++) {
+            sum = sum + ratings.get(i);
+        }
+
+        if (sum == 0D) return 0D;
+
+        for (int j = 0; j <= 10; j++) {
+            r = r + j / 10D * ratings.get(j) / sum;
+        }
+
+        publicRating = r;
+
+        return publicRating;
+    }
+
+    public void setPublicRating(Double publicRating) {
+        this.publicRating = publicRating;
+    }
+
+    public boolean isRanked() {
+        if (Objects.nonNull(status)) {
+            isRanked = (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
+        } else {
+            switch (ranked) {
+                case 1, 2, 3, 4 -> isRanked = true;
+                case null, default -> isRanked = false;
+            }
+        }
+        return isRanked;
+    }
+
+    public void setRanked(Boolean ranked) {
+        isRanked = ranked;
+    }
+
+    public Boolean getFromDatabase() {
+        return fromDatabase;
+    }
+
+    public void setFromDatabase(Boolean fromDatabase) {
+        this.fromDatabase = fromDatabase;
     }
 }

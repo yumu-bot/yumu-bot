@@ -61,8 +61,8 @@ public class BeatMapDao {
 
     public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
         var s = new BeatMapSet();
-        s.setSID(mapSet.getId());
-        s.setMapperUID(mapSet.getMapperId());
+        s.setSID(Long.valueOf(mapSet.getId()));
+        s.setCreatorID(Long.valueOf(mapSet.getMapperId()));
         var cover = new Covers();
         cover.setCover(mapSet.getCover());
         cover.setCover2x(mapSet.getCover());
@@ -75,50 +75,44 @@ public class BeatMapDao {
         s.setCovers(cover);
 
         s.setNsfw(mapSet.getNsfw());
-        s.setAvailabilityDownloadDisable(mapSet.getAvailabilityDownloadDisable());
         s.setStoryboard(mapSet.getStoryboard());
-
-        s.setMapperUID(mapSet.getMapperId());
-        s.setMapperName(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
         s.setPlayCount(mapSet.getPlayCount());
-        s.setFavourite(mapSet.getFavourite());
+        s.setFavouriteCount(mapSet.getFavourite());
         s.setTitle(mapSet.getTitle());
-        s.setTitleUTF(mapSet.getTitleUTF());
+        s.setTitleUnicode(mapSet.getTitleUTF());
         s.setArtist(mapSet.getArtist());
-        s.setArtistUTF(mapSet.getArtistUTF());
-        s.setLegacyUrl(mapSet.getLegacyUrl());
-        s.setMusicUrl(mapSet.getMusicUrl());
+        s.setArtistUnicode(mapSet.getArtistUTF());
+        s.setLegacyThreadUrl(mapSet.getLegacyUrl());
 
-        s.FromDatabases();
+        s.setFromDatabase(false);
         return s;
     }
 
     public static MapSetLite fromMapSetModel(BeatMapSet mapSet){
         var s = new MapSetLite();
-        s.setId(mapSet.getSID());
+        s.setId(Math.toIntExact(mapSet.getSID()));
         s.setCard(mapSet.getCovers().getCard2x());
         s.setCover(mapSet.getCovers().getCover2x());
         s.setList(mapSet.getCovers().getList2x());
         s.setSlimcover(mapSet.getCovers().getSlimcover2x());
 
-        s.setAvailabilityDownloadDisable(mapSet.getAvailabilityDownloadDisable());
+        s.setAvailabilityDownloadDisable(mapSet.getAvailability().downloadDisabled());
         s.setNsfw(mapSet.getNsfw());
         s.setStoryboard(mapSet.getStoryboard());
-        s.setLegacyUrl(mapSet.getLegacyUrl());
-        s.setMusicUrl(mapSet.getMusicUrl());
+        s.setLegacyUrl(mapSet.getLegacyThreadUrl());
 
-        s.setMapperId(mapSet.getMapperUID());
-        s.setCreator(mapSet.getMapperName());
+        s.setMapperId(Math.toIntExact(mapSet.getCreatorID()));
+        s.setCreator(mapSet.getCreator());
         s.setSource(mapSet.getSource());
         s.setStatus(mapSet.getStatus());
         s.setPlayCount(mapSet.getPlayCount());
-        s.setFavourite(mapSet.getFavourite());
+        s.setFavourite(mapSet.getFavouriteCount());
         s.setTitle(mapSet.getTitle());
-        s.setTitleUTF(mapSet.getTitleUTF());
+        s.setTitleUTF(mapSet.getTitleUnicode());
         s.setArtist(mapSet.getArtist());
-        s.setArtistUTF(mapSet.getArtistUTF());
+        s.setArtistUTF(mapSet.getArtistUnicode());
 
         return s;
     }
