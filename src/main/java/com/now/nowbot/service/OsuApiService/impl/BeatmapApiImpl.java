@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
@@ -66,6 +67,20 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 .map(b -> {
                     beatMapDao.saveMap(b);
                     return b;
+                })
+                .block();
+    }
+
+    @Override
+    public BeatMapSet getBeatMapSetInfo(long sid) {
+        return base.osuApiWebClient.get()
+                .uri("beatmapsets/{sid}", sid)
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(BeatMapSet.class)
+                .map(s -> {
+                    beatMapDao.saveMapSet(s);
+                    return s;
                 })
                 .block();
     }

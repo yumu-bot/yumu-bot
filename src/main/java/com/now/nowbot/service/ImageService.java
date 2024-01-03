@@ -423,7 +423,7 @@ public class ImageService {
         var mostPopularBeatmap = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.getMapperUID().longValue() == user.getUID()))
+                .filter(s -> (s.getCreatorID().longValue() == user.getUID()))
                 .sorted(Comparator.comparing(BeatMapSet::getPlayCount).reversed())
                 .limit(6)
                 .toList();
@@ -431,7 +431,7 @@ public class ImageService {
         var mostRecentRankedBeatmap = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.isRanked() && user.getUID() == s.getMapperUID().longValue()))
+                .filter(s -> (s.hasLeaderBoard() && user.getUID() == s.getCreatorID().longValue()))
                 .findFirst()
                 .orElse(null);
 
@@ -444,7 +444,7 @@ public class ImageService {
                 query1.put("page", 1);
 
                 var search1 = beatmapApiService.searchBeatmap(query1);
-                mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::isRanked).findFirst().orElse(null);
+                mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::hasLeaderBoard).findFirst().orElse(null);
 
             } catch (Exception ignored) {
             }
@@ -453,10 +453,10 @@ public class ImageService {
         var mostRecentRankedGuestDiff = search
                 .getBeatmapsets()
                 .stream()
-                .filter(s -> (s.isRanked()) && user.getUID() != s.getMapperUID().longValue())
+                .filter(s -> (s.hasLeaderBoard()) && user.getUID() != s.getCreatorID().longValue())
                 .findFirst()
                 .orElse(null);
-        var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatmaps().stream()).toList();
+        var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatMaps().stream()).toList();
 
         var diffArr = new int[8];
         {
@@ -506,8 +506,8 @@ public class ImageService {
             for (int i = 0; i < search.getBeatmapsets().size(); i++) {
                 var v = search.getBeatmapsets().get(i);
 
-                if (v.getMapperUID() == user.getUID().intValue()) {
-                    favorite += v.getFavourite();
+                if (v.getCreatorID() == user.getUID().intValue()) {
+                    favorite += v.getFavouriteCount();
                     playcount += v.getPlayCount();
                 }
             }

@@ -2,6 +2,7 @@ package com.now.nowbot.service.OsuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.Mod;
@@ -23,6 +24,12 @@ public interface OsuBeatmapApiService {
 
     default BeatMap getBeatMapInfo(int bid) {
         return getBeatMapInfo((long) bid);
+    }
+
+    BeatMapSet getBeatMapSetInfo(long bid);
+
+    default BeatMapSet getBeatMapSetInfo(int bid) {
+        return getBeatMapSetInfo((long) bid);
     }
 
     BeatMap getMapInfoFromDB(long bid);

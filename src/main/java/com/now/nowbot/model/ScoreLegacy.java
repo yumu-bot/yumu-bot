@@ -58,8 +58,8 @@ public class ScoreLegacy {
         for (int i = 0; i < mods.length; i++) {
             mods[i] = modsList.get(i);
         }
-        map_name = beatMapSet.getTitleUTF();
-        artist = beatMapSet.getArtistUTF();
+        map_name = beatMapSet.getTitleUnicode();
+        artist = beatMapSet.getArtistUnicode();
         url = beatMapSet.getCovers().getCard();
         max_combo = beatMap.getMaxCombo();
         difficulty_name = beatMap.getVersion();

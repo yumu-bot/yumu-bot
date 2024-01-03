@@ -167,9 +167,9 @@ public class MatchRoundService implements MessageService<Matcher> {
                 if (
                         beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getArtist().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getTitleUTF().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getArtistUTF().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getMapperName().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getTitleUnicode().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getArtistUnicode().toLowerCase().contains(word) ||
+                        beatMap.getBeatMapSet().getCreator().toLowerCase().contains(word) ||
                         beatMap.getVersion().toLowerCase().contains(word)
                 ) {
                     return i;

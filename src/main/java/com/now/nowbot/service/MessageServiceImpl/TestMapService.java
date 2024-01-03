@@ -36,9 +36,9 @@ public class TestMapService implements MessageService<Matcher> {
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
-        sb.append(info.getBeatMapSet().getArtistUTF()).append(' ').append('-').append(' ');
-        sb.append(info.getBeatMapSet().getTitleUTF()).append(' ');
-        sb.append('(').append(info.getBeatMapSet().getMapperName()).append(')').append(' ');
+        sb.append(info.getBeatMapSet().getArtistUnicode()).append(' ').append('-').append(' ');
+        sb.append(info.getBeatMapSet().getTitleUnicode()).append(' ');
+        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')').append(' ');
         sb.append('[').append(info.getVersion()).append(']').append(',');
 
 

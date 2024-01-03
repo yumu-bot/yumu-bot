@@ -28,7 +28,7 @@ public class RecommendedMap {
         var data = new RecommendedMap();
         data.bid = mapInfo.getId();
         data.bgUrl = mapInfo.getBeatMapSet().getCovers().getCover2x();
-        data.Star = mapInfo.getDifficultyRating().floatValue();
+        data.Star = mapInfo.getDifficultyRating();
         data.OD = mapInfo.getOD();
         data.AR = mapInfo.getAR();
         data.HP = mapInfo.getHP();
@@ -36,7 +36,7 @@ public class RecommendedMap {
         data.bpm = mapInfo.getBPM();
         data.Objects = mapInfo.getSpinners() + mapInfo.getCircles() + mapInfo.getSliders();
         data.length = mapInfo.getTotalLength();
-        data.title = mapInfo.getBeatMapSet().getTitleUTF();
+        data.title = mapInfo.getBeatMapSet().getTitleUnicode();
         data.version = mapInfo.getVersion();
         data.setPlayerPP();
         return data;

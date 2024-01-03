@@ -71,6 +71,8 @@ public class Instructions {
 
     public static final Pattern MAPMINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![A-Za-z_]))\\s*(?<id>\\d+)?");
 
+    public static final Pattern NOMINATION = Pattern.compile("[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![A-Za-z_])|n(?![A-Za-z_]))\\s*(?<sid>\\d+)?");
+
     public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
 
     // #5 osu! 比赛指令

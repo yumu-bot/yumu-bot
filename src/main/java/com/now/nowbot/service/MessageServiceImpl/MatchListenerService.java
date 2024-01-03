@@ -201,7 +201,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                      */
 
                 } catch (Throwable e) {
-                    String info = STR. "(\{ b.getId() }) \{ s.getArtistUTF() } - (\{ s.getTitleUTF() }) [\{ b.getVersion() }]" ;
+                    String info = STR. "(\{ b.getId() }) \{ s.getArtistUnicode() } - (\{ s.getTitleUnicode() }) [\{ b.getVersion() }]" ;
                     var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
                     QQMsgUtil.sendImage(from, i);
                 }

@@ -64,16 +64,17 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         int id = param.id;
 
         String url;
+
         if (isBid) {
-            BeatMap mapinfo;
+            BeatMap b;
             try {
-                mapinfo = beatmapApiService.getBeatMapInfo(id);
+                b = beatmapApiService.getBeatMapInfo(id);
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }
-            url = "https:" + mapinfo.getBeatMapSet().getMusicUrl();
+            url = STR."https://b.ppy.sh/preview/\{b.getBeatMapSet().getSID()}.mp3";
         } else {
-            url = "https://b.ppy.sh/preview/" + id + ".mp3";
+            url = STR."https://b.ppy.sh/preview/\{id}.mp3";
         }
 
         byte[] voiceData;

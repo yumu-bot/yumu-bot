@@ -29,6 +29,10 @@ public class BeatMapDao {
         return beatMapMapper.save(fromBeatmapModel(beatMap));
     }
 
+    public MapSetLite saveMapSet(BeatMapSet beatMapSet){
+        return mapSetMapper.save(fromMapSetModel(beatMapSet));
+    }
+
     public BeatmapLite getBeatMapLite(int id){
         return getBeatMapLite((long) id);
     }

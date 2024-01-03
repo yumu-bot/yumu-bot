@@ -172,7 +172,7 @@ public class BeatMapSet {
     Double publicRating;
 
     //自己算
-    Boolean isRanked;
+    Boolean hasLeaderBoard;
 
     Boolean fromDatabase;
 
@@ -544,11 +544,11 @@ public class BeatMapSet {
     }
 
     public List<OsuUser> getNominators() {
-        int nominatorsCount = 0;
-        if (Objects.nonNull(currentNominations)) nominatorsCount = currentNominations.size();
-
-        if (Objects.nonNull(relatedUsers)) {
-            nominators = relatedUsers.subList(0, nominatorsCount);
+        if (Objects.nonNull(currentNominations)) {
+            for (CurrentNominations c : currentNominations) {
+                var n = c.nominatorID();
+                nominators = relatedUsers.stream().filter(u -> Objects.equals(u.getUID(), n)).toList();
+            };
         }
 
         return nominators;
@@ -584,20 +584,20 @@ public class BeatMapSet {
         this.publicRating = publicRating;
     }
 
-    public boolean isRanked() {
+    public boolean hasLeaderBoard() {
         if (Objects.nonNull(status)) {
-            isRanked = (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
+            hasLeaderBoard = (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
         } else {
             switch (ranked) {
-                case 1, 2, 3, 4 -> isRanked = true;
-                case null, default -> isRanked = false;
+                case 1, 2, 3, 4 -> hasLeaderBoard = true;
+                case null, default -> hasLeaderBoard = false;
             }
         }
-        return isRanked;
+        return hasLeaderBoard;
     }
 
-    public void setRanked(Boolean ranked) {
-        isRanked = ranked;
+    public void setHasLeaderBoard(Boolean hasLeaderBoard) {
+        this.hasLeaderBoard = hasLeaderBoard;
     }
 
     public Boolean getFromDatabase() {
@@ -606,5 +606,10 @@ public class BeatMapSet {
 
     public void setFromDatabase(Boolean fromDatabase) {
         this.fromDatabase = fromDatabase;
+    }
+
+    @Override
+    public String toString() {
+        return STR."BeatMapSet{artist='\{artist}\{'\''}, artistUnicode='\{artistUnicode}\{'\''}, covers=\{covers}, creator='\{creator}\{'\''}, favouriteCount=\{favouriteCount}, hype=\{hype}, SID=\{SID}, nsfw=\{nsfw}, offset=\{offset}, playCount=\{playCount}, previewUrl='\{previewUrl}\{'\''}, source='\{source}\{'\''}, spotlight=\{spotlight}, status='\{status}\{'\''}, title='\{title}\{'\''}, titleUnicode='\{titleUnicode}\{'\''}, trackID=\{trackID}, creatorID=\{creatorID}, video=\{video}, BPM=\{BPM}, canBeHyped=\{canBeHyped}, deletedAt=\{deletedAt}, discussionLocked=\{discussionLocked}, scoreable=\{scoreable}, lastUpdated=\{lastUpdated}, legacyThreadUrl='\{legacyThreadUrl}\{'\''}, nominationsSummary=\{nominationsSummary}, ranked=\{ranked}, rankedDate=\{rankedDate}, storyboard=\{storyboard}, submittedDate=\{submittedDate}, tags='\{tags}\{'\''}, availability=\{availability}, beatMaps=\{beatMaps}, converts=\{converts}, currentNominations=\{currentNominations}, description=\{description}, genre=\{genre}, language=\{language}, packTags=\{packTags}, ratings=\{ratings}, recentFavourites=\{recentFavourites}, relatedUsers=\{relatedUsers}, creatorData=\{creatorData}, mappers=\{mappers}, nominators=\{nominators}, publicRating=\{publicRating}, hasLeaderBoard=\{hasLeaderBoard}, fromDatabase=\{fromDatabase}\{'}'}";
     }
 }
