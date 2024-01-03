@@ -54,8 +54,6 @@ public class BotWebApi {
     ImageService imageService;
     @Resource
     BPAnalysisService bpAnalysisService;
-    @Resource
-    MapPoolService mapPoolService;
 
 
     /**
@@ -413,7 +411,7 @@ public class BotWebApi {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
-            beatMap.setBID(Long.valueOf(bid));
+            beatMap.setId(Long.valueOf(bid));
             score.setBeatMap(beatMap);
         }
 

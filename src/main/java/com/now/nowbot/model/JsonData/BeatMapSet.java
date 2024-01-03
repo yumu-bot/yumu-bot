@@ -529,11 +529,11 @@ public class BeatMapSet {
     }
 
     public List<OsuUser> getMappers() {
-        int nominatorsCount = 0;
-        if (Objects.nonNull(currentNominations)) nominatorsCount = currentNominations.size();
-
-        if (Objects.nonNull(relatedUsers)) {
-            mappers = relatedUsers.subList(nominatorsCount, relatedUsers.size());
+        if (Objects.nonNull(currentNominations)) {
+            for (CurrentNominations c : currentNominations) {
+                var n = c.nominatorID();
+                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getUID(), n)).toList();
+            }
         }
 
         return mappers;
@@ -548,7 +548,7 @@ public class BeatMapSet {
             for (CurrentNominations c : currentNominations) {
                 var n = c.nominatorID();
                 nominators = relatedUsers.stream().filter(u -> Objects.equals(u.getUID(), n)).toList();
-            };
+            }
         }
 
         return nominators;

@@ -85,10 +85,8 @@ public class BeatMap {
         return id;
     }
 
-    public void setBID(Long id) {
-        this.id = id;
-    }
-    public void setId(Long id) { // 别动
+    //不能动（因为有数据库存储
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -351,38 +349,9 @@ public class BeatMap {
 
         return fl.stream().reduce(Integer::sum).orElse(0);
     }
-    
 
+    @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("BeatMap{");
-        sb.append("id=").append(id);
-        sb.append(", beatmapsetId=").append(beatmapsetId);
-        sb.append(", difficultyRating=").append(difficultyRating);
-        sb.append(", mode='").append(mode).append('\'');
-        sb.append(", modeInt=").append(modeInt);
-        sb.append(", status='").append(status).append('\'');
-        sb.append(", totalLength=").append(totalLength);
-        sb.append(", hitLength=").append(hitLength);
-        sb.append(", userId=").append(userId);
-        sb.append(", version='").append(version).append('\'');
-        sb.append(", od=").append(od);
-        sb.append(", ar=").append(ar);
-        sb.append(", cs=").append(cs);
-        sb.append(", hp=").append(hp);
-        sb.append(", bpm=").append(bpm);
-        sb.append(", maxCombo=").append(maxCombo);
-        sb.append(", convert=").append(convert);
-        sb.append(", scoreable=").append(scoreable);
-        sb.append(", updatedTime='").append(updatedTime).append('\'');
-        sb.append(", passcount=").append(passcount);
-        sb.append(", playcount=").append(playcount);
-        sb.append(", url='").append(url).append('\'');
-        sb.append(", md5='").append(md5).append('\'');
-        sb.append(", sliders=").append(sliders);
-        sb.append(", spinners=").append(spinners);
-        sb.append(", circles=").append(circles);
-        sb.append(", beatMapSet=").append(beatMapSet);
-        sb.append('}');
-        return sb.toString();
+        return STR."BeatMap{id=\{id}, beatmapsetId=\{beatmapsetId}, difficultyRating=\{difficultyRating}, mode='\{mode}\{'\''}, modeInt=\{modeInt}, status='\{status}\{'\''}, totalLength=\{totalLength}, hitLength=\{hitLength}, userId=\{userId}, version='\{version}\{'\''}, od=\{od}, ar=\{ar}, cs=\{cs}, hp=\{hp}, bpm=\{bpm}, maxCombo=\{maxCombo}, convert=\{convert}, scoreable=\{scoreable}, updatedTime='\{updatedTime}\{'\''}, passcount=\{passcount}, playcount=\{playcount}, ranked=\{ranked}, url='\{url}\{'\''}, md5='\{md5}\{'\''}, sliders=\{sliders}, spinners=\{spinners}, circles=\{circles}, retryList=\{retryList}, failedList=\{failedList}, beatMapSet=\{beatMapSet}\{'}'}";
     }
 }

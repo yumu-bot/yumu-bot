@@ -155,7 +155,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
                 throw new ScoreException(ScoreException.Type.SCORE_Mod_NotFound);
             } else {
                 var beatMap = new BeatMap();
-                beatMap.setBID(bid);
+                beatMap.setId(bid);
                 score.setBeatMap(beatMap);
             }
         } else {
