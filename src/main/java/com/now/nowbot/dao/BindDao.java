@@ -93,16 +93,16 @@ public class BindDao {
         var qqBind = new QQBindLite();
         qqBind.setQq(qq);
         if (user.getRefreshToken() == null) {
-            Optional<OsuBindUserLite> uLiteOpt = null;
+            Optional<OsuBindUserLite> buLiteOpt;
             try {
-                uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
             } catch (NonUniqueResultException e) {
                 // 查出多个
                 bindUserMapper.deleteOldByOsuId(user.getOsuId());
-                uLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
             }
-            if (uLiteOpt.isPresent()) {
-                var uLite = uLiteOpt.get();
+            if (buLiteOpt.isPresent()) {
+                var uLite = buLiteOpt.get();
                 qqBind.setOsuUser(uLite);
                 return bindQQMapper.save(qqBind);
             }
@@ -187,16 +187,16 @@ public class BindDao {
         }
     }
 
-    public static BinUser fromLite(OsuBindUserLite osuBindUserLite) {
-        if (osuBindUserLite == null) return null;
-        var buser = new BinUser();
-        buser.setOsuID(osuBindUserLite.getOsuId());
-        buser.setOsuName(osuBindUserLite.getOsuName());
-        buser.setAccessToken(osuBindUserLite.getAccessToken());
-        buser.setRefreshToken(osuBindUserLite.getRefreshToken());
-        buser.setTime(osuBindUserLite.getTime());
-        buser.setMode(osuBindUserLite.getMainMode());
-        return buser;
+    public static BinUser fromLite(OsuBindUserLite buLite) {
+        if (buLite == null) return null;
+        var binUser = new BinUser();
+        binUser.setOsuID(buLite.getOsuId());
+        binUser.setOsuName(buLite.getOsuName());
+        binUser.setAccessToken(buLite.getAccessToken());
+        binUser.setRefreshToken(buLite.getRefreshToken());
+        binUser.setTime(buLite.getTime());
+        binUser.setMode(buLite.getMainMode());
+        return binUser;
     }
 
     public static OsuBindUserLite fromModel(BinUser user) {
@@ -227,8 +227,8 @@ public class BindDao {
                 } catch (Exception e) {
                     errCount++;
                 }
-                if (errCount > 10) {
-                    // 连续失败10次, 终止本次更新
+                if (errCount > 100) {
+                    // 连续失败100次, 终止本次更新
                     log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
                     return;
                 }
