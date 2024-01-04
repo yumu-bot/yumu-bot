@@ -26,8 +26,8 @@ public class OsuUserInfoDao {
         osuUserInfoMapper = mapper;
     }
 
-    public void saveUser(OsuUser user) {
-        var u = fromModel(user);
+    public void saveUser(OsuUser user, OsuMode mode) {
+        var u = fromModel(user, mode);
         osuUserInfoMapper.save(u);
     }
 
@@ -92,14 +92,13 @@ public class OsuUserInfoDao {
      * 取 到那一天为止 最后的数据 (默认向前取一年)
      *
      * @param date 那一天
-     * @return
      */
     public Optional<OsuUserInfoArchiveLite> getLastFrom(Long uid, OsuMode mode, LocalDate date) {
         var time = LocalDateTime.of(date, LocalTime.MAX);
         return osuUserInfoMapper.selectDayLast(uid, mode, time.minusYears(1), time);
     }
 
-    public static OsuUserInfoArchiveLite fromModel(OsuUser data) {
+    public static OsuUserInfoArchiveLite fromModel(OsuUser data, OsuMode mode) {
         var out = new OsuUserInfoArchiveLite();
         var statistics = data.getStatistics();
         out.setOsuID(data.getUID());
@@ -107,7 +106,11 @@ public class OsuUserInfoDao {
 
         out.setPlay_count(data.getPlayCount());
         out.setPlay_time(data.getPlayTime());
-        out.setMode(data.getOsuMode());
+        if (mode.equals(OsuMode.DEFAULT)) {
+            out.setMode(data.getOsuMode());
+        } else {
+            out.setMode(mode);
+        }
         out.setTime(LocalDateTime.now());
         return out;
     }
