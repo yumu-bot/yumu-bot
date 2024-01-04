@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service("UUBA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
@@ -176,26 +177,25 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         int sSum = 0;
         int xSum = 0;
         int fcSum = 0;
-        TreeMap<String, intValue> modeSum = new TreeMap<>(); //各个mod的数量
+        TreeMap<String, intValue> modTreeMap = new TreeMap<>(); //各个mod的数量
 
-        DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             //显示前五跟后五的数据
-            if (i < 5 || i > bps.size() - 5) {
+            if (i < 5 || i >= bps.size() - 5) {
                 sb.append("#")
                         .append(i + 1)
                         .append(' ')
-                        .append(decimalFormat.format(bp.getPP()))
+                        .append(String.format("%.2f", bp.getPP()))
                         .append(' ')
-                        .append(decimalFormat.format(100 * bp.getAccuracy()))
-//                        .append(decimalFormat.format(accCoun.getAcc(bp)))
+                        .append(String.format("%.2f", 100 * bp.getAccuracy()))
                         .append('%')
                         .append(' ')
                         .append(bp.getRank());
                 if (!bp.getMods().isEmpty()) {
-                    for (int j = 0; j < bp.getMods().size(); j++) {
-                        sb.append(' ').append(bp.getMods().get(j));
+                    sb.append(" +");
+                    for (var m : bp.getMods()) {
+                        sb.append(m).append(' ');
                     }
                 }
                 sb.append('\n');
@@ -206,8 +206,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             if (!bp.getMods().isEmpty()) {
                 for (int j = 0; j < bp.getMods().size(); j++) {
                     String mod = bp.getMods().get(j);
-                    if (!modeSum.containsKey(mod)) modeSum.put(mod, new intValue());
-                    else modeSum.get(mod).add();
+                    if (!modTreeMap.containsKey(mod)) modTreeMap.put(mod, new intValue());
+                    else modTreeMap.get(mod).add();
                 }
             }
             if (bp.getRank().contains("S")) sSum++;
@@ -219,13 +219,24 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         }
         sb.append("——————————").append('\n');
         sb.append("模组数量：\n");
-        modeSum.forEach((mod, sum) -> sb.append(mod).append(' ').append(sum.value).append("x; "));
 
-        sb.append("\nS+ 评级数量：").append(sSum);
-        if (xSum != 0) sb.append("，其中 SS 数量：").append(xSum);
+        AtomicInteger c = new AtomicInteger();
 
-        sb.append('\n').append("完美 FC 数量：").append(fcSum).append('\n')
-                .append("平均：").append(decimalFormat.format(allPP / bps.size())).append("PP 差值：").append(decimalFormat.format(bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
+        modTreeMap.forEach((mod, sum) -> {
+            c.getAndIncrement();
+            sb.append(mod).append(' ').append(sum.value).append("x; ");
+            if (c.get() == 2) {
+                c.set(0);
+                sb.append('\n');
+            }
+        });
+
+        sb.append("\nS+ 评级：").append(sSum);
+        if (xSum != 0) sb.append("\n     其中 SS：").append(xSum);
+
+        sb.append('\n').append("完美 FC：").append(fcSum).append('\n')
+                .append("平均：").append(String.format("%.2f", allPP / bps.size())).append("PP").append('\n')
+                .append("差值：").append(String.format("%.2f", bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
 
         return sb.toString().split("\n");
     }
@@ -367,14 +378,14 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         sb.append("时间最短：BP").append(minLengthBP + 1).append(' ').append(getTimeStr((int) minLength)).append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("平均连击：").append(avgCombo).append('\n');
+        sb.append("平均连击：").append(avgCombo).append('x').append('\n');
         sb.append("连击最大：BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n');
         sb.append("连击最小：BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("平均星数：").append(String.format("%.2f", avgStar)).append('\n');
-        sb.append("星数最高：BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('x').append('\n');
-        sb.append("星数最低：BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('x').append('\n');
+        sb.append("平均星数：").append(String.format("%.2f", avgStar)).append('*').append('\n');
+        sb.append("星数最高：BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*').append('\n');
+        sb.append("星数最低：BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*').append('\n');
         sb.append("——————————").append('\n');
 
         sb.append("PP/TTH 比例最大：BP").append(maxTTHPPBP + 1)
