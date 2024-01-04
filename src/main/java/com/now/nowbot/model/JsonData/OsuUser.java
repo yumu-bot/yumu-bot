@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
 
 import javax.annotation.Nullable;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -104,7 +105,7 @@ public class OsuUser {
     @JsonProperty("country")
     Country country;
 
-    public record Country (String code, String name) {
+    public record Country(String code, String name) {
     }
 
     @JsonProperty("cover")
@@ -113,10 +114,11 @@ public class OsuUser {
     @JsonProperty("kudosu")
     Kudosu kudosu;
 
-    public record Kudosu (Integer available, Integer total) {}
+    public record Kudosu(Integer available, Integer total) {}
 
     @JsonProperty("account_history")
-    UserAccountHistory accountHistory;
+    @Nullable
+    List<UserAccountHistory> accountHistory;
 
     //type: note, restriction, silence.
     public record UserAccountHistory (
@@ -171,10 +173,20 @@ public class OsuUser {
     @JsonProperty("mapping_follower_count")
     Integer mappingFollowerCount;
 
-    @JsonProperty("monthly_playcounts")
+    @JsonIgnoreProperties
     List<UserMonthly> monthlyPlaycounts;
 
-    public record UserMonthly (LocalDate start_date, Integer count) {}
+    @JsonProperty("monthly_playcounts")
+    void setMonthlyPlayCount(List<HashMap<String, Object>> dataList) {
+        monthlyPlaycounts = new ArrayList<>(dataList.size());
+        for (var d : dataList) {
+            var mp = new UserMonthly((String) d.get("start_date"), (Integer) d.get("count"));
+            monthlyPlaycounts.add(mp);
+        }
+    }
+
+
+    public record UserMonthly (String start_date, Integer count) {}
 
     @JsonProperty("nominated_beatmapset_count")
     Integer nominatedCount;
@@ -197,8 +209,17 @@ public class OsuUser {
     @JsonProperty("ranked_beatmapset_count")
     Integer rankedCount;
 
-    @JsonProperty("replays_watched_counts")
+    @JsonIgnoreProperties
     List<UserMonthly> replaysWatchedCounts;
+
+    @JsonProperty("replays_watched_counts")
+    void setReplaysWatchedCount(List<HashMap<String, Object>> dataList) {
+        replaysWatchedCounts = new ArrayList<>(dataList.size());
+        for (var d : dataList) {
+            var mp = new UserMonthly((String) d.get("start_date"), (Integer) d.get("count"));
+            replaysWatchedCounts.add(mp);
+        }
+    }
 
     @JsonProperty("scores_best_count")
     Integer scoreBestCount;
@@ -526,11 +547,11 @@ public class OsuUser {
         this.kudosu = kudosu;
     }
 
-    public UserAccountHistory getAccountHistory() {
+    public @Nullable List<UserAccountHistory> getAccountHistory() {
         return accountHistory;
     }
 
-    public void setAccountHistory(UserAccountHistory accountHistory) {
+    public void setAccountHistory(@Nullable List<UserAccountHistory> accountHistory) {
         this.accountHistory = accountHistory;
     }
 
