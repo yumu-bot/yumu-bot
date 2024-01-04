@@ -225,7 +225,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         if (xSum != 0) sb.append("，其中 SS 数量：").append(xSum);
 
         sb.append('\n').append("完美 FC 数量：").append(fcSum).append('\n')
-                .append("平均 PP：").append(decimalFormat.format(allPP / bps.size())).append("PP 差值：").append(decimalFormat.format(bps.getFirst().getPP() - bps.getLast().getPP()));
+                .append("平均：").append(decimalFormat.format(allPP / bps.size())).append("PP 差值：").append(decimalFormat.format(bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
 
         return sb.toString().split("\n");
     }
@@ -387,7 +387,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var mappers = mapperSum.values().stream()
                 .sorted((o1, o2) -> {
                     if (o1.size != o2.size) return 2 * (o2.size - o1.size);
-                    return o1.allPP > o2.allPP ? -1 : 1;
+                    return Float.compare(o2.allPP, o1.allPP);
                 })
                 .limit(9).toList();
         var mappersId = mappers.stream().map(u -> u.uid).toList();
@@ -430,10 +430,6 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             allPP += pp;
             size++;
             return this;
-        }
-
-        public float getAllPP() {
-            return allPP;
         }
 
         public int getSize() {
