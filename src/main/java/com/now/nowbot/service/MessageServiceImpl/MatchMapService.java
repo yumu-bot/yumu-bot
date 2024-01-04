@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,8 +56,10 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-        } catch (Exception e) {
+        } catch (HttpClientErrorException.NotFound e) {
             from.sendMessage(MapStatisticsException.Type.M_Map_NotFound.message);
+        } catch (Exception e) {
+            from.sendMessage(MapStatisticsException.Type.M_Fetch_Error.message);
         }
 
         // 标准化 combo

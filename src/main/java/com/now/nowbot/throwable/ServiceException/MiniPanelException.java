@@ -8,6 +8,7 @@ public class MiniPanelException extends TipsException {
         MINI_Me_NotFound ("找不到您绑定的 osu! 玩家！"),
         MINI_Recent_NotFound("找不到 24 小时内的成绩。"), //分数_找不到分数
         MINI_Classification_Error("迷你面板分类失败。\n请重试，或者将信息反馈给开发者。"), //发送_发送失败
+        MINI_Fetch_Error("谱面获取数据失败。"),
         MINI_Send_Error("迷你面板发送失败。\n请耐心等待问题修复。"), //发送_发送失败
 
         ;//逗号分隔

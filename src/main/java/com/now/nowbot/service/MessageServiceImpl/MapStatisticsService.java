@@ -101,8 +101,10 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-        } catch (Exception e) {
+        } catch (WebClientResponseException.NotFound e) {
             throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
+        } catch (Exception e) {
+            throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
 
         // 标准化 acc 和 combo

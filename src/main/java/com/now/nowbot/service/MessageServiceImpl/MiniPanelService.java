@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -74,13 +75,22 @@ public class MiniPanelService implements MessageService<Matcher> {
 
         if (isScore) {
             Score score;
+            BeatMap map;
+
+
             try {
-                score = scoreApiService.getRecentIncludingFail(id, mode, 0, 1).get(0);
-                var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                score = scoreApiService.getRecentIncludingFail(id, mode, 0, 1).getFirst();
+            } catch (Exception e) {
+                throw new MiniPanelException(MiniPanelException.Type.MINI_Recent_NotFound);
+            }
+
+
+            try {
+                map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
                 score.setBeatMap(map);
                 score.setBeatMapSet(map.getBeatMapSet());
             } catch (Exception e) {
-                throw new MiniPanelException(MiniPanelException.Type.MINI_Recent_NotFound);
+                throw new MiniPanelException(MiniPanelException.Type.MINI_Fetch_Error);
             }
 
             try {
