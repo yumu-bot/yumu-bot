@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,10 @@ public class BeatMapSet {
     @JsonProperty("favourite_count")
     Integer favouriteCount;
 
-    Boolean hype;
+    @Nullable
+    Hype hype;
+
+    public record Hype(Integer current, Integer required) {}
 
 
     @JsonProperty("id")
@@ -216,11 +220,12 @@ public class BeatMapSet {
         this.favouriteCount = favouriteCount;
     }
 
-    public Boolean getHype() {
+    @Nullable
+    public Hype getHype() {
         return hype;
     }
 
-    public void setHype(Boolean hype) {
+    public void setHype(@Nullable Hype hype) {
         this.hype = hype;
     }
 
