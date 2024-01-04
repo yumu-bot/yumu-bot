@@ -70,7 +70,7 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToMono(OsuUser.class)
                 .map((data) -> {
-                    userInfoDao.saveUser(data);
+                    userInfoDao.saveUser(data, mode);
                     user.setOsuID(data.getUID());
                     user.setOsuName(data.getUsername());
                     user.setMode(data.getOsuMode());
@@ -86,7 +86,7 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToMono(OsuUser.class)
                 .map((data) -> {
-                    userInfoDao.saveUser(data);
+                    userInfoDao.saveUser(data, mode);
                     return data;
                 }).block();
     }
@@ -100,7 +100,11 @@ public class UserApiImpl implements OsuUserApiService {
                         .build(id, mode.getName()))
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(OsuUser.class).block();
+                .bodyToMono(OsuUser.class)
+                .map((data) -> {
+                    userInfoDao.saveUser(data, mode);
+                    return data;
+                }).block();
     }
 
     @Override

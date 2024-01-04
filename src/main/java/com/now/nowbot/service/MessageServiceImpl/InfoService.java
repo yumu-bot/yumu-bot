@@ -132,18 +132,16 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
         Optional<OsuUser> infoOpt;
-        if (osuUser.getUID().equals(17064371L)) {
-            log.info("mode: {}", mode);
-        }
         recents = scoreApiService.getRecent(user, mode, 0, 3);
 
         infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode, LocalDate.now().minusDays(1))
+                /*
                 .map(arch -> {
                     if (osuUser.getUID().equals(17064371L))
                         log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
                     return arch;
                 })
-
+                */
                 .map(OsuUserInfoDao::fromArchive);
         /*
         log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
