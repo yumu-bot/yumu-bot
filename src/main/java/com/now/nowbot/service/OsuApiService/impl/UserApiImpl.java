@@ -73,7 +73,7 @@ public class UserApiImpl implements OsuUserApiService {
                     userInfoDao.saveUser(data);
                     user.setOsuID(data.getUID());
                     user.setOsuName(data.getUsername());
-                    user.setMode(data.getPlayMode());
+                    user.setMode(data.getOsuMode());
                     return data;
                 }).block();
     }
@@ -110,16 +110,16 @@ public class UserApiImpl implements OsuUserApiService {
             return id;
 
         }
-        var date = getPlayerInfo(name);
-        bindDao.removeOsuNameToId(date.getUID());
-        String[] names = new String[date.getPreviousName().size() + 1];
+        var osuUser = getPlayerInfo(name);
+        bindDao.removeOsuNameToId(osuUser.getUID());
+        String[] nameStrs = new String[osuUser.getPreviousNames().size() + 1];
         int i = 0;
-        names[i++] = date.getUsername().toUpperCase();
-        for (var nName : date.getPreviousName()) {
-            names[i++] = nName.toUpperCase();
+        nameStrs[i++] = osuUser.getUsername().toUpperCase();
+        for (var n : osuUser.getPreviousNames()) {
+            nameStrs[i++] = n.toUpperCase();
         }
-        bindDao.saveOsuNameToId(date.getUID(), names);
-        return date.getUID();
+        bindDao.saveOsuNameToId(osuUser.getUID(), nameStrs);
+        return osuUser.getUID();
     }
 
     /**

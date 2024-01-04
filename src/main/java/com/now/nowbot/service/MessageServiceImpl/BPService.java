@@ -173,7 +173,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         try {
             osuUser = userApiService.getPlayerInfo(param.user(), mode);
             if (OsuMode.isDefault(mode)) {
-                mode = osuUser.getPlayMode();
+                mode = osuUser.getOsuMode();
             }
         } catch (WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
@@ -211,15 +211,6 @@ public class BPService implements MessageService<BPService.BPParam> {
             log.error("BP 发送出错", e);
             throw new BPException(BPException.Type.BP_Send_Error);
         }
-    }
-
-    public static class BPParam1 {
-        String n;
-        String m;
-        String name;
-        OsuMode mode;
-
-        boolean s;
     }
 
     public record BPParam(BinUser user, int offset, int limit, OsuMode mode, boolean isMultipleBP, boolean hasName) {

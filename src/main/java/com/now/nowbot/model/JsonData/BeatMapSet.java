@@ -532,7 +532,7 @@ public class BeatMapSet {
         if (Objects.nonNull(currentNominations)) {
             for (CurrentNominations c : currentNominations) {
                 var n = c.nominatorID();
-                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getUID(), n)).toList();
+                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getId(), n)).toList();
             }
         }
 

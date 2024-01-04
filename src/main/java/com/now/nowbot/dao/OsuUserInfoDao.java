@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -44,7 +45,7 @@ public class OsuUserInfoDao {
 
                     return Stream.of(osu, taiko, fruits, mania);
                 })
-                .filter(su -> su != null)
+                .filter(Objects::nonNull)
                 .toList();
 
         osuUserInfoMapper.saveAllAndFlush(all);
@@ -106,7 +107,7 @@ public class OsuUserInfoDao {
 
         out.setPlay_count(data.getPlayCount());
         out.setPlay_time(data.getPlayTime());
-        out.setMode(data.getPlayMode());
+        out.setMode(data.getOsuMode());
         out.setTime(LocalDateTime.now());
         return out;
     }

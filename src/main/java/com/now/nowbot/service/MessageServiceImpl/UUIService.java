@@ -17,6 +17,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("UUI")
@@ -69,7 +70,7 @@ public class UUIService implements MessageService<Matcher> {
 
         byte[] imgBytes;
         if (user != null) {
-            imgBytes = template.exchange("https://a.ppy.sh/" + user.getOsuID(), HttpMethod.GET, httpEntity, byte[].class).getBody();
+            imgBytes = template.exchange(STR."https://a.ppy.sh/\{user.getOsuID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
         } else {
             imgBytes = null;
         }
@@ -86,26 +87,25 @@ public class UUIService implements MessageService<Matcher> {
 
     //这是 v0.1.0 的 ymi 文字版本，移到这里
     private String getText(BinUser user, OsuMode mode) {
-        var data = userApiService.getPlayerInfo(user, mode);
+        var u = userApiService.getPlayerInfo(user, mode);
 
         StringBuilder sb = new StringBuilder();
-        var statistics = data.getStatistics();
         // Muziyami(osu):10086PP
-        sb.append(data.getUsername()).append(' ').append('(').append(mode).append(')').append(':').append(' ').append(Math.round(statistics.getPP())).append("PP").append('\n');
+        sb.append(u.getUsername()).append(' ').append('(').append(mode).append(')').append(':').append(' ').append(Math.round(u.getPP())).append("PP").append('\n');
         // #114514 CN#1919 (LV.100(32%))
-        sb.append('#').append(statistics.getGlobalRank()).append(' ')
-                .append(data.getCountry().countryCode()).append('#').append(statistics.getCountryRank()).append(' ')
-                .append("(LV.").append(statistics.getLevelCurrent()).append('(').append(statistics.getLevelProgress()).append("%))").append('\n');
+        sb.append('#').append(u.getGlobalRank()).append(' ')
+                .append(u.getCountry().code()).append('#').append(u.getCountryRank()).append(' ')
+                .append("(LV.").append(u.getLevelCurrent()).append('(').append(u.getLevelProgress()).append("%))").append('\n');
         // PC: 2.01w TTH: 743.52w
         sb.append("PC: ");
-        long PC = statistics.getPlayCount();
+        long PC = u.getPlayCount();
         if (PC > 10_000) {
             sb.append(Math.round(PC / 100D) / 100D).append('w');
         } else {
             sb.append(PC);
         }
         sb.append(" TTH: ");
-        long TTH = statistics.getTotalHits();
+        long TTH = u.getTotalHits();
         if (TTH > 10_000) {
             sb.append(Math.round(TTH / 100D) / 100D).append('w');
         } else {
@@ -114,7 +114,7 @@ public class UUIService implements MessageService<Matcher> {
         sb.append('\n');
         // PT:24d2h7m ACC:98.16%
         sb.append("PT: ");
-        long PT = statistics.getPlayTime();
+        long PT = u.getPlayTime();
         if (PT > 86400) {
             sb.append(PT / 86400).append('d');
         }
@@ -124,30 +124,30 @@ public class UUIService implements MessageService<Matcher> {
         if (PT > 60) {
             sb.append((PT % 3600) / 60).append('m');
         }
-        sb.append(" ACC: ").append(statistics.getAccuracy()).append('%').append('\n');
+        sb.append(" ACC: ").append(u.getAccuracy()).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
-        sb.append("♡: ").append(data.getFollowerCount())
-                .append(" kds: ").append(data.getKudosu().total()).append('\n');
+        sb.append("♡: ").append(u.getFollowerCount())
+                .append(" kds: ").append(u.getKudosu().total()).append('\n');
         // SS:26(107) S:157(844) A:1083
-        sb.append("SS: ").append(statistics.getSS())
-                .append('(').append(statistics.getSSH()).append(')')
-                .append(" S: ").append(statistics.getS())
-                .append('(').append(statistics.getSH()).append(')')
-                .append(" A: ").append(statistics.getA()).append('\n');
+        sb.append("SS: ").append(u.getStatistics().getSS())
+                .append('(').append(u.getStatistics().getSSH()).append(')')
+                .append(" S: ").append(u.getStatistics().getS())
+                .append('(').append(u.getStatistics().getSH()).append(')')
+                .append(" A: ").append(u.getStatistics().getA()).append('\n');
         // uid:7003013
         sb.append('\n');
-        sb.append("uid: ").append(data.getUID()).append('\n');
+        sb.append("uid: ").append(u.getUID()).append('\n');
 
-        String occupation = data.getOccupation();
-        String discord = data.getDiscord();
-        String interests = data.getInterests();
-        if (occupation != null && !occupation.trim().isEmpty()) {
+        String occupation = u.getOccupation();
+        String discord = u.getDiscord();
+        String interests = u.getInterests();
+        if (Objects.nonNull(occupation)) {
             sb.append("occupation: ").append(occupation.trim()).append('\n');
         }
-        if (discord != null && !discord.trim().isEmpty()) {
+        if (Objects.nonNull(discord)) {
             sb.append("discord: ").append(discord.trim()).append('\n');
         }
-        if (interests != null && !interests.trim().isEmpty()) {
+        if (Objects.nonNull(interests)) {
             sb.append("interests: ").append(interests.trim());
         }
 

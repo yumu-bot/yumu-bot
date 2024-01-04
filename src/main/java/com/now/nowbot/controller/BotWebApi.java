@@ -12,7 +12,6 @@ import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
-import com.now.nowbot.service.MessageServiceImpl.MapPoolService;
 import com.now.nowbot.service.MessageServiceImpl.MatchNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -87,7 +86,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
         var info1 = userApiService.getPlayerInfo(user1.trim(), mode);
         var info2 = userApiService.getPlayerInfo(user2.trim(), mode);
-        if (OsuMode.isDefault(mode)) mode = info1.getPlayMode();
+        if (OsuMode.isDefault(mode)) mode = info1.getOsuMode();
         var bplist1 = scoreApiService.getBestPerformance(info1.getUID(), mode, 0, 100);
         var bplist2 = scoreApiService.getBestPerformance(info2.getUID(), mode, 0, 100);
         var ppm1 = PPMinus.getInstance(mode, info1, bplist1);

@@ -133,7 +133,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         Optional<OsuUser> infoOpt;
         recents = scoreApiService.getRecent(user, mode, 0, 3);
 
-        infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getPlayMode() : mode, LocalDate.now().minusDays(1))
+        infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode, LocalDate.now().minusDays(1))
                 /*
                 .map(arch -> {
                     log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));

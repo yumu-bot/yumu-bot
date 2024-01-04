@@ -3,7 +3,7 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.Nullable;
 
-public class UserGroups {
+public class UserGroup {
 
     @JsonProperty("colour")
     String color;

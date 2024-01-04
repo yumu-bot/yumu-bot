@@ -114,7 +114,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     osuUser.setPlayMode(mode.getName());
                 } else {
                     osuUser = userApiService.getPlayerInfo(id);
-                    bps = scoreApiService.getBestPerformance(id, osuUser.getPlayMode(), 0, 100);
+                    bps = scoreApiService.getBestPerformance(id, osuUser.getOsuMode(), 0, 100);
                 }
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
@@ -136,7 +136,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             try {
-                var data2 = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode().getName());
+                var data2 = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
                 QQMsgUtil.sendImage(from, imageService.getPanelAlpha(data2));
             } catch (Exception e1) {
                 log.error("BPA Error (to UUBA): ", e1);
@@ -162,7 +162,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
-        var mapAttrGet = new MapAttrGet(user.getPlayMode());
+        var mapAttrGet = new MapAttrGet(user.getOsuMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
                 .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
@@ -377,7 +377,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         data.put("rank_attr", rankAttr);
         data.put("pp_raw", rawPP);
         data.put("pp", userPP);
-        data.put("game_mode", bps.get(0).getMode());
+        data.put("game_mode", bps.getFirst().getMode());
 
         return data;
     }

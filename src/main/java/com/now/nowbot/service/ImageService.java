@@ -435,7 +435,7 @@ public class ImageService {
                 .findFirst()
                 .orElse(null);
 
-        if (mostRecentRankedBeatmap == null && user.getBeatmapSetCountRankedAndApproved() > 0) {
+        if (mostRecentRankedBeatmap == null && user.getRankedCount() > 0) {
             try {
                 var query1 = new HashMap<String, Object>();
                 query1.put("q", user.getUID().toString());

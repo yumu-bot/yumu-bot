@@ -82,7 +82,7 @@ public class PPMinusService implements MessageService<Matcher> {
             }
 
             //默认无主模式
-            if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getPlayMode();
+            if (mode == OsuMode.DEFAULT && user.getPlayMode() != null) mode = user.getOsuMode();
 
         } else if (at != null) {
             try {
