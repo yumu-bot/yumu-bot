@@ -24,20 +24,22 @@ public class RecommendedMap {
     Float maxPlayerPP;
     private RecommendedMap(){}
 
-    public static RecommendedMap getMap(BeatMap mapInfo){
+    public static RecommendedMap getMap(BeatMap b){
         var data = new RecommendedMap();
-        data.bid = mapInfo.getId();
-        data.bgUrl = mapInfo.getBeatMapSet().getCovers().getCover2x();
-        data.Star = mapInfo.getDifficultyRating();
-        data.OD = mapInfo.getOD();
-        data.AR = mapInfo.getAR();
-        data.HP = mapInfo.getHP();
-        data.CS = mapInfo.getCS();
-        data.bpm = mapInfo.getBPM();
-        data.Objects = mapInfo.getSpinners() + mapInfo.getCircles() + mapInfo.getSliders();
-        data.length = mapInfo.getTotalLength();
-        data.title = mapInfo.getBeatMapSet().getTitleUnicode();
-        data.version = mapInfo.getVersion();
+        data.bid = b.getId();
+        if (b.getBeatMapSet() != null) {
+            data.bgUrl = b.getBeatMapSet().getCovers().getCover2x();
+        }
+        data.Star = b.getStarRating();
+        data.OD = b.getOD();
+        data.AR = b.getAR();
+        data.HP = b.getHP();
+        data.CS = b.getCS();
+        data.bpm = b.getBPM();
+        data.Objects = b.getSpinners() + b.getCircles() + b.getSliders();
+        data.length = b.getTotalLength();
+        data.title = b.getBeatMapSet().getTitleUnicode();
+        data.version = b.getDifficultyName();
         data.setPlayerPP();
         return data;
     }

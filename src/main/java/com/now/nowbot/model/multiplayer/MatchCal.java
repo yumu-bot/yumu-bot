@@ -1,7 +1,6 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -192,7 +191,7 @@ public class MatchCal {
     public float getAverageStar() {
         return (float) roundList.stream()
                 .filter(round -> round.getBeatmap() != null)
-                .mapToDouble(round -> round.getBeatmap().getDifficultyRating())
+                .mapToDouble(round -> round.getBeatmap().getStarRating())
                 .average()
                 .orElse(0d);
     }
@@ -205,7 +204,7 @@ public class MatchCal {
     public long getFirstMapSID() {
         for (var r : roundList) {
             if (r.getBeatmap() != null) {
-                return r.getBeatmap().getBeatmapsetId();
+                return r.getBeatmap().getSID();
             }
         }
         return 0;

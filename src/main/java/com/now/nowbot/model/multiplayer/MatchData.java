@@ -280,7 +280,7 @@ public class MatchData {
             MapAttr attr;
             if (Objects.nonNull(attr = result.get(m.getId().longValue()))) {
                 var beatmap = m.getBeatmap();
-                beatmap.setDifficultyRating(attr.getStars());
+                beatmap.setStarRating(attr.getStars());
                 beatmap.setAR(attr.getAr());
                 beatmap.setOD(attr.getOd());
                 beatmap.setCS(attr.getCs());

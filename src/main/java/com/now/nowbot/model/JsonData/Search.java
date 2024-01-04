@@ -33,7 +33,7 @@ public class Search {
     }
 
     public void sortBeatmapDiff() {
-        beatmapsets.forEach(set -> set.getBeatMaps().sort(Comparator.comparing(BeatMap::getDifficultyRating)));
+        beatmapsets.forEach(set -> set.getBeatMaps().sort(Comparator.comparing(BeatMap::getStarRating)));
     }
 
     public void setBeatmapsets(List<BeatMapSet> beatmapsets) {

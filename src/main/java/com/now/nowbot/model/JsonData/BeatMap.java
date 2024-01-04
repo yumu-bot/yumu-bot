@@ -3,83 +3,136 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
+import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class BeatMap {
-    Long id;
+    // 等同于 BeatMapExtended
+    // 原有属性
+
     @JsonProperty("beatmapset_id")
-    Integer beatmapsetId;
+    Integer SID;
+
     @JsonProperty("difficulty_rating")
-    Float difficultyRating;
+    Float StarRating;
+
+    Long id; //这个不能改
+
     String mode;
-    @JsonProperty("mode_int")
-    Integer modeInt;
+
     String status;
+
     @JsonProperty("total_length")
     Integer totalLength;
-    @JsonProperty("hit_length")
-    Integer hitLength;
-    @JsonProperty("user_id")
-    Long userId;
-    String version;
-    @JsonProperty("accuracy")
-    Float od;
-    Float ar;
-    Float cs;
-    @JsonProperty("drain")
-    Float hp;
-    Float bpm;
-    @JsonProperty("max_combo")
-    Integer maxCombo;
-    Boolean convert;
-    @JsonProperty("is_scoreable")
-    Boolean scoreable;
-    @JsonProperty("last_updated")
-    String updatedTime;
-    Integer passcount;
-    Integer playcount;
 
-    Integer ranked;
-    String url;
+    @JsonProperty("user_id")
+    Long MapperID;
+
+    @JsonProperty("version")
+    String difficultyName;
+
+    @JsonProperty("beatmapset")
+    @Nullable
+    BeatMapSet beatMapSet;
+
     @JsonProperty("checksum")
+    @Nullable
     String md5;
-    @JsonProperty("count_sliders")
-    Integer sliders;
-    @JsonProperty("count_spinners")
-    Integer spinners;
-    @JsonProperty("count_circles")
-    Integer circles;
+
+    //retry == fail, fail == exit
+    @JsonProperty("failtimes")
+    public void setFailTimes(JsonNode data) {
+        retryList = getList(data, "fail");
+        failList = getList(data, "exit");
+    }
+
+    private List<Integer> getList(@NotNull JsonNode data, String fieldName) {
+        List<Integer> list = new ArrayList<>();
+        if (data.hasNonNull(fieldName) && data.get(fieldName).isArray()) {
+            list = StreamSupport.stream(data.get(fieldName).spliterator(), false)
+                    .map(n -> n.asInt(0))
+                    .toList();
+        }
+        return list;
+    }
+
     @JsonIgnore
     List<Integer> retryList;
     @JsonIgnore
-    List<Integer> failedList;
+    List<Integer> failList;
 
-    /**
-     * 仅在查询铺面信息的时候有
-     */
-    @JsonProperty("beatmapset")
-    BeatMapSet beatMapSet;
+    @JsonProperty("max_combo")
+    Integer maxCombo;
 
-    @JsonProperty("failtimes")
-    public void setFailTimes(JsonNode data) {
-        if (data.hasNonNull("fail") && data.get("fail").isArray()) {
-            retryList = StreamSupport.stream(data.get("fail").spliterator(), false)
-                    .map(jsonNode -> jsonNode.asInt(0))
-                    .collect(Collectors.toList());
-        }
-        if (data.hasNonNull("exit") && data.get("exit").isArray()) {
-            failedList = StreamSupport.stream(data.get("exit").spliterator(), false)
-                    .map(jsonNode -> jsonNode.asInt(0))
-                    .collect(Collectors.toList());
-        }
-    }
+    // Extended
+    @JsonProperty("accuracy")
+    Float OD;
+
+    @JsonProperty("ar")
+    Float AR;
+
+    @JsonProperty("bpm")
+    Float BPM;
+
+    Boolean convert;
+
+    @JsonProperty("count_circles")
+    Integer circles;
+
+    @JsonProperty("count_sliders")
+    Integer sliders;
+
+    @JsonProperty("count_spinners")
+    Integer spinners;
+
+    @JsonProperty("cs")
+    Float CS;
+
+    @JsonProperty("deleted_at")
+    OffsetDateTime deletedAt;
+
+    @JsonProperty("drain")
+    Float HP;
+
+    @JsonProperty("hit_length")
+    Integer hitLength;
+
+    @JsonProperty("is_scoreable")
+    Boolean scoreAble;
+
+    @JsonProperty("last_updated")
+    OffsetDateTime lastUpdated;
+
+    @JsonProperty("mode_int")
+    Integer modeInt;
+
+    @JsonProperty("passcount")
+    Integer passCount;
+
+    @JsonProperty("playcount")
+    Integer playCount;
+
+    Integer ranked;
+
+    String url;
+
+    //自己算
+    Integer retry;
+
+    //自己算
+    Integer fail;
+
+    //自己算
+    Boolean hasLeaderBoard;
 
     public Long getId() {
         return id;
@@ -90,24 +143,24 @@ public class BeatMap {
         this.id = id;
     }
 
-    public Integer getBeatmapsetId() {
-        return beatmapsetId;
+    public Integer getSID() {
+        return SID;
     }
 
-    public void setBeatmapsetId(Integer beatmapsetId) {
-        this.beatmapsetId = beatmapsetId;
+    public void setSID(Integer SID) {
+        this.SID = SID;
     }
 
-    public Float getDifficultyRating() {
-        return difficultyRating;
+    public Float getStarRating() {
+        return StarRating;
     }
 
-    public void setDifficultyRating(Float difficultyRating) {
-        this.difficultyRating = difficultyRating;
+    public void setStarRating(Float starRating) {
+        StarRating = starRating;
     }
 
     public String getMode() {
-        if (mode == null) {
+        if (Objects.isNull(mode)) {
             mode = OsuMode.getMode(modeInt).getName();
         }
         return mode;
@@ -115,14 +168,7 @@ public class BeatMap {
 
     public void setMode(String mode) {
         this.mode = mode;
-    }
-
-    public Integer getModeInt() {
-        return modeInt;
-    }
-
-    public void setModeInt(Integer modeInt) {
-        this.modeInt = modeInt;
+        this.modeInt = (int) OsuMode.getMode(mode).getModeValue();
     }
 
     public String getStatus() {
@@ -133,10 +179,6 @@ public class BeatMap {
         this.status = status;
     }
 
-    public boolean isRanked() {
-        return (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
-    }
-
     public Integer getTotalLength() {
         return totalLength;
     }
@@ -145,71 +187,54 @@ public class BeatMap {
         this.totalLength = totalLength;
     }
 
-    public Integer getHitLength() {
-        return hitLength;
+    public Long getMapperID() {
+        return MapperID;
     }
 
-    public void setHitLength(Integer hitLength) {
-        this.hitLength = hitLength;
+    public void setMapperID(Long mapperID) {
+        MapperID = mapperID;
     }
 
-    public Long getUserId() {
-        return userId;
+    public String getDifficultyName() {
+        return difficultyName;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setDifficultyName(String difficultyName) {
+        this.difficultyName = difficultyName;
     }
 
-    /**
-     * getDifficulty
-     */
-    public String getVersion() {
-        return version;
+    @Nullable
+    public BeatMapSet getBeatMapSet() {
+        return beatMapSet;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setBeatMapSet(@Nullable BeatMapSet beatMapSet) {
+        this.beatMapSet = beatMapSet;
     }
 
-    public Float getOD() {
-        return od;
+    @Nullable
+    public String getMd5() {
+        return md5;
     }
 
-    public void setOD(Float od) {
-        this.od = od;
+    public void setMd5(@Nullable String md5) {
+        this.md5 = md5;
     }
 
-    public Float getAR() {
-        return ar;
+    public List<Integer> getRetryList() {
+        return retryList;
     }
 
-    public void setAR(Float ar) {
-        this.ar = ar;
+    public void setRetryList(List<Integer> retryList) {
+        this.retryList = retryList;
     }
 
-    public Float getCS() {
-        return cs;
+    public List<Integer> getFailList() {
+        return failList;
     }
 
-    public void setCS(Float cs) {
-        this.cs = cs;
-    }
-
-    public Float getHP() {
-        return hp;
-    }
-
-    public void setHP(Float hp) {
-        this.hp = hp;
-    }
-
-    public Float getBPM() {
-        return bpm;
-    }
-
-    public void setBpm(Float bpm) {
-        this.bpm = bpm;
+    public void setFailList(List<Integer> failList) {
+        this.failList = failList;
     }
 
     public Integer getMaxCombo() {
@@ -220,6 +245,30 @@ public class BeatMap {
         this.maxCombo = maxCombo;
     }
 
+    public Float getOD() {
+        return OD;
+    }
+
+    public void setOD(Float OD) {
+        this.OD = OD;
+    }
+
+    public Float getAR() {
+        return AR;
+    }
+
+    public void setAR(Float AR) {
+        this.AR = AR;
+    }
+
+    public Float getBPM() {
+        return BPM;
+    }
+
+    public void setBPM(Float BPM) {
+        this.BPM = BPM;
+    }
+
     public Boolean getConvert() {
         return convert;
     }
@@ -228,52 +277,12 @@ public class BeatMap {
         this.convert = convert;
     }
 
-    public Boolean getScoreable() {
-        return scoreable;
+    public Integer getCircles() {
+        return circles;
     }
 
-    public void setScoreable(Boolean scoreable) {
-        this.scoreable = scoreable;
-    }
-
-    public String getUpdatedTime() {
-        return updatedTime;
-    }
-
-    public void setUpdatedTime(String updatedTime) {
-        this.updatedTime = updatedTime;
-    }
-
-    public Integer getPasscount() {
-        return passcount;
-    }
-
-    public void setPasscount(Integer passcount) {
-        this.passcount = passcount;
-    }
-
-    public Integer getPlaycount() {
-        return playcount;
-    }
-
-    public void setPlaycount(Integer playcount) {
-        this.playcount = playcount;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
+    public void setCircles(Integer circles) {
+        this.circles = circles;
     }
 
     public Integer getSliders() {
@@ -292,20 +301,80 @@ public class BeatMap {
         this.spinners = spinners;
     }
 
-    public Integer getCircles() {
-        return circles;
+    public Float getCS() {
+        return CS;
     }
 
-    public void setCircles(Integer circles) {
-        this.circles = circles;
+    public void setCS(Float CS) {
+        this.CS = CS;
     }
 
-    public BeatMapSet getBeatMapSet() {
-        return beatMapSet;
+    public OffsetDateTime getDeletedAt() {
+        return deletedAt;
     }
 
-    public void setBeatMapSet(BeatMapSet beatMapSet) {
-        this.beatMapSet = beatMapSet;
+    public void setDeletedAt(OffsetDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public Float getHP() {
+        return HP;
+    }
+
+    public void setHP(Float HP) {
+        this.HP = HP;
+    }
+
+    public Integer getHitLength() {
+        return hitLength;
+    }
+
+    public void setHitLength(Integer hitLength) {
+        this.hitLength = hitLength;
+    }
+
+    public Boolean getScoreAble() {
+        return scoreAble;
+    }
+
+    public void setScoreAble(Boolean scoreAble) {
+        this.scoreAble = scoreAble;
+    }
+
+    public OffsetDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(OffsetDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public Integer getModeInt() {
+        if (Objects.isNull(modeInt)) {
+            modeInt = (int) OsuMode.getMode(mode).getModeValue();
+        }
+        return modeInt;
+    }
+
+    public void setModeInt(Integer modeInt) {
+        this.modeInt = modeInt;
+        this.mode = OsuMode.getMode(modeInt).getName();
+    }
+
+    public Integer getPassCount() {
+        return passCount;
+    }
+
+    public void setPassCount(Integer passCount) {
+        this.passCount = passCount;
+    }
+
+    public Integer getPlayCount() {
+        return playCount;
+    }
+
+    public void setPlayCount(Integer playCount) {
+        this.playCount = playCount;
     }
 
     public Integer getRanked() {
@@ -316,42 +385,54 @@ public class BeatMap {
         this.ranked = ranked;
     }
 
-    public List<Integer> getBeatMapRatingList() {return null;}
-
-    public double getBeatMapRating() {
-        return 0f;
+    public String getUrl() {
+        return url;
     }
 
-    public List<Integer> getBeatMapRetryList() {return retryList;}
-
-    public void SetBeatMapRetryList(List<Integer> retryList) {
-        this.retryList = retryList;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public int getBeatMapRetryCount() {
-        List<Integer> rl = getBeatMapRetryList();
-        if (rl == null || rl.isEmpty()) return 0;
-        return rl.stream().reduce(Integer::sum).orElse(0);
-    }
-
-    public List<Integer> getBeatMapFailedList() {return failedList;}
-    
-    public void SetBeatMapFailedList(List<Integer> failedList) {
-        this.failedList = failedList;
-    }
-    
-    public int getBeatMapFailedCount() {
-        List<Integer> fl = getBeatMapFailedList();
-
-        if (fl == null || fl.isEmpty()) {
-            return 0;
+    public Integer getRetry() {
+        if (Objects.nonNull(retryList) && !retryList.isEmpty()) {
+            return retryList.stream().reduce(Integer::sum).orElse(0);
         }
+        return 0;
+    }
 
-        return fl.stream().reduce(Integer::sum).orElse(0);
+    public void setRetry(Integer retry) {
+        this.retry = retry;
+    }
+
+    public Integer getFail() {
+        if (Objects.nonNull(failList) && !failList.isEmpty()) {
+            return failList.stream().reduce(Integer::sum).orElse(0);
+        }
+        return 0;
+    }
+
+    public void setFail(Integer fail) {
+        this.fail = fail;
+    }
+
+    public boolean hasLeaderBoard() {
+        if (Objects.nonNull(status)) {
+            hasLeaderBoard = (Objects.equals(status, "ranked") || Objects.equals(status, "qualified") || Objects.equals(status, "loved") || Objects.equals(status, "approved"));
+        } else {
+            switch (ranked) {
+                case 1, 2, 3, 4 -> hasLeaderBoard = true;
+                case null, default -> hasLeaderBoard = false;
+            }
+        }
+        return hasLeaderBoard;
+    }
+
+    public void setHasLeaderBoard(Boolean hasLeaderBoard) {
+        this.hasLeaderBoard = hasLeaderBoard;
     }
 
     @Override
     public String toString() {
-        return STR."BeatMap{id=\{id}, beatmapsetId=\{beatmapsetId}, difficultyRating=\{difficultyRating}, mode='\{mode}\{'\''}, modeInt=\{modeInt}, status='\{status}\{'\''}, totalLength=\{totalLength}, hitLength=\{hitLength}, userId=\{userId}, version='\{version}\{'\''}, od=\{od}, ar=\{ar}, cs=\{cs}, hp=\{hp}, bpm=\{bpm}, maxCombo=\{maxCombo}, convert=\{convert}, scoreable=\{scoreable}, updatedTime='\{updatedTime}\{'\''}, passcount=\{passcount}, playcount=\{playcount}, ranked=\{ranked}, url='\{url}\{'\''}, md5='\{md5}\{'\''}, sliders=\{sliders}, spinners=\{spinners}, circles=\{circles}, retryList=\{retryList}, failedList=\{failedList}, beatMapSet=\{beatMapSet}\{'}'}";
+        return STR."BeatMap{SID=\{SID}, StarRating=\{StarRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{MapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
     }
 }

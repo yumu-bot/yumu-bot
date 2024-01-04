@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -62,53 +61,58 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
             throw param.err;
         }
 
-        int id = param.id;
-
-        String url;
+        int sid = 0;
 
         if (param.isBid) {
-            BeatMap b;
             try {
-                b = beatmapApiService.getBeatMapInfo(id);
+                sid = beatmapApiService.getBeatMapInfo(param.id).getSID();
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }
-            url = STR."https://b.ppy.sh/preview/\{b.getBeatMapSet().getSID()}.mp3";
-        } else {
-            url = STR."https://b.ppy.sh/preview/\{id}.mp3";
         }
 
         byte[] voiceData;
 
         try {
-            voiceData = osuApiWebClient
-                    .get()
-                    .uri(url)
-                    .retrieve()
-                    .bodyToMono(byte[].class)
-                    .block();
+            voiceData = getVoice(sid);
         } catch (Exception e) {
-            log.error("下载音频出现错误", e);
-            throw new AudioException(AudioException.Type.SONG_Download_Error);
-        }
-
-        /*
-            if (from instanceof AudioSupported){
+            if (param.isBid) {
+                log.error("音频下载失败：", e);
+                throw new AudioException(AudioException.Type.SONG_Download_Error);
+            } else {
+                //输入的不是 SID
                 try {
-                    Audio audio = ((AudioSupported) from).uploadAudio(ExternalResource.create(voicedate));
-                    from.sendMessage(audio);
-                } catch (Exception e) {
-                    log.error("语音上传失败",e);
-                    throw new TipsException("语音上传失败,请稍后再试");
+                    sid = beatmapApiService.getBeatMapInfo(param.id).getSID();
+                } catch (Exception e1) {
+                    throw new AudioException(AudioException.Type.SONG_Map_NotFound);
+                }
+
+                try {
+                    voiceData = getVoice(sid);
+                } catch (Exception e2) {
+                    log.error("音频下载失败、附加转换失败：", e2);
+                    throw new AudioException(AudioException.Type.SONG_Download_Error);
                 }
             }
-             */
+        }
 
         try {
             from.sendVoice(voiceData);
         } catch (Exception e) {
-            log.error("Audio:", e);
+            log.error("音频发送失败：", e);
             throw new AudioException(AudioException.Type.SONG_Send_Error);
         }
+    }
+
+
+    private byte[] getVoice(int sid) {
+        var url = STR."https://b.ppy.sh/preview/\{sid}.mp3";
+
+        return osuApiWebClient
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
     }
 }

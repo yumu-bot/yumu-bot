@@ -32,28 +32,30 @@ public class TestMapService implements MessageService<Matcher> {
         String mod = matcher.group("mod");
 
 
-        var info = beatmapApiService.getBeatMapInfo(bid);
+        var b = beatmapApiService.getBeatMapInfo(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
-        sb.append(info.getBeatMapSet().getArtistUnicode()).append(' ').append('-').append(' ');
-        sb.append(info.getBeatMapSet().getTitleUnicode()).append(' ');
-        sb.append('(').append(info.getBeatMapSet().getCreator()).append(')').append(' ');
-        sb.append('[').append(info.getVersion()).append(']').append(',');
+        if (b.getBeatMapSet() != null) {
+            sb.append(b.getBeatMapSet().getArtistUnicode()).append(' ').append('-').append(' ');
+            sb.append(b.getBeatMapSet().getTitleUnicode()).append(' ');
+        }
+        sb.append('(').append(b.getBeatMapSet().getCreator()).append(')').append(' ');
+        sb.append('[').append(b.getDifficultyName()).append(']').append(',');
 
 
         if (mod == null || mod.trim().isEmpty()){
 
-            sb.append(String.format("%.2f", info.getDifficultyRating())).append(',')
-                    .append(String.format("%d", Math.round(info.getBPM()))).append(',')
-                    .append(String.format("%d", Math.round(Math.floor(info.getTotalLength() / 60f))))
+            sb.append(String.format("%.2f", b.getStarRating())).append(',')
+                    .append(String.format("%d", Math.round(b.getBPM()))).append(',')
+                    .append(String.format("%d", Math.round(Math.floor(b.getTotalLength() / 60f))))
                     .append(':')
-                    .append(String.format("%02d", Math.round(info.getTotalLength() % 60f)))
+                    .append(String.format("%02d", Math.round(b.getTotalLength() % 60f)))
                     .append(',');
-            sb.append(info.getMaxCombo()).append(',')
-                    .append(info.getCS()).append(',')
-                    .append(info.getAR()).append(',')
-                    .append(info.getOD());
+            sb.append(b.getMaxCombo()).append(',')
+                    .append(b.getCS()).append(',')
+                    .append(b.getAR()).append(',')
+                    .append(b.getOD());
 
             event.getSubject().sendMessage(sb.toString());
             return;
@@ -62,18 +64,18 @@ public class TestMapService implements MessageService<Matcher> {
         var mods = mod.split("[\"\\s,，\\-|:]+");
         int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
-        float newTotalLength = getNewTotalLength (info.getTotalLength(), modInt);
+        float newTotalLength = getNewTotalLength (b.getTotalLength(), modInt);
 
         sb.append(String.format("%.2f", a.getStarRating())).append(',')
-                .append(String.format("%d", getNewBPM(info.getBPM(), modInt))).append(',')
+                .append(String.format("%d", getNewBPM(b.getBPM(), modInt))).append(',')
                 .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
                 .append(':')
                 .append(String.format("%02d", Math.round(newTotalLength % 60f)))
                 .append(',');
         sb.append(a.getMaxCombo()).append(',')
-                .append(String.format("%.2f", Math.round(DataUtil.CS(info.getCS(), modInt) * 100f) / 100f)).append(',')
+                .append(String.format("%.2f", Math.round(DataUtil.CS(b.getCS(), modInt) * 100f) / 100f)).append(',')
                 .append(String.format("%.2f", (Math.round(a.getApproachRate()) * 100f) / 100f)).append(',')
-                .append(String.format("%.2f", Math.round(DataUtil.OD(info.getOD(), modInt) * 100f) / 100f));
+                .append(String.format("%.2f", Math.round(DataUtil.OD(b.getOD(), modInt) * 100f) / 100f));
 
         event.getSubject().sendMessage(sb.toString());
     }

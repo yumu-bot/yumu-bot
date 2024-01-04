@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("MR")
@@ -164,14 +165,14 @@ public class MatchRoundService implements MessageService<Matcher> {
             }
 
             try {
-                if (
+                if (Objects.nonNull(beatMap.getBeatMapSet()) && (
                         beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getArtist().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getTitleUnicode().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getArtistUnicode().toLowerCase().contains(word) ||
                         beatMap.getBeatMapSet().getCreator().toLowerCase().contains(word) ||
-                        beatMap.getVersion().toLowerCase().contains(word)
-                ) {
+                        beatMap.getDifficultyName().toLowerCase().contains(word)
+                )) {
                     return i;
                 }
             } catch (Exception ignored) {

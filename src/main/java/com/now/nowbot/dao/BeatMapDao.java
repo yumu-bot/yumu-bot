@@ -44,19 +44,22 @@ public class BeatMapDao {
         return lite.get();
     }
 
-    public static BeatMap fromBeatmapLite(BeatmapLite map){
+    public static BeatMap fromBeatmapLite(BeatmapLite bl){
         var s = new BeatMap();
-        var mapSet = fromMapsetLite(map.getMapSet());
+        var mapSet = fromMapsetLite(bl.getMapSet());
         s.setBeatMapSet(mapSet);
-        BeanUtils.copyProperties(map, s);
-        s.setBpm(map.getBpm());
+        BeanUtils.copyProperties(bl, s);
+        s.setBPM(bl.getBpm());
         return s;
     }
 
-    public static BeatmapLite fromBeatmapModel(BeatMap map){
+    public static BeatmapLite fromBeatmapModel(BeatMap b){
         var s = new BeatmapLite();
-        var mapSet = fromMapSetModel(map.getBeatMapSet());
-        BeanUtils.copyProperties(map, s);
+        MapSetLite mapSet = null;
+        if (b.getBeatMapSet() != null) {
+            mapSet = fromMapSetModel(b.getBeatMapSet());
+        }
+        BeanUtils.copyProperties(b, s);
         s.setMapSet(mapSet);
         return s;
     }

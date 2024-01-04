@@ -47,8 +47,8 @@ public class ScoreLegacy {
         var user = score.getUser();
         bid = Math.toIntExact(score.getBeatMap().getId());
 
-        var beatMap = osuGetService.getBeatMapInfo(bid);
-        var beatMapSet = beatMap.getBeatMapSet();
+        var b = osuGetService.getBeatMapInfo(bid);
+        var s = b.getBeatMapSet();
         var modsList = score.getMods();
 
         name = user.getUserName();
@@ -58,14 +58,16 @@ public class ScoreLegacy {
         for (int i = 0; i < mods.length; i++) {
             mods[i] = modsList.get(i);
         }
-        map_name = beatMapSet.getTitleUnicode();
-        artist = beatMapSet.getArtistUnicode();
-        url = beatMapSet.getCovers().getCard();
-        max_combo = beatMap.getMaxCombo();
-        difficulty_name = beatMap.getVersion();
+        if (s != null) {
+            map_name = s.getTitleUnicode();
+            artist = s.getArtistUnicode();
+            url = s.getCovers().getCard();
+        }
+        max_combo = b.getMaxCombo();
+        difficulty_name = b.getDifficultyName();
 
-        star_rating = beatMap.getDifficultyRating();
-        map_length = beatMap.getTotalLength();
+        star_rating = b.getStarRating();
+        map_length = b.getTotalLength();
 
         int sr_floor = (int) Math.floor(star_rating);
         star_str = "";

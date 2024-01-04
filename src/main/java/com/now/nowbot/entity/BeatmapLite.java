@@ -259,17 +259,17 @@ public class BeatmapLite {
     public BeatMap toBeatMap(){
         var b = new BeatMap();
         b.setId(getId());
-        b.setBeatmapsetId(getBeatmapsetId());
+        b.setSID(getBeatmapsetId());
         b.setConvert(getConvert());
-        b.setVersion(getVersion());
-        b.setPlaycount(getPlaycount());
-        b.setPasscount(getPasscount());
+        b.setDifficultyName(getVersion());
+        b.setPlayCount(getPlaycount());
+        b.setPassCount(getPasscount());
         b.setOD(getOD());
         b.setCS(getCS());
         b.setAR(getAR());
         b.setHP(getHP());
-        b.setDifficultyRating(getDifficultyRating());
-        b.setBpm(getBpm());
+        b.setStarRating(getDifficultyRating());
+        b.setBPM(getBpm());
         b.setMaxCombo(getMaxCombo());
         b.setStatus(getStatus());
         b.setCircles(getCircles());
@@ -278,8 +278,7 @@ public class BeatmapLite {
         b.setTotalLength(getTotalLength());
         b.setHitLength(getHitLength());
         b.setModeInt(getModeInt());
-        b.setUserId(getUserId());
-        b.setPlaycount(getPlaycount());
+        b.setMapperID(getUserId());
         return b;
     }
 }

@@ -460,7 +460,7 @@ public class ImageService {
 
         var diffArr = new int[8];
         {
-            var diffAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getDifficultyRating).toArray();
+            var diffAll = allBeatmaps.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getStarRating).toArray();
             var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
             for (var d : diffAll) {
                 for (int i = 0; i < 8; i++) {
@@ -515,7 +515,7 @@ public class ImageService {
 
         var lengthArr = new int[8];
         {
-            var lengthAll = allBeatmaps.stream().filter(b -> b.getUserId().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
+            var lengthAll = allBeatmaps.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
             var lengthMaxBoundary = new double[]{60, 90, 120, 150, 180, 210, 240, Double.MAX_VALUE};
             for (var f : lengthAll) {
                 for (int i = 0; i < 8; i++) {

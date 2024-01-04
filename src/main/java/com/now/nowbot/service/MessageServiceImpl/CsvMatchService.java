@@ -170,7 +170,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                     .append(round.getMode()).append(',')
                     .append(round.getScoringType()).append(',')
                     .append(round.getTeamType()).append(',')
-                    .append((round.getBeatmap().getDifficultyRating())).append(',')
+                    .append((round.getBeatmap().getStarRating())).append(',')
                     .append(round.getBeatmap().getTotalLength()).append(',')
                     .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
                     .append(round.getBeatmap().getId()).append(',')

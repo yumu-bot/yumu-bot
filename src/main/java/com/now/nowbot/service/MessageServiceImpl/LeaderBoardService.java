@@ -83,7 +83,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(BID);
-            isRanked = beatMap.isRanked();
+            isRanked = beatMap.hasLeaderBoard();
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);
         }

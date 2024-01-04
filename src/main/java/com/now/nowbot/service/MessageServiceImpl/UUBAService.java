@@ -145,7 +145,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
         }
 
-        if (bps == null || bps.size() <= 5) {
+        if (bps == null || bps.size() <= 10) {
             if (!param.user().at() && Objects.isNull(param.user().name())) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
             } else {
@@ -171,8 +171,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {
-        var dtbf = new StringBuffer()
-                .append(name).append('[').append(mode).append(']').append('\n');
+        var sb = new StringBuffer().append(name).append('：').append(' ').append(mode).append('\n');
         double allPP = 0;
         int sSum = 0;
         int xSum = 0;
@@ -184,7 +183,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             var bp = bps.get(i);
             //显示前五跟后五的数据
             if (i < 5 || i > bps.size() - 5) {
-                dtbf.append("#")
+                sb.append("#")
                         .append(i + 1)
                         .append(' ')
                         .append(decimalFormat.format(bp.getPP()))
@@ -196,12 +195,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                         .append(bp.getRank());
                 if (!bp.getMods().isEmpty()) {
                     for (int j = 0; j < bp.getMods().size(); j++) {
-                        dtbf.append(' ').append(bp.getMods().get(j));
+                        sb.append(' ').append(bp.getMods().get(j));
                     }
                 }
-                dtbf.append('\n');
-            } else if (i == 50) {
-                dtbf.append("-------分割线-------\n");
+                sb.append('\n');
+            } else if (i == 5) {
+                sb.append("...").append('\n');
             }
             allPP += bp.getPP(); //统计总数
             if (!bp.getMods().isEmpty()) {
@@ -218,22 +217,24 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
             if (bp.isPerfect()) fcSum++;
         }
-        dtbf.append("累计模组有：\n");
-        modeSum.forEach((mod, sum) -> dtbf.append(mod).append(' ').append(sum.value).append(';'));
-        dtbf.append("\nBP中有").append(sSum).append("个 S+ 评级\n满连击的 FC 成绩有").append(fcSum).append('个');
-        if (xSum != 0) dtbf.append("\n其中 SS 有").append(xSum).append('个');
-        dtbf.append("\nBP 的 PP 差为").append(decimalFormat.format(bps.get(0).getPP() - bps.get(bps.size() - 1).getPP()));
-        dtbf.append("\nBP 的平均 PP 为").append(decimalFormat.format(allPP / bps.size()));
+        sb.append("——————————").append('\n');
+        sb.append("模组数量：\n");
+        modeSum.forEach((mod, sum) -> sb.append(mod).append(' ').append(sum.value).append("x; "));
 
-        return dtbf.toString().split("\n");
+        sb.append("\nS+ 评级数量：").append(sSum);
+        if (xSum != 0) sb.append("，其中 SS 数量：").append(xSum);
+
+        sb.append('\n').append("完美 FC 数量：").append(fcSum).append('\n')
+                .append("平均 PP：").append(decimalFormat.format(allPP / bps.size())).append("PP 差值：").append(decimalFormat.format(bps.getFirst().getPP() - bps.getLast().getPP()));
+
+        return sb.toString().split("\n");
     }
 
     public String[] getAllMsgI(List<Score> bps, String name, OsuMode mode) {
         if (bps.isEmpty()) return new String[0];
-        var sb = new StringBuffer()
-                .append(name).append('[').append(mode).append(']').append('\n');
+        var sb = new StringBuffer().append(name).append('：').append(' ').append(mode).append('\n');
 
-        var BP1 = bps.get(0);
+        var BP1 = bps.getFirst();
         var BP1BPM = BP1.getBeatMap().getBPM();
         float BP1Length = BP1.getBeatMap().getTotalLength();
         if (BP1.getMods().contains("DT") || BP1.getMods().contains("NC")) {
@@ -243,24 +244,29 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             BP1Length /= 0.75f;
             BP1BPM *= 0.75f;
         }
-        float star = 0f;
+        float star;
+        float maxStar = BP1.getBeatMap().getStarRating();
+        float minStar = maxStar;
         float maxBPM = BP1BPM;
-        int maxCombo = 0;
-        int maxComboValue = BP1.getMaxCombo();
-        int maxLength = 0;
-        float maxLengthValue = BP1Length;
-
         float minBPM = maxBPM;
-        int minCombo = 0;
-        int minComboValue = maxComboValue;
-        int minLength = 0;
-        float minLengthValue = maxLengthValue;
+        int maxCombo = BP1.getMaxCombo();
+        int minCombo = maxCombo;
+        float maxLength = BP1Length;
+        float minLength = maxLength;
+
+        int maxComboBP = 0;
+        int minComboBP = 0;
+        int maxLengthBP = 0;
+        int minLengthBP = 0;
+        int maxStarBP = 0;
+        int minStarBP = 0;
 
         float avgLength = 0f;
         int avgCombo = 0;
-        int maxTimeToPp = 0;
-        float maxTimeToPpValue = 0f;
-        float allPP = 0f;
+        float avgStar = 0f;
+
+        int maxTTHPPBP = 0;
+        float maxTTHPP = 0f;
         float nowPP = 0f;
 
         TreeMap<String, modData> modSum = new TreeMap<>(); //各个mod的数量
@@ -301,67 +307,83 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             avgLength += length;
 
             if (changedStarMap.containsKey(bp.getScoreId())) {
-                star += changedStarMap.get(bp.getScoreId()).getStars();
+                star = changedStarMap.get(bp.getScoreId()).getStars();
+                avgStar += star;
             } else {
-                star += bp.getBeatMap().getDifficultyRating();
+                star =  bp.getBeatMap().getStarRating();
+                avgStar += star;
             }
 
             if (bpm < minBPM) {
                 minBPM = bpm;
-            } else if (bpm > maxBPM) {
+            } else if (bpm >= maxBPM) {
                 maxBPM = bpm;
             }
 
-            if (length < minLengthValue) {
-                minLength = i;
-                minLengthValue = length;
-            } else if (length > maxLengthValue) {
-                maxLength = i;
-                maxLengthValue = length;
+            if (star < minStar) {
+                minStarBP = i;
+                minStar = star;
+            } else if (star > maxStar) {
+                maxStarBP = i;
+                maxStar = star;
             }
 
-            if (bp.getMaxCombo() < minComboValue) {
-                minCombo = i;
-                minComboValue = bp.getMaxCombo();
-            } else if (bp.getMaxCombo() > maxComboValue) {
-                maxCombo = i;
-                maxComboValue = bp.getMaxCombo();
+            if (length < minLength) {
+                minLengthBP = i;
+                minLength = length;
+            } else if (length > maxLength) {
+                maxLengthBP = i;
+                maxLength = length;
+            }
+
+            if (bp.getMaxCombo() < minCombo) {
+                minComboBP = i;
+                minCombo = bp.getMaxCombo();
+            } else if (bp.getMaxCombo() > maxCombo) {
+                maxComboBP = i;
+                maxCombo = bp.getMaxCombo();
             }
             avgCombo += bp.getMaxCombo();
 
             float tthToPp = (bp.getPP()) / (map.getSliders() + map.getSpinners() + map.getCircles());
-            if (maxTimeToPpValue < tthToPp) {
-                maxTimeToPp = i;
-                maxTimeToPpValue = tthToPp;
+            if (maxTTHPP < tthToPp) {
+                maxTTHPPBP = i;
+                maxTTHPP = tthToPp;
             }
 
-            if (mapperSum.containsKey(map.getUserId())) {
-                mapperSum.get(map.getUserId()).add(bp.getPP());
+            if (mapperSum.containsKey(map.getMapperID())) {
+                mapperSum.get(map.getMapperID()).add(bp.getPP());
             } else {
-                mapperSum.put(map.getUserId(), new mapperData(bp.getPP(), map.getUserId()));
+                mapperSum.put(map.getMapperID(), new mapperData(bp.getPP(), map.getMapperID()));
             }
             nowPP += bp.getWeight().getPP();
-            allPP += bp.getPP();
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();
-        star /= bps.size();
+        avgStar /= bps.size();
 
-        sb.append("BP 平均长度: ").append(getTimeStr((int) avgLength)).append('\n');
-        sb.append("最长是 BP").append(maxLength + 1).append(' ').append(getTimeStr((int) maxLengthValue)).append('\n');
-        sb.append("最短是 BP").append(minLength + 1).append(' ').append(getTimeStr((int) minLengthValue)).append('\n');
+        sb.append("平均时间：").append(getTimeStr((int) avgLength)).append('\n');
+        sb.append("时间最长：BP").append(maxLengthBP + 1).append(' ').append(getTimeStr((int) maxLength)).append('\n');
+        sb.append("时间最短：BP").append(minLengthBP + 1).append(' ').append(getTimeStr((int) minLength)).append('\n');
+        sb.append("——————————").append('\n');
 
-        sb.append("BP 平均连击: ").append(avgCombo).append('\n');
-        sb.append("BP 平均星级: ").append(String.format("%.2f", star)).append('\n');
-        sb.append("Combo 最大是 BP").append(maxCombo + 1).append(' ').append(maxComboValue).append('x').append('\n');
-        sb.append("Combo 最小是 BP").append(minCombo + 1).append(' ').append(minComboValue).append('x').append('\n');
+        sb.append("平均连击：").append(avgCombo).append('\n');
+        sb.append("连击最大：BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n');
+        sb.append("连击最小：BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n');
+        sb.append("——————————").append('\n');
 
-        sb.append("单图 PP/TTH 比例最大的是 BP").append(maxTimeToPp + 1)
-                .append(" 获得").append(decimalFormat.format(maxTimeToPpValue)).append("PP/TTH").append('\n');
+        sb.append("平均星数：").append(String.format("%.2f", avgStar)).append('\n');
+        sb.append("星数最高：BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('x').append('\n');
+        sb.append("星数最低：BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('x').append('\n');
+        sb.append("——————————").append('\n');
 
-        sb.append("BPM 统计:").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
+        sb.append("PP/TTH 比例最大：BP").append(maxTTHPPBP + 1)
+                .append("，为").append(decimalFormat.format(maxTTHPP)).append('倍').append('\n');
 
-        sb.append("BP Mapper 统计:\n");
+        sb.append("BPM 区间：").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
+        sb.append("——————————").append('\n');
+
+        sb.append("谱师：\n");
         var mappers = mapperSum.values().stream()
                 .sorted((o1, o2) -> {
                     if (o1.size != o2.size) return 2 * (o2.size - o1.size);
@@ -374,20 +396,21 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         for (var node : mappersInfo) {
             mapperIdToInfo.put(node.getId(), node.getUserName());
         }
-        mappers.forEach(mapperDate -> {
+        mappers.forEach(mapper -> {
             try {
-                sb.append(mapperIdToInfo.get(mapperDate.uid)).append(' ').append(mapperDate.size).append("个 ")
-                        .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
+                sb.append(mapperIdToInfo.get(mapper.uid)).append('：').append(mapper.size).append("x ")
+                        .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
             } catch (Exception e) {
-                sb.append("id为").append(mapperDate.uid).append("暂未找到，但是有").append(mapperDate.size).append("个 总计")
-                        .append(decimalFormat.format(mapperDate.allPP)).append("PP").append('\n');
+                sb.append("UID：").append(mapper.uid).append('：').append(mapper.size).append("x ")
+                        .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
             }
         });
-        sb.append("累计模组有:\n");
+        sb.append("——————————").append('\n');
+        sb.append("模组数量：\n");
         float finalAllPP = nowPP;
-        modSum.forEach((mod, sum) -> sb.append(mod).append('*').append(sum.size).append(' ').append("总计")
-                .append(decimalFormat.format(sum.getAllPP()))
-                .append('[').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(']')
+        modSum.forEach((mod, sum) -> sb.append(mod).append('：').append(sum.size).append("x ")
+                .append(decimalFormat.format(sum.getAllPP())).append("PP ")
+                .append('(').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(')')
                 .append('\n'));
         return sb.toString().split("\n");
     }

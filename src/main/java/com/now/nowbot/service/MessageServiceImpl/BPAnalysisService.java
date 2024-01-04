@@ -187,23 +187,23 @@ public class BPAnalysisService implements MessageService<UserParam> {
         for (int i = 0; i < bpSize; i++) {
             var s = bps.get(i);
             {// 处理 mapList
-                var minfo = s.getBeatMap();
+                var b = s.getBeatMap();
                 if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreId())) {
                     var attr = changedAttrsMap.get(s.getScoreId());
-                    minfo.setDifficultyRating(attr.getStars());
-                    minfo.setBpm(attr.getBpm());
+                    b.setStarRating(attr.getStars());
+                    b.setBPM(attr.getBpm());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
-                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 1.5f));
+                        b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
                     } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-                        minfo.setTotalLength(Math.round(minfo.getTotalLength() / 0.75f));
+                        b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
                     }
                 }
                 var m = new map(
                         i + 1,
-                        minfo.getTotalLength(),
+                        b.getTotalLength(),
                         s.getMaxCombo(),
-                        minfo.getBPM(),
-                        minfo.getDifficultyRating(),
+                        b.getBPM(),
+                        b.getStarRating(),
                         s.getRank(),
                         s.getBeatMapSet().getCovers().getList2x(),
                         s.getMods().toArray(new String[0])
@@ -229,25 +229,25 @@ public class BPAnalysisService implements MessageService<UserParam> {
         ArrayList<map>[] mapStatistics = new ArrayList[4];
         var bpListSortedByLength = mapList.stream().sorted(Comparator.comparingInt(map::length).reversed()).toList();
         mapStatistics[0] = new ArrayList<>(3);
-        mapStatistics[0].add(bpListSortedByLength.get(0));
+        mapStatistics[0].add(bpListSortedByLength.getFirst());
         mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
 
         var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
         mapStatistics[1] = new ArrayList<>(3);
-        mapStatistics[1].add(bpListSortedByCombo.get(0));
+        mapStatistics[1].add(bpListSortedByCombo.getFirst());
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
 
         var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
         mapStatistics[2] = new ArrayList<>(3);
-        mapStatistics[2].add(bpListSortedByStar.get(0));
+        mapStatistics[2].add(bpListSortedByStar.getFirst());
         mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
         mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
 
         var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
         mapStatistics[3] = new ArrayList<>(3);
-        mapStatistics[3].add(bpListSortedByBpm.get(0));
+        mapStatistics[3].add(bpListSortedByBpm.getFirst());
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
 
@@ -266,7 +266,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
         }
         var bpMapperMap = bps.stream()
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.counting()));
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getMapperID(), Collectors.counting()));
         int mappers = bpMapperMap.size();
         var mapperCount = bpMapperMap
                 .entrySet()
@@ -276,9 +276,9 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, e) -> o, LinkedHashMap::new));
         var mapperInfo = userApiService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
-                .filter(s -> mapperCount.containsKey(s.getBeatMap().getUserId()))
+                .filter(s -> mapperCount.containsKey(s.getBeatMap().getMapperID()))
 //                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
-                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(Score::getPP)))
+                .collect(Collectors.groupingBy(s -> s.getBeatMap().getMapperID(), Collectors.summingDouble(Score::getPP)))
                 .entrySet()
                 .stream()
                 .sorted(Comparator.<Map.Entry<Long, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
@@ -347,8 +347,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 long id = s.getBeatMap().getId();
                 if (changedAttrsMap.containsKey(id)) {
                     var attr = changedAttrsMap.get(id);
-                    s.getBeatMap().setDifficultyRating(attr.getStars());
-                    s.getBeatMap().setBpm(attr.getBpm());
+                    s.getBeatMap().setStarRating(attr.getStars());
+                    s.getBeatMap().setBPM(attr.getBpm());
                     if (Mod.hasDt(attr.getMods())) {
                         s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 1.5f));
                     } else if (Mod.hasHt(attr.getMods())) {
