@@ -7,18 +7,25 @@ public class UserGroup {
 
     @JsonProperty("colour")
     String color;
+
     @JsonProperty("has_listing")
     boolean hasListing;
+
     @JsonProperty("has_playmodes")
     boolean hasPlaymodes;
 
     Integer id;
+
     String identifier;
+
     @JsonProperty("is_probationary")
     boolean isProbationary;
+
     String name;
+
     @JsonProperty("short_name")
     String shortName;
+
     @Nullable
     String[] playmodes;
 

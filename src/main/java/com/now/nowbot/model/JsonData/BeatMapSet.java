@@ -537,7 +537,7 @@ public class BeatMapSet {
         if (Objects.nonNull(currentNominations)) {
             for (CurrentNominations c : currentNominations) {
                 var n = c.nominatorID();
-                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getId(), n)).toList();
+                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getUID(), n)).toList();
             }
         }
 
@@ -564,24 +564,28 @@ public class BeatMapSet {
     }
 
     public double getPublicRating() {
-        if (Objects.isNull(ratings)) return 0D;
+        if (Objects.isNull(ratings)) {
+            publicRating = 0D;
+            return publicRating;
+        }
 
         double r = 0;
         double sum = 0;
-        int i;
 
-        for (i = 0; i < ratings.size(); i++) {
-            sum = sum + ratings.get(i);
+        for (var rating : ratings) {
+            sum += rating;
         }
 
-        if (sum == 0D) return 0D;
+        if (sum == 0D) {
+            publicRating = 0D;
+            return publicRating;
+        }
 
         for (int j = 0; j <= 10; j++) {
             r = r + j / 10D * ratings.get(j) / sum;
         }
 
         publicRating = r;
-
         return publicRating;
     }
 

@@ -5,6 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -20,6 +21,8 @@ public class NominationService implements MessageService<Matcher> {
 
     @Resource
     OsuBeatmapApiService osuBeatmapApiService;
+    @Resource
+    OsuUserApiService osuUserApiService;
     @Resource
     ImageService imageService;
 
@@ -43,6 +46,10 @@ public class NominationService implements MessageService<Matcher> {
             m = osuBeatmapApiService.getBeatMapSetInfo(sid);
         } catch (Exception e) {
             log.error("NOM", e);
+        }
+
+        {
+            m.getCreatorData().parseFull(osuUserApiService);
         }
 
         QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(m.toString()));
