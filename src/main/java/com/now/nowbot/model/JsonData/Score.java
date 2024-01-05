@@ -42,6 +42,7 @@ public class Score {
 
     @JsonProperty("beatmap")
     BeatMap beatMap;
+
     @JsonProperty("beatmapset")
     BeatMapSet beatMapSet;
 

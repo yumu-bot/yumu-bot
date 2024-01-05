@@ -65,9 +65,8 @@ public class BeatMap {
         return list;
     }
 
-    @JsonIgnore
     List<Integer> retryList;
-    @JsonIgnore
+
     List<Integer> failList;
 
     @JsonProperty("max_combo")

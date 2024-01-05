@@ -202,23 +202,6 @@ public class MicroUser {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("MicroUser{");
-        sb.append("avatar='").append(avatarUrl).append('\'');
-        sb.append(", group='").append(group).append('\'');
-        sb.append(", id=").append(id);
-        sb.append(", active=").append(active);
-        sb.append(", bot=").append(isBot);
-        sb.append(", deleted=").append(isDeleted);
-        sb.append(", online=").append(isOnline);
-        sb.append(", supporter=").append(isSupporter);
-        sb.append(", lastTime='").append(lastTime).append('\'');
-        sb.append(", pmOnly=").append(pmFriendsOnly);
-        sb.append(", name='").append(userName).append('\'');
-        sb.append(", countryCode='").append(countryCode).append('\'');
-        sb.append(", country=").append(country);
-        sb.append(", cover=").append(cover);
-        sb.append(", statistics=").append(statistics);
-        sb.append('}');
-        return sb.toString();
+        return STR."MicroUser{avatar='\{avatarUrl}\{'\''}, group='\{group}\{'\''}, id=\{id}, active=\{active}, bot=\{isBot}, deleted=\{isDeleted}, online=\{isOnline}, supporter=\{isSupporter}, lastTime='\{lastTime}\{'\''}, pmOnly=\{pmFriendsOnly}, name='\{userName}\{'\''}, countryCode='\{countryCode}\{'\''}, country=\{country}, cover=\{cover}, statistics=\{statistics}\{'}'}";
     }
 }

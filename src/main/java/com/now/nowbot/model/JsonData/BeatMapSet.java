@@ -570,11 +570,9 @@ public class BeatMapSet {
         }
 
         double r = 0;
-        double sum = 0;
+        double sum;
 
-        for (var rating : ratings) {
-            sum += rating;
-        }
+        sum = ratings.stream().reduce(Integer::sum).orElse(0);
 
         if (sum == 0D) {
             publicRating = 0D;
@@ -582,7 +580,7 @@ public class BeatMapSet {
         }
 
         for (int j = 0; j <= 10; j++) {
-            r = r + j / 10D * ratings.get(j) / sum;
+            r += (j * ratings.get(j) / sum);
         }
 
         publicRating = r;
