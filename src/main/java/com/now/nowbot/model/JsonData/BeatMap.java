@@ -1,6 +1,9 @@
 package com.now.nowbot.model.JsonData;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +26,7 @@ public class BeatMap {
     Integer SID;
 
     @JsonProperty("difficulty_rating")
-    Float StarRating;
+    Float starRating;
 
     Long id; //这个不能改
 
@@ -35,17 +38,15 @@ public class BeatMap {
     Integer totalLength;
 
     @JsonProperty("user_id")
-    Long MapperID;
+    Long mapperID;
 
     @JsonProperty("version")
     String difficultyName;
 
     @JsonProperty("beatmapset")
-    @Nullable
     BeatMapSet beatMapSet;
 
     @JsonProperty("checksum")
-    @Nullable
     String md5;
 
     //retry == fail, fail == exit
@@ -151,11 +152,11 @@ public class BeatMap {
     }
 
     public Float getStarRating() {
-        return StarRating;
+        return starRating;
     }
 
     public void setStarRating(Float starRating) {
-        StarRating = starRating;
+        this.starRating = starRating;
     }
 
     public String getMode() {
@@ -187,11 +188,11 @@ public class BeatMap {
     }
 
     public Long getMapperID() {
-        return MapperID;
+        return mapperID;
     }
 
     public void setMapperID(Long mapperID) {
-        MapperID = mapperID;
+        this.mapperID = mapperID;
     }
 
     public String getDifficultyName() {
@@ -432,6 +433,6 @@ public class BeatMap {
 
     @Override
     public String toString() {
-        return STR."BeatMap{SID=\{SID}, StarRating=\{StarRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{MapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
+        return STR."BeatMap{SID=\{SID}, StarRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
     }
 }

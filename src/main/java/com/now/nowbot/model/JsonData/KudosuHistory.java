@@ -4,11 +4,9 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.Locale;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -17,7 +15,7 @@ public class KudosuHistory {
     record Giver(String url, String username) {
     }
 
-    record Post(@Nullable String url, String title) {
+    record Post(String url, String title) {
     }//It'll be "[deleted beatmap]" for deleted beatmaps.
 
     Integer id;

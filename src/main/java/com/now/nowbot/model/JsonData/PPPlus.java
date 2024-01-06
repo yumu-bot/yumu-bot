@@ -16,19 +16,19 @@ public class PPPlus {
     @JsonIgnore
     private LocalDateTime time = LocalDateTime.now();
     @JsonProperty("PerformanceTotal")
-    private Double Total;
+    private Double total;
     @JsonProperty("JumpAimTotal")
-    private Double Jump;
+    private Double jump;
     @JsonProperty("FlowAimTotal")
-    private Double Flow;
+    private Double flow;
     @JsonProperty("AccuracyTotal")
-    private Double Acc;
+    private Double acc;
     @JsonProperty("StaminaTotal")
-    private Double Sta;
+    private Double sta;
     @JsonProperty("SpeedTotal")
-    private Double Spd;
+    private Double spd;
     @JsonProperty("PrecisionTotal")
-    private Double Pre;
+    private Double pre;
 
     public PPPlus() {
     }
@@ -36,13 +36,13 @@ public class PPPlus {
     public PPPlus(Long uid, LocalDateTime time, Double total, Double jump, Double flow, Double acc, Double sta, Double spd, Double pre) {
         this.uid = uid;
         this.time = time;
-        Total = total;
-        Jump = jump;
-        Flow = flow;
-        Acc = acc;
-        Sta = sta;
-        Spd = spd;
-        Pre = pre;
+        this.total = total;
+        this.jump = jump;
+        this.flow = flow;
+        this.acc = acc;
+        this.sta = sta;
+        this.spd = spd;
+        this.pre = pre;
     }
 
 
@@ -75,68 +75,68 @@ public class PPPlus {
     }
 
     public Double getTotal() {
-        return Total;
+        return total;
     }
 
     public PPPlus setTotal(Double total) {
-        Total = total;
+        this.total = total;
         return this;
     }
 
     public Double getJump() {
-        return Jump;
+        return jump;
     }
 
 
     public PPPlus setJump(Double jump) {
-        Jump = jump;
+        this.jump = jump;
         return this;
     }
 
     public Double getFlow() {
-        return Flow;
+        return flow;
     }
 
 
     public PPPlus setFlow(Double flow) {
-        Flow = flow;
+        this.flow = flow;
         return this;
     }
 
     public Double getAcc() {
-        return Acc;
+        return acc;
     }
 
     public PPPlus setAcc(Double acc) {
-        Acc = acc;
+        this.acc = acc;
         return this;
     }
 
     public Double getSta() {
-        return Sta;
+        return sta;
     }
 
     public PPPlus setSta(Double sta) {
-        Sta = sta;
+        this.sta = sta;
         return this;
     }
 
     public Double getSpd() {
-        return Spd;
+        return spd;
     }
 
 
     public PPPlus setSpd(Double spd) {
-        Spd = spd;
+        this.spd = spd;
         return this;
     }
 
     public Double getPre() {
-        return Pre;
+        return pre;
     }
 
     public PPPlus setPre(Double pre) {
-        Pre = pre;
+        this.pre = pre;
         return this;
     }
 
@@ -146,13 +146,13 @@ public class PPPlus {
         sb.append("uid=").append(uid);
         sb.append(", name='").append(name).append('\'');
         sb.append(", time=").append(time);
-        sb.append(", Total=").append(Total);
-        sb.append(", Jump=").append(Jump);
-        sb.append(", Flow=").append(Flow);
-        sb.append(", Acc=").append(Acc);
-        sb.append(", Sta=").append(Sta);
-        sb.append(", Spd=").append(Spd);
-        sb.append(", Pre=").append(Pre);
+        sb.append(", Total=").append(total);
+        sb.append(", Jump=").append(jump);
+        sb.append(", Flow=").append(flow);
+        sb.append(", Acc=").append(acc);
+        sb.append(", Sta=").append(sta);
+        sb.append(", Spd=").append(spd);
+        sb.append(", Pre=").append(pre);
         sb.append('}');
         return sb.toString();
     }

@@ -1,6 +1,9 @@
 package com.now.nowbot.model.JsonData;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 
@@ -47,7 +50,7 @@ public class OsuUser {
     OffsetDateTime lastVisit;
 
     @JsonProperty("pm_friends_only")
-    Boolean PMFriendsOnly;
+    Boolean pmFriendsOnly;
 
     @JsonProperty("profile_colour")
     @Nullable
@@ -353,12 +356,82 @@ public class OsuUser {
         this.lastVisit = lastVisit;
     }
 
-    public Boolean getPMFriendsOnly() {
-        return PMFriendsOnly;
+    //这个是把基础 OsuUser 转换成完整 OsuUser 的方法
+    public void parseFull(OsuUserApiService osuUserApiService) {
+        OsuUser o;
+        try {
+            o = osuUserApiService.getPlayerInfo(this.getUID());
+        } catch (Exception e) {
+            return;
+        }
+
+        this.setAccountHistory(o.getAccountHistory());
+        this.setActive(o.getActive());
+        this.setAvatarUrl(o.getAvatarUrl());
+        this.setBot(o.getBot());
+        this.setBadges(o.getBadges());
+        this.setBeatmapPlaycount(o.getBeatmapPlaycount());
+        this.setCommentsCount(o.getCommentsCount());
+        this.setCountry(o.getCountry());
+        this.setCountryCode(o.getCountryCode());
+        this.setCover(o.getCover());
+        this.setCoverUrl(o.getCoverUrl());
+        this.setDefaultGroup(o.getDefaultGroup());
+        this.setDeleted(o.getDeleted());
+        this.setDiscord(o.getDiscord());
+        this.setFavoriteCount(o.getFavoriteCount());
+        this.setFollowerCount(o.getFollowerCount());
+        this.setGroups(o.getGroups());
+        this.setGraveyardCount(o.getGraveyardCount());
+        this.setGuestCount(o.getGuestCount());
+        this.setHasSupported(o.getHasSupported());
+        this.setHighestRank(o.getHighestRank());
+        this.setId(o.getId());
+        this.setInterests(o.getInterests());
+        this.setJoinDate(o.getJoinDate());
+        this.setKudosu(o.getKudosu());
+        this.setLastVisit(o.getLastVisit());
+        this.setLocation(o.getLocation());
+        this.setLovedCount(o.getLovedCount());
+        this.setMappingFollowerCount(o.getMappingFollowerCount());
+        this.setMaxBlocks(o.getMaxBlocks());
+        this.setMaxFriends(o.getMaxFriends());
+        this.setMonthlyPlaycounts(o.getMonthlyPlaycounts());
+        this.setNominatedCount(o.getNominatedCount());
+        this.setOccupation(o.getOccupation());
+        this.setOnline(o.getOnline());
+        this.setPage(o.getPage());
+        this.setPP(o.getPP());
+        this.setPendingCount(o.getPendingCount());
+        this.setPlayMode(o.getPlayMode());
+        this.setPmFriendsOnly(o.getPmFriendsOnly());
+        this.setPlayStyle(o.getPlayStyle());
+        this.setPreviousNames(o.getPreviousNames());
+        this.setProfileOrder(o.getProfileOrder());
+        this.setProfileBanner(o.getProfileBanner());
+        this.setProfileBanners(o.getProfileBanners());
+        this.setProfileColor(o.getProfileColor());
+        this.setPostCount(o.getPostCount());
+        this.setRankHistory(o.getRankHistory());
+        this.setRankedCount(o.getRankedCount());
+        this.setReplaysWatchedCounts(o.getReplaysWatchedCounts());
+        this.setStatistics(o.getStatistics());
+        this.setSupporter(o.getSupporter());
+        this.setSupportLevel(o.getSupportLevel());
+        this.setScoreBestCount(o.getScoreBestCount());
+        this.setScoreRecentCount(o.getScoreRecentCount());
+        this.setScorePinnedCount(o.getScorePinnedCount());
+        this.setScoreFirstCount(o.getScoreFirstCount());
+        this.setTitle(o.getTitle());
+        this.setTwitter(o.getTwitter());
+        this.setTitleUrl(o.getTitleUrl());
+        this.setUsername(o.getUsername());
+        this.setUserAchievements(o.getUserAchievements());
+        this.setWebsite(o.getWebsite());
     }
 
-    public void setPMFriendsOnly(Boolean PMFriendsOnly) {
-        this.PMFriendsOnly = PMFriendsOnly;
+    public Boolean getPmFriendsOnly() {
+        return pmFriendsOnly;
     }
 
     @Nullable
@@ -857,82 +930,12 @@ public class OsuUser {
         return null;
     }
 
-    //这个是把基础 OsuUser 转换成完整 OsuUser 的方法
-    public void parseFull(OsuUserApiService osuUserApiService) {
-        OsuUser o;
-        try {
-            o = osuUserApiService.getPlayerInfo(this.getUID());
-        } catch (Exception e) {
-            return;
-        }
-
-        this.setAccountHistory(o.getAccountHistory());
-        this.setActive(o.getActive());
-        this.setAvatarUrl(o.getAvatarUrl());
-        this.setBot(o.getBot());
-        this.setBadges(o.getBadges());
-        this.setBeatmapPlaycount(o.getBeatmapPlaycount());
-        this.setCommentsCount(o.getCommentsCount());
-        this.setCountry(o.getCountry());
-        this.setCountryCode(o.getCountryCode());
-        this.setCover(o.getCover());
-        this.setCoverUrl(o.getCoverUrl());
-        this.setDefaultGroup(o.getDefaultGroup());
-        this.setDeleted(o.getDeleted());
-        this.setDiscord(o.getDiscord());
-        this.setFavoriteCount(o.getFavoriteCount());
-        this.setFollowerCount(o.getFollowerCount());
-        this.setGroups(o.getGroups());
-        this.setGraveyardCount(o.getGraveyardCount());
-        this.setGuestCount(o.getGuestCount());
-        this.setHasSupported(o.getHasSupported());
-        this.setHighestRank(o.getHighestRank());
-        this.setId(o.getId());
-        this.setInterests(o.getInterests());
-        this.setJoinDate(o.getJoinDate());
-        this.setKudosu(o.getKudosu());
-        this.setLastVisit(o.getLastVisit());
-        this.setLocation(o.getLocation());
-        this.setLovedCount(o.getLovedCount());
-        this.setMappingFollowerCount(o.getMappingFollowerCount());
-        this.setMaxBlocks(o.getMaxBlocks());
-        this.setMaxFriends(o.getMaxFriends());
-        this.setMonthlyPlaycounts(o.getMonthlyPlaycounts());
-        this.setNominatedCount(o.getNominatedCount());
-        this.setOccupation(o.getOccupation());
-        this.setOnline(o.getOnline());
-        this.setPage(o.getPage());
-        this.setPP(o.getPP());
-        this.setPendingCount(o.getPendingCount());
-        this.setPlayMode(o.getPlayMode());
-        this.setPMFriendsOnly(o.getPMFriendsOnly());
-        this.setPlayStyle(o.getPlayStyle());
-        this.setPreviousNames(o.getPreviousNames());
-        this.setProfileOrder(o.getProfileOrder());
-        this.setProfileBanner(o.getProfileBanner());
-        this.setProfileBanners(o.getProfileBanners());
-        this.setProfileColor(o.getProfileColor());
-        this.setPostCount(o.getPostCount());
-        this.setRankHistory(o.getRankHistory());
-        this.setRankedCount(o.getRankedCount());
-        this.setReplaysWatchedCounts(o.getReplaysWatchedCounts());
-        this.setStatistics(o.getStatistics());
-        this.setSupporter(o.getSupporter());
-        this.setSupportLevel(o.getSupportLevel());
-        this.setScoreBestCount(o.getScoreBestCount());
-        this.setScoreRecentCount(o.getScoreRecentCount());
-        this.setScorePinnedCount(o.getScorePinnedCount());
-        this.setScoreFirstCount(o.getScoreFirstCount());
-        this.setTitle(o.getTitle());
-        this.setTwitter(o.getTwitter());
-        this.setTitleUrl(o.getTitleUrl());
-        this.setUsername(o.getUsername());
-        this.setUserAchievements(o.getUserAchievements());
-        this.setWebsite(o.getWebsite());
+    public void setPmFriendsOnly(Boolean pmFriendsOnly) {
+        this.pmFriendsOnly = pmFriendsOnly;
     }
 
     @Override
     public String toString() {
-        return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{PMFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{playMode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanner=\{profileBanner}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{CommentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
+        return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{pmFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{playMode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanner=\{profileBanner}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{CommentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
     }
 }

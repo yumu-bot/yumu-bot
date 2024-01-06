@@ -178,19 +178,6 @@ public class ActivityEvent {
 
     @Override
     public String toString() {
-        return "ActivityEvent{" +
-                "createdAt=" + createdAt +
-                ", id=" + id +
-                ", count=" + count +
-                ", approval=" + approval +
-                ", scoreRank='" + scoreRank + '\'' +
-                ", rank=" + rank +
-                ", mode='" + mode + '\'' +
-                ", achievement='" + achievement + '\'' +
-                ", type=" + type +
-                ", user=" + user +
-                ", beatmap=" + beatmap +
-                ", beatmapSet=" + beatmapSet +
-                '}';
+        return STR."ActivityEvent{createdAt=\{createdAt}, id=\{id}, count=\{count}, approval=\{approval}, scoreRank='\{scoreRank}\{'\''}, rank=\{rank}, mode='\{mode}\{'\''}, achievement='\{achievement}\{'\''}, type=\{type}, user=\{user}, beatmap=\{beatmap}, beatmapSet=\{beatmapSet}\{'}'}";
     }
 }

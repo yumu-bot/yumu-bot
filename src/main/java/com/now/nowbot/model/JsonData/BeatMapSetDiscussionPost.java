@@ -3,7 +3,6 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
 
@@ -17,18 +16,15 @@ public class BeatMapSetDiscussionPost {
     OffsetDateTime createdAt;
 
     @JsonProperty("deleted_at")
-    @Nullable
     OffsetDateTime deletedAt;
 
     @JsonProperty("deleted_by_id")
-    @Nullable
     Long deletedByUID;
 
     @JsonProperty("id")
     Long PID;
 
     @JsonProperty("last_editor_id")
-    @Nullable
     Long lastEditorID;
 
     String message;
@@ -57,21 +53,21 @@ public class BeatMapSetDiscussionPost {
         this.createdAt = createdAt;
     }
 
-    @Nullable
+
     public OffsetDateTime getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(@Nullable OffsetDateTime deletedAt) {
+    public void setDeletedAt(OffsetDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
 
-    @Nullable
+
     public Long getDeletedByUID() {
         return deletedByUID;
     }
 
-    public void setDeletedByUID(@Nullable Long deletedByUID) {
+    public void setDeletedByUID(Long deletedByUID) {
         this.deletedByUID = deletedByUID;
     }
 
@@ -83,12 +79,12 @@ public class BeatMapSetDiscussionPost {
         this.PID = PID;
     }
 
-    @Nullable
+
     public Long getLastEditorID() {
         return lastEditorID;
     }
 
-    public void setLastEditorID(@Nullable Long lastEditorID) {
+    public void setLastEditorID(Long lastEditorID) {
         this.lastEditorID = lastEditorID;
     }
 
