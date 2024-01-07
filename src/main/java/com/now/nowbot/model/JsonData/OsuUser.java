@@ -46,6 +46,9 @@ public class OsuUser {
     @JsonProperty("is_supporter")
     Boolean isSupporter;
 
+    @JsonProperty("is_restricted")
+    Boolean isRestricted;
+
     @JsonProperty("last_visit")
     OffsetDateTime lastVisit;
 

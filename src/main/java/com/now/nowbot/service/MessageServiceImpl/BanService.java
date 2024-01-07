@@ -112,7 +112,7 @@ public class BanService implements MessageService<BanParam> {
             }
             case "ban", "b" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.addUser2PerMissionGroup(param.qq(), true, true);
+                    var add = permission.addUser2FriendGroup(param.qq());
                     if (add) {
                         from.sendMessage("成功拉黑用户");
                     }
