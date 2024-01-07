@@ -57,15 +57,15 @@ public class OsuUserInfoDao {
         user.setUID(archive.getOsuID());
 
         Statistics statistics = new Statistics();
-        statistics.setA(statistics.getA());
-        statistics.setS(statistics.getS());
-        statistics.setSS(statistics.getSS());
-        statistics.setSH(statistics.getSH());
-        statistics.setSSH(statistics.getSSH());
+        statistics.setA(archive.getGrade_counts_a());
+        statistics.setS(archive.getGrade_counts_s());
+        statistics.setSS(archive.getGrade_counts_ss());
+        statistics.setSH(archive.getGrade_counts_sh());
+        statistics.setSSH(archive.getGrade_counts_ssh());
 
-        statistics.setTotalScore(statistics.getTotalScore());
-        statistics.setTotalHits(statistics.getTotalHits());
-        statistics.setRankedScore(statistics.getRankedScore());
+        statistics.setTotalScore(archive.getTotal_score());
+        statistics.setTotalHits(archive.getTotal_hits());
+        statistics.setRankedScore(archive.getRanked_score());
         statistics.setAccuracy(archive.getHit_accuracy());
         statistics.setPlayCount(archive.getPlay_count());
         statistics.setPlayTime(archive.getPlay_time());
