@@ -143,7 +143,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                 })
                 */
                 .map(OsuUserInfoDao::fromArchive);
-        log.info("old: {}", JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
+        log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
 
 
         try {
