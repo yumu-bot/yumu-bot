@@ -143,10 +143,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                 })
                 */
                 .map(OsuUserInfoDao::fromArchive);
-        /*
-        log.info("old: {}\n new: {}", JacksonUtil.objectToJsonPretty(osuUser), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
+        log.info("old: {}", JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
 
-         */
 
         try {
             var img = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
