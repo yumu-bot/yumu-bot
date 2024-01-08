@@ -6,7 +6,6 @@ import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.util.MoliUtil;
-import com.now.nowbot.util.PanelUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -54,7 +53,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
       ioc容器加载完毕运行
      */
     public void run(String... args) throws Exception {
-        PanelUtil.init();
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
         MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
         permission.init(applicationContext);
