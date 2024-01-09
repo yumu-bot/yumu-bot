@@ -61,7 +61,7 @@ public class ServiceCountService implements MessageService<Integer> {
     public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
         StringBuilder sb = new StringBuilder("""
                 | 服务名 | 调用次数 | 平均用时 | 最大用时 | 最小用时 |
-                |-------|--------|---------|---------|---------|
+                |:-------|:--------:|:---------:|:---------:|:---------:|
                 """);
         List<ServiceCallLite.ServiceCallResult> result;
         if (Objects.isNull(hours) || hours == 0) {
@@ -75,12 +75,12 @@ public class ServiceCountService implements MessageService<Integer> {
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
                 .append('|').append(r.getService())
                 .append('|').append(r.getSize())
-                .append('|').append(r.getAvgTime().intValue())
-                .append('|').append(r.getMaxTime())
-                .append('|').append(r.getMinTime())
+                .append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
+                .append('|').append(r.getMaxTime() / 1000D).append('s')
+                .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append("|\n");
         result.forEach(work);
-        var s = imageService.getMarkdownImage(sb.toString(), 600);
+        var s = imageService.getPanelA6(sb.toString(), "service");
         QQMsgUtil.sendImage(event.getSubject(), s);
     }
 }

@@ -11,12 +11,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class DataUtil {
     private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
+
+    public static String String2Markdown(String str) {
+        return str.replace("\n", "\n\n");
+    }
+    public static String JSONString2Markdown(String str) {
+        if (Objects.isNull(str)) return null;
+        return str.replace("},", "},\n\n");
+    }
 
     public static char getRoundedNumberUnit(double number, int level) {
         char unit = '-';
@@ -157,9 +166,9 @@ public class DataUtil {
     }
 
     public static List<Integer> getGrouping26(List<Integer> x) {
-        var steps = (x.get(x.size() - 1) - x.get(0)) / 26 + 1;
+        var steps = (x.getLast() - x.getFirst()) / 26 + 1;
         var out = new LinkedList<Integer>();
-        int m = x.get(0) + steps;
+        int m = x.getFirst() + steps;
         short sum = 0;
         for (var i : x) {
             if (i < m) {

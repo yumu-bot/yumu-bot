@@ -5,7 +5,10 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.MatchData;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchStat;
+import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
@@ -17,17 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
@@ -45,6 +42,12 @@ public class ImageService {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * 获取 md 图片，现已经弃用，被 panel A6 代替
+     * @param markdown md 字符串
+     * @return 图片流
+     */
+    @Deprecated
     public byte[] getMarkdownImage(String markdown) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -54,10 +57,13 @@ public class ImageService {
     }
 
     /***
+     * 获取 md 图片，现已经弃用，被 panel A6 代替
      * 宽度是px,最好600以上
+     * @param markdown md 字符串
      * @param width 宽度
-     * @return 图片
+     * @return 图片流
      */
+    @Deprecated
     public byte[] getMarkdownImage(String markdown, int width) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -78,36 +84,6 @@ public class ImageService {
         }
 
         return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
-    }
-
-    public byte[] getCardH() {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            InputStream in = new FileInputStream("/home/spring/Downloads/background.jpg");
-            MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
-            ByteArrayResource fs = new ByteArrayResource(in.readAllBytes(), "") {
-                @Override
-                public String getFilename() {
-                    return "bg.png";
-                }
-            };
-            form.add("background", fs);
-            form.add("title", "title");
-            form.add("artist", "artist");
-            form.add("info", "info");
-            form.add("mod", "mod");
-            form.add("star_b", "3");
-            form.add("star_m", ".33");
-            HttpEntity<MultiValueMap<String, Object>> datas = new HttpEntity<>(form, headers);
-            var t = restTemplate.postForEntity("http://localhost:8555/card-d", datas, byte[].class);
-            if (t.getStatusCode().is2xxSuccessful()) {
-                return t.getBody();
-            }
-        } catch (IOException e) {
-            log.error("File error", e);
-        }
-        return new byte[0];
     }
 
     public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
@@ -148,6 +124,72 @@ public class ImageService {
         return doPost("panel_A4", httpEntity);
     }
 
+    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of(
+                "user", user,
+                "score", scores
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A5", httpEntity);
+    }
+
+    /**
+     * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， name 默认 ""
+     */
+    public byte[] getPanelA6(String markdown) {
+        return getPanelA6(Optional.empty(), markdown, "", 1840);
+    }
+
+    /**
+     * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840
+     */
+    public byte[] getPanelA6(String markdown, String name) {
+        return getPanelA6(Optional.empty(), markdown, name, 1840);
+    }
+
+    /**
+     * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840， name 默认 null
+     */
+    public byte[] getPanelA6(Optional<OsuUser> user, String markdown) {
+        return getPanelA6(user, markdown, "", 1840);
+    }
+
+    /**
+     * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840
+     */
+    public byte[] getPanelA6(Optional<OsuUser> user, String markdown, String name) {
+        return getPanelA6(user, markdown, name, 1840);
+    }
+    /**
+     * Markdown 页面，用于帮助和维基 MD/H/W
+     * @param user 左上角的玩家，可以为 Optional.empty
+     * @param markdown md 字符串
+     * @param name 名字，仅支持 null、wiki、help
+     * @param width 默认 1840
+     * @return 图片流
+     */
+
+    public byte[] getPanelA6(Optional<OsuUser> user, String markdown, String name, Integer width) {
+        HttpHeaders headers = getDefaultHeader();
+
+        if (Objects.isNull(width)) width = 1840;
+
+        var body = new HashMap<String, Object>(Map.of(
+                "markdown", markdown,
+                "name", name,
+                "width", width
+        ));
+
+        if (user.isPresent()) {
+            body.put("user", user);
+        }
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A6", httpEntity);
+    }
+
     public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus PPMinusMe) {
         String STBPRE;
 
@@ -182,18 +224,6 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
-
-    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "user", user,
-                "score", scores
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A5", httpEntity);
-    }
-
     public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, PPMinus PPMinusMe, PPMinus PPMinusOther, OsuMode mode) {
         String STBPRE;
 

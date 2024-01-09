@@ -6,6 +6,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -40,18 +41,25 @@ public class NominationService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var sid = Long.parseLong(matcher.group("sid"));
 
-        BeatMapSet m = new BeatMapSet();
+        BeatMapSet m;
 
         try {
             m = osuBeatmapApiService.getBeatMapSetInfo(sid);
+            m.getCreatorData().parseFull(osuUserApiService);
         } catch (Exception e) {
             log.error("NOM", e);
+            throw new TipsException("我去，找不到这张图！");
         }
 
-        {
-            m.getCreatorData().parseFull(osuUserApiService);
-        }
+        byte[] data;
 
-        QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(m.toString()));
+        try {
+            data = imageService.getPanelA6("");
+            //JSONString2Markdown(m.toString())
+            QQMsgUtil.sendImage(event.getSubject(), data);
+        } catch (Exception e) {
+            log.error("NOM", e);
+            throw new TipsException("我去，这个对象太大了！");
+        }
     }
 }
