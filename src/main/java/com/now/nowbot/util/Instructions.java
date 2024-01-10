@@ -56,7 +56,7 @@ public class Instructions {
 
     public static final Pattern FRIEND = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![A-Za-z_]))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
 
-    public static final Pattern MUTUAL = Pattern.compile("[!！]\\s*(?i)(ym)?(mutual|mu(?![A-Za-z_]))\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]*)?");
+    public static final Pattern MUTUAL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mutual|mu(?![A-Za-z_]))\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?");
 
     public static final Pattern PPMINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(ppminus|(p?(pm))(?![a-rt-uw-zA-RT-UW-Z_]))\\s*(?<vs>vs)?\\s*([:：](?<mode>[\\w\\d]+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
 

@@ -73,12 +73,12 @@ public class MutualFriendService implements MessageService<Matcher> {
             var name = matcher.group("names");
             StringBuilder s = new StringBuilder();
 
-            if (Objects.nonNull(name)){
+            if (Objects.nonNull(name) && !name.trim().isBlank()){
                 for (var n : name.split(",")){
                     try {
                         Long id = userApiService.getOsuId(n);
                         s.append(STR."# \{n} : https://osu.ppy.sh/users/\{id}\n");
-                    } catch (HttpClientErrorException e) {
+                    } catch (Exception e) {
                         s.append(STR."# \{n} : 找不到玩家或网络错误！\n");
                     }
                 }
