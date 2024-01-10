@@ -2,17 +2,28 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("HELP")
 public class HelpService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(HelpService.class);
+
+    @Resource
+    ImageService imageService;
 
     @Override
     public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
@@ -24,9 +35,127 @@ public class HelpService implements MessageService<Matcher> {
     }
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        boolean isSendLink = true; //这是防止web不能用，临时关闭的布尔值
         var from = event.getSubject();
+
         String module = matcher.group("module").trim().toLowerCase(); //传东西进来
+
+        try {
+            var pic = getHelpPicture(module, imageService);
+
+            if (Objects.nonNull(pic)) {
+                from.sendImage(pic);
+            } else {
+                throw new TipsException("窝趣，找不到文件");
+            }
+        } catch (Exception e) {
+            log.error("Help A6 输出错误，使用默认方法");
+
+            var picLegacy = getHelpPictureLegacy(module);
+            var msgLegacy = getHelpLinkLegacy(module);
+
+            if (Objects.nonNull(picLegacy)) {
+                from.sendImage(picLegacy);
+            }
+
+            if (!msgLegacy.isEmpty()) {
+                var receipt = from.sendMessage(msgLegacy);
+                //默认110秒后撤回
+                from.recallIn(receipt, 110 * 1000);
+            }
+        }
+
+    }
+
+
+    /**
+     * 目前的 help 方法，走 panel A6
+     * @param module 需要查询的功能名字
+     * @return 图片流
+     */
+    private static byte[] getHelpPicture(String module, ImageService imageService) {
+        String fileName = switch (module) {
+            case "bot", "b" -> "bot";
+            case "score", "s" -> "score";
+            case "player", "p" -> "player";
+            case "map", "m" -> "map";
+            case "chat", "c" -> "chat";
+            case "fun", "f" -> "fun";
+            case "aid", "a" -> "aid";
+            case "tournament", "t" -> "tournament";
+            
+            case "help", "h" -> "help";
+            case "ping", "pi" -> "ping";
+            case "bind", "bi" -> "bind";
+            case "ban", "bq", "bu", "bg" -> "ban";
+            case "switch", "sw" -> "switch";
+            case "antispam", "as" -> "antispam";
+
+            case "mode", "setmode", "sm", "mo" -> "mode";
+            case "pass", "pr" -> "pass";
+            case "recent", "re" -> "recent";
+            case "scores" -> "scores";
+            case "bestperformance", "bp" -> "bestperformance";
+            case "todaybp", "tbp" -> "todaybp";
+            case "bpanalysis", "bpa", "ba" -> "bpanalysis";
+
+            case "information", "info", "i" -> "info";
+            case "immapper", "imapper", "im" -> "immapper";
+            case "friend", "friends", "fr" -> "friend";
+            case "mutual", "mu" -> "mutual";
+            case "ppminus", "ppm", "pm" -> "ppminus";
+            case "ppplus", "ppp" -> "ppplus";
+
+            case "maps" -> "maps";
+            case "audio", "song", "au" -> "audio";
+            case "search", "sh" -> "search";
+            case "course", "co" -> "course";
+            case "danacc", "da" -> "danacc";
+            case "qualified", "q" -> "qualified";
+            case "leader", "l" -> "leader";
+
+            case "match", "ma" -> "match";
+            case "rating", "mra", "ra" -> "rating";
+            case "series", "sra", "sa" -> "series";
+            case "matchlisten", "listen", "ml", "li" -> "listen";
+            case "matchnow", "now", "mn" -> "matchnow";
+            case "matchround", "round", "ro", "mr" -> "round";
+            case "mappool", "pool", "po" -> "pool";
+
+            case "oldavatar", "oa" -> "oldavatar";
+            case "overrating", "oversr", "or" -> "overrating";
+            case "trans", "tr" -> "trans";
+            case "kita", "k" -> "kita";
+
+            case null, default -> "";
+        };
+
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            //todo 这里之后要改的，路径要改成环境变量
+            var bufferedReader = Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."ExportFileV3/Help/\{fileName}.md"));
+
+            // 逐行读取文本内容
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+
+            // 关闭流
+            bufferedReader.close();
+
+            return imageService.getPanelA6(sb.toString(), "help");
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * 老旧的 help 方法，可以备不时之需
+     * @param module 需要查询的功能名字
+     * @return 图片流
+     */
+    private static byte[] getHelpPictureLegacy(@Nullable String module) {
         String path = switch (module) {
             case "bot", "b" -> "help-bot.png";
             case "score", "s" -> "help-score.png";
@@ -37,11 +166,26 @@ public class HelpService implements MessageService<Matcher> {
             case "aid", "a" -> "help-aid.png";
             case "tournament", "t" -> "help-tournament.png";
             case "" -> "help-default.png";
+            case null -> "help-default.png";
             default -> "";
         };
 
-        boolean isSendPic = !path.isEmpty();
+        if (path.isEmpty()) return null;
 
+        try {
+            //todo 这里之后要改的，路径要改成环境变量
+            return Files.readAllBytes(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."ExportFileV3/\{path}"));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 老旧的 help 方法，可以备不时之需
+     * @param module 需要查询的功能名字
+     * @return 请参阅：link
+     */
+    private static String getHelpLinkLegacy(@Nullable String module) {
         String web = "https://docs.365246692.xyz/help/";
         String link = switch (module) {
             case "bot", "b" -> "bot";
@@ -52,7 +196,7 @@ public class HelpService implements MessageService<Matcher> {
             case "fun", "f" -> "fun";
             case "aid", "a" -> "aid";
             case "tournament", "t" -> "tournament";
-            default -> "";
+            case null, default -> "";
         };
 
         //这个是细化的功能
@@ -102,29 +246,20 @@ public class HelpService implements MessageService<Matcher> {
             case "trans", "tr" -> "aid.html#trans";
             case "kita", "k" -> "aid.html#kita";
 
-            default -> "";
+            case null, default -> "";
         };
-        
-        if (isSendPic) {
-            QQMsgUtil.sendImage(from, Files.readAllBytes(Path.of(NowbotConfig.BG_PATH).resolve("ExportFileV3/" + path)));
+
+        String msg = "";
+
+        if (link.isEmpty() && link2.isEmpty()) {
+            msg = STR."请参阅：\{web}";
+        } else if (!link.isEmpty() && link2.isEmpty()) {
+            msg = STR."请参阅：\{web}\{link}.html";
+        } else if (link.isEmpty()) {
+            msg = STR."请参阅功能介绍：\{web}\{link2}";
         }
 
-        if (isSendLink) {
-            String msg = "";
-
-            if (link.isEmpty() && link2.isEmpty()) {
-                msg =  "请参阅：" + web;
-            } else if (!link.isEmpty() && link2.isEmpty()) {
-                msg = "请参阅：" + web + link + ".html";
-            } else if (link.isEmpty()) {
-                msg = "请参阅功能介绍：" + web + link2;
-            }
-
-            if (!msg.isEmpty()) {
-                var receipt = from.sendMessage(msg);
-                //默认110秒后撤回
-                from.recallIn(receipt, 110 * 1000);
-            }
-        }
+        return msg;
     }
+
 }

@@ -16,9 +16,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.SkiaUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -299,7 +299,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var bpPPs = bps.stream().mapToDouble(Score::getPP).toArray();
 
         var userPP = user.getPP();
-        var bonusPP = SkiaUtil.getBonusPP(userPP, bpPPs);
+        var bonusPP = DataUtil.getBonusPP(userPP, bpPPs);
 
         //bpPP + remainPP (bp100之后的) = rawPP
         var bpPP = (float) bps.stream().mapToDouble(s -> s.getWeight().getPP()).sum();

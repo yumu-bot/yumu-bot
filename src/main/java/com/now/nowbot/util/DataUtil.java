@@ -2,7 +2,9 @@ package com.now.nowbot.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -272,4 +274,245 @@ public class DataUtil {
         System.out.println(OD(7, Mod.DoubleTime.value));
         System.out.println(OD(7, Mod.add(Mod.HardRock.value, Mod.DoubleTime)));
     }
+
+    public static int getPlayedRankedMapCount(double bonusPP) {
+        double v = - (bonusPP / (1000f / 2.4f)) + 1;
+
+        if (v < 0) {
+            return 0;
+        } else {
+            return (int) Math.round(Math.log(v) / Math.log(0.9994));
+        }
+    }
+
+    /**
+     * 计算bonusPP
+     * 算法是最小二乘 y = kx + b
+     * 输入的PP数组应该是加权之前的数组。
+     */
+    public static float getBonusPP(double playerPP, double[] fullPP) {
+        double bonusPP, remainPP = 0, k, b, bpPP = 0, x = 0, x2 = 0, xy = 0, y = 0;
+
+        if (fullPP == null || fullPP.length == 0d) return 0f;
+
+        int length = fullPP.length;
+
+        for (int i = 0; i < length; i++) {
+            double weight = Math.pow(0.95f, i);
+            double PP = fullPP[i];
+
+            //只拿最后50个bp来算，这样精准
+            if (i >= 50) {
+                x += i;
+                y += PP;
+                x2 += Math.pow(i, 2f);
+                xy += i * PP;
+            }
+            bpPP += PP * weight;//前 100 的bp上的 pp
+        }
+
+        double N = length - 50;
+        // Exiyi - Nxy__ / Ex2i - Nx_2
+        k = (xy - (x * y / N)) / (x2 - (Math.pow(x, 2f) / N));
+        b = (y / N) - k * (x / N);
+
+        //找零点
+        int expectedX = (k == 0f) ? -1 : (int) Math.floor(- b / k);
+
+        //这个预估的零点应该在很后面，不应该小于 100
+        //如果bp没满100，那么bns直接可算得，remainPP = 0
+        if (length < 100 || expectedX <= 100) {
+            bonusPP = playerPP - bpPP;
+        } else {
+            //对离散数据求和
+            for (int i = length; i <= expectedX; i++) {
+                double weight = Math.pow(0.95f, i);
+                remainPP += (k * i + b) * weight;
+            }
+
+            bonusPP = playerPP - bpPP - remainPP;
+        }
+
+        return (float) Math.max(Math.min(bonusPP, 416.6667f), 0f);
+    }
+
+    public static double getV3ScoreProgress(Score score) { //下下策
+        OsuMode mode = score.getMode();
+        double progress;
+
+        if(!score.getPassed()){
+            progress = 1D * score.getStatistics().getCountAll(mode) / score.getBeatMap().getMaxCombo();
+        } else {
+            progress = 1D;
+        }
+        return progress;
+    }
+
+    public static String getV3Score(Score score) {
+        // 算 v3 分（lazer的计分方式
+        // 有个版本指出，目前 stable 的 v2 是这个算法的复杂版本，acc是10次方，转盘分数纳入mod倍率
+
+        OsuMode mode = score.getMode();
+        List<String> mods = score.getMods();
+
+        int fc = 100_0000;
+        double i = getV3ModsMultiplier(mods,mode);
+        double p = getV3ScoreProgress(score); //下下策
+        int c = score.getMaxCombo();
+        int m = score.getBeatMap().getMaxCombo();
+        double ap8 = Math.pow(score.getAccuracy(), 8f);
+        double v3 = switch (score.getMode()) {
+            case OSU, CATCH, DEFAULT -> fc * i * (0.7f * c / m + 0.3f * ap8) * p;
+            case TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p;
+            case MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p;
+        };
+
+        return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求
+    }
+
+    // 这东西是啥?
+    public static double getV3ModsMultiplier(List<String> mod, OsuMode mode) {
+        double index = 1.00D;
+
+        if (mod.contains("EZ")) index *= 0.50D;
+
+        switch (mode){
+            case OSU:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.10D;
+                if (mod.contains("DT")) index *= 1.20D;
+                if (mod.contains("NC")) index *= 1.20D;
+                if (mod.contains("HD")) index *= 1.06D;
+                if (mod.contains("FL")) index *= 1.12D;
+                if (mod.contains("SO")) index *= 0.90D;
+            } break;
+
+            case TAIKO:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.06D;
+                if (mod.contains("DT")) index *= 1.12D;
+                if (mod.contains("NC")) index *= 1.12D;
+                if (mod.contains("HD")) index *= 1.06D;
+                if (mod.contains("FL")) index *= 1.12D;
+            } break;
+
+            case CATCH:{
+                if (mod.contains("HT")) index *= 0.30D;
+                if (mod.contains("HR")) index *= 1.12D;
+                if (mod.contains("DT")) index *= 1.12D;
+                if (mod.contains("NC")) index *= 1.12D;
+                if (mod.contains("FL")) index *= 1.12D;
+            } break;
+
+            case MANIA: {
+                if (mod.contains("HT")) index *= 0.50D;
+                if (mod.contains("CO")) index *= 0.90D;
+            }
+        }
+
+        return index;
+    }
+
+    /***
+     * 缩短字符 220924
+     * @param Str 需要被缩短的字符
+     * @param MaxWidth 最大宽度
+     * @return 返回已缩短的字符
+     */
+    public static String getShortenStr (String Str, int MaxWidth){
+        StringBuilder sb = new StringBuilder();
+        var Char = Str.toCharArray();
+
+        float allWidth = 0;
+        int backL = 0;
+
+        for (var thisChar : Char) {
+            if (allWidth > MaxWidth){
+                break;
+            }
+            sb.append(thisChar);
+            if ((allWidth) < MaxWidth){
+                backL++;
+            }
+        }
+        if (allWidth > MaxWidth){
+            sb.delete(backL,sb.length());
+            sb.append("...");
+        }
+
+        sb.delete(0,sb.length());
+        allWidth = 0;
+        backL = 0;
+
+        return sb.toString();
+    }
+
+    /*
+    public static float getBonusPP (double playerPP, double[] rawPP){
+        double bonusPP, remainPP = 0, a, b, c, bpPP = 0, x = 0, x2 = 0, x3 = 0, x4 = 0, xy = 0, x2y = 0, y = 0;
+
+        if (rawPP == null || rawPP.length == 0d) return 0f;
+
+        int length = rawPP.length;
+
+        for (int i = 0; i < length; i++) {
+            double weight = Math.pow(0.95f, i);
+            double PP = rawPP[i];
+
+            x += i;
+            x2 += Math.pow(i, 2f);
+            x3 += Math.pow(i, 3f);
+            x4 += Math.pow(i, 4f);
+            xy += i * PP;
+            x2y += Math.pow(i, 2f) * PP;
+            y += PP;
+            bpPP += PP * weight;//前 100 的bp上的 pp
+        }
+
+        if (length < 100) { //如果bp没满100，那么bns直接可算得，remaining = 0
+            return (float) Math.min((playerPP - bpPP), 416.6667f);
+        } else {
+
+            x /= length;
+            x2 /= length;
+            x3 /= length;
+            x4 /= length;
+            xy /= length;
+            x2y /= length;
+            y /= length;
+
+            double a1 = xy - x * y;
+            double a2 = x3 - x * x2;
+            double a3 = x2y - x2 * y;
+            double a4 = x2 - Math.pow(x, 2f);
+            double a5 = x4 - Math.pow(x2, 2f) * x2;
+
+            //得到 y = ax2 + bx + c
+            a = ((a1 * a2) - (a3 * a4)) / (Math.pow(a2, 2f) - (a5 * a4));
+            b = (xy - (x * y) - (a * a2)) / (x2 - Math.pow(x, 2f));
+            c = y - a * x2 - b * x;
+
+            //好像不需要求导，直接找零点
+            double delta = Math.pow(b, 2f) - (4 * a * c);
+            if (delta < 0) {
+                return 0f; //不相交
+            }
+            int expectedX = (int) Math.floor(( - b - Math.sqrt(delta)) / (2 * a)); //找左边的零点，而且要向下取整
+            if (expectedX <= 100) {
+                return (float) Math.min((playerPP - bpPP), 416.6667f); //这个预估的零点应该在很后面
+            }
+
+            //对离散数据求和
+            for (int i = length; i <= expectedX; i++) {
+                double weight = Math.pow(0.95f, i);
+                remainPP += (a * Math.pow(i, 2f) + b * i + c) * weight;
+            }
+
+            bonusPP = playerPP - bpPP - remainPP;
+
+            return (float) Math.min(bonusPP, 416.6667f);
+        }
+    }
+
+     */
 }

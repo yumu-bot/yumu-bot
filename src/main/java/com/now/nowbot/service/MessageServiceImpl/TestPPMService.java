@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.regex.Matcher;
 
-import static com.now.nowbot.util.SkiaUtil.getBonusPP;
+import static com.now.nowbot.util.DataUtil.getBonusPP;
 
 @Service("TESTPPM")
 public class TestPPMService implements MessageService<Matcher> {

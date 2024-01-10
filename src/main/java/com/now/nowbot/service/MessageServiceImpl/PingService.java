@@ -35,11 +35,11 @@ public class PingService implements MessageService<Matcher> {
 
             Image BG;
             try {
-                BG = SkiaImageUtil.getImage(NowbotConfig.BG_PATH + "ExportFileV3/help-ping.png");
-            } catch (IOException e) {
-                throw new RuntimeException("ping failed cuz no BG??!");
+                BG = SkiaImageUtil.getImage(STR."\{NowbotConfig.EXPORT_FILE_PATH}ExportFileV3/help-ping.png");
+                canvas.drawImage(BG,0,0);
+            } catch (IOException ignored) {
+                //throw new RuntimeException("ping failed cuz no BG??!");
             }
-            canvas.drawImage(BG,0,0);
 
             Font x = new Font(SkiaUtil.getTorusRegular(), 60);
             TextLine t = TextLine.make("PONG!",x);

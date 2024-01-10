@@ -75,7 +75,7 @@ public class NowbotConfig {
     /**
      * 素材资源文件
      */
-    public static String BG_PATH;
+    public static String EXPORT_FILE_PATH;
     /**
      * 网络图片 本地缓存
      */
@@ -89,7 +89,7 @@ public class NowbotConfig {
     public NowbotConfig(FileConfig fileConfig) {
         RUN_PATH = createDir(fileConfig.root);
         FONT_PATH = createDir(fileConfig.font);
-        BG_PATH = createDir(fileConfig.bgdir);
+        EXPORT_FILE_PATH = createDir(fileConfig.bgdir); //System.getenv("EXPORT_FILE");
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 
@@ -164,7 +164,7 @@ public class NowbotConfig {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
-                log.error(path + "创建失败", e);
+                log.error(STR."\{path}创建失败", e);
             }
         }
         return path;

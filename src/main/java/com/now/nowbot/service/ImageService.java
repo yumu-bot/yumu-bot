@@ -14,8 +14,8 @@ import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.SkiaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -302,7 +302,7 @@ public class ImageService {
         double bonus = 0f;
         if (!BPs.isEmpty()) {
             var bpPPs = BPs.stream().mapToDouble(Score::getPP).toArray();
-            bonus = SkiaUtil.getBonusPP(osuUser.getPP(), bpPPs);
+            bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
         var times = BPs.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();
@@ -322,7 +322,7 @@ public class ImageService {
                 "re-list", Recents,
                 "bonus_pp", bonus,
                 "mode", mode.getName(),
-                "ranked_map_play_count", SkiaUtil.getPlayedRankedMapCount(bonus)
+                "ranked_map_play_count", DataUtil.getPlayedRankedMapCount(bonus)
         ));
         historyUser.ifPresent(user -> body.put("historyUser", user));
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);

@@ -6,7 +6,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
 
-import static com.now.nowbot.util.SkiaUtil.getBonusPP;
+import static com.now.nowbot.util.DataUtil.getBonusPP;
 
 public class PPMinusCatch extends PPMinus {
     public PPMinusCatch(OsuUser user, List<Score> bps){
