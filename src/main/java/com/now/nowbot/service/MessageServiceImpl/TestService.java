@@ -96,6 +96,7 @@ public class TestService implements MessageService<Matcher> {
             return;
         var grp = ((GroupMessageEvent) event).getGroup();
         //这不是啥功能,这是木子取ppm 原始数据留下的接口,只允许他用,不需要单独做成功能
+        //?
         var ppmPat = Pattern.compile("");
 //        var mo = Pattern.compile("!testra(\\s+(?<id>\\d+))");
 //        var mathcer_mo = mo.matcher(msg.contentToString());

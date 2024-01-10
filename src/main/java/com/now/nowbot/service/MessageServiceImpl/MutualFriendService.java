@@ -4,21 +4,31 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("MUTUAL")
 public class MutualFriendService implements MessageService<Matcher> {
-    private final OsuUserApiService userApiService;
+    private static final Logger log = LoggerFactory.getLogger(MutualFriendService.class);
+    @Resource
+    OsuUserApiService userApiService;
 
-
+    @Resource
     BindDao bindDao;
+    @Resource
+    ImageService imageService;
 
     MutualFriendService(OsuUserApiService userApiService, BindDao bindDao) {
         this.userApiService = userApiService;
@@ -37,31 +47,41 @@ public class MutualFriendService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
 
-        var atList = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
-        if (!atList.isEmpty()){
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        if (Objects.nonNull(at)){
             var data = new MessageChain.MessageChainBuilder();
-            atList.forEach(at->{
-                data.addAt(at.getTarget());
 
-                    try {
-                        var u = bindDao.getUserFromQQ(at.getTarget());
-                        data.addText(" https://osu.ppy.sh/users/" + u.getOsuID() + '\n');
-                    } catch (BindException e) {
-                        data.addText(" 未绑定\n");
-                    }
-            });
+            data.addAt(at.getTarget());
+
+            try {
+                var u = bindDao.getUserFromQQ(at.getTarget());
+                byte[] pic = imageService.getPanelA6(STR."# https://osu.ppy.sh/users/\{u.getOsuID()}");
+
+                data.addText("\n");
+                data.addImage(pic);
+            } catch (BindException e) {
+                data.addText(" 未绑定\n");
+            }
+
             event.getSubject().sendMessage(data.build());
             return;
         }
-        var s = matcher.group("names");
-        if (s != null && !s.trim().isEmpty()){
-            var names = s.split(",");
-            StringBuilder sb = new StringBuilder();
-            for (var name:names){
-                Long id = userApiService.getOsuId(name);
-                sb.append(name).append(" : https://osu.ppy.sh/users/").append(id).append("\n");
+        var name = matcher.group("names");
+        if (Objects.nonNull(name)){
+            String s = "";
+            for (var n : name.split(",")){
+                Long id = userApiService.getOsuId(n);
+                s = STR."# \{n} : https://osu.ppy.sh/users/\{id}\n";
             }
-            event.getSubject().sendMessage(sb.toString());
+            try {
+                byte[] pic = imageService.getPanelA6(s);
+                event.getSubject().sendImage(pic);
+            } catch (HttpClientErrorException e) {
+                event.getSubject().sendMessage(s);
+            } catch (Exception e) {
+                log.error("MU：", e);
+            }
+
             return;
         }
 
