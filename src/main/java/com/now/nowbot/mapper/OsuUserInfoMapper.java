@@ -18,8 +18,8 @@ default Optional<OsuUserInfoArchiveLite> selectDayLast(Long osuId, OsuMode mode,
         return selectDayLast(osuId, mode, LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
     }
 
-        @Query("select o from OsuUserInfoArchiveLite o where o.osuID = :osuId and o.mode = :mode and (o.time between :time1 and :time2) order by o.time desc limit 1")
-    Optional<OsuUserInfoArchiveLite> selectDayLast(Long osuId, OsuMode mode, LocalDateTime time1, LocalDateTime time2);;
+    @Query("select o from OsuUserInfoArchiveLite o where o.osuID = :osuId and o.mode = :mode and (o.time between :time1 and :time2) order by o.time desc limit 1")
+    Optional<OsuUserInfoArchiveLite> selectDayLast(Long osuId, OsuMode mode, LocalDateTime time1, LocalDateTime time2);
 
     @Query("select o from OsuUserInfoArchiveLite o where o.osuID = :osuId and o.mode = :mode order by o.time desc limit 1")
     Optional<OsuUserInfoArchiveLite> selectLast(Long osuId, OsuMode mode);
