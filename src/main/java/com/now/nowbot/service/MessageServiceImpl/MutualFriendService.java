@@ -55,7 +55,7 @@ public class MutualFriendService implements MessageService<Matcher> {
 
             try {
                 var u = bindDao.getUserFromQQ(at.getTarget());
-                byte[] pic = imageService.getPanelA6(STR."# https://osu.ppy.sh/users/\{u.getOsuID()}");
+                byte[] pic = imageService.getPanelA6(STR."# \{u.getOsuName()} : https://osu.ppy.sh/users/\{u.getOsuID()}");
 
                 data.addText("\n");
                 data.addImage(pic);
@@ -63,32 +63,43 @@ public class MutualFriendService implements MessageService<Matcher> {
                 data.addText(" 未绑定\n");
             }
 
-            event.getSubject().sendMessage(data.build());
-            return;
-        }
-        var name = matcher.group("names");
-        if (Objects.nonNull(name)){
-            String s = "";
-            for (var n : name.split(",")){
-                Long id = userApiService.getOsuId(n);
-                s = STR."# \{n} : https://osu.ppy.sh/users/\{id}\n";
-            }
             try {
-                byte[] pic = imageService.getPanelA6(s);
+                event.getSubject().sendMessage(data.build());
+            } catch (Exception e) {
+                log.error("MU：艾特发送失败", e);
+            }
+
+        } else {
+            var name = matcher.group("names");
+            StringBuilder s = new StringBuilder();
+
+            if (Objects.nonNull(name)){
+                for (var n : name.split(",")){
+                    try {
+                        Long id = userApiService.getOsuId(n);
+                        s.append(STR."# \{n} : https://osu.ppy.sh/users/\{id}\n");
+                    } catch (HttpClientErrorException e) {
+                        s.append(STR."# \{n} : 找不到玩家或网络错误！\n");
+                    }
+                }
+
+            } else {
+                try {
+                    var u = bindDao.getUserFromQQ(event.getSender().getId());
+                    s = new StringBuilder(STR."# \{u.getOsuName()} : https://osu.ppy.sh/users/\{u.getOsuID()}\n");
+                } catch (BindException e) {
+                    s = new StringBuilder(STR."# \{event.getSender().getId()} : 未绑定或已经掉绑\n");
+                }
+            }
+
+            try {
+                byte[] pic = imageService.getPanelA6(s.toString());
                 event.getSubject().sendImage(pic);
             } catch (HttpClientErrorException e) {
-                event.getSubject().sendMessage(s);
+                event.getSubject().sendMessage(s.toString());
             } catch (Exception e) {
-                log.error("MU：", e);
+                log.error("MU：名字发送失败", e);
             }
-
-            return;
         }
-
-
-        var user = bindDao.getUserFromQQ(event.getSender().getId());
-        var id = user.getOsuID();
-
-        event.getSubject().sendMessage("https://osu.ppy.sh/users/" + id);
     }
 }
