@@ -207,7 +207,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     } else {
                         info = STR."(\{ b.getId() }) [\{ b.getDifficultyName() }]";
                     }
-                    var i = imageService.getMarkdownImage(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
+                    var i = imageService.getPanelA6(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
                     QQMsgUtil.sendImage(from, i);
                 }
                 return;

@@ -8,7 +8,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +53,7 @@ public class TestService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher aaa) throws Throwable {
         var msg = event.getRawMessage();
 
+        /*
         if (msg.startsWith("!testmd")){
             QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(msg),1080));
         } else if (msg.startsWith("!testwebmd")){
@@ -64,6 +64,9 @@ public class TestService implements MessageService<Matcher> {
                 QQMsgUtil.sendImage(event.getSubject(), imageService.getMarkdownImage(removeFirstLine(s), 1080));
             }
         } else if (msg.startsWith("!testname")){
+
+         */
+        if (msg.startsWith("!testname")){
            var m = pattern.matcher(msg);
            if (m.find()){
                var names = m.group("ids").split(",");

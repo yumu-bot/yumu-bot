@@ -63,7 +63,7 @@ public class CountQQMessageService implements MessageService<Matcher> {
             if (res.isEmpty()) {
                 event.getSubject().sendMessage("无消息");
             }
-            var data = res.get(0);
+            var data = res.getFirst();
             int n = data.get("sum").intValue();
             long i = data.get("QQ").longValue();
             event.getSubject().sendMessage(i + " -> " + n);
@@ -102,7 +102,8 @@ public class CountQQMessageService implements MessageService<Matcher> {
             String name = u.getName();
             sb.append('|').append(m.n).append('|').append(qq).append('|').append(name.replace("|", "\\|")).append('|').append('\n');
         }
-        var b = imageService.getMarkdownImage(sb.toString(), 600); //要不要考虑用 Markdown?
+        //var b = imageService.getMarkdownImage(sb.toString(), 600); //要不要考虑用 Markdown?
+        var b = imageService.getPanelA6(sb.toString());
 
         QQMsgUtil.sendImage(event.getSubject(), b);
     }
