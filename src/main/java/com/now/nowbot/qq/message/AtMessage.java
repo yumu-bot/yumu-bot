@@ -1,5 +1,7 @@
 package com.now.nowbot.qq.message;
 
+import com.mikuac.shiro.common.utils.MsgUtils;
+
 public class AtMessage extends Message {
     private final long qq;
 
@@ -28,5 +30,10 @@ public class AtMessage extends Message {
     @Override
     public String toString() {
         return "[@" + qq + "]";
+    }
+
+    @Override
+    public String getCQ() {
+        return new MsgUtils().at(qq).build();
     }
 }

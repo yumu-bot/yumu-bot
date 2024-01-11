@@ -100,14 +100,14 @@ public class MutualFriendService implements MessageService<Matcher> {
                 sb.append(u.name).append('\n');
                 return;
             }
-            var m = userNameTest.matcher(u.name);
-
+            var name = u.name.replaceAll(" ", "%20");
+            var m = userNameTest.matcher(name);
             if (m.find()) {
-                sb.append(STR."# \{u.name} : https://osu.ppy.sh/users/\{u.uid}\n");
+                sb.append(STR."# \{name} : https://osu.ppy.sh/users/\{u.uid}\n");
                 return;
             }
 
-            sb.append(STR."# \{Objects.nonNull(u.qq) ? new AtMessage(u.qq).toString() : ""} \{u.name} : https://osu.ppy.sh/users/\{u.name}\n");
+            sb.append(STR."# \{Objects.nonNull(u.qq) ? new AtMessage(u.qq).getCQ() : ""} \{u.name} : https://osu.ppy.sh/users/\{name}\n");
         });
         return sb.toString();
     }
