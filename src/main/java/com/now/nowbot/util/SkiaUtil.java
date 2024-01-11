@@ -1,6 +1,5 @@
 package com.now.nowbot.util;
 
-import com.now.nowbot.config.NowbotConfig;
 import io.github.humbleui.skija.*;
 import io.github.humbleui.skija.Typeface;
 import io.github.humbleui.skija.svg.*;
@@ -17,6 +16,8 @@ import java.util.Random;
 
 @Deprecated
 public class SkiaUtil {
+
+    static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     static final int[] COLOR_SUGER = new int[]{
             Color.makeRGB(73, 250, 255),
             Color.makeRGB(255, 253, 73),
@@ -97,80 +98,7 @@ public class SkiaUtil {
 
         return new int[]{Color.getA(color), Color.getR(color), Color.getG(color), Color.getB(color)};
     }
-
-    static final Logger log = LoggerFactory.getLogger(SkiaUtil.class);
     //字体文件
-    static Typeface TORUS_REGULAR;
-
-    public static Typeface getTorusRegular() {
-        if (TORUS_REGULAR == null || TORUS_REGULAR.isClosed()) {
-            try {
-//                InputStream in = SkiaUtil.class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
-//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
-                TORUS_REGULAR = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-Regular.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-Regular.ttf", e);
-                TORUS_REGULAR = Typeface.makeDefault();
-            }
-        }
-        return TORUS_REGULAR;
-    }
-
-    static Typeface TORUS_SEMIBOLD;
-
-    public static Typeface getTorusSemiBold() {
-        if (TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()) {
-            try {
-                TORUS_SEMIBOLD = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-SemiBold.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-SemiBold.ttf", e);
-                TORUS_SEMIBOLD = Typeface.makeDefault();
-            }
-        }
-        return TORUS_SEMIBOLD;
-    }
-
-    static Typeface PUHUITI;
-
-    public static Typeface getPUHUITI() {
-        if (PUHUITI == null || PUHUITI.isClosed()) {
-            try {
-                PUHUITI = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Puhuiti.ttf");
-            } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
-                PUHUITI = Typeface.makeDefault();
-            }
-        }
-        return PUHUITI;
-    }
-
-    static Typeface PUHUITI_MEDIUM;
-
-    public static Typeface getPUHUITIMedium() {
-        if (PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()) {
-            try {
-                PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
-            } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
-                PUHUITI_MEDIUM = Typeface.makeDefault();
-            }
-        }
-        return PUHUITI_MEDIUM;
-    }
-
-    static Typeface EXTRA;
-
-    public static Typeface getEXTRA(){
-        if (EXTRA == null || EXTRA.isClosed()) {
-            try {
-                EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:extra.ttf", e);
-                throw e;
-            }
-        }
-        return EXTRA;
-    }
 
     /*
      * 直接绘制为剪切的圆角矩形
@@ -264,7 +192,7 @@ public class SkiaUtil {
         char x2 = ct.charAt(1);
         int s1 = A + x1 - 'A';
         int s2 = A + x2 - 'A';
-        return "https://osu.ppy.sh/assets/images/flags/" + Integer.toHexString(s1) + "-" + Integer.toHexString(s2) + ".svg";
+        return STR."https://osu.ppy.sh/assets/images/flags/\{Integer.toHexString(s1)}-\{Integer.toHexString(s2)}.svg";
     }
 
     /***
@@ -443,7 +371,7 @@ public class SkiaUtil {
             }
             List<Integer> colors = new ArrayList<>();
             for (int i = 0; i < colorCount.length; i++) {
-                if (colorCount[i] != 0 && true/* 接近白色、黑色和红色的颜色。 why? */) {
+                if (colorCount[i] != 0/* 接近白色、黑色和红色的颜色。 why? */) {
                     colors.add(i);
                 }
             }
@@ -493,21 +421,21 @@ public class SkiaUtil {
 
     public static int getRankColor(String rank) {
         if (rank == null) rank = "F";
-        switch (rank.trim().toUpperCase()) {
-            case "S" : return  Color.makeRGB(240, 148, 80);
-            case "SH" : return  Color.makeRGB(180, 180, 180);
-            case "X" : return  Color.makeRGB(254, 246, 103);
-            case "XH" : return  Color.makeRGB(248, 248, 248);
-            case "A" : return  Color.makeRGB(121, 196, 113);
-            case "B" : return  Color.makeRGB(62, 188, 239);
-            case "C" : return  Color.makeRGB(151, 129, 183);
-            case "D" : return  Color.makeRGB(234, 107, 72);
-            default : return  Color.makeRGB(32, 32, 32);
-        }
+        return switch (rank.trim().toUpperCase()) {
+            case "S" -> Color.makeRGB(240, 148, 80);
+            case "SH" -> Color.makeRGB(180, 180, 180);
+            case "X" -> Color.makeRGB(254, 246, 103);
+            case "XH" -> Color.makeRGB(248, 248, 248);
+            case "A" -> Color.makeRGB(121, 196, 113);
+            case "B" -> Color.makeRGB(62, 188, 239);
+            case "C" -> Color.makeRGB(151, 129, 183);
+            case "D" -> Color.makeRGB(234, 107, 72);
+            default -> Color.makeRGB(32, 32, 32);
+        };
     }
 
 
-    public class PolylineBuilder {
+    public static class PolylineBuilder {
         ArrayList<Float> point = new ArrayList<>();
         float width;
         float height;
@@ -547,7 +475,6 @@ public class SkiaUtil {
     public static void main(String[] args) throws IOException {
         var img = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-beatmap-mask.png");
         var image1 = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-score-backimage-C.jpg");
-        var bitmap = Bitmap.makeFromImage(img);
         var s = Surface.makeRasterN32Premul(150,150);
         var c = s.getCanvas();
 

@@ -4,13 +4,14 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.SkiaImageUtil;
-import com.now.nowbot.util.SkiaUtil;
 import io.github.humbleui.skija.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("PING")
@@ -29,32 +30,35 @@ public class PingService implements MessageService<Matcher> {
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        byte[] date = null;
+        byte[] data;
         try (Surface surface = Surface.makeRasterN32Premul(240,240)){
             Canvas canvas = surface.getCanvas();
 
-            Image BG;
             try {
-                BG = SkiaImageUtil.getImage(STR."\{NowbotConfig.EXPORT_FILE_PATH}ExportFileV3/help-ping.png");
+                var file = Files.readAllBytes(
+                        Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
+                );
+                var BG = Image.makeDeferredFromEncodedBytes(file);
                 canvas.drawImage(BG,0,0);
+
             } catch (IOException ignored) {
                 //throw new RuntimeException("ping failed cuz no BG??!");
             }
 
-            Font x = new Font(SkiaUtil.getTorusRegular(), 60);
+            Font x = new Font(DataUtil.getTorusRegular(), 60);
             TextLine t = TextLine.make("PONG!",x);
             canvas.drawTextLine(t,(240 - t.getWidth())/2, t.getHeight(), new Paint().setARGB(255,192,219,288));
 
             x.close();
             t.close();
-            x = new Font(SkiaUtil.getTorusRegular(),20);
+            x = new Font(DataUtil.getTorusRegular(),20);
             t = TextLine.make(System.currentTimeMillis() + "ms", x);
             canvas.drawTextLine(t,0,t.getCapHeight() + 4, new Paint().setARGB(200,255,255,255));
             x.close();t.close();
-            date = surface.makeImageSnapshot().encodeToData().getBytes();
+            data = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (date != null) {
-            from.sendImage(date).recallIn(5000);
+        if (data != null) {
+            from.sendImage(data).recallIn(5000);
         }
 
     }

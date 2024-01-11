@@ -15,6 +15,10 @@ public class FileConfig {
      */
     String bgdir = "/tmp/bot/bg";
     /**
+     * 图片资源文件
+     */
+    String exportFile = "/tmp/bot/bg/ExportFileV3";
+    /**
      * 字体文件资源
      */
     String font = "/tmp/bot/font";

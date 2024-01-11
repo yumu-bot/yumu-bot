@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 public class Instructions {
 
     // #0 调出帮助
-    public static final Pattern HELP = Pattern.compile("^[!！]\\s*(?i)(ym)?(help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
+    public static final Pattern HELP = Pattern.compile("^[!！]\\s*(?i)(ym)?(帮助|help|h)+(\\s*(?<module>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
     public static final Pattern AUDIO = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![AaC-RT-Zc-rt-z_]))+\\s*([:：]?(?<type>(bid|b|sid|s)))?\\s*(?<id>\\d+)?");
 
     // #1 BOT 内部指令

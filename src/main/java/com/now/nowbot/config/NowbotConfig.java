@@ -73,6 +73,10 @@ public class NowbotConfig {
      */
     public static String FONT_PATH;
     /**
+     * 资源文件
+     */
+    public static String BG_PATH;
+    /**
      * 素材资源文件
      */
     public static String EXPORT_FILE_PATH;
@@ -89,7 +93,8 @@ public class NowbotConfig {
     public NowbotConfig(FileConfig fileConfig) {
         RUN_PATH = createDir(fileConfig.root);
         FONT_PATH = createDir(fileConfig.font);
-        EXPORT_FILE_PATH = createDir(fileConfig.bgdir); //System.getenv("EXPORT_FILE");
+        BG_PATH = createDir(fileConfig.bgdir);
+        EXPORT_FILE_PATH = createDir(fileConfig.exportFile);
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 

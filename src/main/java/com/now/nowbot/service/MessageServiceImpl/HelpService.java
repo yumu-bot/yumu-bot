@@ -65,8 +65,7 @@ public class HelpService implements MessageService<Matcher> {
         }
 
     }
-
-
+    
     /**
      * 目前的 help 方法，走 panel A6
      * @param module 需要查询的功能名字
@@ -132,8 +131,9 @@ public class HelpService implements MessageService<Matcher> {
         StringBuilder sb = new StringBuilder();
 
         try {
-            //todo 这里之后要改的，路径要改成环境变量
-            var bufferedReader = Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."ExportFileV3/Help/\{fileName}.md"));
+            var bufferedReader = Files.newBufferedReader(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."\{fileName}.md")
+            );
 
             // 逐行读取文本内容
             String line;
@@ -173,8 +173,9 @@ public class HelpService implements MessageService<Matcher> {
         if (path.isEmpty()) return null;
 
         try {
-            //todo 这里之后要改的，路径要改成环境变量
-            return Files.readAllBytes(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."ExportFileV3/\{path}"));
+            return Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."\{path}")
+            );
         } catch (IOException e) {
             return null;
         }

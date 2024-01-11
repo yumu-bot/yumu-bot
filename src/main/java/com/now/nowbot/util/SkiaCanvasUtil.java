@@ -4,6 +4,7 @@ import io.github.humbleui.skija.*;
 import io.github.humbleui.types.*;
 import io.github.humbleui.skija.paragraph.*;
 
+@Deprecated
 public class SkiaCanvasUtil {
 
     /**

@@ -2,9 +2,11 @@ package com.now.nowbot.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import io.github.humbleui.skija.Typeface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,16 @@ public class DataUtil {
     private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
+    
+    static Typeface TORUS_REGULAR;
+
+    static Typeface TORUS_SEMIBOLD;
+
+    static Typeface PUHUITI;
+
+    static Typeface PUHUITI_MEDIUM;
+
+    static Typeface EXTRA;
 
     public static String String2Markdown(String str) {
         return str.replace("\n", "\n\n");
@@ -445,6 +457,68 @@ public class DataUtil {
         backL = 0;
 
         return sb.toString();
+    }
+
+    public static Typeface getTorusRegular() {
+        if (TORUS_REGULAR == null || TORUS_REGULAR.isClosed()) {
+            try {
+//                InputStream in = class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
+//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
+                TORUS_REGULAR = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-Regular.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:Torus-Regular.ttf", e);
+                TORUS_REGULAR = Typeface.makeDefault();
+            }
+        }
+        return TORUS_REGULAR;
+    }
+
+    public static Typeface getTorusSemiBold() {
+        if (TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()) {
+            try {
+                TORUS_SEMIBOLD = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-SemiBold.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:Torus-SemiBold.ttf", e);
+                TORUS_SEMIBOLD = Typeface.makeDefault();
+            }
+        }
+        return TORUS_SEMIBOLD;
+    }
+
+    public static Typeface getPUHUITI() {
+        if (PUHUITI == null || PUHUITI.isClosed()) {
+            try {
+                PUHUITI = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Puhuiti.ttf");
+            } catch (Exception e) {
+                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
+                PUHUITI = Typeface.makeDefault();
+            }
+        }
+        return PUHUITI;
+    }
+
+    public static Typeface getPUHUITIMedium() {
+        if (PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()) {
+            try {
+                PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
+            } catch (Exception e) {
+                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
+                PUHUITI_MEDIUM = Typeface.makeDefault();
+            }
+        }
+        return PUHUITI_MEDIUM;
+    }
+
+    public static Typeface getEXTRA(){
+        if (EXTRA == null || EXTRA.isClosed()) {
+            try {
+                EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
+            } catch (Exception e) {
+                log.error("未读取到目标字体:extra.ttf", e);
+                throw e;
+            }
+        }
+        return EXTRA;
     }
 
     /*
