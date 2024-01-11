@@ -14,7 +14,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
 
     @Query(value = "select service, count(service) as size, avg(time) as avgTime, min(time) as minTime, max(time) as maxTime" +
             " from service_call where ctime between :start and :end group by service order by size desc;", nativeQuery = true)
-    List<ServiceCallLite.ServiceCallResult> countBetwen(LocalDateTime start, LocalDateTime end);
+    List<ServiceCallLite.ServiceCallResult> countBetween(LocalDateTime start, LocalDateTime end);
 
     default void saveCall(String service, long time) {
         save(new ServiceCallLite(service, time));

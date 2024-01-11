@@ -72,7 +72,7 @@ public class BindService implements MessageService<Matcher> {
                     unbindQQ(Long.parseLong(qqStr));
                     return;
                 } else {
-                    unbindQQ(from.getId());
+                    unbindQQ(event.getSender().getId());
                     return;
                 }
             } else if (at != null) {
@@ -83,7 +83,7 @@ public class BindService implements MessageService<Matcher> {
 
         //绑定权限下放。这个不应该是超级管理员的专属权利。
         if (matcher.group("un") != null) {
-            unbindQQ(from.getId());
+            unbindQQ(event.getSender().getId());
             return;
         }
 
@@ -114,9 +114,7 @@ public class BindService implements MessageService<Matcher> {
                 if (!osuUser.getUID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
-                from.sendMessage("您已绑定 (" + binUser.getOsuID() + ") " + binUser.getOsuName() + "。\n但您仍可以重新绑定。" +
-                        "\n若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。" +
-                        "\n回复 OK 重新绑定。");
+                from.sendMessage(STR."您已绑定 (\{binUser.getOsuID()}) \{binUser.getOsuName()}。\n但您仍可以重新绑定。\n若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。\n回复 OK 重新绑定。");
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
                 if (!(s != null && s.getRawMessage().trim().equalsIgnoreCase("OK"))) {
@@ -149,12 +147,12 @@ public class BindService implements MessageService<Matcher> {
 
     private void unbindQQ(Long qqId) throws BindException {
         if (qqId == null) throw new BindException(BindException.Type.BIND_Player_NoQQ);
-        var user = bindDao.getQQLiteFromQQ(qqId);
-        if (user.isEmpty()) {
+        var bind = bindDao.getQQLiteFromQQ(qqId);
+        if (bind.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Player_NoBind);
         }
 
-        if (bindDao.unBindQQ(user.get().getBinUser())) {
+        if (bindDao.unBindQQ(bind.get().getBinUser())) {
             throw new BindException(BindException.Type.BIND_Client_UnBindSuccess);
         } else {
             throw new BindException(BindException.Type.BIND_Client_UnBindFailed);
@@ -177,14 +175,14 @@ public class BindService implements MessageService<Matcher> {
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
-        var qqLiteFromID = bindDao.getQQLiteFromOsuId(id);
-        if (qqLiteFromID.isEmpty()) {
-            from.sendMessage("正在将" + qq + "绑定到 (" + id + ")" + nameStr + "上");
+        var bind = bindDao.getQQLiteFromOsuId(id);
+        if (bind.isEmpty()) {
+            from.sendMessage(STR."正在将\{qq}绑定到 (\{id})\{nameStr}上");
             bindDao.bindQQ(qq, new BinUser(id, nameStr));
             throw new BindException(BindException.Type.BIND_Player_Success);
         }
-        var u = qqLiteFromID.get();
-        from.sendMessage(u.getOsuUser().getOsuName() + "绑定在 QQ " + qq + " 上，是否覆盖？回复 OK 生效");
+        var u = bind.get();
+        from.sendMessage(STR."\{u.getOsuUser().getOsuName()}绑定在 QQ \{qq} 上，是否覆盖？回复 OK 生效");
         s = lock.get();
         if (s != null && s.getRawMessage().startsWith("OK")) {
             bindDao.bindQQ(qq, u.getOsuUser());
@@ -208,7 +206,7 @@ public class BindService implements MessageService<Matcher> {
 
         var userFromID = bindDao.getQQLiteFromOsuId(osuUserId);
         if (userFromID.isPresent()) {
-            from.sendMessage(name + " 已绑定 (" + userFromID.get().getQq() + ")，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
+            from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
             return;
         }
 
@@ -231,7 +229,7 @@ public class BindService implements MessageService<Matcher> {
         }
 
         bindDao.bindQQ(qq, new BinUser(osuUserId, name));
-        from.sendMessage("已将 " + qq + " 绑定到 (" + osuUserId + ") " + name + " 上");
+        from.sendMessage(STR."已将 \{qq} 绑定到 (\{osuUserId}) \{name} 上");
     }
 
     public record Bind(Long key, MessageReceipt receipt, Long QQ) {

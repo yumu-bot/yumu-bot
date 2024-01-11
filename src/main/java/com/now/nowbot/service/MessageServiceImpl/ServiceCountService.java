@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class ServiceCountService implements MessageService<Integer> {
     private final ServiceCallRepository serviceCallRepository;
     private final ImageService imageService;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd:HH");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm");
 
     public ServiceCountService(ServiceCallRepository serviceCallRepository, ImageService imageService) {
         this.serviceCallRepository = serviceCallRepository;
@@ -59,19 +59,23 @@ public class ServiceCountService implements MessageService<Integer> {
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
-        StringBuilder sb = new StringBuilder("""
-                | 服务名 | 调用次数 | 平均用时 | 最大用时 | 最小用时 |
-                |:-------|:--------:|:---------:|:---------:|:---------:|
-                """);
+        StringBuilder sb = new StringBuilder();
         List<ServiceCallLite.ServiceCallResult> result;
         if (Objects.isNull(hours) || hours == 0) {
             result = serviceCallRepository.countAll();
+            sb.append("## 时间段：迄今为止\n");
         } else {
             var now = LocalDateTime.now();
             var before = now.minusHours(hours);
-            event.getSubject().sendMessage(STR."处理 [\{before.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
-            result = serviceCallRepository.countBetwen(before, now);
+            //event.getSubject().sendMessage(STR."处理 [\{before.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
+            sb.append(STR."## 时间段：**\{before.format(dateTimeFormatter)}** - **\{now.format(dateTimeFormatter)}**\n");
+            result = serviceCallRepository.countBetween(before, now);
         }
+
+        sb.append("""
+                | 服务名 | 调用次数 | 平均用时 | 最大用时 | 最小用时 |
+                |:-------|:--------:|:---------:|:---------:|:---------:|
+                """);
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
                 .append('|').append(r.getService())
                 .append('|').append(r.getSize())
