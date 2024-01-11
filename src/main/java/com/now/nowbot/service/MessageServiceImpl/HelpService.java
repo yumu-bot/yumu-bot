@@ -48,7 +48,7 @@ public class HelpService implements MessageService<Matcher> {
                 throw new TipsException("窝趣，找不到文件");
             }
         } catch (Exception e) {
-            log.error("Help A6 输出错误，使用默认方法");
+            log.error("Help A6 输出错误，使用默认方法", e);
 
             var picLegacy = getHelpPictureLegacy(module);
             var msgLegacy = getHelpLinkLegacy(module);
@@ -127,12 +127,13 @@ public class HelpService implements MessageService<Matcher> {
 
             case null, default -> "";
         };
-
+        
         StringBuilder sb = new StringBuilder();
 
         try {
+            fileName += ".md";
             var bufferedReader = Files.newBufferedReader(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."\{fileName}.md")
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Help").resolve(fileName)
             );
 
             // 逐行读取文本内容
@@ -157,16 +158,16 @@ public class HelpService implements MessageService<Matcher> {
      */
     private static byte[] getHelpPictureLegacy(@Nullable String module) {
         String fileName = switch (module) {
-            case "bot", "b" -> "help-bot.png";
-            case "score", "s" -> "help-score.png";
-            case "player", "p" -> "help-player.png";
-            case "map", "m" -> "help-map.png";
-            case "chat", "c" -> "help-chat.png";
-            case "fun", "f" -> "help-fun.png";
-            case "aid", "a" -> "help-aid.png";
-            case "tournament", "t" -> "help-tournament.png";
-            case "" -> "help-default.png";
-            case null -> "help-default.png";
+            case "bot", "b" -> "help-bot";
+            case "score", "s" -> "help-score";
+            case "player", "p" -> "help-player";
+            case "map", "m" -> "help-map";
+            case "chat", "c" -> "help-chat";
+            case "fun", "f" -> "help-fun";
+            case "aid", "a" -> "help-aid";
+            case "tournament", "t" -> "help-tournament";
+            case "" -> "help-default";
+            case null -> "help-default";
             default -> "";
         };
 
@@ -175,6 +176,7 @@ public class HelpService implements MessageService<Matcher> {
         byte[] file;
 
         try {
+            fileName += ".png";
             file = Files.readAllBytes(
                     Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(fileName)
             );

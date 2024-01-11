@@ -94,7 +94,7 @@ public class NowbotConfig {
         RUN_PATH = createDir(fileConfig.root);
         FONT_PATH = createDir(fileConfig.font);
         BG_PATH = createDir(fileConfig.bgdir);
-        EXPORT_FILE_PATH = createDir(fileConfig.exportFile);
+        EXPORT_FILE_PATH = STR."\{fileConfig.bgdir}/ExportFileV3";
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 
