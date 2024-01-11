@@ -125,7 +125,7 @@ public class HelpService implements MessageService<Matcher> {
             case "trans", "tr" -> "trans";
             case "kita", "k" -> "kita";
 
-            case null, default -> "";
+            case null, default -> "GUIDE";
         };
         
         StringBuilder sb = new StringBuilder();

@@ -12,7 +12,6 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import io.netty.util.internal.ConcurrentSet;
 import jakarta.persistence.NonUniqueResultException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 @Component
@@ -61,7 +59,9 @@ public class BindDao {
     }
 
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
-        Optional<OsuBindUserLite> liteData = null;
+        if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Client_NullName);
+
+        Optional<OsuBindUserLite> liteData;
         try {
             liteData = bindUserMapper.getByOsuId(osuId);
         } catch (IncorrectResultSizeDataAccessException e) {

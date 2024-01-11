@@ -6,6 +6,7 @@ public class BindException extends TipsRuntimeException{
     public enum Type {
         BIND_Client_UnBindSuccess("您已成功解绑。TuT"),//解绑_成功
         BIND_Client_UnBindFailed("解绑失败！请重试。OwOb"),//解绑_失败
+        BIND_Client_UnBindNull("请输入要解绑的对象。"),//解绑_玩家未输入用户名
         BIND_Client_NullName("你叫啥名呀？告诉我吧。"),//绑定_玩家未输入用户名
         BIND_Client_AlreadyBound("不要重复绑定哟，小沐已经记住你啦！\n(如果要改绑，请输入 !ymbind。"),//绑定_玩家早已绑定
         BIND_Client_AlreadyBoundByName("禁止在仅绑定玩家名时，再次使用玩家名绑定。\n若要改绑请输入 !ymbind。"),
