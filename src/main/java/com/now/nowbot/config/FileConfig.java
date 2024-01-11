@@ -22,7 +22,10 @@ public class FileConfig {
      * 资源缓存路径
      */
     String imgbuffer = "/tmp/bot/imgbuffer";
-
+    /**
+     * 图片资源文件
+     */
+    String exportFile = "/tmp/bot/bg/ExportFileV3";
     /**
      * 缓存 .osu 文件的路径
      */
@@ -67,5 +70,13 @@ public class FileConfig {
 
     public void setOsuFilePath(String osuFilePath) {
         this.osuFilePath = osuFilePath;
+    }
+
+    public String getExportFile() {
+        return exportFile;
+    }
+
+    public void setExportFile(String exportFile) {
+        this.exportFile = exportFile;
     }
 }
