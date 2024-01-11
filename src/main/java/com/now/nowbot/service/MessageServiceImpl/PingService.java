@@ -38,7 +38,7 @@ public class PingService implements MessageService<Matcher> {
                 var file = Files.readAllBytes(
                         Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
                 );
-                var BG = Image.makeDeferredFromEncodedBytes(file);
+                var BG = Image.makeFromEncoded(file);
                 canvas.drawImage(BG,0,0);
 
             } catch (IOException ignored) {

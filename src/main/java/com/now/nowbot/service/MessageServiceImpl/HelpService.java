@@ -57,7 +57,7 @@ public class HelpService implements MessageService<Matcher> {
                 from.sendImage(picLegacy);
             }
 
-            if (!msgLegacy.isEmpty()) {
+            if (Objects.nonNull(msgLegacy)) {
                 var receipt = from.sendMessage(msgLegacy);
                 //默认110秒后撤回
                 from.recallIn(receipt, 110 * 1000);
@@ -65,7 +65,7 @@ public class HelpService implements MessageService<Matcher> {
         }
 
     }
-    
+
     /**
      * 目前的 help 方法，走 panel A6
      * @param module 需要查询的功能名字
@@ -156,7 +156,7 @@ public class HelpService implements MessageService<Matcher> {
      * @return 图片流
      */
     private static byte[] getHelpPictureLegacy(@Nullable String module) {
-        String path = switch (module) {
+        String fileName = switch (module) {
             case "bot", "b" -> "help-bot.png";
             case "score", "s" -> "help-score.png";
             case "player", "p" -> "help-player.png";
@@ -170,15 +170,19 @@ public class HelpService implements MessageService<Matcher> {
             default -> "";
         };
 
-        if (path.isEmpty()) return null;
+        if (fileName.isEmpty()) return null;
+
+        byte[] file;
 
         try {
-            return Files.readAllBytes(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(STR."\{path}")
+            file = Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(fileName)
             );
         } catch (IOException e) {
             return null;
         }
+
+        return file;
     }
 
     /**
@@ -250,17 +254,14 @@ public class HelpService implements MessageService<Matcher> {
             case null, default -> "";
         };
 
-        String msg = "";
-
         if (link.isEmpty() && link2.isEmpty()) {
-            msg = STR."请参阅：\{web}";
+            return STR."请参阅：\{web}";
         } else if (!link.isEmpty() && link2.isEmpty()) {
-            msg = STR."请参阅：\{web}\{link}.html";
+            return STR."请参阅：\{web}\{link}.html";
         } else if (link.isEmpty()) {
-            msg = STR."请参阅功能介绍：\{web}\{link2}";
+            return STR."请参阅功能介绍：\{web}\{link2}";
+        } else {
+            return null;
         }
-
-        return msg;
     }
-
 }
