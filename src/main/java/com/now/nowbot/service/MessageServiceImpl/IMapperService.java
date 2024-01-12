@@ -127,9 +127,8 @@ public class IMapperService implements MessageService<Matcher> {
 
         List<ActivityEvent> activity;
         List<ActivityEvent> mappingActivity;
-        try {
-            List<ActivityEvent> f = new ArrayList<>();
 
+        try {
             activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
             mappingActivity = activity
                     .stream()
@@ -189,10 +188,9 @@ public class IMapperService implements MessageService<Matcher> {
 
         var diffArr = new int[8];
         {
-            var diffAll = beatMapSum.stream().filter(b -> Objects.equals(b.getMapperID(), user.getUID())).mapToDouble(BeatMap::getStarRating).toArray();
-
+            var diffStar = beatMapSum.stream().filter(b -> Objects.equals(b.getMapperID(), user.getUID())).mapToDouble(BeatMap::getStarRating).toArray();
             var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
-            for (var d : diffAll) {
+            for (var d : diffStar) {
                 for (int i = 0; i < 8; i++) {
                     if (d <= starMaxBoundary[i]) {
                         diffArr[i]++;
@@ -211,6 +209,7 @@ public class IMapperService implements MessageService<Matcher> {
             //逻辑应该是先每张图然后再遍历12吧？
             if (!CollectionUtils.isEmpty(search.getBeatmapSets())) {
                 search.getBeatmapSets().forEach(m -> {
+
                     for (int i = 1; i < keywords.length; i++) {
                         var keyword = keywords[i];
 
