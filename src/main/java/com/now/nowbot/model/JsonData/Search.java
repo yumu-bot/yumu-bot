@@ -28,7 +28,7 @@ public class Search {
     @JsonProperty("search")
     SearchInfo searchInfo;
 
-    public List<BeatMapSet> getBeatmapsets() {
+    public List<BeatMapSet> getBeatmapSets() {
         return beatmapsets;
     }
 

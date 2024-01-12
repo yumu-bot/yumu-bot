@@ -4,21 +4,26 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ActivityEvent {
-    public record Beatmap(String title, String url) {
+    public record Achievement(
+            @JsonProperty("icon_url") String icon_url,
+            @JsonProperty("id") Integer AID,
+            String name, String grouping, String ordering, String slug, String description, String mode, String instructions) {
     }
 
-    public record BeatmapSet(String title, String url) {
+    public record EventBeatMap(String title, String url) {
     }
 
+    public record EventBeatMapSet(String title, String url) {
+    }
 
-    public record User(String name, String url, String previousUsername) {
+    public record EventUser(String name, String url, String previousUsername) {
     }
 
     public enum EventType {
@@ -44,11 +49,12 @@ public class ActivityEvent {
         }
     }
 
+    //@JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     @JsonProperty("created_at")
-//    @JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     OffsetDateTime createdAt;
+
     @JsonProperty("id")
-    Long id;
+    Long EID;
 
     @JsonIgnore
     EventType type;
@@ -57,27 +63,35 @@ public class ActivityEvent {
     void setType(String type) {
         this.type = EventType.valueOf(type);
     }
+
     /*****************************下面属性根据不同 type 进行变动, 只包含 enum 中括号内的属性************************************/
+
     @JsonProperty("count")
     Integer count;
+
     @JsonProperty("approval")
     Integer approval;
+
     @JsonProperty("scoreRank")
     String scoreRank;
+
     @JsonProperty("rank")
     Integer rank;
+
     @JsonProperty("mode")
     String mode;
 
     @JsonProperty("achievement")
-    String achievement;
+    Achievement achievement;
 
     @JsonProperty("user")
-    User user;
+    EventUser user;
+
     @JsonProperty("beatmap")
-    Beatmap beatmap;
+    EventBeatMap beatmap;
+
     @JsonProperty("beatmapset")
-    BeatmapSet beatmapSet;
+    EventBeatMapSet beatmapSet;
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
@@ -87,12 +101,20 @@ public class ActivityEvent {
         this.createdAt = createdAt;
     }
 
-    public Long getId() {
-        return id;
+    public Long getEID() {
+        return EID;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setEID(Long EID) {
+        this.EID = EID;
+    }
+
+    public EventType getType() {
+        return type;
+    }
+
+    public void setType(EventType type) {
+        this.type = type;
     }
 
     public Integer getCount() {
@@ -127,57 +149,60 @@ public class ActivityEvent {
         this.rank = rank;
     }
 
-    public String getAchievement() {
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public Achievement getAchievement() {
         return achievement;
     }
 
-    public void setAchievement(String achievement) {
+    public void setAchievement(Achievement achievement) {
         this.achievement = achievement;
     }
 
-    public User getUser() {
+    public EventUser getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(EventUser user) {
         this.user = user;
     }
 
-    public Beatmap getBeatmap() {
+    public EventBeatMap getBeatmap() {
         return beatmap;
     }
 
-    public void setBeatmap(Beatmap beatmap) {
+    public void setBeatmap(EventBeatMap beatmap) {
         this.beatmap = beatmap;
     }
 
-    public BeatmapSet getBeatmapSet() {
+    public EventBeatMapSet getBeatmapSet() {
         return beatmapSet;
     }
 
-    public void setBeatmapSet(BeatmapSet beatmapSet) {
+    public void setBeatmapSet(EventBeatMapSet beatmapSet) {
         this.beatmapSet = beatmapSet;
     }
 
-    public EventType getType() {
-        return type;
+    public boolean isMapping() {
+        return Objects.equals(type, EventType.beatmapsetApprove) || Objects.equals(type, EventType.beatmapsetDelete) || Objects.equals(type, EventType.beatmapsetRevive) || Objects.equals(type, EventType.beatmapsetUpdate) || Objects.equals(type, EventType.beatmapsetUpload);
     }
 
-    public OsuMode getMode() {
-        return OsuMode.getMode(mode);
-    }
-
-    public boolean isTypeMapping() {
-        return (type == EventType.beatmapsetApprove ||
-                type == EventType.beatmapsetDelete ||
-                type == EventType.beatmapsetRevive ||
-                type == EventType.beatmapsetUpdate ||
-                type == EventType.beatmapsetUpload
-        );
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof ActivityEvent e) {
+            return (this.getType()).equals(e.getType()) && (this.getBeatmapSet().url()).equals(e.getBeatmapSet().url());
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        return STR."ActivityEvent{createdAt=\{createdAt}, id=\{id}, count=\{count}, approval=\{approval}, scoreRank='\{scoreRank}\{'\''}, rank=\{rank}, mode='\{mode}\{'\''}, achievement='\{achievement}\{'\''}, type=\{type}, user=\{user}, beatmap=\{beatmap}, beatmapSet=\{beatmapSet}\{'}'}";
+        return STR."ActivityEvent{createdAt=\{createdAt}, EID=\{EID}, type=\{type}, count=\{count}, approval=\{approval}, scoreRank='\{scoreRank}\{'\''}, rank=\{rank}, mode='\{mode}\{'\''}, achievement=\{achievement}, user=\{user}, beatmap=\{beatmap}, beatmapSet=\{beatmapSet}\{'}'}";
     }
 }

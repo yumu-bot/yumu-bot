@@ -13,7 +13,6 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
@@ -28,7 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service("NOWBOTIMAGE")
@@ -405,172 +403,10 @@ public class ImageService {
     }
     //2023-07-12T12:42:37Z
 
-    public byte[] getPanelM(OsuUser user, OsuUserApiService userApiService, OsuBeatmapApiService beatmapApiService) {
-        var page = 1;
-        var query = new HashMap<String, Object>();
-        query.put("q", "creator=" + user.getUID());
-        query.put("sort", "ranked_desc");
-        query.put("s", "any");
-        query.put("page", page);
-
-        Search search = null;
-        //依据QualifiedMapService 的逻辑来多次获取
-
-        {
-            int resultCount = 0;
-            do {
-                if (search == null) {
-                    search = beatmapApiService.searchBeatmap(query);
-                    resultCount += search.getBeatmapsets().size();
-                    continue;
-                }
-                page++;
-                query.put("page", page);
-                var result = beatmapApiService.searchBeatmap(query);
-                resultCount += result.getResultCount();
-                search.getBeatmapsets().addAll(result.getBeatmapsets());
-            } while (resultCount < search.getTotal() && page < 10);
-        }
-
-        List<ActivityEvent> activity;
-        List<ActivityEvent> mappingActivity;
-        try {
-            activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
-            mappingActivity = activity.stream().filter(ActivityEvent::isTypeMapping).toList();
-                    /* 原设想是，这里把相近的同名同属性活动删去。但是不知道怎么写
-                    .collect(collectingAndThen(
-                    toCollection(() -> new TreeSet<>(Comparator.comparing(s -> (s.getBeatmapSet().title())))),
-                    ArrayList::new))
-
-                    .stream().sorted(Comparator.comparing(ActivityEvent::getCreatedAt).reversed()).toList();
-
-                     */
-
-        } catch (Exception e) {
-            mappingActivity = null;
-        }
-
-        var mostPopularBeatmap = search
-                .getBeatmapsets()
-                .stream()
-                .filter(s -> (s.getCreatorID().longValue() == user.getUID()))
-                .sorted(Comparator.comparing(BeatMapSet::getPlayCount).reversed())
-                .limit(6)
-                .toList();
-
-        var mostRecentRankedBeatmap = search
-                .getBeatmapsets()
-                .stream()
-                .filter(s -> (s.hasLeaderBoard() && user.getUID() == s.getCreatorID().longValue()))
-                .findFirst()
-                .orElse(null);
-
-        if (mostRecentRankedBeatmap == null && user.getRankedCount() > 0) {
-            try {
-                var query1 = new HashMap<String, Object>();
-                query1.put("q", user.getUID().toString());
-                query1.put("sort", "ranked_desc");
-                query1.put("s", "any");
-                query1.put("page", 1);
-
-                var search1 = beatmapApiService.searchBeatmap(query1);
-                mostRecentRankedBeatmap = search1.getBeatmapsets().stream().filter(BeatMapSet::hasLeaderBoard).findFirst().orElse(null);
-
-            } catch (Exception ignored) {
-            }
-        }
-
-        var mostRecentRankedGuestDiff = search
-                .getBeatmapsets()
-                .stream()
-                .filter(s -> (s.hasLeaderBoard()) && user.getUID() != s.getCreatorID().longValue())
-                .findFirst()
-                .orElse(null);
-        var allBeatmaps = search.getBeatmapsets().stream().flatMap(s -> s.getBeatMaps().stream()).toList();
-
-        var diffArr = new int[8];
-        {
-            var diffAll = allBeatmaps.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getStarRating).toArray();
-            var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
-            for (var d : diffAll) {
-                for (int i = 0; i < 8; i++) {
-                    if (d <= starMaxBoundary[i]) {
-                        diffArr[i]++;
-                        break;
-                    }
-                }
-            }
-        }
-
-        int[] genre;
-        {
-            String[] keywords = new String[]{"unspecified", "video game", "anime", "rock", "pop", "other", "novelty", "hip hop", "electronic", "metal", "classical", "folk", "jazz"};
-            genre = new int[keywords.length];
-            AtomicBoolean hasAnyGenre = new AtomicBoolean(false);
-
-            //逻辑应该是先每张图然后再遍历12吧？
-            if (!CollectionUtils.isEmpty(search.getBeatmapsets())) {
-                search.getBeatmapsets().forEach(m -> {
-                    for (int i = 1; i < keywords.length; i++) {
-                        var keyword = keywords[i];
-
-                        if (m.getTags().toLowerCase().contains(keyword)) {
-                            genre[i]++;
-                            hasAnyGenre.set(true);
-                        }
-                    }
-
-                    //0是实在找不到 tag 的时候所赋予的默认值
-                    if (hasAnyGenre.get()) {
-                        hasAnyGenre.set(false);
-                    } else {
-                        genre[0]++;
-                    }
-                });
-            }
-        }
-
-        int favorite = 0;
-        int playcount = 0;
-        if (!CollectionUtils.isEmpty(search.getBeatmapsets())) {
-            for (int i = 0; i < search.getBeatmapsets().size(); i++) {
-                var v = search.getBeatmapsets().get(i);
-
-                if (v.getCreatorID() == user.getUID().intValue()) {
-                    favorite += v.getFavouriteCount();
-                    playcount += v.getPlayCount();
-                }
-            }
-        }
-
-        var lengthArr = new int[8];
-        {
-            var lengthAll = allBeatmaps.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
-            var lengthMaxBoundary = new double[]{60, 90, 120, 150, 180, 210, 240, Double.MAX_VALUE};
-            for (var f : lengthAll) {
-                for (int i = 0; i < 8; i++) {
-                    if (f <= lengthMaxBoundary[i]) {
-                        lengthArr[i]++;
-                        break;
-                    }
-                }
-            }
-        }
-
-
+    public byte[] getPanelM(Map<String, Object> data) {
         var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("user", user);
-        body.put("most_popular_beatmap", mostPopularBeatmap);
-        body.put("most_recent_ranked_beatmap", mostRecentRankedBeatmap);
-        body.put("most_recent_ranked_guest_diff", mostRecentRankedGuestDiff);
-        body.put("difficulty_arr", diffArr);
-        body.put("length_arr", lengthArr);
-        body.put("genre", genre);
-        body.put("recent_activity", mappingActivity);
-        body.put("favorite", favorite);
-        body.put("playcount", playcount);
-        return doPost("panel_M", new HttpEntity<>(body, headers));
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
+        return doPost("panel_M", httpEntity);
     }
 
     public byte[] getPanelAlpha(String... lines) {

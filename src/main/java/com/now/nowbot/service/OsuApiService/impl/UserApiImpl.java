@@ -169,7 +169,8 @@ public class UserApiImpl implements OsuUserApiService {
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToFlux(ActivityEvent.class)
-                .collectList().block();
+                .collectList()
+                .block();
     }
 
     @Override

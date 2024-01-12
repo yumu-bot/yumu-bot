@@ -82,7 +82,7 @@ public class SeriesData {
         series.getSeriesStat().setName(name);
 
         //合并（去重）所有 MRA 数据，并存入 playerDataList
-        getSeries().setPlayers(
+        series.setPlayers(
                 playerUIDSet.stream().map(playerMap::get).toList()
         );
 

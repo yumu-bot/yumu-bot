@@ -74,14 +74,14 @@ public class QualifiedMapService implements MessageService<Matcher> {
             do {
                 if (data == null) {
                     data = beatmapApiService.searchBeatmap(query);
-                    resultCount += data.getBeatmapsets().size();
+                    resultCount += data.getBeatmapSets().size();
                     continue;
                 }
                 page ++;
                 query.put("page", page);
                 var result = beatmapApiService.searchBeatmap(query);
-                resultCount += result.getBeatmapsets().size();
-                data.getBeatmapsets().addAll(result.getBeatmapsets());
+                resultCount += result.getBeatmapSets().size();
+                data.getBeatmapSets().addAll(result.getBeatmapSets());
             } while (resultCount < data.getTotal() && page < page_aim);
 
             if (resultCount == 0) throw new QualifiedMapException(QualifiedMapException.Type.Q_Result_NotFound);
