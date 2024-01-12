@@ -94,8 +94,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         } else if (matcher.group("uu") != null) {
             String str = parseUSA(data);
             try {
-                var receipt = from.sendMessage(str);
-                from.recallIn(receipt, 60000);
+                from.sendMessage(str).recallIn(60000);
             } catch (Exception e) {
                 log.error("USA 发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_USAFailed);

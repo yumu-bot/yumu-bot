@@ -79,8 +79,7 @@ public class MuRatingService implements MessageService<Matcher> {
         } else if (matcher.group("uu") != null) {
             String str = parseCSA(data);
             try {
-                var receipt = from.sendMessage(str);
-                from.recallIn(receipt, 60000);
+                from.sendMessage(str).recallIn(60000);
             } catch (Exception e) {
                 log.error("URA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_URAFailed);

@@ -58,9 +58,7 @@ public class HelpService implements MessageService<Matcher> {
             }
 
             if (Objects.nonNull(msgLegacy)) {
-                var receipt = from.sendMessage(msgLegacy);
-                //默认110秒后撤回
-                from.recallIn(receipt, 110 * 1000);
+                from.sendMessage(msgLegacy).recallIn(110 * 1000);
             }
         }
 
@@ -73,16 +71,16 @@ public class HelpService implements MessageService<Matcher> {
      */
     private static byte[] getHelpPicture(String module, ImageService imageService) {
         String fileName = switch (module) {
-            case "bot", "b" -> "bot";
-            case "score", "s" -> "score";
-            case "player", "p" -> "player";
-            case "map", "m" -> "map";
-            case "chat", "c" -> "chat";
-            case "fun", "f" -> "fun";
-            case "aid", "a" -> "aid";
-            case "tournament", "t" -> "tournament";
+            case "bot", "b", "内部指令", "内部" -> "bot";
+            case "score", "s", "成绩指令", "成绩" -> "score";
+            case "player", "p", "玩家指令", "玩家" -> "player";
+            case "map", "m", "谱面指令", "谱面" -> "map";
+            case "chat", "c", "聊天指令", "聊天" -> "chat";
+            case "fun", "f", "娱乐指令", "娱乐" -> "fun";
+            case "aid", "a", "辅助指令", "辅助" -> "aid";
+            case "tournament", "t", "比赛指令", "比赛" -> "tournament";
             
-            case "help", "h" -> "help";
+            //case "help", "h" -> "help";
             case "ping", "pi" -> "ping";
             case "bind", "bi" -> "bind";
             case "ban", "bq", "bu", "bg" -> "ban";
@@ -92,7 +90,7 @@ public class HelpService implements MessageService<Matcher> {
             case "mode", "setmode", "sm", "mo" -> "mode";
             case "pass", "pr" -> "pass";
             case "recent", "re" -> "recent";
-            case "scores" -> "scores";
+            case "scores", "ss" -> "scores";
             case "bestperformance", "bp" -> "bestperformance";
             case "todaybp", "tbp" -> "todaybp";
             case "bpanalysis", "bpa", "ba" -> "bpanalysis";
