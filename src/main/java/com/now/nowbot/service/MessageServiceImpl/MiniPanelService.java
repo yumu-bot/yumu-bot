@@ -60,18 +60,17 @@ public class MiniPanelService implements MessageService<Matcher> {
         boolean isScore = (matcher.group("ymx") != null);
         boolean isInfo = (matcher.group("ymy") != null);
 
-        BinUser user;
-        long qqId;
+        BinUser bu;
+        long qq;
 
         try {
-            qqId = event.getSender().getId();
-            user = bindDao.getUserFromQQ(qqId);
+            qq = event.getSender().getId();
+            bu = bindDao.getUserFromQQ(qq);
         } catch (BindException e) {
             throw new MiniPanelException(MiniPanelException.Type.MINI_Me_TokenExpired);
         }
 
-        var mode = user.getMode();
-        var id = user.getOsuID();
+        var mode = bu.getMode();
 
         if (isScore) {
             Score score;
@@ -79,7 +78,7 @@ public class MiniPanelService implements MessageService<Matcher> {
 
 
             try {
-                score = scoreApiService.getRecentIncludingFail(id, mode, 0, 1).getFirst();
+                score = scoreApiService.getRecentIncludingFail(bu, mode, 0, 1).getFirst();
             } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Recent_NotFound);
             }
@@ -102,7 +101,7 @@ public class MiniPanelService implements MessageService<Matcher> {
         } else if (isInfo) {
             OsuUser osuUser;
             try {
-                osuUser = userApiService.getPlayerInfo(id, mode);
+                osuUser = userApiService.getPlayerInfo(bu, mode);
             } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Me_NotFound);
             }

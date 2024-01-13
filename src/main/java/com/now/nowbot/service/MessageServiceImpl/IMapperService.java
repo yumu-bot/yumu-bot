@@ -130,6 +130,7 @@ public class IMapperService implements MessageService<Matcher> {
 
         try {
             activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
+
             activity.stream()
                     .filter(ActivityEvent::isMapping)
                     .forEach(e -> {
@@ -138,7 +139,8 @@ public class IMapperService implements MessageService<Matcher> {
                             return;
                         }
                         var last = mappingActivity.getLast();
-                        if (Objects.equals(last, e)) return;
+                        if (e.equals(last)) return;
+                        //if (Objects.equals(last, e)) return;
                         mappingActivity.add(e);
                     });
 
@@ -146,14 +148,14 @@ public class IMapperService implements MessageService<Matcher> {
 
         var mostPopularBeatmap = result
                 .stream()
-                .filter(s -> (s.getCreatorID().longValue() == user.getUID()))
+                .filter(s -> (Objects.equals(s.getCreatorID(), user.getUID())))
                 .sorted(Comparator.comparing(BeatMapSet::getPlayCount).reversed())
                 .limit(6)
                 .toList();
 
         var mostRecentRankedBeatmap = result
                 .stream()
-                .filter(s -> (s.hasLeaderBoard() && user.getUID() == s.getCreatorID().longValue()))
+                .filter(s -> (s.hasLeaderBoard() && Objects.equals(user.getUID(), s.getCreatorID())))
                 .findFirst()
                 .orElse(null);
 

@@ -89,7 +89,7 @@ public class OsuUser {
     @JsonProperty("playmode")
     String playMode;
 
-    @JsonProperty("playStyle")
+    @JsonProperty("playstyle")
     List<String> playStyle;
 
     @JsonProperty("post_count")

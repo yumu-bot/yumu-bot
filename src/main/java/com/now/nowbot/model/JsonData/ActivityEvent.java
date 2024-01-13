@@ -196,7 +196,7 @@ public class ActivityEvent {
     @Override
     public boolean equals(Object o) {
         if (o instanceof ActivityEvent e) {
-            return (this.getType()).equals(e.getType()) && (this.getBeatmapSet().url()).equals(e.getBeatmapSet().url());
+            return Objects.equals(this.getType(), e.getType()) && Objects.equals(this.getBeatmapSet().url(), e.getBeatmapSet().url());
         }
         return false;
     }
