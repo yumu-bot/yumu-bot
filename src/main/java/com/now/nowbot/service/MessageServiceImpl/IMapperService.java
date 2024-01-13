@@ -126,11 +126,10 @@ public class IMapperService implements MessageService<Matcher> {
         var result = search.getBeatmapSets();
 
         List<ActivityEvent> activity;
-        List<ActivityEvent> mappingActivity;
+        final List<ActivityEvent> mappingActivity = new ArrayList<>();
 
         try {
             activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
-            mappingActivity = new ArrayList<>();
             activity.stream()
                     .filter(ActivityEvent::isMapping)
                     .forEach(e -> {
@@ -153,9 +152,7 @@ public class IMapperService implements MessageService<Matcher> {
 
                      */
 
-        } catch (Exception e) {
-            mappingActivity = null;
-        }
+        } catch (Exception ignore) { }
 
         var mostPopularBeatmap = result
                 .stream()
