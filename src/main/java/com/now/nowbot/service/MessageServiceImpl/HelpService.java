@@ -72,7 +72,7 @@ public class HelpService implements MessageService<Matcher> {
     private static byte[] getHelpPicture(String module, ImageService imageService) {
         String fileName = switch (module) {
             case "interbot", "inter", "it", "因特" -> "interbot";
-            case "maomaobot", "meowbot", "meow", "maomao", "catbot", "cat", "mm", "猫猫", "猫猫bot"  -> "maomaobot";
+            case "maomaobot", "meowbot", "meow", "maomao", "kanonbot", "kanon", "cat", "kn", "猫猫", "猫猫bot"  -> "kanonbot";
             case "superdalou", "dalou", "daloubot", "superdaloubot", "dl", "大楼"  -> "superdaloubot";
             case "hydrantbot", "hydrant", "hydro", "hy", "xfs", "xf", "~", "消防栓"  -> "hydrantbot";
             case "cabbage", "白菜", "baicai", "妈船", "妈船？", "mothership", "mother ship", "bc"  -> "cabbagebot";
