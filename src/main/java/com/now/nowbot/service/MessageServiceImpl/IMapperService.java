@@ -130,11 +130,18 @@ public class IMapperService implements MessageService<Matcher> {
 
         try {
             activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
-            mappingActivity = activity
-                    .stream()
+            mappingActivity = new ArrayList<>();
+            activity.stream()
                     .filter(ActivityEvent::isMapping)
-                    .distinct()
-                    .toList();
+                    .forEach(e -> {
+                        if (CollectionUtils.isEmpty(mappingActivity)) {
+                            mappingActivity.add(e);
+                            return;
+                        }
+                        var last = mappingActivity.getLast();
+                        if (Objects.equals(last, e)) return;
+                        mappingActivity.add(e);
+                    });
 
                     /* todo 原设想是，这里把相近的同名同属性活动删去。但是不知道怎么写
 
