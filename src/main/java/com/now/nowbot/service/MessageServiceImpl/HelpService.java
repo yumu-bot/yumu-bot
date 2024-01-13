@@ -75,6 +75,7 @@ public class HelpService implements MessageService<Matcher> {
             case "maomaobot", "meowbot", "meow", "maomao", "catbot", "cat", "mm", "猫猫", "猫猫bot"  -> "maomaobot";
             case "superdalou", "dalou", "daloubot", "superdaloubot", "dl", "大楼"  -> "superdaloubot";
             case "hydrantbot", "hydrant", "hydro", "hy", "xfs", "xf", "~", "消防栓"  -> "hydrantbot";
+            case "cabbage", "白菜", "baicai", "妈船", "妈船？", "mothership", "mother ship", "bc"  -> "cabbagebot";
 
             case "bot", "b", "内部指令", "内部" -> "bot";
             case "score", "s", "成绩指令", "成绩" -> "score";
