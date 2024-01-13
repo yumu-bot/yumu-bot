@@ -142,16 +142,6 @@ public class IMapperService implements MessageService<Matcher> {
                         mappingActivity.add(e);
                     });
 
-                    /* todo 原设想是，这里把相近的同名同属性活动删去。但是不知道怎么写
-
-                    原始活动 -> 1：更新图A，2：更新图A，3-5：更新图B，6：更新图A
-                    简化后 -> 只留 1，3，6
-
-                    思路：用比较器，相近的活动的谱面信息和活动类型完全一致，这样子只保留最近（最前）的活动
-                    distinct 不起作用。已经重写过 Object.equals
-
-                     */
-
         } catch (Exception ignore) { }
 
         var mostPopularBeatmap = result

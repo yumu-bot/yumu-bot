@@ -14,6 +14,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
 import com.now.nowbot.service.MessageServiceImpl.MatchNowService;
 import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
+import com.now.nowbot.service.MessageServiceImpl.Over6KUserService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
@@ -23,20 +24,20 @@ import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
-@RequestMapping(value = "/pub", method = RequestMethod.GET)
+@ResponseBody
 @CrossOrigin("http://localhost:5173")
+@RequestMapping(value = "/pub", method = RequestMethod.GET)
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
@@ -483,6 +484,19 @@ public class BotWebApi {
         headers.setContentLength(length);
         headers.setContentType(MediaType.IMAGE_JPEG);
         return headers;
+    }
+
+    @Resource
+    Over6KUserService over6KUserService;
+    @GetMapping("alumni")
+    public Object getAlumni(@RequestParam(name = "start", defaultValue = "0")int start,
+                            @RequestParam(name = "size", defaultValue = "30")int size) {
+        try {
+            return over6KUserService.getResultJson(start, size);
+        } catch (IOException e) {
+            log.error("alumni 文件异常",e );
+            return "[]";
+        }
     }
 }
 
