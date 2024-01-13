@@ -48,7 +48,7 @@ public class OneBotListener {
             try {
                 var service = messageServiceMap.get(ins);
                 var d = new MessageService.DataValue();
-                if (service.isHandle(event, d)) {
+                if (service.isHandle(event, event.getRawMessage().trim(), d)) {
                     service.HandleMessage(event, d.getValue());
                 }
             } catch (Throwable e) {
