@@ -7,6 +7,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
             DATA_FILE.createNewFile();
         }
     }
+
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<User> data) throws Throwable {
         if (!messageText.startsWith("高阶出群")) {
@@ -130,7 +132,6 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
         try (var f = writeFile();) {
             var u = new User(id, name, LocalDate.parse(timeStr));
             var d = getUserData(u);
-            f.setLength(f.length() + d.length);
             f.seek(f.length());
             f.write(d);
         }
@@ -139,7 +140,6 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
     private void saveUser(User u) throws IOException {
         try (var f = writeFile();) {
             var d = getUserData(u);
-            f.setLength(f.length() + d.length);
             f.seek(f.length());
             f.write(d);
         }
