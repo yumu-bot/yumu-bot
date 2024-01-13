@@ -18,8 +18,8 @@ public class TestMapService implements MessageService<Matcher> {
     OsuBeatmapApiService beatmapApiService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.TESTMAP.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.TESTMAP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

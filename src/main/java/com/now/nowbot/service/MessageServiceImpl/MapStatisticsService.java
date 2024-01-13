@@ -49,8 +49,8 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<MapParam> data) {
-        var matcher = Instructions.MAP.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) {
+        var matcher = Instructions.MAP.matcher(messageText);
         if (!matcher.find()) return false;
 
         var mode = OsuMode.getMode(matcher.group("mode"));

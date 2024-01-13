@@ -45,8 +45,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     ImageService      imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<InfoParam> data) throws InfoException {
-        var matcher = Instructions.INFO.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<InfoParam> data) throws InfoException {
+        var matcher = Instructions.INFO.matcher(messageText);
         if (! matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
@@ -55,13 +55,13 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         if (Objects.nonNull(at)) {
             data.setValue(new InfoParam(
-                    getBinUser(at.getTarget(), event.getRawMessage().toLowerCase()),
+                    getBinUser(at.getTarget(), messageText.toLowerCase()),
                     mode));
             return true;
         }
         if (Objects.nonNull(qq)) {
             data.setValue(new InfoParam(
-                    getBinUser(Long.parseLong(qq), event.getRawMessage().toLowerCase()),
+                    getBinUser(Long.parseLong(qq), messageText.toLowerCase()),
                     mode));
             return true;
         }
@@ -81,7 +81,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             return true;
         }
         data.setValue(new InfoParam(
-                getBinUser(event.getSender().getId(), event.getRawMessage().toLowerCase()),
+                getBinUser(event.getSender().getId(), messageText.toLowerCase()),
                 mode));
         return true;
     }

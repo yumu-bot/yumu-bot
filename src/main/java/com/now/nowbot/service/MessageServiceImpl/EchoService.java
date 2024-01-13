@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 @Service("ECHO")
 public class EchoService implements MessageService<String> {
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<String> data) {
-        var m = Instructions.ECHO.matcher(event.getRawMessage());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<String> data) {
+        var m = Instructions.ECHO.matcher(messageText);
         if (m.find()) {
             data.setValue(m.group("any"));
             return true;

@@ -26,8 +26,8 @@ public class DrawService implements MessageService<Matcher> {
     private DrawLogLiteRepository drawLogLiteRepository;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.DRAW.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.DRAW.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

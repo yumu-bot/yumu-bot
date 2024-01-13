@@ -61,17 +61,17 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BPHeadTailParam> data) throws BPAnalysisException {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BPHeadTailParam> data) throws BPAnalysisException {
 
 
         //旧功能指引
-        var matcher2 = Instructions.BPHT.matcher(event.getRawMessage().trim());
+        var matcher2 = Instructions.BPHT.matcher(messageText);
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
             // 直接在这里抛, 效果一样
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
         }
 
-        var matcher = Instructions.UUBA.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.UUBA.matcher(messageText);
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));

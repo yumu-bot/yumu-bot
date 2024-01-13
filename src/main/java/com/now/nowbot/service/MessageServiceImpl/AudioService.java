@@ -29,8 +29,8 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<AudioParam> data) {
-        var matcher = Instructions.AUDIO.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<AudioParam> data) {
+        var matcher = Instructions.AUDIO.matcher(messageText);
         if (!matcher.find()) {
             return false;
         }

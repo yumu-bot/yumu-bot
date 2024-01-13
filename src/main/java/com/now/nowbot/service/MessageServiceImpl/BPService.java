@@ -53,8 +53,8 @@ public class BPService implements MessageService<BPService.BPParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BPParam> data) throws BPException {
-        var matcher = Instructions.BP.matcher(event.getRawMessage());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws BPException {
+        var matcher = Instructions.BP.matcher(messageText);
         if (!matcher.find()) {
             return false;
         }

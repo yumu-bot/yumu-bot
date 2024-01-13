@@ -108,11 +108,11 @@ public class GroupStatisticsService implements MessageService<Long> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Long> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Long> data) throws Throwable {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }
-        var m = Instructions.GROUPSTATISTICS.matcher(event.getRawMessage().trim());
+        var m = Instructions.GROUPSTATISTICS.matcher(messageText);
         if (m.find()) {
             switch (m.group("group")) {
                 case "a", "进阶群" -> data.setValue(928936255L);

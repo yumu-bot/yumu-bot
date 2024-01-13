@@ -28,11 +28,10 @@ public class ServiceCountService implements MessageService<Integer> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Integer> data) throws Throwable {
-        var matcher = Instructions.SERVICECOUNT.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Integer> data) throws Throwable {
+        var matcher = Instructions.SERVICECOUNT.matcher(messageText);
         if (! matcher.find()) return false;
 
-        //if (! event.getRawMessage().startsWith("统计服务调用")) return false;
         var d = matcher.group("days");
         var h = matcher.group("hours");
         int hours = 0;

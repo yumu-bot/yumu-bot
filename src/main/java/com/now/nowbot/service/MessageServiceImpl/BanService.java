@@ -27,8 +27,8 @@ public class BanService implements MessageService<BanParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BanParam> data) {
-        var matcher = Instructions.BAN.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BanParam> data) {
+        var matcher = Instructions.BAN.matcher(messageText);
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

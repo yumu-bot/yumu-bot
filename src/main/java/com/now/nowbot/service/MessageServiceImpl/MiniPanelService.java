@@ -46,8 +46,8 @@ public class MiniPanelService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.MINI.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.MINI.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

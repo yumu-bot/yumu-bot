@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class Map4DCalculate implements MessageService<Map4DCalculate.param> {
     public record param(String type, float value, String mods){}
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<param> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<param> data) throws Throwable {
         String message = event.getRawMessage();
         if (!message.startsWith("#cal")) return false;
         var matcher = Instructions.MAP4DCALCULATE.matcher(message);

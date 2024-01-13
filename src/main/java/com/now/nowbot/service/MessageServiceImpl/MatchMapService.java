@@ -41,7 +41,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<MatchMapService.MatchMapParam> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<MatchMapParam> data) throws Throwable {
         //这个只能通过父服务 MatchListenerService 调用得到
         return false;
     }

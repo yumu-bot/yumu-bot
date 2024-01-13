@@ -33,8 +33,8 @@ public class LeverTestService implements MessageService<BinUser> {
 
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<BinUser> data) throws Throwable {
-        if (!event.getRawMessage().equals("测测我的")) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BinUser> data) throws Throwable {
+        if (!messageText.equals("测测我的")) {
             return false;
         }
         var qqId = event.getSender().getId();

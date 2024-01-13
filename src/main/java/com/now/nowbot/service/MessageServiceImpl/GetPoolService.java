@@ -25,8 +25,8 @@ public class GetPoolService implements MessageService<Matcher> {
     OsuBeatmapApiService osuBeatmapApiService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.GETPOOL.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
+        var m = Instructions.GETPOOL.matcher(messageText);
         if (! m.find()) {
             return false;
         }

@@ -36,8 +36,8 @@ public class UUIService implements MessageService<Matcher> {
         this.bindDao = bindDao;
     }
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.UUINFO.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.UUINFO.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

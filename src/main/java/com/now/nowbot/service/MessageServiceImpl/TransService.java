@@ -15,8 +15,8 @@ public class TransService implements MessageService<Matcher> {
     static List<String> d1 = List.of("null","C","C#","D","D#","E","F","F#","G","G#","A","A#","B");
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.TRANS.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.TRANS.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

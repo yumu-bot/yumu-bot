@@ -58,9 +58,9 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
         if (event.getSender().getId() != 365246692L) return false;
-        var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
+        var m = Instructions.SCOREPR.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             Permission.stopListener();

@@ -34,8 +34,8 @@ public class WikiService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.WIKI.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.WIKI.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

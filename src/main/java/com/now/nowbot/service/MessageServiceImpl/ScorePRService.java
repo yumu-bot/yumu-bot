@@ -60,8 +60,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<ScorePrParam> data) throws ScoreException {
-        var m = Instructions.SCOREPR.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePrParam> data) throws ScoreException {
+        var m = Instructions.SCOREPR.matcher(messageText);
         if (m.find()) {
             getData(m, event, data);
             return true;

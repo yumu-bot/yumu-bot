@@ -37,8 +37,8 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
     WebClient            webClient;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<PoolParam> data) throws TipsException {
-        var m = Instructions.MAPPOOL.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<PoolParam> data) throws TipsException {
+        var m = Instructions.MAPPOOL.matcher(messageText);
         if (! m.find()) {
             return false;
         }

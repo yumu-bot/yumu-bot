@@ -33,8 +33,8 @@ public class MatchRoundService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.ROUND.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.ROUND.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

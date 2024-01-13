@@ -28,9 +28,9 @@ public class NominationService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
 
-        var matcher = Instructions.NOMINATION.matcher(event.getRawMessage().trim());
+        var matcher = Instructions.NOMINATION.matcher(messageText);
         if (! matcher.find()) return false;
 
         data.setValue(matcher);

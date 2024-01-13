@@ -35,8 +35,8 @@ public class OldAvatarService implements MessageService<UserParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = Instructions.OLDAVATAR.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {
+        var matcher = Instructions.OLDAVATAR.matcher(messageText);
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

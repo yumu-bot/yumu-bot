@@ -57,8 +57,8 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<ScoreParam> data) throws ScoreException {
-        var matcher = Instructions.SCORE.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScoreParam> data) throws ScoreException {
+        var matcher = Instructions.SCORE.matcher(messageText);
         if (! matcher.find()) {
             return false;
         }
@@ -88,7 +88,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
                 isOther = false;
             } catch (BindException e) {
                 //退避 !score
-                if (event.getRawMessage().toLowerCase().contains("score")) {
+                if (messageText.toLowerCase().contains("score")) {
                     throw new LogException("score 退避成功");
                 } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);

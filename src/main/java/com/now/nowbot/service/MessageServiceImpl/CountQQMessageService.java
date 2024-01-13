@@ -34,13 +34,13 @@ public class CountQQMessageService implements MessageService<Matcher> {
 
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<Matcher> data) {
-        var m = Instructions.COUNTMSG.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+        var m = Instructions.COUNTMSG.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
         } else {
-            m = Instructions.COUNTMSGLEGACY.matcher(event.getRawMessage().trim());
+            m = Instructions.COUNTMSGLEGACY.matcher(messageText);
             if (m.find()) {
                 data.setValue(m);
                 return true;

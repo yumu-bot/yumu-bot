@@ -55,8 +55,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, DataValue<UserParam> data) {
-        var matcher = Instructions.BPANALYSIS.matcher(event.getRawMessage().trim());
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {
+        var matcher = Instructions.BPANALYSIS.matcher(messageText);
         if (!matcher.find()) return false;
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

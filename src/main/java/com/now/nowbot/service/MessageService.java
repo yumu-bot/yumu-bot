@@ -4,13 +4,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 
 public interface MessageService<T> {
 
-    default boolean isHandle(MessageEvent event, DataValue<T> data) throws Throwable {
-        return false;
-    }
+    boolean isHandle(MessageEvent event, String messageText, DataValue<T> data) throws Throwable;
 
     void HandleMessage(MessageEvent event, T matcher) throws Throwable;
-
-    ;
 
     class DataValue<T> {
         T value;
