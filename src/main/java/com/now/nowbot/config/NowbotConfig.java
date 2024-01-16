@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.controller.BotWebApi;
@@ -24,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +51,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 
@@ -265,5 +270,17 @@ public class NowbotConfig {
     @Value("${server.port}")
     public void setPORT(Integer port) {
         PORT = port;
+    }
+
+    @Bean
+    public CacheManager cacheManager(Executor mainExecutor) {
+        var caffeine = Caffeine.newBuilder()
+                .executor(mainExecutor)
+                .expireAfterAccess(5, TimeUnit.SECONDS)
+                .maximumSize(60);
+        var manager = new CaffeineCacheManager();
+        manager.setCaffeine(caffeine);
+        manager.setAllowNullValues(true);
+        return manager;
     }
 }
