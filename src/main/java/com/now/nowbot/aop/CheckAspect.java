@@ -191,7 +191,7 @@ public class CheckAspect {
         }
     }
 
-    @Around("imageService()")
+    //    @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
         var result = point.getArgs();
         for (int i = 0; i < result.length; i++) {
