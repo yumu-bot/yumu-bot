@@ -1,10 +1,10 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -12,9 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
@@ -47,9 +44,8 @@ public class HelpService implements MessageService<Matcher> {
             } else {
                 throw new TipsException("窝趣，找不到文件");
             }
-        } catch (Exception e) {
-            log.error("Help A6 输出错误，使用默认方法", e);
 
+        } catch (TipsException e) {
             var picLegacy = getHelpPictureLegacy(module);
             var msgLegacy = getHelpLinkLegacy(module);
 
@@ -60,6 +56,8 @@ public class HelpService implements MessageService<Matcher> {
             if (Objects.nonNull(msgLegacy)) {
                 from.sendMessage(msgLegacy).recallIn(110 * 1000);
             }
+        } catch (Exception e) {
+            log.error("Help A6 输出错误，使用默认方法？", e);
         }
 
     }
@@ -131,28 +129,10 @@ public class HelpService implements MessageService<Matcher> {
 
             case null, default -> "GUIDE";
         };
-        
-        StringBuilder sb = new StringBuilder();
 
-        try {
-            fileName += ".md";
-            var bufferedReader = Files.newBufferedReader(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Help").resolve(fileName)
-            );
-
-            // 逐行读取文本内容
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-
-            // 关闭流
-            bufferedReader.close();
-
-            return imageService.getPanelA6(sb.toString(), "help");
-        } catch (Exception ignored) {
-            return null;
-        }
+        return imageService.getPanelA6(
+                DataUtil.getMarkdownFile(STR."Help/\{fileName}.md"),
+                "help");
     }
 
     /**
@@ -175,20 +155,7 @@ public class HelpService implements MessageService<Matcher> {
             default -> "";
         };
 
-        if (fileName.isEmpty()) return null;
-
-        byte[] file;
-
-        try {
-            fileName += ".png";
-            file = Files.readAllBytes(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(fileName)
-            );
-        } catch (IOException e) {
-            return null;
-        }
-
-        return file;
+        return DataUtil.getPicture(STR."\{fileName}.png");
     }
 
     /**

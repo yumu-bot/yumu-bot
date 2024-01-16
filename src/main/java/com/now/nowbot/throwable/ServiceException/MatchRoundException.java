@@ -4,7 +4,13 @@ import com.now.nowbot.throwable.TipsException;
 
 public class MatchRoundException extends TipsException {
     public enum Type {
-        MR_Parameter_None("欢迎使用 Yumu Match Round 系统！指令食用方法：\n!ymmatchround / !ymro [matchid] (rounds) (keyword)\nmatchid：这场比赛的房间号。\nkeyword：需要查询的关键字，可以查询谱面艺术家、曲名、难度名。"),//参数_无参数
+        MR_Instructions("""
+                欢迎使用 Yumu Match Round 功能！食用方法：
+                !ymmatchround / !ro [matchid] (rounds) (keyword)
+                matchid：这场比赛的房间号。
+                rounds：轮次
+                keyword：需要查询的关键字，可以查询谱面艺术家、曲名、难度名。
+                """),//参数_无参数
 
         MR_MatchID_RangeError("输入的房间号范围错误！"),//参数_参数错误
         MR_MatchID_NotFound("小沐找不到这场比赛..."),//参数_参数错误

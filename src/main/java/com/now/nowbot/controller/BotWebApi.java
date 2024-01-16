@@ -24,7 +24,6 @@ import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
@@ -441,7 +440,7 @@ public class BotWebApi {
             @RequestBody Map<String, List<Long>> dataMap
     ) throws RuntimeException {
         var mapPool = new MapPoolDto(nameStr, dataMap, beatmapApiService);
-        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.PO_Map_Empty.message);
+        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
 
         var data = imageService.getPanelH(mapPool);
         return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);

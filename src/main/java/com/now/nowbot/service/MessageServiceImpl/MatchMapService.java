@@ -50,7 +50,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     public void HandleMessage(MessageEvent event, MatchMapService.MatchMapParam param) throws Throwable {
         var from = event.getSubject();
 
-        if (param.bid == 0) from.sendMessage(MapStatisticsException.Type.M_Parameter_None.message);
+        if (param.bid == 0) from.sendMessage(MapStatisticsException.Type.M_Instructions.message);
 
         var beatMap = new BeatMap();
 

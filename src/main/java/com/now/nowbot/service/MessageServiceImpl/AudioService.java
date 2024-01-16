@@ -38,7 +38,9 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         var id_str = matcher.group("id");
         var type = matcher.group("type");
 
-        if (Objects.isNull(id_str)) param.err = new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+        if (Objects.isNull(id_str)) {
+            param.err = new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+        }
 
 
         try {
@@ -63,23 +65,27 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
 
         int sid = 0;
 
+        byte[] voice;
+
         if (param.isBid) {
             try {
                 sid = beatmapApiService.getBeatMapInfo(param.id).getSID();
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }
-        }
 
-        byte[] voiceData;
-
-        try {
-            voiceData = getVoice(sid);
-        } catch (Exception e) {
-            if (param.isBid) {
+            try {
+                voice = getVoice(sid);
+            } catch (Exception e) {
                 log.error("音频下载失败：", e);
                 throw new AudioException(AudioException.Type.SONG_Download_Error);
-            } else {
+            }
+
+        } else {
+            // isSid
+            try {
+                voice = getVoice(sid);
+            } catch (Exception e) {
                 //输入的不是 SID
                 try {
                     sid = beatmapApiService.getBeatMapInfo(param.id).getSID();
@@ -88,7 +94,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
                 }
 
                 try {
-                    voiceData = getVoice(sid);
+                    voice = getVoice(sid);
                 } catch (Exception e2) {
                     log.error("音频下载失败、附加转换失败：", e2);
                     throw new AudioException(AudioException.Type.SONG_Download_Error);
@@ -97,7 +103,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         }
 
         try {
-            from.sendVoice(voiceData);
+            from.sendVoice(voice);
         } catch (Exception e) {
             log.error("音频发送失败：", e);
             throw new AudioException(AudioException.Type.SONG_Send_Error);

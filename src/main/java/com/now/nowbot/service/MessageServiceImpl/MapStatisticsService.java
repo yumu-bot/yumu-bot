@@ -13,6 +13,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -94,8 +95,16 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
     public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
         var from = event.getSubject();
 
-        if (param.bid == 0)
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_None);
+        if (param.bid == 0) {
+            try {
+                var md = DataUtil.getMarkdownFile("Help/maps.md");
+                var data = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(event.getSubject(), data);
+                return;
+            } catch (Exception e) {
+                throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
+            }
+        }
 
         var beatMap = new BeatMap();
 
