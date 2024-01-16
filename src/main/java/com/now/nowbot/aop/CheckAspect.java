@@ -51,21 +51,25 @@ public class CheckAspect {
 
     //所有实现MessageService的HandMessage方法切入点
     @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(void HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
-    public void servicePoint() {}
+    public void servicePoint() {
+    }
 
     @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
-    public void restTemplate() {}
+    public void restTemplate() {
+    }
 
     @Pointcut("execution(* com.now.nowbot.mapper.BindUserMapper.save(..))")
-    public void userSave() {}
+    public void userSave() {
+    }
 
     @Pointcut("execution(* com.now.nowbot.service.OsuApiService.OsuBeatmapApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuUserApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
-    public void apiService() {}
+    public void apiService() {
+    }
 
-    @Pointcut("execution(* com.now.nowbot.service.ImageService.get*(..))")
+    @Pointcut("execution(* com.now.nowbot.service.ImageService.getPanelGamma(..))")
     public void imageService() {
     }
 
@@ -100,7 +104,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
+            if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
                 throw new PermissionException(STR."\{servicename}非管理员使用管理功能", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
@@ -108,16 +112,16 @@ public class CheckAspect {
             throw new PermissionException(STR."\{servicename}使用超管功能", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         // test 功能
-        if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
+        if (CheckPermission.test() && ! Permission.isTester(event.getSender().getId())) {
             throw new PermissionException(STR."\{servicename}有人使用测试功能 ", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())) {
+            if (CheckPermission.friend() && ! permission.containsFriend(servicename, event.getSender().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.containsGroup(servicename, g.getGroup().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         } else {
@@ -191,7 +195,7 @@ public class CheckAspect {
         }
     }
 
-    //    @Around("imageService()")
+    @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
         var result = point.getArgs();
         for (int i = 0; i < result.length; i++) {
@@ -234,7 +238,7 @@ public class CheckAspect {
     private static final int retryTime = 4;
 
     //    @Around(value = "apiService()")
-    public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable{
+    public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable {
         int i = 0;
         while (true) {
             try {
@@ -242,7 +246,7 @@ public class CheckAspect {
             } catch (WebClientResponseException.NotFound | WebClientResponseException.Unauthorized e) {
                 throw e;
             } catch (Throwable e) {
-                if (++i > retryTime) {
+                if (++ i > retryTime) {
                     throw e;
                 }
                 Thread.sleep(Duration.ofSeconds(1L << i));
