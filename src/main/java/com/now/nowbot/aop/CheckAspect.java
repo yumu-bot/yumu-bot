@@ -69,7 +69,7 @@ public class CheckAspect {
     public void apiService() {
     }
 
-    @Pointcut("execution(* com.now.nowbot.service.ImageService.getPanelGamma(..))")
+    @Pointcut("execution(* com.now.nowbot.service.ImageService.getPanelG*(..))")
     public void imageService() {
     }
 
