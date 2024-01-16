@@ -6,6 +6,8 @@ import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.OsuUserPlus;
+import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.JsonData.ScorePlus;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -34,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class CheckAspect {
     private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
+    private static final String USER_PROFILE_KEY = "#user_profile";
     Permission        permission;
     ServiceCallRepository serviceCall;
     UserProfileMapper userProfileMapper;
@@ -197,20 +200,14 @@ public class CheckAspect {
 
     @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
-        var result = point.getArgs();
-        for (int i = 0; i < result.length; i++) {
-            var param = result[i];
-            if (param instanceof OsuUser user) {
-                result[i] = getUser(user);
-            } else if (
-                    param instanceof Optional<?> opt
-                            && opt.isPresent()
-                            && opt.get() instanceof OsuUser user
-            ) {
-                result[i] = Optional.of(getUser(user));
+        var args = point.getArgs();
+        for (int i = 0; i < args.length; i++) {
+            var param = parse(args[i]);
+            if (Objects.nonNull(param)) {
+                args[i] = param;
             }
         }
-        return point.proceed(result);
+        return point.proceed(args);
     }
 
 
@@ -235,6 +232,28 @@ public class CheckAspect {
         }
     }
 
+    private Object parse(Object param) {
+        if (param instanceof OsuUser user) {
+            return getUser(user);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof OsuUser user
+        ) {
+            return Optional.ofNullable(getUser(user));
+        }
+        if (param instanceof Score score) {
+            return getScore(score);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof Score score
+        ) {
+            return Optional.ofNullable(getScore(score));
+        }
+
+        return null;
+    }
     private OsuUser getUser(OsuUser user) {
         if (Objects.isNull(user.getUID())) return user;
         var data = userProfileMapper.findTopByUserId(user.getUID());
@@ -244,5 +263,16 @@ public class CheckAspect {
             result.setProfile(profile);
             return (OsuUser) result;
         }).orElse(user);
+    }
+
+    private Score getScore(Score score) {
+        if (score == null || score.getUser() == null || score.getUser().getId() == null) return score;
+        var data = userProfileMapper.findTopByUserId(score.getUser().getId());
+
+        return data.map(profile -> {
+            var result = ScorePlus.copyOf(score);
+            result.setProfile(profile);
+            return (Score) result;
+        }).orElse(score);
     }
 }
