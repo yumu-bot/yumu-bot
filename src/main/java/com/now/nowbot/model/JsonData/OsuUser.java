@@ -933,6 +933,14 @@ public class OsuUser {
         return null;
     }
 
+    public Boolean getRestricted() {
+        return isRestricted;
+    }
+
+    public void setRestricted(Boolean restricted) {
+        isRestricted = restricted;
+    }
+
     public void setPmFriendsOnly(Boolean pmFriendsOnly) {
         this.pmFriendsOnly = pmFriendsOnly;
     }

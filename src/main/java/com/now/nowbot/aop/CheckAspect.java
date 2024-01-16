@@ -3,6 +3,8 @@ package com.now.nowbot.aop;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.OsuUserPlus;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -28,6 +30,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -61,6 +64,10 @@ public class CheckAspect {
             "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
     public void apiService() {}
+
+    @Pointcut("execution(* com.now.nowbot.service.ImageService.get*(..))")
+    public void imageService() {
+    }
 
 
     @Before(value = "userSave()")
@@ -184,6 +191,25 @@ public class CheckAspect {
         }
     }
 
+    @Before("imageService()")
+    public Object[] beforeGetImage(JoinPoint point) {
+        var result = point.getArgs();
+        for (int i = 0; i < result.length; i++) {
+            var param = result[i];
+            if (param instanceof OsuUser user) {
+                result[i] = getUser(user);
+            } else if (
+                    param instanceof Optional<?> opt
+                            && opt.isPresent()
+                            && opt.get() instanceof OsuUser user
+            ) {
+                result[i] = getUser(user);
+            }
+        }
+        return result;
+    }
+
+
     //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
     @Around(value = "servicePoint()", argNames = "pjp")
     public void setContext(ProceedingJoinPoint pjp) throws Throwable {
@@ -222,5 +248,11 @@ public class CheckAspect {
                 Thread.sleep(Duration.ofSeconds(1L << i));
             }
         }
+    }
+
+    private OsuUserPlus getUser(OsuUser user) {
+        var result = OsuUserPlus.copyOf(user);
+        result.setUsername(STR."\{result.getUsername()}💕");
+        return result;
     }
 }
