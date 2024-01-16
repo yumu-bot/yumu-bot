@@ -69,7 +69,7 @@ public class CheckAspect {
     public void apiService() {
     }
 
-    @Pointcut("execution(* com.now.nowbot.service.ImageService.*(..))")
+    @Pointcut("execution(* com.now.nowbot.service.ImageService.get*(..))")
     public void imageService() {
     }
 
@@ -207,7 +207,7 @@ public class CheckAspect {
                             && opt.isPresent()
                             && opt.get() instanceof OsuUser user
             ) {
-                result[i] = getUser(user);
+                result[i] = Optional.of(getUser(user));
             }
         }
         return point.proceed(result);
