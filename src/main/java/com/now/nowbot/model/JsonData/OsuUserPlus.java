@@ -17,4 +17,12 @@ public class OsuUserPlus extends OsuUser {
         BeanUtils.copyProperties(user, result);
         return result;
     }
+
+    public UserProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(UserProfile profile) {
+        this.profile = profile;
+    }
 }

@@ -3,6 +3,7 @@ package com.now.nowbot.aop;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
+import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.OsuUserPlus;
 import com.now.nowbot.qq.contact.Contact;
@@ -25,25 +26,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.Duration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Aspect
 @Component
 public class CheckAspect {
     private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
-    Permission permission;
+    Permission        permission;
     ServiceCallRepository serviceCall;
+    UserProfileMapper userProfileMapper;
 
     @Autowired
-    public CheckAspect(Permission permission, ServiceCallRepository serviceCallRepository) {
+    public CheckAspect(Permission permission,
+                       ServiceCallRepository serviceCallRepository,
+                       UserProfileMapper userProfileMapper) {
         this.permission = permission;
+        this.userProfileMapper = userProfileMapper;
         serviceCall = serviceCallRepository;
     }
 
@@ -235,28 +235,14 @@ public class CheckAspect {
         }
     }
 
-    private static final int retryTime = 4;
+    private OsuUser getUser(OsuUser user) {
+        if (Objects.isNull(user.getUID())) return user;
+        var data = userProfileMapper.findTopByUserId(user.getUID());
 
-    //    @Around(value = "apiService()")
-    public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable {
-        int i = 0;
-        while (true) {
-            try {
-                return joinPoint.proceed();
-            } catch (WebClientResponseException.NotFound | WebClientResponseException.Unauthorized e) {
-                throw e;
-            } catch (Throwable e) {
-                if (++ i > retryTime) {
-                    throw e;
-                }
-                Thread.sleep(Duration.ofSeconds(1L << i));
-            }
-        }
-    }
-
-    private OsuUserPlus getUser(OsuUser user) {
-        var result = OsuUserPlus.copyOf(user);
-        result.setUsername(STR."\{result.getUsername()}💕");
-        return result;
+        return data.map(profile -> {
+            var result = OsuUserPlus.copyOf(user);
+            result.setProfile(profile);
+            return (OsuUser) result;
+        }).orElse(user);
     }
 }
