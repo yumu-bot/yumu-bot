@@ -25,11 +25,10 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     public static class AudioParam {
         Boolean isBid;
         Integer id;
-        Exception err;
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<AudioParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<AudioParam> data) throws Exception {
         var matcher = Instructions.AUDIO.matcher(messageText);
         if (!matcher.find()) {
             return false;
@@ -39,14 +38,14 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
         var type = matcher.group("type");
 
         if (Objects.isNull(id_str)) {
-            param.err = new AudioException(AudioException.Type.SONG_Parameter_NoBid);
+            throw new AudioException(AudioException.Type.SONG_Parameter_NoBid);
         }
 
 
         try {
             param.id = Integer.parseInt(id_str);
         } catch (NumberFormatException e) {
-            param.err = new AudioException(AudioException.Type.SONG_Parameter_BidError);
+            throw new AudioException(AudioException.Type.SONG_Parameter_BidError);
         }
 
         param.isBid = Objects.equals(type, "b") || Objects.equals(type, "bid");
@@ -58,10 +57,6 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
     @Override
     public void HandleMessage(MessageEvent event, AudioParam param) throws Throwable {
         var from = event.getSubject();
-
-        if (param.err != null) {
-            throw param.err;
-        }
 
         int sid = 0;
 
