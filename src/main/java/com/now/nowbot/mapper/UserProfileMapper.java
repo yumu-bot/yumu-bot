@@ -12,4 +12,13 @@ public interface UserProfileMapper extends JpaRepository<UserProfile, Long> {
 
     @Cacheable(value = "user_profile", key = "#aLong")
     Optional<UserProfile> findTopByUserId(long aLong);
+
+    default UserProfile getProfileById(long id) {
+        var opt = this.findTopByUserId(id);
+        return opt.orElseGet(() -> {
+            var prof = new UserProfile();
+            prof.setUserId(id);
+            return prof;
+        });
+    }
 }

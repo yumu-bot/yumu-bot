@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -245,24 +246,7 @@ public class NowbotConfig {
                 if (parameterAnnotation == null) {
                     continue;
                 }
-                OptionType optionType;
-                Class<?> type = parameter.getType();
-                if (type.equals(int.class) || type.equals(Integer.class)) {
-                    optionType = OptionType.INTEGER;
-                } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-                    optionType = OptionType.BOOLEAN;
-                } else {
-                    optionType = OptionType.STRING;
-                }
-                String parameterName = parameterAnnotation.name();
-                OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
-                if (parameterName.equals("mode")) {
-                    optionData.addChoice("OSU", "OSU");
-                    optionData.addChoice("TAIKO", "TAIKO");
-                    optionData.addChoice("CATCH", "CATCH");
-                    optionData.addChoice("MANIA", "MANIA");
-                }
-                optionData.setRequired(parameterAnnotation.required());
+                final OptionData optionData = getOptionData(parameter, parameterAnnotation);
                 commandData.addOptions(optionData);
             }
             jda.upsertCommand(commandData).complete();
@@ -270,6 +254,29 @@ public class NowbotConfig {
         log.info("jda init ok");
 
         return jda;
+    }
+
+    @NotNull
+    private static OptionData getOptionData(Parameter parameter, OpenResource parameterAnnotation) {
+        OptionType optionType;
+        Class<?> type = parameter.getType();
+        if (type.equals(int.class) || type.equals(Integer.class)) {
+            optionType = OptionType.INTEGER;
+        } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+            optionType = OptionType.BOOLEAN;
+        } else {
+            optionType = OptionType.STRING;
+        }
+        String parameterName = parameterAnnotation.name();
+        OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
+        if (parameterName.equals("mode")) {
+            optionData.addChoice("OSU", "OSU");
+            optionData.addChoice("TAIKO", "TAIKO");
+            optionData.addChoice("CATCH", "CATCH");
+            optionData.addChoice("MANIA", "MANIA");
+        }
+        optionData.setRequired(parameterAnnotation.required());
+        return optionData;
     }
 
     @Value("${server.port}")

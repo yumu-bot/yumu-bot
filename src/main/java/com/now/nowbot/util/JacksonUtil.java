@@ -288,8 +288,7 @@ public class JacksonUtil {
 
         JsonNode node = (JsonNode) toNode(body);
         if (node != null) {
-            return mapper.convertValue(node, new TypeReference<List<T>>() {
-            });
+            return parseObjectList(node, clazz);
         }
         return null;
     }

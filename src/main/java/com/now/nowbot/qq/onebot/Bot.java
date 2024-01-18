@@ -1,9 +1,15 @@
 package com.now.nowbot.qq.onebot;
 
+import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.contact.Stranger;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.onebot.contact.Group;
+import com.now.nowbot.qq.onebot.event.MessageEvent;
+import com.now.nowbot.util.JacksonUtil;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Bot implements com.now.nowbot.qq.Bot {
     private final com.mikuac.shiro.core.Bot bot;
@@ -45,6 +51,20 @@ public class Bot implements com.now.nowbot.qq.Bot {
         return new Group(bot, data.getGroupId(), data.getGroupName());
     }
 
+    @Override
+    public MessageChain getMessage(Long id) {
+        var action = bot.getMsg(id.intValue());
+
+        if (Objects.isNull(action.getData())) return null;
+
+        var data = JacksonUtil.parseObjectList(action.getData().getMessage(), ArrayMsg.class);
+
+        if (CollectionUtils.isEmpty(data)) return null;
+
+        return MessageEvent.getMessageChain(data);
+    }
+
+
     /***
      * 未实现
      * @return null
@@ -62,7 +82,8 @@ public class Bot implements com.now.nowbot.qq.Bot {
     public Stranger getStranger(Long id) {
         return null;
     }
-    public com.mikuac.shiro.core.Bot getTrueBot(){
+
+    public com.mikuac.shiro.core.Bot getTrueBot() {
         return bot;
     }
 }

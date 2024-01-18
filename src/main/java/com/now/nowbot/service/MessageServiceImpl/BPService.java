@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ public class BPService implements MessageService<BPService.BPParam> {
     OsuScoreApiService scoreApiService;
     OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
-    RestTemplate template;
     ImageService imageService;
 
     @Autowired
@@ -42,13 +40,11 @@ public class BPService implements MessageService<BPService.BPParam> {
                      OsuScoreApiService scoreApiService,
                      OsuBeatmapApiService beatmapApiService,
                      BindDao bindDao,
-                     RestTemplate template,
                      ImageService image) {
         this.userApiService = userApiService;
         this.scoreApiService = scoreApiService;
         this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
-        this.template = template;
         imageService = image;
     }
 
