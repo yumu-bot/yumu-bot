@@ -1,31 +1,81 @@
+# 运行路径 file 设置
+botfile:
+  # 基目录
+  root: ""
+  # 图片素材
+  bgdir: ${botfile.root}img/
+  font: ${botfile.root}font/
+  # 图片缓存路径
+  imgbuffer: ${botfile.root}imgbuffer/
+  # 用于解析星级的 .osu 文件路径
+  osuFilePath: ${botfile.root}osufile/
+  # 也是图片素材
+  exportFile: ${botfile.bgdir}ExportFileV3/
+# osu 相关的配置
+osu:
+  # v2 api 接口地址, 无需修改
+  url: https://osu.ppy.sh/api/v2/
+  # api 回调接口端点, 注意: 注册 oauth 应用时填写下面访问服务器的 url 而不是接口端点
+  callbackpath: /oauth
+  # 访问服务器的url, 注意端口号以确保拼合的链接可以访问
+  callBackUrl: http://yourdoman${osu.callbackpath}
+  #oauth应用的id与token
+  id: 0
+  token: ""
+# dc 机器人的配置, 如果没有可以不用填, 注意访问情况, 可能需要代理
+discord:
+  command-suffix: 'ym-'
+  token: "" # dc 的 token, 在官网申请, 没有可以不用填
 #服务监听端口
 server:
   port: 8388
 
+shiro:
+  ws-config:
+    # 反向 Websocket 连接地址
+    ws-url: "/pub/onebotSocket"
+    timeout: 10
+    # 二进制消息的最大长度
+    max-binary-message-buffer-size: 5120000
+    # 最大空闲时间，超过这个时间将关闭会话
+    max-session-idle-timeout: 3600000
+    # 最大文本消息缓冲区
+    max-text-message-buffer-size: 512000
+  # 关闭 shiro 默认构造的线程池, 本项目已启用虚拟线程
+  task-pool:
+    enable-task-pool: false
+  group-event-filter: true
+  group-event-filter-time: 15000
+  limiter:
+    # 是否启用限速器
+    enable: true
+    # 补充速率（每秒补充的令牌数量）
+    rate: 10
+    # 令牌桶容量
+    capacity: 30
+    # 如果该值为 false 时，当令牌获取失败则会直接丢次本次请求
+    # 如果该值为 true 时，当令牌获取失败则会阻塞当前线程，后续任务将被添加到等待队列
+    awaitTask: true
+    # 等待超时
+    timeout: 10
 #数据源
 spring:
-  profiles:
-    include:
-      discord,OSU
+  # 用于配置 dc bot 以及请求ppy接口时使用代理
+  proxy:
+    # type 通常只允许 DIRECT / HTTP / SOCKS
+    type: HTTP
+    host: localhost
+    port: 7890
+
   datasource:
-    driverClassName: org.h2.Driver
-    url: jdbc:h2:mem:testdb
-    username: sa
-    password:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/bot
+    username: postgres
+    password: postgres
     hikari:
       maximum-pool-size: 10
       minimum-idle: 1
       connection-test-query: SELECT 1;
-#使用MySql数据库
-#  datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://{路径}:{端口}/{库}?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC&useSSL=true
-#    username:
-#    password:
-#    hikari:
-#      maximum-pool-size: 10
-#      minimum-idle: 1
-  #jpa配置
   jpa:
     hibernate:
       ddl-auto: update
@@ -34,23 +84,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
-  proxy:
-    port: 0
-shiro:
-  ws-config:
-    # 反向 Websocket 连接地址，无需该配置字段可删除，将使用默认值 "/ws/shiro"
-    ws-url: "/websocket-1"
-    # 访问密钥，强烈推荐在公网的服务器设置
-    # 超时回收，默认10秒
-    timeout: 10
-    # 二进制消息的最大长度
-    max-binary-message-buffer-size: 512000
-    # 最大空闲时间，超过这个时间将关闭会话
-    max-session-idle-timeout: 900000
-    # 最大文本消息缓冲区
-    max-text-message-buffer-size: 512000
-  task-pool:
-    enable-task-pool: false
-  group-event-filter: true
-  group-event-filter-time: 1000
+logging:
+  level:
+    root: info
+  file:
+    name: ${botfile.root}botlog/bot.log

@@ -33,7 +33,7 @@ public class WebClientConfig implements WebFluxConfigurer {
 
     @Bean("osuApiWebClient")
     @Primary
-    public WebClient OsuApiWebClient(WebClient.Builder builder) {
+    public WebClient OsuApiWebClient(WebClient.Builder builder, NowbotConfig config) {
         /*
          * Setting maxIdleTime as 30s, because servers usually have a keepAliveTimeout of 60s, after which the connection gets closed.
          * If the connection pool has any connection which has been idle for over 10s, it will be evicted from the pool.
@@ -44,9 +44,9 @@ public class WebClientConfig implements WebFluxConfigurer {
                 .build();
         HttpClient httpClient = HttpClient.create(connectionProvider)
                 .proxy(proxy ->
-                        proxy.type(ProxyProvider.Proxy.SOCKS5)
-                                .host("127.0.0.1")
-                                .port(7890)
+                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
+                                .host(config.proxyHost)
+                                .port(config.proxyPort)
                 )
                 .followRedirect(true)
                 .responseTimeout(Duration.ofSeconds(30));
