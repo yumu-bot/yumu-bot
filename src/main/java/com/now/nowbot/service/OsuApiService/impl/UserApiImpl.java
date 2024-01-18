@@ -21,7 +21,7 @@ import java.util.List;
 @Service
 public class UserApiImpl implements OsuUserApiService {
     OsuApiBaseService base;
-    BindDao bindDao;
+    BindDao        bindDao;
     OsuUserInfoDao userInfoDao;
 
     public UserApiImpl(
@@ -47,7 +47,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public String refreshUserToken(BinUser user) {
-        if (!user.isAuthorized()) return base.getBotToken();
+        if (! user.isAuthorized()) return base.getBotToken();
         return base.refreshUserToken(user, false);
     }
 
@@ -63,7 +63,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
-        if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
+        if (! user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
         return base.osuApiWebClient.get()
                 .uri("me/{mode}", mode.getName())
                 .headers(base.insertHeader(user))
@@ -81,7 +81,11 @@ public class UserApiImpl implements OsuUserApiService {
     @Override
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
         return base.osuApiWebClient.get()
-                .uri("users/{name}/{mode}", userName, mode.getName())
+                .uri(l -> l
+                        .path("users/{name}/{mode}")
+                        .queryParam("key", "username")
+                        .build(userName, mode.getName())
+                )
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(OsuUser.class)
@@ -150,7 +154,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public List<MicroUser> getFriendList(BinUser user) {
-        if (!user.isAuthorized()) throw new TipsRuntimeException("无权限");
+        if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
         return base.osuApiWebClient.get()
                 .uri("friends")
                 .headers(base.insertHeader(user))
