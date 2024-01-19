@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -27,14 +26,12 @@ public class LeaderBoardService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(LeaderBoardService.class);
     OsuBeatmapApiService beatmapApiService;
     OsuScoreApiService scoreApiService;
-    RestTemplate template;
     ImageService imageService;
 
     @Autowired
-    public LeaderBoardService(OsuBeatmapApiService beatmapApiService, OsuScoreApiService scoreApiService, RestTemplate template, ImageService image) {
+    public LeaderBoardService(OsuBeatmapApiService beatmapApiService, OsuScoreApiService scoreApiService, ImageService image) {
         this.beatmapApiService = beatmapApiService;
         this.scoreApiService = scoreApiService;
-        this.template = template;
         imageService = image;
     }
 

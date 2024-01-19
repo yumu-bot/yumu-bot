@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -589,4 +591,49 @@ public class DataUtil {
     }
 
      */
+
+    /**
+     * 获取该文件名的 Markdown 文件并转成字符串
+     * @param path 文件名，和相对路径
+     * @return 文件内容
+     */
+    public static String getMarkdownFile(String path) {
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            var bufferedReader = Files.newBufferedReader(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
+            );
+
+            // 逐行读取文本内容
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+
+            // 关闭流
+            bufferedReader.close();
+
+            return sb.toString();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * 获取该文件名的图片文件并转成字符串
+     * @param path 图片名，和相对路径
+     * @return 图片流
+     */
+    public static byte[] getPicture(String path) {
+        if (path.isEmpty()) return null;
+
+        try {
+            return Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
+            );
+        } catch (IOException e) {
+            return null;
+        }
+    }
 }

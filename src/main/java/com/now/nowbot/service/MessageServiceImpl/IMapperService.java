@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,16 +27,14 @@ public class IMapperService implements MessageService<Matcher> {
     OsuUserApiService userApiService;
     OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
-    RestTemplate template;
     ImageService imageService;
 
     @Autowired
     public IMapperService(OsuUserApiService userApiService,
                           OsuBeatmapApiService beatmapApiService,
-                          BindDao bindDao, RestTemplate template, ImageService image) {
+                          BindDao bindDao, ImageService image) {
         this.userApiService = userApiService;
         this.beatmapApiService = beatmapApiService;
-        this.template = template;
         this.bindDao = bindDao;
         imageService = image;
     }

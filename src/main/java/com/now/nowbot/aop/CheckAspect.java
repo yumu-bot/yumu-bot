@@ -3,6 +3,11 @@ package com.now.nowbot.aop;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
+import com.now.nowbot.mapper.UserProfileMapper;
+import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.JsonData.OsuUserPlus;
+import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.JsonData.ScorePlus;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -23,24 +28,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.Duration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Aspect
 @Component
 public class CheckAspect {
     private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
-    Permission permission;
+    private static final String USER_PROFILE_KEY = "#user_profile";
+    Permission        permission;
     ServiceCallRepository serviceCall;
+    UserProfileMapper userProfileMapper;
 
     @Autowired
-    public CheckAspect(Permission permission, ServiceCallRepository serviceCallRepository) {
+    public CheckAspect(Permission permission,
+                       ServiceCallRepository serviceCallRepository,
+                       UserProfileMapper userProfileMapper) {
         this.permission = permission;
+        this.userProfileMapper = userProfileMapper;
         serviceCall = serviceCallRepository;
     }
 
@@ -48,19 +54,27 @@ public class CheckAspect {
 
     //所有实现MessageService的HandMessage方法切入点
     @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(void HandleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
-    public void servicePoint() {}
+    public void servicePoint() {
+    }
 
     @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
-    public void restTemplate() {}
+    public void restTemplate() {
+    }
 
     @Pointcut("execution(* com.now.nowbot.mapper.BindUserMapper.save(..))")
-    public void userSave() {}
+    public void userSave() {
+    }
 
     @Pointcut("execution(* com.now.nowbot.service.OsuApiService.OsuBeatmapApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuUserApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
-    public void apiService() {}
+    public void apiService() {
+    }
+
+    @Pointcut("execution(* com.now.nowbot.service.ImageService.get*(..))")
+    public void imageService() {
+    }
 
 
     @Before(value = "userSave()")
@@ -93,7 +107,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
+            if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
                 throw new PermissionException(STR."\{servicename}非管理员使用管理功能", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
@@ -101,16 +115,16 @@ public class CheckAspect {
             throw new PermissionException(STR."\{servicename}使用超管功能", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         // test 功能
-        if (CheckPermission.test() && !Permission.isTester(event.getSender().getId())) {
+        if (CheckPermission.test() && ! Permission.isTester(event.getSender().getId())) {
             throw new PermissionException(STR."\{servicename}有人使用测试功能 ", STR."\{event.getSender().getId()} -> \{servicename}");
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && !permission.containsFriend(servicename, event.getSender().getId())) {
+            if (CheckPermission.friend() && ! permission.containsFriend(servicename, event.getSender().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.containsGroup(servicename, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.containsGroup(servicename, g.getGroup().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         } else {
@@ -184,6 +198,19 @@ public class CheckAspect {
         }
     }
 
+    @Around("imageService()")
+    public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
+        var args = point.getArgs();
+        for (int i = 0; i < args.length; i++) {
+            var param = parse(args[i]);
+            if (Objects.nonNull(param)) {
+                args[i] = param;
+            }
+        }
+        return point.proceed(args);
+    }
+
+
     //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
     @Around(value = "servicePoint()", argNames = "pjp")
     public void setContext(ProceedingJoinPoint pjp) throws Throwable {
@@ -205,22 +232,47 @@ public class CheckAspect {
         }
     }
 
-    private static final int retryTime = 4;
-
-    //    @Around(value = "apiService()")
-    public Object doRetry(ProceedingJoinPoint joinPoint) throws Throwable{
-        int i = 0;
-        while (true) {
-            try {
-                return joinPoint.proceed();
-            } catch (WebClientResponseException.NotFound | WebClientResponseException.Unauthorized e) {
-                throw e;
-            } catch (Throwable e) {
-                if (++i > retryTime) {
-                    throw e;
-                }
-                Thread.sleep(Duration.ofSeconds(1L << i));
-            }
+    private Object parse(Object param) {
+        if (param instanceof OsuUser user) {
+            return getUser(user);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof OsuUser user
+        ) {
+            return Optional.ofNullable(getUser(user));
         }
+        if (param instanceof Score score) {
+            return getScore(score);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof Score score
+        ) {
+            return Optional.ofNullable(getScore(score));
+        }
+
+        return null;
+    }
+    private OsuUser getUser(OsuUser user) {
+        if (Objects.isNull(user.getUID())) return user;
+        var data = userProfileMapper.findTopByUserId(user.getUID());
+
+        return data.map(profile -> {
+            var result = OsuUserPlus.copyOf(user);
+            result.setProfile(profile);
+            return (OsuUser) result;
+        }).orElse(user);
+    }
+
+    private Score getScore(Score score) {
+        if (score == null || score.getUser() == null || score.getUser().getId() == null) return score;
+        var data = userProfileMapper.findTopByUserId(score.getUser().getId());
+
+        return data.map(profile -> {
+            var result = ScorePlus.copyOf(score);
+            result.setProfile(profile);
+            return (Score) result;
+        }).orElse(score);
     }
 }

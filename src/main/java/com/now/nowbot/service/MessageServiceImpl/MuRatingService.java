@@ -8,6 +8,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("MURATING")
@@ -41,8 +43,15 @@ public class MuRatingService implements MessageService<Matcher> {
         int matchID;
         var matchIDStr = matcher.group("matchid");
 
-        if (matchIDStr == null || matchIDStr.isBlank()) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_MatchNone);
+        if (Objects.isNull(matchIDStr) || matchIDStr.isBlank()) {
+            try {
+                var md = DataUtil.getMarkdownFile("Help/rating.md");
+                var data = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(event.getSubject(), data);
+                return;
+            } catch (Exception e) {
+                throw new MRAException(MRAException.Type.RATING_Instructions);
+            }
         }
 
         try {

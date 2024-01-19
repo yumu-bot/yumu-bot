@@ -10,6 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,15 @@ public class MatchRoundService implements MessageService<Matcher> {
         var matchIDStr = matcher.group("matchid");
 
         if (matchIDStr == null || matchIDStr.isBlank()) {
-            throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
+
+            try {
+                var md = DataUtil.getMarkdownFile("Help/round.md");
+                var data = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(event.getSubject(), data);
+                return;
+            } catch (Exception e) {
+                throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
+            }
         }
 
         try {
@@ -73,7 +82,14 @@ public class MatchRoundService implements MessageService<Matcher> {
             if (hasKeyword) {
                 roundStr = "-1";
             } else {
-                throw new MatchRoundException(MatchRoundException.Type.MR_Parameter_None);
+                try {
+                    var md = DataUtil.getMarkdownFile("Help/round.md");
+                    var data = imageService.getPanelA6(md, "help");
+                    QQMsgUtil.sendImage(event.getSubject(), data);
+                    return;
+                } catch (Exception e) {
+                    throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
+                }
             }
         }
 

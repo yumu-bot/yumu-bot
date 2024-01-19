@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("SRA")
@@ -50,8 +52,15 @@ public class SeriesRatingService implements MessageService<Matcher> {
         var dataStr = matcher.group("data");
         var nameStr = matcher.group("name");
 
-        if (dataStr == null || dataStr.isBlank()) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_SeriesNone);
+        if (Objects.isNull(dataStr) || dataStr.isBlank()) {
+            try {
+                var md = DataUtil.getMarkdownFile("Help/series.md");
+                var data = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(event.getSubject(), data);
+                return;
+            } catch (Exception e) {
+                throw new MRAException(MRAException.Type.RATING_Series_Instructions);
+            }
         }
 
         var parsed = parseDataString(dataStr);

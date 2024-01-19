@@ -6,6 +6,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -36,27 +37,34 @@ public class GetPoolService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
+
         var dataStr = matcher.group("data");
         var nameStr = matcher.group("name");
 
-        if (dataStr == null || dataStr.isBlank()) {
-            throw new MapPoolException(MapPoolException.Type.PO_Parameter_None);
+        if (Objects.isNull(dataStr) || dataStr.isBlank()) {
+            try {
+                var md = DataUtil.getMarkdownFile("Help/getpool.md");
+                var data = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(from, data);
+                return;
+            } catch (Exception e) {
+                throw new MapPoolException(MapPoolException.Type.GP_Instructions);
+            }
         }
 
         var data = parseDataString(dataStr);
         var mapPool = new MapPoolDto(nameStr, data, osuBeatmapApiService);
 
-        if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.PO_Map_Empty);
-
-        var from = event.getSubject();
+        if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);
 
         byte[] img;
         try {
             img = imageService.getPanelH(mapPool);
             QQMsgUtil.sendImage(from, img);
         } catch (Exception e) {
-            log.error("PO 数据请求失败", e);
-            throw new MapPoolException(MapPoolException.Type.PO_Send_Error);
+            log.error("GP 数据请求失败", e);
+            throw new MapPoolException(MapPoolException.Type.GP_Send_Error);
         }
     }
 
@@ -90,12 +98,12 @@ public class GetPoolService implements MessageService<Matcher> {
                         Mods = mod;
                         mod = null;
                         status = 1;
-                    } else throw new MapPoolException(MapPoolException.Type.PO_Parse_MissingMap, s, String.valueOf(i));
+                    } else throw new MapPoolException(MapPoolException.Type.GP_Parse_MissingMap, s, String.valueOf(i));
                 }
                 case 1 -> {
                     if (Objects.nonNull(mod)) {
                         if (BIDs.isEmpty()) {
-                            throw new MapPoolException(MapPoolException.Type.PO_Parse_MissingMap, s, String.valueOf(i));
+                            throw new MapPoolException(MapPoolException.Type.GP_Parse_MissingMap, s, String.valueOf(i));
                         } else {
                             status = 2;
                         }

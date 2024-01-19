@@ -14,6 +14,7 @@ import com.now.nowbot.throwable.ServiceException.MatchListenerException;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -58,14 +59,23 @@ public class MatchListenerService implements MessageService<MatchListenerService
         if (StringUtils.hasText(id)) {
             param.id = Integer.parseInt(matcher.group("matchid"));
         } else {
-            throw new MatchListenerException(MatchListenerException.Type.ML_Parameter_None);
+
+            try {
+                var md = DataUtil.getMarkdownFile("Help/listen.md");
+                var img = imageService.getPanelA6(md, "help");
+                QQMsgUtil.sendImage(event.getSubject(), img);
+                return false;
+            } catch (Exception e) {
+                throw new MatchListenerException(MatchListenerException.Type.ML_Instructions);
+            }
+
         }
 
         param.operate = switch (op) {
             case "stop", "p", "end", "e", "off", "f" -> "stop";
             case "s", "start" -> "start";
             case null -> "start";
-            default -> throw new MatchListenerException(MatchListenerException.Type.ML_Parameter_None);
+            default -> throw new MatchListenerException(MatchListenerException.Type.ML_Instructions);
         };
 
         data.setValue(param);

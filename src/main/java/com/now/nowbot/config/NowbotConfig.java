@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.controller.BotWebApi;
@@ -19,11 +20,14 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +52,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 
@@ -85,6 +91,10 @@ public class NowbotConfig {
      */
     public static String IMGBUFFER_PATH;
     public static int PORT;
+    @Value("${spring.proxy.type:'HTTP'}")
+    public String proxyType;
+    @Value("${spring.proxy.host:'localhost'}")
+    public String proxyHost;
     @Value("${spring.proxy.port:0}")
     public        int proxyPort;
 
@@ -101,8 +111,9 @@ public class NowbotConfig {
     @Bean
     public OkHttpClient httpClient() {
         var builder = new OkHttpClient.Builder();
+
         if (proxyPort != 0)
-            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", proxyPort)));
+            builder.proxy(new Proxy(Proxy.Type.valueOf(proxyType), new InetSocketAddress(proxyHost, proxyPort)));
         return builder.build();
     }
 
@@ -216,7 +227,7 @@ public class NowbotConfig {
                     .build();
             jda.awaitReady();
         } catch (Exception e) {
-            log.error("create jda error", e);
+            log.error("create jda error: {}", e.getMessage());
             return null;
         }
 
@@ -235,24 +246,7 @@ public class NowbotConfig {
                 if (parameterAnnotation == null) {
                     continue;
                 }
-                OptionType optionType;
-                Class<?> type = parameter.getType();
-                if (type.equals(int.class) || type.equals(Integer.class)) {
-                    optionType = OptionType.INTEGER;
-                } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-                    optionType = OptionType.BOOLEAN;
-                } else {
-                    optionType = OptionType.STRING;
-                }
-                String parameterName = parameterAnnotation.name();
-                OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
-                if (parameterName.equals("mode")) {
-                    optionData.addChoice("OSU", "OSU");
-                    optionData.addChoice("TAIKO", "TAIKO");
-                    optionData.addChoice("CATCH", "CATCH");
-                    optionData.addChoice("MANIA", "MANIA");
-                }
-                optionData.setRequired(parameterAnnotation.required());
+                final OptionData optionData = getOptionData(parameter, parameterAnnotation);
                 commandData.addOptions(optionData);
             }
             jda.upsertCommand(commandData).complete();
@@ -262,8 +256,43 @@ public class NowbotConfig {
         return jda;
     }
 
+    @NotNull
+    private static OptionData getOptionData(Parameter parameter, OpenResource parameterAnnotation) {
+        OptionType optionType;
+        Class<?> type = parameter.getType();
+        if (type.equals(int.class) || type.equals(Integer.class)) {
+            optionType = OptionType.INTEGER;
+        } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+            optionType = OptionType.BOOLEAN;
+        } else {
+            optionType = OptionType.STRING;
+        }
+        String parameterName = parameterAnnotation.name();
+        OptionData optionData = new OptionData(optionType, parameterName.toLowerCase(), parameterAnnotation.desp());
+        if (parameterName.equals("mode")) {
+            optionData.addChoice("OSU", "OSU");
+            optionData.addChoice("TAIKO", "TAIKO");
+            optionData.addChoice("CATCH", "CATCH");
+            optionData.addChoice("MANIA", "MANIA");
+        }
+        optionData.setRequired(parameterAnnotation.required());
+        return optionData;
+    }
+
     @Value("${server.port}")
     public void setPORT(Integer port) {
         PORT = port;
+    }
+
+    @Bean
+    public CacheManager cacheManager(Executor mainExecutor) {
+        var caffeine = Caffeine.newBuilder()
+                .executor(mainExecutor)
+                .expireAfterAccess(5, TimeUnit.SECONDS)
+                .maximumSize(60);
+        var manager = new CaffeineCacheManager();
+        manager.setCaffeine(caffeine);
+        manager.setAllowNullValues(true);
+        return manager;
     }
 }

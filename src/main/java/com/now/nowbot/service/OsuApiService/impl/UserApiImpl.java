@@ -38,7 +38,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public String getOauthUrl(String state, boolean full) throws WebClientResponseException {
+    public String getOauthUrl(String state, boolean full) {
         return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize")
                 .queryParam("client_id", base.oauthId)
                 .queryParam("redirect_uri", base.redirectUrl)
@@ -52,7 +52,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public String refreshUserToken(BinUser user) {
-        if (!user.isAuthorized()) return base.getBotToken();
+        if (! user.isAuthorized()) return base.getBotToken();
         return base.refreshUserToken(user, false);
     }
 
@@ -68,7 +68,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
-        if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
+        if (! user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
         return base.osuApiWebClient.get()
                 .uri("me/{mode}", mode.getName())
                 .headers(base.insertHeader(user))
@@ -86,7 +86,11 @@ public class UserApiImpl implements OsuUserApiService {
     @Override
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
         return base.osuApiWebClient.get()
-                .uri("users/{name}/{mode}", userName, mode.getName())
+                .uri(l -> l
+                        .path("users/{name}/{mode}")
+                        .queryParam("key", "username")
+                        .build(userName, mode.getName())
+                )
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(OsuUser.class)
@@ -155,7 +159,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public List<MicroUser> getFriendList(BinUser user) {
-        if (!user.isAuthorized()) throw new TipsRuntimeException("无权限");
+        if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
         return base.osuApiWebClient.get()
                 .uri("friends")
                 .headers(base.insertHeader(user))

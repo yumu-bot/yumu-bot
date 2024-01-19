@@ -4,8 +4,26 @@ import com.now.nowbot.throwable.TipsException;
 
 public class MRAException extends TipsException {
     public enum Type {
-        RATING_Parameter_MatchNone("欢迎使用 Yumu Rating 系统！指令食用方法：\n!ymrating / !ymra [matchid] (warmup) (delete) (r?) (f?)\nmatchid：这场比赛的房间号。\nwarmup：需要抛弃的前面场次（热手）数量，默认为0。\ndelete：需要抛弃的后面场次（表演赛）数量，默认为0。\nr?：清除重赛场次？\nf?：不计失败成绩？"),//参数_无参数
-        RATING_Parameter_SeriesNone("欢迎使用 Yumu Series Rating 系统！指令食用方法：\n!ymseries / !ymsa [[matchid] (warmup) (delete)] (r?) (f?)\nmatchid：这场比赛的房间号，可按组多次输入。\nwarmup：需要抛弃的前面场次（热手）数量，默认为0，可按组多次输入。\ndelete：需要抛弃的后面场次（表演赛）数量，默认为0，可按组多次输入。\nr?：清除重赛场次？\nf?：不计失败成绩？"),//参数_无参数
+        RATING_Instructions("""
+        欢迎使用 Yumu Rating 功能！食用方法：
+        !ymrating / !ra [matchid] (warmup) (delete) (r?) (f?)
+        matchid：这场比赛的房间号。
+        warmup：需要抛弃的前面场次（热手）数量，默认为0。
+        delete：需要抛弃的后面场次（表演赛）数量，默认为0。
+        r?：清除重赛场次？
+        f?：不计失败成绩？
+        """),//参数_无参数
+
+        RATING_Series_Instructions("""
+        欢迎使用 Yumu Series Rating 功能！食用方法：
+        !ymseries / !sa [[matchid] (warmup) (delete)] (r?) (f?)
+        matchid：这场比赛的房间号，可按组多次输入。
+        warmup：需要抛弃的前面场次（热手）数量，默认为0，可按组多次输入。
+        delete：需要抛弃的后面场次（表演赛）数量，默认为0，可按组多次输入。
+        r?：清除重赛场次？
+        f?：不计失败成绩？
+        """),//参数_无参数
+
         RATING_Parameter_Error("输入的参数范围错误！"),//参数_参数错误
         RATING_Parameter_SkipError("你要在虚空中热手吗？"),//参数_热手数量负数或者小数
         RATING_Parameter_SkipEndError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数
@@ -57,7 +75,7 @@ public class MRAException extends TipsException {
         Type (String message) {
             this.message = message;
         }
-        }
+    }
     public MRAException(MRAException.Type type){
         super(type.message);
     }
