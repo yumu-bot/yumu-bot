@@ -1,7 +1,9 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -11,6 +13,7 @@ import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -50,8 +53,25 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
     public void HandleMessage(MessageEvent event, Param param) throws Throwable {
         var from = event.getSubject();
         var bin = bindDao.getUserFromQQ(event.getSender().getId());
+        JsonNode json;
+        try {
+            json = getJson(param, bin);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new TipsException("权限不足");
+        }
+        QQMsgUtil.sendImage(from, getCodeImage(JacksonUtil.objectToJsonPretty(json)));
+    }
+
+    enum Type {
+        send, get, act
+    }
+
+    record Param(Type type, Long id, String message) {
+    }
+
+    private JsonNode getJson(Param param, BinUser bin) throws TipsException {
         final boolean hasParam = Objects.isNull(param.id) || Objects.isNull(param.message);
-        var json = switch (param.type) {
+        return switch (param.type) {
             case send -> {
                 if (hasParam) throw new TipsException("参数缺失");
                 yield userApiService.sendPrivateMessage(bin, param.id, param.message);
@@ -69,14 +89,6 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
                 }
             }
         };
-        QQMsgUtil.sendImage(from, getCodeImage(JacksonUtil.objectToJsonPretty(json)));
-    }
-
-    enum Type {
-        send, get, act
-    }
-
-    record Param(Type type, Long id, String message) {
     }
 
     private byte[] getCodeImage(String code) {
