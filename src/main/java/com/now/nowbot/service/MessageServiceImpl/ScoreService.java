@@ -125,10 +125,8 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             List<Score> scoreall;
             try {
                 scoreall = scoreApiService.getScoreAll(bid, binUser, mode);
-            } catch (WebClientResponseException.NotFound e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
-            } catch (WebClientResponseException.Unauthorized e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore);
+            } catch (WebClientResponseException e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound);
             }
 
             for (var s : scoreall) {
