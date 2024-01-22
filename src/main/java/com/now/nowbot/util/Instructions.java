@@ -42,7 +42,6 @@ public class Instructions {
 
 
     public static final Pattern UUBA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?(\\s*[:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]{3,}))?");
-    public static final Pattern BPHT = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\w-]*");
 
     // #3 osu! 玩家指令
 
@@ -117,7 +116,7 @@ public class Instructions {
 
     public static final Pattern OLDAVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?(oldavatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))+(\\s+(?<d>\\d+))?");
+    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))\\s*(?<d>\\d+)?");
 
     public static final Pattern COUNTMSGLEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 
@@ -125,6 +124,8 @@ public class Instructions {
 
     public static final Pattern GROUPSTATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))(?!\\w)");
 
+    // #9 自定义
+    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?((custom)?profile|cp(?![A-Za-z_]))\\s*([:：]?(?<type>(b|c|banner|card)))?");
 
     /*
     public static final Pattern TEST = Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
@@ -139,4 +140,12 @@ public class Instructions {
     public static final Pattern TESTTAIKOSRCALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
     public static final Pattern TESTMAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\d\\s,，|\\-]+))?");
+
+
+
+    // #-1 已弃用
+
+    public static final Pattern DEPRECATED_BPHT = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\s\\S]*");
+
+    public static final Pattern DEPRECATED_SET = Pattern.compile("^[!！]\\s*(?i)ym(?<set>(set))[\\s\\S]*");
 }

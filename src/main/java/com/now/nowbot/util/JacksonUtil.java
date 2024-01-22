@@ -46,7 +46,7 @@ public class JacksonUtil {
     }
 
     public static <T>T jsonToObject(String src,Class<T> clazz){
-        if(src == null || "".equals(src.trim()) || clazz == null){
+        if(src == null || src.trim().isEmpty() || clazz == null){
             return null;
         }
         try {
@@ -288,8 +288,7 @@ public class JacksonUtil {
 
         JsonNode node = (JsonNode) toNode(body);
         if (node != null) {
-            return mapper.convertValue(node, new TypeReference<List<T>>() {
-            });
+            return parseObjectList(node, clazz);
         }
         return null;
     }

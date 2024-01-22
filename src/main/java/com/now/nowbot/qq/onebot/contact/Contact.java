@@ -71,7 +71,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
                     else builder.atAll();
                 }
                 case TextMessage text -> builder.text(text.toString());
-                case ReplayMessage re -> builder.reply(Long.toString(re.getId()));
+                case ReplyMessage re -> builder.reply(Long.toString(re.getId()));
                 case null, default -> {
                 }
             }

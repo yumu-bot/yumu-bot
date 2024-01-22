@@ -1,13 +1,11 @@
 package com.now.nowbot.qq.onebot.event;
 
 import com.mikuac.shiro.common.utils.ShiroUtils;
-import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.contact.Contact;
 import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.onebot.contact.Group;
-import com.now.nowbot.qq.onebot.contact.GroupContact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +53,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
             switch (arrayMsg.getType()) {
                 case at -> m = new AtMessage(Long.parseLong(arrayMsg.getData().getOrDefault("qq", "0")));
                 case text -> m = new TextMessage(decodeArr(arrayMsg.getData().getOrDefault("text", "")));
-                case reply -> m = new ReplayMessage(Integer.parseInt(arrayMsg.getData().getOrDefault("id", "0")),
+                case reply -> m = new ReplyMessage(Integer.parseInt(arrayMsg.getData().getOrDefault("id", "0")),
                         decodeArr(arrayMsg.getData().getOrDefault("text", "")));
                 case image -> {
                     try {

@@ -17,7 +17,6 @@ import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.regex.Matcher;
 
@@ -27,7 +26,6 @@ public class MiniPanelService implements MessageService<Matcher> {
     OsuScoreApiService scoreApiService;
     OsuBeatmapApiService beatmapApiService;
     BindDao bindDao;
-    RestTemplate template;
     ImageService imageService;
 
     @Autowired
@@ -35,13 +33,11 @@ public class MiniPanelService implements MessageService<Matcher> {
                             OsuScoreApiService scoreApiService,
                             OsuBeatmapApiService beatmapApiService,
                             BindDao bindDao,
-                            RestTemplate template,
                             ImageService image) {
         this.userApiService = userApiService;
         this.scoreApiService = scoreApiService;
         this.beatmapApiService = beatmapApiService;
         this.bindDao = bindDao;
-        this.template = template;
         imageService = image;
     }
 
