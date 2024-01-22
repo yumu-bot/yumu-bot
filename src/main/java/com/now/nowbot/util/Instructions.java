@@ -14,7 +14,7 @@ public class Instructions {
     // #1 BOT 内部指令
     public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?![A-Za-z_]))|yumu\\?)");
 
-    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
+    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(ym)?(bi(?!nd)|((ym)|(?<un>(un)))bind)\\s*(?<full>-f)?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
 
     public static final Pattern BAN  = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black)?list|add|remove|(un)?ban|[lkarub]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
 

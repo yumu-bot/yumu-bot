@@ -13,10 +13,13 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class UserApiImpl implements OsuUserApiService {
@@ -35,12 +38,14 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public String getOauthUrl(String state) {
+    public String getOauthUrl(String state, boolean full) throws WebClientResponseException {
         return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize")
                 .queryParam("client_id", base.oauthId)
                 .queryParam("redirect_uri", base.redirectUrl)
                 .queryParam("response_type", "code")
-                .queryParam("scope", "friends.read identify public")
+                .queryParam("scope", full
+                        ? "chat.read chat.write chat.write_manage forum.write friends.read identify public"
+                        : "friends.read identify public")
                 .queryParam("state", state)
                 .build().encode().toUriString();
     }
@@ -139,8 +144,8 @@ public class UserApiImpl implements OsuUserApiService {
     public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
         return base.osuApiWebClient.get()
                 .uri(b -> b.path("users")
-                        .queryParam("ids[]", users).
-                        build())
+                        .queryParam("ids[]", users)
+                        .build())
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
@@ -184,6 +189,41 @@ public class UserApiImpl implements OsuUserApiService {
                 .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(KudosuHistory.class)
+                .block();
+    }
+
+
+    @Override
+    public JsonNode sendPrivateMessage(BinUser sender, Long target, String message) {
+        var body = Map.of("target_id", target, "message", message, "is_action", false);
+        return base.osuApiWebClient.post()
+                .uri("chat/new")
+                .headers(base.insertHeader(sender))
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+    }
+
+    @Override
+    public JsonNode acknowledgmentPrivateMessageAlive(BinUser user, Long since) {
+        return base.osuApiWebClient.post()
+                .uri(b -> b.path("chat/ack")
+                        .queryParamIfPresent("since", Optional.ofNullable(since))
+                        .build())
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+    }
+
+    @Override
+    public JsonNode getPrivateMessage(BinUser sender, Long channel, Long since) {
+        return base.osuApiWebClient.get()
+                .uri("chat/channels/{channel}/messages?since={since}", channel, since)
+                .headers(base.insertHeader(sender))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
                 .block();
     }
 }

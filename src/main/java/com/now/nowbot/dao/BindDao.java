@@ -46,7 +46,7 @@ public class BindDao {
     public BinUser getUserFromQQ(Long qq) throws BindException {
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
-            throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+            throw new BindException(BindException.Type.BIND_Me_NotBind);
         }
         var u = liteData.get().getOsuUser();
         // 此处防止全局更新中再次被更新

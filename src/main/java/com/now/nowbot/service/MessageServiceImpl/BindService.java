@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 
@@ -140,7 +141,7 @@ public class BindService implements MessageService<Matcher> {
         // 需要绑定
         String state = event.getSender().getId() + "+" + timeMillis;
         //将消息回执作为 value
-        state = userApiService.getOauthUrl(state);
+        state = userApiService.getOauthUrl(state, Objects.nonNull(matcher.group("full")));
         var send = new MessageChain.MessageChainBuilder()
                 .addAt(event.getSender().getId())
                 .addText("\n")

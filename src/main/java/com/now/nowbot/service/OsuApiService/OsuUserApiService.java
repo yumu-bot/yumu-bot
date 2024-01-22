@@ -1,5 +1,6 @@
 package com.now.nowbot.service.OsuApiService;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.ActivityEvent;
 import com.now.nowbot.model.JsonData.KudosuHistory;
@@ -18,7 +19,10 @@ public interface OsuUserApiService {
      * @param state QQ[+群号]
      * @return
      */
-    String getOauthUrl(String state) throws WebClientResponseException;
+    default String getOauthUrl(String state) throws WebClientResponseException {
+        return getOauthUrl(state, false);
+    }
+    String getOauthUrl(String state, boolean full) throws WebClientResponseException;
 
     String refreshUserToken(BinUser user) throws WebClientResponseException;
 
@@ -88,4 +92,14 @@ public interface OsuUserApiService {
     List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
 
     KudosuHistory getUserKudosu(BinUser user);
+
+    JsonNode sendPrivateMessage(BinUser sender, Long target, String message);
+
+    JsonNode acknowledgmentPrivateMessageAlive(BinUser user, Long since);
+
+    default JsonNode acknowledgmentPrivateMessageAlive(BinUser user) {
+        return acknowledgmentPrivateMessageAlive(user, null);
+    }
+
+    JsonNode getPrivateMessage(BinUser sender, Long channel, Long since);
 }
