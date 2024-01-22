@@ -272,6 +272,7 @@ public class DataUtil {
         }
         return cs;
     }
+
     public static float HP(float hp, int mod){
         if (Mod.hasHr(mod)){
             hp *= 1.3f;

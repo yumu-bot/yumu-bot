@@ -16,7 +16,10 @@ public class PPMinusException extends TipsException {
         //PPM_Default_ManiaComingSoon("等哪天 mania 社区风气变好了，或许就有 PPM-mania 了吧...\n要不你给我出出主意（色眯眯的笑容）"),//Mania模式查询未开放
 
         PPM_Calculate_Error("PPM 计算出错，请等待问题修复。"),//默认报错
-        PPM_Default_Error("PPM 渲染图片超时，请重试。\n请耐心等待问题修复。")//默认报错
+        PPM_Default_Error("PPM 渲染图片超时，请重试。\n请耐心等待问题修复。"),//默认报错
+        PPM_Test_Empty("数据是空的！"),
+        PPM_Test_SendError("TESTPPM 文件发送失败，请重试。\n请耐心等待问题修复。"),
+        PPM_Test_NotGroup("请在群聊中使用这个功能！"),
         ;//逗号分隔
         public final String message;
         Type(String message) {

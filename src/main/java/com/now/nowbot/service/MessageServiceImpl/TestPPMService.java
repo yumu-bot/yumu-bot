@@ -5,23 +5,31 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.Instructions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
 @Service("TESTPPM")
 public class TestPPMService implements MessageService<Matcher> {
+    private static final Logger log = LoggerFactory.getLogger(TestPPMService.class);
     private final OsuUserApiService userApiService;
-
     BindDao bindDao;
     private final OsuScoreApiService scoreApiService;
     @Autowired
@@ -43,56 +51,83 @@ public class TestPPMService implements MessageService<Matcher> {
     @Override
     @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
 
-        OsuUser user;
-        List<Score> bpList;
+        var nameList = parseDataString(matcher.group("data"));
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (matcher.group("name") != null && !matcher.group("name").trim().isEmpty()) {
-            var id = userApiService.getOsuId(matcher.group("name").trim());
-            user = userApiService.getPlayerOsuInfo(id);
-            bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
-        } else {
-            var userBin = bindDao.getUserFromQQ(event.getSender().getId());
-            user = userApiService.getPlayerInfo(userBin);
-            bpList = scoreApiService.getBestPerformance(userBin, mode, 0, 100);
+
+        if (Objects.isNull(nameList) || nameList.isEmpty()) throw new PPMinusException(PPMinusException.Type.PPM_Test_Empty);
+
+        StringBuilder sb = new StringBuilder();
+
+        for (var name : nameList) {
+            if (Objects.isNull(name) || name.isBlank()) {
+                break;
+            }
+
+            OsuUser user;
+            List<Score> bpList;
+
+            try {
+                var id = userApiService.getOsuId(name);
+                user = userApiService.getPlayerOsuInfo(id);
+                bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
+            } catch (Exception e) {
+                sb.append("name=").append(name).append("not found").append('\n');
+                break;
+            }
+
+            var ppmData = new TestPPMData();
+            ppmData.init(user, bpList);
+
+            sb.append(user.getUsername()).append(',')
+                    .append(user.getGlobalRank()).append(',')
+                    .append(user.getPP()).append(',')
+                    .append(user.getAccuracy()).append(',')
+                    .append(user.getLevelCurrent()).append(',')
+                    .append(user.getStatistics().getMaxCombo()).append(',')
+                    .append(user.getTotalHits()).append(',')
+                    .append(user.getPlayCount()).append(',')
+                    .append(user.getPlayTime()).append(',')
+                    .append(ppmData.notfc).append(',')
+                    .append(ppmData.rawpp).append(',')
+                    .append(ppmData.xx).append(',')
+                    .append(ppmData.xs).append(',')
+                    .append(ppmData.xa).append(',')
+                    .append(ppmData.xb).append(',')
+                    .append(ppmData.xc).append(',')
+                    .append(ppmData.xd).append(',')
+                    .append(ppmData.ppv0).append(',')
+                    .append(ppmData.accv0).append(',')
+                    .append(ppmData.lengv0).append(',')
+                    .append(ppmData.pgr0).append(',')
+                    .append(ppmData.ppv45).append(',')
+                    .append(ppmData.accv45).append(',')
+                    .append(ppmData.lengv45).append(',')
+                    .append(ppmData.pgr45).append(',')
+                    .append(ppmData.ppv90).append(',')
+                    .append(ppmData.accv45).append(',')
+                    .append(ppmData.lengv90).append(',')
+                    .append(ppmData.pgr90).append('\n');
         }
 
-        var date = new ppmtest();
-        date.act(user, bpList);
-        StringBuilder sb = new StringBuilder();
-        sb.append(user.getUsername()).append(',')
-                .append(user.getGlobalRank()).append(',')
-                .append(user.getPP()).append(',')
-                .append(user.getAccuracy()).append(',')
-                .append(user.getLevelCurrent()).append(',')
-                .append(user.getStatistics().getMaxCombo()).append(',')
-                .append(user.getTotalHits()).append(',')
-                .append(user.getPlayCount()).append(',')
-                .append(user.getPlayTime()).append(',')
-                .append(date.notfc).append(',')
-                .append(date.rawpp).append(',')
-                .append(date.xx).append(',')
-                .append(date.xs).append(',')
-                .append(date.xa).append(',')
-                .append(date.xb).append(',')
-                .append(date.xc).append(',')
-                .append(date.xd).append(',')
-                .append(date.ppv0).append(',')
-                .append(date.accv0).append(',')
-                .append(date.lengv0).append(',')
-                .append(date.pgr0).append(',')
-                .append(date.ppv45).append(',')
-                .append(date.accv45).append(',')
-                .append(date.lengv45).append(',')
-                .append(date.pgr45).append(',')
-                .append(date.ppv90).append(',')
-                .append(date.accv45).append(',')
-                .append(date.lengv90).append(',')
-                .append(date.pgr90);
+        var result = sb.toString();
 
-        event.getSubject().sendMessage(sb.toString());
+        //必须群聊
+        if (from instanceof Group group) {
+            try {
+                group.sendFile(result.getBytes(StandardCharsets.UTF_8), STR."\{nameList.getFirst()}...-testppm.csv");
+            } catch (Exception e) {
+                log.error("TESTPPM:", e);
+                throw new PPMinusException(PPMinusException.Type.PPM_Test_SendError);
+            }
+        } else {
+            throw new PPMinusException(PPMinusException.Type.PPM_Test_NotGroup);
+        }
+
+        //event.getSubject().sendMessage(sb.toString());
     }
-    static class ppmtest{
+    static class TestPPMData {
         protected float ppv0 = 0;
         protected float ppv45 = 0;
         protected float ppv90 = 0;
@@ -115,7 +150,7 @@ public class TestPPMService implements MessageService<Matcher> {
         protected int xs = 0;
         protected int xx = 0;
         protected int notfc = 0;
-        private void act(OsuUser user, List<Score> bps){
+        private void init(OsuUser user, List<Score> bps){
             double[] bpPPs = new double[bps.size()];
             for (int i = 0; i < bps.size(); i++) {
                 var bp = bps.get(i);
@@ -175,12 +210,23 @@ public class TestPPMService implements MessageService<Matcher> {
                 accv0 = 0;
                 lengv0 = 0;
             }
+            /*
             double pp = user.getStatistics().getPP();
             double acc = user.getStatistics().getAccuracy();
             double pc = user.getStatistics().getPlayCount();
             double pt = user.getStatistics().getPlayTime();
             double tth = user.getStatistics().getTotalHits();
+
+             */
         }
+    }
+
+    private List<String> parseDataString(String dataStr) {
+        if (Objects.isNull(dataStr) || dataStr.isBlank()) return null;
+        String[] dataStrArray = dataStr.trim().split("[,，|:]+"); //空格和-_不能匹配
+        if (dataStrArray.length == 0) return null;
+
+        return Arrays.asList(dataStrArray);
     }
 
 }

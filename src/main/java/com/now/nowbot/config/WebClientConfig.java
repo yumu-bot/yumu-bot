@@ -44,7 +44,7 @@ public class WebClientConfig implements WebFluxConfigurer {
                 .build();
         HttpClient httpClient = HttpClient.create(connectionProvider)
                 .proxy(proxy ->
-                        proxy.type(ProxyProvider.Proxy.SOCKS5)
+                        proxy.type(ProxyProvider.Proxy.HTTP)
                                 .host("127.0.0.1")
                                 .port(7890)
                 )
