@@ -45,7 +45,7 @@ public class HelpService implements MessageService<Matcher> {
                 throw new TipsException("窝趣，找不到文件");
             }
 
-        } catch (TipsException e) {
+        } catch (TipsException | NullPointerException e) {
             var picLegacy = getHelpPictureLegacy(module);
             var msgLegacy = getHelpLinkLegacy(module);
 
@@ -57,7 +57,7 @@ public class HelpService implements MessageService<Matcher> {
                 from.sendMessage(msgLegacy).recallIn(110 * 1000);
             }
         } catch (Exception e) {
-            log.error("Help A6 输出错误，使用默认方法？", e);
+            log.error("Help A6 输出错误，使用默认方法也出错？", e);
         }
 
     }
@@ -130,9 +130,11 @@ public class HelpService implements MessageService<Matcher> {
             case null, default -> "GUIDE";
         };
 
-        return imageService.getPanelA6(
-                DataUtil.getMarkdownFile(STR."Help/\{fileName}.md"),
-                "help");
+        try {
+            return imageService.getPanelA6(DataUtil.getMarkdownFile(STR."Help/\{fileName}.md"), "help");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
