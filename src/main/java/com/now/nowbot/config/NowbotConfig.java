@@ -90,6 +90,10 @@ public class NowbotConfig {
      */
     public static String IMGBUFFER_PATH;
     public static int PORT;
+    @Value("${spring.proxy.type:'HTTP'}")
+    public String proxyType;
+    @Value("${spring.proxy.host:'localhost'}")
+    public String proxyHost;
     @Value("${spring.proxy.port:0}")
     public        int proxyPort;
 
@@ -103,11 +107,13 @@ public class NowbotConfig {
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 
+
     @Bean
     public OkHttpClient httpClient() {
         var builder = new OkHttpClient.Builder();
+
         if (proxyPort != 0)
-            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("localhost", proxyPort)));
+            builder.proxy(new Proxy(Proxy.Type.valueOf(proxyType), new InetSocketAddress(proxyHost, proxyPort)));
         return builder.build();
     }
 
