@@ -81,7 +81,11 @@ public class UserApiImpl implements OsuUserApiService {
     @Override
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
         return base.osuApiWebClient.get()
-                .uri("users/{name}/{mode}", userName, mode.getName())
+                .uri(l -> l
+                        .path("users/{name}/{mode}")
+                        .queryParam("key", "username")
+                        .build(userName, mode.getName())
+                )
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(OsuUser.class)
