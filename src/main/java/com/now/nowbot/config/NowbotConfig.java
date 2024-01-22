@@ -227,7 +227,7 @@ public class NowbotConfig {
                     .build();
             jda.awaitReady();
         } catch (Exception e) {
-            log.error("create jda error", e);
+            log.error("create jda error: {}", e.getMessage());
             return null;
         }
 
