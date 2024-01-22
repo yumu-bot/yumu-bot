@@ -13,7 +13,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collection;
@@ -38,7 +37,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public String getOauthUrl(String state, boolean full) throws WebClientResponseException {
+    public String getOauthUrl(String state, boolean full) {
         return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize")
                 .queryParam("client_id", base.oauthId)
                 .queryParam("redirect_uri", base.redirectUrl)
