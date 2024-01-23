@@ -63,7 +63,7 @@ public class YumuConfig {
 
     private String getRowDomain(String s) {
         int n;
-        if ((n = s.indexOf(':')) >= 0) {
+        if ((n = s.indexOf(':', 7)) >= 0) {
             return s.substring(0, n);
         }
         return s;
