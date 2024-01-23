@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
-@ConditionalOnProperty(value = "osu.callbackpath")
+@ConditionalOnProperty(value = "yumu.osu.callbackpath")
 public class BindController {
     public static final boolean DEBUG = false;
     static final Logger log = LoggerFactory.getLogger(BindController.class);
