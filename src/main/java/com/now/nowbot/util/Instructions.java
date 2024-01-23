@@ -125,7 +125,7 @@ public class Instructions {
     public static final Pattern GROUP_STATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))(?!\\w)");
 
     // #9 自定义
-    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?((custom)?profile|cp(?![A-Za-z_]))\\s*([:：]?(?<type>(b|c|banner|card)))?");
+    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：]?(?<type>(b|c|banner|card)))?");
 
     /*
     public static final Pattern TEST = Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
@@ -136,7 +136,7 @@ public class Instructions {
     public static final Pattern TEST_PPM = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:]+)?");
 
 
-    public static final Pattern MAP_4D_CALCULATE = Pattern.compile("[!！#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>(ez|hd|dt|hr|nc|ht)+)?");
+    public static final Pattern MAP_4D_CALCULATE = Pattern.compile("[!！#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtrnc]+))?");
     public static final Pattern TEST_TAIKO_SR_CALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
     public static final Pattern TEST_MAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\d\\s,，|\\-]+))?");
