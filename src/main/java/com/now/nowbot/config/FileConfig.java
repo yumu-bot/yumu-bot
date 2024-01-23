@@ -13,7 +13,7 @@ public class FileConfig {
     /**
      * 素材资源文件
      */
-    String bgdir = "/tmp/bot/bg";
+    String bgdir = "/tmp/bot/img";
     /**
      * 字体文件资源
      */
@@ -25,7 +25,7 @@ public class FileConfig {
     /**
      * 图片资源文件
      */
-    String exportFile = "/tmp/bot/bg/ExportFileV3";
+    String exportFile = "/tmp/bot/img/ExportFileV3";
     /**
      * 缓存 .osu 文件的路径
      */
