@@ -123,7 +123,7 @@ public class OsuApiBaseService {
                 throw new BindException(BindException.Type.BIND_Me_Banned);
             } catch (WebClientResponseException.TooManyRequests e) {
                 log.info("更新令牌失败：API 访问太频繁", e);
-                throw new BindException(BindException.Type.BIND_Me_TooManyRequests);
+                throw new BindException(BindException.Type.BIND_API_TooManyRequests);
             }
         } else {
             token = user.getAccessToken();

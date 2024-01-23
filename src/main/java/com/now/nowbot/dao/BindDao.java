@@ -59,7 +59,7 @@ public class BindDao {
     }
 
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
-        if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Client_NullName);
+        if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
         Optional<OsuBindUserLite> liteData;
         try {

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -43,7 +44,7 @@ public class BindController {
         try {
             key = Long.parseLong(keyStr);
         } catch (NumberFormatException e) {
-            sb.append("非法的访问:参数异常")
+            sb.append("非法访问：参数异常")
                     .append(e.getMessage());
             return sb.toString();
         }
@@ -55,7 +56,7 @@ public class BindController {
 
         if (msg == null) {
             return """
-                    绑定链接失效
+                    绑定链接失效。
                     请重新绑定。
                     当然也有可能你已经绑好了。出去可以试试功能。
                     """;
@@ -63,10 +64,10 @@ public class BindController {
             try {
                 msg.receipt().recall();
             } catch (Exception e) {
-                log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
+                log.error("绑定消息撤回失败", e);
                 return """
                         绑定连接已超时。
-                        请重新绑定
+                        请重新绑定。
                         """;
             }
         }
@@ -83,17 +84,25 @@ public class BindController {
             BindService.removeBind(key);
             sb.append("成功绑定:\n<br/>")
                     .append(msg.QQ())
-                    .append('>')
+                    .append("->")
                     .append(bd.getOsuName())
                     .append("\n<br/>")
-                    .append("已经默认绑定为[")
-                    .append(u.getOsuUser().getMainMode().getName()).append("]模式")
+                    .append("您的默认游戏模式为：[")
+                    .append(u.getOsuUser().getMainMode().getName()).append("]。")
                     .append("\n<br/>")
-                    .append("可以使用 `!ymmode [mode]` 来修改默认模式")
+                    .append("如果您不是主模式 (STD) 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
+                    .append("\n<br/>")
+                    .append("[mode]：1 taiko，2 catch，3 mania")
             ;
+        } catch (HttpClientErrorException.BadRequest e) {
+            log.error("绑定时异常：400", e);
+            sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
+                    .append('\n')
+                    .append(e.getLocalizedMessage());
         } catch (Exception e) {
-            log.error("绑定时异常", e);
-            sb.append("出现异常,请截图给开发者让他抓紧修bug\n")
+            log.error("绑定时异常：未知", e);
+            sb.append("出现未知异常，请截图给开发者让他抓紧修 BUG。错误信息：")
+                    .append('\n')
                     .append(e.getLocalizedMessage());
         }
         return sb.toString();

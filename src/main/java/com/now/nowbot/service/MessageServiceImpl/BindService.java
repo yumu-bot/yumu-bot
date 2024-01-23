@@ -19,6 +19,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
@@ -115,31 +116,27 @@ public class BindService implements MessageService<Matcher> {
                 if (!osuUser.getUID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
-                from.sendMessage(STR."""
-                您已绑定 (\{binUser.getOsuID()}) \{binUser.getOsuName()}。
-                如果您想改绑，请输入 !unbind 后，再次使用 !ymbind。
-                """);
 
-                /*
-                但您仍可以重新绑定。
-                若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。
-                回复 OK 重新绑定。
-                 */
+                from.sendMessage(
+                        String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                );
+
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
                 if (Objects.isNull(s) || s.getRawMessage().compareToIgnoreCase("OK") < 0) {
                     return;
                 }
-            } catch (Exception e) {
-                if (!(e instanceof WebClientResponseException.Unauthorized)) {
-                    throw e;
-                }
+
+            } catch (WebClientResponseException.Unauthorized e) {
+                throw e;
+            } catch (Exception ignored) {
                 //如果符合，直接允许绑定
             }
         }
 
         // 需要绑定
-        String state = event.getSender().getId() + "+" + timeMillis;
+        String state = STR."\{event.getSender().getId()}+\{timeMillis}";
+
         //将消息回执作为 value
         state = userApiService.getOauthUrl(state, Objects.nonNull(matcher.group("full")));
         var send = new MessageChain.MessageChainBuilder()
@@ -147,8 +144,9 @@ public class BindService implements MessageService<Matcher> {
                 .addText("\n")
                 .addText(state)
                 .build();
+
         var receipt = from.sendMessage(send);
-        //默认110秒后撤回
+
         from.recallIn(receipt, 110 * 1000);
         //此处在 controller.msgController 处理
         putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
@@ -163,62 +161,84 @@ public class BindService implements MessageService<Matcher> {
         }
 
         if (bindDao.unBindQQ(bind.get().getBinUser())) {
-            throw new BindException(BindException.Type.BIND_Client_UnBindSuccess);
+            throw new BindException(BindException.Type.BIND_UnBind_Success);
         } else {
-            throw new BindException(BindException.Type.BIND_Client_UnBindFailed);
+            throw new BindException(BindException.Type.BIND_UnBind_Failed);
         }
     }
 
     private void bindQQAt(MessageEvent event, long qq) {
         // 只有管理才有权力@人绑定,提示就不改了
         var from = event.getSubject();
-        from.sendMessage("你叫啥名呀？告诉我吧");
+
+        from.sendMessage(BindException.Type.BIND_Receive_NoName.message);
+
         var lock = ASyncMessageUtil.getLock(event);
         var s = lock.get();//阻塞,注意超时判空
-        if (s == null) {
-            throw new BindException(BindException.Type.BIND_Client_Overtime);
+        if (Objects.isNull(s)) {
+            throw new BindException(BindException.Type.BIND_Receive_Overtime);
         }
-        String nameStr = s.getRawMessage();
-        Long id;
+
+        String name = s.getRawMessage();
+        Long UID;
+
         try {
-            id = userApiService.getOsuId(nameStr);
+            UID = userApiService.getOsuId(name);
+        } catch (HttpClientErrorException.Forbidden e) {
+            throw new BindException(BindException.Type.BIND_Player_Banned);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
-        var bind = bindDao.getQQLiteFromOsuId(id);
+        var bind = bindDao.getQQLiteFromOsuId(UID);
+
         if (bind.isEmpty()) {
-            from.sendMessage(STR."正在将\{qq}绑定到 (\{id})\{nameStr}上");
-            bindDao.bindQQ(qq, new BinUser(id, nameStr));
-            throw new BindException(BindException.Type.BIND_Player_Success);
+            from.sendMessage(
+                    String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
+            );
+            bindDao.bindQQ(qq, new BinUser(UID, name));
+            throw new BindException(BindException.Type.BIND_Response_Success);
         }
+
         var u = bind.get();
-        from.sendMessage(STR."\{u.getOsuUser().getOsuName()}绑定在 QQ \{qq} 上，是否覆盖？回复 OK 生效");
+
+        from.sendMessage(
+                String.format(BindException.Type.BIND_Progress_BindingRecover.message, u.getOsuUser().getOsuName(), qq)
+        );
+        //from.sendMessage(STR."\{u.getOsuUser().getOsuName()}绑定在 QQ \{qq} 上，是否覆盖？回复 OK 生效");
+
         s = lock.get();
-        if (s != null && s.getRawMessage().startsWith("OK")) {
+        if (Objects.nonNull(s) && s.getRawMessage().toUpperCase().startsWith("OK")) {
             bindDao.bindQQ(qq, u.getOsuUser());
-            throw new BindException(BindException.Type.BIND_Player_Success);
+            from.sendMessage(BindException.Type.BIND_Response_Success.message);
         } else {
-            throw new BindException(BindException.Type.BIND_Client_Refused);
+            from.sendMessage(BindException.Type.BIND_Receive_Refused.message);
         }
     }
 
     private void bindQQName(MessageEvent event, String name, long qq) {
         Contact from = event.getSubject();
-        var userFromQQ = bindDao.getQQLiteFromQQ(qq);
-        if (userFromQQ.isPresent()) throw new BindException(BindException.Type.BIND_Client_AlreadyBound);
+        var u = bindDao.getQQLiteFromQQ(qq);
+        if (u.isPresent()) throw new BindException(BindException.Type.BIND_Response_AlreadyBound);
 
-        long osuUserId;
+        long UID;
         try {
-            osuUserId = userApiService.getOsuId(name);
+            UID = userApiService.getOsuId(name);
+        } catch (HttpClientErrorException.Forbidden e) {
+            throw new BindException(BindException.Type.BIND_Player_Banned);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
 
-        var userFromID = bindDao.getQQLiteFromOsuId(osuUserId);
+        var userFromID = bindDao.getQQLiteFromOsuId(UID);
         if (userFromID.isPresent()) {
-            from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind)");
+            from.sendMessage(
+                    String.format(BindException.Type.BIND_Response_AlreadyBoundByName.message, userFromID.get().getQq(), name)
+            );
+            //from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind)");
             return;
         }
+
+        from.sendMessage(BindException.Type.BIND_Question_BindByName.message);
 
         /*
         from.sendMessage("""
@@ -227,28 +247,32 @@ public class BindService implements MessageService<Matcher> {
                 设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
                 """);
 
-         */
         from.sendMessage("""
                 别看了，乖乖发送 !ymbind 绑定吧，不要带任何参数。
                 现在没法直接单独绑定用户名，请点击链接绑定。
                 记得不要挂科学上网。
                 """);
 
+         */
         var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
 
-        if (event == null) {
+        if (Objects.isNull(event)) {
             //from.sendMessage("回答超时，撤回绑定请求。");
-            return;
+            throw new BindException(BindException.Type.BIND_Question_Overtime);
         }
 
         if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2") && !event.getRawMessage().contains("50%")) {
-            from.sendMessage("回答错误，请重试。");
-            return;
+            //from.sendMessage("回答错误，请重试。");
+            throw new BindException(BindException.Type.BIND_Question_Wrong);
         }
 
-        bindDao.bindQQ(qq, new BinUser(osuUserId, name));
-        from.sendMessage(STR."已将 \{qq} 绑定到 (\{osuUserId}) \{name} 上");
+        //from.sendMessage(STR."已将 \{qq} 绑定到 (\{UID}) \{name} 上");
+        from.sendMessage(
+                String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
+        );
+
+        bindDao.bindQQ(qq, new BinUser(UID, name));
     }
 
     public record Bind(Long key, MessageReceipt receipt, Long QQ) {
