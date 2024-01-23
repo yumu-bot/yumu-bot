@@ -118,7 +118,7 @@
         <dependency>
             <groupId>io.github.humbleui</groupId>
             <artifactId>skija-${run.os}-x64</artifactId>
-            <version>0.116.1</version>
+            <version>0.116.2</version>
         </dependency>
         <!--
         <dependency>

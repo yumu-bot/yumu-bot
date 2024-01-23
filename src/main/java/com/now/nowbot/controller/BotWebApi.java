@@ -3,7 +3,6 @@ package com.now.nowbot.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
-import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -32,7 +31,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @ResponseBody
@@ -497,14 +499,6 @@ public class BotWebApi {
             log.error("alumni 文件异常",e );
             return "[]";
         }
-    }
-
-    @Resource
-    BindDao dao;
-
-    @GetMapping("t1")
-    public Object t1(Optional<String> name) {
-        return dao.getOsuId(name.orElse("MREKK"));
     }
 }
 
