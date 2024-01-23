@@ -27,7 +27,7 @@ public class BindController {
         bindDao = dao;
     }
 
-    @GetMapping("${osu.callbackpath}")
+    @GetMapping("${yumu.osu.callbackpath}")
     public String bind(@RequestParam("code") String code, @RequestParam("state") String stat) {
         var data = stat.split(" ");
         if (data.length != 2) {
@@ -54,13 +54,20 @@ public class BindController {
         }
 
         if (msg == null) {
-            return "绑定链接失效\n请重新绑定";
+            return """
+                    绑定链接失效
+                    请重新绑定。
+                    当然也有可能你已经绑好了。出去可以试试功能。
+                    """;
         } else {
             try {
                 msg.receipt().recall();
             } catch (Exception e) {
                 log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
-                return "绑定连接已超时\n请重新绑定";
+                return """
+                        绑定连接已超时。
+                        请重新绑定
+                        """;
             }
         }
 
