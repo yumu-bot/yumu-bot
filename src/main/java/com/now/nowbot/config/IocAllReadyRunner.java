@@ -53,7 +53,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
       ioc容器加载完毕运行
      */
     public void run(String... args) throws Exception {
-        QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class));
+        QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
         MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
         permission.init(applicationContext);
 //        initFountWidth();

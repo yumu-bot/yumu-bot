@@ -6,7 +6,7 @@ import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.ImageMessage;
-import com.now.nowbot.qq.message.ReplayMessage;
+import com.now.nowbot.qq.message.ReplyMessage;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -52,7 +52,7 @@ public class SetProfileService implements MessageService<SetProfileService.Param
         }
 
         var repObj = event.getMessage().getMessageList().getFirst();
-        if (! (repObj instanceof ReplayMessage replay)) {
+        if (! (repObj instanceof ReplyMessage replay)) {
             throw new TipsException("""
                     指令 `!ymset <type>` 回复图片消息以设置
                     下面是可用的 type 以及对应的推荐尺寸

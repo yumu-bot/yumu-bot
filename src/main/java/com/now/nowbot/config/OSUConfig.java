@@ -6,7 +6,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Primary
 @Validated
-@ConfigurationProperties(prefix = "osu", ignoreInvalidFields = true)
+@ConfigurationProperties(prefix = "yumu.osu", ignoreInvalidFields = true)
 public class OSUConfig {
     /**
      * 接口路径, 一般不用改
@@ -17,9 +17,11 @@ public class OSUConfig {
      */
     String callBackUrl = "/bind";
     /**
-     * 回调链接, ${osu.callbackpath} 用callBackUrl 替换
+     * 回调链接, 需要与 osu oauth 应用的callback url 完全一致
+     * 默认不需要配置, 自动构造 publicDomain+callBackUrl
+     * 也可以自行配置, 强制覆盖
      */
-    String callbackpath = "http://localhost:8388${osu.callbackpath}";
+    String callbackpath = "";
     Integer id = 0;
     String token = "*";
 

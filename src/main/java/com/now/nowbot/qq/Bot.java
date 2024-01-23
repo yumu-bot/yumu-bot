@@ -21,7 +21,5 @@ public interface Bot {
 
     List<? extends Stranger> getStrangers();
 
-    MessageChain getMessage(Long id);
-
     Stranger getStranger(Long id);
 }

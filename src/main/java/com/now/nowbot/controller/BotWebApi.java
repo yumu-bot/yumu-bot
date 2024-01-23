@@ -3,6 +3,7 @@ package com.now.nowbot.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -496,6 +497,14 @@ public class BotWebApi {
             log.error("alumni 文件异常",e );
             return "[]";
         }
+    }
+
+    @Resource
+    BindDao dao;
+
+    @GetMapping("t1")
+    public Object t1(Optional<String> name) {
+        return dao.getOsuId(name.orElse("MREKK"));
     }
 }
 

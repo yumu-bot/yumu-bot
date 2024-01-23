@@ -2,6 +2,7 @@ package com.now.nowbot.service.OsuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.OSUConfig;
+import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -14,17 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriBuilder;
 
-import java.net.URI;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Service
 public class OsuApiBaseService {
@@ -44,9 +41,13 @@ public class OsuApiBaseService {
     @Resource
     WebClient webClient;
 
-    public OsuApiBaseService(OSUConfig osuConfig) {
+    public OsuApiBaseService(OSUConfig osuConfig, YumuConfig yumuConfig) {
+        String url;
         oauthId = osuConfig.getId();
-        redirectUrl = osuConfig.getCallBackUrl();
+        if (! StringUtils.hasText(url = osuConfig.getCallbackpath())) {
+            url = STR."\{yumuConfig.getPublicUrl()}\{osuConfig.getCallBackUrl()}";
+        }
+        redirectUrl = url;
         oauthToken = osuConfig.getToken();
     }
 
@@ -55,7 +56,7 @@ public class OsuApiBaseService {
     }
 
     protected String getBotToken() {
-        if (!isPassed()) {
+        if (! isPassed()) {
             return accessToken;
         }
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
@@ -64,14 +65,7 @@ public class OsuApiBaseService {
         body.add("grant_type", "client_credentials");
         body.add("scope", "public");
 
-        var s = osuApiWebClient.post()
-                .uri("https://osu.ppy.sh/oauth/token")
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(body))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+        var s = osuApiWebClient.post().uri("https://osu.ppy.sh/oauth/token").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
 
         if (s != null) {
             accessToken = s.get("access_token").asText();
@@ -89,14 +83,7 @@ public class OsuApiBaseService {
         body.add("redirect_uri", redirectUrl);
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
         body.add(first ? "code" : "refresh_token", user.getRefreshToken());
-        JsonNode s = osuApiWebClient.post()
-                .uri("https://osu.ppy.sh/oauth/token")
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(body))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+        JsonNode s = osuApiWebClient.post().uri("https://osu.ppy.sh/oauth/token").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
         String accessToken;
         String refreshToken;
         long time;
@@ -109,7 +96,7 @@ public class OsuApiBaseService {
         } else {
             throw new RuntimeException("更新 Oauth 令牌, 接口格式错误");
         }
-        if (!first) {
+        if (! first) {
             // 第一次更新需要在外面更新去更新数据库
             bindDao.updateToken(user.getOsuID(), accessToken, refreshToken, time);
         }

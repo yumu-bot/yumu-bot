@@ -86,7 +86,7 @@ public class ASyncMessageUtil{
         private final Condition getCondition = reentrantLock.newCondition();
 
         void checkAdd(MessageEvent message){
-            if (check(message) && checkOpt.map(f -> f.apply(message)).orElse(false)) {
+            if (check(message) && checkOpt.map(f -> f.apply(message)).orElse(true)) {
                 reentrantLock.lock();
                 try {
                     this.msg = message;
@@ -113,7 +113,6 @@ public class ASyncMessageUtil{
                 }
                 return msg;
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 return null;
             } finally {
                 reentrantLock.unlock();

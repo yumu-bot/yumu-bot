@@ -2,6 +2,7 @@ package com.now.nowbot.irc;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Channel {
     private       String                m_channel;
@@ -25,7 +26,7 @@ public class Channel {
 
     public String poll() {
         try {
-            return m_messages.take();
+            return m_messages.poll(0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }

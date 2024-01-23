@@ -4,8 +4,6 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;

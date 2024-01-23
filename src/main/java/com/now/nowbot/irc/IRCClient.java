@@ -95,7 +95,7 @@ public class IRCClient implements Runnable {
                     String line = null;
                     while ((line = breader.readLine()) != null) {
                         System.out.println("||" + line + "||");
-                        if (!line.contains("cho@ppy.sh QUIT")) {
+                        if (! line.contains("cho@ppy.sh QUIT")) {
                             if (line.contains("001 AutoHost")) {
                                 System.out.println("Line: " + line);
                             } else if (line.startsWith("PING")) {
@@ -132,15 +132,13 @@ public class IRCClient implements Runnable {
                     }
                 }
             });
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     ircClient.disconnect();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }
-            ));
+            }));
 
             Thread.sleep(1000);
             ircClient.write("/who");
@@ -151,7 +149,7 @@ public class IRCClient implements Runnable {
     }
 
     public void connect() throws IOException {
-        if (!m_disconnected) {
+        if (! m_disconnected) {
             System.out.println("Attempt to connect the IRCClient without first disconnecting.");
             return;
         }
@@ -183,11 +181,14 @@ public class IRCClient implements Runnable {
         write(message, false);
     }
 
-    private void write(String message, boolean censor) {
-        if (!censor && !message.startsWith("PING") && !message.startsWith("PONG")) {
-            System.out.println("SEND(" + new Date(System.currentTimeMillis()) + "): " + message);
+    public void sendMessage(String channel, String message) {
+        synchronized (m_channels) {
+            if (! m_channels.containsKey(channel)) {
+                m_channels.put(channel, new Channel(channel, this));
+            }
+
+//            m_channels.get(channel).addMessage(message);
         }
-        m_outStream.println(message);
     }
 
     private void register() {
@@ -201,14 +202,11 @@ public class IRCClient implements Runnable {
         return m_channels.put(channel, new Channel(channel, this));
     }
 
-    public void sendMessage(String channel, String message) {
-        synchronized (m_channels) {
-            if (!m_channels.containsKey(channel)) {
-                m_channels.put(channel, new Channel(channel, this));
-            }
-
-//            m_channels.get(channel).addMessage(message);
+    private void write(String message, boolean censor) {
+        if (! censor && ! message.startsWith("PING") && ! message.startsWith("PONG")) {
+            System.out.println("SEND(" + new Date(System.currentTimeMillis()) + "): " + message);
         }
+        m_outStream.println(message);
     }
 
     @Override
@@ -218,12 +216,12 @@ public class IRCClient implements Runnable {
             String line = null;
             InputStreamReader inputStreamReader = new InputStreamReader(in);
             BufferedReader breader = new BufferedReader(inputStreamReader);
-            while (!m_disconnected && (line = breader.readLine()) != null) {
+            while (! m_disconnected && (line = breader.readLine()) != null) {
                 pipedOutputStream.write(line.getBytes());
                 pipedOutputStream.flush();
 
                 int nameIndex;
-                if ((nameIndex = line.indexOf("!cho@ppy.sh")) != -1) {
+                if ((nameIndex = line.indexOf("!cho@ppy.sh")) != - 1) {
 
                 }
             }

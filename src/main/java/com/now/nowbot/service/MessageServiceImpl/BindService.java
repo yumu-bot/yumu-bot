@@ -127,7 +127,7 @@ public class BindService implements MessageService<Matcher> {
                  */
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
-                if (!(s != null && s.getRawMessage().trim().equalsIgnoreCase("OK"))) {
+                if (Objects.isNull(s) || s.getRawMessage().compareToIgnoreCase("OK") < 0) {
                     return;
                 }
             } catch (Exception e) {

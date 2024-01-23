@@ -13,9 +13,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.boot.Banner;
-
-import java.io.IOException;
 
 import java.io.IOException;
 

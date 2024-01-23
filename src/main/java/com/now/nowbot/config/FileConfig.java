@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
 
 @Primary
-@ConfigurationProperties(prefix = "botfile")
+@ConfigurationProperties(prefix = "yumu.file")
 public class FileConfig {
     /**
      * 运行的位置

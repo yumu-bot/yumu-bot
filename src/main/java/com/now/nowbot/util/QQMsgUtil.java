@@ -1,6 +1,6 @@
 package com.now.nowbot.util;
 
-import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.contact.Group;
@@ -18,12 +18,18 @@ import java.util.*;
 public class QQMsgUtil {
     private static final Base64.Encoder base64Util = Base64.getEncoder();
     private static final Map<String, FileData> FILE_DATA = new HashMap<>();
-    private static       QQMessageDao   qqMessageDao;
+    private static QQMessageDao qqMessageDao;
+    private static List<Long>   LocalBotList;
+    private static String       LocalUrl;
+    private static String       PublicUrl;
 
     public record FileData(String name, ByteBuffer bytes) {}
 
-    public static void init(QQMessageDao qqMessageDao) {
+    public static void init(QQMessageDao qqMessageDao, YumuConfig yumuConfig) {
         QQMsgUtil.qqMessageDao = qqMessageDao;
+        LocalBotList = yumuConfig.getPrivateDevice();
+        LocalUrl = STR."\{yumuConfig.getPrivateUrl()}/pub/file/%s";
+        PublicUrl = STR."\{yumuConfig.getPublicUrl()}/pub/file/%s";
     }
 
     public static String byte2str(byte[] data) {
@@ -66,12 +72,12 @@ public class QQMsgUtil {
     public static String getFileUrl(byte[] data, String name) {
         var key = UUID.randomUUID().toString();
         FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
-        return String.format("http://127.0.0.1:%d/pub/file/%s",NowbotConfig.PORT,key);
+        return String.format(LocalUrl, key);
     }
     public static String getFilePubUrl(byte[] data, String name) {
         var key = UUID.randomUUID().toString();
         FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
-        return "https://bot.365246692.xyz/pub/file/" + key;
+        return String.format(PublicUrl, key);
     }
     public static FileData getFileData(String key) {
         return FILE_DATA.get(key);
@@ -84,7 +90,6 @@ public class QQMsgUtil {
     }
 
     public static boolean botInLocal(Long botQQ){
-        boolean f = false;
-        return botQQ != null && botQQ == 1563653406L;
+        return LocalBotList.contains(botQQ);
     }
 }

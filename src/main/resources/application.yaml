@@ -1,31 +1,32 @@
-# 运行路径 file 设置
-botfile:
-  # 基目录
-  root: ""
-  # 图片素材
-  bgdir: ${botfile.root}img/
-  font: ${botfile.root}font/
-  # 图片缓存路径
-  imgbuffer: ${botfile.root}imgbuffer/
-  # 用于解析星级的 .osu 文件路径
-  osuFilePath: ${botfile.root}osufile/
-  # 也是图片素材
-  exportFile: ${botfile.bgdir}ExportFileV3/
-# osu 相关的配置
-osu:
-  # v2 api 接口地址, 无需修改
-  url: https://osu.ppy.sh/api/v2/
-  # api 回调接口端点, 注意: 注册 oauth 应用时填写下面访问服务器的 url 而不是接口端点
-  callbackpath: /oauth
-  # 访问服务器的url, 注意端口号以确保拼合的链接可以访问
-  callBackUrl: http://yourdoman${osu.callbackpath}
-  #oauth应用的id与token
-  id: 0
-  token: ""
+yumu:
+  #domain 带 http/https 但是不要带端口号, 要指定端口用 private-port / public-port
+  private-domain: "http://localhost"
+  #如果无法通过公网访问则保持与私网一致
+  public-domain: ${yumu.private-domain}
+  private-device: [ ]
+  file: # 运行路径 file 设置
+    # 基目录
+    root: ""
+    # 图片素材
+    bgdir: ${yumu.file.root}img/
+    font: ${yumu.file.root}font/
+    # 图片缓存路径
+    imgbuffer: ${yumu.file.root}imgbuffer/
+    # 用于解析星级的 .osu 文件路径
+    osuFilePath: ${yumu.file.root}osufile/
+    # 也是图片素材
+    exportFile: ${yumu.file.bgdir}ExportFileV3/
+  osu: # osu 相关的配置
+    # api 回调接口端点, 注意: 注册 oauth 应用时填写下面访问服务器的 url 而不是接口端点
+    callbackpath: /oauth
+    #oauth应用的id与token
+    id: 0
+    token: ""
+
 # dc 机器人的配置, 如果没有可以不用填, 注意访问情况, 可能需要代理
 discord:
   command-suffix: 'ym-'
-  token: "" # dc 的 token, 在官网申请, 没有可以不用填
+  token: '' # dc 的 token, 在官网申请, 没有可以填 '*'
 #服务监听端口
 server:
   port: 8388
@@ -73,9 +74,14 @@ spring:
     username: postgres
     password: postgres
     hikari:
+      pool-name: pgsql
       maximum-pool-size: 10
       minimum-idle: 1
       connection-test-query: SELECT 1;
+      connection-timeout: 50000
+      data-source-properties:
+        networkTimeout: 5000
+        socketTimeout: 60
   jpa:
     hibernate:
       ddl-auto: update
@@ -88,4 +94,4 @@ logging:
   level:
     root: info
   file:
-    name: ${botfile.root}botlog/bot.log
+    name: ${yumu.file.root}botlog/bot.log
