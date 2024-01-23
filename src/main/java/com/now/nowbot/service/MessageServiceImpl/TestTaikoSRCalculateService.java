@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("TESTTAIKOCALCSR")
+@Service("TEST_TAIKO_SR_CALCULATE")
 public class TestTaikoSRCalculateService implements MessageService<Matcher> {
     private static final char CHAR_X = 'x';
     private static final char CHAR_O = 'o';
@@ -36,7 +36,7 @@ public class TestTaikoSRCalculateService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TESTTAIKOSRCALCULATE.matcher(messageText);
+        var m = Instructions.TEST_TAIKO_SR_CALCULATE.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("UUI")
+@Service("UU_INFO")
 public class UUIService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(UUIService.class);
 
@@ -37,7 +37,7 @@ public class UUIService implements MessageService<Matcher> {
     }
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.UUINFO.matcher(messageText);
+        var m = Instructions.UU_INFO.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

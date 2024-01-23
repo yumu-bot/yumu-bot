@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class TestPPMService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TESTPPM.matcher(messageText);
+        var m = Instructions.TEST_PPM.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

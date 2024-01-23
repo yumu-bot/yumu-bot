@@ -17,6 +17,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Me_NotBind("您还从未绑定过呢，请授权。(!ymbind)"),
         BIND_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),
         BIND_Me_AuthorizationRevoked("您已撤销授权，请重新授权。(!ymbind)"),
+        BIND_Me_TokenExpiredButBindID("您已经绑定玩家名，但是令牌已经过期。"),
         BIND_Me_Banned("你号没了，或是 ppy API 无法访问。"),
         BIND_Me_TooManyRequests("ppy API 访问量超限，暂时不能绑定呢..."),
         BIND_Me_Blacklisted("本 Bot 根本不想理你。"),

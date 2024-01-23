@@ -38,7 +38,7 @@ public class CsvMatchService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.CSVMATCH.matcher(messageText);
+        var m = Instructions.CSV_MATCH.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

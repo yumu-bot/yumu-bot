@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.regex.Matcher;
 
-@Service("GETPOOL")
+@Service("GET_POOL")
 public class GetPoolService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MapPoolService.class);
     @Resource
@@ -27,7 +27,7 @@ public class GetPoolService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.GETPOOL.matcher(messageText);
+        var m = Instructions.GET_POOL.matcher(messageText);
         if (! m.find()) {
             return false;
         }

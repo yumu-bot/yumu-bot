@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("TODAYBP")
+@Service("TODAY_BP")
 public class TodayBPService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     OsuUserApiService userApiService;
@@ -42,7 +42,7 @@ public class TodayBPService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TODAYBP.matcher(messageText);
+        var m = Instructions.TODAY_BP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

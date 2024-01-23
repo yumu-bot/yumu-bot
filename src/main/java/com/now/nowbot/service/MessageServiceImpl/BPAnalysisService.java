@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service("BPANALYSIS")
+@Service("BP_ANALYSIS")
 public class BPAnalysisService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(BPAnalysisService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
@@ -56,7 +56,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {
-        var matcher = Instructions.BPANALYSIS.matcher(messageText);
+        var matcher = Instructions.BP_ANALYSIS.matcher(messageText);
         if (!matcher.find()) return false;
         var mode = OsuMode.getMode(matcher.group("mode"));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);

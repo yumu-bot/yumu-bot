@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service("UUBA")
+@Service("UU_BA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
@@ -68,7 +68,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Instruction_Deprecated);
         }
 
-        var matcher = Instructions.UUBA.matcher(messageText);
+        var matcher = Instructions.UU_BA.matcher(messageText);
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));

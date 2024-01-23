@@ -48,7 +48,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
-        var matcher = Instructions.LISTENER.matcher(messageText);
+        var matcher = Instructions.MATCH_LISTENER.matcher(messageText);
         var param = new MatchListenerService.ListenerParam();
 
         if (! matcher.find()) return false;

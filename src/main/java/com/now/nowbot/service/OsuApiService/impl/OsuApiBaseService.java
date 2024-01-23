@@ -117,7 +117,7 @@ public class OsuApiBaseService {
             } catch (WebClientResponseException.Unauthorized e) {
                 bindDao.backupBind(user.getOsuID());
                 log.error("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.getOsuID(), e);
-                throw new BindException(BindException.Type.BIND_Me_TokenExpired);
+                throw new BindException(BindException.Type.BIND_Me_TokenExpiredButBindID);
             } catch (WebClientResponseException.NotFound e) {
                 log.info("更新令牌失败：账号封禁", e);
                 throw new BindException(BindException.Type.BIND_Me_Banned);
@@ -128,6 +128,6 @@ public class OsuApiBaseService {
         } else {
             token = user.getAccessToken();
         }
-        return (headers) -> headers.set("Authorization", "Bearer " + token);
+        return (headers) -> headers.set("Authorization", STR."Bearer \{token}");
     }
 }

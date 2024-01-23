@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("SRA")
+@Service("SERIES_RATING")
 public class SeriesRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(SeriesRatingService.class);
 
@@ -39,7 +39,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.SERIES.matcher(messageText);
+        var m = Instructions.SERIES_RATING.matcher(messageText);
 
         if (m.find()) {
             data.setValue(m);

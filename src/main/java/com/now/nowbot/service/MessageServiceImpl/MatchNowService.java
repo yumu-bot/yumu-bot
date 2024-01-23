@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.regex.Matcher;
 
-@Service("MATCHNOW")
+@Service("MATCH_NOW")
 public class MatchNowService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MatchNowService.class);
     @Resource
@@ -26,7 +26,7 @@ public class MatchNowService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.MATCHNOW.matcher(messageText);
+        var m = Instructions.MATCH_NOW.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
