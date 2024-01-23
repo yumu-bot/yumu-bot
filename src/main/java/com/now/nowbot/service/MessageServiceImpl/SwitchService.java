@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -11,6 +10,8 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
 
@@ -37,15 +38,12 @@ public class SwitchService implements MessageService<Matcher> {
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        //我忘了这玩意挖坑是干啥的...似乎是没什么用
         var from = event.getSubject();
+
         String p1 = matcher.group("p1");
         String p2 = matcher.group("p2");
-        if (event instanceof GroupMessageEvent){
-            var group = ((GroupMessageEvent) event);
-//            group.getSender().mute(60*60*8); 禁言
-        }
-        if (p1 == null) {
+
+        if (Objects.isNull(p1)) {
             var tips = """
                     [sleep] wake/sleep <time>
                     [list] export all available service: <servicename> on/off
@@ -53,7 +51,7 @@ public class SwitchService implements MessageService<Matcher> {
                     """;
 
             //from.sendMessage(tips);
-            QQMsgUtil.sendImage(from, imageService.getPanelAlpha(tips.split("\n")));
+            QQMsgUtil.sendImage(from, imageService.getPanelA6(Arrays.toString(tips.split("\n"))));
             // 等同于 case list
 
             StringBuilder sb = new StringBuilder();
@@ -62,14 +60,14 @@ public class SwitchService implements MessageService<Matcher> {
                 sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             //from.sendMessage(sb.toString());
-            QQMsgUtil.sendImage(from, imageService.getPanelAlpha(sb));
+            QQMsgUtil.sendImage(from, imageService.getPanelA6(sb.toString()));
             return;
         }
 
         // sleep awake 功能应该放在其他的地方吧，比如新开一个重启bot的服务，里面附带这个功能
         switch (p1.toLowerCase()) {
             case "sleep" -> {
-                if (p2 != null){
+                if (Objects.nonNull(p2)){
                     try {
                         int time = Integer.parseInt(p2);
                         from.sendMessage("晚安！");
@@ -89,10 +87,10 @@ public class SwitchService implements MessageService<Matcher> {
                 StringBuilder sb = new StringBuilder();
                 var list = Permission.getCloseServices();
                 for (String value : Permission.getAllService()) {
-                    sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
+                    sb.append("- ").append(list.contains(value)? "OFF" : "ON").append(':').append(' ').append(value).append('\n');
                 }
                 //from.sendMessage(sb.toString());
-                QQMsgUtil.sendImage(from, imageService.getPanelAlpha(sb));
+                QQMsgUtil.sendImage(from, imageService.getPanelA6(sb.toString()));
                 return;
             }
 
@@ -106,12 +104,12 @@ public class SwitchService implements MessageService<Matcher> {
             }
         }
 
-        if (p2 != null) {
+        if (Objects.nonNull(p2)) {
             switch (p2.toLowerCase()){
                 case "off" -> {
                     try {
                         Permission.closeService(p1);
-                        from.sendMessage("已关闭 " + p1 + " 服务");
+                        from.sendMessage(STR."已关闭 \{p1} 服务");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("请输入正确的服务名");
                     }
@@ -119,7 +117,7 @@ public class SwitchService implements MessageService<Matcher> {
                 case "on" -> {
                     try {
                         Permission.openService(p1);
-                        from.sendMessage("已启动 " + p1 + " 服务");
+                        from.sendMessage(STR."已启动 \{p1} 服务");
                     } catch (IllegalArgumentException e) {
                         from.sendMessage("请输入正确的服务名");
                     }

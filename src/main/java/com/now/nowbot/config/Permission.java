@@ -38,7 +38,7 @@ public class Permission {
 
     private static Bot bot;
 
-    private boolean isAllWhite = true;
+    private final boolean isAllWhite = true;
 
     @Autowired
     public Permission(PermissionDao permissionDao) {
@@ -333,10 +333,9 @@ public class Permission {
     /**
      * 单功能开关
      *
-     * @return
      */
     public static boolean isServiceClose(String name) {
-        return OFF_SERVICE.contains(name) && !name.equals("switch");
+        return OFF_SERVICE.contains(name) && !name.equals("SWITCH");
     }
 
     public static void closeService(String name) {
