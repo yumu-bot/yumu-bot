@@ -60,7 +60,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
         if (event.getSender().getId() != 365246692L) return false;
-        var m = Instructions.SCOREPR.matcher(messageText);
+        var m = Instructions.SCORE_PR.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             Permission.stopListener();
@@ -245,7 +245,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
             //throw new RuntimeException("没打");
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
-        return imageService.getPanelBeta(s.get(0));
+        return imageService.getPanelBeta(s.getFirst());
     }
 
     private void getTextOutput(Score score, Contact from) {

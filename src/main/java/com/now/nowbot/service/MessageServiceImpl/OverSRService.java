@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("OVERSR")
+@Service("OVER_SR")
 public class OverSRService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.OVERSR.matcher(messageText);
+        var m = Instructions.OVER_SR.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

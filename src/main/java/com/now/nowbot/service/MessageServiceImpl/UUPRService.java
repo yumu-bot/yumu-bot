@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("UUPR")
+@Service("UU_PR")
 public class UUPRService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
@@ -52,7 +52,7 @@ public class UUPRService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.UUPR.matcher(messageText);
+        var m = Instructions.UU_PR.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -144,7 +144,7 @@ public class UUPRService implements MessageService<Matcher> {
 
         //单成绩发送
         try {
-            getTextOutput(scoreList.get(0), from);
+            getTextOutput(scoreList.getFirst(), from);
         } catch (Exception e) {
             from.sendMessage("UUPR 发送失败，请重试");
             log.error("UUPR 发送失败：", e);

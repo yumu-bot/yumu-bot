@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("MAPMINUS")
+@Service("MAP_MINUS")
 public class MapMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MapMinusService.class);
     OsuBeatmapApiService beatmapApiService;
@@ -32,7 +32,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.MAPMINUS.matcher(messageText);
+        var m = Instructions.MAP_MINUS.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

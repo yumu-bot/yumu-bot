@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("MR")
+@Service("MATCH_ROUND")
 public class MatchRoundService implements MessageService<Matcher> {
     Logger log = LoggerFactory.getLogger(MatchRoundService.class);
 
@@ -35,7 +35,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.ROUND.matcher(messageText);
+        var m = Instructions.MATCH_ROUND.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

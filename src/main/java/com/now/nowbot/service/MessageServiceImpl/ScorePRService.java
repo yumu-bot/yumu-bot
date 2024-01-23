@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
 
 //UUPR，Multiple Score也合并进来了
 
-@Service("SCOREPR")
+@Service("SCORE_PR")
 public class ScorePRService implements MessageService<ScorePRService.ScorePrParam> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
@@ -61,7 +61,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePrParam> data) throws ScoreException {
-        var m = Instructions.SCOREPR.matcher(messageText);
+        var m = Instructions.SCORE_PR.matcher(messageText);
         if (m.find()) {
             getData(m, event, data);
             return true;

@@ -26,7 +26,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("PPMINUS")
+@Service("PP_MINUS")
 public class PPMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
     @Resource
@@ -40,7 +40,7 @@ public class PPMinusService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.PPMINUS.matcher(messageText);
+        var m = Instructions.PP_MINUS.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

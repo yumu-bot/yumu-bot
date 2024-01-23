@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-@Service("SETMODE")
+@Service("SET_MODE")
 public class SetModeService implements MessageService<Matcher> {
     BindDao bindDao;
     @Autowired
@@ -20,7 +20,7 @@ public class SetModeService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.SETMODE.matcher(messageText);
+        var m = Instructions.SET_MODE.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

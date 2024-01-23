@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-@Service("SERVICECOUNT")
+@Service("SERVICE_COUNT")
 public class ServiceCountService implements MessageService<Integer> {
     private final ServiceCallRepository serviceCallRepository;
     private final ImageService imageService;
@@ -29,7 +29,7 @@ public class ServiceCountService implements MessageService<Integer> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Integer> data) throws Throwable {
-        var matcher = Instructions.SERVICECOUNT.matcher(messageText);
+        var matcher = Instructions.SERVICE_COUNT.matcher(messageText);
         if (! matcher.find()) return false;
 
         var d = matcher.group("days");

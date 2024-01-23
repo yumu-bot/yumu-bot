@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-@Service("GROUPSTATISTICS")
+@Service("GROUP_STATISTICS")
 public class GroupStatisticsService implements MessageService<Long> {
     private static final Logger log = LoggerFactory.getLogger(GroupStatisticsService.class);
     private static final String getBinding = "https://api.bleatingsheep.org/api/Binding/{qq}";
@@ -112,7 +112,7 @@ public class GroupStatisticsService implements MessageService<Long> {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }
-        var m = Instructions.GROUPSTATISTICS.matcher(messageText);
+        var m = Instructions.GROUP_STATISTICS.matcher(messageText);
         if (m.find()) {
             switch (m.group("group")) {
                 case "a", "进阶群" -> data.setValue(928936255L);

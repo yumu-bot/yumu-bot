@@ -12,14 +12,14 @@ import org.springframework.stereotype.Service;
 import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
-@Service("TESTMAP")
+@Service("TEST_MAP")
 public class TestMapService implements MessageService<Matcher> {
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TESTMAP.matcher(messageText);
+        var m = Instructions.TEST_MAP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

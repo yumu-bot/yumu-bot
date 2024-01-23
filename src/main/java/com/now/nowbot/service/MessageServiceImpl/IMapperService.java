@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 
-@Service("IMAPPER")
+@Service("I_MAPPER")
 public class IMapperService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(IMapperService.class);
     OsuUserApiService userApiService;
@@ -41,7 +41,7 @@ public class IMapperService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.IMAPPER.matcher(messageText);
+        var m = Instructions.I_MAPPER.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

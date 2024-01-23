@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 
-@Service("QUALIFIEDMAP")
+@Service("QUALIFIED_MAP")
 public class QualifiedMapService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(QualifiedMapService.class);
     @Resource
@@ -26,7 +26,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.QUALIFIEDMAP.matcher(messageText);
+        var m = Instructions.QUALIFIED_MAP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

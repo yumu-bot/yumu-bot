@@ -8,14 +8,14 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
-@Service("MAP4D")
+@Service("MAP_4D_CALCULATE")
 public class Map4DCalculate implements MessageService<Map4DCalculate.param> {
     public record param(String type, float value, String mods){}
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<param> data) throws Throwable {
         String message = event.getRawMessage();
         if (!message.startsWith("#cal")) return false;
-        var matcher = Instructions.MAP4DCALCULATE.matcher(message);
+        var matcher = Instructions.MAP_4D_CALCULATE.matcher(message);
         if (matcher.find()) {
             var d = new param(
                     matcher.group("type"),

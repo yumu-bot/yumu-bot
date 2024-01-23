@@ -21,7 +21,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.util.List;
 import java.util.regex.Matcher;
 
-@Service("LEADER")
+@Service("LEADER_BOARD")
 public class LeaderBoardService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(LeaderBoardService.class);
     OsuBeatmapApiService beatmapApiService;
@@ -37,7 +37,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.LEADERBOARD.matcher(messageText);
+        var m = Instructions.LEADER_BOARD.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
