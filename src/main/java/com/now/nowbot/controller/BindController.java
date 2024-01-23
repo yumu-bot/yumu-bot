@@ -12,6 +12,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
@@ -84,17 +87,17 @@ public class BindController {
             BindService.removeBind(key);
             sb.append("成功绑定:\n<br/>")
                     .append(msg.QQ())
-                    .append("->")
+                    .append(" -> ")
                     .append(bd.getOsuName())
                     .append("\n<br/>")
                     .append("您的默认游戏模式为：[")
                     .append(u.getOsuUser().getMainMode().getName()).append("]。")
                     .append("\n<br/>")
-                    .append("如果您不是主模式 (STD) 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
+                    .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
                     .append("\n<br/>")
-                    .append("[mode]：1 taiko，2 catch，3 mania")
+                    .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
             ;
-        } catch (HttpClientErrorException.BadRequest e) {
+        } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
             log.error("绑定时异常：400", e);
             sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
                     .append('\n')
@@ -111,16 +114,32 @@ public class BindController {
     @PostMapping("/api")
     public String opa(@RequestHeader("state") @Nullable String stat,
                       @RequestBody @Nullable JsonNode body) {
-        String[] data;
-        String code;
+        String[] data = null;
+        String code = null;
+
         try {
-            data = stat.split(" ");
-            code = body.get("code").asText();
+            if (Objects.nonNull(stat)) data = stat.split(" ");
+            if (Objects.nonNull(body)) code = body.get("code").asText();
+        } catch (NullPointerException e) {
+        return e.getMessage();
+    }
+
+        /*
+        try {
+            if (stat != null) {
+                data = stat.split(" ");
+            }
+            if (body != null) {
+                code = body.get("code").asText();
+            }
         } catch (NullPointerException e) {
             return e.getMessage();
         }
-        if (data.length != 2) {
-            return "槲?";
+
+         */
+
+        if (Objects.isNull(data) || data.length != 2) {
+            return "蛤";
         }
 
         var ret = saveBind(code, data[1]);
