@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
-@ConditionalOnProperty(value = "setCallbackPath")
+@ConditionalOnProperty(value = "yumu.osu.callbackPath")
 public class BindController {
     public static final boolean DEBUG = false;
     static final Logger log = LoggerFactory.getLogger(BindController.class);
@@ -54,13 +54,20 @@ public class BindController {
         }
 
         if (msg == null) {
-            return "绑定链接失效\n请重新绑定";
+            return """
+                    绑定链接失效
+                    请重新绑定。
+                    当然也有可能你已经绑好了。出去可以试试功能。
+                    """;
         } else {
             try {
                 msg.receipt().recall();
             } catch (Exception e) {
                 log.error("绑定消息撤回失败错误,一般为已经撤回(超时/管理撤回)", e);
-                return "绑定连接已超时\n请重新绑定";
+                return """
+                        绑定连接已超时。
+                        请重新绑定
+                        """;
             }
         }
 
