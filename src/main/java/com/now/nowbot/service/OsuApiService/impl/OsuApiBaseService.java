@@ -104,7 +104,7 @@ public class OsuApiBaseService {
     }
 
     void insertHeader(HttpHeaders headers) {
-        headers.set("Authorization", "Bearer " + getBotToken());
+        headers.set("Authorization", STR."Bearer \{getBotToken()}");
     }
 
     Consumer<HttpHeaders> insertHeader(BinUser user) {
@@ -118,9 +118,12 @@ public class OsuApiBaseService {
                 bindDao.backupBind(user.getOsuID());
                 log.error("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.getOsuID(), e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpiredButBindID);
-            } catch (WebClientResponseException.NotFound e) {
+            } catch (WebClientResponseException.Forbidden e) {
                 log.info("更新令牌失败：账号封禁", e);
                 throw new BindException(BindException.Type.BIND_Me_Banned);
+            } catch (WebClientResponseException.NotFound e) {
+                log.info("更新令牌失败：找不到账号", e);
+                throw new BindException(BindException.Type.BIND_Player_NotFound);
             } catch (WebClientResponseException.TooManyRequests e) {
                 log.info("更新令牌失败：API 访问太频繁", e);
                 throw new BindException(BindException.Type.BIND_API_TooManyRequests);

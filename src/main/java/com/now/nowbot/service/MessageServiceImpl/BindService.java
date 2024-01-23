@@ -66,7 +66,7 @@ public class BindService implements MessageService<Matcher> {
             var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
             var qqStr = matcher.group("qq");
 
-            if (matcher.group("un") != null){
+            if (Objects.nonNull(matcher.group("un"))){
                 if (at != null) {
                     unbindQQ(at.getTarget());
                     return;
@@ -77,29 +77,30 @@ public class BindService implements MessageService<Matcher> {
                     unbindQQ(event.getSender().getId());
                     return;
                 }
-            } else if (at != null) {
+            } else if (Objects.nonNull(at)) {
                 bindQQAt(event, at.getTarget());
                 return;
             }
         }
 
         //绑定权限下放。这个不应该是超级管理员的专属权利。
-        if (matcher.group("un") != null) {
+        if (Objects.nonNull(matcher.group("un"))) {
             unbindQQ(event.getSender().getId());
             return;
         }
 
         var name = matcher.group("name");
-        if (name != null) {
+        if (Objects.nonNull(name)) {
             bindQQName(event, name, event.getSender().getId());
             return;
         }
         //将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
 
-        //验证是否已绑定
         BinUser binUser;
+
         /*
+        //验证是否已绑定
         try {
             binUser = bindDao.getUserFromQQ(event.getSender().getId());
         } catch (BindException ignore) {
@@ -123,11 +124,11 @@ public class BindService implements MessageService<Matcher> {
 
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
-                if (Objects.isNull(s) || s.getRawMessage().compareToIgnoreCase("OK") < 0) {
+                if (Objects.isNull(s) || !s.getRawMessage().toUpperCase().contains("OK")) {
                     return;
                 }
 
-            } catch (WebClientResponseException.Unauthorized e) {
+            } catch (WebClientResponseException.Unauthorized | BindException e) {
                 throw e;
             } catch (Exception ignored) {
                 //如果符合，直接允许绑定
@@ -145,11 +146,14 @@ public class BindService implements MessageService<Matcher> {
                 .addText(state)
                 .build();
 
-        var receipt = from.sendMessage(send);
+        MessageReceipt receipt;
+        if (Objects.nonNull(from)) {
+            receipt = from.sendMessage(send);
 
-        from.recallIn(receipt, 110 * 1000);
-        //此处在 controller.msgController 处理
-        putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
+            from.recallIn(receipt, 110 * 1000);
+            //此处在 controller.msgController 处理
+            putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
+        }
 
     }
 
@@ -232,7 +236,7 @@ public class BindService implements MessageService<Matcher> {
         var userFromID = bindDao.getQQLiteFromOsuId(UID);
         if (userFromID.isPresent()) {
             from.sendMessage(
-                    String.format(BindException.Type.BIND_Response_AlreadyBoundByName.message, userFromID.get().getQq(), name)
+                    String.format(BindException.Type.BIND_Response_AlreadyBoundInfo.message, userFromID.get().getQq(), name)
             );
             //from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind)");
             return;

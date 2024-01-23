@@ -13,21 +13,20 @@ public class BindException extends TipsRuntimeException{
         BIND_Receive_Refused("已取消绑定授权。OwOb"),
 
         BIND_Question_BindByName("""
-                不推荐使用直接绑定用户名的方法。
-                请直接发送 '!ymbind' 绑定，并且不带任何参数。
-                如果您执意使用绑定用户名的方式, 请回答下面问题:
+                不推荐使用直接绑定用户名的方法。请直接发送 !ymbind 绑定，并且不带任何参数。
+                如果您执意使用, 请回答:
                 设随机变量 X 与 Y 相互独立，且服从 U(0,1), 则 P(X+Y<1) 为？
                 """),
 
         BIND_Question_Wrong("回答错误。"),
         BIND_Question_Overtime("回答超时，撤回绑定请求。"),
 
-        BIND_Progress_Binding("正在将 {} 绑定到 ({}) {} 上"),
+        BIND_Progress_Binding("正在将 %s 绑定到 (%s) %s 上"),
         BIND_Progress_BindingRecoverInfo("""
-                您已绑定 ({}) {}。
+                您已绑定 (%s) %s。
                 如果要改绑，请回复 OK。
                 """),
-        BIND_Progress_BindingRecover("正在将 {} 绑定在 QQ {} 上，是否覆盖？回复 OK 生效。"),
+        BIND_Progress_BindingRecover("正在将 %s 绑定在 QQ %s 上，是否覆盖？回复 OK 生效。"),
 
         BIND_Me_NotBind("您还从未绑定过呢，请授权。(!ymbind)"),
         BIND_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),
@@ -50,14 +49,15 @@ public class BindException extends TipsRuntimeException{
                 不要重复绑定哟，小沐已经记住你啦！
                 如果要改绑，请输入 !unbind 解绑后再操作。
                 """),
-        BIND_Response_AlreadyBoundByName("""
-                {} 已绑定 {}。
+        BIND_Response_AlreadyBoundInfo("""
+                %s 已绑定 %s。
                 如果要改绑，请输入 !unbind 解绑后再操作。
                 """),
         BIND_Response_Success("已绑定成功！"),
 
         ;
         public final String message;
+
         Type(String message) {
             this.message = message;
         }
