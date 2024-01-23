@@ -74,7 +74,7 @@ public class TestMapService implements MessageService<Matcher> {
                 .append(',');
         sb.append(a.getMaxCombo()).append(',')
                 .append(String.format("%.2f", Math.round(DataUtil.CS(b.getCS(), modInt) * 100f) / 100f)).append(',')
-                .append(String.format("%.2f", (Math.round(a.getApproachRate()) * 100f) / 100f)).append(',')
+                .append(String.format("%.2f", Math.round(DataUtil.AR(b.getAR(), modInt) * 100f) / 100f)).append(',')
                 .append(String.format("%.2f", Math.round(DataUtil.OD(b.getOD(), modInt) * 100f) / 100f));
 
         event.getSubject().sendMessage(sb.toString());

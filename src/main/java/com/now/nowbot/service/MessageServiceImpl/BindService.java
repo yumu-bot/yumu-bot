@@ -115,7 +115,16 @@ public class BindService implements MessageService<Matcher> {
                 if (!osuUser.getUID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
-                from.sendMessage(STR."您已绑定 (\{binUser.getOsuID()}) \{binUser.getOsuName()}。\n但您仍可以重新绑定。\n若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。\n回复 OK 重新绑定。");
+                from.sendMessage(STR."""
+                您已绑定 (\{binUser.getOsuID()}) \{binUser.getOsuName()}。
+                如果您想改绑，请输入 !unbind 后，再次使用 !ymbind。
+                """);
+
+                /*
+                但您仍可以重新绑定。
+                若无必要请勿绑定, 多次绑定仍无法使用则大概率为 BUG, 请联系开发者。
+                回复 OK 重新绑定。
+                 */
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
                 if (!(s != null && s.getRawMessage().trim().equalsIgnoreCase("OK"))) {
@@ -207,20 +216,29 @@ public class BindService implements MessageService<Matcher> {
 
         var userFromID = bindDao.getQQLiteFromOsuId(osuUserId);
         if (userFromID.isPresent()) {
-            from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind / !ymbi / !bi)");
+            from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind)");
             return;
         }
 
+        /*
         from.sendMessage("""
                 将弃用直接绑定用户名的方法, 请直接发送 '!ymbind' 绑定，并且不带任何参数。
                 如果您执意使用绑定用户名的方式, 请回答下面问题:
                 设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
                 """);
+
+         */
+        from.sendMessage("""
+                别看了，乖乖发送 !ymbind 绑定吧，不要带任何参数。
+                现在没法直接单独绑定用户名，请点击链接绑定。
+                记得不要挂科学上网。
+                """);
+
         var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
 
         if (event == null) {
-            from.sendMessage("回答超时，撤回绑定请求。");
+            //from.sendMessage("回答超时，撤回绑定请求。");
             return;
         }
 

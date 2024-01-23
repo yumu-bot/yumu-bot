@@ -2,7 +2,7 @@ package com.now.nowbot.qq.onebot;
 
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.message.MessageReceipt;
-import com.now.nowbot.qq.message.ReplayMessage;
+import com.now.nowbot.qq.message.ReplyMessage;
 
 import com.mikuac.shiro.core.Bot;
 import java.util.concurrent.Executors;
@@ -46,7 +46,7 @@ public class OneBotMessageReceipt extends MessageReceipt {
     }
 
     @Override
-    public ReplayMessage replay() {
-        return new ReplayMessage(mid);
+    public ReplyMessage replay() {
+        return new ReplyMessage(mid);
     }
 }

@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -107,6 +108,7 @@ public class NowbotConfig {
         EXPORT_FILE_PATH = createDir(fileConfig.exportFile);
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
+
 
     @Bean
     public OkHttpClient httpClient() {

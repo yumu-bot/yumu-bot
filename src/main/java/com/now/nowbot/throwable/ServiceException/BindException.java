@@ -43,7 +43,7 @@ public class BindException extends TipsRuntimeException{
         Type(String message) {
             this.message = message;
         }
-        }
+    }
 
     public BindException(BindException.Type type){
         super(type.message);

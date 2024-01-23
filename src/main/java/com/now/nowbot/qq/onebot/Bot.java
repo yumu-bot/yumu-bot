@@ -64,7 +64,6 @@ public class Bot implements com.now.nowbot.qq.Bot {
         return MessageEvent.getMessageChain(data);
     }
 
-
     /***
      * 未实现
      * @return null

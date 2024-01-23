@@ -62,13 +62,10 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPHeadTailParam> data) throws BPAnalysisException {
-
-
         //旧功能指引
-        var matcher2 = Instructions.BPHT.matcher(messageText);
+        var matcher2 = Instructions.DEPRECATED_BPHT.matcher(messageText);
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
-            // 直接在这里抛, 效果一样
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_BPHT_NotSupported);
+            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Instruction_Deprecated);
         }
 
         var matcher = Instructions.UUBA.matcher(messageText);

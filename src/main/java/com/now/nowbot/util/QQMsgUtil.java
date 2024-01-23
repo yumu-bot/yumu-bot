@@ -7,7 +7,7 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.message.Message;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
-import com.now.nowbot.qq.message.ReplayMessage;
+import com.now.nowbot.qq.message.ReplyMessage;
 import io.github.humbleui.skija.EncodedImageFormat;
 import io.github.humbleui.skija.Image;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class QQMsgUtil {
         return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
     }
     @Nullable
-    public static MessageChain getReply(ReplayMessage reply) {
+    public static MessageChain getReply(ReplyMessage reply) {
         return qqMessageDao.getReply(reply);
     }
 
@@ -85,9 +85,6 @@ public class QQMsgUtil {
 
     public static boolean botInLocal(Long botQQ){
         boolean f = false;
-        if (botQQ != null && botQQ == 1563653406L) {
-            return true;
-        }
-        return false;
+        return botQQ != null && botQQ == 1563653406L;
     }
 }

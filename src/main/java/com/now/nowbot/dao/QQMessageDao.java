@@ -2,7 +2,7 @@ package com.now.nowbot.dao;
 
 import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.ReplayMessage;
+import com.now.nowbot.qq.message.ReplyMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ public class QQMessageDao {
         this.messageMapper = messageMapper;
     }
 
-    public MessageChain getReply(ReplayMessage reply) {
+    public MessageChain getReply(ReplyMessage reply) {
         // todo 待实现
         var id = reply.getId();
         return null;

@@ -18,7 +18,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@Service("PM_SERVICE")
+@Service("PM")
 public class PrivateMessageService implements MessageService<PrivateMessageService.Param> {
     @Resource
     OsuUserApiService userApiService;

@@ -46,7 +46,7 @@ public class JacksonUtil {
     }
 
     public static <T>T jsonToObject(String src,Class<T> clazz){
-        if(src == null || "".equals(src.trim()) || clazz == null){
+        if(src == null || src.trim().isEmpty() || clazz == null){
             return null;
         }
         try {
