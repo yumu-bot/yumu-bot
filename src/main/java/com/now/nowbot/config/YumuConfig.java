@@ -53,6 +53,9 @@ public class YumuConfig {
     }
 
     public String getPublicUrl() {
+        if (getPrivateDomain().equals(getPublicDomain())) {
+            return getPrivateUrl();
+        }
         String domain = getRowDomain(getPublicDomain());
         return STR."\{domain}\{
                 getPublicPort() == 0 ? "" : STR.":\{getPublicPort()}"}";
