@@ -1,8 +1,8 @@
 package com.now.nowbot.throwable.ServiceException;
 
-import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.throwable.TipsException;
 
-public class NominationException extends TipsRuntimeException {
+public class NominationException extends TipsException {
     public enum Type {
         N_Map_NotFound("找不到这张谱面，请检查。"),
         N_Map_FetchFailed("提名信息：谱面获取失败。\n请重试，或者将信息反馈给开发者。"),
