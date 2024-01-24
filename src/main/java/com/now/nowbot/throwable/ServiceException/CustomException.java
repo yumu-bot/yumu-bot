@@ -15,7 +15,7 @@ public class CustomException extends TipsException {
                 - banner：(1920*320)
                 - card：(430*210)
                 """),
-        CUSTOM_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),
+        CUSTOM_Me_Nobind("未绑定无法使用。(!ymbind)"),
         CUSTOM_Receive_NoPicture("没有接收到图片，或读取图片失败。\n如果一直失败，请重发图片。"),
         CUSTOM_Receive_PictureFetchFailed("下载图片失败, 请稍后尝试。"),
         CUSTOM_Send_Success("设置成功！"),

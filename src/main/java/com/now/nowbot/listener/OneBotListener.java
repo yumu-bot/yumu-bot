@@ -43,6 +43,7 @@ public class OneBotListener {
         // if (event.getSender().getId() != 2480557535L) return;
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
+        String textMessage = event.getTextMessage().trim();
         for (var ins : Permission.getAllService()) {
             //功能关闭 优先级高于aop拦截
             if (Permission.isServiceClose(ins) && !Permission.isSuper(event.getSender().getId())) continue;
@@ -50,7 +51,7 @@ public class OneBotListener {
             try {
                 var service = messageServiceMap.get(ins);
                 var d = new MessageService.DataValue();
-                if (service.isHandle(event, event.getRawMessage().trim(), d)) {
+                if (service.isHandle(event, textMessage, d)) {
                     service.HandleMessage(event, d.getValue());
                 }
             } catch (Throwable e) {

@@ -1,10 +1,10 @@
 package com.now.nowbot.qq.onebot.event;
 
 import com.mikuac.shiro.common.utils.ShiroUtils;
+import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.contact.Contact;
-import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.onebot.contact.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MessageEvent extends Event implements com.now.nowbot.qq.event.MessageEvent {
     private static final Logger l = LoggerFactory.getLogger("msg");
@@ -45,6 +46,15 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
 
     public String getRawMessage() {
         return decode(event.getRawMessage());
+    }
+
+    @Override
+    public String getTextMessage() {
+        return getMessage().getMessageList()
+                .stream()
+                .filter(m -> m instanceof TextMessage)
+                .map(Message::toString)
+                .collect(Collectors.joining());
     }
 
     public static MessageChain getMessageChain(List<ArrayMsg> msgs) {
