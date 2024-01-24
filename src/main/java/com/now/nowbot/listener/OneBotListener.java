@@ -7,11 +7,11 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -41,7 +41,7 @@ public class OneBotListener {
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
-//        if (event.getSender().getId() != 2480557535L) return;
+        // if (event.getSender().getId() != 2480557535L) return;
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         ASyncMessageUtil.put(event);
         for (var ins : Permission.getAllService()) {
@@ -60,14 +60,18 @@ public class OneBotListener {
         }
     }
 
-    public void errorHandle(com.now.nowbot.qq.onebot.event.GroupMessageEvent event, Throwable e) {
+    public void errorHandle(com.now.nowbot.qq.onebot.event.MessageEvent event, Throwable e) {
+        var from = event.getSubject();
         // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
-        if (e instanceof TipsException || e instanceof TipsRuntimeException) {
-            event.getSubject().sendMessage(e.getMessage()).recallIn(RECAL_TIME);
+        if (e instanceof BotException botException) {
+            if (botException.hasImage()) {
+                QQMsgUtil.sendImage(from, ((BotException) e).getImage());
+            } else {
+                from.sendMessage(e.getMessage()).recallIn(RECAL_TIME);
+            }
         } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
             log.info("连接超时:", e);
-//            event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
-            event.getSubject().sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。");
+            from.sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
         } else if (e instanceof LogException) {
             log.info(e.getMessage(), ((LogException) e).getThrowable());
         } else if (e instanceof IllegalArgumentException) {

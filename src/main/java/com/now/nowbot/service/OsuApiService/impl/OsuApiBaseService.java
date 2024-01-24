@@ -83,7 +83,12 @@ public class OsuApiBaseService {
         body.add("redirect_uri", redirectUrl);
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
         body.add(first ? "code" : "refresh_token", user.getRefreshToken());
-        JsonNode s = osuApiWebClient.post().uri("https://osu.ppy.sh/oauth/token").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
+        JsonNode s = osuApiWebClient.post()
+                .uri("https://osu.ppy.sh/oauth/token")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(body))
+                .retrieve().bodyToMono(JsonNode.class).block();
         String accessToken;
         String refreshToken;
         long time;

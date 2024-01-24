@@ -1,8 +1,10 @@
 package com.now.nowbot.config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Primary;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,7 @@ public class YumuConfig {
 
     List<Long> privateDevice = new ArrayList<>(0);
 
+
     public String getPrivateDomain() {
         return privateDomain;
     }
@@ -53,12 +56,8 @@ public class YumuConfig {
     }
 
     public String getPublicUrl() {
-        if (getPrivateDomain().equals(getPublicDomain())) {
-            return getPrivateUrl();
-        }
-        String domain = getRowDomain(getPublicDomain());
-        return STR."\{domain}\{
-                getPublicPort() == 0 ? "" : STR.":\{getPublicPort()}"}";
+        return STR."\{publicDomain}\{
+                publicPort == 0 ? "" : STR.":\{publicPort}"}";
     }
 
     private String getRowDomain(String s) {
@@ -86,9 +85,8 @@ public class YumuConfig {
     }
 
     public String getPrivateUrl() {
-        String domain = getRowDomain(getPublicDomain());
-        return STR."\{domain}\{
-                getPrivatePort() == 0 ? "" : STR.":\{getPrivatePort()}"}";
+        return STR."\{privateDomain}\{
+                privatePort == 0 ? "" : STR.":\{privatePort}"}";
     }
 
     public Integer getPrivatePort() {
@@ -97,5 +95,13 @@ public class YumuConfig {
 
     public void setPrivatePort(Integer privatePort) {
         this.privatePort = privatePort;
+    }
+
+    @PostConstruct
+    public void init() {
+        publicDomain = getRowDomain(publicDomain);
+        privateDomain = getRowDomain(privateDomain);
+        if (! StringUtils.hasText(publicDomain)) publicDomain = privateDomain;
+        if (publicDomain.equals(privateDomain) && publicPort == 0) publicPort = privatePort;
     }
 }

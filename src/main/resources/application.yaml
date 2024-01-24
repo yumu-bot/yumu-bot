@@ -18,7 +18,7 @@ yumu:
     exportFile: ${yumu.file.bgdir}ExportFileV3/
   osu: # osu 相关的配置
     # api 回调接口端点, 注意: 注册 oauth 应用时填写下面访问服务器的 url 而不是接口端点
-    callbackpath: /oauth
+    callbackPath: /oauth
     #oauth应用的id与token
     id: 0
     token: ""
