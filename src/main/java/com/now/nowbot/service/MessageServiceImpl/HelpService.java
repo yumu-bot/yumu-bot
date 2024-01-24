@@ -37,20 +37,20 @@ public class HelpService implements MessageService<Matcher> {
         String module = matcher.group("module").trim().toLowerCase(); //传东西进来
 
         try {
-            var pic = getHelpPicture(module, imageService);
+            var image = getHelpPicture(module, imageService);
 
-            if (Objects.nonNull(pic)) {
-                from.sendImage(pic);
+            if (Objects.nonNull(image)) {
+                from.sendImage(image);
             } else {
                 throw new TipsException("窝趣，找不到文件");
             }
 
         } catch (TipsException | NullPointerException e) {
-            var picLegacy = getHelpPictureLegacy(module);
+            var imgLegacy = getHelpImageLegacy(module);
             var msgLegacy = getHelpLinkLegacy(module);
 
-            if (Objects.nonNull(picLegacy)) {
-                from.sendImage(picLegacy);
+            if (Objects.nonNull(imgLegacy)) {
+                from.sendImage(imgLegacy);
             }
 
             if (Objects.nonNull(msgLegacy)) {
@@ -142,7 +142,7 @@ public class HelpService implements MessageService<Matcher> {
      * @param module 需要查询的功能名字
      * @return 图片流
      */
-    private static byte[] getHelpPictureLegacy(@Nullable String module) {
+    private static byte[] getHelpImageLegacy(@Nullable String module) {
         String fileName = switch (module) {
             case "bot", "b" -> "help-bot";
             case "score", "s" -> "help-score";

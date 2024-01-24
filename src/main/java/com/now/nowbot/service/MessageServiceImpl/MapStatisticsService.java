@@ -15,7 +15,6 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,8 +97,8 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         if (param.bid == 0) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/maps.md");
-                var data = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), data);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return;
             } catch (Exception e) {
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
@@ -191,8 +190,8 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         var expected = new Expected(mode, acc, combo, param.miss, mods);
 
         try {
-            var data = imageService.getPanelE2(osuUser, beatMap, expected);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelE2(osuUser, beatMap, expected);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("Map 发送失败: ", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);

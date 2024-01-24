@@ -10,7 +10,6 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,8 +108,8 @@ public class LeaderBoardService implements MessageService<Matcher> {
         subScores = scores.subList(0, range);
 
         try {
-            var data = imageService.getPanelA3(beatMap, subScores);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelA3(beatMap, subScores);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("Leader", e);
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Send_Error);

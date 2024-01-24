@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.Objects;
 
-@Service("OLDAVATAR")
+@Service("OLD_AVATAR")
 public class OldAvatarService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
     OsuUserApiService userApiService;
@@ -91,7 +91,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             }
         } else {
             String name = param.name().trim();
-            long id;
+            Long id;
 
             try {
                 id = userApiService.getOsuId(name);
@@ -111,8 +111,8 @@ public class OldAvatarService implements MessageService<UserParam> {
         }
 
         try {
-            var data = imageService.getPanelEpsilon(osuUser.getUsername(), osuUser.getUID());
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelEpsilon(osuUser.getUsername(), osuUser.getUID());
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("OA 发送失败: ", e);
             throw new OldAvatarException(OldAvatarException.Type.OA_Send_Error);

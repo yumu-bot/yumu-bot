@@ -12,7 +12,6 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +43,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
         int matchID;
         var matchIDStr = matcher.group("matchid");
 
@@ -51,8 +51,8 @@ public class MatchRoundService implements MessageService<Matcher> {
 
             try {
                 var md = DataUtil.getMarkdownFile("Help/round.md");
-                var data = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), data);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return;
             } catch (Exception e) {
                 throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
@@ -84,8 +84,8 @@ public class MatchRoundService implements MessageService<Matcher> {
             } else {
                 try {
                     var md = DataUtil.getMarkdownFile("Help/round.md");
-                    var data = imageService.getPanelA6(md, "help");
-                    QQMsgUtil.sendImage(event.getSubject(), data);
+                    var image = imageService.getPanelA6(md, "help");
+                    from.sendImage(image);
                     return;
                 } catch (Exception e) {
                     throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
@@ -102,11 +102,9 @@ public class MatchRoundService implements MessageService<Matcher> {
                 throw new MatchRoundException(MatchRoundException.Type.MR_Round_RangeError);
             }
         }
-
-        var from = event.getSubject();
-        var img = getDataImage(matchID, round, keyword);
         try {
-            QQMsgUtil.sendImage(from, img);
+            var image = getDataImage(matchID, round, keyword);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("MR 数据请求失败", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Send_Error);

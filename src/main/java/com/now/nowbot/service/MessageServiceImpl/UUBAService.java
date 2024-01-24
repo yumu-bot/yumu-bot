@@ -165,7 +165,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 Lines = getAllMsg(bps, binUser.getOsuName(), mode.getName());
             }
         }
-        QQMsgUtil.sendImage(from, imageService.getPanelAlpha(Lines));
+
+        var image = imageService.getPanelAlpha(Lines);
+        from.sendImage(image);
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {

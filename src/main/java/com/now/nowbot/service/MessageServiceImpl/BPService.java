@@ -15,7 +15,6 @@ import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -196,12 +195,12 @@ public class BPService implements MessageService<BPService.BPParam> {
         try {
             if (param.isMultipleBP()) {
                 for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
-                var data = imageService.getPanelA4(osuUser, bpList, rankList);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelA4(osuUser, bpList, rankList);
+                from.sendImage(image);
             } else {
                 var score = bpList.getFirst();
-                var data = imageService.getPanelE(osuUser, score, beatmapApiService);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelE(osuUser, score, beatmapApiService);
+                from.sendImage(image);
             }
         } catch (Exception e) {
             log.error("BP 发送出错", e);

@@ -1,0 +1,44 @@
+package com.now.nowbot.service.OsuApiService.impl;
+
+import com.now.nowbot.model.JsonData.Discussion;
+import com.now.nowbot.model.JsonData.DiscussionDetails;
+import com.now.nowbot.service.OsuApiService.OsuDiscussionApiService;
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class DiscussionApiImpl implements OsuDiscussionApiService {
+    OsuApiBaseService base;
+
+public DiscussionApiImpl(OsuApiBaseService baseService) {
+        base = baseService;
+    }
+
+    //sort默认id_desc，即最新的在前。也可以是 id_asc
+    @Override
+    public Discussion getBeatMapDiscussion(Long bid, Long sid, @Nullable BeatMapSetStatus status, int limit, @Nullable DiscussionDetails.MessageType[] types, @Nullable Boolean onlyResolved, int page, @Nullable String sort, Long uid) {
+        return base.osuApiWebClient.get()
+                .uri(u -> u.path("beatmapsets/discussions")
+                        .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
+                        .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
+                        .queryParamIfPresent("beatmapset_status", Optional.ofNullable(status))
+                        .queryParam("limit", limit)
+                        .queryParamIfPresent("message_types[]", Optional.ofNullable(types))
+                        .queryParamIfPresent("only_resolved", Optional.ofNullable(onlyResolved))
+                        .queryParam("page", page)
+                        .queryParamIfPresent("sort", Optional.ofNullable(sort))
+                        .queryParamIfPresent("user", Optional.ofNullable(uid))
+                        .build())
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(Discussion.class)
+                .block();
+    }
+
+    public enum BeatMapSetStatus {
+        all, ranked, qualified, disqualified, never_qualified,
+    }
+}
+

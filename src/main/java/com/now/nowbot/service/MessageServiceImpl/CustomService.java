@@ -68,8 +68,9 @@ public class CustomService implements MessageService<CustomService.Param> {
         if (! (firstMessage instanceof ReplyMessage reply)) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/custom.md");
-                var img = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), img);
+                var image = imageService.getPanelA6(md, "help");
+                var from = event.getSubject();
+                from.sendImage(image);
                 return false;
             } catch (Exception e) {
                 throw new CustomException(CustomException.Type.CUSTOM_Instructions);

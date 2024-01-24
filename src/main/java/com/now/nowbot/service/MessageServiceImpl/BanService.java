@@ -72,8 +72,8 @@ public class BanService implements MessageService<BanParam> {
         var from = event.getSubject();
 
         switch (param.operate()) {
-            case "list", "l" -> SendPic(event, Permission.getAllW().getGroupList(), "白名单包含：");
-            case "blacklist", "k" -> SendPic(event, Permission.getAllB().getGroupList(), "黑名单包含：");
+            case "list", "l" -> SendImage(event, Permission.getAllW().getGroupList(), "白名单包含：");
+            case "blacklist", "k" -> SendImage(event, Permission.getAllB().getGroupList(), "黑名单包含：");
             case "add", "a" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
@@ -153,11 +153,14 @@ public class BanService implements MessageService<BanParam> {
         }
     }
 
-    private void SendPic(MessageEvent event, Set<Long> groups, String introduction) {
+    private void SendImage(MessageEvent event, Set<Long> groups, String introduction) {
+        var from = event.getSubject();
         StringBuilder sb = new StringBuilder(introduction + "\n");
         for (Long qq : groups) {
             sb.append(qq).append("\n");
         }
-        QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
+
+        var image = imageService.getPanelAlpha(sb);
+        from.sendImage(image);
     }
 }

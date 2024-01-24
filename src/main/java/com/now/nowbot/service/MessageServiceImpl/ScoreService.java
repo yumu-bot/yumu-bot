@@ -175,8 +175,8 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         var userInfo = userApiService.getPlayerInfo(binUser, score.getMode());
 
         try {
-            var data = imageService.getPanelE(userInfo, score, beatmapApiService);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelE(userInfo, score, beatmapApiService);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("SCORE：渲染和发送失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);

@@ -14,7 +14,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MiniPanelException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -89,8 +88,8 @@ public class MiniPanelService implements MessageService<Matcher> {
             }
 
             try {
-                var data = imageService.getPanelGamma(score);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelGamma(score);
+                from.sendImage(image);
             } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Send_Error);
             }
@@ -103,8 +102,8 @@ public class MiniPanelService implements MessageService<Matcher> {
             }
 
             try {
-                var data = imageService.getPanelGamma(osuUser);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelGamma(osuUser);
+                from.sendImage(image);
             } catch (Exception e) {
                 throw new MiniPanelException(MiniPanelException.Type.MINI_Send_Error);
             }

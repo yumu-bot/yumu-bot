@@ -235,8 +235,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
             if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
 
             try {
-                var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                from.sendImage(image);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
@@ -244,8 +244,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
         } else {
             //单成绩发送
             try {
-                var data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                from.sendImage(image);
             } catch (Exception e) {
                 log.error("绘图出错", e);
                 getTextOutput(scoreList.getFirst(), from);

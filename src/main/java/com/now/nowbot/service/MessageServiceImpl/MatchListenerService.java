@@ -16,7 +16,6 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +47,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
+        var from = event.getSubject();
         var matcher = Instructions.MATCH_LISTENER.matcher(messageText);
         var param = new MatchListenerService.ListenerParam();
 
@@ -62,8 +62,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             try {
                 var md = DataUtil.getMarkdownFile("Help/listen.md");
-                var img = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), img);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return false;
             } catch (Exception e) {
                 throw new MatchListenerException(MatchListenerException.Type.ML_Instructions);
@@ -217,8 +217,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     } else {
                         info = STR."(\{ b.getId() }) [\{ b.getDifficultyName() }]";
                     }
-                    var i = imageService.getPanelA6(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
-                    QQMsgUtil.sendImage(from, i);
+                    var image = imageService.getPanelA6(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
+                    from.sendImage(image);
                 }
                 return;
             }
@@ -227,9 +227,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 var round = insertUser(matchEvent, newMatch);
                 int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
 
-                var img = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1, imageService);
-
-                QQMsgUtil.sendImage(from, img);
+                var image = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1, imageService);
+                from.sendImage(image);
             } catch (TipsException tipsException) {
                 // 注意 在监听器里为多线程环境, 无法通过向上 throw 来抛出错误
                 // 手动处理提示

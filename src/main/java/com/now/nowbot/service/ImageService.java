@@ -409,6 +409,12 @@ public class ImageService {
         return doPost("panel_M", httpEntity);
     }
 
+    public byte[] getPanelN(Map<String, Object> data) {
+        var headers = getDefaultHeader();
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
+        return doPost("panel_N", httpEntity);
+    }
+
     public byte[] getPanelAlpha(String... lines) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();

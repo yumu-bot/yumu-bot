@@ -8,10 +8,8 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
-import org.springframework.stereotype.Service;
-
 import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -52,6 +50,8 @@ public class CountQQMessageService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var bot = event.getBot();
+        var from = event.getSubject();
+
         String groupType = matcher.group("d");
         if (false) {
             var end = LocalDateTime.now();
@@ -103,8 +103,8 @@ public class CountQQMessageService implements MessageService<Matcher> {
             sb.append('|').append(m.n).append('|').append(qq).append('|').append(name.replace("|", "\\|")).append('|').append('\n');
         }
         //var b = imageService.getMarkdownImage(sb.toString(), 600); //要不要考虑用 Markdown?
-        var b = imageService.getPanelA6(sb.toString());
+        var image = imageService.getPanelA6(sb.toString());
 
-        QQMsgUtil.sendImage(event.getSubject(), b);
+        from.sendImage(image);
     }
 }

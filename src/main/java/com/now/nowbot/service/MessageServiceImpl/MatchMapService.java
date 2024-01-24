@@ -9,7 +9,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,8 +93,8 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
         var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, mods);
 
         try {
-            var data = imageService.getPanelE3(param.matchData, beatMap, expected);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelE3(param.matchData, beatMap, expected);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("Map 发送失败: ", e);
             from.sendMessage(MapStatisticsException.Type.M_Send_Error.message);

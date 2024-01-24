@@ -57,20 +57,24 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
 
     @Override
     public void HandleMessage(MessageEvent event, PoolParam param) throws Throwable {
-        byte[] img;
+        var from = event.getSubject();
+        byte[] image;
         if (StringUtils.hasText(param.name())) {
             var result = searchByName(param.name());
             if (result.isEmpty())
                 throw new TipsException(STR."未找到名称包含 \{param.name()} 的图池");
             if (result.size() == 1) {
-                img = imageService.getPanelH(new MapPoolDto(result.getFirst(), osuBeatmapApiService));
+                image = imageService.getPanelH(new MapPoolDto(result.getFirst(), osuBeatmapApiService));
             } else {
                 StringBuilder sb = new StringBuilder("查到了多个图池, 请确认结果:\n");
                 for (int i = 0; i < result.size(); i++) {
                     sb.append(i + 1).append(": ").append(result.get(i).getName()).append('\n');
                 }
                 sb.append("p.s. 请直接发送选项对应的数字");
-                QQMsgUtil.sendImage(event.getSubject(), imageService.getPanelAlpha(sb));
+
+                var image2 = imageService.getPanelAlpha(sb);
+                from.sendImage(image2);
+
                 var lock = ASyncMessageUtil.getLock(event);
                 var newEvent = lock.get();
                 int n = 0;
@@ -81,14 +85,14 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
                 }
                 if (n < 1 || n > result.size()) throw new TipsException("输入错误");
 
-                img = imageService.getPanelH(new MapPoolDto(result.get(n - 1), osuBeatmapApiService));
+                image = imageService.getPanelH(new MapPoolDto(result.get(n - 1), osuBeatmapApiService));
             }
         } else {
             var p = searchById(param.id());
-            img = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")));
+            image = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")));
         }
 
-        QQMsgUtil.sendImage(event.getSubject(), img);
+        from.sendImage(image);
     }
 
     public record PoolParam(int id, String name) {

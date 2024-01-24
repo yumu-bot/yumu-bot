@@ -8,7 +8,6 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +44,8 @@ public class GetPoolService implements MessageService<Matcher> {
         if (Objects.isNull(dataStr) || dataStr.isBlank()) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/getpool.md");
-                var data = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return;
             } catch (Exception e) {
                 throw new MapPoolException(MapPoolException.Type.GP_Instructions);
@@ -58,10 +57,9 @@ public class GetPoolService implements MessageService<Matcher> {
 
         if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);
 
-        byte[] img;
         try {
-            img = imageService.getPanelH(mapPool);
-            QQMsgUtil.sendImage(from, img);
+            var image = imageService.getPanelH(mapPool);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("GP 数据请求失败", e);
             throw new MapPoolException(MapPoolException.Type.GP_Send_Error);

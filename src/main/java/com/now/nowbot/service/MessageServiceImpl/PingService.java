@@ -30,7 +30,7 @@ public class PingService implements MessageService<Matcher> {
 //    @CheckPermission(roles = {"we","are","winner"})
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        byte[] data;
+        byte[] image;
         try (Surface surface = Surface.makeRasterN32Premul(240,240)){
             Canvas canvas = surface.getCanvas();
 
@@ -52,13 +52,13 @@ public class PingService implements MessageService<Matcher> {
             x.close();
             t.close();
             x = new Font(DataUtil.getTorusRegular(),20);
-            t = TextLine.make(System.currentTimeMillis() + "ms", x);
+            t = TextLine.make(STR."\{System.currentTimeMillis()}ms", x);
             canvas.drawTextLine(t,0,t.getCapHeight() + 4, new Paint().setARGB(200,255,255,255));
             x.close();t.close();
-            data = surface.makeImageSnapshot().encodeToData().getBytes();
+            image = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (data != null) {
-            from.sendImage(data).recallIn(5000);
+        if (image != null) {
+            from.sendImage(image).recallIn(5000);
         }
 
     }

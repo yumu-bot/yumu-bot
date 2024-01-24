@@ -146,8 +146,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
          */
         try {
-            var img = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
-            QQMsgUtil.sendImage(from, img);
+            var image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("Info 发送异常", e);
             throw new InfoException(InfoException.Type.INFO_Send_Error);

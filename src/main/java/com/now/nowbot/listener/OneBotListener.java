@@ -11,7 +11,6 @@ import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -65,7 +64,8 @@ public class OneBotListener {
         // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
         if (e instanceof BotException botException) {
             if (botException.hasImage()) {
-                QQMsgUtil.sendImage(from, ((BotException) e).getImage());
+                from.sendImage(((BotException) e).getImage());
+                //QQMsgUtil.sendImage(from, ((BotException) e).getImage());
             } else {
                 from.sendMessage(e.getMessage()).recallIn(RECAL_TIME);
             }

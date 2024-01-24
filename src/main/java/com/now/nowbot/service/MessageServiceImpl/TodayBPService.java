@@ -124,8 +124,8 @@ public class TodayBPService implements MessageService<Matcher> {
         }
 
         try {
-            var data = imageService.getPanelA4(ouMe, bpList, rankList);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelA4(ouMe, bpList, rankList);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("TBP Error: ", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);

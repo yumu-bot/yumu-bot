@@ -10,7 +10,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,8 +143,8 @@ public class FriendService implements MessageService<Matcher> {
         if (CollectionUtils.isEmpty(friends)) throw new FriendException(FriendException.Type.FRIEND_Client_NoFriend);
 
         try {
-            var data = imageService.getPanelA1(osuUser, friends);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelA1(osuUser, friends);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("Friend: ", e);
             throw new FriendException(FriendException.Type.FRIEND_Send_Error);

@@ -7,7 +7,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -58,6 +57,7 @@ public class ServiceCountService implements MessageService<Integer> {
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
+        var from = event.getSubject();
         StringBuilder sb = new StringBuilder();
         List<ServiceCallLite.ServiceCallResult> result;
         if (Objects.isNull(hours) || hours == 0) {
@@ -83,7 +83,8 @@ public class ServiceCountService implements MessageService<Integer> {
                 .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append("|\n");
         result.forEach(work);
-        var s = imageService.getPanelA6(sb.toString(), "service");
-        QQMsgUtil.sendImage(event.getSubject(), s);
+
+        var image = imageService.getPanelA6(sb.toString(), "service");
+        from.sendImage(image);
     }
 }

@@ -31,11 +31,11 @@ public class Discussion {
         }
     }
 
-    List<BeatMapSetDiscussion> discussions;
+    List<DiscussionDetails> discussions;
 
     @JsonProperty("included_discussions")
     @Nullable
-    List<BeatMapSetDiscussion> includedDiscussions;
+    List<DiscussionDetails> includedDiscussions;
 
     public record ReviewsConfig(@JsonProperty("max_blocks") Integer maxBlocks) {}
 
@@ -71,20 +71,20 @@ public class Discussion {
         this.beatMapSet = beatMapSet;
     }
 
-    public List<BeatMapSetDiscussion> getDiscussions() {
+    public List<DiscussionDetails> getDiscussions() {
         return discussions;
     }
 
-    public void setDiscussions(List<BeatMapSetDiscussion> discussions) {
+    public void setDiscussions(List<DiscussionDetails> discussions) {
         this.discussions = discussions;
     }
 
     @Nullable
-    public List<BeatMapSetDiscussion> getIncludedDiscussions() {
+    public List<DiscussionDetails> getIncludedDiscussions() {
         return includedDiscussions;
     }
 
-    public void setIncludedDiscussions(@Nullable List<BeatMapSetDiscussion> includedDiscussions) {
+    public void setIncludedDiscussions(@Nullable List<DiscussionDetails> includedDiscussions) {
         this.includedDiscussions = includedDiscussions;
     }
 

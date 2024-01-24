@@ -133,8 +133,8 @@ public class PPMinusService implements MessageService<Matcher> {
 
 
         try {
-            var img = imageService.getPanelB1(user, mode, ppMinus);
-            QQMsgUtil.sendImage(from, img);
+            var image = imageService.getPanelB1(user, mode, ppMinus);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("PPM 数据请求失败", e);
             throw new PPMinusException(PPMinusException.Type.PPM_Default_Error);
@@ -213,8 +213,8 @@ public class PPMinusService implements MessageService<Matcher> {
             setUser(PPMinusOther, 0);
         }
 
-        var data = imageService.getPanelB1(userMe, userOther, PPMinusMe, PPMinusOther, mode);
-        QQMsgUtil.sendImage(from, data);
+        var image = imageService.getPanelB1(userMe, userOther, PPMinusMe, PPMinusOther, mode);
+        from.sendImage(image);
     }
 
     static void setUser(PPMinus PPMinusOther, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {

@@ -9,7 +9,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +80,8 @@ public class MapMinusService implements MessageService<Matcher> {
         }
 
         try {
-            var data = imageService.getPanelB2(beatMap, mapMinus);
-            QQMsgUtil.sendImage(from, data);
+            var image = imageService.getPanelB2(beatMap, mapMinus);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("MapMinus", e);
             throw new MapMinusException(MapMinusException.Type.MM_Send_Error);

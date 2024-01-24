@@ -10,7 +10,6 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,14 +39,15 @@ public class MuRatingService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
         int matchID;
         var matchIDStr = matcher.group("matchid");
 
         if (Objects.isNull(matchIDStr) || matchIDStr.isBlank()) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/rating.md");
-                var data = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), data);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return;
             } catch (Exception e) {
                 throw new MRAException(MRAException.Type.RATING_Instructions);
@@ -65,7 +65,6 @@ public class MuRatingService implements MessageService<Matcher> {
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
         boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
 
-        var from = event.getSubject();
         MatchData data;
         try {
             data = calculate(matchID, skip, skipEnd, failed, rematch);
@@ -77,10 +76,10 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         if (matcher.group("main") != null) {
-            byte[] img;
+            byte[] image;
             try {
-                img = imageService.getPanelC(data);
-                QQMsgUtil.sendImage(from, img);
+                image = imageService.getPanelC(data);
+                from.sendImage(image);
             } catch (Exception e) {
                 log.error("MRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);

@@ -68,6 +68,7 @@ public class CheckAspect {
     @Pointcut("execution(* com.now.nowbot.service.OsuApiService.OsuBeatmapApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuUserApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.OsuApiService.OsuDiscussionApiService.*(..)) ||" +
             "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
     public void apiService() {
     }

@@ -1,13 +1,15 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.multiplayer.*;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchData;
+import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.multiplayer.MatchScore;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchNowException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +54,15 @@ public class MatchNowService implements MessageService<Matcher> {
 
         var data = parseData(matchID, skip, skipEnd, failed, rematch);
 
-        byte[] img;
+        byte[] image;
         try {
-            img = imageService.getPanelF(data);
+            image = imageService.getPanelF(data);
         } catch (Exception e) {
             throw new MatchNowException(MatchNowException.Type.MN_Render_Error);
         }
 
         try {
-            QQMsgUtil.sendImage(from, img);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("MN:", e);
             throw new MatchNowException(MatchNowException.Type.MN_Send_Error);

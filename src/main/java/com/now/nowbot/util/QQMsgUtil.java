@@ -41,15 +41,19 @@ public class QQMsgUtil {
     }
 
 
+    @Deprecated
     public static void sendImage(Contact from, Image img) {
-        befor(from);
+        beforeContact(from);
         from.sendImage(img.encodeToData(EncodedImageFormat.JPEG, 60).getBytes());
     }
+
+    //这个太坑了，如果数据是空的，好像抛不出来
+    @Deprecated
     public static void sendImage(Contact from, byte[] img) {
-        befor(from);
+        beforeContact(from);
         from.sendImage(img);
     }
-    private static void befor(Contact from) {
+    private static void beforeContact(Contact from) {
 //        from.sendMessage("正在处理图片请稍候...");
     }
     public static <T extends com.now.nowbot.qq.message.Message> List<T> getTypeAll(MessageChain msg, Class<T> T) {
@@ -61,7 +65,7 @@ public class QQMsgUtil {
     }
 
     public static MessageReceipt sendImageAndText(Contact from, byte[] imgData, String text) {
-        befor(from);
+        beforeContact(from);
         return from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgData).addText(text).build());
     }
 

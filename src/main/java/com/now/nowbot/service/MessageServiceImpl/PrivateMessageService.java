@@ -10,7 +10,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -18,8 +17,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@Service("PM")
-public class PrivateMessageService implements MessageService<PrivateMessageService.Param> {
+@Service("PRIVATE_MESSAGE")
+public class PrivateMessageService implements MessageService<PrivateMessageService.PMParam> {
     @Resource
     OsuUserApiService userApiService;
     @Resource
@@ -30,7 +29,7 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
             .compile("^!testmsg (?<type>send|get|act)\\s*(?<id>\\d+)?\\s*(?<msg>.*)?$");
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Param> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<PMParam> data) throws Throwable {
         if (!messageText.startsWith("!testmsg")) return false;
         var m = pattern.matcher(messageText);
         if (!m.matches()) return false;
@@ -44,13 +43,13 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
         }
         s = m.group("msg");
 
-        data.setValue(new Param(type, id, s));
+        data.setValue(new PMParam(type, id, s));
         return true;
     }
 
     @Override
     @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, Param param) throws Throwable {
+    public void HandleMessage(MessageEvent event, PMParam param) throws Throwable {
         var from = event.getSubject();
         var bin = bindDao.getUserFromQQ(event.getSender().getId());
         JsonNode json;
@@ -59,17 +58,17 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
         } catch (WebClientResponseException.Forbidden e) {
             throw new TipsException("权限不足");
         }
-        QQMsgUtil.sendImage(from, getCodeImage(JacksonUtil.objectToJsonPretty(json)));
+        from.sendImage(getCodeImage(JacksonUtil.objectToJsonPretty(json)));
     }
 
     enum Type {
         send, get, act
     }
 
-    record Param(Type type, Long id, String message) {
+    public record PMParam(Type type, Long id, String message) {
     }
 
-    private JsonNode getJson(Param param, BinUser bin) throws TipsException {
+    private JsonNode getJson(PMParam param, BinUser bin) throws TipsException {
         final boolean hasParam = Objects.isNull(param.id) || Objects.isNull(param.message);
         return switch (param.type) {
             case send -> {

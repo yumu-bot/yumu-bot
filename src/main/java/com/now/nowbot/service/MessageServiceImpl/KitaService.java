@@ -8,7 +8,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.KitaException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,8 +86,8 @@ public class KitaService implements MessageService<Matcher> {
 
         if (hasBG) {
             try {
-                var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
+                from.sendImage(image);
             } catch (Exception e) {
                 log.error("KITA", e);
                 throw new KitaException(KitaException.Type.KITA_Send_Error);
@@ -97,8 +96,8 @@ public class KitaService implements MessageService<Matcher> {
         } else {
             if (from instanceof Group group) {
                 try {
-                    var data = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
-                    group.sendFile(data, matcher.group("bid") + ' ' + mod + position + ".png");
+                    var image = imageService.getPanelDelta(beatMap, round, mod, position, hasBG);
+                    group.sendFile(image, STR."\{matcher.group("bid")}\{' '}\{mod}\{position}.png");
                 } catch (Exception e) {
                     log.error("KITA-X", e);
                     throw new KitaException(KitaException.Type.KITA_Send_Error);

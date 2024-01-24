@@ -13,7 +13,6 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,14 +48,15 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+        var from = event.getSubject();
         var dataStr = matcher.group("data");
         var nameStr = matcher.group("name");
 
         if (Objects.isNull(dataStr) || dataStr.isBlank()) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/series.md");
-                var data = imageService.getPanelA6(md, "help");
-                QQMsgUtil.sendImage(event.getSubject(), data);
+                var image = imageService.getPanelA6(md, "help");
+                from.sendImage(image);
                 return;
             } catch (Exception e) {
                 throw new MRAException(MRAException.Type.RATING_Series_Instructions);
@@ -70,8 +70,6 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
         boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
-
-        var from = event.getSubject();
 
         if (matcher.group("csv") != null) {
             from.sendMessage(MRAException.Type.RATING_Series_Progressing.message);
@@ -92,10 +90,10 @@ public class SeriesRatingService implements MessageService<Matcher> {
         }
 
         if (matcher.group("main") != null) {
-            byte[] img;
+            byte[] image;
             try {
-                img = imageService.getPanelC2(data);
-                QQMsgUtil.sendImage(from, img);
+                image = imageService.getPanelC2(data);
+                from.sendImage(image);
             } catch (Exception e) {
                 log.error("SRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_SRAFailed);

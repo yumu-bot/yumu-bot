@@ -220,8 +220,8 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
             if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
 
             try {
-                var data = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                QQMsgUtil.sendImage(from, data);
+                var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                from.sendImage(image);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
@@ -230,11 +230,11 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
             //单成绩发送
 
             try {
-                var data = getAlphaPanel(mode, offset, 1, isRecent);
-                QQMsgUtil.sendImage(from, data);
+                var image = getAlphaPanel(mode, offset, 1, isRecent);
+                from.sendImage(image);
             } catch (Exception e) {
                 log.error("为什么要转 Legacy 方法发送呢？直接重试不就好了", e);
-                getTextOutput(scoreList.get(0), from);
+                getTextOutput(scoreList.getFirst(), from);
             }
         }
     }

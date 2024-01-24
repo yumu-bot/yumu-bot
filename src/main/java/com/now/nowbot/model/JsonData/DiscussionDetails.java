@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BeatMapSetDiscussion {
+public class DiscussionDetails {
     @JsonProperty("id")
     Long DID;
 
@@ -29,7 +29,7 @@ public class BeatMapSetDiscussion {
 
     //hype, mapper_note, problem, suggestion, praise, review. Blank defaults to all types
     @JsonProperty("message_type")
-    String messageType;
+    MessageType messageType;
 
     @JsonProperty("parent_id")
     Long parentDID;
@@ -104,11 +104,11 @@ public class BeatMapSetDiscussion {
         this.deletedByUID = deletedByUID;
     }
 
-    public String getMessageType() {
+    public MessageType getMessageType() {
         return messageType;
     }
 
-    public void setMessageType(String messageType) {
+    public void setMessageType(MessageType messageType) {
         this.messageType = messageType;
     }
 
@@ -198,5 +198,14 @@ public class BeatMapSetDiscussion {
 
     public void setPost(BeatMapSetDiscussionPost post) {
         this.post = post;
+    }
+
+    public enum MessageType {
+        hype,
+        mapper_note,
+        problem,
+        suggestion,
+        praise,
+        review,
     }
 }

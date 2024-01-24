@@ -6,7 +6,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +50,8 @@ public class SwitchService implements MessageService<Matcher> {
                     """;
 
             //from.sendMessage(tips);
-            QQMsgUtil.sendImage(from, imageService.getPanelA6(Arrays.toString(tips.split("\n"))));
+            var image = imageService.getPanelA6(Arrays.toString(tips.split("\n")));
+            from.sendImage(image);
             // 等同于 case list
 
             StringBuilder sb = new StringBuilder();
@@ -60,7 +60,8 @@ public class SwitchService implements MessageService<Matcher> {
                 sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
             }
             //from.sendMessage(sb.toString());
-            QQMsgUtil.sendImage(from, imageService.getPanelA6(sb.toString()));
+            var image2 = imageService.getPanelA6(sb.toString());
+            from.sendImage(image2);
             return;
         }
 
@@ -90,7 +91,8 @@ public class SwitchService implements MessageService<Matcher> {
                     sb.append("- ").append(list.contains(value)? "OFF" : "ON").append(':').append(' ').append(value).append('\n');
                 }
                 //from.sendMessage(sb.toString());
-                QQMsgUtil.sendImage(from, imageService.getPanelA6(sb.toString()));
+                var image = imageService.getPanelA6(sb.toString());
+                from.sendImage(image);
                 return;
             }
 

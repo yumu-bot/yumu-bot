@@ -136,8 +136,10 @@ public class BPAnalysisService implements MessageService<UserParam> {
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             try {
-                var data2 = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
-                QQMsgUtil.sendImage(from, imageService.getPanelAlpha(data2));
+                var msg = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
+                var image2 = imageService.getPanelAlpha(msg);
+
+                from.sendImage(image2);
             } catch (Exception e1) {
                 log.error("BPA Error (to UUBA): ", e1);
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
@@ -149,7 +151,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
 
         try {
-            QQMsgUtil.sendImage(from, image);
+            from.sendImage(image);
         } catch (Exception e) {
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
         }

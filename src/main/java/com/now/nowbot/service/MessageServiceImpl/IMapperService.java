@@ -10,7 +10,6 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,9 +83,9 @@ public class IMapperService implements MessageService<Matcher> {
         }
         try {
             var map = parseData(osuUser, userApiService, beatmapApiService);
-            var data = imageService.getPanelM(map);
+            var image = imageService.getPanelM(map);
 
-            QQMsgUtil.sendImage(from, data);
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("IMapper", e);
             throw new IMapperException(IMapperException.Type.IM_Send_Error);
