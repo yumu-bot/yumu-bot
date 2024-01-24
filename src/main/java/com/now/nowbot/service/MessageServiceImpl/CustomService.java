@@ -60,7 +60,7 @@ public class CustomService implements MessageService<CustomService.Param> {
         try {
             u = bindDao.getUserFromQQ(event.getSender().getId());
         } catch (BindException e) {
-            throw new CustomException(CustomException.Type.CUSTOM_Me_TokenExpired);
+            throw new CustomException(CustomException.Type.CUSTOM_Me_Nobind);
         }
 
         var firstMessage = event.getMessage().getMessageList().getFirst();

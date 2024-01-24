@@ -19,6 +19,7 @@ public class JacksonUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JacksonUtil.class);
     private static final ObjectMapper mapper = JsonMapper.builder().build().registerModules(new JavaTimeModule());
+    private static TypeFactory typeFactory = mapper.getTypeFactory();
 
     public static <T>String objectToJsonPretty(T obj){
         if(obj == null){
@@ -28,7 +29,6 @@ public class JacksonUtil {
             return obj instanceof String ? (String) obj : mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
         } catch (Exception e) {
             log.warn("Parse Object to Json error",e);
-            e.printStackTrace();
             return null;
         }
     }
@@ -40,7 +40,6 @@ public class JacksonUtil {
             return obj instanceof String ? (String) obj : mapper.writeValueAsString(obj);
         } catch (Exception e) {
             log.warn("Parse Object to Json error",e);
-            e.printStackTrace();
             return null;
         }
     }
@@ -50,10 +49,9 @@ public class JacksonUtil {
             return null;
         }
         try {
-            return clazz.equals(String.class) ? (T) src : mapper.readValue(src,clazz);
+            return clazz.isAssignableFrom(String.class) ? (T) src : mapper.readValue(src, clazz);
         } catch (Exception e) {
             log.warn("Parse Json to Object error",e);
-            e.printStackTrace();
             return null;
         }
     }
@@ -80,8 +78,8 @@ public class JacksonUtil {
             JsonNode leaf = node.get(field);
 
             if (leaf != null) {
-                return mapper.convertValue(leaf, new TypeReference<List<String>>() {
-                });
+                var type = typeFactory.constructCollectionType(List.class, String.class);
+                return mapper.convertValue(leaf, type);
             }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -123,8 +121,7 @@ public class JacksonUtil {
             JsonNode leaf = node.get(field);
 
             if (leaf != null) {
-                return mapper.convertValue(leaf, new TypeReference<List<Integer>>() {
-                });
+                return mapper.convertValue(leaf, typeFactory.constructCollectionType(List.class, Integer.class));
             }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -259,8 +256,7 @@ public class JacksonUtil {
 
     public static Map<String, String> toMap(String data) {
         try {
-            return mapper.readValue(data, new TypeReference<Map<String, String>>() {
-            });
+            return mapper.readValue(data, typeFactory.constructMapType(Map.class, String.class, String.class));
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
@@ -296,7 +292,6 @@ public class JacksonUtil {
     public static <T> List<T> parseObjectList(JsonNode body, Class<T> clazz){
 
         if (body != null && body.isArray()) {
-            TypeFactory typeFactory = mapper.getTypeFactory();
             CollectionType collectionType = typeFactory.constructCollectionType(List.class, clazz);
             return mapper.convertValue(body, collectionType);
         }

@@ -9,4 +9,6 @@ public interface MessageEvent extends Event{
     MessageChain getMessage();
 
     String getRawMessage();
+
+    String getTextMessage();
 }
