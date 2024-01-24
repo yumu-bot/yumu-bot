@@ -114,6 +114,10 @@ public class CustomService implements MessageService<CustomService.Param> {
     enum Type {
         banner,
         card,
+        header,
+        info,
+        score,
+        ppm,
     }
 
     public record Param(long uid, Type type, String url) {
