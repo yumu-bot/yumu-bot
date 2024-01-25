@@ -7,8 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -23,12 +24,8 @@ public class Discussion {
 
     @JsonProperty("beatmapsets")
     public void parseBeatMapSet(JsonNode data) {
-
-        if (data.hasNonNull("beatmapsets") && data.get("beatmapsets").isArray()) {
-            JsonNode n = StreamSupport.stream(data.get("beatmapsets").spliterator(), false).toList().getFirst();
-
-            beatMapSet = JacksonUtil.parseObject(n, BeatMapSet.class);
-        }
+        if (!data.hasNonNull("beatmapsets") || !data.get("beatmapsets").isArray()) return;
+        beatMapSet = JacksonUtil.parseObject(data.get("beatmapsets").get(0), BeatMapSet.class);
     }
 
     List<DiscussionDetails> discussions;
@@ -37,14 +34,16 @@ public class Discussion {
     @Nullable
     List<DiscussionDetails> includedDiscussions;
 
-    public record ReviewsConfig(@JsonProperty("max_blocks") Integer maxBlocks) {}
+    public record ReviewsConfig(@JsonProperty("max_blocks") Integer maxBlocks) {
+    }
 
     @JsonProperty("reviews_config")
     ReviewsConfig reviewsConfig;
 
     List<OsuUser> users;
 
-    public record Cursor(Integer page, Integer limit) {}
+    public record Cursor(Integer page, Integer limit) {
+    }
 
     @JsonProperty("cursor")
     @Nullable
@@ -120,5 +119,50 @@ public class Discussion {
 
     public void setCursorString(@Nullable String cursorString) {
         this.cursorString = cursorString;
+    }
+
+    public void nextDiscussion(Discussion other, String sort) {
+        // discussions, includedDiscussions合并
+        if (Objects.equals("id_asc", sort)) {
+            if (CollectionUtils.isEmpty(other.getDiscussions())) {
+                if (CollectionUtils.isEmpty(this.getDiscussions()))
+                    other.getDiscussions().addAll(this.getDiscussions());
+                this.setDiscussions(other.getDiscussions());
+            }
+
+            if (CollectionUtils.isEmpty(other.getIncludedDiscussions())) {
+                if (CollectionUtils.isEmpty(this.getIncludedDiscussions()))
+                    other.getIncludedDiscussions().addAll(this.getIncludedDiscussions());
+                this.setIncludedDiscussions(other.getIncludedDiscussions());
+            }
+        } else {
+            if (CollectionUtils.isEmpty(other.getDiscussions())) {
+                if (CollectionUtils.isEmpty(this.getDiscussions()))
+                    this.getDiscussions().addAll(other.getDiscussions());
+                else
+                    this.setDiscussions(other.getDiscussions());
+            }
+
+            if (CollectionUtils.isEmpty(other.getIncludedDiscussions())) {
+                if (CollectionUtils.isEmpty(this.getIncludedDiscussions()))
+                    this.getIncludedDiscussions().addAll(other.getIncludedDiscussions());
+                else
+                    other.setIncludedDiscussions(this.getIncludedDiscussions());
+            }
+
+        }
+
+        // user去重
+        if (!this.getUsers().containsAll(other.getUsers())) {
+            if (CollectionUtils.isEmpty(other.getUsers())) {
+            } else if (CollectionUtils.isEmpty(this.getUsers())) {
+                this.setUsers(other.getUsers());
+            } else {
+                var idSet1 = new HashSet<>(this.getUsers());
+                var idSet2 = new HashSet<>(other.getUsers());
+                idSet1.addAll(idSet2);
+                this.setUsers(new ArrayList<>(idSet1));
+            }
+        }
     }
 }

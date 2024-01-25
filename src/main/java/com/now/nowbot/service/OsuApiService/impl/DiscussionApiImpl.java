@@ -2,23 +2,68 @@ package com.now.nowbot.service.OsuApiService.impl;
 
 import com.now.nowbot.model.JsonData.Discussion;
 import com.now.nowbot.model.JsonData.DiscussionDetails;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.service.OsuApiService.OsuDiscussionApiService;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DiscussionApiImpl implements OsuDiscussionApiService {
     OsuApiBaseService base;
 
-public DiscussionApiImpl(OsuApiBaseService baseService) {
+    public DiscussionApiImpl(OsuApiBaseService baseService) {
         base = baseService;
     }
 
     //sort默认id_desc，即最新的在前。也可以是 id_asc
     @Override
-    public Discussion getBeatMapDiscussion(Long bid, Long sid, @Nullable BeatMapSetStatus status, int limit, @Nullable DiscussionDetails.MessageType[] types, @Nullable Boolean onlyResolved, int page, @Nullable String sort, Long uid) {
+    public Discussion getBeatMapDiscussion(
+            Long bid,
+            Long sid,
+            @Nullable
+            BeatMapSetStatus status,
+            int limit,
+            @Nullable
+            DiscussionDetails.MessageType[] types,
+            @Nullable
+            Boolean onlyResolved,
+            int page,
+            @Nullable
+            String sort,
+            Long uid
+    ) {
+        Discussion discussion =
+                getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null);
+        while (Objects.nonNull(discussion.getCursorString())) {
+            var other =
+                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, discussion.getCursorString());
+            discussion.nextDiscussion(other, sort);
+        }
+        return discussion;
+    }
+
+    public Discussion getBeatMapDiscussion(
+            Long bid,
+            Long sid,
+            @Nullable
+            BeatMapSetStatus status,
+            int limit,
+            @Nullable
+            DiscussionDetails.MessageType[] types,
+            @Nullable
+            Boolean onlyResolved,
+            int page,
+            @Nullable
+            String sort,
+            Long uid,
+            String cursor
+    ) {
         return base.osuApiWebClient.get()
                 .uri(u -> u.path("beatmapsets/discussions")
                         .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
@@ -30,6 +75,7 @@ public DiscussionApiImpl(OsuApiBaseService baseService) {
                         .queryParam("page", page)
                         .queryParamIfPresent("sort", Optional.ofNullable(sort))
                         .queryParamIfPresent("user", Optional.ofNullable(uid))
+                        .queryParamIfPresent("cursor_string", Optional.ofNullable(cursor))
                         .build())
                 .headers(base::insertHeader)
                 .retrieve()
