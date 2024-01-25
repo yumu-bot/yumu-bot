@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMapSet;
+import com.now.nowbot.model.JsonData.Discussion;
 import com.now.nowbot.model.JsonData.DiscussionDetails;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -61,6 +62,7 @@ public class NominationService implements MessageService<Matcher> {
 
     public Map<String, Object> parseData(long sid) throws NominationException {
         BeatMapSet s;
+        Discussion d;
         final List<DiscussionDetails> discussions;
         final List<DiscussionDetails> hypes;
         Map<String, Object> more = new HashMap<>();
@@ -78,7 +80,7 @@ public class NominationService implements MessageService<Matcher> {
         }
 
         try {
-            var d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);
+            d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);
 
 
             hypes = d.getDiscussions().stream().filter(i -> {
@@ -100,9 +102,25 @@ public class NominationService implements MessageService<Matcher> {
         {
             int hostCount = 0;
             int guestCount = 0;
+            int problemCount = 0;
+            int suggestCount = 0;
+            int notSolvedCount = 0;
             String maxSR;
             String minSR;
             int hitLength = 0;
+
+            var ds = d.getDiscussions();
+
+            for (var i : ds) {
+                switch (i.getMessageType()) {
+                    case problem -> problemCount ++;
+                    case suggestion -> suggestCount ++;
+                }
+
+                if (i.getCanBeResolved() && !i.getResolved()) {
+                    notSolvedCount ++;
+                }
+            }
 
             var bs = s.getBeatMaps();
 
@@ -153,10 +171,13 @@ public class NominationService implements MessageService<Matcher> {
             more.put("minSR", minSR);
             more.put("hitLength", hitLength);
             more.put("tags", tags);
+            more.put("problemCount", problemCount);
+            more.put("suggestCount", suggestCount);
+            more.put("notSolvedCount", notSolvedCount);
         }
 
         var n = new HashMap<String, Object>();
-        n.put("beatmap", s);
+        n.put("beatmapset", s);
         n.put("discussion", discussions);
         n.put("hype", hypes);
         n.put("more", more);
