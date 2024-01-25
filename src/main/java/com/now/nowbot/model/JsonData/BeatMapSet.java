@@ -92,8 +92,8 @@ public class BeatMapSet {
     NominationsSummary nominationsSummary;
 
     public record NominationsSummary (
-        Integer current,
-        Integer required
+            Integer current,
+            Integer required
     ) {}
 
     Integer ranked;
@@ -534,10 +534,15 @@ public class BeatMapSet {
     }
 
     public List<OsuUser> getMappers() {
-        if (Objects.nonNull(currentNominations)) {
-            for (CurrentNominations c : currentNominations) {
-                var n = c.nominatorID();
-                mappers = relatedUsers.stream().filter(u -> !Objects.equals(u.getUID(), n)).toList();
+        if (nominators.isEmpty()) {
+            nominators = this.getNominators();
+        }
+
+        if (mappers.isEmpty()) {
+            for (OsuUser u : relatedUsers) {
+                if (!(nominators.contains(u) || Objects.equals(u.getUID(), creatorID))) {
+                    mappers.add(u);
+                }
             }
         }
 
@@ -549,10 +554,14 @@ public class BeatMapSet {
     }
 
     public List<OsuUser> getNominators() {
-        if (Objects.nonNull(currentNominations)) {
+        if (nominators.isEmpty()) {
             for (CurrentNominations c : currentNominations) {
-                var n = c.nominatorID();
-                nominators = relatedUsers.stream().filter(u -> Objects.equals(u.getUID(), n)).toList();
+                for (OsuUser u : relatedUsers) {
+                    if (Objects.equals(u.getUID(), c.nominatorID())) {
+                        nominators.add(u);
+                        break;
+                    }
+                }
             }
         }
 

@@ -51,7 +51,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         } else {
             d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
         }
-        if (d != null && d.getData() != null) {
+        if (d != null && d.getData() != null && d.getData().getMessageId() != null) {
             id = d.getData().getMessageId();
         }
         return OneBotMessageReceipt.create(bot, id, this);

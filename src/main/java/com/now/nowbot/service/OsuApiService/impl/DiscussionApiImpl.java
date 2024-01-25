@@ -2,16 +2,13 @@ package com.now.nowbot.service.OsuApiService.impl;
 
 import com.now.nowbot.model.JsonData.Discussion;
 import com.now.nowbot.model.JsonData.DiscussionDetails;
-import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.service.OsuApiService.OsuDiscussionApiService;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class DiscussionApiImpl implements OsuDiscussionApiService {
@@ -36,14 +33,17 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
             int page,
             @Nullable
             String sort,
+            @Nullable
             Long uid
     ) {
+        AtomicInteger pageAtm = new AtomicInteger(page);
         Discussion discussion =
                 getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null);
-        while (Objects.nonNull(discussion.getCursorString())) {
+        while (Objects.nonNull(discussion.getCursorString()) && pageAtm.get() < 10) {
             var other =
-                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, discussion.getCursorString());
-            discussion.nextDiscussion(other, sort);
+                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, pageAtm.getAndAdd(1), sort, uid, null);
+            discussion.setCursorString(other.getCursorString());
+            discussion.mergeDiscussion(other, sort);
         }
         return discussion;
     }

@@ -9,8 +9,10 @@ import com.now.nowbot.util.JacksonUtil;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
-import java.util.stream.StreamSupport;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -121,47 +123,56 @@ public class Discussion {
         this.cursorString = cursorString;
     }
 
-    public void nextDiscussion(Discussion other, String sort) {
+    public void mergeDiscussion(Discussion that, String sort) {
         // discussions, includedDiscussions合并
         if (Objects.equals("id_asc", sort)) {
-            if (CollectionUtils.isEmpty(other.getDiscussions())) {
-                if (CollectionUtils.isEmpty(this.getDiscussions()))
-                    other.getDiscussions().addAll(this.getDiscussions());
-                this.setDiscussions(other.getDiscussions());
+
+            if (! CollectionUtils.isEmpty(that.getDiscussions())) {
+                if (! CollectionUtils.isEmpty(this.getDiscussions())) {
+                    that.getDiscussions().addAll(this.getDiscussions());
+                } else {
+                    this.setDiscussions(that.getDiscussions());
+                }
             }
 
-            if (CollectionUtils.isEmpty(other.getIncludedDiscussions())) {
-                if (CollectionUtils.isEmpty(this.getIncludedDiscussions()))
-                    other.getIncludedDiscussions().addAll(this.getIncludedDiscussions());
-                this.setIncludedDiscussions(other.getIncludedDiscussions());
+            if (! CollectionUtils.isEmpty(that.getIncludedDiscussions())) {
+                if (! CollectionUtils.isEmpty(this.getIncludedDiscussions())) {
+                    that.getIncludedDiscussions().addAll(this.getIncludedDiscussions());
+                } else {
+                    this.setIncludedDiscussions(that.getIncludedDiscussions());
+                }
             }
+
         } else {
-            if (CollectionUtils.isEmpty(other.getDiscussions())) {
-                if (CollectionUtils.isEmpty(this.getDiscussions()))
-                    this.getDiscussions().addAll(other.getDiscussions());
-                else
-                    this.setDiscussions(other.getDiscussions());
+
+            if (! CollectionUtils.isEmpty(that.getDiscussions())) {
+                if (! CollectionUtils.isEmpty(this.getDiscussions())) {
+                    this.getDiscussions().addAll(that.getDiscussions());
+                } else {
+                    this.setDiscussions(that.getDiscussions());
+                }
             }
 
-            if (CollectionUtils.isEmpty(other.getIncludedDiscussions())) {
-                if (CollectionUtils.isEmpty(this.getIncludedDiscussions()))
-                    this.getIncludedDiscussions().addAll(other.getIncludedDiscussions());
-                else
-                    other.setIncludedDiscussions(this.getIncludedDiscussions());
+            if (! CollectionUtils.isEmpty(that.getIncludedDiscussions())) {
+                if (! CollectionUtils.isEmpty(this.getIncludedDiscussions())) {
+                    this.getIncludedDiscussions().addAll(that.getIncludedDiscussions());
+                } else {
+                    this.setIncludedDiscussions(that.getIncludedDiscussions());
+                }
             }
-
         }
 
         // user去重
-        if (!this.getUsers().containsAll(other.getUsers())) {
-            if (CollectionUtils.isEmpty(other.getUsers())) {
-            } else if (CollectionUtils.isEmpty(this.getUsers())) {
-                this.setUsers(other.getUsers());
-            } else {
-                var idSet1 = new HashSet<>(this.getUsers());
-                var idSet2 = new HashSet<>(other.getUsers());
-                idSet1.addAll(idSet2);
-                this.setUsers(new ArrayList<>(idSet1));
+        if (! new HashSet<>(this.getUsers()).containsAll(that.getUsers())) {
+            if (! CollectionUtils.isEmpty(that.getUsers())) {
+                if (CollectionUtils.isEmpty(this.getUsers())) {
+                    this.setUsers(that.getUsers());
+                } else {
+                    var idSet1 = new HashSet<>(this.getUsers());
+                    var idSet2 = new HashSet<>(that.getUsers());
+                    idSet1.addAll(idSet2);
+                    this.setUsers(new ArrayList<>(idSet1));
+                }
             }
         }
     }

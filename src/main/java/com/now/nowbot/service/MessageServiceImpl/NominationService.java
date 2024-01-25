@@ -82,7 +82,6 @@ public class NominationService implements MessageService<Matcher> {
         try {
             d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);
 
-
             hypes = d.getDiscussions().stream().filter(i -> {
                 var t = i.getMessageType();
                 return t.equals(DiscussionDetails.MessageType.hype) || t.equals(DiscussionDetails.MessageType.praise);
@@ -107,7 +106,7 @@ public class NominationService implements MessageService<Matcher> {
             int notSolvedCount = 0;
             String maxSR;
             String minSR;
-            int hitLength = 0;
+            int totalLength = 0;
 
             var ds = d.getDiscussions();
 
@@ -130,7 +129,7 @@ public class NominationService implements MessageService<Matcher> {
 
             if (Objects.nonNull(bs) && !bs.isEmpty()) {
                 var f = bs.getFirst();
-                hitLength = f.getHitLength();
+                totalLength = f.getTotalLength();
                 maxStarRating = f.getStarRating();
                 minStarRating = maxStarRating;
             }
@@ -153,7 +152,9 @@ public class NominationService implements MessageService<Matcher> {
             minSR = String.valueOf(minStarRatingInt);
 
             if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+';
-            if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
+            //if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
+
+            if (bs.size() <= 1) minSR = "";
 
             //其他
             String[] tags = s.getTags().split(" ");
@@ -169,7 +170,7 @@ public class NominationService implements MessageService<Matcher> {
             more.put("totalCount", hostCount + guestCount);
             more.put("maxSR", maxSR);
             more.put("minSR", minSR);
-            more.put("hitLength", hitLength);
+            more.put("totalLength", totalLength);
             more.put("tags", tags);
             more.put("problemCount", problemCount);
             more.put("suggestCount", suggestCount);
