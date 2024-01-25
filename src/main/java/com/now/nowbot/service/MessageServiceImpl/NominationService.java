@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 
 @Service("NOMINATION")
@@ -140,12 +137,22 @@ public class NominationService implements MessageService<Matcher> {
             if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+';
             if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
 
+            //其他
+            String[] tags = s.getTags().split(" ");
+            /*
+            int notResolved = Math.toIntExact(
+                    discussions.stream().filter(d -> !d.getResolved() && d.getCanBeResolved()
+                    ).count());
+
+             */
+
             more.put("hostCount", hostCount);
             more.put("guestCount", guestCount);
             more.put("totalCount", hostCount + guestCount);
             more.put("maxSR", maxSR);
             more.put("minSR", minSR);
             more.put("hitLength", hitLength);
+            more.put("tags", tags);
         }
 
         var n = new HashMap<String, Object>();

@@ -33,11 +33,12 @@ public class QQMsgUtil {
     }
 
     public static String byte2str(byte[] data) {
+        if (Objects.isNull(data)) return "";
         return base64Util.encodeToString(data);
     }
     @Nullable
     public static <T extends Message> T getType(MessageChain msg, Class<T> T) {
-        return (T) msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
+        return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
     }
 
 
