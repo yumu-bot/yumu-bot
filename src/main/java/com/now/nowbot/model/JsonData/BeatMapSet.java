@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,6 +124,7 @@ public class BeatMapSet {
 
     List<BeatMap> converts;
 
+    @Nullable
     @JsonProperty("current_nominations")
     List<CurrentNominations> currentNominations;
 
@@ -160,6 +161,7 @@ public class BeatMapSet {
     @JsonProperty("recent_favourites")
     List<OsuUser> recentFavourites;
 
+    @Nullable
     @JsonProperty("related_users")
     List<OsuUser> relatedUsers;
 
@@ -517,11 +519,12 @@ public class BeatMapSet {
         this.recentFavourites = recentFavourites;
     }
 
+    @Nullable
     public List<OsuUser> getRelatedUsers() {
         return relatedUsers;
     }
 
-    public void setRelatedUsers(List<OsuUser> relatedUsers) {
+    public void setRelatedUsers(@Nullable List<OsuUser> relatedUsers) {
         this.relatedUsers = relatedUsers;
     }
 
@@ -538,7 +541,7 @@ public class BeatMapSet {
             nominators = this.getNominators();
         }
 
-        if (mappers.isEmpty()) {
+        if (mappers.isEmpty() && Objects.nonNull(relatedUsers) && Objects.nonNull(nominators)) {
             for (OsuUser u : relatedUsers) {
                 if (!(nominators.contains(u) || Objects.equals(u.getUID(), creatorID))) {
                     mappers.add(u);
@@ -554,7 +557,7 @@ public class BeatMapSet {
     }
 
     public List<OsuUser> getNominators() {
-        if (nominators.isEmpty()) {
+        if (nominators.isEmpty() && Objects.nonNull(currentNominations) && Objects.nonNull(relatedUsers)) {
             for (CurrentNominations c : currentNominations) {
                 for (OsuUser u : relatedUsers) {
                     if (Objects.equals(u.getUID(), c.nominatorID())) {
