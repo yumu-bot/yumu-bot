@@ -108,6 +108,7 @@ public class BeatMapSet {
 
     String tags;
 
+    @Nullable
     @JsonProperty("availability")
     Availability availability;
 
@@ -119,9 +120,11 @@ public class BeatMapSet {
             String moreInformation
     ) {}
 
+    @Nullable
     @JsonProperty("beatmaps")
     List<BeatMap> beatMaps;
 
+    @Nullable
     List<BeatMap> converts;
 
     @Nullable
@@ -145,19 +148,23 @@ public class BeatMapSet {
             String description
     ) {}
 
+    @Nullable
     Genre genre;
 
     public record Genre (Integer id, String name) {}
 
+    @Nullable
     Language language;
 
     public record Language (Integer id, String name) {}
 
+    @Nullable
     @JsonProperty("pack_tags")
     List<String> packTags;
 
     List<Integer> ratings;
 
+    @Nullable
     @JsonProperty("recent_favourites")
     List<OsuUser> recentFavourites;
 
@@ -165,6 +172,7 @@ public class BeatMapSet {
     @JsonProperty("related_users")
     List<OsuUser> relatedUsers;
 
+    @Nullable
     @JsonProperty("user")
     OsuUser creatorData;
 
@@ -439,35 +447,39 @@ public class BeatMapSet {
         this.tags = tags;
     }
 
+    @Nullable
     public Availability getAvailability() {
         return availability;
     }
 
-    public void setAvailability(Availability availability) {
+    public void setAvailability(@Nullable Availability availability) {
         this.availability = availability;
     }
 
+    @Nullable
     public List<BeatMap> getBeatMaps() {
         return beatMaps;
     }
 
-    public void setBeatMaps(List<BeatMap> beatMaps) {
+    public void setBeatMaps(@Nullable List<BeatMap> beatMaps) {
         this.beatMaps = beatMaps;
     }
 
+    @Nullable
     public List<BeatMap> getConverts() {
         return converts;
     }
 
-    public void setConverts(List<BeatMap> converts) {
+    public void setConverts(@Nullable List<BeatMap> converts) {
         this.converts = converts;
     }
 
+    @Nullable
     public List<CurrentNominations> getCurrentNominations() {
         return currentNominations;
     }
 
-    public void setCurrentNominations(List<CurrentNominations> currentNominations) {
+    public void setCurrentNominations(@Nullable List<CurrentNominations> currentNominations) {
         this.currentNominations = currentNominations;
     }
 
@@ -479,27 +491,30 @@ public class BeatMapSet {
         this.description = description;
     }
 
+    @Nullable
     public Genre getGenre() {
         return genre;
     }
 
-    public void setGenre(Genre genre) {
+    public void setGenre(@Nullable Genre genre) {
         this.genre = genre;
     }
 
+    @Nullable
     public Language getLanguage() {
         return language;
     }
 
-    public void setLanguage(Language language) {
+    public void setLanguage(@Nullable Language language) {
         this.language = language;
     }
 
+    @Nullable
     public List<String> getPackTags() {
         return packTags;
     }
 
-    public void setPackTags(List<String> packTags) {
+    public void setPackTags(@Nullable List<String> packTags) {
         this.packTags = packTags;
     }
 
@@ -511,11 +526,12 @@ public class BeatMapSet {
         this.ratings = ratings;
     }
 
+    @Nullable
     public List<OsuUser> getRecentFavourites() {
         return recentFavourites;
     }
 
-    public void setRecentFavourites(List<OsuUser> recentFavourites) {
+    public void setRecentFavourites(@Nullable List<OsuUser> recentFavourites) {
         this.recentFavourites = recentFavourites;
     }
 
@@ -528,16 +544,17 @@ public class BeatMapSet {
         this.relatedUsers = relatedUsers;
     }
 
+    @Nullable
     public OsuUser getCreatorData() {
         return creatorData;
     }
 
-    public void setCreatorData(OsuUser creatorData) {
+    public void setCreatorData(@Nullable OsuUser creatorData) {
         this.creatorData = creatorData;
     }
 
     public List<OsuUser> getMappers() {
-        if (nominators.isEmpty()) {
+        if (nominators.isEmpty() && Objects.nonNull(currentNominations)) {
             nominators = this.getNominators();
         }
 
