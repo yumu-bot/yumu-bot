@@ -81,12 +81,12 @@ public class NominationService implements MessageService<Matcher> {
         Map<String, Object> more = new HashMap<>();
 
         try {
-            if (isSID) {
-                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
-            } else {
+            if (!isSID) {
                 var b = osuBeatmapApiService.getBeatMapInfo(sid);
-                s = osuBeatmapApiService.getBeatMapSetInfo(b.getSID());
+                sid = b.getSID();
             }
+
+            s = osuBeatmapApiService.getBeatMapSetInfo(sid);
 
             if (Objects.nonNull(s.getCreatorData())) {
                 s.getCreatorData().parseFull(osuUserApiService);
