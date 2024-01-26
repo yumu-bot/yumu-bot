@@ -1,5 +1,7 @@
 package com.now.nowbot.throwable;
 
+import java.util.Objects;
+
 public class TipsException extends Exception implements BotException {
     String message;
     byte[] image = null;
@@ -16,7 +18,7 @@ public class TipsException extends Exception implements BotException {
     }
 
     public boolean hasImage() {
-        return image == null;
+        return Objects.nonNull(image);
     }
 
     public byte[] getImage() {

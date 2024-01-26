@@ -104,8 +104,8 @@ public class NominationService implements MessageService<Matcher> {
             int problemCount = 0;
             int suggestCount = 0;
             int notSolvedCount = 0;
-            String maxSR;
-            String minSR;
+            String maxSR = "";
+            String minSR = "";
             int totalLength = 0;
 
             var ds = d.getDiscussions();
@@ -134,36 +134,33 @@ public class NominationService implements MessageService<Matcher> {
                 minStarRating = maxStarRating;
             }
 
-            for (var b : bs) {
-                if (Objects.equals(s.getCreatorID(), b.getMapperID())) {
-                    hostCount ++;
-                } else {
-                    guestCount ++;
+            if (Objects.nonNull(bs)) {
+                for (var b : bs) {
+                    if (Objects.equals(s.getCreatorID(), b.getMapperID())) {
+                        hostCount ++;
+                    } else {
+                        guestCount ++;
+                    }
+
+                    if (b.getStarRating() > maxStarRating) maxStarRating = b.getStarRating();
+                    if (b.getStarRating() < minStarRating) minStarRating = b.getStarRating();
                 }
 
-                if (b.getStarRating() > maxStarRating) maxStarRating = b.getStarRating();
-                if (b.getStarRating() < minStarRating) minStarRating = b.getStarRating();
+                var maxStarRatingInt = (int) Math.floor(maxStarRating);
+                var minStarRatingInt = (int) Math.floor(minStarRating);
+
+                maxSR = String.valueOf(maxStarRatingInt);
+                minSR = String.valueOf(minStarRatingInt);
+
+                if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+';
+                //if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
+
+                //单难度
+                if (bs.size() <= 1) minSR = "";
             }
-
-            var maxStarRatingInt = (int) Math.floor(maxStarRating);
-            var minStarRatingInt = (int) Math.floor(minStarRating);
-
-            maxSR = String.valueOf(maxStarRatingInt);
-            minSR = String.valueOf(minStarRatingInt);
-
-            if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+';
-            //if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
-
-            if (bs.size() <= 1) minSR = "";
 
             //其他
             String[] tags = s.getTags().split(" ");
-            /*
-            int notResolved = Math.toIntExact(
-                    discussions.stream().filter(d -> !d.getResolved() && d.getCanBeResolved()
-                    ).count());
-
-             */
 
             more.put("hostCount", hostCount);
             more.put("guestCount", guestCount);

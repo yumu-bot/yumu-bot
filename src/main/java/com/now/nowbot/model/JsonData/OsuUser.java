@@ -6,12 +6,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -961,5 +961,32 @@ public class OsuUser {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    /**
+     * List<OsuUser> 去重方法
+     * @param to 要合并进去 List
+     * @param from 要用来合并的 List
+     * @return 合并好的 List
+     */
+
+    public static List<OsuUser> merge2OsuUserList(@Nullable List<OsuUser> to, @Nullable List<OsuUser> from) {
+        if (CollectionUtils.isEmpty(to)) {
+            return from;
+        }
+
+        if (CollectionUtils.isEmpty(from)) {
+            return to;
+        }
+
+        var toSet = new HashSet<>(to);
+        var fromSet = new HashSet<>(from);
+
+        if (! (toSet.containsAll(fromSet) || CollectionUtils.isEmpty(fromSet))) {
+            toSet.addAll(fromSet);
+            return new ArrayList<>(toSet);
+        }
+
+        return to;
     }
 }

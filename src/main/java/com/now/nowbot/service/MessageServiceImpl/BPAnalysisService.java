@@ -80,17 +80,17 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
         //bp列表
         List<Score> bps;
-        OsuUser osuUser;
+        OsuUser u;
         if (Objects.nonNull(param.qq())) {
-            BinUser binUser = bindDao.getUserFromQQ(param.qq());
+            BinUser bu = bindDao.getUserFromQQ(param.qq());
             try {
                 if (mode != OsuMode.DEFAULT) {
-                    osuUser = userApiService.getPlayerInfo(binUser, mode);
-                    osuUser.setPlayMode(mode.getName());
-                    bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
+                    u = userApiService.getPlayerInfo(bu, mode);
+                    u.setPlayMode(mode.getName());
+                    bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);
                 } else {
-                    bps = scoreApiService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
-                    osuUser = userApiService.getPlayerInfo(binUser, binUser.getMode());
+                    bps = scoreApiService.getBestPerformance(bu, bu.getMode(), 0, 100);
+                    u = userApiService.getPlayerInfo(bu, bu.getMode());
                 }
             } catch (Exception e) {
                 if (!param.at()) {
@@ -110,33 +110,33 @@ public class BPAnalysisService implements MessageService<UserParam> {
             try {
                 if (mode != OsuMode.DEFAULT) {
                     bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-                    osuUser = userApiService.getPlayerInfo(id, mode);
-                    osuUser.setPlayMode(mode.getName());
+                    u = userApiService.getPlayerInfo(id, mode);
+                    u.setPlayMode(mode.getName());
                 } else {
-                    osuUser = userApiService.getPlayerInfo(id);
-                    bps = scoreApiService.getBestPerformance(id, osuUser.getOsuMode(), 0, 100);
+                    u = userApiService.getPlayerInfo(id);
+                    bps = scoreApiService.getBestPerformance(id, u.getOsuMode(), 0, 100);
                 }
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
             }
         }
 
-        if (bps == null || bps.size() <= 5) {
-            if (param.qq() == event.getSender().getId()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
+        if (Objects.isNull(bps) || bps.size() <= 5) {
+            if (Objects.nonNull(param.qq()) && param.qq() == event.getSender().getId()) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP, u.getPlayMode());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP, u.getPlayMode());
             }
         }
 
         byte[] image = new byte[0];
 
         try {
-            var data = parseData(osuUser, bps, userApiService);
+            var data = parseData(u, bps, userApiService);
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             try {
-                var msg = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
+                var msg = uubaService.getAllMsg(bps, u.getUsername(), u.getPlayMode());
                 var image2 = imageService.getPanelAlpha(msg);
 
                 from.sendImage(image2);

@@ -93,12 +93,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     @Override
     public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws Throwable {
         var from = event.getSubject();
-        BinUser binUser;
+        BinUser bu;
 
         // 是否为绑定用户
         if (Objects.nonNull(param.user().qq())) {
             try {
-                binUser = bindDao.getUserFromQQ(param.user().qq());
+                bu = bindDao.getUserFromQQ(param.user().qq());
             } catch (BindException e) {
                 if (!param.user().at()) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
@@ -112,12 +112,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             long id = 0;
             try {
                 id = userApiService.getOsuId(name);
-                binUser = bindDao.getUserFromOsuid(id);
+                bu = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
                 //构建只有 name + id 的对象, binUser == null
-                binUser = new BinUser();
-                binUser.setOsuID(id);
-                binUser.setOsuName(name);
+                bu = new BinUser();
+                bu.setOsuID(id);
+                bu.setOsuName(name);
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
             }
@@ -128,9 +128,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         //分别处理mode
         var mode = param.user().mode();
         //处理默认mode
-        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
+        if (mode == OsuMode.DEFAULT && bu.getMode() != null) mode = bu.getMode();
         try {
-            bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
+            bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);
         } catch (WebClientResponseException.BadRequest e) {
             // 请求失败 超时/断网
             if (param.user().qq() == event.getSender().getId()) {
@@ -145,24 +145,24 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
         if (bps == null || bps.size() <= 10) {
             if (!param.user().at() && Objects.isNull(param.user().name())) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP);
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP, mode.getName());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP);
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP, mode.getName());
             }
         }
 
         String[] Lines;
         if (param.info()) {
             if (mode == null || mode == OsuMode.DEFAULT) {
-                Lines = getAllMsgI(bps, binUser.getOsuName(), OsuMode.DEFAULT);
+                Lines = getAllMsgI(bps, bu.getOsuName(), OsuMode.DEFAULT);
             } else {
-                Lines = getAllMsgI(bps, binUser.getOsuName(), mode);
+                Lines = getAllMsgI(bps, bu.getOsuName(), mode);
             }
         } else {
             if (mode == null || mode == OsuMode.DEFAULT) {
-                Lines = getAllMsg(bps, binUser.getOsuName(), "");
+                Lines = getAllMsg(bps, bu.getOsuName(), "");
             } else {
-                Lines = getAllMsg(bps, binUser.getOsuName(), mode.getName());
+                Lines = getAllMsg(bps, bu.getOsuName(), mode.getName());
             }
         }
 

@@ -163,17 +163,9 @@ public class Discussion {
         }
 
         // user去重
-        if (! new HashSet<>(this.getUsers()).containsAll(that.getUsers())) {
-            if (! CollectionUtils.isEmpty(that.getUsers())) {
-                if (CollectionUtils.isEmpty(this.getUsers())) {
-                    this.setUsers(that.getUsers());
-                } else {
-                    var idSet1 = new HashSet<>(this.getUsers());
-                    var idSet2 = new HashSet<>(that.getUsers());
-                    idSet1.addAll(idSet2);
-                    this.setUsers(new ArrayList<>(idSet1));
-                }
-            }
-        }
+        this.setUsers(
+                OsuUser.merge2OsuUserList(this.getUsers(), that.getUsers())
+        );
+
     }
 }
