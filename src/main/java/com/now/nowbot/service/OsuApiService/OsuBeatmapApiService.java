@@ -26,10 +26,10 @@ public interface OsuBeatmapApiService {
         return getBeatMapInfo((long) bid);
     }
 
-    BeatMapSet getBeatMapSetInfo(long bid);
+    BeatMapSet getBeatMapSetInfo(long sid);
 
-    default BeatMapSet getBeatMapSetInfo(int bid) {
-        return getBeatMapSetInfo((long) bid);
+    default BeatMapSet getBeatMapSetInfo(int sid) {
+        return getBeatMapSetInfo((long) sid);
     }
 
     BeatMap getMapInfoFromDB(long bid);

@@ -48,13 +48,21 @@ public class NominationService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         long sid;
+        boolean isSID = true;
+
+        String mode = matcher.group("mode");
+
+        if (Objects.nonNull(mode) && (Objects.equals(mode, "b") || Objects.equals(mode, "bid"))) {
+            isSID = false;
+        }
+
         try {
             sid = Long.parseLong(matcher.group("sid"));
         } catch (NumberFormatException e) {
             throw new NominationException(NominationException.Type.N_Instructions);
         }
 
-        var data = parseData(sid);
+        var data = parseData(sid, isSID);
 
         try {
             var image = imageService.getPanelN(data);
@@ -65,7 +73,7 @@ public class NominationService implements MessageService<Matcher> {
         }
     }
 
-    public Map<String, Object> parseData(long sid) throws NominationException {
+    public Map<String, Object> parseData(long sid, boolean isSID) throws NominationException {
         BeatMapSet s;
         Discussion d;
         final List<DiscussionDetails> discussions;
@@ -73,10 +81,17 @@ public class NominationService implements MessageService<Matcher> {
         Map<String, Object> more = new HashMap<>();
 
         try {
-            s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+            if (isSID) {
+                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+            } else {
+                var b = osuBeatmapApiService.getBeatMapInfo(sid);
+                s = osuBeatmapApiService.getBeatMapSetInfo(b.getSID());
+            }
+
             if (Objects.nonNull(s.getCreatorData())) {
                 s.getCreatorData().parseFull(osuUserApiService);
             }
+
         } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
             throw new NominationException(NominationException.Type.N_Map_NotFound);
         } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
@@ -111,6 +126,8 @@ public class NominationService implements MessageService<Matcher> {
             int problemCount = 0;
             int suggestCount = 0;
             int notSolvedCount = 0;
+            int hypeCount = 0;
+            int praiseCount = 0;
             String maxSR = "";
             String minSR = "";
             int totalLength = 0;
@@ -121,6 +138,8 @@ public class NominationService implements MessageService<Matcher> {
                 switch (i.getMessageType()) {
                     case problem -> problemCount ++;
                     case suggestion -> suggestCount ++;
+                    case hype -> hypeCount ++;
+                    case praise -> praiseCount ++;
                 }
 
                 if (i.getCanBeResolved() && !i.getResolved()) {
@@ -179,6 +198,8 @@ public class NominationService implements MessageService<Matcher> {
             more.put("problemCount", problemCount);
             more.put("suggestCount", suggestCount);
             more.put("notSolvedCount", notSolvedCount);
+            more.put("hypeCount", hypeCount);
+            more.put("praiseCount", praiseCount);
         }
 
         var n = new HashMap<String, Object>();
@@ -186,6 +207,7 @@ public class NominationService implements MessageService<Matcher> {
         n.put("discussion", discussions);
         n.put("hype", hypes);
         n.put("more", more);
+        n.put("users", d.getUsers());
 
         return n;
     }

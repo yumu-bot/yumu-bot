@@ -6,9 +6,10 @@ public class NominationException extends TipsException {
     public enum Type {
         N_Instructions("""
                 欢迎使用 Yumu Nomination 功能！食用方法：
-                !ymnomination / !ymn [sid]
-                - sid：谱面集编号。注意不是 bid。
-                """),
+                !ymnomination / !ymn (:mode) [sid]
+                
+                - mode: 模式。如果输入 b，则可以输入谱面的 bid。默认 s。
+                - id：编号。可以输入 sid 或 bid。默认 sid。"""),
         N_Map_NotFound("找不到这张谱面，请检查。"),
         N_Map_FetchFailed("提名信息：谱面获取失败。\n请重试，或者将信息反馈给开发者。"),
         N_Discussion_FetchFailed("提名信息：讨论区获取失败。\n请重试，或者将信息反馈给开发者。"),
