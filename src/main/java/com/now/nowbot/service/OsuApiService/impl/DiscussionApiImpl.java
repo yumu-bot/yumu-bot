@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class DiscussionApiImpl implements OsuDiscussionApiService {
@@ -21,28 +20,30 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
     //sort默认id_desc，即最新的在前。也可以是 id_asc
     @Override
     public Discussion getBeatMapDiscussion(
+            @Nullable
             Long bid,
+            @Nullable
             Long sid,
             @Nullable
             BeatMapSetStatus status,
-            int limit,
+            Integer limit,
             @Nullable
             DiscussionDetails.MessageType[] types,
             @Nullable
             Boolean onlyResolved,
-            int page,
+            @Nullable
+            Integer page,
             @Nullable
             String sort,
             @Nullable
             Long uid
     ) {
-        AtomicInteger pageAtm = new AtomicInteger(page);
+        int count = 0;
         Discussion discussion =
                 getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null);
-        while (Objects.nonNull(discussion.getCursorString()) && pageAtm.get() < 10) {
+        while (Objects.nonNull(discussion.getCursorString()) && count++ < 10) {
             var other =
-                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, pageAtm.getAndAdd(1), sort, uid, null);
-            discussion.setCursorString(other.getCursorString());
+                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, discussion.getCursorString());
             discussion.mergeDiscussion(other, sort);
         }
         return discussion;
@@ -51,15 +52,11 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
     public Discussion getBeatMapDiscussion(
             Long bid,
             Long sid,
-            @Nullable
             BeatMapSetStatus status,
-            int limit,
-            @Nullable
+            Integer limit,
             DiscussionDetails.MessageType[] types,
-            @Nullable
             Boolean onlyResolved,
-            int page,
-            @Nullable
+            Integer page,
             String sort,
             Long uid,
             String cursor
@@ -69,10 +66,10 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
                         .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
                         .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
                         .queryParamIfPresent("beatmapset_status", Optional.ofNullable(status))
-                        .queryParam("limit", limit)
+                        .queryParamIfPresent("limit", Optional.ofNullable(limit))
                         .queryParamIfPresent("message_types[]", Optional.ofNullable(types))
                         .queryParamIfPresent("only_resolved", Optional.ofNullable(onlyResolved))
-                        .queryParam("page", page)
+                        .queryParamIfPresent("page", Optional.ofNullable(page))
                         .queryParamIfPresent("sort", Optional.ofNullable(sort))
                         .queryParamIfPresent("user", Optional.ofNullable(uid))
                         .queryParamIfPresent("cursor_string", Optional.ofNullable(cursor))
