@@ -47,7 +47,12 @@ public class NominationService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        var sid = Long.parseLong(matcher.group("sid"));
+        long sid;
+        try {
+            sid = Long.parseLong(matcher.group("sid"));
+        } catch (NumberFormatException e) {
+            throw new NominationException(NominationException.Type.N_Instructions);
+        }
 
         var data = parseData(sid);
 
@@ -69,7 +74,9 @@ public class NominationService implements MessageService<Matcher> {
 
         try {
             s = osuBeatmapApiService.getBeatMapSetInfo(sid);
-            s.getCreatorData().parseFull(osuUserApiService);
+            if (Objects.nonNull(s.getCreatorData())) {
+                s.getCreatorData().parseFull(osuUserApiService);
+            }
         } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
             throw new NominationException(NominationException.Type.N_Map_NotFound);
         } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
