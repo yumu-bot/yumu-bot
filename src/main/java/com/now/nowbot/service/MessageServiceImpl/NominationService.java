@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.Discussion;
 import com.now.nowbot.model.JsonData.DiscussionDetails;
@@ -20,6 +21,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service("NOMINATION")
 public class NominationService implements MessageService<Matcher> {
@@ -76,6 +79,7 @@ public class NominationService implements MessageService<Matcher> {
     public Map<String, Object> parseData(long sid, boolean isSID) throws NominationException {
         BeatMapSet s;
         Discussion d;
+        final List<DiscussionDetails> details;
         final List<DiscussionDetails> discussions;
         final List<DiscussionDetails> hypes;
         Map<String, Object> more = new HashMap<>();
@@ -103,22 +107,41 @@ public class NominationService implements MessageService<Matcher> {
 
         try {
             d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);
-
-            hypes = d.getDiscussions().stream().filter(i -> {
-                var t = i.getMessageType();
-                return t.equals(DiscussionDetails.MessageType.hype) || t.equals(DiscussionDetails.MessageType.praise);
-            }).toList();
-
-            discussions = d.getDiscussions().stream().filter(i -> {
-                var t = i.getMessageType();
-                return t.equals(DiscussionDetails.MessageType.problem) || t.equals(DiscussionDetails.MessageType.suggestion);
-            }).toList();
-
         } catch (Exception e) {
             log.error("提名信息：讨论区获取失败", e);
             throw new NominationException(NominationException.Type.N_Discussion_FetchFailed);
         }
 
+        //插入难度名
+        if (Objects.nonNull(s.getBeatMaps())) {
+            Map<Long, String> diffs = s.getBeatMaps().stream().collect(
+                    Collectors.toMap(BeatMap::getId, BeatMap::getDifficultyName)
+            );
+
+            d.addDifficulty4DiscussionDetails(diffs);
+        }
+
+        //获取 hypes 和 discussions 列表
+        {
+            //这两个list需要合并起来
+            details = Stream.of(d.getDiscussions(), d.getIncludedDiscussions())
+                    .filter(Objects::nonNull)
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .toList();
+
+            hypes = details.stream().filter(i -> {
+                var t = i.getMessageType();
+                return t.equals(DiscussionDetails.MessageType.hype) || t.equals(DiscussionDetails.MessageType.praise);
+            }).toList();
+
+            var dis = details.stream().filter(i -> {
+                var t = i.getMessageType();
+                return t.equals(DiscussionDetails.MessageType.problem) || t.equals(DiscussionDetails.MessageType.suggestion);
+            }).toList();
+
+            discussions = Discussion.toppingUnsolvedDiscussionDetails(dis);
+        }
         //这一部分提供额外信息
         {
             int hostCount = 0;
@@ -132,9 +155,7 @@ public class NominationService implements MessageService<Matcher> {
             String minSR = "";
             int totalLength = 0;
 
-            var ds = d.getDiscussions();
-
-            for (var i : ds) {
+            for (var i : details) {
                 switch (i.getMessageType()) {
                     case problem -> problemCount ++;
                     case suggestion -> suggestCount ++;

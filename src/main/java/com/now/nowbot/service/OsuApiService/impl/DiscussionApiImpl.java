@@ -40,8 +40,7 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
         Discussion discussion =
                 getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null);
         while (Objects.nonNull(discussion.getCursorString()) && pageAtm.get() < 10) {
-            var other =
-                    getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, pageAtm.getAndAdd(1), sort, uid, null);
+            var other = getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, pageAtm.getAndAdd(1), sort, uid, null);
             discussion.setCursorString(other.getCursorString());
             discussion.mergeDiscussion(other, sort);
         }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -61,6 +62,10 @@ public class DiscussionDetails {
 
     @JsonProperty("starting_post")
     BeatMapSetDiscussionPost post;
+
+    //自己算
+    @Nullable
+    String difficulty;
 
     public Long getDID() {
         return DID;
@@ -200,6 +205,15 @@ public class DiscussionDetails {
         this.post = post;
     }
 
+    @Nullable
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(@Nullable String difficulty) {
+        this.difficulty = difficulty;
+    }
+
     public enum MessageType {
         hype,
         mapper_note,
@@ -207,5 +221,19 @@ public class DiscussionDetails {
         suggestion,
         praise,
         review,
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof DiscussionDetails d) {
+            return Objects.equals(d.DID, this.DID);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return DID.hashCode();
     }
 }

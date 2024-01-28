@@ -9,10 +9,8 @@ import com.now.nowbot.util.JacksonUtil;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -167,5 +165,38 @@ public class Discussion {
                 OsuUser.merge2OsuUserList(this.getUsers(), that.getUsers())
         );
 
+    }
+
+    /**
+     * 置顶未解决的讨论
+     */
+    public static List<DiscussionDetails> toppingUnsolvedDiscussionDetails(List<DiscussionDetails> discussions) {
+        List<DiscussionDetails> u = new ArrayList<>();
+        List<DiscussionDetails> s = new ArrayList<>();
+
+        for (DiscussionDetails d : discussions) {
+            var c = d.getCanBeResolved();
+            var r = d.getResolved();
+
+            if (c && !r) {
+                u.add(d);
+            } else {
+                s.add(d);
+            }
+        }
+        return Stream.of(u, s).flatMap(Collection::stream).distinct().toList();
+    }
+
+    /**
+     * 把谱面难度名字嵌入到 DiscussionDetails 里
+     * @param diffs 难度 bid 和难度名的 map
+     */
+    public void addDifficulty4DiscussionDetails(Map<Long, String> diffs) {
+        this.setDiscussions(
+                this.getDiscussions().stream()
+                        .peek(d -> d.setDifficulty(
+                                diffs.get(d.getBID())
+                        )).toList()
+        );
     }
 }
