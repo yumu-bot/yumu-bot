@@ -122,6 +122,8 @@ public class Discussion {
     }
 
     public void mergeDiscussion(Discussion that, String sort) {
+        this.setCursorString(that.getCursorString());
+        this.setCursor(that.getCursor());
         // discussions, includedDiscussions合并
         if (Objects.equals("id_asc", sort)) {
 

@@ -35,14 +35,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
     @Autowired
     public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
         this.applicationContext = applicationContext;
-
-//        serviceMap.putAll(applicationContext
-//                .getBeansOfType(MessageService.class)
-//                .values()
-//                .stream()
-//                .collect(Collectors.toMap(s -> s.getClass(), s->s, (s1,s2) -> s2))
-//        );
-
         var services = applicationContext.getBeansOfType(MessageService.class);
         oneBotListener.init(services);
         this.check = check;
@@ -52,19 +44,17 @@ public class IocAllReadyRunner implements CommandLineRunner {
     /*
       ioc容器加载完毕运行
      */
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
         MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
         permission.init(applicationContext);
 //        initFountWidth();
-//        ((LoggerContext)LoggerFactory.getILoggerFactory()).getLogger("com.mikuac.shiro.handler").setLevel(Level.DEBUG);
 
         ((TomcatWebServer) webServerApplicationContext.getWebServer())
                 .getTomcat()
                 .getConnector()
                 .getProtocolHandler()
                 .setExecutor(executor);
-
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
@@ -74,16 +64,5 @@ public class IocAllReadyRunner implements CommandLineRunner {
         log.info("启动成功");
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());
-        /*
-        if (NowbotConfig.QQ_LOGIN) {
-            //登录
-            bot.login();
-            if (bot != null && bot.getGroup(746671531L) != null) {
-                bot.getGroup(746671531L).sendMessage("启动完成");
-            }
-        }
-
-         */
-
     }
 }
