@@ -5,6 +5,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class ScoreLegacy {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -34,7 +35,7 @@ public class ScoreLegacy {
     int n_geki;
     int n_katu;
     int n_0;
-    boolean passed = true;
+    boolean passed;
     String url;
     int key;
     String play_time;
@@ -70,23 +71,20 @@ public class ScoreLegacy {
         map_length = b.getTotalLength();
 
         int sr_floor = (int) Math.floor(star_rating);
-        star_str = "";
+        var sr_str = new StringBuilder();
         for (int i = 0; i < sr_floor && i < 10; i++) {
-            star_str += '★';
+            sr_str.append('★');
         }
         if (0.5 < (star_rating - sr_floor) && sr_floor < 10) {
-            star_str += '☆';
+            sr_str.append('☆');
         }
+        star_str = sr_str.toString();
 
         rank = score.getRank();
         this.score = score.getScore();
         acc = (float) ((Math.round(score.getAccuracy() * 10000)) / 100D);
 
-        if (score.getPP() == null) {
-            pp = 0;
-        } else {
-            pp = score.getPP();
-        }
+        pp = Objects.nonNull(score.getPP()) ? score.getPP() : 0;
 
         combo = score.getMaxCombo();
         passed = score.getPassed();
@@ -94,12 +92,12 @@ public class ScoreLegacy {
         play_time = score.getCreateTime().toString();
 
         var stat = score.getStatistics();
-        n_300 = stat.getCount300();
-        n_100 = stat.getCount100();
-        n_50 = stat.getCount50();
-        n_0 = stat.getCountMiss();
-        n_geki = stat.getCountGeki();
-        n_katu = stat.getCountKatu();
+        n_300 = Objects.nonNull(stat.getCount300()) ? stat.getCount300() : 0;
+        n_100 = Objects.nonNull(stat.getCount100()) ? stat.getCount100() : 0;
+        n_50 = Objects.nonNull(stat.getCount50()) ? stat.getCount50() : 0;
+        n_geki = Objects.nonNull(stat.getCountGeki()) ? stat.getCountGeki() : 0;
+        n_katu = Objects.nonNull(stat.getCountKatu()) ? stat.getCountKatu() : 0;
+        n_0 = Objects.nonNull(stat.getCountMiss()) ? stat.getCountMiss() : 0;
 
         if (!passed) rank = "F";
     }

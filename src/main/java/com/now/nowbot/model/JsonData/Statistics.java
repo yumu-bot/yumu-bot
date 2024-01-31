@@ -6,8 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
+import org.springframework.lang.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 注意,countxxx只有成绩相关的statustucs存在,而且不包含其他部分,别问为啥掺在一起,问就是ppysb
@@ -15,16 +17,22 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Statistics {
+    @Nullable
     @JsonProperty("count_50")
     Integer count50;
+    @Nullable
     @JsonProperty("count_100")
     Integer count100;
+    @Nullable
     @JsonProperty("count_300")
     Integer count300;
+    @Nullable
     @JsonProperty("count_geki")
     Integer countGeki;
+    @Nullable
     @JsonProperty("count_katu")
     Integer countKatu;
+    @Nullable
     @JsonProperty("count_miss")
     Integer countMiss;
     Integer countAll;
@@ -107,52 +115,56 @@ public class Statistics {
             }
         }
     }
-
+    @Nullable
     public Integer getCount50() {
         return count50;
     }
 
-    public void setCount50(Integer count50) {
+    public void setCount50(@Nullable Integer count50) {
         this.count50 = count50;
     }
-
+    @Nullable
     public Integer getCount100() {
         return count100;
     }
 
-    public void setCount100(Integer count100) {
+    public void setCount100(@Nullable Integer count100) {
         this.count100 = count100;
     }
 
+    @Nullable
     public Integer getCount300() {
         return count300;
     }
 
-    public void setCount300(Integer count300) {
+    public void setCount300(@Nullable Integer count300) {
         this.count300 = count300;
     }
 
+    @Nullable
     public Integer getCountGeki() {
         return countGeki;
     }
 
-    public void setCountGeki(Integer countGeki) {
+    public void setCountGeki(@Nullable Integer countGeki) {
         this.countGeki = countGeki;
     }
 
+    @Nullable
     public Integer getCountKatu() {
         return countKatu;
     }
 
-    public void setCountKatu(Integer countKatu) {
+    public void setCountKatu(@Nullable Integer countKatu) {
         this.countKatu = countKatu;
     }
 
+    @Nullable
     public Integer getCountMiss() {
         return countMiss;
     }
 
-    public void setCountMiss(Integer countMiss) {
+    public void setCountMiss(@Nullable Integer countMiss) {
         this.countMiss = countMiss;
     }
 
@@ -162,12 +174,12 @@ public class Statistics {
 
     public Integer getCountAll(OsuMode mode) {
         int countAll = 0;
-        int s_300 = getCount300();
-        int s_100 = getCount100();
-        int s_50 = getCount50();
-        int s_g = getCountGeki();
-        int s_k = getCountKatu();
-        int s_0 = getCountMiss();
+        int s_300 = Objects.nonNull(getCount300()) ? getCount300() : 0;
+        int s_100 = Objects.nonNull(getCount100()) ? getCount100() : 0;
+        int s_50 = Objects.nonNull(getCount50()) ? getCount50() : 0;
+        int s_g = Objects.nonNull(getCountGeki()) ? getCountGeki() : 0;
+        int s_k = Objects.nonNull(getCountKatu()) ? getCountKatu() : 0;
+        int s_0 = Objects.nonNull(getCountMiss()) ? getCountMiss() : 0;
 
         countAll = switch (mode) {
             case OSU -> s_300 + s_100 + s_50 + s_0;
