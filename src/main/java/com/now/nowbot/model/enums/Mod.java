@@ -95,38 +95,38 @@ public enum Mod {
 
     public static List<Mod> getModsList(String modsStr) {
         var modStrArray = getModsString(modsStr);
-        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).toList();
+        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
         check(mList);
         return mList;
     }
 
     public static List<Mod> getModsList(int mods) {
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
         check(mList);
         return mList;
     }
 
     public static List<String> getModsStrList(Integer mods) {
         if (Objects.isNull(mods)) return new ArrayList<>();
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
         check(mList);
         return mList.stream().map(Mod::getAbbreviation).toList();
     }
 
     public static String getModsStr(Integer mods) {
         if (Objects.isNull(mods)) return "";
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).toList();
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
         check(mList);
         return String.join("", mList.stream().map(Mod::getAbbreviation).toList());
     }
 
     public static int getModsValue(String modsStr) {
         var modStrArray = getModsString(modsStr);
-        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).toList();
+        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
     public static int getModsValue(String[] modsStr) {
-        var mList = Arrays.stream(modsStr).map(Mod::fromStr).filter(e -> e != Other).toList();
+        var mList = Arrays.stream(modsStr).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
 
@@ -154,7 +154,7 @@ public enum Mod {
     }
 
     public static int getModsValueFromStr(List<String> mList) {
-        return getModsValue(mList.stream().map(Mod::fromStr).toList());
+        return getModsValue(mList.stream().map(Mod::fromStr).distinct().toList());
     }
 
     public static int getModsValue(List<Mod> mList) {

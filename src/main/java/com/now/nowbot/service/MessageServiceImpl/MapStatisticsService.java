@@ -13,7 +13,6 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,8 +95,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         if (param.bid == 0) {
             try {
+                /*
                 var md = DataUtil.getMarkdownFile("Help/maps.md");
                 var image = imageService.getPanelA6(md, "help");
+                 */
+                var image = imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
                 from.sendImage(image);
                 return;
             } catch (Exception e) {
