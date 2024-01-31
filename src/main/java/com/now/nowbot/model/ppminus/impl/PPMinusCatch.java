@@ -5,6 +5,7 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
@@ -13,8 +14,8 @@ public class PPMinusCatch extends PPMinus {
         double [] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var bpiPP = bp.getWeight().getPP();
-            var bprPP = bp.getPP();
+            var bpiPP = Optional.ofNullable(bp.getWeight().getPP()).orElse(0f);
+            var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
             bpPP += bpiPP;
             bpPPs[i] = bprPP;
 

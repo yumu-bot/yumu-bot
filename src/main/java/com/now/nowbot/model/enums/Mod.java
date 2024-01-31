@@ -1,6 +1,6 @@
 package com.now.nowbot.model.enums;
 
-import com.now.nowbot.throwable.ModsCatchException;
+import com.now.nowbot.throwable.ModsException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,23 +133,26 @@ public enum Mod {
     private static String[] getModsString(String modsStr) {
         var newStr = modsStr.replaceAll("\\s+", "");
         if (newStr.length() % 2 != 0) {
-            throw ModsCatchException.Create.SiseException();
+            throw new ModsException(ModsException.Type.MOD_Receive_CharNotPaired);
         }
         return newStr.split("(?<=\\w)(?=(\\w{2})+$)");
     }
 
     private static void check(List<Mod> modList) {
         if (modList.contains(None) && modList.size() > 1) {
-            throw ModsCatchException.Create.ConflictException(None);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
         if (modList.contains(DoubleTime) && modList.contains(HalfTime)) {
-            throw ModsCatchException.Create.ConflictException(DoubleTime, HalfTime);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, DoubleTime.abbreviation + HalfTime.abbreviation);
         }
         if (modList.contains(HardRock) && modList.contains(Easy)) {
-            throw ModsCatchException.Create.ConflictException(HardRock, Easy);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, HardRock.abbreviation + Easy.abbreviation);
         }
         if (modList.contains(NoFail) && (modList.contains(SuddenDeath) || modList.contains(Perfect))) {
-            throw ModsCatchException.Create.ConflictException(NoFail, SuddenDeath, Perfect);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, NoFail.abbreviation + SuddenDeath.abbreviation + Perfect.abbreviation);
+        }
+        if (modList.contains(DoubleTime) && modList.contains(Nightcore)) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, DoubleTime.abbreviation + Nightcore.abbreviation);
         }
     }
 

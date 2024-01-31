@@ -6,6 +6,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ScoreLegacy {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -92,12 +93,12 @@ public class ScoreLegacy {
         play_time = score.getCreateTime().toString();
 
         var stat = score.getStatistics();
-        n_300 = Objects.nonNull(stat.getCount300()) ? stat.getCount300() : 0;
-        n_100 = Objects.nonNull(stat.getCount100()) ? stat.getCount100() : 0;
-        n_50 = Objects.nonNull(stat.getCount50()) ? stat.getCount50() : 0;
-        n_geki = Objects.nonNull(stat.getCountGeki()) ? stat.getCountGeki() : 0;
-        n_katu = Objects.nonNull(stat.getCountKatu()) ? stat.getCountKatu() : 0;
-        n_0 = Objects.nonNull(stat.getCountMiss()) ? stat.getCountMiss() : 0;
+        n_300 = Optional.ofNullable(stat.getCount300()).orElse(0);
+        n_100 = Optional.ofNullable(stat.getCount100()).orElse(0);
+        n_50 = Optional.ofNullable(stat.getCount50()).orElse(0);
+        n_geki = Optional.ofNullable(stat.getCountGeki()).orElse(0);
+        n_katu = Optional.ofNullable(stat.getCountKatu()).orElse(0);
+        n_0 = Optional.ofNullable(stat.getCountMiss()).orElse(0);
 
         if (!passed) rank = "F";
     }

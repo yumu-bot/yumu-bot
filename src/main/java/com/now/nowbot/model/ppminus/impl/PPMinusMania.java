@@ -5,6 +5,7 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
@@ -13,8 +14,8 @@ public class PPMinusMania extends PPMinus {
         double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var bpiPP = bp.getWeight().getPP();
-            var bprPP = bp.getPP();
+            var bpiPP = Optional.ofNullable(bp.getWeight().getPP()).orElse(0f);
+            var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
             bpPP += bpiPP;
             bpPPs[i] = bprPP;
 
@@ -27,21 +28,21 @@ public class PPMinusMania extends PPMinus {
                 case "D" -> xd++;
             }
             if (!bp.isPerfect()) notfc ++;
-            if(i < 10){
+            if (i < 10){
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
-                pgr0 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
+                pgr0 += 1.0f * Optional.ofNullable(bp.getStatistics().getCountGeki()).orElse(0) / Optional.ofNullable(bp.getStatistics().getCount300()).orElse(1);
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
-                pgr45 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
+                pgr45 += 1.0f * Optional.ofNullable(bp.getStatistics().getCountGeki()).orElse(0) / Optional.ofNullable(bp.getStatistics().getCount300()).orElse(1);
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
-                pgr90 += 1.0f * bp.getStatistics().getCountGeki() / bp.getStatistics().getCount300();
+                pgr90 += 1.0f * Optional.ofNullable(bp.getStatistics().getCountGeki()).orElse(0) / Optional.ofNullable(bp.getStatistics().getCount300()).orElse(1);
             }
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
@@ -103,7 +104,7 @@ public class PPMinusMania extends PPMinus {
         {
             double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
-            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+            double LPI = (pp > 1000) ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
 
             double BPD; // BP density BP密度
             if (rBPD == 0) {

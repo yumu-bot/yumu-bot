@@ -304,7 +304,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var bonusPP = DataUtil.getBonusPP(userPP, bpPPs);
 
         //bpPP + remainPP (bp100之后的) = rawPP
-        var bpPP = (float) bps.stream().mapToDouble(s -> s.getWeight().getPP()).sum();
+        var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeight().getPP()).orElse(0f)).sum();
         var rawPP = (float) (userPP - bonusPP);
 
         List<attr> modsAttr;

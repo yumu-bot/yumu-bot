@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
@@ -153,8 +154,8 @@ public class TestPPMService implements MessageService<Matcher> {
             double[] bpPPs = new double[bps.size()];
             for (int i = 0; i < bps.size(); i++) {
                 var bp = bps.get(i);
-                var bpiPP = bp.getWeight().getPP();
-                var bprPP = bp.getPP();
+                var bpiPP = Optional.ofNullable(bp.getWeight().getPP()).orElse(0f);
+                var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
                 bpPP += bpiPP;
                 bpPPs[i] = bprPP;
 

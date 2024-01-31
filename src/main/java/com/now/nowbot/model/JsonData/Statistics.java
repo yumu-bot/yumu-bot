@@ -9,7 +9,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.lang.Nullable;
 
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 注意,countxxx只有成绩相关的statustucs存在,而且不包含其他部分,别问为啥掺在一起,问就是ppysb
@@ -174,12 +174,12 @@ public class Statistics {
 
     public Integer getCountAll(OsuMode mode) {
         int countAll = 0;
-        int s_300 = Objects.nonNull(getCount300()) ? getCount300() : 0;
-        int s_100 = Objects.nonNull(getCount100()) ? getCount100() : 0;
-        int s_50 = Objects.nonNull(getCount50()) ? getCount50() : 0;
-        int s_g = Objects.nonNull(getCountGeki()) ? getCountGeki() : 0;
-        int s_k = Objects.nonNull(getCountKatu()) ? getCountKatu() : 0;
-        int s_0 = Objects.nonNull(getCountMiss()) ? getCountMiss() : 0;
+        int s_300 = Optional.ofNullable(getCount300()).orElse(0);
+        int s_100 = Optional.ofNullable(getCount100()).orElse(0);
+        int s_50 = Optional.ofNullable(getCount50()).orElse(0);
+        int s_g = Optional.ofNullable(getCountGeki()).orElse(0);
+        int s_k = Optional.ofNullable(getCountKatu()).orElse(0);
+        int s_0 = Optional.ofNullable(getCountMiss()).orElse(0);
 
         countAll = switch (mode) {
             case OSU -> s_300 + s_100 + s_50 + s_0;
