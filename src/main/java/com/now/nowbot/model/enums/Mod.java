@@ -143,16 +143,16 @@ public enum Mod {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
         if (modList.contains(DoubleTime) && modList.contains(HalfTime)) {
-            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, DoubleTime.abbreviation + HalfTime.abbreviation);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{HalfTime.abbreviation}");
         }
         if (modList.contains(HardRock) && modList.contains(Easy)) {
-            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, HardRock.abbreviation + Easy.abbreviation);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{HardRock.abbreviation} \{Easy.abbreviation}");
         }
         if (modList.contains(NoFail) && (modList.contains(SuddenDeath) || modList.contains(Perfect))) {
-            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, NoFail.abbreviation + SuddenDeath.abbreviation + Perfect.abbreviation);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{NoFail.abbreviation} \{SuddenDeath.abbreviation} \{Perfect.abbreviation}");
         }
         if (modList.contains(DoubleTime) && modList.contains(Nightcore)) {
-            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, DoubleTime.abbreviation + Nightcore.abbreviation);
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{Nightcore.abbreviation}");
         }
     }
 
