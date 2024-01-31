@@ -7,11 +7,10 @@ public class MapStatisticsException extends TipsException {
         M_Instructions("""
                 欢迎使用 Yumu Map 功能！食用方法：
                 !ymmap / !ymm [BID] (acc%) (comboX) (+mod)
-                BID：谱面编号。
+                BID：谱面编号。不输入默认获取玩家最近一次成绩（包括失败），并且以下所有参数均会替换成这次成绩的数据。
                 acc：准确率。不输入默认为 100%。
                 combo：连击。不输入默认为全连。
-                mod：模组。不输入默认为 no mod。
-                """),//参数_无参数
+                mod：模组。不输入默认为 no mod。"""),//参数_无参数
         M_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)。"),
         M_Me_NotFound("找不到你的玩家信息？"),
         M_Map_NotFound("找不到这张谱面，请检查。"),

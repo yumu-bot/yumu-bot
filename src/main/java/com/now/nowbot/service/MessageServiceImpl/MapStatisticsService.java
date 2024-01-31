@@ -10,6 +10,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
@@ -27,14 +28,17 @@ import java.util.Optional;
 @Service("MAP")
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
     private static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
+    OsuScoreApiService scoreApiService;
     OsuBeatmapApiService beatmapApiService;
     OsuUserApiService osuUserApiService;
     BindDao bindDao;
     ImageService imageService;
     @Autowired
-    public MapStatisticsService(OsuBeatmapApiService beatmapApiService, OsuUserApiService osuUserApiService, BindDao bindDao, ImageService imageService) {
+    public MapStatisticsService(OsuBeatmapApiService beatmapApiService, OsuUserApiService osuUserApiService,
+                                OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
         this.beatmapApiService = beatmapApiService;
         this.osuUserApiService = osuUserApiService;
+        this.scoreApiService = scoreApiService;
         this.bindDao = bindDao;
         this.imageService = imageService;
     }
@@ -93,74 +97,12 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
     public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
         var from = event.getSubject();
 
-        if (param.bid == 0) {
-            try {
-                /*
-                var md = DataUtil.getMarkdownFile("Help/maps.md");
-                var image = imageService.getPanelA6(md, "help");
-                 */
-                var image = imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
-                from.sendImage(image);
-                return;
-            } catch (Exception e) {
-                throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
-            }
-        }
-
-        var beatMap = new BeatMap();
-
-        try {
-            beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-        } catch (WebClientResponseException.NotFound e) {
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
-        } catch (Exception e) {
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
-        }
-
-        // 标准化 acc 和 combo
+        BeatMap beatMap;
         int combo;
         double acc;
         OsuMode mode;
 
-        {
-            Integer maxCombo = beatMap.getMaxCombo();
-
-            if (Objects.isNull(maxCombo)) {
-                combo = (int) Math.round(param.combo);
-            } else if (param.combo > 0 && param.combo <= 1) {
-                combo = Math.toIntExact(Math.round(maxCombo * param.combo));
-            } else if (param.combo > 1) {
-                combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
-            } else {
-                throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_ComboError);
-            }
-        }
-
-        {
-            if (param.accuracy > 0 && param.accuracy <= 1) {
-                acc = param.accuracy;
-            } else if (param.accuracy > 1 && param.accuracy <= 100) {
-                acc = param.accuracy / 100d;
-            } else if (param.accuracy > 100 && param.accuracy <= 10000) {
-                acc = param.accuracy / 10000d;
-            } else {
-                throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_AccuracyError);
-            }
-        }
-
-        //只有转谱才能赋予游戏模式
-        {
-            if (! (param.osuMode.equals(OsuMode.DEFAULT)) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
-                mode = param.osuMode;
-            } else {
-                mode = OsuMode.getMode(beatMap.getMode());
-            }
-        }
-
-        List<String> mods = null;
-        if (Objects.nonNull(param.modStr)) {
-            mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
-        }
+        Expected expected;
 
         BinUser binUser;
         Optional<OsuUser> osuUser;
@@ -169,27 +111,94 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         try {
             binUser = bindDao.getUserFromQQ(qq);
             try {
-                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser, mode));
+                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser, binUser.getMode()));
             } catch (WebClientResponseException e) {
                 osuUser = Optional.empty();
-                /*
-                osuUser = new OsuUser();
-                osuUser.setBot(true);
-                osuUser.setUsername("YumuBot");
-
-                 */
-                //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_NotFound);
             }
         } catch (BindException e) {
             //传null过去，让面板生成一个默认的 card A1
             osuUser = Optional.empty();
-            //throw new MapStatisticsException(MapStatisticsException.Type.M_Me_TokenExpired);
         } catch (Exception e) {
             log.error("M：", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
 
-        var expected = new Expected(mode, acc, combo, param.miss, mods);
+        //没有bid，且有绑定
+        if (param.bid == 0 && osuUser.isPresent()) {
+
+            try {
+                var score = scoreApiService.getRecentIncludingFail(osuUser.get().getUID(), osuUser.get().getOsuMode(), 0,1).getFirst();
+                beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                expected = new Expected(score.getMode(), score.getAccuracy(), score.getMaxCombo(), score.getStatistics().getCountMiss(), score.getMods());
+
+            } catch (Exception e) {
+                try {
+                /*
+                var md = DataUtil.getMarkdownFile("Help/maps.md");
+                var image = imageService.getPanelA6(md, "help");
+                 */
+                    var image = imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
+                    from.sendImage(image);
+                    return;
+                } catch (Exception e1) {
+                    throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
+                }
+            }
+
+        } else {
+            try {
+                beatMap = beatmapApiService.getBeatMapInfo(param.bid);
+            } catch (WebClientResponseException.NotFound e) {
+                throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
+            } catch (Exception e) {
+                throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
+            }
+
+
+            // 标准化 acc 和 combo
+
+            {
+                Integer maxCombo = beatMap.getMaxCombo();
+
+                if (Objects.isNull(maxCombo)) {
+                    combo = (int) Math.round(param.combo);
+                } else if (param.combo > 0 && param.combo <= 1) {
+                    combo = Math.toIntExact(Math.round(maxCombo * param.combo));
+                } else if (param.combo > 1) {
+                    combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
+                } else {
+                    throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_ComboError);
+                }
+            }
+
+            {
+                if (param.accuracy > 0 && param.accuracy <= 1) {
+                    acc = param.accuracy;
+                } else if (param.accuracy > 1 && param.accuracy <= 100) {
+                    acc = param.accuracy / 100d;
+                } else if (param.accuracy > 100 && param.accuracy <= 10000) {
+                    acc = param.accuracy / 10000d;
+                } else {
+                    throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_AccuracyError);
+                }
+            }
+
+            //只有转谱才能赋予游戏模式
+            {
+                if (! (param.osuMode.equals(OsuMode.DEFAULT)) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
+                    mode = param.osuMode;
+                } else {
+                    mode = OsuMode.getMode(beatMap.getMode());
+                }
+            }
+
+            List<String> mods = null;
+            if (Objects.nonNull(param.modStr)) {
+                mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
+            }
+
+            expected = new Expected(mode, acc, combo, param.miss, mods);
+        }
 
         try {
             var image = imageService.getPanelE2(osuUser, beatMap, expected);
