@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-@Service("MURATING")
+@Service("MU_RATING")
 public class MuRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
 

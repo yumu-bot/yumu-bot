@@ -22,8 +22,10 @@ import java.util.List;
 import java.util.function.Function;
 
 
-@Service("LEVER_TEST")
-public class LeverTestService implements MessageService<BinUser> {
+@Service("TEST_LEVEL")
+public class TestLevelService implements MessageService<BinUser> {
+
+    //意思你要做 PPM4 ？
     @Resource
     BindDao            bindDao;
     @Resource

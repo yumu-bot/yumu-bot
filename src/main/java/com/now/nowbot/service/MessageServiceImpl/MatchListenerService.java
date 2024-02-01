@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@Service("MATCHLISTENER")
+@Service("MATCH_LISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 

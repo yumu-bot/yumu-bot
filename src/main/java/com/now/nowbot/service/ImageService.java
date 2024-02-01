@@ -29,7 +29,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service("NOWBOTIMAGE")
+@Service("NOWBOT_IMAGE")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     RestTemplate restTemplate;

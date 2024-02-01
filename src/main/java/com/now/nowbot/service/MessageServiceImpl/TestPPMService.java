@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
-@Service("TESTPPM")
+@Service("TEST_PPM")
 public class TestPPMService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(TestPPMService.class);
     private final OsuUserApiService userApiService;

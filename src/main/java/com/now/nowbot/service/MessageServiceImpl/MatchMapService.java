@@ -19,7 +19,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.util.List;
 import java.util.Objects;
 
-@Service("MATCHMAP")
+@Service("MATCH_MAP")
 public class MatchMapService implements MessageService<MatchMapService.MatchMapParam> {
     static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
 

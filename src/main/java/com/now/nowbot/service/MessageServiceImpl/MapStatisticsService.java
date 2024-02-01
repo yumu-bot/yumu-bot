@@ -131,7 +131,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
                 beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
                 expected = new Expected(score.getMode(), score.getAccuracy(), score.getMaxCombo(), score.getStatistics().getCountMiss(), score.getMods());
 
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 try {
                 /*
                 var md = DataUtil.getMarkdownFile("Help/maps.md");
@@ -140,7 +140,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
                     var image = imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
                     from.sendImage(image);
                     return;
-                } catch (Exception e1) {
+                } catch (Exception e) {
                     throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
                 }
             }
@@ -148,9 +148,10 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         } else {
             try {
                 beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-            } catch (WebClientResponseException.NotFound e) {
+            } catch (WebClientResponseException e) {
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
             } catch (Exception e) {
+                log.error("", e);
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
             }
 

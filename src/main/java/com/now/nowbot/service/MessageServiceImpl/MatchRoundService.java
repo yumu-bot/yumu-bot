@@ -102,8 +102,10 @@ public class MatchRoundService implements MessageService<Matcher> {
                 throw new MatchRoundException(MatchRoundException.Type.MR_Round_RangeError);
             }
         }
+
+        var image = getDataImage(matchID, round, keyword);
+
         try {
-            var image = getDataImage(matchID, round, keyword);
             from.sendImage(image);
         } catch (Exception e) {
             log.error("MR 数据请求失败", e);
@@ -111,7 +113,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
     }
 
-    public byte[] getDataImage (int matchID, int index, @Nullable String keyword) throws MatchRoundException {
+    public byte[] getDataImage(int matchID, int index, @Nullable String keyword) throws MatchRoundException {
         boolean hasKeyword = (keyword != null && !keyword.isEmpty() && !keyword.isBlank());
 
         Match match;
