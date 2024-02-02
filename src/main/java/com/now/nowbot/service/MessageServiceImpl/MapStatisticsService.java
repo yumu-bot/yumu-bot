@@ -66,19 +66,19 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         try {
             bid = Long.parseLong(matcher.group("bid"));
         } catch (RuntimeException e) {
-            bid = 0;
+            bid = 0L;
         }
 
         try {
             accuracy = Double.parseDouble(matcher.group("accuracy"));
         } catch (RuntimeException e) {
-            accuracy = 1;
+            accuracy = 1d;
         }
 
         try {
             combo = Double.parseDouble(matcher.group("combo"));
         } catch (RuntimeException e) {
-            combo = 1;
+            combo = 1d;
         }
 
         try {
@@ -119,7 +119,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             //传null过去，让面板生成一个默认的 card A1
             osuUser = Optional.empty();
         } catch (Exception e) {
-            log.error("M：", e);
+            log.error("谱面信息：无法生成空对象", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
 
@@ -151,7 +151,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             } catch (WebClientResponseException e) {
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
             } catch (Exception e) {
-                log.error("", e);
+                log.error("谱面信息：谱面获取失败", e);
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
             }
 
@@ -163,9 +163,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
                 if (Objects.isNull(maxCombo)) {
                     combo = (int) Math.round(param.combo);
-                } else if (param.combo > 0 && param.combo <= 1) {
+                } else if (param.combo > 0D && param.combo < 1D) {
                     combo = Math.toIntExact(Math.round(maxCombo * param.combo));
-                } else if (param.combo > 1) {
+                } else if (param.combo == 1D) {
+                    combo = maxCombo;
+                } else if (param.combo > 1D) {
                     combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
                 } else {
                     throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_ComboError);
@@ -173,11 +175,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             }
 
             {
-                if (param.accuracy > 0 && param.accuracy <= 1) {
+                if (param.accuracy > 0D && param.accuracy <= 1D) {
                     acc = param.accuracy;
-                } else if (param.accuracy > 1 && param.accuracy <= 100) {
+                } else if (param.accuracy > 1D && param.accuracy <= 100D) {
                     acc = param.accuracy / 100d;
-                } else if (param.accuracy > 100 && param.accuracy <= 10000) {
+                } else if (param.accuracy > 100D && param.accuracy <= 10000D) {
                     acc = param.accuracy / 10000d;
                 } else {
                     throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_AccuracyError);
@@ -205,7 +207,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             var image = imageService.getPanelE2(osuUser, beatMap, expected);
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("Map 发送失败: ", e);
+            log.error("谱面信息：发送失败", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
         }
     }
