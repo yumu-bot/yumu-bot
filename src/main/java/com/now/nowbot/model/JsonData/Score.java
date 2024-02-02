@@ -147,7 +147,7 @@ public class Score {
         if (Objects.nonNull(pp)) {
             return pp;
         } else {
-            if (Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
+            if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
                 return weight.pp / (weight.percentage / 100f);
             } else {
                 return 0f;
