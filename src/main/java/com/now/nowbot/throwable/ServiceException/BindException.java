@@ -13,7 +13,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Receive_Refused("已取消绑定授权。OwOb"),
 
 
-        BIND_Question_BindRetreat("你要绑定我吗？回复 OK 确认。"),
+        BIND_Question_BindRetreat("你要绑定吗？回复 OK 确认。"),
         BIND_Question_BindByName("""
                 不推荐使用直接绑定用户名的方法。请直接发送 !ymbind 绑定，并且不带任何参数。
                 如果您执意使用, 请回答:

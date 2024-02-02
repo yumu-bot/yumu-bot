@@ -125,9 +125,10 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         //没有bid，且有绑定
         if (param.bid == 0 && osuUser.isPresent()) {
+            var o = osuUser.get();
 
             try {
-                var score = scoreApiService.getRecentIncludingFail(osuUser.get().getUID(), osuUser.get().getOsuMode(), 0,1).getFirst();
+                var score = scoreApiService.getRecentIncludingFail(o.getUID(), o.getOsuMode(), 0,1).getFirst();
                 beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
                 expected = new Expected(score.getMode(), score.getAccuracy(), score.getMaxCombo(), score.getStatistics().getCountMiss(), score.getMods());
 
