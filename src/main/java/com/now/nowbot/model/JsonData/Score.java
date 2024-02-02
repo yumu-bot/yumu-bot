@@ -16,7 +16,7 @@ import java.util.Objects;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
     static final DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-//    @JsonProperty("statistics")
+    //    @JsonProperty("statistics")
     Double accuracy;
     @JsonProperty("best_id")
     Long bestId;
@@ -146,13 +146,14 @@ public class Score {
     public Float getPP() {
         if (Objects.nonNull(pp)) {
             return pp;
-        } else {
-            if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
-                return weight.pp / (weight.percentage / 100f);
-            } else {
-                return 0f;
-            }
         }
+
+        // PPY PP 有时候是 null
+        if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
+            return weight.pp / (weight.percentage / 100f);
+        }
+
+        return 0f;
     }
 
     public void setPP(Float pp) {

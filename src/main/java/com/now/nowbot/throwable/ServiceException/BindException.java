@@ -4,19 +4,20 @@ import com.now.nowbot.throwable.TipsRuntimeException;
 
 public class BindException extends TipsRuntimeException{
     public enum Type {
+        BIND_UnBind_Successes("%s 已成功解绑。TuT"),
         BIND_UnBind_Success("您已成功解绑。TuT"),
         BIND_UnBind_Failed("解绑失败！请重试。OwOb"),
         BIND_UnBind_Null("请输入要解绑的对象。"),
-
         BIND_Receive_NoName("你叫啥名呀？告诉我吧。"),
         BIND_Receive_Overtime("绑定超时！请重试。OwOb"),
         BIND_Receive_Refused("已取消绑定授权。OwOb"),
 
+
+        BIND_Question_BindRetreat("你要绑定我吗？回复 OK 确认。"),
         BIND_Question_BindByName("""
                 不推荐使用直接绑定用户名的方法。请直接发送 !ymbind 绑定，并且不带任何参数。
                 如果您执意使用, 请回答:
-                设随机变量 X 与 Y 相互独立，且服从 U(0,1), 则 P(X+Y<1) 为？
-                """),
+                设随机变量 X 与 Y 相互独立，且服从 U(0,1), 则 P(X+Y<1) 为？"""),
 
         BIND_Question_Wrong("回答错误。"),
         BIND_Question_Overtime("回答超时，撤回绑定请求。"),
@@ -24,8 +25,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Progress_Binding("正在将 %s 绑定到 (%s) %s 上"),
         BIND_Progress_BindingRecoverInfo("""
                 您已绑定 (%s) %s。
-                如果要改绑，请回复 OK。
-                """),
+                如果要改绑，请回复 OK。"""),
         BIND_Progress_BindingRecover("正在将 %s 绑定在 QQ %s 上，是否覆盖？回复 OK 生效。"),
 
         BIND_Me_NotBind("您还从未绑定过呢，请授权。(!ymbind)"),

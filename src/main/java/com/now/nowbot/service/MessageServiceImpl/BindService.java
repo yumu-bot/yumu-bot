@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
@@ -25,10 +26,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 
 @Service("BIND")
-public class BindService implements MessageService<Matcher> {
+public class BindService implements MessageService<BindService.BindParam> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
@@ -45,70 +45,94 @@ public class BindService implements MessageService<Matcher> {
         this.taskExecutor = taskExecutor;
     }
 
+    // full: 全绑定，只有 bot 开发可以这样做
+    public record BindParam(Long qq, String name, boolean at, boolean unbind, boolean isSuper, boolean isFull) {}
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BindParam> data) throws Throwable {
         var m = Instructions.BIND.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else {
-            return false;
+        if (!m.find()) return false;
+
+        //!bind 给个提示
+        if (Objects.isNull(m.group("ym")) &&
+                (Objects.isNull(m.group("ub")) || Objects.isNull(m.group("bi")) || Objects.isNull(m.group("un")))) {
+            var from = event.getSubject();
+            var receipt = from.sendMessage(BindException.Type.BIND_Question_BindRetreat.message);
+
+            var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
+            event = lock.get();
+
+            if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
+                from.recall(receipt);
+                return false;
+            }
         }
+
+        var me = event.getSender().getId();
+
+        var qq = m.group("qq");
+        var name = m.group("name");
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        boolean unbind = Objects.nonNull(m.group("un")) || Objects.nonNull(m.group("ub"));
+        boolean isSuper = Permission.isSuper(me);
+        boolean isFull = Objects.nonNull(m.group("full"));
+
+        if (Objects.nonNull(at)) {
+            data.setValue(new BindParam(at.getTarget(), null, true, unbind, isSuper, isFull));
+            return true;
+        }
+
+        if (Objects.nonNull(qq) && Strings.isNotBlank(qq) && ! qq.trim().equals("0")) {
+            data.setValue(new BindParam(Long.parseLong(qq), name, false, unbind, isSuper, isFull));
+            return true;
+        }
+
+        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
+            data.setValue(new BindParam(null, name, false, unbind, isSuper, isFull));
+            return true;
+        }
+
+        data.setValue(new BindParam(me, null, false, unbind, isSuper, isFull));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-        boolean isSuper = Permission.isSuper(event.getSender().getId());
+    public void HandleMessage(MessageEvent event, BindParam param) throws Throwable {
+        var me = event.getSender().getId();
 
-        //超级管理员的专属权利
-        if (isSuper) {
-            var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-            var qqStr = matcher.group("qq");
+        //解绑自己的权限下放。这个不应该是超级管理员的专属权利。
+        if (param.unbind && me == param.qq) {
+            unbindQQ(me);
+            return;
+        }
 
-            if (Objects.nonNull(matcher.group("un"))){
-                if (at != null) {
-                    unbindQQ(at.getTarget());
-                    return;
-                } else if (qqStr != null && Long.parseLong(qqStr) > 0L) {
-                    unbindQQ(Long.parseLong(qqStr));
-                    return;
-                } else {
-                    unbindQQ(event.getSender().getId());
-                    return;
-                }
-            } else if (Objects.nonNull(at)) {
-                bindQQAt(event, at.getTarget());
+        if (Objects.nonNull(param.name)) {
+            bindQQName(event, param.name, param.qq);
+            return;
+        }
+
+        //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
+        if (param.isSuper) {
+            if (param.at) {
+                bindQQAt(event, param.qq);
+                return;
+            }
+            if (param.unbind) {
+                unbindQQ(param.qq);
                 return;
             }
         }
 
-        //绑定权限下放。这个不应该是超级管理员的专属权利。
-        if (Objects.nonNull(matcher.group("un"))) {
-            unbindQQ(event.getSender().getId());
-            return;
-        }
+        bindQQ(event, me, param.isFull);
+    }
 
-        var name = matcher.group("name");
-        if (Objects.nonNull(name)) {
-            bindQQName(event, name, event.getSender().getId());
-            return;
-        }
-        //将当前毫秒时间戳作为 key
-        long timeMillis = System.currentTimeMillis();
-
+    //默认绑定路径
+    private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
+        var from = event.getSubject();
         BinUser binUser;
 
-        /*
-        //验证是否已绑定
-        try {
-            binUser = bindDao.getUserFromQQ(event.getSender().getId());
-        } catch (BindException ignore) {
-            // do nothing
-        }
-        */
-
-        var qqLiteFromQQ = bindDao.getQQLiteFromQQ(event.getSender().getId());
+        //检查是否已经绑定
+        var qqLiteFromQQ = bindDao.getQQLiteFromQQ(qq);
         QQBindLite qqBindLite;
         if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
             binUser = qqBindLite.getBinUser();
@@ -131,17 +155,19 @@ public class BindService implements MessageService<Matcher> {
             } catch (WebClientResponseException.Unauthorized | BindException e) {
                 throw e;
             } catch (Exception ignored) {
-                //如果符合，直接允许绑定
+                // 如果符合，直接允许绑定
             }
         }
 
         // 需要绑定
-        String state = STR."\{event.getSender().getId()}+\{timeMillis}";
+        // 将当前毫秒时间戳作为 key
+        long timeMillis = System.currentTimeMillis();
+        String state = STR."\{qq}+\{timeMillis}";
 
-        //将消息回执作为 value
-        state = userApiService.getOauthUrl(state, Objects.nonNull(matcher.group("full")));
+        // 将消息回执作为 value
+        state = userApiService.getOauthUrl(state, isFull);
         var send = new MessageChain.MessageChainBuilder()
-                .addAt(event.getSender().getId())
+                .addAt(qq)
                 .addText("\n")
                 .addText(state)
                 .build();
@@ -152,20 +178,19 @@ public class BindService implements MessageService<Matcher> {
 
             from.recallIn(receipt, 110 * 1000);
             //此处在 controller.msgController 处理
-            putBind(timeMillis, new Bind(timeMillis, receipt, event.getSender().getId()));
+            putBind(timeMillis, new Bind(timeMillis, receipt, qq));
         }
-
     }
 
-    private void unbindQQ(Long qqId) throws BindException {
-        if (qqId == null) throw new BindException(BindException.Type.BIND_Player_NoQQ);
-        var bind = bindDao.getQQLiteFromQQ(qqId);
+    private void unbindQQ(Long qq) throws BindException {
+        if (Objects.isNull(qq)) throw new BindException(BindException.Type.BIND_Player_NoQQ);
+        var bind = bindDao.getQQLiteFromQQ(qq);
         if (bind.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Player_NoBind);
         }
 
         if (bindDao.unBindQQ(bind.get().getBinUser())) {
-            throw new BindException(BindException.Type.BIND_UnBind_Success);
+            throw new BindException(BindException.Type.BIND_UnBind_Successes, qq);
         } else {
             throw new BindException(BindException.Type.BIND_UnBind_Failed);
         }
@@ -174,11 +199,11 @@ public class BindService implements MessageService<Matcher> {
     private void bindQQAt(MessageEvent event, long qq) {
         // 只有管理才有权力@人绑定,提示就不改了
         var from = event.getSubject();
-
         from.sendMessage(BindException.Type.BIND_Receive_NoName.message);
 
         var lock = ASyncMessageUtil.getLock(event);
-        var s = lock.get();//阻塞,注意超时判空
+        var s = lock.get();
+
         if (Objects.isNull(s)) {
             throw new BindException(BindException.Type.BIND_Receive_Overtime);
         }
