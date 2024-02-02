@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -143,8 +144,15 @@ public class Score {
     }
 
     public Float getPP() {
-        if (pp == null) return 0f;
-        return pp;
+        if (Objects.nonNull(pp)) {
+            return pp;
+        } else {
+            if (Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
+                return weight.pp / (weight.percentage / 100f);
+            } else {
+                return 0f;
+            }
+        }
     }
 
     public void setPP(Float pp) {
@@ -252,37 +260,12 @@ public class Score {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Weight{");
-            sb.append("percentage=").append(percentage);
-            sb.append(", pp=").append(pp);
-            sb.append('}');
-            return sb.toString();
+            return STR."Weight{percentage=\{percentage}, pp=\{pp}\{'}'}";
         }
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Score{");
-        sb.append("accuracy=").append(accuracy);
-        sb.append(", bestId=").append(bestId);
-        sb.append(", maxCombo=").append(maxCombo);
-        sb.append(", userId=").append(userId);
-        sb.append(", createTime='").append(createTime).append('\'');
-        sb.append(", scoreId=").append(scoreId);
-        sb.append(", mode=").append(mode);
-        sb.append(", modeInt=").append(modeInt);
-        sb.append(", mods=").append(mods);
-        sb.append(", passed=").append(passed);
-        sb.append(", perfect=").append(perfect);
-        sb.append(", pp=").append(pp);
-        sb.append(", rank='").append(rank).append('\'');
-        sb.append(", replay=").append(replay);
-        sb.append(", score=").append(score);
-        sb.append(", statistics=").append(statistics);
-        sb.append(", beatMap=").append(beatMap);
-        sb.append(", beatMapSet=").append(beatMapSet);
-        sb.append(", user=").append(user);
-        sb.append('}');
-        return sb.toString();
+        return STR."Score{accuracy=\{accuracy}, bestId=\{bestId}, maxCombo=\{maxCombo}, userId=\{userId}, createTime='\{createTime}\{'\''}, scoreId=\{scoreId}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, pp=\{pp}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
     }
 }
