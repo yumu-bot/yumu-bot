@@ -54,8 +54,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         if (!m.find()) return false;
 
         //!bind 给个提示
-        if (Objects.isNull(m.group("ym")) &&
-                (Objects.isNull(m.group("ub")) || Objects.isNull(m.group("bi")) || Objects.isNull(m.group("un")))) {
+        if (Objects.isNull(m.group("ym")) && Objects.nonNull(m.group("bind"))) {
             var from = event.getSubject();
             var receipt = from.sendMessage(BindException.Type.BIND_Question_BindRetreat.message);
 
