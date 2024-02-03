@@ -64,6 +64,8 @@ public class BindService implements MessageService<BindService.BindParam> {
             if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
                 from.recall(receipt);
                 return false;
+            } else {
+                from.recall(receipt);
             }
         }
 
