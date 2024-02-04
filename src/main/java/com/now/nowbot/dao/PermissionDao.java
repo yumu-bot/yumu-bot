@@ -13,39 +13,39 @@ import java.util.List;
 @Component
 public class PermissionDao {
     @Resource
-    PermissionMapper permMapper;
+    PermissionMapper permissionMapper;
     @Resource
     QQIDMapper qqMapper;
 
     public List<Long> getQQList(String service, PermissionType type){
-        var perm = permMapper.getByServiceAndType(service, type);
+        var perm = permissionMapper.getByServiceAndType(service, type);
         if(perm == null){
-            perm = permMapper.save(new PermissionLite(service, type));
+            perm = permissionMapper.save(new PermissionLite(service, type));
         }
         return qqMapper.getByPermissionId(perm.getId()).stream().map(QQID::getQQ).toList();
     }
     public void addGroup(String service, PermissionType type, Long id){
-        Long pid = permMapper.getId(service, type);
+        Long pid = permissionMapper.getId(service, type);
         var data = new QQID();
         data.setGroup(true);
         data.setPermissionId(pid);
         data.setQQ(id);
         qqMapper.saveAndFlush(data);
     }
-    public void delGroup(String service, PermissionType type, Long id){
-        Long pid = permMapper.getId(service, type);
+    public void deleteGroup(String service, PermissionType type, Long id){
+        Long pid = permissionMapper.getId(service, type);
         qqMapper.deleteQQIDByPermissionIdAndIsGroupAndQQ(pid,true,id);
     }
-    public void addFriend(String service, PermissionType type, Long id){
-        Long pid = permMapper.getId(service, type);
+    public void addUser(String service, PermissionType type, Long id){
+        Long pid = permissionMapper.getId(service, type);
         var data = new QQID();
         data.setGroup(false);
         data.setPermissionId(pid);
         data.setQQ(id);
         qqMapper.saveAndFlush(data);
     }
-    public void delFriend(String service, PermissionType type, Long id){
-        Long pid = permMapper.getId(service, type);
+    public void deleteUser(String service, PermissionType type, Long id){
+        Long pid = permissionMapper.getId(service, type);
         qqMapper.deleteQQIDByPermissionIdAndIsGroupAndQQ(pid,false,id);
     }
 }

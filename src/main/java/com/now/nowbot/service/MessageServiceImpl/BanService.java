@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.config.PermissionParam;
 import com.now.nowbot.model.Service.BanParam;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
-import java.util.Set;
 
 @Service("BAN")
 public class BanService implements MessageService<BanParam> {
@@ -72,58 +72,54 @@ public class BanService implements MessageService<BanParam> {
         var from = event.getSubject();
 
         switch (param.operate()) {
-            case "list", "l" -> SendImage(event, Permission.getAllW().getGroupList(), "白名单包含：");
-            case "blacklist", "k" -> SendImage(event, Permission.getAllB().getGroupList(), "黑名单包含：");
+            case "list", "whitelist", "l", "w" ->
+                    SendImage(event, Permission.getWhiteList(), "白名单包含：");
+            case "banlist", "blacklist", "k" ->
+                    SendImage(event, Permission.getBlackList(), "黑名单包含：");
             case "add", "a" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    var add = permission.addUser(param.qq(), true);
                     if (add) {
                         from.sendMessage("成功添加用户进白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
-                    throw new TipsException("群组功能还在制作中");
-                    /*
-                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    //throw new TipsException("群组功能还在制作中");
+                    var add = permission.addGroup(param.qq(), true, true);
                     if (add) {
                         from.sendMessage("成功添加群组");
                     }
-                     */
                 } else {
                     throw new TipsException("add 操作必须输入 qq！\n格式：!sp add qq=114514 / group=1919810");
                 }
             }
             case "remove", "r" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var remove = permission.removeUser4PermissionGroup(param.qq(), true);
+                    var remove = permission.removeUser(param.qq(), true);
                     if (remove) {
                         from.sendMessage("成功移除用户出白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
-                    throw new TipsException("群组功能还在制作中");
-                    /*
-                    var add = permission.addUser2PerMissionGroup(param.qq(), false);
+                    //throw new TipsException("群组功能还在制作中");
+                    var add = permission.removeGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功添加群组");
+                        from.sendMessage("成功移除群组");
                     }
-                     */
                 } else {
                     throw new TipsException("remove 操作必须输入 qq！\n格式：!sp remove qq=114514 / group=1919810");
                 }
             }
             case "ban", "b" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.addUser2FriendGroup(param.qq());
+                    var add = permission.addUser(param.qq(), false);
                     if (add) {
                         from.sendMessage("成功拉黑用户");
                     }
                 } else if (Objects.nonNull(param.qq())) {
-                    throw new TipsException("群组功能还在制作中");
-                    /*
-                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    //throw new TipsException("群组功能还在制作中");
+                    var add = permission.addGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功添加群组");
+                        from.sendMessage("成功拉黑群组");
                     }
-                     */
                 } else {
                     //ban 玩家名也可以吧？
                     throw new TipsException("ban 操作必须输入 qq！\n格式：!sp ban qq=114514 / group=1919810");
@@ -131,18 +127,16 @@ public class BanService implements MessageService<BanParam> {
             }
             case "unban", "u" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.removeUser4PermissionGroup(param.qq(), true);
+                    var add = permission.removeUser(param.qq(), false);
                     if (add) {
                         from.sendMessage("成功恢复用户");
                     }
                 } else if (Objects.nonNull(param.qq())) {
-                    throw new TipsException("群组功能还在制作中");
-                    /*
-                    var add = permission.addUser2PerMissionGroup(param.qq(), true, false);
+                    //throw new TipsException("群组功能还在制作中");
+                    var add = permission.removeGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功添加群组");
+                        from.sendMessage("成功恢复群组");
                     }
-                     */
                 } else {
                     //ban 玩家名也可以吧？
                     throw new TipsException("unban 操作必须输入 qq！\n格式：!sp unban qq=114514 / group=1919810");
@@ -153,9 +147,20 @@ public class BanService implements MessageService<BanParam> {
         }
     }
 
-    private void SendImage(MessageEvent event, Set<Long> groups, String introduction) {
+    private void SendImage(MessageEvent event, PermissionParam param, String info) {
         var from = event.getSubject();
-        StringBuilder sb = new StringBuilder(introduction + "\n");
+        var users = param.getUserList();
+        var groups = param.getGroupList();
+
+
+        StringBuilder sb = new StringBuilder(STR."\{info}\nqq:");
+
+        for (Long qq : users) {
+            sb.append(qq).append("\n");
+        }
+
+        sb.append("group:").append('\n');
+
         for (Long qq : groups) {
             sb.append(qq).append("\n");
         }

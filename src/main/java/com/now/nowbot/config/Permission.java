@@ -46,10 +46,10 @@ public class Permission {
     }
 
     //全局名单
-    private static PermissionData ALL_W;
-    private static PermissionData ALL_B;
+    private static PermissionParam WHITELIST;
+    private static PermissionParam BLACKLIST;
     //service名单
-    private static final Map<String, PermissionData> PERMISSIONS = new ConcurrentHashMap<>();
+    private static final Map<String, PermissionParam> PERMISSIONS = new ConcurrentHashMap<>();
 
     private static ArrayList<String> ALL_SERVICE = null;
     private static CopyOnWriteArraySet<String> OFF_SERVICE = null;
@@ -57,20 +57,22 @@ public class Permission {
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
         assert permissionDao != null;
-        var AllFw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
-        var AllGw = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
-        ALL_W = new PermissionData(new HashSet<>(AllFw), new HashSet<>(AllGw));
-        ALL_W.setWhite(true);
-        var AllFb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
-        var AllGb = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
-        ALL_B = new PermissionData(new HashSet<>(AllFb), new HashSet<>(AllGb));
-        ALL_B.setWhite(false);
+
+        var whiteUserList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
+        var whiteGroupList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
+        WHITELIST = new PermissionParam(new HashSet<>(whiteUserList), new HashSet<>(whiteGroupList));
+        WHITELIST.setWhite(true);
+
+        var blackUserList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
+        var blackGroupList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
+        BLACKLIST = new PermissionParam(new HashSet<>(blackUserList), new HashSet<>(blackGroupList));
+        BLACKLIST.setWhite(false);
+
         OFF_SERVICE = new CopyOnWriteArraySet<>();
         //初始化功能关闭菜单
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
 
         //初始化各功能名单
-
         var beans = applicationContext.getBeansOfType(MessageService.class);
         Map<String, Integer> sortServiceMap = new HashMap<>();
         beans.forEach((name, bean) -> {
@@ -107,17 +109,17 @@ public class Permission {
             //如果包含权限注解 则初始化权限列表
             if ($beansCheck != null) {
                 if ($beansCheck.isSuperAdmin()) {
-                    var obj = new PermissionData(true);
+                    var obj = new PermissionParam(true);
                     Permission.PERMISSIONS.put(name, obj);
                 } else {
-                    Set<Long> friend = null;
+                    Set<Long> user = null;
                     Set<Long> group = null;
                     // 存放好友名单
                     if ($beansCheck.friend()) {
                         if ($beansCheck.isWhite()) {
-                            friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
+                            user = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
                         } else {
-                            friend = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
+                            user = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
                         }
                     }
                     // 存放群组名单
@@ -129,8 +131,8 @@ public class Permission {
                         }
                     }
                     //写入存储对象
-                    var obj = new PermissionData(friend, group);
-                    obj.setSupper($beansCheck.userSet());
+                    var obj = new PermissionParam(user, group);
+                    obj.setAdministrator($beansCheck.userSet());
                     obj.setWhite($beansCheck.isWhite());
                     Permission.PERMISSIONS.put(name, obj);
                 }
@@ -154,17 +156,25 @@ public class Permission {
     public Set<String> list() {
         Set<String> out = new HashSet<>();
         PERMISSIONS.forEach((name, perm) -> {
-            if (perm.isSupper()) {
-                out.add(perm.getMsg(name));
+            if (perm.isAdministrator()) {
+                out.add(perm.getMessage(name));
             }
         });
         return out;
     }
 
-    public boolean containsGroup(String sName, Long id) {
+    public static PermissionParam getWhiteList() {
+        return WHITELIST;
+    }
+
+    public static PermissionParam getBlackList() {
+        return BLACKLIST;
+    }
+
+    public boolean hasGroup(String name, Long id) {
         //不存在该名单默认为无限制
-        if (!PERMISSIONS.containsKey(sName)) return true;
-        var p = PERMISSIONS.get(sName);
+        if (!PERMISSIONS.containsKey(name)) return true;
+        var p = PERMISSIONS.get(name);
         /*   真值表
         p.isWhite();
         p.hasGroup(id);
@@ -175,46 +185,38 @@ public class Permission {
         return p.hasGroup(id);
     }
 
-    public boolean containsFriend(String sName, Long id) {
+    public boolean hasUser(String name, Long id) {
         //不存在该名单默认为无限制
-        if (!PERMISSIONS.containsKey(sName)) return true;
-        var p = PERMISSIONS.get(sName);
-        return p.hasFriend(id);
+        if (!PERMISSIONS.containsKey(name)) return true;
+        var p = PERMISSIONS.get(name);
+        return p.hasUser(id);
     }
 
-    public boolean addUser2PerMissionGroup(String sName, Long id, boolean isSuper) {
-        var perm = PERMISSIONS.get(sName);
-        return addUser2PerMissionGroup(sName, id, isSuper, perm);
+    public boolean addGroup(String name, Long id, boolean isSuper) {
+        var perm = PERMISSIONS.get(name);
+        return addGroup(name, id, isSuper, perm);
     }
 
 
-    public boolean addUser2PerMissionGroup(Long id, boolean isSuper, boolean isBlack) {
-        var perm = isBlack ? ALL_B : ALL_W;
-        return addUser2PerMissionGroup(PERMISSION_ALL, id, isSuper, perm);
+    public boolean addGroup(Long id, boolean isWhite, boolean isSuper) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return addGroup(PERMISSION_ALL, id, isSuper, param);
     }
 
-    public static PermissionData getAllW() {
-        return ALL_W;
-    }
-
-    public static PermissionData getAllB() {
-        return ALL_B;
-    }
-
-    private boolean addUser2PerMissionGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
-        if (perm == null || (!isSuper && perm.isSupper())) {
+    private boolean addGroup(String name, Long id, boolean isSuper, PermissionParam param) {
+        if (param == null || (!isSuper && param.isAdministrator())) {
             return false;
         }
-        if (perm.isWhite()) {
-            if (perm.getGroupList().add(id)) {
-                permissionDao.addGroup(sName, PermissionType.GROUP_W, id);
+        if (param.isWhite()) {
+            if (param.getGroupList().add(id)) {
+                permissionDao.addGroup(name, PermissionType.GROUP_W, id);
                 return true;
             } else {
                 throw new TipsRuntimeException("已经有了");
             }
         } else {
-            if (perm.getGroupList().add(id)) {
-                permissionDao.addGroup(sName, PermissionType.GROUP_B, id);
+            if (param.getGroupList().add(id)) {
+                permissionDao.addGroup(name, PermissionType.GROUP_B, id);
                 return true;
             } else {
                 throw new TipsRuntimeException("已经有了");
@@ -222,87 +224,81 @@ public class Permission {
         }
     }
 
-    public boolean addUser2FriendGroup(String sName, Long id) {
-        var perm = PERMISSIONS.get(sName);
-        return addUser2FriendGroup(id, perm, sName);
+    public boolean addUser(String name, Long id) {
+        var param = PERMISSIONS.get(name);
+        return addUser(id, param, name);
     }
 
-    public boolean addUser2FriendGroup(Long id) {
-        var perm = ALL_B;
-        return addUser2FriendGroup(id, perm, PERMISSION_ALL);
+
+    public boolean addUser(Long id, boolean isWhite) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return addUser(id, param, PERMISSION_ALL);
     }
 
-    private boolean addUser2FriendGroup(Long id, PermissionData perm, String sName) {
-        if (perm == null) {
+    private boolean addUser(Long id, PermissionParam param, String name) {
+        if (param == null) {
             return false;
         }
-        PermissionType type;
-        if (perm.isWhite()) {
-            type = PermissionType.FRIEND_W;
-        } else {
-            type = PermissionType.FRIEND_B;
-        }
 
-        if (perm.getFriendList().add(id)) {
-            permissionDao.addFriend(sName, type, id);
+        var type = param.isWhite() ? PermissionType.FRIEND_W : PermissionType.FRIEND_B;
+
+        if (param.getUserList().add(id)) {
+            permissionDao.addUser(name, type, id);
             return true;
         } else {
             throw new TipsRuntimeException("本身不存在");
         }
     }
 
-    public boolean deleteFriend(String sName, Long id) {
-        var perm = PERMISSIONS.get(sName);
-        return deleteFriend(id, perm, sName);
+    public boolean removeUser(String name, Long id) {
+        var param = PERMISSIONS.get(name);
+        return removeUser(id, param, name);
     }
 
-    public boolean deleteFriend(Long id) {
-        var perm = ALL_B;
-        return deleteFriend(id, perm, PERMISSION_ALL);
+    public boolean removeUser(Long id, boolean isWhite) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return removeUser(id, param, PERMISSION_ALL);
     }
 
-    private boolean deleteFriend(Long id, PermissionData perm, String sName) {
-        if (perm == null) {
+    private boolean removeUser(Long id, PermissionParam param, String name) {
+        if (param == null) {
             return false;
         }
-        PermissionType type;
-        if (perm.isWhite()) {
-            type = PermissionType.FRIEND_W;
-        } else {
-            type = PermissionType.FRIEND_B;
-        }
 
-        if (perm.getFriendList().remove(id)) {
-            permissionDao.delFriend(sName, type, id);
+        var type = param.isWhite() ? PermissionType.FRIEND_W : PermissionType.FRIEND_B;
+
+        if (param.getUserList().remove(id)) {
+            permissionDao.deleteUser(name, type, id);
             return true;
         } else {
             throw new TipsRuntimeException("本身不存在");
         }
     }
 
-    public boolean removeUser4PermissionGroup(String sName, Long id, boolean isSuper) {
-        var perm = PERMISSIONS.get(sName);
-        return removeUser4PermissionGroup(sName, id, isSuper, perm);
+    public boolean removeGroup(String name, Long id, boolean isSuper) {
+        var param = PERMISSIONS.get(name);
+        return removeGroup(name, id, isSuper, param);
     }
 
-    public boolean removeUser4PermissionGroup(Long id, boolean isSuper) {
-        var perm = ALL_B;
-        return removeUser4PermissionGroup(PERMISSION_ALL, id, isSuper, perm);
+    public boolean removeGroup(Long id, boolean isSuper) {
+        var param = WHITELIST;
+        return removeGroup(PERMISSION_ALL, id, isSuper, param);
     }
 
-    private boolean removeUser4PermissionGroup(String sName, Long id, boolean isSuper, PermissionData perm) {
-        if (perm == null || (!isSuper && perm.isSupper())) {
+    public boolean removeGroup(Long id, boolean isWhite, boolean isSuper) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return removeGroup(PERMISSION_ALL, id, isSuper, param);
+    }
+
+    private boolean removeGroup(String name, Long id, boolean isSuper, PermissionParam param) {
+        if (param == null || (!isSuper && param.isAdministrator())) {
             return false;
         }
-        PermissionType type;
-        if (perm.isWhite()) {
-            type = PermissionType.GROUP_W;
-        } else {
-            type = PermissionType.GROUP_B;
-        }
 
-        if (perm.getGroupList().remove(id)) {
-            permissionDao.delGroup(sName, type, id);
+        var type = param.isWhite() ? PermissionType.GROUP_W : PermissionType.GROUP_B;
+
+        if (param.getGroupList().remove(id)) {
+            permissionDao.deleteGroup(name, type, id);
             return true;
         } else {
             throw new TipsRuntimeException("本身不存在");
@@ -318,12 +314,12 @@ public class Permission {
      */
     public boolean containsAll(Long group, Long id) {
         //全局黑名单
-        return (group == null || !ALL_B.hasGroup(group)) && !ALL_B.hasFriend(id);
+        return (group == null || !BLACKLIST.hasGroup(group)) && !BLACKLIST.hasUser(id);
     }
 
     public boolean containsAllW(Long group) {
         //全局白名单
-        return group != null && ALL_W.hasGroup(group);
+        return group != null && WHITELIST.hasGroup(group);
     }
 
     public static boolean isSuper(Long id) {

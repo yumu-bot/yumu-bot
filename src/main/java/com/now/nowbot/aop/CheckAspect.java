@@ -122,17 +122,17 @@ public class CheckAspect {
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && ! permission.containsFriend(servicename, event.getSender().getId())) {
+            if (CheckPermission.friend() && ! permission.hasUser(servicename, event.getSender().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.containsGroup(servicename, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.hasGroup(servicename, g.getGroup().getId())) {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         } else {
-            if (CheckPermission.friend() && permission.containsFriend(servicename, event.getSender().getId())) {
+            if (CheckPermission.friend() && permission.hasUser(servicename, event.getSender().getId())) {
                 throw new PermissionException(STR."\{servicename} 黑名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.containsGroup(servicename, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(servicename, g.getGroup().getId())) {
                 throw new PermissionException(STR."\{servicename} 黑名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
