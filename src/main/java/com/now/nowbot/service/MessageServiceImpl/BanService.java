@@ -66,7 +66,7 @@ public class BanService implements MessageService<BanParam> {
     @Override
     public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
         if (!Permission.isSuper(event.getSender().getId())) {
-            throw new TipsException("只有超级管理员可以使用此功能！");
+            throw new TipsException("只有超级管理员 (原批) 可以使用此功能！");
         }
 
         var from = event.getSubject();
@@ -80,13 +80,13 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser(param.qq(), true);
                     if (add) {
-                        from.sendMessage("成功添加用户进白名单");
+                        from.sendMessage(STR."成功添加用户 \{param.qq()} 进白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     //throw new TipsException("群组功能还在制作中");
                     var add = permission.addGroup(param.qq(), true, true);
                     if (add) {
-                        from.sendMessage("成功添加群组");
+                        from.sendMessage(STR."成功添加群组 \{param.qq()} 进白名单");
                     }
                 } else {
                     throw new TipsException("add 操作必须输入 qq！\n格式：!sp add qq=114514 / group=1919810");
@@ -96,13 +96,13 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var remove = permission.removeUser(param.qq(), true);
                     if (remove) {
-                        from.sendMessage("成功移除用户出白名单");
+                        from.sendMessage(STR."成功移除用户 \{param.qq()} 出白名单");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     //throw new TipsException("群组功能还在制作中");
                     var add = permission.removeGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功移除群组");
+                        from.sendMessage(STR."成功移除群组 \{param.qq()} 出白名单");
                     }
                 } else {
                     throw new TipsException("remove 操作必须输入 qq！\n格式：!sp remove qq=114514 / group=1919810");
@@ -112,13 +112,13 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser(param.qq(), false);
                     if (add) {
-                        from.sendMessage("成功拉黑用户");
+                        from.sendMessage(STR."成功拉黑用户 \{param.qq()}");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     //throw new TipsException("群组功能还在制作中");
                     var add = permission.addGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功拉黑群组");
+                        from.sendMessage(STR."成功拉黑群组 \{param.qq()}");
                     }
                 } else {
                     //ban 玩家名也可以吧？
@@ -129,13 +129,13 @@ public class BanService implements MessageService<BanParam> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.removeUser(param.qq(), false);
                     if (add) {
-                        from.sendMessage("成功恢复用户");
+                        from.sendMessage(STR."成功恢复用户 \{param.qq()}");
                     }
                 } else if (Objects.nonNull(param.qq())) {
                     //throw new TipsException("群组功能还在制作中");
                     var add = permission.removeGroup(param.qq(), false, true);
                     if (add) {
-                        from.sendMessage("成功恢复群组");
+                        from.sendMessage(STR."成功恢复群组 \{param.qq()}");
                     }
                 } else {
                     //ban 玩家名也可以吧？
