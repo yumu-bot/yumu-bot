@@ -9,15 +9,15 @@ import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 @Service("MAP_4D_CALCULATE")
-public class Map4DCalculate implements MessageService<Map4DCalculate.param> {
-    public record param(String type, float value, String mods){}
+public class Map4DCalculate implements MessageService<Map4DCalculate.Map4DParam> {
+    public record Map4DParam(String type, float value, String mods){}
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<param> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Map4DParam> data) throws Throwable {
         String message = event.getRawMessage();
         if (!message.startsWith("#cal")) return false;
         var matcher = Instructions.MAP_4D_CALCULATE.matcher(message);
         if (matcher.find()) {
-            var d = new param(
+            var d = new Map4DParam(
                     matcher.group("type"),
                     Float.parseFloat(matcher.group("value")),
                     matcher.group("mods")
@@ -30,7 +30,7 @@ public class Map4DCalculate implements MessageService<Map4DCalculate.param> {
 
     @Override
     @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, param param) throws Throwable {
+    public void HandleMessage(MessageEvent event, Map4DParam param) throws Throwable {
         int mod;
         if (param.mods() == null) {
             mod = 0;

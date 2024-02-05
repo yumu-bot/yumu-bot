@@ -9,7 +9,6 @@ import com.now.nowbot.qq.message.ImageMessage;
 import com.now.nowbot.qq.message.ReplyMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.CustomException;
 import com.now.nowbot.util.DataUtil;
@@ -26,10 +25,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @Service("CUSTOM")
-public class CustomService implements MessageService<CustomService.Param> {
+public class CustomService implements MessageService<CustomService.CustomParam> {
     private static Path FILE_DIV_PATH;
-    @Resource
-    OsuUserApiService userApiService;
     @Resource
     RestTemplate restTemplate;
     @Resource
@@ -44,8 +41,11 @@ public class CustomService implements MessageService<CustomService.Param> {
         FILE_DIV_PATH = Path.of(fileConfig.getBgdir(), "user-profile");
     }
 
+    public record CustomParam(long uid, Type type, String url) {
+    }
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Param> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<CustomParam> data) throws Throwable {
         var matcher2 = Instructions.DEPRECATED_SET.matcher(messageText);
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("set"))) {
             throw new CustomException(CustomException.Type.CUSTOM_Instruction_Deprecated);
@@ -85,8 +85,8 @@ public class CustomService implements MessageService<CustomService.Param> {
             }
 
             switch (matcher.group("type")) {
-                case "c", "card" -> data.setValue(new Param(u.getOsuID(), Type.card, img.getPath()));
-                case null, default -> data.setValue(new Param(u.getOsuID(), Type.banner, img.getPath()));
+                case "c", "card" -> data.setValue(new CustomParam(u.getOsuID(), Type.card, img.getPath()));
+                case null, default -> data.setValue(new CustomParam(u.getOsuID(), Type.banner, img.getPath()));
             }
 
             return true;
@@ -94,7 +94,7 @@ public class CustomService implements MessageService<CustomService.Param> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Param param) throws Throwable {
+    public void HandleMessage(MessageEvent event, CustomParam param) throws Throwable {
         var fileName = STR."\{param.uid}-\{param.type}.png";
         Path f = FILE_DIV_PATH.resolve(fileName);
 
@@ -119,8 +119,5 @@ public class CustomService implements MessageService<CustomService.Param> {
         info,
         score,
         ppm,
-    }
-
-    public record Param(long uid, Type type, String url) {
     }
 }

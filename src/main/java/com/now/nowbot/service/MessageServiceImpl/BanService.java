@@ -2,12 +2,11 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.config.PermissionParam;
-import com.now.nowbot.model.Service.BanParam;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.ServiceException.BanException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +15,13 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 @Service("BAN")
-public class BanService implements MessageService<BanParam> {
+public class BanService implements MessageService<BanService.BanParam> {
     Permission permission;
     ImageService imageService;
+
+    public record BanParam(Long qq, String name, String operate, boolean isUser) {
+
+    }
 
     @Autowired
     public BanService(Permission permission, ImageService imageService) {
@@ -66,16 +69,14 @@ public class BanService implements MessageService<BanParam> {
     @Override
     public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
         if (!Permission.isSuper(event.getSender().getId())) {
-            throw new TipsException("只有超级管理员 (原批) 可以使用此功能！");
+            throw new BanException(BanException.Type.SUPER_Permission_Admin);
         }
 
         var from = event.getSubject();
 
         switch (param.operate()) {
-            case "list", "whitelist", "l", "w" ->
-                    SendImage(event, Permission.getWhiteList(), "白名单包含：");
-            case "banlist", "blacklist", "k" ->
-                    SendImage(event, Permission.getBlackList(), "黑名单包含：");
+            case "list", "whitelist", "l", "w" -> SendImage(event, Permission.getWhiteList(), "白名单包含：");
+            case "banlist", "blacklist", "k" -> SendImage(event, Permission.getBlackList(), "黑名单包含：");
             case "add", "a" -> {
                 if (Objects.nonNull(param.qq()) && param.isUser()) {
                     var add = permission.addUser(param.qq(), true);
@@ -89,7 +90,7 @@ public class BanService implements MessageService<BanParam> {
                         from.sendMessage(STR."成功添加群组 \{param.qq()} 进白名单");
                     }
                 } else {
-                    throw new TipsException("add 操作必须输入 qq！\n格式：!sp add qq=114514 / group=1919810");
+                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "add", "add");
                 }
             }
             case "remove", "r" -> {
@@ -105,7 +106,7 @@ public class BanService implements MessageService<BanParam> {
                         from.sendMessage(STR."成功移除群组 \{param.qq()} 出白名单");
                     }
                 } else {
-                    throw new TipsException("remove 操作必须输入 qq！\n格式：!sp remove qq=114514 / group=1919810");
+                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "remove", "remove");
                 }
             }
             case "ban", "b" -> {
@@ -121,8 +122,7 @@ public class BanService implements MessageService<BanParam> {
                         from.sendMessage(STR."成功拉黑群组 \{param.qq()}");
                     }
                 } else {
-                    //ban 玩家名也可以吧？
-                    throw new TipsException("ban 操作必须输入 qq！\n格式：!sp ban qq=114514 / group=1919810");
+                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "ban", "ban");
                 }
             }
             case "unban", "u" -> {
@@ -138,12 +138,11 @@ public class BanService implements MessageService<BanParam> {
                         from.sendMessage(STR."成功恢复群组 \{param.qq()}");
                     }
                 } else {
-                    //ban 玩家名也可以吧？
-                    throw new TipsException("unban 操作必须输入 qq！\n格式：!sp unban qq=114514 / group=1919810");
+                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "unban", "unban");
                 }
             }
 
-            case null, default -> throw new TipsException("请输入 super 操作！超管可用的操作有：\nlist：查询白名单\nblacklist：查询黑名单\nadd：添加用户至白名单\nremove：移除用户出白名单\nban：添加用户至黑名单\nunban：移除用户出黑名单");
+            case null, default -> throw new BanException(BanException.Type.SUPER_Instruction);
         }
     }
 
