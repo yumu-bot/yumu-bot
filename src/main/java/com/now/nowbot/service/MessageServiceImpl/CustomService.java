@@ -85,8 +85,12 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
             }
 
             switch (matcher.group("type")) {
-                case "c", "card" -> data.setValue(new CustomParam(u.getOsuID(), Type.card, img.getPath()));
-                case null, default -> data.setValue(new CustomParam(u.getOsuID(), Type.banner, img.getPath()));
+                case "c", "card" -> data.setValue(
+                        new CustomParam(u.getOsuID(), Type.card, img.getPath())
+                );
+                case null, default -> data.setValue(
+                        new CustomParam(u.getOsuID(), Type.banner, img.getPath())
+                );
             }
 
             return true;
@@ -109,7 +113,7 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
             case banner -> profile.setBanner(f.toAbsolutePath().toString());
         }
         userProfileMapper.saveAndFlush(profile);
-        event.getSubject().sendMessage(CustomException.Type.CUSTOM_Receive_PictureFetchFailed.message);
+        event.getSubject().sendMessage(CustomException.Type.CUSTOM_Send_Success.message);
     }
 
     enum Type {

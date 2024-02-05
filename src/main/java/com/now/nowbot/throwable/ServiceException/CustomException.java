@@ -11,7 +11,7 @@ public class CustomException extends TipsException {
                 !ymcustom / !ymc [type]
                 - type：想要自定义的种类。可以输入 banner 或 card。默认 banner。
                 
-                之后回复你自己发出消息并附带图片即可。推荐尺寸：
+                之后回复你自己发出的消息，并附带图片即可。推荐尺寸：
                 - banner：(1920*320)
                 - card：(430*210)
                 """),
