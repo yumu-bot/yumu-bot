@@ -12,10 +12,10 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -117,7 +117,7 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
                     .bodyToMono(JsonNode.class)
                     .<Optional<Pool>>map(json -> json.has("data") ? Optional.ofNullable(JacksonUtil.parseObject(json.get("data"), Pool.class)) : Optional.empty())
                     .block(Duration.ofSeconds(30));
-        } catch (WebClientResponseException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             return Optional.empty();
         }
     }

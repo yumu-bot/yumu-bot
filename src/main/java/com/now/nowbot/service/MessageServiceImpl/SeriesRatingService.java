@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -315,7 +316,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         for (int m: matchIDs) {
             try {
                 matches.add(osuMatchApiService.getMatchInfo(m, 10));
-            } catch (HttpClientErrorException.TooManyRequests e) {
+            } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
 
                 fetchMapFail ++;
                 if (fetchMapFail > 3) {
@@ -333,7 +334,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
                     log.error("SRA 休眠意外中断", e1);
                     throw new MRAException(MRAException.Type.RATING_Series_SleepingInterrupted, String.valueOf(m));
                 }
-            } catch (HttpClientErrorException.NotFound e) {
+            } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
                 log.error("SRA 对局找不到", e);
 
                 if (from != null) {

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.Objects;
@@ -55,7 +56,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             from.sendMessage(MapStatisticsException.Type.M_Map_NotFound.message);
         } catch (Exception e) {
             from.sendMessage(MapStatisticsException.Type.M_Fetch_Error.message);

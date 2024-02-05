@@ -102,6 +102,9 @@ public class Instructions {
 
      */
 
+    // #8 辅助指令
+    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>\\d*)?(?<text>[\\s\\S]+)?");
+
     public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
 
     public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
@@ -111,7 +114,7 @@ public class Instructions {
 
     public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|d(?!raw))\\s*(?<d>\\d+)?");
+    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|dr(?![A-Za-z_]))\\s*(?<d>\\d+)?");
 
     public static final Pattern COUNT_MESSAGE_LEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 
@@ -143,4 +146,6 @@ public class Instructions {
     public static final Pattern DEPRECATED_BPHT = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<bpht>(bpht))[\\s\\S]*");
 
     public static final Pattern DEPRECATED_SET = Pattern.compile("^[!！]\\s*(?i)ym(?<set>(set))[\\s\\S]*");
+
+    public static final Pattern DEPRECATED_AYACHI_NENE = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<nene>(0d0(0)?))[\\s\\S]*");
 }

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
@@ -112,7 +113,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             binUser = bindDao.getUserFromQQ(qq);
             try {
                 osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser, binUser.getMode()));
-            } catch (WebClientResponseException e) {
+            } catch (HttpClientErrorException | WebClientResponseException e) {
                 osuUser = Optional.empty();
             }
         } catch (BindException e) {
@@ -149,7 +150,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         } else {
             try {
                 beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-            } catch (WebClientResponseException e) {
+            } catch (HttpClientErrorException | WebClientResponseException e) {
                 throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
             } catch (Exception e) {
                 log.error("谱面信息：谱面获取失败", e);

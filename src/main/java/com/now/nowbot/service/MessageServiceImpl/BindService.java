@@ -19,6 +19,7 @@ import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -46,7 +47,7 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     // full: 全绑定，只有 bot 开发可以这样做
-    public record BindParam(Long qq, String name, boolean at, boolean unbind, boolean isSuper, boolean isFull) {}
+    public record BindParam(@NonNull Long qq, String name, boolean at, boolean unbind, boolean isSuper, boolean isFull) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BindParam> data) throws Throwable {
@@ -69,13 +70,13 @@ public class BindService implements MessageService<BindService.BindParam> {
             }
         }
 
-        var me = event.getSender().getId();
+        var meQQ = event.getSender().getId();
 
         var qq = m.group("qq");
         var name = m.group("name");
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         boolean unbind = Objects.nonNull(m.group("un")) || Objects.nonNull(m.group("ub"));
-        boolean isSuper = Permission.isSuper(me);
+        boolean isSuper = Permission.isSuper(meQQ);
         boolean isFull = Objects.nonNull(m.group("full"));
 
         if (Objects.nonNull(at)) {
@@ -83,17 +84,22 @@ public class BindService implements MessageService<BindService.BindParam> {
             return true;
         }
 
-        if (Objects.nonNull(qq) && Strings.isNotBlank(qq) && ! qq.trim().equals("0")) {
-            data.setValue(new BindParam(Long.parseLong(qq), name, false, unbind, isSuper, isFull));
-            return true;
-        }
-
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new BindParam(null, name, false, unbind, isSuper, isFull));
+            if (Objects.nonNull(qq)) {
+                data.setValue(new BindParam(Long.parseLong(qq), name, false, unbind, isSuper, isFull));
+                return true;
+            } else {
+                data.setValue(new BindParam(meQQ, name, false, unbind, isSuper, isFull));
+                return true;
+            }
+        }
+
+        if (Objects.nonNull(qq) && Strings.isNotBlank(qq) && ! qq.trim().equals("0")) {
+            data.setValue(new BindParam(Long.parseLong(qq), null, false, unbind, isSuper, isFull));
             return true;
         }
 
-        data.setValue(new BindParam(me, null, false, unbind, isSuper, isFull));
+        data.setValue(new BindParam(meQQ, null, false, unbind, isSuper, isFull));
         return true;
     }
 
@@ -107,18 +113,21 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
 
-        if (Objects.nonNull(param.name)) {
-            bindQQName(event, param.name, param.qq);
+        if (Objects.nonNull(param.name) && me == param.qq) {
+            bindQQName(event, param.name, me);
             return;
         }
 
         //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
         if (param.isSuper) {
+            if (Objects.nonNull(param.name) && me != param.qq) {
+                bindQQName(event, param.name, param.qq);
+            }
             if (param.at) {
                 bindQQAt(event, param.qq);
                 return;
             }
-            if (param.unbind) {
+            if (param.unbind) { //超管也可以解绑自己，就不写 me != param.qq 了
                 unbindQQ(param.qq);
                 return;
             }
@@ -153,7 +162,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                     return;
                 }
 
-            } catch (WebClientResponseException.Unauthorized | BindException e) {
+            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized | BindException e) {
                 throw e;
             } catch (Exception ignored) {
                 // 如果符合，直接允许绑定
@@ -214,7 +223,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         try {
             UID = userApiService.getOsuId(name);
-        } catch (HttpClientErrorException.Forbidden e) {
+        } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
             throw new BindException(BindException.Type.BIND_Player_Banned);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
@@ -253,7 +262,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         long UID;
         try {
             UID = userApiService.getOsuId(name);
-        } catch (HttpClientErrorException.Forbidden e) {
+        } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
             throw new BindException(BindException.Type.BIND_Player_Banned);
         } catch (Exception e) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);

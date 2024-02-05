@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
@@ -170,9 +171,9 @@ public class BPService implements MessageService<BPService.BPParam> {
             if (OsuMode.isDefault(mode)) {
                 mode = osuUser.getOsuMode();
             }
-        } catch (WebClientResponseException.Unauthorized e) {
+        } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
-        } catch (WebClientResponseException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             if (param.hasName()) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {

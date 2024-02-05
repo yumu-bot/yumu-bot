@@ -154,6 +154,7 @@ public class NominationService implements MessageService<Matcher> {
             String maxSR = "";
             String minSR = "";
             int totalLength = 0;
+            List<Float> SRList = new ArrayList<>();
 
             for (var i : details) {
                 switch (i.getMessageType()) {
@@ -191,6 +192,8 @@ public class NominationService implements MessageService<Matcher> {
 
                     if (b.getStarRating() > maxStarRating) maxStarRating = b.getStarRating();
                     if (b.getStarRating() < minStarRating) minStarRating = b.getStarRating();
+
+                    SRList.add(b.getStarRating());
                 }
 
                 var maxStarRatingInt = (int) Math.floor(maxStarRating);
@@ -214,6 +217,9 @@ public class NominationService implements MessageService<Matcher> {
             more.put("totalCount", hostCount + guestCount);
             more.put("maxSR", maxSR);
             more.put("minSR", minSR);
+            more.put("SRList", SRList.stream().sorted(
+                    Comparator.comparingDouble(Float::doubleValue).reversed()
+            ).toList());
             more.put("totalLength", totalLength);
             more.put("tags", tags);
             more.put("problemCount", problemCount);

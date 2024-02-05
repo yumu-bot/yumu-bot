@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -113,7 +114,7 @@ public class UUPRService implements MessageService<Matcher> {
                 try {
                     id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
-                } catch (WebClientResponseException e) {
+                } catch (HttpClientErrorException | WebClientResponseException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
                 }
 
@@ -134,7 +135,7 @@ public class UUPRService implements MessageService<Matcher> {
             } else if (binUser != null) {
                 scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
             }
-        } catch (WebClientResponseException e) {
+        } catch (HttpClientErrorException | WebClientResponseException e) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 

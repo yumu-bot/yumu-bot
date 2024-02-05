@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -81,7 +82,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         try {
             beatMap = beatmapApiService.getBeatMapInfo(BID);
             isRanked = beatMap.hasLeaderBoard();
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_FetchFailed);

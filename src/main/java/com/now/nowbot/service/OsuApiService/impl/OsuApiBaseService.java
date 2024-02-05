@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -119,17 +120,17 @@ public class OsuApiBaseService {
         } else if (user.isPassed()) {
             try {
                 token = refreshUserToken(user, false);
-            } catch (WebClientResponseException.Unauthorized e) {
+            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
                 bindDao.backupBind(user.getOsuID());
                 log.error("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.getOsuID(), e);
                 throw new BindException(BindException.Type.BIND_Me_TokenExpiredButBindID);
-            } catch (WebClientResponseException.Forbidden e) {
+            } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
                 log.info("更新令牌失败：账号封禁", e);
                 throw new BindException(BindException.Type.BIND_Me_Banned);
-            } catch (WebClientResponseException.NotFound e) {
+            } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
                 log.info("更新令牌失败：找不到账号", e);
                 throw new BindException(BindException.Type.BIND_Player_NotFound);
-            } catch (WebClientResponseException.TooManyRequests e) {
+            } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
                 log.info("更新令牌失败：API 访问太频繁", e);
                 throw new BindException(BindException.Type.BIND_API_TooManyRequests);
             }

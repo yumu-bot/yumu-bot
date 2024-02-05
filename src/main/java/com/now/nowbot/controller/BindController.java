@@ -104,7 +104,7 @@ public class BindController {
                     .append(e.getLocalizedMessage());
         } catch (Exception e) {
             log.error("绑定时异常：未知", e);
-            sb.append("出现未知异常，请截图给开发者让他抓紧修 BUG。错误信息：")
+            sb.append("出现未知异常，请截图给开发者让他抓紧修 BUG。错误代码和信息：")
                     .append('\n')
                     .append(e.getLocalizedMessage());
         }

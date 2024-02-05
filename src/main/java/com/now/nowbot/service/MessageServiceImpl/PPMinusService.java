@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
@@ -72,7 +73,7 @@ public class PPMinusService implements MessageService<Matcher> {
                 var id = userApiService.getOsuId(matcher.group("name").trim());
                 user = userApiService.getPlayerInfo(id, mode);
                 bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            } catch (WebClientResponseException.NotFound e) {
+            } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
                 throw new PPMinusException(PPMinusException.Type.PPM_Player_NotFound);
             } catch (BindException e) {
                 throw e;
