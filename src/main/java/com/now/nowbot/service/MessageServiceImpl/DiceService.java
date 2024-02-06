@@ -154,7 +154,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             leftFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
-                case ASSUME -> "我觉得%s也没啥。";
+                case ASSUME -> "%s。";
                 case CONDITION -> "是的。";
                 case IS -> "%s%s%s。";
             };
