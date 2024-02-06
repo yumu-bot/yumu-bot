@@ -147,5 +147,5 @@ public class Instructions {
 
     public static final Pattern DEPRECATED_SET = Pattern.compile("^[!！]\\s*(?i)ym(?<set>(set))[\\s\\S]*");
 
-    public static final Pattern DEPRECATED_AYACHI_NENE = Pattern.compile("^[!！]?\\s*(?i)(ym)?(?<nene>(0d0(0)?))[\\s\\S]*");
+    public static final Pattern DEPRECATED_AYACHI_NENE = Pattern.compile("^[!！]?\\s*(?i)(ym)?(?<nene>(0d0(0)?))$");
 }
