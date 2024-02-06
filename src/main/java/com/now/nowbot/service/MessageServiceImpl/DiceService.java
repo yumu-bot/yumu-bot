@@ -50,11 +50,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         if (StringUtils.hasText(number)) {
             data.setValue(new DiceParam(Long.parseLong(number), null));
-            return true;
         } else {
             data.setValue(new DiceParam(100L, null));
-            return true;
         }
+        return true;
 
         //throw new DiceException(DiceException.Type.DICE_Instruction);
     }
@@ -114,7 +113,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVENIF, ASSUME, CONDITION, IS);
+        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS);
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == IS;
@@ -153,7 +152,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         if (Objects.nonNull(split) && StringUtils.hasText(left) && StringUtils.hasText(right)) {
             leftFormat = switch (split) {
-                case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVENIF -> "当然%s啦！";
+                case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "我觉得%s也没啥。";
                 case CONDITION -> "是的。";
                 case IS -> "%s%s%s。";
@@ -161,7 +160,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
             rightFormat = switch (split) {
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
-                case EVENIF -> "当然不%s啦！";
+                case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
                 case CONDITION -> "不是。";
                 case IS -> "%s不%s%s。";
@@ -171,7 +170,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             boundary = switch (split) {
                 case PREFER -> 0.35f; //更喜欢A
                 case HESITATE -> 0.65f; //更喜欢B
-                case EVENIF -> 0.7f; //需要鼓励去B
+                case EVEN -> 0.7f; //需要鼓励去B
                 default -> 0.5f;
             };
         } else {
@@ -192,7 +191,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return String.format(leftFormat, left);
                 }
                 //注意，这个会忽视A
-                case EVENIF -> {
+                case EVEN -> {
                     return String.format(leftFormat, right);
                 }
                 case OR -> {
@@ -211,7 +210,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVENIF -> {
+                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> {
                     return String.format(rightFormat, right);
                 }
                 case OR -> {
@@ -255,30 +254,30 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //选A，还是选B？
         //正常选择
         //当然选 X 啦！
-        OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //并列AB
         //当然选 X 啦！
-        JUXTAPOSITION(Pattern.compile("\\s*(?<c1>(不仅|一边|一方面|有时|既)(选?[择中好]了?)?)\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(而且|一边|一方面|有时|又)(选?[择中好]了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        JUXTAPOSITION(Pattern.compile("\\s*(?<c1>(不仅|一边|一方面|有时|既)(选?[择中好]?了?)?)\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(而且|一边|一方面|有时|又)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //宁可A，也不B
         //偏好A
         //当然选 X 啦！
-        PREFER(Pattern.compile("\\s*(?<c1>(宁[可愿]|尽管)(选?[择中好]了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(也不[要想]?(选?[择中好]了?)?))\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        PREFER(Pattern.compile("\\s*(?<c1>(宁[可愿]|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(也不[要想]?(选?[择中好]?了?)?))\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //与其A，不如B
         //偏好B
         //当然选 X 啦！
-        HESITATE(Pattern.compile("\\s*(?<c1>(与其|虽然|尽管)(选?[择中好]了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(不如|但是|可是|然而|却)(选?[择中好]了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        HESITATE(Pattern.compile("\\s*(?<c1>(与其|虽然|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(还?不如|比不上|但是|可是|然而|却)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //即使A，也B
         //偏好当然
         //当然B，不会B。
-        EVENIF(Pattern.compile("\\s*(?<c1>(即使|even if)((选?[择中好]了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>(也会?)(选?[择中好]了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        EVEN(Pattern.compile("\\s*(?<c1>(即使|even if)((选?[择中好]?了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>(也会?)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //假设A，才有B。
         //我觉得 A 也没啥。// 没有如果。
-        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|if|assume))\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>(就|便|那么))\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|if|assume))\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>那?([你我他她它祂]们?|别人)?[就便么才]|那)\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\w]*)")),
 
         //A是B？
         //确实。 //不对。
@@ -286,7 +285,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是不是
         //A是。A不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)\\s*(?<c2>[\\u4e00-\\u9fa5\\w]{1})不(?<c3>[\\u4e00-\\u9fa5\\w]{1})[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)\\s*(?<c2>[\\u4e00-\\u9fa5\\w])不(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         ;
 
