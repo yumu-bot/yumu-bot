@@ -296,7 +296,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //即使A，也B
         //偏好当然
         //当然B，不会B。
-        EVEN(Pattern.compile("\\s*(?<c1>(即使|even if)((选?[择中好]?了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>(也会?)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        EVEN(Pattern.compile("\\s*(?<c1>(即使|even if)((选?[择中好]?了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>([也还]会?)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //假设A，才有B。
         //我觉得 A 也没啥。// 没有如果。
