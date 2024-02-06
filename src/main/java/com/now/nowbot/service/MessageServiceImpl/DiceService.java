@@ -152,6 +152,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         if (Objects.nonNull(split) && StringUtils.hasText(left) && StringUtils.hasText(right)) {
             leftFormat = switch (split) {
+                case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "我觉得%s也没啥。";
                 case CONDITION -> "是的。";
@@ -159,6 +160,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             };
 
             rightFormat = switch (split) {
+                case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
@@ -177,10 +179,29 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
         }
 
-        //更换主语
+        //更换主语和和谐
         {
             left = ChangeCase(left);
             right = ChangeCase(right);
+        }
+
+        //如果还是有条件。那么进入多匹配模式。
+        {
+            var leftHas = MULTIPLE.pattern.matcher(left);
+            var rightHas = MULTIPLE.pattern.matcher(right);
+
+            if (leftHas.find() && StringUtils.hasText(leftHas.group("m2")) || rightHas.find() && StringUtils.hasText(rightHas.group("m2"))) {
+                String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！]|\\s*");
+                List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
+
+                if (stringList.isEmpty()) {
+                    throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
+                }
+
+                var r = Math.round(getRandom(stringList.size() + 1)) - 1;
+
+                return String.format(leftFormat, stringList.get(r)); //lr一样的
+            }
         }
 
         if (result < boundary - 0.002f) {
@@ -240,6 +261,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
     }
 
     enum Split {
+        //用于匹配是否还有关联词
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //A和B比谁更C？
         //正常选择
@@ -277,7 +300,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //假设A，才有B。
         //我觉得 A 也没啥。// 没有如果。
-        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|if|assume))\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)[，,\\s]*?(?<c2>那?([你我他她它祂]们?|别人)?[就便么才]|那)\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\w]*)")),
+        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|if|assume))\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*?)[，,\\s]*?(?<c2>(那?([你我他她它祂]们?|别人)?[会要想就便么才])那?)\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\w]*)")),
 
         //A是B？
         //确实。 //不对。
@@ -341,7 +364,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
     }
 
+    /**
+     * 改变主宾格，删除语气助词，和谐违禁词
+     * @param s 未和谐
+     * @return 和谐
+     */
     private String ChangeCase(String s) {
-        return s.replaceAll("你", "雨沐").replaceAll("(?i)your(s)?", "yumu's").replaceAll("(?i)you", "yumu").replaceAll("我", "你").replaceAll("(?i)[Ii]|me", "you").replaceAll("(?i)me", "your").replaceAll("(?i)my", "yours").replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "");
+        return s.replaceAll("你", "雨沐").replaceAll("(?i)your(s)?", "yumu's").replaceAll("(?i)you", "yumu").replaceAll("我", "你").replaceAll("(?i)[Ii]|me", "you").replaceAll("(?i)me", "your").replaceAll("(?i)my", "yours").replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "")
+                .replaceAll("习近平|习?总书记|国家|[党国吊批逼操草肏]|迪克", "○");
     }
 }

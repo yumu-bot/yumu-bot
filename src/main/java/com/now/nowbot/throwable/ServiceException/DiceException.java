@@ -11,7 +11,7 @@ public class DiceException extends TipsException {
                 compare：要比较的字符串，最好使用中文常见关联词。也可以输入冒号来分隔需要比较的两个对象。"""),
         DICE_Number_TooLarge("选这么大干什么！"),
         DICE_Number_TooSmall("和你的杂鱼脑子一样小！"),
-        DICE_Compare_NotMatch("我也不知道该选什么..."),
+        DICE_Compare_NotMatch("我也不知道该选什么...扔骰子解决吧。"),
         DICE_Compare_All("我全都要！！！"),
         DICE_Compare_Tie("硬币立在墙角了。再投一次？"),
         DICE_Compare_Wtf("你不可能看到这条消息。"),
