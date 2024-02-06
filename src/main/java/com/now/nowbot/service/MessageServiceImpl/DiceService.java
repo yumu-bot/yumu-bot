@@ -191,7 +191,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var rightHas = MULTIPLE.pattern.matcher(right);
 
             if (leftHas.find() && StringUtils.hasText(leftHas.group("m2")) || rightHas.find() && StringUtils.hasText(rightHas.group("m2"))) {
-                String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！]|\\s*");
+                String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！:：]|\\s+");
                 List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
 
                 if (stringList.isEmpty()) {
@@ -208,11 +208,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             //选第一个
             switch (split) {
 
-                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, ASSUME-> {
+                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE-> {
                     return String.format(leftFormat, left);
                 }
                 //注意，这个会忽视A
-                case EVEN -> {
+                case ASSUME, EVEN -> {
                     return String.format(leftFormat, right);
                 }
                 case OR -> {
@@ -262,7 +262,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     enum Split {
         //用于匹配是否还有关联词
-        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         //A和B比谁更C？
         //正常选择
