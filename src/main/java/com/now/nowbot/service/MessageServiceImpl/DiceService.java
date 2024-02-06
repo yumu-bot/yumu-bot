@@ -27,11 +27,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<DiceParam> data) throws Throwable {
-        var m = Instructions.DICE.matcher(messageText);
-        if (!m.find()) return false;
-
         var m2 = Instructions.DEPRECATED_AYACHI_NENE.matcher(messageText);
         if (m2.find()) throw new DiceException(DiceException.Type.DICE_EasterEgg_0d00);
+
+        var m = Instructions.DICE.matcher(messageText);
+        if (!m.find()) return false;
 
         var number = m.group("number");
         var text = m.group("text");
