@@ -198,7 +198,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
                 }
 
-                var r = Math.round(getRandom(stringList.size() + 1)) - 1;
+                var r = Math.round(getRandom(stringList.size()) - 1);
 
                 return String.format(leftFormat, stringList.get(r)); //lr一样的
             }
