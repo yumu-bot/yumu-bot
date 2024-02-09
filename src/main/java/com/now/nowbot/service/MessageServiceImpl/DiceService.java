@@ -408,7 +408,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 .replaceAll("(?i)\\smy\\s", " your ")
                 .replaceAll("(?i)\\smine\\s", "yours")
                 .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "")
-                .replaceAll("习近平|习?总书记|国家|政治|迪克|", "(和谐)")
+                .replaceAll("习近平|习?总书记|国家|政治|迪克|生殖器|阴茎|阴蒂|肛门|屁眼", "(和谐)")
                 .replaceAll("[党国吊批逼操肏死]", "○");
     }
 }
