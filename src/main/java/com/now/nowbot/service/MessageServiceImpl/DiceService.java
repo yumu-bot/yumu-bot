@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.now.nowbot.service.MessageServiceImpl.DiceService.Split.*;
-import static java.lang.Integer.parseInt;
 
 @Service("DICE")
 public class DiceService implements MessageService<DiceService.DiceParam> {
@@ -379,7 +378,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         int r;
 
         try {
-            r = parseInt(String.valueOf(range));
+            r = Integer.parseInt(String.valueOf(range));
         } catch (NumberFormatException e) {
             try {
                 r = Math.round((float) range);
