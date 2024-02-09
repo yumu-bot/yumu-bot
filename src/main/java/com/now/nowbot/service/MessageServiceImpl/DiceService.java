@@ -113,7 +113,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS);
+        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, RANGE);
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == IS;
@@ -146,6 +146,29 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     }
                 }
 
+                if (sp == RANGE) {
+                    int range;
+
+                    try {
+                        range = Integer.parseInt(right);
+                    } catch (NumberFormatException e) {
+                        continue;
+                    }
+
+                    if (range <= 0) {
+                        throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
+                    } else if (range <= 100) {
+                        right = String.format("%.0f", getRandom(100));
+                    } else if (range <= 10000) {
+                        right = String.format("%.0f", getRandom(10000));
+                    } else if (range <= 1000000) {
+                        right = String.format("%.0f", getRandom(1000000));
+                    } else {
+                        throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
+                    }
+
+                }
+
                 break;
             }
         }
@@ -157,6 +180,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case ASSUME -> "%s。";
                 case CONDITION -> "是的。";
                 case IS -> "%s%s%s。";
+                case RANGE -> "您许愿的结果是：%s。";
             };
 
             rightFormat = switch (split) {
@@ -166,6 +190,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case ASSUME -> "没有如果。";
                 case CONDITION -> "不是。";
                 case IS -> "%s不%s%s。";
+                case RANGE -> "您许愿的结果是：%s。";
             };
 
             //改变几率
@@ -227,6 +252,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case IS -> {
                     return String.format(leftFormat, left, is, right);
                 }
+                case RANGE -> {
+                    return String.format(right, leftFormat);
+                }
             }
         } else if (result > boundary + 0.002f) {
             //选第二个
@@ -245,6 +273,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
                 case IS -> {
                     return String.format(rightFormat, left, is, right);
+                }
+                case RANGE -> {
+                    return String.format(right, leftFormat);
                 }
             }
         } else {
@@ -308,8 +339,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是不是
         //A是。A不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])不(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])[不没](?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
+
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|超过|不足)(?<c2>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
         ;
 
         public final Pattern pattern;
@@ -368,7 +401,15 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 和谐
      */
     private String ChangeCase(String s) {
-        return s.replaceAll("你", "雨沐").replaceAll("(?i)your(s)?", "yumu's").replaceAll("(?i)you", "yumu").replaceAll("我", "你").replaceAll("(?i)[Ii]|me", "you").replaceAll("(?i)me", "your").replaceAll("(?i)my", "yours").replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "")
-                .replaceAll("习近平|习?总书记|国家|[党国吊批逼操草肏]|迪克", "○");
+        return s.replaceAll("你", "雨沐")
+                .replaceAll("(?i)\\syour(s)?\\s", " yumu's ")
+                .replaceAll("(?i)\\syou\\s", " yumu ")
+                .replaceAll("我", "你")
+                .replaceAll("(?i)(\\s([Ii]|me)\\s)", " you ")
+                .replaceAll("(?i)\\smy\\s", " your ")
+                .replaceAll("(?i)\\smine\\s", "yours")
+                .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "")
+                .replaceAll("习近平|习?总书记|国家|政治|迪克|", "(和谐)")
+                .replaceAll("[党国吊批逼操肏死]", "○");
     }
 }
