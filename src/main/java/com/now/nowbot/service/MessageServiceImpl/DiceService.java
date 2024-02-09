@@ -129,11 +129,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 left = matcher.group("m1");
                 right = matcher.group("m2");
 
-                if (hasC3) {
-                    is = matcher.group("c3");
-                }
-
                 if (sp == IS) {
+                    is = matcher.group("c3");
+                    if (Objects.isNull(left)) left = "...";
+
                     try {
                         var c2 = matcher.group("c2");
                         //要不要，如果不是ABA那么不能匹配
@@ -308,7 +307,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是不是
         //A是。A不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)\\s*(?<c2>[\\u4e00-\\u9fa5\\w])不(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])不(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
         ;
 
