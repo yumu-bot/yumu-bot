@@ -117,8 +117,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == IS;
+            var considerM1 = !(sp == IS);
 
-            if (isPerfectMatch(sp.pattern, s, hasC3)) {
+            if (isPerfectMatch(sp.pattern, s, hasC3, considerM1)) {
                 split = sp;
 
                 var matcher = sp.pattern.matcher(s);
@@ -131,7 +132,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 if (sp == IS) {
                     is = matcher.group("c3");
-                    if (Objects.isNull(left)) left = "...";
+                    if (! StringUtils.hasText(left)) left = "...";
 
                     try {
                         var c2 = matcher.group("c2");
@@ -318,20 +319,18 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
     }
 
-    private boolean isPerfectMatch(Pattern p, String s, boolean hasC3) {
+    private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean considerM1) {
         var matcher = p.matcher(s);
-        boolean c3 = true;
 
         if (! matcher.find()) {
             return false;
         }
 
-        if (hasC3) {
-            c3 = Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
-        }
-
         var m1 = Objects.nonNull(matcher.group("m1")) && StringUtils.hasText(matcher.group("m1"));
         var m2 = Objects.nonNull(matcher.group("m2")) && StringUtils.hasText(matcher.group("m2"));
+        var c3 = hasC3 && Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
+
+        if (! considerM1) m1 = true;
 
         return m1 && m2 && c3;
     }
