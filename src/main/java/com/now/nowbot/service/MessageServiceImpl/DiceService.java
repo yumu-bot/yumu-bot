@@ -355,7 +355,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
 
 
-        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|超过|不足)(?<c2>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
         ;
 
         public final Pattern pattern;
