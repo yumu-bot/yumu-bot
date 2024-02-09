@@ -374,7 +374,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         var m1 = Objects.nonNull(matcher.group("m1")) && StringUtils.hasText(matcher.group("m1"));
         var m2 = Objects.nonNull(matcher.group("m2")) && StringUtils.hasText(matcher.group("m2"));
-        var c3 = Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
+        var c3 = hasC3 && Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
 
         if (onlyC3) return c3;
         if (hasC3) return m1 && m2 && c3;
