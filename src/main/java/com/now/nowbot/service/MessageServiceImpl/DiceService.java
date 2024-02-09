@@ -108,6 +108,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String left = "";
         String right = "";
         String is = "";
+        String not = "";
         String leftFormat;
         String rightFormat;
         Split split = null;
@@ -116,9 +117,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == IS;
-            var considerM1 = !(sp == IS);
+            var onlyC3 = sp == IS;
 
-            if (isPerfectMatch(sp.pattern, s, hasC3, considerM1)) {
+            if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
                 split = sp;
 
                 var matcher = sp.pattern.matcher(s);
@@ -131,12 +132,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 if (sp == IS) {
                     is = matcher.group("c3");
+                    not = matcher.group("m3");
                     if (! StringUtils.hasText(left)) left = "...";
+                    if (! StringUtils.hasText(right)) right = "";
 
                     try {
-                        var c2 = matcher.group("c2");
+                        var is2 = matcher.group("c2");
                         //要不要，如果不是ABA那么不能匹配
-                        if (! Objects.equals(c2, is)) {
+                        if (! Objects.equals(is2, is)) {
                             continue;
                         }
                         //找不到也不行
@@ -172,7 +175,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             }
         }
 
-        if (Objects.nonNull(split) && StringUtils.hasText(left) && StringUtils.hasText(right)) {
+        if (Objects.nonNull(split) && Objects.nonNull(left) && Objects.nonNull(right)) {
             leftFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
@@ -188,7 +191,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
                 case CONDITION -> "不是。";
-                case IS -> "%s不%s%s。";
+                case IS -> "%s%s%s%s。"; //他 不 是 猪。
                 case RANGE -> "您许愿的结果是：%s。";
             };
 
@@ -271,7 +274,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return rightFormat;
                 }
                 case IS -> {
-                    return String.format(rightFormat, left, is, right);
+                    return String.format(rightFormat, left, not, is, right);
                 }
                 case RANGE -> {
                     return String.format(right, leftFormat);
@@ -338,7 +341,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是不是
         //A是。A不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])[不没](?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
 
 
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|超过|不足)(?<c2>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
@@ -351,7 +354,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
     }
 
-    private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean considerM1) {
+    private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean onlyC3) {
         var matcher = p.matcher(s);
 
         if (! matcher.find()) {
@@ -360,11 +363,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         var m1 = Objects.nonNull(matcher.group("m1")) && StringUtils.hasText(matcher.group("m1"));
         var m2 = Objects.nonNull(matcher.group("m2")) && StringUtils.hasText(matcher.group("m2"));
-        var c3 = hasC3 && Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
+        var c3 = Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
 
-        if (! considerM1) m1 = true;
-
-        return m1 && m2 && c3;
+        if (onlyC3) return c3;
+        if (hasC3) return m1 && m2 && c3;
+        return m1 && m2;
     }
 
     /**
