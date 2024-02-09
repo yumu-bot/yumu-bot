@@ -113,11 +113,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, RANGE);
+        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, COULD, CONDITION, IS, RANGE);
 
         for (var sp : splits) {
-            var hasC3 = sp == BETTER || sp == IS;
-            var onlyC3 = sp == IS;
+            var hasC3 = sp == BETTER || sp == COULD || sp == IS;
+            var onlyC3 = sp == COULD || sp == IS;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
                 split = sp;
@@ -129,6 +129,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 left = matcher.group("m1");
                 right = matcher.group("m2");
+
+                if (sp == COULD) {
+                    is = matcher.group("c3");
+                    not = "不";
+                    if (! StringUtils.hasText(left)) left = "...";
+                    if (! StringUtils.hasText(right)) right = "";
+                }
 
                 if (sp == IS) {
                     is = matcher.group("c3");
@@ -180,8 +187,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "%s。";
+                case COULD, IS -> "%s%s%s。";
                 case CONDITION -> "是的。";
-                case IS -> "%s%s%s。";
                 case RANGE -> "您许愿的结果是：%s。";
             };
 
@@ -191,7 +198,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
                 case CONDITION -> "不是。";
-                case IS -> "%s%s%s%s。"; //他 不 是 猪。
+                case COULD, IS -> "%s%s%s%s。"; //他 不 是 猪。
                 case RANGE -> "您许愿的结果是：%s。";
             };
 
@@ -242,6 +249,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case ASSUME, EVEN -> {
                     return String.format(leftFormat, right);
                 }
+                case COULD, IS -> {
+                    return String.format(leftFormat, left, is, right);
+                }
                 case OR -> {
                     if (left.contains("是")) {
                         leftFormat = "我觉得，%s。";
@@ -250,9 +260,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
                 case CONDITION -> {
                     return leftFormat;
-                }
-                case IS -> {
-                    return String.format(leftFormat, left, is, right);
                 }
                 case RANGE -> {
                     return String.format(right, leftFormat);
@@ -273,7 +280,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case ASSUME, CONDITION -> {
                     return rightFormat;
                 }
-                case IS -> {
+                case COULD, IS -> {
                     return String.format(rightFormat, left, not, is, right);
                 }
                 case RANGE -> {
@@ -334,6 +341,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //假设A，才有B。
         //我觉得 A 也没啥。// 没有如果。
         ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|if|assume))\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*?)[，,\\s]*?(?<c2>(那?([你我他她它祂]们?|别人)?[会要想就便么才])那?)\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\w]*)")),
+
+        //我能
+
+        COULD(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*?)\\s*?(?<c2>不)?\\s*?(?<c3>([想要]|想要|能够?|可以))\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*?)")),
 
         //A是B？
         //确实。 //不对。
@@ -410,8 +421,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 .replaceAll("(?i)(\\s([Ii]|me)\\s)", " you ")
                 .replaceAll("(?i)\\smy\\s", " your ")
                 .replaceAll("(?i)\\smine\\s", "yours")
-                .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵的价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "")
-                .replaceAll("习近平|习?总书记|国家|政治|迪克|生殖器|阴茎|阴蒂|肛门|屁眼", "(和谐)")
+                .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "") //的 不匹配
+                .replaceAll("习近平|习?总书记|主席|国家|政治|共产党|迪克|生殖器|寄吧|几把|鸡巴|阴茎|阴蒂|肛门|屁眼", "(和谐)")
                 .replaceAll("[党国吊批逼操肏死]", "○");
     }
 }
