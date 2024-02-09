@@ -262,7 +262,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
                 case RANGE -> {
-                    return String.format(right, leftFormat);
+                    return String.format(leftFormat, right);
                 }
             }
         } else if (result > boundary + 0.002f) {
@@ -284,7 +284,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return String.format(rightFormat, left, not, is, right);
                 }
                 case RANGE -> {
-                    return String.format(right, leftFormat);
+                    return String.format(leftFormat, right);
                 }
             }
         } else {
