@@ -113,7 +113,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, COULD, CONDITION, IS, RANGE);
+        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD, RANGE);
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == COULD || sp == IS;
@@ -129,13 +129,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 left = matcher.group("m1");
                 right = matcher.group("m2");
-
-                if (sp == COULD) {
-                    is = matcher.group("c3");
-                    not = "不";
-                    if (! StringUtils.hasText(left)) left = "...";
-                    if (! StringUtils.hasText(right)) right = "";
-                }
 
                 if (sp == IS) {
                     is = matcher.group("c3");
@@ -153,6 +146,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     } catch (IllegalArgumentException | IllegalStateException e) {
                         continue;
                     }
+                }
+
+                if (sp == COULD) {
+                    is = matcher.group("c3");
+                    not = "不";
+                    if (! StringUtils.hasText(left)) left = "...";
+                    if (! StringUtils.hasText(right)) right = "";
                 }
 
                 if (sp == RANGE) {
