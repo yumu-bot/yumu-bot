@@ -107,13 +107,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         float boundary;
         String left = "";
         String right = "";
+        String num = "";
         String is = "";
         String not = "";
         String leftFormat;
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD, RANGE);
+        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD);
 
         for (var sp : splits) {
             var hasC3 = sp == BETTER || sp == COULD || sp == IS;
@@ -155,6 +156,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     if (! StringUtils.hasText(right)) right = "";
                 }
 
+                if (sp == POSSIBILITY) {
+                    var r = getRandom(1) * 100f;
+                    num = String.valueOf(r);
+                }
+
                 if (sp == RANGE) {
                     int range;
 
@@ -167,11 +173,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     if (range <= 0) {
                         throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
                     } else if (range <= 100) {
-                        right = String.format("%.0f", getRandom(100));
+                        num = String.format("%.0f", getRandom(100));
                     } else if (range <= 10000) {
-                        right = String.format("%.0f", getRandom(10000));
+                        num = String.format("%.0f", getRandom(10000));
                     } else if (range <= 1000000) {
-                        right = String.format("%.0f", getRandom(1000000));
+                        num = String.format("%.0f", getRandom(1000000));
                     } else {
                         throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
                     }
@@ -185,21 +191,23 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         if (Objects.nonNull(split) && Objects.nonNull(left) && Objects.nonNull(right)) {
             leftFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
+                case POSSIBILITY -> "概率是：%s%%";
+                case RANGE -> "您许愿的结果是：%s。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "%s。";
                 case COULD, IS -> "%s%s%s。";
                 case CONDITION -> "是的。";
-                case RANGE -> "您许愿的结果是：%s。";
             };
 
             rightFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
+                case POSSIBILITY -> "概率是：%s%%";
+                case RANGE -> "您许愿的结果是：%s。";
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
                 case CONDITION -> "不是。";
                 case COULD, IS -> "%s%s%s%s。"; //他 不 是 猪。
-                case RANGE -> "您许愿的结果是：%s。";
             };
 
             //改变几率
@@ -242,6 +250,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             //选第一个
             switch (split) {
 
+                case RANGE, POSSIBILITY -> {
+                    return String.format(leftFormat, num);
+                }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE-> {
                     return String.format(leftFormat, left);
                 }
@@ -261,13 +272,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case CONDITION -> {
                     return leftFormat;
                 }
-                case RANGE -> {
-                    return String.format(leftFormat, right);
-                }
             }
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
+                case RANGE, POSSIBILITY -> {
+                    return String.format(rightFormat, num);
+                }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> {
                     return String.format(rightFormat, right);
                 }
@@ -282,9 +293,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
                 case COULD, IS -> {
                     return String.format(rightFormat, left, not, is, right);
-                }
-                case RANGE -> {
-                    return String.format(leftFormat, right);
                 }
             }
         } else {
@@ -303,6 +311,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
     enum Split {
         //用于匹配是否还有关联词
         MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
+
+        POSSIBILITY(Pattern.compile("((有多少)?的?(可能)[是性]?)|((有多大)?的?(概率)是?)|(chance|possib(l[ey]|ility)(\\sis)?)")),
+
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
 
         //A和B比谁更C？
         //正常选择
@@ -354,8 +366,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //A是。A不是。
         IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
 
-
-        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
         ;
 
         public final Pattern pattern;
