@@ -107,7 +107,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         float boundary;
         String left = "";
         String right = "";
-        String num = "";
+        float num = 0f;
         String is = "";
         String not = "";
         String leftFormat;
@@ -117,8 +117,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD);
 
         for (var sp : splits) {
-            var hasC3 = sp == BETTER || sp == COULD || sp == IS;
-            var onlyC3 = sp == COULD || sp == IS;
+            var hasC3 = sp == BETTER || sp == COULD || sp == IS || sp == POSSIBILITY;
+            var onlyC3 = sp == COULD || sp == IS || sp == POSSIBILITY;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
                 split = sp;
@@ -157,8 +157,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
 
                 if (sp == POSSIBILITY) {
-                    var r = getRandom(1) * 100f;
-                    num = String.valueOf(r);
+                    num = Math.round(getRandom(1) * 10000f) / 100f;
                 }
 
                 if (sp == RANGE) {
@@ -173,15 +172,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     if (range <= 0) {
                         throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
                     } else if (range <= 100) {
-                        num = String.format("%.0f", getRandom(100));
+                        num = getRandom(100);
                     } else if (range <= 10000) {
-                        num = String.format("%.0f", getRandom(10000));
+                        num = getRandom(10000);
                     } else if (range <= 1000000) {
-                        num = String.format("%.0f", getRandom(1000000));
+                        num = getRandom(1000000);
                     } else {
                         throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
                     }
-
                 }
 
                 break;
@@ -191,8 +189,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         if (Objects.nonNull(split) && Objects.nonNull(left) && Objects.nonNull(right)) {
             leftFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
-                case POSSIBILITY -> "概率是：%s%%";
-                case RANGE -> "您许愿的结果是：%s。";
+
+                case POSSIBILITY -> "概率是：%.2f%%";
+                case RANGE -> "您许愿的结果是：%.0f。";
+
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "%s。";
                 case COULD, IS -> "%s%s%s。";
@@ -201,8 +201,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
             rightFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
-                case POSSIBILITY -> "概率是：%s%%";
-                case RANGE -> "您许愿的结果是：%s。";
+
+                case POSSIBILITY -> "概率是：%.2f%%";
+                case RANGE -> "您许愿的结果是：%.0f。";
+
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
@@ -241,7 +243,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
 
                 var r = Math.round(getRandom(stringList.size()) - 1);
-
                 return String.format(leftFormat, stringList.get(r)); //lr一样的
             }
         }
@@ -312,7 +313,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //用于匹配是否还有关联词
         MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
-        POSSIBILITY(Pattern.compile("((有多少)?的?(可能)[是性]?)|((有多大)?的?(概率)是?)|(chance|possib(l[ey]|ility)(\\sis)?)")),
+        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(?<c3>((有多少)?的?(可能)[是性]?)|((有多大)?的?(概率)是?)|(chance|possib(l[ey]|ility)(\\sis)?))(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
 
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
 
