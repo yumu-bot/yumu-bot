@@ -114,11 +114,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD);
+        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, COULD, WHO);
 
         for (var sp : splits) {
-            var hasC3 = sp == BETTER || sp == COULD || sp == IS || sp == POSSIBILITY;
-            var onlyC3 = sp == COULD || sp == IS || sp == POSSIBILITY;
+            var onlyC3 = sp == WHO || sp == COULD || sp == IS || sp == POSSIBILITY;
+            var hasC3 = sp == BETTER || onlyC3;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
                 split = sp;
@@ -166,7 +166,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     try {
                         range = Integer.parseInt(right);
                     } catch (NumberFormatException e) {
-                        continue;
+                        range = 100;
                     }
 
                     if (range <= 0) {
@@ -190,6 +190,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             leftFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
 
+                case WHO -> "我是 Yumu 机器人。";
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
@@ -202,6 +203,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             rightFormat = switch (split) {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
 
+                case WHO -> "我是 Yumu 机器人。";
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
@@ -251,6 +253,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             //选第一个
             switch (split) {
 
+                case WHO, CONDITION -> {
+                    return leftFormat;
+                }
                 case RANGE, POSSIBILITY -> {
                     return String.format(leftFormat, num);
                 }
@@ -270,9 +275,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     }
                     return String.format(leftFormat, left);
                 }
-                case CONDITION -> {
-                    return leftFormat;
-                }
             }
         } else if (result > boundary + 0.002f) {
             //选第二个
@@ -289,7 +291,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     }
                     return String.format(rightFormat, right);
                 }
-                case ASSUME, CONDITION -> {
+                case WHO, ASSUME, CONDITION -> {
                     return rightFormat;
                 }
                 case COULD, IS -> {
@@ -313,9 +315,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //用于匹配是否还有关联词
         MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w]*)")),
 
+
+        WHO(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
+
         POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w]*)?(?<c3>((有多少)?的?(可能)[是性]?)|((有多大)?的?(概率)是?)|(chance|possib(l[ey]|ility)(\\sis)?))(?<m2>[\\u4e00-\\u9fa5\\w]*)?")),
 
-        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约?等于?|超过|不足|多少|[><]=?|[＞＜≥≤≡≈])(?<c3>[\\u4e00-\\u9fa5\\w]*?)?\\s*(?<m2>\\d+)")),
 
         //A和B比谁更C？
         //正常选择
