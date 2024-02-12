@@ -82,16 +82,16 @@ public class ServiceCountService implements MessageService<Integer> {
         ));
 
         sb.append("""
-                | 服务名 | 调用次数 | 平均用时 | 最大用时 | 最小用时 | 90% |
+                | 服务名 | 调用次数 | 最大用时 | 80% 用时 | 平均用时 | 最小用时 |
                 |:-------|:--------:|:---------:|:---------:|:---------:|:---------:|
                 """);
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
                 .append('|').append(r.getService())
                 .append('|').append(r.getSize())
-                .append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
                 .append('|').append(r.getMaxTime() / 1000D).append('s')
-                .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append('|').append(r80map.get(r.getService()) / 1000D).append('s')
+                .append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
+                .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append("|\n");
         result.forEach(work);
 
