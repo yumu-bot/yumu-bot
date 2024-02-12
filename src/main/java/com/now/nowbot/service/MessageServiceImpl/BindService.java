@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.entity.bind.QQBindLite;
 import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -17,6 +18,8 @@ import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
@@ -27,9 +30,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
+    private static final Logger log = LoggerFactory.getLogger(BindService.class);
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
@@ -54,8 +59,25 @@ public class BindService implements MessageService<BindService.BindParam> {
         var m = Instructions.BIND.matcher(messageText);
         if (!m.find()) return false;
 
+        var qq = m.group("qq");
+        var name = m.group("name");
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
+        boolean hasOsu = Pattern.matches("(?i)osu", name);
+
         //!bind 给个提示
         if (Objects.isNull(m.group("ym")) && Objects.nonNull(m.group("bind"))) {
+            if (hasOsu) {
+                OsuUser user;
+                try {
+                    user = userApiService.getPlayerInfo(name);
+                } catch (WebClientResponseException e) {
+                    log.info("Bind 退避成功：!bind osu <name>");
+                    return false;
+                }
+                name = user.getUsername();
+            }
+
             var from = event.getSubject();
             var receipt = from.sendMessage(BindException.Type.BIND_Question_BindRetreat.message);
 
@@ -71,10 +93,6 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
 
         var meQQ = event.getSender().getId();
-
-        var qq = m.group("qq");
-        var name = m.group("name");
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         boolean unbind = Objects.nonNull(m.group("un")) || Objects.nonNull(m.group("ub"));
         boolean isSuper = Permission.isSuper(meQQ);
         boolean isFull = Objects.nonNull(m.group("full"));
