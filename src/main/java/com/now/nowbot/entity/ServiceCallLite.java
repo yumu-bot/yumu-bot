@@ -39,4 +39,11 @@ public class ServiceCallLite {
 
         Long getMaxTime();
     }
+
+
+    public interface ServiceCallResult$80 {
+        String getService();
+
+        Long getData();
+    }
 }
