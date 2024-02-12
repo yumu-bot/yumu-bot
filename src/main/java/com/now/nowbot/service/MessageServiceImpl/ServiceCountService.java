@@ -95,7 +95,7 @@ public class ServiceCountService implements MessageService<Integer> {
                 .append('|').append(r.getService())
                 .append('|').append(r.getSize())
                 .append('|').append(r.getMaxTime() / 1000D).append('s')
-                .append('|').append(r80map.get(r.getService()) / 1000D).append('s')
+                .append('|').append(r80map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
                 .append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
                 .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append("|\n");
