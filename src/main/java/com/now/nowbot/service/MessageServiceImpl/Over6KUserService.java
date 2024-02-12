@@ -7,7 +7,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -24,18 +23,26 @@ import java.util.Optional;
 @Service("FOR_NEWBIE_GROUP_WEB_API")
 public class Over6KUserService implements MessageService<Over6KUserService.User> {
     private static File DATA_FILE;
+    private static boolean INITED = false;
     @Resource
     OsuUserApiService userApiService;
     public Over6KUserService(FileConfig fileConfig) throws IOException {
         DATA_FILE = new File(fileConfig.getRoot(), "6k.out");
-        if (!DATA_FILE.exists()) {
-            DATA_FILE.createNewFile();
+        try {
+            if (! DATA_FILE.exists()) {
+                DATA_FILE.createNewFile();
+            }
+        } catch (IOException err) {
+            INITED = false;
+            return;
         }
+
+        INITED = true;
     }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<User> data) throws Throwable {
-        if (!messageText.startsWith("高阶出群")) {
+        if (INITED && ! messageText.startsWith("高阶出群")) {
             return false;
         }
         var ps = messageText.split("#");
