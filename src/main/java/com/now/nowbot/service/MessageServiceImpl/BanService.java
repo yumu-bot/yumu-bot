@@ -68,7 +68,7 @@ public class BanService implements MessageService<BanService.BanParam> {
 
     @Override
     public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
-        if (!Permission.isSuper(event.getSender().getId())) {
+        if (!Permission.isSuperAdmin(event.getSender().getId())) {
             throw new BanException(BanException.Type.SUPER_Permission_Admin);
         }
 

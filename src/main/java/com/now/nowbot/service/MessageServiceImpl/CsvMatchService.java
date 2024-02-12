@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchCal;
 import com.now.nowbot.model.multiplayer.MatchRound;
@@ -37,8 +38,13 @@ public class CsvMatchService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
         var m = Instructions.CSV_MATCH.matcher(messageText);
+
+        if (!Permission.isGroupAdmin(event)) {
+            throw new MRAException(MRAException.Type.RATING_Permission_OnlyGroupAdmin);
+        }
+
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -68,7 +74,7 @@ public class CsvMatchService implements MessageService<Matcher> {
         } else {
             try {
                 id = Integer.parseInt(matcher.group("data"));
-                from.sendMessage("正在处理" + id);
+                from.sendMessage(STR."正在处理\{id}");
                 parseCRA(sb, id);
             } catch (NullPointerException e) {
                 throw new MRAException(MRAException.Type.RATING_Match_NotFound);
@@ -85,10 +91,10 @@ public class CsvMatchService implements MessageService<Matcher> {
             try {
                 if (isMultiple) {
                     if (Objects.nonNull(ids)) {
-                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.getFirst() + "s.csv");
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), STR."\{ids.getFirst()}s.csv");
                     }
                 } else {
-                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
+                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), STR."\{id}.csv");
                 }
             } catch (Exception e) {
                 log.error("CSV: 发送失败", e);
@@ -170,7 +176,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                     .append(round.getMode()).append(',')
                     .append(round.getScoringType()).append(',')
                     .append(round.getTeamType()).append(',')
-                    .append((round.getBeatmap().getStarRating())).append(',')
+                    .append(round.getBeatmap().getStarRating()).append(',')
                     .append(round.getBeatmap().getTotalLength()).append(',')
                     .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
                     .append(round.getBeatmap().getId()).append(',')

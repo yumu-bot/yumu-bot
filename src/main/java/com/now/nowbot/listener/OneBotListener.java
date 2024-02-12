@@ -46,7 +46,7 @@ public class OneBotListener {
         String textMessage = event.getTextMessage().trim();
         for (var ins : Permission.getAllService()) {
             //功能关闭 优先级高于aop拦截
-            if (Permission.isServiceClose(ins) && !Permission.isSuper(event.getSender().getId())) continue;
+            if (Permission.isServiceClose(ins) && !Permission.isSuperAdmin(event.getSender().getId())) continue;
             if (Permission.checkStopListener()) break;
             try {
                 var service = messageServiceMap.get(ins);
@@ -80,7 +80,7 @@ public class OneBotListener {
         } else if (e instanceof PermissionException) {
             log.error(e.getMessage());
         } else {
-            if (Permission.isSuper(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
+            if (Permission.isSuperAdmin(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
             log.error("捕捉其他异常", e);
         }
     }

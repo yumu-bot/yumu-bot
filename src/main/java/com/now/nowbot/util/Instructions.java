@@ -114,7 +114,7 @@ public class Instructions {
 
     public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|dr(?![A-Za-z_]))\\s*(?<d>\\d+)?");
+    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|w(?![A-Za-z_]))\\s*(?<d>\\d+)?");
 
     public static final Pattern COUNT_MESSAGE_LEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 

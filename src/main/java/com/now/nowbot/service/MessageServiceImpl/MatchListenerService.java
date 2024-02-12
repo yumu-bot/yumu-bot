@@ -122,7 +122,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 ListenerCheck.cancel(
                         groupEvent.getSender().getId(),
                         groupEvent.getGroup().getId(),
-                        Permission.isSuper(event.getSender().getId()),
+                        Permission.isSuperAdmin(event.getSender().getId()),
                         param.id);
             } else {
                 throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
@@ -243,7 +243,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 senderId,
                 groupEvent.getGroup().getId(),
                 param.id,
-                Permission.isSuper(senderId),
+                Permission.isSuperAdmin(senderId),
                 (e) -> {
                 },
                 handleEvent,

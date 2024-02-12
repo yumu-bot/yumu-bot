@@ -9,6 +9,7 @@ import com.now.nowbot.qq.Bot;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ContextUtil;
@@ -322,7 +323,7 @@ public class Permission {
         return group != null && WHITELIST.hasGroup(group);
     }
 
-    public static boolean isSuper(Long id) {
+    public static boolean isSuperAdmin(Long id) {
         return supetList.contains(id);
     }
 
@@ -368,6 +369,10 @@ public class Permission {
         GroupContact member;
         if ((member = group.getUser(qq)) == null) return false;
         return member.getRoll() == Role.ADMIN || member.getRoll() == Role.OWNER;
+    }
+
+    public static boolean isGroupAdmin(MessageEvent event) {
+        return isGroupAdmin(event.getSubject().getId(), event.getSender().getId());
     }
 
     public static void stopListener() {

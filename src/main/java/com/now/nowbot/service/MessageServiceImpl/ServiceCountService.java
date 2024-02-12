@@ -1,11 +1,13 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.ServiceCallLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,10 @@ public class ServiceCountService implements MessageService<Integer> {
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Integer> data) throws Throwable {
         var matcher = Instructions.SERVICE_COUNT.matcher(messageText);
         if (! matcher.find()) return false;
+
+        if (!Permission.isSuperAdmin(event.getSender().getId())) {
+            throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
+        }
 
         var d = matcher.group("days");
         var h = matcher.group("hours");

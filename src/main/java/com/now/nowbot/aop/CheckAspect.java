@@ -102,7 +102,7 @@ public class CheckAspect {
         var event = (MessageEvent) args[0];
         var servicename = Service.value();
 
-        if (Permission.isSuper(event.getSender().getId())) {
+        if (Permission.isSuperAdmin(event.getSender().getId())) {
             //超管无视任何限制
             return args;
         }
@@ -150,7 +150,7 @@ public class CheckAspect {
         var servicename = Service.value();
 //        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
         try {
-            if (Permission.isSuper(event.getSender().getId())) {
+            if (Permission.isSuperAdmin(event.getSender().getId())) {
                 //超管无视任何限制
                 return args;
             }

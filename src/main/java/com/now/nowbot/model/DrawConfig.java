@@ -20,7 +20,7 @@ public class DrawConfig {
     public Map<DrawKind, List<Card>> cardList;
     public Map<DrawKind, List<Double>> cardWeightList;
 
-    private Map<String, DrawKind> kindMap;
+    private final Map<String, DrawKind> kindMap;
     private static final Random random = new Random();
 
     public DrawConfig(JsonNode jsonData) {
@@ -36,7 +36,7 @@ public class DrawConfig {
                         kindData.get("name").asText("no name"),
                         kindData.get("weight").asInt(100));
                 this.kindConfig.put(kind, conf);
-                if (kindData.get("cards").isArray() && kindData.get("cards").size() > 0) {
+                if (kindData.get("cards").isArray() && !kindData.get("cards").isEmpty()) {
                     var cards = new ArrayList<DrawConfig.Card>(kindData.get("cards").size());
                     int weightSum = 0;
                     for (var cardData : kindData.get("cards")) {

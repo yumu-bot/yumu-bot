@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service("FOR_NEWBIE_GROUP_WEB_API")
-public class Over6KUserService implements MessageService<Over6KUserService.User> {
+public class Over6KUserService implements MessageService<Over6KUserService.OverUser> {
     private static File DATA_FILE;
     private static boolean INITED = false;
     @Resource
@@ -41,7 +41,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<User> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<OverUser> data) throws Throwable {
         if (INITED && ! messageText.startsWith("高阶出群")) {
             return false;
         }
@@ -61,18 +61,18 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
             throw new TipsException(STR."没找到用户\{name}");
         }
 
-        data.setValue(new User(id, name, time));
+        data.setValue(new OverUser(id, name, time));
         return true;
     }
 
     @CheckPermission(isSuperAdmin = true)
     @Override
-    public void HandleMessage(MessageEvent event, User user) throws Throwable {
+    public void HandleMessage(MessageEvent event, OverUser user) throws Throwable {
         saveUser(user);
         event.getSubject().sendMessage("添加成功");
     }
 
-    record User(long id, String name, LocalDate date) {
+    public record OverUser(long id, String name, LocalDate date) {
     }
 
     private RandomAccessFile readFile() throws FileNotFoundException {
@@ -83,16 +83,16 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
         return new RandomAccessFile(DATA_FILE, "rws");
     }
 
-    private List<User> getUsers(RandomAccessFile data, int size) throws IOException {
+    private List<OverUser> getUsers(RandomAccessFile data, int size) throws IOException {
         return getUsers(data, 0, size);
     }
 
-    private List<User> getUsers(RandomAccessFile data, int start, int size) throws IOException {
+    private List<OverUser> getUsers(RandomAccessFile data, int start, int size) throws IOException {
         while (start > 0) {
             skipUser(data);
             start--;
         }
-        var result = new ArrayList<User>();
+        var result = new ArrayList<OverUser>();
         for (int i = 0; i < size; i++) {
             readUser(data).ifPresent(result::add);
         }
@@ -106,7 +106,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
         }
     }
 
-    private Optional<User> readUser (RandomAccessFile data) throws IOException {
+    private Optional<OverUser> readUser (RandomAccessFile data) throws IOException {
         if (data.length() - data.getFilePointer() < 4) {
             return Optional.empty();
         }
@@ -119,10 +119,10 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
         data.read(date);
         String dateStr = new String(date, 0, 10);
         String name = new String(date, 10, dataSize - 18);
-        return Optional.of(new User(id, name, LocalDate.parse(dateStr)));
+        return Optional.of(new OverUser(id, name, LocalDate.parse(dateStr)));
     }
 
-    private byte[] getUserData(User u) {
+    private byte[] getUserData(OverUser u) {
         byte[] name = u.name.getBytes();
         //  (size)4 + (uid)8 + (data)10 + name
         int size = 22 + name.length;
@@ -137,14 +137,14 @@ public class Over6KUserService implements MessageService<Over6KUserService.User>
     private void saveUser(long id, String name, String timeStr) throws IOException {
         System.out.println("save "+id);
         try (var f = writeFile();) {
-            var u = new User(id, name, LocalDate.parse(timeStr));
+            var u = new OverUser(id, name, LocalDate.parse(timeStr));
             var d = getUserData(u);
             f.seek(f.length());
             f.write(d);
         }
     }
 
-    private void saveUser(User u) throws IOException {
+    private void saveUser(OverUser u) throws IOException {
         try (var f = writeFile();) {
             var d = getUserData(u);
             f.seek(f.length());

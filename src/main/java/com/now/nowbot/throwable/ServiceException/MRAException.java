@@ -24,6 +24,8 @@ public class MRAException extends TipsException {
         f?：不计失败成绩？
         """),//参数_无参数
 
+        RATING_Permission_OnlyGroupAdmin("只有群聊管理员或群主可以使用此功能！"),
+
         RATING_Parameter_Error("输入的参数范围错误！"),//参数_参数错误
         RATING_Parameter_SkipError("你要在虚空中热手吗？"),//参数_热手数量负数或者小数
         RATING_Parameter_SkipEndError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数

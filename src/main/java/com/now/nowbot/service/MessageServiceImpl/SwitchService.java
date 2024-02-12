@@ -5,6 +5,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,12 @@ public class SwitchService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
         var m = Instructions.SWITCH.matcher(messageText);
+
+        if (!Permission.isSuperAdmin(event.getSender().getId())) {
+            throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
+        }
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -80,9 +85,7 @@ public class SwitchService implements MessageService<Matcher> {
                 }
             }
 
-            case "wake" -> {
-                from.sendMessage("早安！");
-            }
+            case "wake" -> from.sendMessage("早安！");
 
             case "list" -> {
                 StringBuilder sb = new StringBuilder();

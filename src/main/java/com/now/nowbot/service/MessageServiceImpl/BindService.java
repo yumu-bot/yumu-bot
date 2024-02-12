@@ -95,7 +95,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var meQQ = event.getSender().getId();
         boolean unbind = Objects.nonNull(m.group("un")) || Objects.nonNull(m.group("ub"));
-        boolean isSuper = Permission.isSuper(meQQ);
+        boolean isSuper = Permission.isSuperAdmin(meQQ);
         boolean isFull = Objects.nonNull(m.group("full"));
 
         if (Objects.nonNull(at)) {

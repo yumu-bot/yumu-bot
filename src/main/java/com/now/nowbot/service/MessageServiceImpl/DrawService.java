@@ -37,7 +37,7 @@ public class DrawService implements MessageService<Matcher> {
     @Override
     @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var osuUser = bindDao.getUserFromQQ(event.getSender().getId());
+        var binUser = bindDao.getUserFromQQ(event.getSender().getId());
 
         int times = 1;
         if (matcher.group("d") != null) {
@@ -49,11 +49,11 @@ public class DrawService implements MessageService<Matcher> {
         List<DrawConfig.Card> clist = new LinkedList<>();
         // 10 连
         for (int i = 0; i < tenTimes; i++) {
-            var kindList = defaultConfig.getRandomKindTenTimes(osuUser.getOsuID(), drawLogLiteRepository);
+            var kindList = defaultConfig.getRandomKindTenTimes(binUser.getOsuID(), drawLogLiteRepository);
             var cards = kindList.stream().map(defaultConfig::getRandomCard).toList();
             var cardLites = new ArrayList<DrawLogLite>(kindList.size());
             for (int j = 0; j < kindList.size(); j++) {
-                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i), osuUser.getOsuID()));
+                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i), binUser.getOsuID()));
             }
             drawLogLiteRepository.saveAll(cardLites);
             clist.addAll(cards);
@@ -61,9 +61,9 @@ public class DrawService implements MessageService<Matcher> {
         // 单抽
         {
             for (int i = 0; i < times; i++) {
-                var kind = defaultConfig.getRandomKind(osuUser.getOsuID(), drawLogLiteRepository);
+                var kind = defaultConfig.getRandomKind(binUser.getOsuID(), drawLogLiteRepository);
                 var card = defaultConfig.getRandomCard(kind);
-                drawLogLiteRepository.save(new DrawLogLite(card, kind, osuUser.getOsuID()));
+                drawLogLiteRepository.save(new DrawLogLite(card, kind, binUser.getOsuID()));
                 clist.add(card);
             }
         }
@@ -177,5 +177,5 @@ public class DrawService implements MessageService<Matcher> {
               }
             }
             """;
-    private static DrawConfig defaultConfig = getConfig(config);
+    private static final DrawConfig defaultConfig = getConfig(config);
 }
