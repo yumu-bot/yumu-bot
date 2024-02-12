@@ -146,13 +146,15 @@ public class UUPRService implements MessageService<Matcher> {
         //单成绩发送
         try {
             getTextOutput(scoreList.getFirst(), from);
+        } catch (ScoreException e) {
+            throw e;
         } catch (Exception e) {
             from.sendMessage("UUPR 发送失败，请重试");
             log.error("UUPR 发送失败：", e);
         }
     }
 
-    private void getTextOutput(Score score, Contact from) {
+    private void getTextOutput(Score score, Contact from) throws ScoreException {
         var d = ScoreLegacy.getInstance(score, beatmapApiService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();

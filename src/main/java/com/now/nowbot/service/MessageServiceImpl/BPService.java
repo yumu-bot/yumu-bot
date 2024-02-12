@@ -203,6 +203,8 @@ public class BPService implements MessageService<BPService.BPParam> {
                 var image = imageService.getPanelE(osuUser, score, beatmapApiService);
                 from.sendImage(image);
             }
+        } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
+            throw new BPException(BPException.Type.BP_Me_TokenExpired);
         } catch (Exception e) {
             log.error("BP 发送出错", e);
             throw new BPException(BPException.Type.BP_Send_Error);

@@ -256,7 +256,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
     public record ScorePrParam(BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
     }
 
-    private void getTextOutput(Score score, Contact from) {
+    private void getTextOutput(Score score, Contact from) throws ScoreException {
         var d = ScoreLegacy.getInstance(score, beatmapApiService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();

@@ -248,7 +248,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
         return imageService.getPanelBeta(s.getFirst());
     }
 
-    private void getTextOutput(Score score, Contact from) {
+    private void getTextOutput(Score score, Contact from) throws ScoreException {
         var d = ScoreLegacy.getInstance(score, beatmapApiService);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();

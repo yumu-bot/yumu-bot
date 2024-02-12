@@ -23,6 +23,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -327,7 +328,7 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelE(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) {
+    public byte[] getPanelE(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) throws WebClientResponseException {
         var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
