@@ -434,11 +434,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 .replaceAll("(?i)\\syour(s)?\\s", " yumu's ")
                 .replaceAll("(?i)\\syou\\s", " yumu ")
                 .replaceAll("我", "你")
-                .replaceAll("(?i)(\\s([Ii]|me)\\s)", " you ")
+                .replaceAll("(?i)\\s([Ii]|me)\\s", " you ")
                 .replaceAll("(?i)\\smy\\s", " your ")
                 .replaceAll("(?i)\\smine\\s", "yours")
-                .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵价家啦来唻了嘞哩咧咯啰喽吗嘛嚜么麽哪呢呐否呵哈不兮般则连罗给噻哉呸也矣乎焉]", "") //的 不匹配
-                .replaceAll("习近平|习?总书记|主席|国家|政治|共产党|迪克|生殖器|寄吧|几把|鸡巴|阴茎|阴蒂|肛门|屁眼", "(和谐)")
-                .replaceAll("[党国吊批逼操肏死]", "○");
+
+                .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧罢呗啵啦来唻了嘞哩咧咯啰喽吗嘛嚜哪呢呐否呵哈兮噻哉矣乎焉]", "") //价也罗给的么麽般则连不呸 不匹配
+
+                .replaceAll("习近平|习?总书记|主席|国家|政治|共产党|天安门|情趣|迪克|高潮|色色|射精|蛇精|潮喷|成人|性交|男娘|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡巴|阴茎|阴蒂|阴毛|阴唇|屁眼|搞基", "(和谐)")
+                .replaceAll("[党国吊批逼操肏死肛杀]", "○");
     }
 }
