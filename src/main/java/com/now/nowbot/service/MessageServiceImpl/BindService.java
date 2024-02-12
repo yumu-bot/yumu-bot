@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -63,11 +64,11 @@ public class BindService implements MessageService<BindService.BindParam> {
         var name = m.group("name");
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        boolean hasOsu = Pattern.matches("(?i)osu", name);
-
         //!bind 给个提示
         if (Objects.isNull(m.group("ym")) && Objects.nonNull(m.group("bind"))) {
-            if (hasOsu) {
+
+            //!bind osu
+            if (StringUtils.hasText(name) && Pattern.matches("(?i)osu", name)) {
                 OsuUser user;
                 try {
                     user = userApiService.getPlayerInfo(name);
