@@ -13,11 +13,12 @@ public class EchoService implements MessageService<String> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<String> data) throws Throwable {
         var m = Instructions.ECHO.matcher(messageText);
-
-        if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
-        }
         if (m.find()) {
+
+            if (!Permission.isSuperAdmin(event.getSender().getId())) {
+                throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
+            }
+
             data.setValue(m.group("any"));
             return true;
         }

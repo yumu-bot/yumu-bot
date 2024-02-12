@@ -40,12 +40,10 @@ public class CsvMatchService implements MessageService<Matcher> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
         var m = Instructions.CSV_MATCH.matcher(messageText);
-
-        if (!Permission.isGroupAdmin(event)) {
-            throw new MRAException(MRAException.Type.RATING_Permission_OnlyGroupAdmin);
-        }
-
         if (m.find()) {
+            if (!Permission.isGroupAdmin(event)) {
+                throw new MRAException(MRAException.Type.RATING_Permission_OnlyGroupAdmin);
+            }
             data.setValue(m);
             return true;
         } else return false;
