@@ -14,7 +14,7 @@ public class DrawLogLite {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private DrawGrade grade;
+    private DrawGrade kind;
     private String card;
     private Long uid;
     @Column(name = "create_at")
@@ -35,11 +35,11 @@ public class DrawLogLite {
     }
 
     public DrawGrade getGrade() {
-        return grade;
+        return kind;
     }
 
     public void setGrade(DrawGrade grade) {
-        this.grade = grade;
+        this.kind = grade;
     }
 
     public String getCard() {
@@ -68,7 +68,7 @@ public class DrawLogLite {
     public DrawLogLite(){}
     public DrawLogLite(DrawConfig.Card card, DrawGrade grade, long uid){
         this.card = card.name();
-        this.grade = grade;
+        this.kind = grade;
         this.uid = uid;
     }
 }
