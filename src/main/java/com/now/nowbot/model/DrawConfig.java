@@ -2,7 +2,7 @@ package com.now.nowbot.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.mapper.DrawLogLiteRepository;
-import com.now.nowbot.model.enums.DrawKind;
+import com.now.nowbot.model.enums.DrawGrade;
 
 import java.util.*;
 
@@ -13,40 +13,40 @@ public class DrawConfig {
     public record Card(String name, int weight, String info) {
     }
 
-    public record CardLog(DrawKind kind, String card) {
+    public record CardLog(DrawGrade grade, String card) {
     }
 
-    public Map<DrawKind, Config> kindConfig;
-    public Map<DrawKind, List<Card>> cardList;
-    public Map<DrawKind, List<Double>> cardWeightList;
+    public Map<DrawGrade, Config> gradeConfigMap;
+    public Map<DrawGrade, List<Card>> cardList;
+    public Map<DrawGrade, List<Double>> cardWeightList;
 
-    private final Map<String, DrawKind> kindMap;
+    private final Map<String, DrawGrade> gradeMap;
     private static final Random random = new Random();
 
     public DrawConfig(JsonNode jsonData) {
-        kindConfig = new HashMap<>();
-        kindMap = new HashMap<>();
+        gradeConfigMap = new HashMap<>();
+        gradeMap = new HashMap<>();
         cardList = new HashMap<>();
         cardWeightList = new TreeMap<>();
 
-        for (var kind : DrawKind.values()) {
-            if (jsonData.has(kind.name())) {
-                var kindData = jsonData.get(kind.name());
+        for (var grade : DrawGrade.values()) {
+            if (jsonData.has(grade.name())) {
+                var gradeData = jsonData.get(grade.name());
                 var conf = new DrawConfig.Config(
-                        kindData.get("name").asText("no name"),
-                        kindData.get("weight").asInt(100));
-                this.kindConfig.put(kind, conf);
-                if (kindData.get("cards").isArray() && !kindData.get("cards").isEmpty()) {
-                    var cards = new ArrayList<DrawConfig.Card>(kindData.get("cards").size());
+                        gradeData.get("name").asText("no name"),
+                        gradeData.get("weight").asInt(100));
+                this.gradeConfigMap.put(grade, conf);
+                if (gradeData.get("cards").isArray() && !gradeData.get("cards").isEmpty()) {
+                    var cards = new ArrayList<DrawConfig.Card>(gradeData.get("cards").size());
                     int weightSum = 0;
-                    for (var cardData : kindData.get("cards")) {
+                    for (var cardData : gradeData.get("cards")) {
                         var card = new DrawConfig.Card(
                                 cardData.get("name").asText("no name"),
                                 cardData.get("weight").asInt(100),
                                 cardData.get("info").asText("default")
                         );
                         cards.add(card);
-                        this.kindMap.put(card.info(), kind);
+                        this.gradeMap.put(card.info(), grade);
                         weightSum += card.weight;
                     }
                     int thisWeight = 0;
@@ -55,90 +55,90 @@ public class DrawConfig {
                         weightList.add((double) thisWeight / weightSum);
                         thisWeight += card.weight();
                     }
-                    this.cardList.put(kind, cards);
-                    this.cardWeightList.put(kind, weightList);
+                    this.cardList.put(grade, cards);
+                    this.cardWeightList.put(grade, weightList);
                 }
             }
         }
     }
 
-    public DrawKind getKind(String cardInfo) {
-        return kindMap.get(cardInfo);
+    public DrawGrade getGrade(String cardKey) {
+        return gradeMap.get(cardKey);
     }
 
     /***
      * 随机品级
-     * @param uid
-     * @param repository
-     * @return
+     * @param uid 玩家
+     * @param repository 仓库
+     * @return 随机品级
      */
-    public DrawKind getRandomKind(long uid, DrawLogLiteRepository repository) {
+    public DrawGrade getGrade(long uid, DrawLogLiteRepository repository) {
         // 20抽之内出ssr的次数
-        int countSSR = repository.getKindCount(uid, 20, DrawKind.SSR);
+        int countSSR = repository.getGradeCount(uid, 20, DrawGrade.SSR);
         // 距离上次出ssr,已经抽了多少次
-        int countBefSSR = repository.getBeforCount(uid, DrawKind.SSR);
-        return checkKind(countBefSSR, countSSR);
+        int countBefSSR = repository.getBeforeCount(uid, DrawGrade.SSR);
+        return checkGrade(countBefSSR, countSSR);
     }
 
-    public List<DrawKind> getRandomKindTenTimes(long uid, DrawLogLiteRepository repository) {
-        int countSSR = repository.getKindCount(uid, 20, DrawKind.SSR);
-        int countBefSSR = repository.getBeforCount(uid, DrawKind.SSR);
+    public List<DrawGrade> getGrade10(long uid, DrawLogLiteRepository repository) {
+        int countSSR = repository.getGradeCount(uid, 20, DrawGrade.SSR);
+        int beforeSSR = repository.getBeforeCount(uid, DrawGrade.SSR);
 
-        var datas = new ArrayList<DrawKind>(10);
-        boolean srFlag = false;
+        var gradeList = new ArrayList<DrawGrade>(10);
+        boolean isSRShown = false;
         for (int i = 0; i < 9; i++) {
-            var kind = checkKind(countBefSSR, countSSR);
-            if (kind == DrawKind.SSR) {
+            var grade = checkGrade(beforeSSR, countSSR);
+            if (grade == DrawGrade.SSR) {
                 countSSR += 1;
-                countBefSSR = 0;
-                srFlag = true;
-            } else if (kind == DrawKind.SR) {
-                srFlag = true;
+                beforeSSR = 0;
+                isSRShown = true;
+            } else if (grade == DrawGrade.SR) {
+                isSRShown = true;
             }
-            datas.add(kind);
-            countBefSSR++;
+            gradeList.add(grade);
+            beforeSSR++;
         }
-        if (!srFlag) {
-            var kind = checkKind(countBefSSR, countSSR);
-            if (kind != DrawKind.SSR && kind != DrawKind.SR) kind = DrawKind.SR;
-            datas.add(kind);
+        if (!isSRShown) {
+            var grade = checkGrade(beforeSSR, countSSR);
+            if (grade != DrawGrade.SSR && grade != DrawGrade.SR) grade = DrawGrade.SR;
+            gradeList.add(grade);
         }
-        return datas;
+        return gradeList;
     }
 
-    private DrawKind checkKind(int countBefSSR, int countSSR) {
-        double ssrProb = 0.006 + Math.max(0, (countBefSSR - 73) * 0.06D);
+    private DrawGrade checkGrade(int beforeSSR, int countSSR) {
+        double chanceSSR = 0.006 + Math.max(0, (beforeSSR - 73) * 0.06D);
         // 20抽之内出现两个 ssr, 必定不不会ssr
-        if (countSSR >= 2) ssrProb = 0;
+        if (countSSR >= 2) chanceSSR = 0;
         // 十连保底在在十连抽做
-        double srProb = 0.051;
-        double rProb = 0.243;
+        double ChanceSR = 0.051;
+        double ChanceR = 0.243;
 
-        var randomValue = random.nextDouble();
-        if (randomValue - ssrProb < 0) {
-            return DrawKind.SSR;
+        var r = random.nextDouble();
+        if (r - chanceSSR < 0) {
+            return DrawGrade.SSR;
         }
-        randomValue -= ssrProb;
+        r -= chanceSSR;
 
-        if (randomValue - srProb < 0) {
-            return DrawKind.SR;
+        if (r - ChanceSR < 0) {
+            return DrawGrade.SR;
         }
-        randomValue -= srProb;
+        r -= ChanceSR;
 
-        if (randomValue - rProb < 0) {
-            return DrawKind.R;
+        if (r - ChanceR < 0) {
+            return DrawGrade.R;
         }
-        return DrawKind.N;
+        return DrawGrade.N;
     }
 
     /***
      * 随机卡片
-     * @return
+     * @return 随机卡片
      */
-    public Card getRandomCard(DrawKind kind) {
-        var cards = cardWeightList.get(kind);
+    public Card getCard(DrawGrade grade) {
+        var cards = cardWeightList.get(grade);
         int index = find(cards, 0, cards.size()-1, random.nextDouble());
-        return cardList.get(kind).get(index);
+        return cardList.get(grade).get(index);
     }
 
     private static int find(List<Double> l, int i, int j, double n) {

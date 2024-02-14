@@ -16,6 +16,7 @@ import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 
 @Service("DRAW")
@@ -49,11 +50,11 @@ public class DrawService implements MessageService<Matcher> {
         List<DrawConfig.Card> clist = new LinkedList<>();
         // 10 连
         for (int i = 0; i < tenTimes; i++) {
-            var kindList = defaultConfig.getRandomKindTenTimes(binUser.getOsuID(), drawLogLiteRepository);
-            var cards = kindList.stream().map(defaultConfig::getRandomCard).toList();
-            var cardLites = new ArrayList<DrawLogLite>(kindList.size());
-            for (int j = 0; j < kindList.size(); j++) {
-                cardLites.add(new DrawLogLite(cards.get(i), kindList.get(i), binUser.getOsuID()));
+            var gradeList = defaultConfig.getGrade10(binUser.getOsuID(), drawLogLiteRepository);
+            var cards = gradeList.stream().map(defaultConfig::getCard).toList();
+            var cardLites = new ArrayList<DrawLogLite>(gradeList.size());
+            for (int j = 0; j < gradeList.size(); j++) {
+                cardLites.add(new DrawLogLite(cards.get(i), gradeList.get(i), binUser.getOsuID()));
             }
             drawLogLiteRepository.saveAll(cardLites);
             clist.addAll(cards);
@@ -61,9 +62,9 @@ public class DrawService implements MessageService<Matcher> {
         // 单抽
         {
             for (int i = 0; i < times; i++) {
-                var kind = defaultConfig.getRandomKind(binUser.getOsuID(), drawLogLiteRepository);
-                var card = defaultConfig.getRandomCard(kind);
-                drawLogLiteRepository.save(new DrawLogLite(card, kind, binUser.getOsuID()));
+                var grade = defaultConfig.getGrade(binUser.getOsuID(), drawLogLiteRepository);
+                var card = defaultConfig.getCard(grade);
+                drawLogLiteRepository.save(new DrawLogLite(card, grade, binUser.getOsuID()));
                 clist.add(card);
             }
         }

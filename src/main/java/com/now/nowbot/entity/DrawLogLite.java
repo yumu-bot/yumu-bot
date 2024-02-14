@@ -1,7 +1,7 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.DrawConfig;
-import com.now.nowbot.model.enums.DrawKind;
+import com.now.nowbot.model.enums.DrawGrade;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -14,7 +14,7 @@ public class DrawLogLite {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    private DrawKind kind;
+    private DrawGrade grade;
     private String card;
     private Long uid;
     @Column(name = "create_at")
@@ -34,12 +34,12 @@ public class DrawLogLite {
         this.id = id;
     }
 
-    public DrawKind getKind() {
-        return kind;
+    public DrawGrade getGrade() {
+        return grade;
     }
 
-    public void setKind(DrawKind kind) {
-        this.kind = kind;
+    public void setGrade(DrawGrade grade) {
+        this.grade = grade;
     }
 
     public String getCard() {
@@ -66,9 +66,9 @@ public class DrawLogLite {
         this.uid = uid;
     }
     public DrawLogLite(){}
-    public DrawLogLite(DrawConfig.Card card, DrawKind kind, long uid){
+    public DrawLogLite(DrawConfig.Card card, DrawGrade grade, long uid){
         this.card = card.name();
-        this.kind = kind;
+        this.grade = grade;
         this.uid = uid;
     }
 }

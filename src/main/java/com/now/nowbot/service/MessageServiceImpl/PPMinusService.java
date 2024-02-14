@@ -122,7 +122,7 @@ public class PPMinusService implements MessageService<Matcher> {
         }
 
         if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort,  OsuMode.getName(mode).orElse(OsuMode.getName(mode).orElse("Default")));
         }
 
         try {
@@ -199,11 +199,11 @@ public class PPMinusService implements MessageService<Matcher> {
         }
 
         if (userOther.getStatistics().getPlayTime() < 60 || userOther.getStatistics().getPlayCount() < 30) {
-            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort);
+            throw new PPMinusException(PPMinusException.Type.PPM_Player_PlayTimeTooShort,  OsuMode.getName(mode).orElse(OsuMode.getName(mode).orElse("Default")));
         }
 
         if (userMe.getStatistics().getPlayTime() < 60 || userMe.getStatistics().getPlayCount() < 30) {
-            throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort);
+            throw new PPMinusException(PPMinusException.Type.PPM_Me_PlayTimeTooShort,  OsuMode.getName(mode).orElse(OsuMode.getName(mode).orElse("Default")));
         }
 
         //你为啥不在数据库里存这些。。。

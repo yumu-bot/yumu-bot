@@ -1,5 +1,5 @@
 package com.now.nowbot.model.enums;
 
-public enum DrawKind {
+public enum DrawGrade {
     N,R,SR,SSR,
 }
