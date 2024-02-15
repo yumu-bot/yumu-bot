@@ -26,7 +26,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
                             service,
                             time
                         from service_call
-                        where ctime between '2024-1-20 13:51:00' and '2024-1-22 13:51:00'
+                        where ctime between :start and :end
                         order by time
                     ) as rank_data
                     group by service;
