@@ -31,7 +31,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
                 where ctime between :start and :end
             ) as rank_data
             where rank_data.row_num <= floor(0.8 * total)
-            order by row_num desc limit 1;
+            order by row_num desc;
             """,
             nativeQuery = true)
     List<ServiceCallLite.ServiceCallResult$80> countBetween$80(LocalDateTime start, LocalDateTime end);
