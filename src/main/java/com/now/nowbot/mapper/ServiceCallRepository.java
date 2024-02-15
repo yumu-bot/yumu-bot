@@ -20,18 +20,16 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
     List<ServiceCallLite.ServiceCallResult> countBetween(LocalDateTime start, LocalDateTime end);
 
     @Query(value = """
-            select service, time as data
-            from (
-                select
-                    service,
-                    time,
-                    row_number() over (partition by service order by time desc ) as row_num,
-                    count(*) over (partition by service) as total
-                from service_call
-                where ctime between :start and :end
-            ) as rank_data
-            where rank_data.row_num <= floor(0.8 * total)
-            order by row_num desc limit 1;
+            select service, percentile_cont(0.8) within group ( order by time) as data
+                    from (
+                        select
+                            service,
+                            time
+                        from service_call
+                        where ctime between :start and :end
+                        order by time
+                    ) as rank_data
+                    group by service;
             """,
             nativeQuery = true)
     List<ServiceCallLite.ServiceCallResult$80> countBetween$80(LocalDateTime start, LocalDateTime end);
