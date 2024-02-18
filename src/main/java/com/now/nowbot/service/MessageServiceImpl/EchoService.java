@@ -3,10 +3,13 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.onebot.contact.Group;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
 
 @Service("ECHO")
 public class EchoService implements MessageService<String> {
@@ -29,5 +32,6 @@ public class EchoService implements MessageService<String> {
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, String data) throws Throwable {
         event.getSubject().sendMessage(data);
+        ((Group) (event.getSubject())).sendFile("test".getBytes(StandardCharsets.UTF_8), "test.txt");
     }
 }
