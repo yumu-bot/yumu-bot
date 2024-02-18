@@ -27,7 +27,7 @@ job-update:
     - job-build
   script:
     - cd ~/nowbot
-    - mv ./target/nowbot-linux.jar ~/work
+    - mv ~/nowbot/target/nowbot-linux.jar ~/work
     - sudo systemctl restart nowbot
 # job-restart-server:
 #   stage: restart
