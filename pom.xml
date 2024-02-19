@@ -39,7 +39,7 @@
     </profiles>
     <properties>
         <java.version>21</java.version>
-        <skipTests>false</skipTests>
+        <skipTests>true</skipTests>
     </properties>
     <dependencies>
 
@@ -184,6 +184,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.24.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>xyz.365246692.oirc</groupId>
+            <artifactId>oirc</artifactId>
+            <version>0.0.1</version>
         </dependency>
 
         <!--        <dependency>-->

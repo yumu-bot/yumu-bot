@@ -6,7 +6,7 @@ public interface MessageService<T> {
 
     boolean isHandle(MessageEvent event, String messageText, DataValue<T> data) throws Throwable;
 
-    void HandleMessage(MessageEvent event, T matcher) throws Throwable;
+    void HandleMessage(MessageEvent event, T data) throws Throwable;
 
     class DataValue<T> {
         T value;
