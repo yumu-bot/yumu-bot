@@ -274,7 +274,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
 
-                case CONDITION, THINK -> {
+                case CONDITION, THINK, NEST -> {
                     return leftFormat;
                 }
                 case RANGE, POSSIBILITY -> {
@@ -300,7 +300,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHO, ASSUME, CONDITION, THINK -> {
+                case WHO, ASSUME, CONDITION, THINK, NEST -> {
                     return rightFormat;
                 }
                 case RANGE, POSSIBILITY -> {
