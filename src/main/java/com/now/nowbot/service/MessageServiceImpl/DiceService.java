@@ -275,7 +275,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 }
 
                 var r = Math.round(getRandom(stringList.size()) - 1);
-                return String.format(leftFormat, stringList.get(r)); //lr一样的
+                return String.format(leftFormat, ChangeCase(stringList.get(r))); //lr format一样的
             }
         }
 
