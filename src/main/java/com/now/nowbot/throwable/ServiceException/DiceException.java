@@ -13,6 +13,7 @@ public class DiceException extends TipsException {
         DICE_Number_TooSmall("和你的杂鱼脑子一样小！"),
         DICE_Compare_NotMatch("我也不知道该选什么...扔骰子解决吧。"),
         DICE_Compare_All("我全都要！！！"),
+        DICE_Compare_NoDifference("有区别？重新选吧！"),
         DICE_Compare_Tie("硬币立在墙角了。再投一次？"),
         DICE_Compare_Wtf("你不可能看到这条消息。"),
         DICE_EasterEgg_0d00("打个角先..."),

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static com.now.nowbot.service.MessageServiceImpl.DiceService.Split.*;
 
@@ -188,6 +189,20 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         num = getRandom(1000000);
                     } else {
                         throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
+                    }
+                }
+
+                //排除掉AB一样的选择要求
+                if (StringUtils.hasText(left) && StringUtils.hasText(right) && num == 0f) {
+                    boolean m = false;
+                    try {
+                        m = left.toLowerCase().contains(right.toLowerCase()) || right.toLowerCase().contains(left.toLowerCase());
+                    } catch (PatternSyntaxException ignored) {
+
+                    }
+
+                    if (m) {
+                        throw new DiceException(DiceException.Type.DICE_Compare_NoDifference);
                     }
                 }
 
