@@ -196,7 +196,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 if (StringUtils.hasText(left) && StringUtils.hasText(right) && num == 0f) {
                     boolean m = false;
                     try {
-                        m = left.toLowerCase().contains(right.toLowerCase()) || right.toLowerCase().contains(left.toLowerCase());
+                        m = (left.toLowerCase().contains(right.toLowerCase()) || right.toLowerCase().contains(left.toLowerCase())) && left.length() >= 3 && right.length() >= 3;
                     } catch (PatternSyntaxException ignored) {
 
                     }
