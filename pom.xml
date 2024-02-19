@@ -186,6 +186,12 @@
             <version>1.24.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>xyz.365246692.oirc</groupId>
+            <artifactId>oirc</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+
         <!--        <dependency>-->
         <!--            <groupId>protocol</groupId>-->
         <!--            <artifactId>protocol</artifactId>-->
