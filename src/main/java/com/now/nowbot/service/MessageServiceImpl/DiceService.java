@@ -124,10 +124,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, THINK, COULD, WHO, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, WHETHER, IS, THINK, COULD, WHO, NEST);
 
         for (var sp : splits) {
-            var onlyC3 = sp == WHO || sp == COULD || sp == IS || sp == POSSIBILITY || sp == THINK || sp == NEST;
+            var onlyC3 = sp == WHO || sp == COULD || sp == WHETHER || sp == IS || sp == POSSIBILITY || sp == THINK || sp == NEST;
             var hasC3 = sp == BETTER || onlyC3;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
@@ -141,7 +141,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 left = matcher.group("m1");
                 right = matcher.group("m2");
 
-                if (sp == IS) {
+                if (sp == WHETHER) {
                     is = matcher.group("c3");
                     not = matcher.group("m3");
                     if (! StringUtils.hasText(left)) left = "...";
@@ -221,8 +221,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "%s。";
-                case COULD, IS -> "%s%s%s。";
-                case CONDITION -> "是的。";
+                case COULD, WHETHER -> "%s%s%s。";
+                case CONDITION, IS -> "是的。";
                 case THINK -> "嗯。";
             };
 
@@ -237,8 +237,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
-                case CONDITION -> "不是。";
-                case COULD, IS -> "%s%s%s%s。"; //他 不 是 猪。
+                case CONDITION, IS -> "不是。";
+                case COULD, WHETHER -> "%s%s%s%s。"; //他 不 是 猪。
                 case THINK -> "也没有吧。";
             };
 
@@ -289,7 +289,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
 
-                case CONDITION, THINK, NEST -> {
+                case CONDITION, THINK, NEST, IS -> {
                     return leftFormat;
                 }
                 case RANGE, POSSIBILITY -> {
@@ -302,7 +302,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case ASSUME, EVEN -> {
                     return String.format(leftFormat, right);
                 }
-                case COULD, IS -> {
+                case COULD, WHETHER -> {
                     return String.format(leftFormat, left, is, right);
                 }
                 case OR -> {
@@ -315,7 +315,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHO, ASSUME, CONDITION, THINK, NEST -> {
+                case WHO, ASSUME, CONDITION, THINK, NEST, IS -> {
                     return rightFormat;
                 }
                 case RANGE, POSSIBILITY -> {
@@ -330,7 +330,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     }
                     return String.format(rightFormat, right);
                 }
-                case COULD, IS -> {
+                case COULD, WHETHER -> {
                     return String.format(rightFormat, left, not, is, right);
                 }
             }
@@ -407,7 +407,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是不是
         //A是。A不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>是)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         //觉得
         //嗯。也没有吧。
