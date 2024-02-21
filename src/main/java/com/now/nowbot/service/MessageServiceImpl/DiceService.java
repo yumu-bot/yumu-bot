@@ -120,8 +120,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         float num = 0f;
         String is = "";
         String not = "";
-        String leftFormat;
-        String rightFormat;
+        String leftFormat = "";
+        String rightFormat = "";
         Split split = null;
 
         final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, WHETHER, IS, THINK, COULD, WHO, NEST);
@@ -251,8 +251,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 default -> 0.5f;
             };
         } else {
-            log.info(STR."扔骰子：\{s} 匹配失败。");
-            throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
+            try {
+                return chooseMultiple(s, "当然%s啦！");
+            } catch (Exception e) {
+                log.info(STR."扔骰子：\{s} 匹配失败。");
+                throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
+            }
         }
 
         //更换主语和和谐
@@ -267,15 +271,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var rightHas = MULTIPLE.pattern.matcher(right);
 
             if (leftHas.find() && StringUtils.hasText(leftHas.group("m2")) || rightHas.find() && StringUtils.hasText(rightHas.group("m2"))) {
-                String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！:：]|\\s+");
-                List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
-
-                if (stringList.isEmpty()) {
-                    throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
-                }
-
-                var r = Math.round(getRandom(stringList.size()) - 1);
-                return String.format(leftFormat, ChangeCase(stringList.get(r))); //lr format一样的
+                return chooseMultiple(s, leftFormat); //LR一样的
             }
         }
 
@@ -349,7 +345,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     enum Split {
         //用于匹配是否还有关联词
-        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(还是|或者|或|与|\\s+)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
@@ -422,6 +418,18 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split(Pattern p) {
             this.pattern = p;
         }
+    }
+
+    private String chooseMultiple(String s, String format) throws DiceException {
+        String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！:：]|\\s+");
+        List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
+
+        if (stringList.isEmpty() || stringList.size() == 1) {
+            throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
+        }
+
+        var r = Math.round(getRandom(stringList.size()) - 1);
+        return String.format(format, ChangeCase(stringList.get(r))); //lr format一样的
     }
 
     private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean onlyC3) {
