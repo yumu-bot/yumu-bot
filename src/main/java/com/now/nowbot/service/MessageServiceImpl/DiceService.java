@@ -112,7 +112,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 返回随机一个子项
      * @throws DiceException 错
      */
-    private String Compare(String s) throws DiceException {
+    public String Compare(String s) throws DiceException {
         float result = getRandom(0);
         float boundary;
         String left = "";
@@ -446,7 +446,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
      * @param <T> 数字的子类
      */
-    private <T extends Number> float getRandom(@Nullable T range) {
+    public <T extends Number> float getRandom(@Nullable T range) {
         long millis = System.currentTimeMillis() % 1000;
         int r;
 

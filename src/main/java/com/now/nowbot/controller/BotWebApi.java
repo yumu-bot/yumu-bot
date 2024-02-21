@@ -11,10 +11,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageServiceImpl.BPAnalysisService;
-import com.now.nowbot.service.MessageServiceImpl.MatchNowService;
-import com.now.nowbot.service.MessageServiceImpl.MuRatingService;
-import com.now.nowbot.service.MessageServiceImpl.Over6KUserService;
+import com.now.nowbot.service.MessageServiceImpl.*;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
@@ -30,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +54,8 @@ public class BotWebApi {
     ImageService imageService;
     @Resource
     BPAnalysisService bpAnalysisService;
+    @Resource
+    DiceService diceService;
 
 
     /**
@@ -418,12 +418,13 @@ public class BotWebApi {
         }
 
         var data = imageService.getPanelE(osuUser, score, beatmapApiService);
-        return new ResponseEntity<>(data, getImageHeader(userName + "-score.jpg", data.length), HttpStatus.OK);
+        return new ResponseEntity<>(data, getImageHeader(STR."\{userName}-score.jpg", data.length), HttpStatus.OK);
     }
 
     @GetMapping(value = "bpa")
-    public ResponseEntity<byte[]> getBPAnalysis(@RequestParam("u1") String userName,
-                                                @Nullable @RequestParam("mode") String playMode
+    public ResponseEntity<byte[]> getBPAnalysis(
+            @RequestParam("u1") String userName,
+            @Nullable @RequestParam("mode") String playMode
     ) {
         userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
@@ -434,7 +435,7 @@ public class BotWebApi {
 
         var d = bpAnalysisService.parseData(osuUser, scores, userApiService);
         var data = imageService.getPanelJ(d);
-        return new ResponseEntity<>(data, getImageHeader(userName + "-bp.jpg", data.length), HttpStatus.OK);
+        return new ResponseEntity<>(data, getImageHeader(STR."\{userName}-bp.jpg", data.length), HttpStatus.OK);
     }
 
     @PostMapping(value = "pool")
@@ -447,6 +448,38 @@ public class BotWebApi {
 
         var data = imageService.getPanelH(mapPool);
         return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);
+    }
+
+
+    @GetMapping(value = "dice")
+    @OpenResource(name = "dice", desp = "扔骰子 !ymdice (!d)")
+    public ResponseEntity<byte[]> getDice(
+            @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable Integer range,
+            @OpenResource(name = "compare", desp = "比较文本") @RequestParam("compare") @Nullable String compareStr
+    ) throws RuntimeException {
+        String message;
+
+        try {
+            if (Objects.isNull(range)) {
+                if (Objects.isNull(compareStr)) {
+                    message = String.format("%.0f", diceService.getRandom(100));
+                } else {
+                    message = diceService.Compare(compareStr);
+                }
+            } else {
+                message = String.format("%.0f", diceService.getRandom(range));
+            }
+
+            return new ResponseEntity<>(message.getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
+
+        } catch (DiceException e) {
+            return new ResponseEntity<>(
+                    String.format("%.0f", diceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
+                    , HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("扔骰子：API 失败", e);
+            throw new RuntimeException(DiceException.Type.DICE_Send_Error.message);
+        }
     }
 
     /**
