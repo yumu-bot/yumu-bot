@@ -50,6 +50,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         if (StringUtils.hasText(number)) {
             try {
+                if (number.contains("-")) {
+                    throw new DiceException(DiceException.Type.DICE_Number_NotSupportNegative);
+                }
                 data.setValue(new DiceParam(Long.parseLong(number), null));
             } catch (NumberFormatException e) {
                 throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);

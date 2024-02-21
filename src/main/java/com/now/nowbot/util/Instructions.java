@@ -103,7 +103,7 @@ public class Instructions {
      */
 
     // #8 辅助指令
-    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>\\d*)?(?<text>[\\s\\S]+)?");
+    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>-?\\d*)?(?<text>[\\s\\S]+)?");
 
     public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
 

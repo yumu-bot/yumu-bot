@@ -12,6 +12,7 @@ public class DiceException extends TipsException {
         DICE_Number_TooLarge("选这么大干什么！"),
         DICE_Number_TooSmall("和你的杂鱼脑子一样小！"),
         DICE_Number_ParseFailed("请不要输入天文数字！"),
+        DICE_Number_NotSupportNegative("请不要输入负数！"),
         DICE_Compare_NotMatch("我也不知道该选什么...扔骰子解决吧。"),
         DICE_Compare_All("我全都要！！！"),
         DICE_Compare_NoDifference("有区别？重新选吧！"),
