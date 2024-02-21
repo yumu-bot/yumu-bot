@@ -49,7 +49,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
 
         if (StringUtils.hasText(number)) {
-            data.setValue(new DiceParam(Long.parseLong(number), null));
+            try {
+                data.setValue(new DiceParam(Long.parseLong(number), null));
+            } catch (NumberFormatException e) {
+                throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);
+            }
         } else {
             data.setValue(new DiceParam(100L, null));
         }
@@ -120,8 +124,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         float num = 0f;
         String is = "";
         String not = "";
-        String leftFormat = "";
-        String rightFormat = "";
+        String leftFormat;
+        String rightFormat;
         Split split = null;
 
         final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, WHETHER, IS, THINK, COULD, WHO, NEST);
@@ -332,7 +336,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             }
         } else {
             //打平机会千分之四。彩蛋？
-            if (split == JUXTAPOSITION) {
+            if (result > boundary + 0.001f) {
                 throw new DiceException(DiceException.Type.DICE_Compare_All);
             } else {
                 throw new DiceException(DiceException.Type.DICE_Compare_Tie);
