@@ -370,7 +370,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是？
         //我不知道。是哈基米。
-        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>是(([你我他她它祂]们?|别人)?吗|谁|哪[个里处]|什么|啥)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!要)是(([你我他她它祂]们?|别人)?吗|谁|哪[个里处]|什么|啥)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         //A和B比谁更C？
         //正常选择
