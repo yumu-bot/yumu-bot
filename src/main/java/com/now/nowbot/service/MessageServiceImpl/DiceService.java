@@ -261,7 +261,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             };
         } else {
             try {
-                return chooseMultiple(s, "当然%s啦！");
+                return chooseMultiple(s);
             } catch (Exception e) {
                 log.info(STR."扔骰子：\{s} 匹配失败。");
                 throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
@@ -280,7 +280,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var rightHas = MULTIPLE.pattern.matcher(right);
 
             if (leftHas.find() && StringUtils.hasText(leftHas.group("m2")) || rightHas.find() && StringUtils.hasText(rightHas.group("m2"))) {
-                return chooseMultiple(s, leftFormat); //LR一样的
+                return chooseMultiple(s); //LR一样的
             }
         }
 
@@ -354,7 +354,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     enum Split {
         //用于匹配是否还有关联词
-        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(还是|或者|或|与|\\s+)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(还是|或者|或|与)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
@@ -433,7 +433,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
     }
 
-    private String chooseMultiple(String s, String format) throws DiceException {
+    private String chooseMultiple(String s) throws DiceException {
         String[] strings = s.split("还是|或者|[是或与,，.。/?!、？！:：]|\\s+");
         List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
 
@@ -442,7 +442,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
 
         var r = Math.round(getRandom(stringList.size()) - 1);
-        return String.format(format, ChangeCase(stringList.get(r))); //lr format一样的
+        return String.format("当然%s啦！", ChangeCase(stringList.get(r))); //lr format一样的
     }
 
     private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean onlyC3) {
@@ -507,6 +507,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 .replaceAll("[阿啊呃欸哇呀耶哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜哪呢呐呵哈兮噻哉矣焉]|[罢否乎][?？!！。.\\s]?$", "") //来唻了价也罗给的么麽般则连不呸 不匹配，删去其他语气助词
 
                 .replaceAll("[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安门|极[左右](主义)?|革命|(社会)?主义|情趣|迪克|高潮|色色|[蛇射受授吞]精|潮喷|成人|性交|男娘|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18", "(和谐)")
-                .replaceAll("[黨党國国吊批逼操肏死肛杀穴屁萎猥]", "○");
+                .replaceAll("[黨党吊批逼操肏死肛杀穴屁萎猥]", "○");
     }
 }
