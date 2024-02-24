@@ -131,7 +131,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, WHETHER, WHAT, BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, LIKE, THINK, COULD, WHO, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, WHAT, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, LIKE, THINK, COULD, WHO, NEST);
 
         for (var sp : splits) {
             var onlyC3 = sp == WHO || sp == COULD || sp == WHETHER || sp == IS || sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
@@ -380,10 +380,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //A是。A不是。
         WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
-        //是？
-        //我不知道。是哈基米。
-        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!要)是(([你我他她它祂]们?|别人)?吗|谁|哪[个里处]|什么|啥)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
-
         //A和B比谁更C？
         //正常选择
         //当然选 X 啦！
@@ -398,6 +394,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //正常选择
         //当然选 X 啦！
         OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+
+        //是？
+        //我不知道。是哈基米。
+        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!要)是(([你我他她它祂]们?|别人)?吗|谁|哪[个里处]|什么|啥)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         //并列AB
         //当然选 X 啦！
