@@ -44,14 +44,6 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         this.imageService = imageService;
     }
 
-    public record MapParam (Long bid, OsuMode osuMode, Double accuracy, Double combo, Integer miss, String modStr) {
-
-    }
-
-    public record Expected (OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
-
-    }
-
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) {
         var matcher = Instructions.MAP.matcher(messageText);
@@ -61,7 +53,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         long bid;
         double accuracy;
-        double combo;
+        int combo;
         int miss;
 
         try {
@@ -77,9 +69,9 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         }
 
         try {
-            combo = Double.parseDouble(matcher.group("combo"));
+            combo = Integer.parseInt(matcher.group("combo"));
         } catch (RuntimeException e) {
-            combo = 1d;
+            combo = 0;
         }
 
         try {
@@ -94,17 +86,13 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         return true;
     }
 
+    public record Expected (OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
+
+    }
+
     @Override
     public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
         var from = event.getSubject();
-
-        BeatMap beatMap;
-        int combo;
-        double acc;
-        OsuMode mode;
-
-        Expected expected;
-
         BinUser binUser;
         Optional<OsuUser> osuUser;
 
@@ -123,13 +111,31 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             log.error("谱面信息：无法生成空对象", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
+        try {
+            var image = getImage(param, osuUser);
+            from.sendImage(image);
+        } catch (Exception e) {
+            log.error("谱面信息：发送失败", e);
+            throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
+        }
+    }
+
+    public byte[] getImage(MapParam param, Optional<OsuUser> osuUser) throws Exception {
+
+        BeatMap beatMap;
+        int combo;
+        double acc;
+        OsuMode mode;
+
+        Expected expected;
+
 
         //没有bid，且有绑定
         if (param.bid == 0 && osuUser.isPresent()) {
             var o = osuUser.get();
 
             try {
-                var score = scoreApiService.getRecentIncludingFail(o.getUID(), o.getOsuMode(), 0,1).getFirst();
+                var score = scoreApiService.getRecentIncludingFail(o.getUID(), o.getOsuMode(), 0, 1).getFirst();
                 beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
                 expected = new Expected(score.getMode(), score.getAccuracy(), score.getMaxCombo(), score.getStatistics().getCountMiss(), score.getMods());
 
@@ -139,9 +145,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
                 var md = DataUtil.getMarkdownFile("Help/maps.md");
                 var image = imageService.getPanelA6(md, "help");
                  */
-                    var image = imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
-                    from.sendImage(image);
-                    return;
+                    return imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
                 } catch (Exception e) {
                     throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
                 }
@@ -164,15 +168,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
                 Integer maxCombo = beatMap.getMaxCombo();
 
                 if (Objects.isNull(maxCombo)) {
-                    combo = (int) Math.round(param.combo);
-                } else if (param.combo > 0D && param.combo < 1D) {
-                    combo = Math.toIntExact(Math.round(maxCombo * param.combo));
-                } else if (param.combo == 1D) {
+                    combo = param.combo;
+                } else if (param.combo <= 0) {
                     combo = maxCombo;
-                } else if (param.combo > 1D) {
-                    combo = Math.min(Math.toIntExact(Math.round(param.combo)), maxCombo);
                 } else {
-                    throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_ComboError);
+                    combo = Math.min(param.combo, maxCombo);
                 }
             }
 
@@ -204,14 +204,11 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
             expected = new Expected(mode, acc, combo, param.miss, mods);
         }
+        return imageService.getPanelE2(osuUser, beatMap, expected);
+    }
 
-        try {
-            var image = imageService.getPanelE2(osuUser, beatMap, expected);
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("谱面信息：发送失败", e);
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
-        }
+    public record MapParam(Long bid, OsuMode osuMode, Double accuracy, Integer combo, Integer miss, String modStr) {
+
     }
 }
 

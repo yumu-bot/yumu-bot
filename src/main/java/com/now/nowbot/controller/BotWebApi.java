@@ -29,10 +29,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_MAP;
 
 @RestController
 @ResponseBody
@@ -480,6 +479,62 @@ public class BotWebApi {
             log.error("扔骰子：API 失败", e);
             throw new RuntimeException(DiceException.Type.DICE_Send_Error.message);
         }
+    }
+
+
+    @Resource
+    MapStatisticsService mapStatisticsService;
+
+    /***
+     *
+     * @param bid -
+     * @param modeStr 模式
+     * @param accuracy acc, 0-1的浮点数
+     * @param combo 最大连击
+     * @param miss miss数
+     * @param modStr mod字符串, 比如 HDHR 等
+     * @return
+     * @throws RuntimeException
+     */
+    @GetMapping(value = "map")
+    @OpenResource(name = "m", desp = "获取谱面`pp`等信息")
+    public ResponseEntity<byte[]> getMapInfo(
+            @OpenResource(name = "bid", desp = "bid") @RequestParam("bid") Long bid,
+            @OpenResource(name = "mode", desp = "mode") @RequestParam("mode") @Nullable String modeStr,
+            @OpenResource(name = "accuracy", desp = "accuracy") @RequestParam("accuracy") @Nullable Double accuracy,
+            @OpenResource(name = "combo", desp = "combo") @RequestParam("combo") @Nullable Integer combo,
+            @OpenResource(name = "miss", desp = "miss") @RequestParam("miss") @Nullable Integer miss,
+            @OpenResource(name = "mods", desp = "mods") @RequestParam("mods") @Nullable String modStr
+    ) throws RuntimeException {
+        var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
+        if (Objects.isNull(accuracy)) accuracy = 0D;
+        if (Objects.isNull(combo)) combo = 0;
+        if (Objects.isNull(miss)) miss = 0;
+        if (Objects.isNull(modStr)) modStr = "";
+        var parm = new MapStatisticsService.MapParam(bid, mode, accuracy, combo, miss, modStr);
+        try {
+            var data = mapStatisticsService.getImage(parm, Optional.empty());
+
+            return new ResponseEntity<>(data, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("map api 出错", e);
+            throw new RuntimeException("map api 出错");
+        }
+    }
+
+    /**
+     * 登录, 向 bot 发送 !login 获得验证码, 验证码不区分大小写, 1分钟过期
+     *
+     * @param code 验证码
+     * @return {userName, userId}
+     */
+    @GetMapping(value = "login")
+    public Object doLogin(@RequestParam("code") @NotNull String code) {
+        var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
+        if (Objects.nonNull(u)) {
+            return Map.of("userName", u.name(), "userId", u.uid());
+        }
+        throw new RuntimeException("已过期或者不存在");
     }
 
     /**
