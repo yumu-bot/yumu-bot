@@ -40,21 +40,21 @@ import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
-    OsuUserApiService userApiService;
+    OsuUserApiService  userApiService;
     @Resource
     OsuScoreApiService scoreApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    MuRatingService mraService;
+    MuRatingService    mraService;
     @Resource
-    MatchNowService monitorNowService;
+    MatchNowService    monitorNowService;
     @Resource
-    ImageService imageService;
+    ImageService       imageService;
     @Resource
-    BPAnalysisService bpAnalysisService;
+    BPAnalysisService  bpAnalysisService;
     @Resource
-    DiceService diceService;
+    DiceService        diceService;
 
 
     /**
@@ -537,7 +537,11 @@ public class BotWebApi {
     }
 
     @GetMapping(value = "uui")
-    public OsuUser uui(@RequestParam("uid") @Nullable Long uid, @RequestParam("name") @Nullable String name, @RequestParam("mode") @Nullable String modeStr) {
+    public OsuUser uui(
+            @RequestParam("uid") @Nullable Long uid,
+            @RequestParam("name") @Nullable String name,
+            @RequestParam("mode") @Nullable String modeStr
+    ) {
         var mode = OsuMode.getMode(modeStr);
         if (Objects.nonNull(uid)) {
             return userApiService.getPlayerInfo(uid, mode);
@@ -567,9 +571,13 @@ public class BotWebApi {
     }
 
     @GetMapping("log-level")
-    public String setLoggerLever(@RequestParam("l") String level) {
+    public String setLoggerLever(@RequestParam("l") String level, @RequestParam("package") @Nullable String package$) {
         var l = Level.toLevel(level, Level.INFO);
-        ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
+        if (Objects.isNull(package$)) {
+            ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
+        } else {
+            ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger(package$).setLevel(l);
+        }
         log.trace("trace");
         log.debug("debug");
         log.info("info");
@@ -589,13 +597,14 @@ public class BotWebApi {
 
     @Resource
     Over6KUserService over6KUserService;
+
     @GetMapping("alumni")
-    public Object getAlumni(@RequestParam(name = "start", defaultValue = "0")int start,
-                            @RequestParam(name = "size", defaultValue = "30")int size) {
+    public Object getAlumni(@RequestParam(name = "start", defaultValue = "0") int start,
+                            @RequestParam(name = "size", defaultValue = "30") int size) {
         try {
             return over6KUserService.getResultJson(start, size);
         } catch (IOException e) {
-            log.error("alumni 文件异常",e );
+            log.error("alumni 文件异常", e);
             return "[]";
         }
     }
