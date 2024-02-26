@@ -531,6 +531,7 @@ public class BotWebApi {
     public OsuUser doLogin(@RequestParam("code") @NotNull String code) {
         var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
         if (Objects.nonNull(u)) {
+            LOGIN_USER_MAP.remove(code.toUpperCase());
             return userApiService.getPlayerInfo(u.uid());
         }
         throw new RuntimeException("已过期或者不存在");

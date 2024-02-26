@@ -56,7 +56,9 @@ public class LoginService implements MessageService<String> {
             if (temp < 10) {
                 t[i] = (char) ('0' + temp);
             } else {
-                if (random.nextBoolean()) {
+                // 防止 'l' 与 'I', 0 与 'O' 混淆
+                if (temp == 'o' - 'a') temp += 3;
+                if (temp != 18 && (temp == 21 || random.nextBoolean())) {
                     temp -= 10;
                 } else {
                     temp -= 42;
@@ -68,5 +70,12 @@ public class LoginService implements MessageService<String> {
     }
 
     public record LoginUser(Long uid, String name, Long time) {
+    }
+
+    public static void main(String[] args) {
+        int i = 'L' - 'A';
+        System.out.println(i);
+        i = 'I' - 'A';
+        System.out.println(i);
     }
 }
