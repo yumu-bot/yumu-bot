@@ -526,15 +526,26 @@ public class BotWebApi {
      * 登录, 向 bot 发送 !login 获得验证码, 验证码不区分大小写, 1分钟过期
      *
      * @param code 验证码
-     * @return {userName, userId}
      */
     @GetMapping(value = "login")
-    public Object doLogin(@RequestParam("code") @NotNull String code) {
+    public OsuUser doLogin(@RequestParam("code") @NotNull String code) {
         var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
         if (Objects.nonNull(u)) {
-            return Map.of("userName", u.name(), "userId", u.uid());
+            return userApiService.getPlayerInfo(u.uid());
         }
         throw new RuntimeException("已过期或者不存在");
+    }
+
+    @GetMapping(value = "uui")
+    public OsuUser uui(@RequestParam("uid") @Nullable Long uid, @RequestParam("name") @Nullable String name, @RequestParam("mode") @Nullable String modeStr) {
+        var mode = OsuMode.getMode(modeStr);
+        if (Objects.nonNull(uid)) {
+            return userApiService.getPlayerInfo(uid, mode);
+        } else if (Objects.nonNull(name)) {
+            return userApiService.getPlayerInfo(name, mode);
+        } else {
+            return userApiService.getPlayerInfo(17064371L, mode);
+        }
     }
 
     /**
