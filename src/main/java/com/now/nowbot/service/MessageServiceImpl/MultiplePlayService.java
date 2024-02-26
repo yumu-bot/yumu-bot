@@ -19,13 +19,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
-@Service
-public class MpService implements MessageService<String> {
+@Service("MP")
+public class MultiplePlayService implements MessageService<String> {
     private static IRCClient client    = null;
     private static MpChannel mpChannel = null;
     Proxy proxy = null;
 
-    public MpService(NowbotConfig config, FileConfig fileConfig) throws IOException {
+    public MultiplePlayService(NowbotConfig config, FileConfig fileConfig) throws IOException {
         proxy = new Proxy(Proxy.Type.valueOf(config.proxyType), new InetSocketAddress(config.proxyHost, config.proxyPort));
         var path = Path.of(fileConfig.getRoot(), "irc.conf");
         if (! Files.isRegularFile(path)) {

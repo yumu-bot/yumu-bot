@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service("MUTUAL")
-public class MutualFriendService implements MessageService<Matcher> {
+public class MutualService implements MessageService<Matcher> {
     //private static final Logger log = LoggerFactory.getLogger(MutualFriendService.class);
     @Resource
     OsuUserApiService userApiService;
@@ -29,9 +29,9 @@ public class MutualFriendService implements MessageService<Matcher> {
     @Resource
     BindDao bindDao;
 
-    static private final Pattern userNameTest = Pattern.compile("^\\d{5,12}$");
+    static private final Pattern NumberPattern = Pattern.compile("^\\d{5,12}$");
 
-    MutualFriendService(OsuUserApiService userApiService, BindDao bindDao) {
+    MutualService(OsuUserApiService userApiService, BindDao bindDao) {
         this.userApiService = userApiService;
         this.bindDao = bindDao;
     }
@@ -98,14 +98,20 @@ public class MutualFriendService implements MessageService<Matcher> {
                 sb.append(u.name).append('\n');
                 return;
             }
-            var name = u.name.replaceAll(" ", "%20");
-            var m = userNameTest.matcher(name);
-            if (m.find()) {
-                sb.append(STR."\{name} : https://osu.ppy.sh/users/\{u.uid}\n");
-                return;
-            }
+            var name4Url = u.name
+                    .replaceAll("\\s", "%20")
+                    .replaceAll("-", "%2D")
+                    .replaceAll("\\[", "%5B")
+                    .replaceAll("]", "%5D")
+                    .replaceAll("_", "%5F");
 
-            sb.append(STR."\{Objects.nonNull(u.qq) ? new AtMessage(u.qq).getCQ() : ""} \{u.name} : https://osu.ppy.sh/users/\{name}\n");
+            var m = NumberPattern.matcher(name4Url);
+            if (m.find()) {
+                //有数字，只能 uid
+                sb.append(STR."\{Objects.nonNull(u.qq) ? (new AtMessage(u.qq).getCQ() + '\n') : ""} \{u.name} : : https://osu.ppy.sh/users/\{u.uid}\n");
+            } else {
+                sb.append(STR."\{Objects.nonNull(u.qq) ? (new AtMessage(u.qq).getCQ() + '\n') : ""} \{u.name} : https://osu.ppy.sh/users/\{name4Url}\n");
+            }
         });
         return sb.toString();
     }

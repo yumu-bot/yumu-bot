@@ -72,8 +72,6 @@ public class Instructions {
 
     public static final Pattern NOMINATION = Pattern.compile("^[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))\\s*([:：]?(?<mode>(bid|sid|s|b)))?\\s*(?<sid>\\d+)?");
 
-    public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
-
     // #5 osu! 比赛指令
 
     public static final Pattern MATCH_LISTENER = Pattern.compile("^[!！]\\s*(?i)(ym)?(make\\s*love|(match)?listen(er)?|ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?\\s*(?<operate>start|stop|end|off|on|[spefo](?![A-Za-z_]))?");
@@ -97,24 +95,33 @@ public class Instructions {
      */
     public static final Pattern GET_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(getpool|gp(?![A-Za-z_]))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
 
+    // #6 聊天指令
+
+    // ...
+
+    // #7 娱乐指令
+    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>-?\\d*)?(?<text>[\\s\\S]+)?");
+
+    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|w(?![A-Za-z_]))\\s*(?<d>\\d+)?");
+
     /*
     public static final Pattern START = Pattern.compile("^[!！]((积分)|(..积分))+.*");
 
      */
 
+
     // #8 辅助指令
-    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>-?\\d*)?(?<text>[\\s\\S]+)?");
-
-    public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
-
-    public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
-
-    public static final Pattern OVER_SR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
-
 
     public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
-    public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|w(?![A-Za-z_]))\\s*(?<d>\\d+)?");
+    public static final Pattern OVER_SR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
+
+    public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G#]{1,2})(?<b>\\w)");
+
+    public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
+
+    // 未列入辅助的
+    public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
 
     public static final Pattern COUNT_MESSAGE_LEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 
@@ -123,7 +130,7 @@ public class Instructions {
     public static final Pattern GROUP_STATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))(?!\\w)");
 
     // #9 自定义
-    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：]?(?<type>(b|c|banner|card)))?");
+    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：](?<save>([adscr]|add|delete|remove|save|clear)))?\\s*(?<type>([bc]|banner|card))?");
 
     /*
     public static final Pattern TEST = Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
