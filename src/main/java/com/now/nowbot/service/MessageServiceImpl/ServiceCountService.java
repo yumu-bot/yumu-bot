@@ -109,19 +109,19 @@ public class ServiceCountService implements MessageService<Integer> {
         ));
 
         sb.append("""
-                | 服务名 | 调用次数 | 最大用时 | 平均用时 | 最小用时 | 99% 用时 | %50 用时 | %80 用时 | 1% 用时 |
-                |:-------|:--------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|
+                | 服务名 | 调用次数 | 最长用时 (100%) | 99% | 80% | 50% | 1% | 最短用时 (0%) |
+                | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
                 """);
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
+                //.append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
                 .append('|').append(r.getService())
                 .append('|').append(r.getSize())
                 .append('|').append(r.getMaxTime() / 1000D).append('s')
-                .append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
-                .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append('|').append(r99map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
-                .append('|').append(r50map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
                 .append('|').append(r80map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
+                .append('|').append(r50map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
                 .append('|').append(r1map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
+                .append('|').append(r.getMinTime() / 1000D).append('s')
                 .append("|\n");
         result.forEach(work);
 
