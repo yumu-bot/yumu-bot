@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.DiceException;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
@@ -244,7 +243,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case NEST -> "你搁这搁这呢？";
 
-                case AM -> throw new LogException("拒绝回复");
+                case AM -> "别问了，我也想知道自己是谁";
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
