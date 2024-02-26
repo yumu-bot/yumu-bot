@@ -41,7 +41,7 @@ public class ServiceCallLite {
     }
 
 
-    public interface ServiceCallResult$80 {
+    public interface ServiceCallResultLimit {
         String getService();
 
         Long getData();

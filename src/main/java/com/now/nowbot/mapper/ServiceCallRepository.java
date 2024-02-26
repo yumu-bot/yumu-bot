@@ -20,7 +20,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
     List<ServiceCallLite.ServiceCallResult> countBetween(LocalDateTime start, LocalDateTime end);
 
     @Query(value = """
-            select service, percentile_cont(0.8) within group ( order by time) as data
+            select service, percentile_cont(:limit) within group ( order by time) as data
                     from (
                         select
                             service,
@@ -32,7 +32,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
                     group by service;
             """,
             nativeQuery = true)
-    List<ServiceCallLite.ServiceCallResult$80> countBetween$80(LocalDateTime start, LocalDateTime end);
+    List<ServiceCallLite.ServiceCallResultLimit> countBetweenLimit(LocalDateTime start, LocalDateTime end, Double limit);
 
     default void saveCall(String service, long time) {
         save(new ServiceCallLite(service, time));
