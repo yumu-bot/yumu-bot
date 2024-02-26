@@ -131,10 +131,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, WHAT, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, IS, LIKE, THINK, COULD, WHO, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, IS, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
 
         for (var sp : splits) {
-            var onlyC3 = sp == WHO || sp == COULD || sp == WHETHER || sp == IS || sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
+            var onlyC3 = sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
             var hasC3 = sp == BETTER || onlyC3;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
@@ -226,7 +226,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case NEST -> "你搁这搁这呢？";
 
-                case WHO -> "我是 Yumu 机器人。";
+                case AM -> "我是 Yumu 机器人。";
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
@@ -243,7 +243,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case NEST -> "你搁这搁这呢？";
 
-                case WHO -> "我是你爹。";
+                case AM -> "我是你爹。";
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
@@ -262,7 +262,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case PREFER -> 0.35f; //更喜欢A
                 case HESITATE -> 0.65f; //更喜欢B
                 case EVEN -> 0.7f; //需要鼓励去B
-                case WHAT, WHO -> 0.9f; //我是哈基米。 //我是你爹
+                case WHAT, AM -> 0.9f; //我是哈基米。 //我是你爹
                 default -> 0.5f;
             };
         } else {
@@ -293,7 +293,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         if (result < boundary - 0.002f) {
             //选第一个
             switch (split) {
-                case WHO -> {
+                case AM -> {
                     if (StringUtils.hasText(right)) {
                         return STR."\{leftFormat}不是\{right}。";
                     }
@@ -329,7 +329,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHAT, WHO, ASSUME, CONDITION, THINK, NEST, IS -> {
+                case WHAT, AM, ASSUME, CONDITION, THINK, NEST, IS -> {
                     return rightFormat;
                 }
                 case RANGE, POSSIBILITY -> {
@@ -370,8 +370,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
-        WHO(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
-
         POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?(概率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|多少|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
@@ -395,9 +393,17 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //当然选 X 啦！
         OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
 
-        //是？
+        //你谁？
+        //我是 YumuBot
+        AM(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+
+        //是什么？
         //我不知道。是哈基米。
-        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还那])是(([你我他她它祂]们?|别人)?吗|谁|哪[个里处]|什么|啥)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还那])是(([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+
+        //是吗？
+        //是的。不是。
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还那])是吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         //并列AB
         //当然选 X 啦！
@@ -429,8 +435,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //A是B？
         //确实。 //不对。
         CONDITION(Pattern.compile("\\s*(?<c1>(只要|只有|无论|不管|忽略|忽视|不(去)?想|\\sif\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(([你我他她它祂]们?|别人)?[就才都也还]是?|反正|依然))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
-
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<!要)是|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
         LIKE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>喜欢|爱|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
 
