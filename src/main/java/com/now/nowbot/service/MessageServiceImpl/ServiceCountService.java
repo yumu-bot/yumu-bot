@@ -103,7 +103,7 @@ public class ServiceCountService implements MessageService<Integer> {
 
         sb.append("""
                 | 服务名 | 调用次数 | 最大用时 | 平均用时 | 最小用时 | 1% 用时 | %80 用时 | 99% 用时 |
-                |:-------|:--------:|:---------:|:---------:|:---------:|:---------:|
+                |:-------|:--------:|:---------:|:---------:|:---------:|:---------:|:---------:|:---------:|
                 """);
         Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
                 .append('|').append(r.getService())
