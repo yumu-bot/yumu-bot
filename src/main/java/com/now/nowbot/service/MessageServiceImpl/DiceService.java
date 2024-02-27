@@ -131,10 +131,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        final List<Split> splits = Arrays.asList(RANGE, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, IS, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
+        //记得这里才是需要查询的
+        final List<Split> splits = Arrays.asList(RANGE, TIME, AMOUNT, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
 
         for (var sp : splits) {
-            var onlyC3 = sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
+            var onlyC3 =
+                    sp == TIME || sp == AMOUNT ||
+                    sp == AM || sp == COULD || sp == WHETHER || sp == IS ||
+                    sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
             var hasC3 = sp == BETTER || onlyC3;
 
             if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
@@ -148,59 +152,108 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 left = matcher.group("m1");
                 right = matcher.group("m2");
 
-                if (sp == WHETHER) {
-                    is = matcher.group("c3");
-                    not = matcher.group("m3");
-                    if (! StringUtils.hasText(left)) left = "...";
-                    if (! StringUtils.hasText(right)) right = "";
+                // 预处理
+                switch (split) {
+                    case RANGE -> {
+                        int range;
 
-                    try {
-                        var is2 = matcher.group("c2");
-                        //要不要，如果不是ABA那么不能匹配
-                        if (! Objects.equals(is2, is)) {
+                        try {
+                            range = Integer.parseInt(right);
+                        } catch (NumberFormatException e) {
+                            range = 100;
+                        }
+
+                        if (range <= 0) {
+                            throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
+                        } else if (range <= 100) {
+                            num = getRandom(100);
+                        } else if (range <= 10000) {
+                            num = getRandom(10000);
+                        } else if (range <= 1000000) {
+                            num = getRandom(1000000);
+                        } else {
+                            throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
+                        }
+                    }
+
+                    case AMOUNT -> num = getRandom(100);
+
+                    case TIME -> {
+                        var c3 = matcher.group("c3").trim();
+
+                        if (c3.contains("年")) {
+                            num = getRandom(100);
+                            is = "年";
+                        } else if (c3.contains("月")) {
+                            num = getRandom(12);
+                            is = "月";
+                        } else if (c3.contains("周")) {
+                            num = getRandom(52);
+                            is = "周";
+                        } else if (c3.contains("日") || c3.contains("天")) {
+                            num = getRandom(30);
+                            is = "天";
+                        } else if (c3.contains("时")) {
+                            num = getRandom(24);
+                            is = "时";
+                        } else if (c3.contains("分")) {
+                            num = getRandom(60);
+                            is = "分";
+                        } else if (c3.contains("毫秒")) {
+                            num = getRandom(1000);
+                            is = "秒";
+                        } else if (c3.contains("微秒")) {
+                            num = getRandom(1000000);
+                            is = "微秒";
+                        } else if (c3.contains("纳秒")) {
+                            num = getRandom(100000000);
+                            is = "纳秒";
+                        } else if (c3.contains("秒")) {
+                            num = getRandom(60);
+                            is = "秒";
+                        } else {
+                            //未指定时间单位，比如多久
+                            var timeList = new String[]{"年", "月", "周", "天", "时", "分", "秒"};
+                            num = getRandom(100);
+                            is = timeList[(int) getRandom(timeList.length) - 1];
+                        }
+                    }
+
+                    case WHETHER -> {
+                        is = matcher.group("c3");
+                        not = matcher.group("m3");
+                        if (! StringUtils.hasText(left)) left = "...";
+                        if (! StringUtils.hasText(right)) right = "";
+
+                        try {
+                            var is2 = matcher.group("c2");
+                            //要不要，如果不是ABA那么不能匹配
+                            if (! Objects.equals(is2, is)) {
+                                continue;
+                            }
+                            //找不到也不行
+                        } catch (IllegalArgumentException | IllegalStateException e) {
                             continue;
                         }
-                        //找不到也不行
-                    } catch (IllegalArgumentException | IllegalStateException e) {
-                        continue;
-                    }
-                }
-
-                if (sp == COULD) {
-                    is = matcher.group("c3");
-                    not = "不";
-                    if (! StringUtils.hasText(left)) left = "...";
-                    if (! StringUtils.hasText(right)) right = "";
-                }
-
-                if (sp == POSSIBILITY) {
-                    num = Math.round(getRandom(1) * 10000f) / 100f;
-                }
-
-                if (sp == LIKE) {
-                    is = matcher.group("c3");
-                }
-
-                if (sp == RANGE) {
-                    int range;
-
-                    try {
-                        range = Integer.parseInt(right);
-                    } catch (NumberFormatException e) {
-                        range = 100;
                     }
 
-                    if (range <= 0) {
-                        throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
-                    } else if (range <= 100) {
-                        num = getRandom(100);
-                    } else if (range <= 10000) {
-                        num = getRandom(10000);
-                    } else if (range <= 1000000) {
-                        num = getRandom(1000000);
-                    } else {
-                        throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
+                    case COULD -> {
+                        is = matcher.group("c3");
+                        not = "不";
+                        if (! StringUtils.hasText(left)) left = "...";
+                        if (! StringUtils.hasText(right)) right = "";
                     }
+
+                    case POSSIBILITY -> {
+                        // 做点手脚，让 0% 和 100% 更容易出现 -2 ~ 102
+                        num = (Math.round(getRandom(1) * 10400f) / 100f) - 2f;
+
+                        // 钳位
+                        if (num >= 100f) num = 100f;
+                        if (num <= 0f) num = 0f;
+                    }
+
+                    case LIKE -> is = matcher.group("c3");
                 }
 
                 //排除掉AB一样的选择要求
@@ -228,14 +281,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 case AM -> "我是 Yumu 机器人。";
                 case POSSIBILITY -> "概率是：%.2f%%";
-                case RANGE -> "您许愿的结果是：%.0f。";
+                case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
+                case TIME -> "您许愿的结果是：%.0f %s。";
 
-                case WHAT -> "我怎么知道。";
+                case WHAT, WHY -> "我怎么知道。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
-                case ASSUME -> "%s。";
+                case ASSUME, LIKE -> "%s。";
                 case COULD, WHETHER -> "%s%s%s。";
                 case CONDITION, IS -> "是的。";
-                case LIKE -> "%s。";
                 case THINK -> "嗯。";
             };
 
@@ -243,11 +296,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case MULTIPLE -> "要我选的话，我觉得，%s。";
                 case NEST -> "你搁这搁这呢？";
 
-                case AM -> "别问了，我也想知道自己是谁";
+                case AM -> "别问了，我也想知道自己是谁。";
                 case POSSIBILITY -> "概率是：%.2f%%";
-                case RANGE -> "您许愿的结果是：%.0f。";
+                case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
+                case TIME -> "您许愿的结果是：%.0f %s。";
 
                 case WHAT -> "是哈基米。\n整个宇宙都是哈基米组成的。";
+                case WHY -> "你不如去问问神奇海螺？";
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
@@ -262,7 +317,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case PREFER -> 0.35f; //更喜欢A
                 case HESITATE -> 0.65f; //更喜欢B
                 case EVEN -> 0.7f; //需要鼓励去B
-                case WHAT, AM -> 0.9f; //我是哈基米。
+                case WHAT, AM, WHY -> 0.8f; //我是哈基米。
                 default -> 0.5f;
             };
         } else {
@@ -300,11 +355,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
 
-                case WHAT, CONDITION, THINK, NEST, IS -> {
+                case WHAT, WHY, CONDITION, THINK, NEST, IS -> {
                     return leftFormat;
                 }
-                case RANGE, POSSIBILITY -> {
+                case RANGE, POSSIBILITY, AMOUNT -> {
                     return String.format(leftFormat, num);
+                }
+                case TIME -> {
+                    return String.format(leftFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE-> {
                     return String.format(leftFormat, left);
@@ -329,11 +387,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHAT, AM, ASSUME, CONDITION, THINK, NEST, IS -> {
+                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST, IS -> {
                     return rightFormat;
                 }
-                case RANGE, POSSIBILITY -> {
+                case RANGE, POSSIBILITY, AMOUNT -> {
                     return String.format(rightFormat, num);
+                }
+                case TIME -> {
+                    return String.format(rightFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> {
                     return String.format(rightFormat, right);
@@ -370,13 +431,17 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?(概率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|多少|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
+
+        TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少)(时间|个?(年|月|周|日子?|天|分钟?|小?时|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
+
+        AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>是?多少|数量(?!级)|[个件位条只匹头颗根]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //是不是
         //A是。A不是。
-        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[个件位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //A和B比谁更C？
         //正常选择
@@ -397,13 +462,17 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //我是 YumuBot
         AM(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
+        //为什么？
+        //我怎么知道。因为爱情。
+        WHY(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c3>为(什么|何|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+
         //是什么？
-        //我不知道。是哈基米。
+        //我怎么知道。是哈基米。
         WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还哪那就])是(([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //是吗？
         //是的。不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])是吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])([是会要]|可以)吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //并列AB
         //当然选 X 啦！
