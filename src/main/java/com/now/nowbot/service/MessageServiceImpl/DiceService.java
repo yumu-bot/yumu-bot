@@ -181,6 +181,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     case TIME -> {
                         var c3 = matcher.group("c3").trim();
 
+                        //2% 触发彩蛋。
+                        var soonList = new String[]{"马上。", "立刻。", "一会儿。", "过不了多久。", "就现在。", "永远不会。", "很久很久之后。"};
+                        if (getRandom(100) <= 2f) return soonList[(int) getRandom(soonList.length) - 1];
+
                         if (c3.contains("年")) {
                             num = getRandom(100);
                             is = "年";
