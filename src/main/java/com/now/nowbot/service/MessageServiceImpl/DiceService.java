@@ -253,7 +253,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         if (num <= 0f) num = 0f;
                     }
 
-                    case LIKE -> is = matcher.group("c3");
+                    case LIKE, IS -> is = matcher.group("c3");
                 }
 
                 //排除掉AB一样的选择要求
@@ -286,9 +286,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 case WHAT, WHY -> "我怎么知道。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
-                case ASSUME, LIKE -> "%s。";
+                case ASSUME, LIKE, IS -> "%s。";
                 case COULD, WHETHER -> "%s%s%s。";
-                case CONDITION, IS -> "是的。";
+                case CONDITION -> "是的。";
                 case THINK -> "嗯。";
             };
 
@@ -307,8 +307,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
                 case COULD, WHETHER -> "%s%s%s%s。"; //他 不 是 猪。
-                case CONDITION, IS -> "不是。";
-                case LIKE -> "不%s。";
+                case CONDITION -> "不是。";
+                case LIKE, IS -> "不%s。";
                 case THINK -> "也没有吧。";
             };
 
@@ -355,7 +355,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
 
-                case WHAT, WHY, CONDITION, THINK, NEST, IS -> {
+                case WHAT, WHY, CONDITION, THINK, NEST -> {
                     return leftFormat;
                 }
                 case RANGE, POSSIBILITY, AMOUNT -> {
@@ -374,7 +374,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case COULD, WHETHER -> {
                     return String.format(leftFormat, left, is, right);
                 }
-                case LIKE -> {
+                case LIKE, IS -> {
                     return String.format(leftFormat, is);
                 }
                 case OR -> {
@@ -387,7 +387,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST, IS -> {
+                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST -> {
                     return rightFormat;
                 }
                 case RANGE, POSSIBILITY, AMOUNT -> {
@@ -408,7 +408,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case COULD, WHETHER -> {
                     return String.format(rightFormat, left, not, is, right);
                 }
-                case LIKE -> {
+                case LIKE, IS -> {
                     return String.format(rightFormat, is);
                 }
             }
@@ -429,7 +429,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //用于匹配是否还有关联词
         MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(还是|或者?是?|与)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
-        NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！1]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
@@ -470,8 +470,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //我怎么知道。是哈基米。
         WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还哪那就])是(([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        //是吗？
-        //是的。不是。
+        //是，会，要吗？
+        //是。不是。
         IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])([是会要]|可以)吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //并列AB
