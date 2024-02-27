@@ -7,14 +7,14 @@ import com.mikuac.shiro.dto.action.common.MsgId;
 import com.now.nowbot.config.OneBotConfig;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
-import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class Contact implements com.now.nowbot.qq.contact.Contact {
     String name;
@@ -42,40 +42,46 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
 
     @Override
     public OneBotMessageReceipt sendMessage(MessageChain msg) {
-//        if (msg != null) {
-//            log.info("send: [{}]", msg.getRawMessage());
-//            return null;
-//        }
-        getIfNewBot();
-        int id = 0;
+        try {
+            getIfNewBot();
+        } catch (NullPointerException e) {
+            throw new LogException(STR."获取bot为空, 本次消息内容:[\{getMsg4Chain(msg)}]");
+        }
+        long id = 0;
         ActionData<MsgId> d;
         if (this instanceof Group g) {
-            var test = ContextUtil.getContext("isTest", Boolean.class);
-            if (test != null && test) {
-                d = bot.customRequest(() -> "send_group_msg", Map.of(
-                        "group_id", getId(),
-                        "message", msg.getMessageList().stream().map(Message::toJson).filter(Objects::nonNull).toList(),
-                        "auto_escape", false
-                ), MsgId.class);
-            } else {
-                d = bot.sendGroupMsg(g.getId(), getMsg4Chain(msg), false);
-            }
+            d = bot.customRequest(() -> "send_group_msg", Map.of(
+                    "group_id", getId(),
+                    "message", getMsgJson(msg),
+                    "auto_escape", false
+            ), MsgId.class);
+            id = getId();
         } else if (this instanceof GroupContact g) {
-            d = bot.sendPrivateMsg(g.getGroupId(), g.getId(), getMsg4Chain(msg), false);
+            d = bot.customRequest(() -> "send_private_msg", Map.of(
+                    "group_id", g.getGroupId(),
+                    "user_id", g.getId(),
+                    "message", getMsgJson(msg),
+                    "auto_escape", false
+            ), MsgId.class);
+            id = g.getGroupId();
         } else {
-            d = bot.sendGroupMsg(getId(), getMsg4Chain(msg), false);
+            d = bot.customRequest(() -> "send_private_msg", Map.of(
+                    "user_id", getId(),
+                    "message", getMsgJson(msg),
+                    "auto_escape", false
+            ), MsgId.class);
+            id = getId();
         }
         if (d != null && d.getData() != null && d.getData().getMessageId() != null) {
-            id = d.getData().getMessageId();
+            return OneBotMessageReceipt.create(bot, d.getData().getMessageId(), this);
+        } else {
+            throw new LogException(STR."发送消息时获取回执失败, 发送到[\{id}] 内容:[\{getMsg4Chain(msg)}]");
         }
-        return OneBotMessageReceipt.create(bot, id, this);
     }
 
-    protected static String getMsgJson(MessageChain messageChain) {
-        List<Message.JsonMessage> l = messageChain.getMessageList().stream().map(Message::toJson).filter(Objects::nonNull).toList();
-        return JacksonUtil.objectToJson(l);
-    }
     protected static String getMsg4Chain(MessageChain messageChain) {
+        var s = messageChain.getMessageList().stream().map(Message::toString).collect(Collectors.joining());
+        if (Objects.nonNull(s)) return s;
         var builder = MsgUtils.builder();
         for (var msg : messageChain.getMessageList()) {
             switch (msg) {
@@ -95,6 +101,10 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             }
         }
         return builder.build();
+    }
+
+    protected static List<Message.JsonMessage> getMsgJson(MessageChain messageChain) {
+        return messageChain.getMessageList().stream().map(Message::toJson).filter(Objects::nonNull).toList();
     }
 
     private boolean testBot() {

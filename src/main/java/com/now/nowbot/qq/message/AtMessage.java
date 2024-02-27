@@ -31,7 +31,7 @@ public class AtMessage extends Message {
 
     @Override
     public String toString() {
-        return "[@" + qq + "]";
+        return STR."[@\{qq}]";
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.now.nowbot.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -272,12 +271,7 @@ public class JacksonUtil {
     }
 
     public static String toJson(Object data) {
-        try {
-            return mapper.writeValueAsString(data);
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage(),e);
-        }
-        return null;
+        return objectToJson(data);
     }
 
     public static <T> List<T> parseObjectList(String body, Class<T> clazz){

@@ -27,4 +27,9 @@ public class ReplyMessage extends Message {
     public JsonMessage toJson() {
         return new JsonMessage("reply", Map.of("id", id));
     }
+
+    @Override
+    public String toString() {
+        return STR."[at:\{id}]";
+    }
 }
