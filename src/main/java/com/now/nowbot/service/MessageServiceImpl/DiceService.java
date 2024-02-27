@@ -136,7 +136,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         for (var sp : splits) {
             var onlyC3 =
-                    sp == TIME || sp == AMOUNT ||
+                    sp == TIME || sp == AMOUNT || sp == WHY ||
                     sp == AM || sp == COULD || sp == WHETHER || sp == IS ||
                     sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
             var hasC3 = sp == BETTER || onlyC3;
