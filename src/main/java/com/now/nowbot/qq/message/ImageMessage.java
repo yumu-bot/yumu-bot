@@ -1,6 +1,9 @@
 package com.now.nowbot.qq.message;
 
+import com.now.nowbot.util.QQMsgUtil;
+
 import java.net.URL;
+import java.util.Map;
 
 public class ImageMessage extends Message {
     private enum Type {
@@ -44,5 +47,16 @@ public class ImageMessage extends Message {
     @Override
     public String toString() {
         return "[图片]";
+    }
+
+    @Override
+    public JsonMessage toJson() {
+        Object img;
+        if (isByteArray()) {
+            img = STR."base64://\{QQMsgUtil.byte2str(getData())}";
+        } else {
+            img = getPath();
+        }
+        return new JsonMessage("image", Map.of("file", img));
     }
 }

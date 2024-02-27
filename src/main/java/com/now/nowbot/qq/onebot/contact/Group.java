@@ -4,9 +4,12 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     String name = null;
@@ -61,8 +64,14 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
         try {
             ActionData<DownloadFileResp> rep = null;
             for (int i = 0; i < 5; i++) {
-                rep = bot.downloadFile(url);
+                rep = bot.customRequest(() -> "download_file", Map.of(
+                        "name", name,
+                        "base64", STR."base64://\{QQMsgUtil.byte2str(data)}"
+                ), DownloadFileResp.class);
                 if (rep != null) break;
+            }
+            if (Objects.isNull(rep) || Objects.isNull(rep.getData())) {
+                throw new TipsRuntimeException("框架加载文件错误");
             }
             bot.uploadGroupFile(getId(), rep.getData().getFile(), name);
         } catch (Exception e) {

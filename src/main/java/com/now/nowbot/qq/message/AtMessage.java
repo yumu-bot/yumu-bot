@@ -2,6 +2,8 @@ package com.now.nowbot.qq.message;
 
 import com.mikuac.shiro.common.utils.MsgUtils;
 
+import java.util.Map;
+
 public class AtMessage extends Message {
     private final long qq;
 
@@ -35,5 +37,16 @@ public class AtMessage extends Message {
     @Override
     public String getCQ() {
         return new MsgUtils().at(qq).build();
+    }
+
+    @Override
+    public JsonMessage toJson() {
+        Object qq;
+        if (isAll()) {
+            qq = "all";
+        } else {
+            qq = this.qq;
+        }
+        return new JsonMessage("at", Map.of("qq", qq));
     }
 }

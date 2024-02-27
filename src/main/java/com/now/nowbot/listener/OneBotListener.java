@@ -11,6 +11,7 @@ import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -40,8 +41,10 @@ public class OneBotListener {
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
-        // if (event.getSender().getId() != 2480557535L) return;
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
+        if (event.getSender().getId() == 365246692L) {
+            ContextUtil.setContext("isTest", Boolean.TRUE);
+        }
         ASyncMessageUtil.put(event);
         String textMessage = event.getTextMessage().trim();
         for (var ins : Permission.getAllService()) {
