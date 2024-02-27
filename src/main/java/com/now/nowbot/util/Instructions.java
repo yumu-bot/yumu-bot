@@ -82,7 +82,7 @@ public class Instructions {
 
     public static final Pattern CSV_MATCH = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-rt-wy-zA-RT-WY-Z_])|cra(?![a-rt-wy-zA-RT-WY-Z_])))\\s*(?<x>[xXsS])?\\s*(?<data>[\\d\\s,，|\\-]+)?");
 
-    public static final Pattern MATCH_ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|]+))?");
+    public static final Pattern MATCH_ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+))?");
 
     public static final Pattern MATCH_NOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|matchnow|mn(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*(?<skip>\\d+))?(\\s*(?<skipend>\\d+))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 

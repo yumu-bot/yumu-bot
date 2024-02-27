@@ -230,7 +230,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case POSSIBILITY -> "概率是：%.2f%%";
                 case RANGE -> "您许愿的结果是：%.0f。";
 
-                case WHAT -> "我不知道。";
+                case WHAT -> "我怎么知道。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME -> "%s。";
                 case COULD, WHETHER -> "%s%s%s。";
@@ -262,7 +262,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case PREFER -> 0.35f; //更喜欢A
                 case HESITATE -> 0.65f; //更喜欢B
                 case EVEN -> 0.7f; //需要鼓励去B
-                case WHAT, AM -> 0.9f; //我是哈基米。 //我是你爹
+                case WHAT, AM -> 0.9f; //我是哈基米。
                 default -> 0.5f;
             };
         } else {
@@ -366,81 +366,81 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     enum Split {
         //用于匹配是否还有关联词
-        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(还是|或者?是?|与)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(还是|或者?是?|与)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
-        NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?(概率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?(概率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|多少|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
+        RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|多少|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
 
         //是不是
         //A是。A不是。
-        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[个位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //A和B比谁更C？
         //正常选择
         //当然选 X 啦！
-        BETTER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)\\s*(?<c2>(跟|和|与|并|\\s(and|or|with)\\s))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)\\s*比?(比[，,\\s]*?哪个|比[，,\\s]*?谁|哪个|谁)更?(?<c3>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        BETTER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)\\s*(?<c2>(跟|和|与|并|\\s(and|or|with)\\s))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)\\s*比?(比[，,\\s]*?哪个|比[，,\\s]*?谁|哪个|谁)更?(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //A比B厉害？
         //正常选择
         //当然选 A 啦！，当然是 B 啦！（B厉害，这里分不开）
-        COMPARE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(比(?![赛如比拟重邻值及照目价例试上下肩方对分热画划类舍武翼意义喻作基利天推量年萨勒葫芦集速时势特体]|$)较?|(\\scompare(\\sto)?\\s)))[，,\\s]*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        COMPARE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(比(?![赛如比拟重邻值及照目价例试上下肩方对分热画划类舍武翼意义喻作基利天推量年萨勒葫芦集速时势特体]|$)较?|(\\scompare(\\sto)?\\s)))[，,\\s]*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //选A，还是选B？
         //正常选择
         //当然选 X 啦！
-        OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //你谁？
         //我是 YumuBot
-        AM(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        AM(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>你是谁?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //是什么？
         //我不知道。是哈基米。
-        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还那])是(([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        WHAT(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c3>(?<!你们?|[要还哪那就])是(([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么|啥))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //是吗？
         //是的。不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还那])是吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])是吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //并列AB
         //当然选 X 啦！
-        JUXTAPOSITION(Pattern.compile("\\s*(?<c1>(不仅|一边|一方面|有时|既)(选?[择中好]?了?)?)\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(而且|一边|一方面|有时|又)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        JUXTAPOSITION(Pattern.compile("\\s*(?<c1>(不仅|一边|一方面|有时|既)(选?[择中好]?了?)?)\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(而且|一边|一方面|有时|又)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //宁可A，也不B
         //偏好A
         //当然选 X 啦！
-        PREFER(Pattern.compile("\\s*(?<c1>(宁[可愿]|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(也不[要想]?(选?[择中好]?了?)?))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        PREFER(Pattern.compile("\\s*(?<c1>(宁[可愿]|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(也不[要想]?(选?[择中好]?了?)?))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //与其A，不如B
         //偏好B
         //当然选 X 啦！
-        HESITATE(Pattern.compile("\\s*(?<c1>(与其|虽然|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(还?不如|比不上|但是|可是|然而|却)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        HESITATE(Pattern.compile("\\s*(?<c1>(与其|虽然|尽管)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(还?不如|比不上|但是|可是|然而|却)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //即使A，也B
         //偏好当然
         //当然B，不会B。
-        EVEN(Pattern.compile("\\s*(?<c1>(即使|\\seven\\sif\\s)((选?[择中好]?了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>([也还]会?)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        EVEN(Pattern.compile("\\s*(?<c1>(即使|\\seven\\sif\\s)((选?[择中好]?了?)?[择中好])?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?([你我他她它祂]们?|别人)?(?<c2>([也还]会?)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //假设A，才有B。
         //我觉得 A 也没啥。// 没有如果。
-        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|要是|\\s(if|assume)\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)[，,\\s]*?(?<c2>(那?([你我他她它祂]们?|别人)?[会要想就便么才])|([想要]|想要|能够?|可以))\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        ASSUME(Pattern.compile("\\s*(?<c1>(如果|假使|假设|要是|\\s(if|assume)\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)[，,\\s]*?(?<c2>(那?([你我他她它祂]们?|别人)?[会要想就便么才])|([想要]|想要|能够?|可以))\\s*(?<m2>([你我他她它祂]们?|别人)?[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //我能
 
-        COULD(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)\\s*?(?<c2>不)?\\s*?(?<c3>([想要]|想要|能够?|可以))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)")),
+        COULD(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)\\s*?(?<c2>不)?\\s*?(?<c3>([想要]|想要|能够?|可以))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)")),
 
         //A是B？
         //确实。 //不对。
-        CONDITION(Pattern.compile("\\s*(?<c1>(只要|只有|无论|不管|忽略|忽视|不(去)?想|\\sif\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(([你我他她它祂]们?|别人)?[就才都也还]是?|反正|依然))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)")),
+        CONDITION(Pattern.compile("\\s*(?<c1>(只要|只有|无论|不管|忽略|忽视|不(去)?想|\\sif\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(([你我他她它祂]们?|别人)?[就才都也还]是?|反正|依然))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
-        LIKE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*?)?\\s*?(?<c3>喜欢|爱|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        LIKE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>喜欢|爱|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //觉得
         //嗯。也没有吧。
-        THINK(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\w\\s.\\-_])(?<c3>(觉得|认为))\\s*(?<m2>[\\u4e00-\\u9fa5\\w\\s.\\-_]*)?")),
+        THINK(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<c3>(觉得|认为))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         ;
 
@@ -451,7 +451,22 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         }
     }
 
+    /**
+     * 多重选择
+     * @param s 字符串
+     * @return 随机分配的结果
+     * @throws DiceException 不知道该选什么
+     */
     private String chooseMultiple(String s) throws DiceException {
+        // A是B1还是B2还是B3？
+        // 这个时候 A 是主语，不能加入匹配
+        var m = Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)(?<c3>((?<![要还哪那就])是|喜欢|属于))(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")
+                .matcher(s);
+
+        if (m.matches() && Objects.nonNull(m.group("m2"))) {
+            s = m.group("m2");
+        }
+
         String[] strings = s.split("还是|或者?是?|[是或与,，.。/?!、？！:：]|\\s+");
         List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
 
@@ -463,6 +478,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         return String.format("当然%s啦！", ChangeCase(stringList.get(r))); //lr format一样的
     }
 
+    /**
+     * 是否完美匹配
+     * @param p 格式
+     * @param s 字符串
+     * @param hasC3 含有C3
+     * @param onlyC3 只有C3
+     * @return 结果
+     */
     private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean onlyC3) {
         var matcher = p.matcher(s);
 
