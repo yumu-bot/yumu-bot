@@ -7,8 +7,12 @@ import com.mikuac.shiro.dto.action.common.MsgId;
 import com.now.nowbot.config.OneBotConfig;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
+import com.now.nowbot.util.ContextUtil;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Contact implements com.now.nowbot.qq.contact.Contact {
@@ -45,7 +49,12 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         int id = 0;
         ActionData<MsgId> d;
         if (this instanceof Group g) {
-            d = bot.sendGroupMsg(g.getId(), getMsg4Chain(msg), false);
+            var test = ContextUtil.getContext("isTest", Boolean.class);
+            if (test != null && test) {
+                d = bot.sendGroupMsg(g.getId(), getMsgJson(msg), false);
+            } else {
+                d = bot.sendGroupMsg(g.getId(), getMsg4Chain(msg), false);
+            }
         } else if (this instanceof GroupContact g) {
             d = bot.sendPrivateMsg(g.getGroupId(), g.getId(), getMsg4Chain(msg), false);
         } else {
@@ -57,15 +66,19 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         return OneBotMessageReceipt.create(bot, id, this);
     }
 
+    protected static String getMsgJson(MessageChain messageChain) {
+        List<Message.JsonMessage> l = messageChain.getMessageList().stream().map(Message::toJson).filter(Objects::nonNull).toList();
+        return JacksonUtil.objectToJson(l);
+    }
     protected static String getMsg4Chain(MessageChain messageChain) {
         var builder = MsgUtils.builder();
         for (var msg : messageChain.getMessageList()) {
             switch (msg) {
                 case ImageMessage img -> {
-                    if (img.isByteArray()) builder.img("base64://" + QQMsgUtil.byte2str(img.getData()));
+                    if (img.isByteArray()) builder.img(STR."base64://\{QQMsgUtil.byte2str(img.getData())}");
                     else builder.img(img.getPath());
                 }
-                case VoiceMessage voice -> builder.voice("base64://" + QQMsgUtil.byte2str(voice.getData()));
+                case VoiceMessage voice -> builder.voice(STR."base64://\{QQMsgUtil.byte2str(voice.getData())}");
                 case AtMessage at -> {
                     if (! at.isAll()) builder.at(at.getQQ());
                     else builder.atAll();

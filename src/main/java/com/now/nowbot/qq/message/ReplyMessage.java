@@ -1,5 +1,7 @@
 package com.now.nowbot.qq.message;
 
+import java.util.Map;
+
 public class ReplyMessage extends Message {
     final long id;
     String text;
@@ -19,5 +21,10 @@ public class ReplyMessage extends Message {
 
     public String getText() {
         return text;
+    }
+
+    @Override
+    public JsonMessage toJson() {
+        return new JsonMessage("reply", Map.of("id", id));
     }
 }
