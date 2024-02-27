@@ -186,22 +186,28 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                             is = "年";
                         } else if (c3.contains("月")) {
                             num = getRandom(12);
-                            is = "月";
+                            is = "个月";
                         } else if (c3.contains("周")) {
                             num = getRandom(52);
                             is = "周";
                         } else if (c3.contains("日") || c3.contains("天")) {
                             num = getRandom(30);
                             is = "天";
-                        } else if (c3.contains("时")) {
+                        } else if (c3.contains("时辰")) {
+                            num = getRandom(12);
+                            is = "时辰";
+                        } else if (c3.contains("时") || c3.contains("钟")) {
                             num = getRandom(24);
-                            is = "时";
+                            is = "小时";
+                        } else if (c3.contains("柱香")) {
+                            num = getRandom(48);
+                            is = "柱香";
                         } else if (c3.contains("分")) {
                             num = getRandom(60);
-                            is = "分";
+                            is = "分钟";
                         } else if (c3.contains("毫秒")) {
                             num = getRandom(1000);
-                            is = "秒";
+                            is = "毫秒";
                         } else if (c3.contains("微秒")) {
                             num = getRandom(1000000);
                             is = "微秒";
@@ -213,7 +219,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                             is = "秒";
                         } else {
                             //未指定时间单位，比如多久
-                            var timeList = new String[]{"年", "月", "周", "天", "时", "分", "秒"};
+                            var timeList = new String[]{"年", "个月", "周", "天", "小时", "分钟", "秒"};
                             num = getRandom(100);
                             is = timeList[(int) getRandom(timeList.length) - 1];
                         }
@@ -435,7 +441,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
 
-        TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少)(时间|个?(年|月|周|日子?|天|分钟?|小?时|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
+        TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少)(时间|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
 
         AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>是?多少|数量(?!级)|[个件位条只匹头颗根]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
