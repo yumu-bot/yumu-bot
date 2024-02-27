@@ -181,6 +181,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     case TIME -> {
                         var c3 = matcher.group("c3").trim();
 
+                        //2% 触发彩蛋。
+                        var soonList = new String[]{"马上。", "立刻。", "一会儿。", "过不了多久。", "就现在。", "永远不会。", "很久很久。"};
+                        if (getRandom(100) <= 2f) return soonList[(int) getRandom(soonList.length) - 1];
+
                         if (c3.contains("年")) {
                             num = getRandom(100);
                             is = "年";
@@ -441,7 +445,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
 
-        TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少)(时间|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
+        TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少|什么)(时[候间]|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
 
         AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>是?多少|数量(?!级)|[个件位条只匹头颗根]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
