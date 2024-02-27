@@ -12,6 +12,7 @@ import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,7 +52,11 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         if (this instanceof Group g) {
             var test = ContextUtil.getContext("isTest", Boolean.class);
             if (test != null && test) {
-                d = bot.sendGroupMsg(g.getId(), getMsgJson(msg), false);
+                d = bot.customRequest(() -> "send_group_msg", Map.of(
+                        "group_id", getId(),
+                        "message", msg.getMessageList().stream().map(Message::toJson).filter(Objects::nonNull).toList(),
+                        "auto_escape", false
+                ), MsgId.class);
             } else {
                 d = bot.sendGroupMsg(g.getId(), getMsg4Chain(msg), false);
             }
