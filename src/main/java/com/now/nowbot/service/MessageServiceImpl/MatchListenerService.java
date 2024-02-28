@@ -225,14 +225,19 @@ public class MatchListenerService implements MessageService<MatchListenerService
             //比赛结束，发送成绩
             try {
                 var round = insertUser(matchEvent, newMatch);
+
+                //剔除 5k 分以下
+                round.setScoreInfoList(round.getScoreInfoList().stream()
+                        .filter(s -> s.getScore() >= 5000).toList());
+
                 int indexP1 = newMatch.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
 
                 var image = getDataImage(round, newMatch.getMatchStat(), indexP1 - 1, imageService);
                 from.sendImage(image);
-            } catch (TipsException tipsException) {
+            } catch (TipsException e) {
                 // 注意 在监听器里为多线程环境, 无法通过向上 throw 来抛出错误
                 // 手动处理提示
-                from.sendMessage(tipsException.getMessage());
+                from.sendMessage(e.getMessage());
             } catch (Exception e) {
                 log.error("图片发送失败", e);
             }
