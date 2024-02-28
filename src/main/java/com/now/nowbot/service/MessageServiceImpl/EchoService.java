@@ -32,6 +32,6 @@ public class EchoService implements MessageService<String> {
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, String data) throws Throwable {
         event.getSubject().sendMessage(data);
-        ((Group) (event.getSubject())).sendFile("test".getBytes(StandardCharsets.UTF_8), "test.txt");
+        // ((Group) (event.getSubject())).sendFile("test".getBytes(StandardCharsets.UTF_8), "test.txt");
     }
 }
