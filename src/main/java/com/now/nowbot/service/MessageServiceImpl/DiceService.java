@@ -132,7 +132,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split split = null;
 
         //记得这里才是需要查询的
-        final List<Split> splits = Arrays.asList(RANGE, TIME, AMOUNT, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, AMOUNT, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
 
         for (var sp : splits) {
             var onlyC3 =
@@ -455,11 +455,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！1]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
-
         RANGE(Pattern.compile("(?<m1>[大多高等小少低]于(等于)?|约等于?|超过|不足|[><]=?|[＞＜≥≤≡≈]|\\s(more|less)\\s(than)?\\s)(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*(?<m2>\\d+)")),
 
         TIME(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>多久|((几多?|多少|什么)(时[候间]|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒)))(几?何|之?后)?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")), //皮秒 飞秒
+
+        POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>是?多少|数量(?!级)|[个件位条只匹头颗根]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
