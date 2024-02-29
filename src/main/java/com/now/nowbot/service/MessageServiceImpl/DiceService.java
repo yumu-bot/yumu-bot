@@ -132,12 +132,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split split = null;
 
         //记得这里才是需要查询的
-        final List<Split> splits = Arrays.asList(RANGE, TIME, AMOUNT, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, TIME, AMOUNT, POSSIBILITY, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
 
         for (var sp : splits) {
             var onlyC3 =
                     sp == TIME || sp == AMOUNT || sp == WHY ||
-                    sp == AM || sp == COULD || sp == WHETHER || sp == IS ||
+                    sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == REAL ||
                     sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
             var hasC3 = sp == BETTER || onlyC3;
 
@@ -181,9 +181,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     case TIME -> {
                         var c3 = matcher.group("c3").trim();
 
-                        //2% 触发彩蛋。
-                        var soonList = new String[]{"马上。", "立刻。", "一会儿。", "过不了多久。", "就现在。", "永远不会。", "很久很久。"};
-                        if (getRandom(100) <= 2f) return soonList[(int) getRandom(soonList.length) - 1];
+                        // 4% 触发彩蛋。
+                        var soonList = new String[]{"不可能。", "永远不会。", "马上。", "立刻。", "就现在。", "很久很久。", "一会儿。", "过不了多久。", "等鸡啄完了米..."};
+                        if (getRandom(100) <= 4f) return soonList[(int) getRandom(soonList.length) - 1];
 
                         if (c3.contains("年")) {
                             num = getRandom(100);
@@ -255,15 +255,27 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     }
 
                     case POSSIBILITY -> {
-                        // 做点手脚，让 0% 和 100% 更容易出现 -2 ~ 102
-                        num = (Math.round(getRandom(1) * 10400f) / 100f) - 2f;
+                        // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
+                        // 7.07% 触发彩蛋。
+                        num = (Math.round(getRandom(1) * 10800f) / 100f) - 4f;
+                        is = "";
 
                         // 钳位
+                        if (num >= 102f) {
+                            // 2% 买卖理论值
+                            num = 101.00f;
+                            is = "00";
+                        }
                         if (num >= 100f) num = 100f;
                         if (num <= 0f) num = 0f;
                     }
 
                     case LIKE, IS -> is = matcher.group("c3");
+
+                    case REAL -> {
+                        // 10% 触发彩蛋。
+                        if (getRandom(100) <= 10f) return "我怎么知道。";
+                    }
                 }
 
                 //排除掉AB一样的选择要求
@@ -290,11 +302,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case NEST -> "你搁这搁这呢？";
 
                 case AM -> "我是 Yumu 机器人。";
-                case POSSIBILITY -> "概率是：%.2f%%";
+                case POSSIBILITY -> "概率是：%.2f%s%%";
                 case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
                 case TIME -> "您许愿的结果是：%.0f %s。";
 
                 case WHAT, WHY -> "我怎么知道。";
+                case REAL -> "我觉得，是真的。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME, LIKE, IS -> "%s。";
                 case COULD, WHETHER -> "%s%s%s。";
@@ -307,12 +320,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case NEST -> "你搁这搁这呢？";
 
                 case AM -> "别问了，我也想知道自己是谁。";
-                case POSSIBILITY -> "概率是：%.2f%%";
+                case POSSIBILITY -> "概率是：%.2f%s%%";
                 case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
                 case TIME -> "您许愿的结果是：%.0f %s。";
 
                 case WHAT -> "是哈基米。\n整个宇宙都是哈基米组成的。";
                 case WHY -> "你不如去问问神奇海螺？";
+                case REAL -> "我觉得，是假的。";
                 case BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！";
                 case EVEN -> "当然不%s啦！";
                 case ASSUME -> "没有如果。";
@@ -365,13 +379,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     return leftFormat;
                 }
 
-                case WHAT, WHY, CONDITION, THINK, NEST -> {
+                case WHAT, WHY, CONDITION, THINK, NEST, REAL -> {
                     return leftFormat;
                 }
-                case RANGE, POSSIBILITY, AMOUNT -> {
+                case RANGE, AMOUNT -> {
                     return String.format(leftFormat, num);
                 }
-                case TIME -> {
+                case TIME, POSSIBILITY -> {
                     return String.format(leftFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE-> {
@@ -397,13 +411,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST -> {
+                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST, REAL -> {
                     return rightFormat;
                 }
-                case RANGE, POSSIBILITY, AMOUNT -> {
+                case RANGE, AMOUNT -> {
                     return String.format(rightFormat, num);
                 }
-                case TIME -> {
+                case TIME, POSSIBILITY -> {
                     return String.format(rightFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> {
@@ -483,6 +497,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //是，会，要吗？
         //是。不是。
         IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])([是会要]|可以)吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+
+        //真的吗？
+        //我怎么知道。是真的。是假的。
+        REAL(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>真的吗?|\\sreal(ly)?\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //并列AB
         //当然选 X 啦！
