@@ -4,6 +4,7 @@ import com.now.nowbot.entity.ServiceCallLite;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.beans.Transient;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public interface ServiceCallRepository extends JpaRepository<ServiceCallLite, Lo
             nativeQuery = true)
     List<ServiceCallLite.ServiceCallResultLimit> countBetweenLimit(LocalDateTime start, LocalDateTime end, Double limit);
 
+    @Transient
     default void saveCall(String service, long time) {
         save(new ServiceCallLite(service, time));
     }
