@@ -228,9 +228,6 @@ public class CheckAspect {
         long end = System.currentTimeMillis();
         long work = end - now;
         serviceCall.saveCall(name, work);
-        if (work > 3000) {
-            log.debug("[{}] 执行结束,用时:{}", name, work);
-        }
     }
 
     private Object parse(Object param) {
