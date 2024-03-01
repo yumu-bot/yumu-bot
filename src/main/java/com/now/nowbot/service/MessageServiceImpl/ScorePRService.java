@@ -59,6 +59,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
         imageService = image;
     }
 
+    public record ScorePrParam(BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
+    }
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePrParam> data) throws ScoreException {
         var m = Instructions.SCORE_PR.matcher(messageText);
@@ -80,8 +82,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
         {   // !p 45-55 offset/n = 44 limit/m = 11
             //处理 n，m
-            int n;
-            int m;
+            long n;
+            long m;
             var nStr = matcher.group("n");
             var mStr = matcher.group("m");
 
@@ -89,38 +91,38 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 n = 1;
             } else {
                 try {
-                    n = Integer.parseInt(nStr);
+                    n = Long.parseLong(nStr);
                 } catch (NumberFormatException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
             }
 
             //避免 !b lolol233 这样子被错误匹配
-            boolean nNotFit = (n < 1 || n > 100);
+            boolean nNotFit = (n < 1L || n > 100L);
             if (nNotFit) {
                 name += nStr;
-                n = 1;
+                n = 1L;
             }
 
             if (mStr == null || mStr.isBlank()) {
                 m = n;
             } else {
                 try {
-                    m = Integer.parseInt(mStr);
+                    m = Long.parseLong(mStr);
                 } catch (NumberFormatException e) {
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
             }
             //分流：正常，相等，相反
             if (m > n) {
-                offset = n - 1;
-                limit = m - n + 1;
+                offset = Math.toIntExact(n - 1);
+                limit = Math.toIntExact(m - n + 1);
             } else if (m == n) {
-                offset = n - 1;
+                offset = Math.toIntExact(n - 1);
                 limit = 1;
             } else {
-                offset = m - 1;
-                limit = n - m + 1;
+                offset = Math.toIntExact(m - 1);
+                limit = Math.toIntExact(n - m + 1);
             }
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
@@ -129,7 +131,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 if (! StringUtils.hasText(nStr) || nNotFit) {
                     limit = 20;
                 } else if (! StringUtils.hasText(mStr)) {
-                    limit = n;
+                    limit = Math.toIntExact(n);
                 }
             }
             isMultipleScore = (limit > 1);
@@ -251,9 +253,6 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 getTextOutput(scoreList.getFirst(), from);
             }
         }
-    }
-
-    public record ScorePrParam(BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
     }
 
     private void getTextOutput(Score score, Contact from) throws ScoreException {
