@@ -327,6 +327,10 @@ public class Permission {
         return supetList.contains(id);
     }
 
+    public static boolean isSuperAdmin(MessageEvent event) {
+        return supetList.contains(event.getSender().getId());
+    }
+
     /**
      * 单功能开关
      *
@@ -371,8 +375,9 @@ public class Permission {
         return member.getRoll() == Role.ADMIN || member.getRoll() == Role.OWNER;
     }
 
+    //超级管理员无视此限制
     public static boolean isGroupAdmin(MessageEvent event) {
-        return isGroupAdmin(event.getSubject().getId(), event.getSender().getId());
+        return isGroupAdmin(event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
     }
 
     public static void stopListener() {

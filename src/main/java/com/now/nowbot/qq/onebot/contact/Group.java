@@ -66,7 +66,7 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
             for (int i = 0; i < 5; i++) {
                 rep = bot.customRequest(() -> "download_file", Map.of(
                         "name", name,
-                        "base64", STR."base64://\{QQMsgUtil.byte2str(data)}"
+                        "base64", QQMsgUtil.byte2str(data) //框架说这里要加 base64://，但是看起来加了会直接跑到文件里？
                 ), DownloadFileResp.class);
                 if (rep != null) break;
             }
