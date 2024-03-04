@@ -139,8 +139,11 @@ public class IMapperService implements MessageService<Matcher> {
                         //if (Objects.equals(last, e)) return;
                         mappingActivity.add(e);
                     });
+        } catch (NoSuchElementException ignored) {
 
-        } catch (Exception ignore) { }
+        } catch (Exception e) {
+            log.error("谱师信息：筛选出错", e);
+        }
 
         var mostPopularBeatmap = result
                 .stream()
@@ -176,7 +179,7 @@ public class IMapperService implements MessageService<Matcher> {
                 .findFirst()
                 .orElse(null);
 
-        var beatMapSum = search.getBeatmapSets().stream().flatMap(s -> s.getBeatMaps().stream()).toList();
+        var beatMapSum = search.getBeatmapSets().stream().flatMap(s -> Objects.requireNonNull(s.getBeatMaps()).stream()).toList();
 
         var diffArr = new int[8];
         {

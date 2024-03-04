@@ -70,7 +70,7 @@ public class ActivityEvent {
     Integer count;
 
     @JsonProperty("approval")
-    Integer approval;
+    String approval;
 
     @JsonProperty("scoreRank")
     String scoreRank;
@@ -125,11 +125,11 @@ public class ActivityEvent {
         this.count = count;
     }
 
-    public Integer getApproval() {
+    public String getApproval() {
         return approval;
     }
 
-    public void setApproval(Integer approval) {
+    public void setApproval(String approval) {
         this.approval = approval;
     }
 
