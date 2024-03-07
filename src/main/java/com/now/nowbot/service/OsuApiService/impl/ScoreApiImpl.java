@@ -7,15 +7,12 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.util.JacksonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class ScoreApiImpl implements OsuScoreApiService {
-    private static final Logger log = LoggerFactory.getLogger(ScoreApiImpl.class);
     OsuApiBaseService base;
 
     public ScoreApiImpl(OsuApiBaseService baseService) {
@@ -23,13 +20,13 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public List<Score> getBestPerformance(BinUser user, OsuMode mode, int s, int e) {
-        if (!user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, s, e);
+    public List<Score> getBestPerformance(BinUser user, OsuMode mode, int offset, int limit) {
+        if (!user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, offset, limit);
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/best")
-                        .queryParam("offset", s)
-                        .queryParam("limit", e)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(user.getOsuID()))
                 .headers(base.insertHeader(user))
@@ -40,12 +37,12 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public List<Score> getBestPerformance(Long id, OsuMode mode, int s, int e) {
+    public List<Score> getBestPerformance(Long id, OsuMode mode, int offset, int limit) {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/best")
-                        .queryParam("offset", s)
-                        .queryParam("limit", e)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(id))
                 .headers(base::insertHeader)
@@ -56,22 +53,22 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public List<Score> getRecent(BinUser user, OsuMode mode, int s, int e) {
-        return getRecent(user, mode, false, s, e);
+    public List<Score> getRecent(BinUser user, OsuMode mode, int offset, int limit) {
+        return getRecent(user, mode, false, offset, limit);
     }
 
     @Override
-    public List<Score> getRecentIncludingFail(BinUser user, OsuMode mode, int s, int e) {
-        return getRecent(user, mode, true, s, e);
+    public List<Score> getRecentIncludingFail(BinUser user, OsuMode mode, int offset, int limit) {
+        return getRecent(user, mode, true, offset, limit);
     }
 
-    private List<Score> getRecent(BinUser user, OsuMode mode, boolean includeF, int s, int e) {
+    private List<Score> getRecent(BinUser user, OsuMode mode, boolean includeFails, int offset, int limit) {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/recent")
-                        .queryParam("include_fails", includeF ? 1 : 0)
-                        .queryParam("offset", s)
-                        .queryParam("limit", e)
+                        .queryParam("include_fails", includeFails ? 1 : 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(user.getOsuID()))
                 .headers(base.insertHeader(user))
@@ -81,13 +78,13 @@ public class ScoreApiImpl implements OsuScoreApiService {
                 .block();
     }
 
-    public List<Score> getRecent(long uid, OsuMode mode, boolean includeF, int s, int e) {
+    public List<Score> getRecent(long uid, OsuMode mode, boolean includeFails, int offset, int limit) {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/recent")
-                        .queryParam("include_fails", includeF ? 1 : 0)
-                        .queryParam("offset", s)
-                        .queryParam("limit", e)
+                        .queryParam("include_fails", includeFails ? 1 : 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(uid))
                 .headers(base::insertHeader)
@@ -98,13 +95,13 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public List<Score> getRecent(long uid, OsuMode mode, int s, int e) {
-        return getRecent(uid, mode, false, s, e);
+    public List<Score> getRecent(long uid, OsuMode mode, int offset, int limit) {
+        return getRecent(uid, mode, false, offset, limit);
     }
 
     @Override
-    public List<Score> getRecentIncludingFail(long uid, OsuMode mode, int s, int e) {
-        return getRecent(uid, mode, true, s, e);
+    public List<Score> getRecentIncludingFail(long uid, OsuMode mode, int offset, int limit) {
+        return getRecent(uid, mode, true, offset, limit);
     }
 
     @Override

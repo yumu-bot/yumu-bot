@@ -7,7 +7,8 @@ public class IMapperException extends TipsException {
         IM_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),//查询自己_绑定失效
         IM_Me_NotFound ("找不到您绑定的 osu! 玩家！"),
         IM_Player_NotFound("找不到此玩家，请检查。"), //获取玩家失败
-        IM_Send_Error ("IM 发送失败，请耐心等待问题修复。")
+        IM_Send_Error("谱师信息发送失败，请耐心等待问题修复。"),
+        IM_Fetch_Error("谱师信息图片获取失败。")
 
         ;//逗号分隔
         final String message;

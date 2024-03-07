@@ -43,6 +43,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     @Resource
     ImageService      imageService;
 
+    public record InfoParam(BinUser user, OsuMode mode) {
+    }
+
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<InfoParam> data) throws InfoException {
         var matcher = Instructions.INFO.matcher(messageText);
@@ -85,12 +88,12 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         return true;
     }
 
-    private BinUser getBinUser(long qq, String cmd) throws InfoException {
+    private BinUser getBinUser(long qq, String messageText) throws InfoException {
 
         try {
             return bindDao.getUserFromQQ(qq);
         } catch (BindException e) {
-            if (! cmd.contains("information") && cmd.contains("info")) {
+            if (! messageText.contains("information") && messageText.contains("info")) {
                 throw new LogException("info 退避成功");
             } else {
                 throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
@@ -118,7 +121,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         } catch (WebClientResponseException.Unauthorized | BindException e) {
             throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
         } catch (Exception e) {
-            log.error("Info 异常：获取玩家信息", e);
+            log.error("玩家信息：找不到玩家信息", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
 
@@ -127,7 +130,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         } catch (WebClientResponseException.NotFound e) {
             throw new InfoException(InfoException.Type.INFO_Player_NoBP);
         } catch (Exception e) {
-            log.error("Info 异常：获取玩家 BP", e);
+            log.error("玩家信息：无法获取玩家 BP", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
         Optional<OsuUser> infoOpt;
@@ -145,15 +148,20 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         /*
         log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
          */
+        byte[] image;
+
         try {
-            var image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
+            image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
+        } catch (Exception e) {
+            log.error("玩家信息：图片渲染失败", e);
+            throw new InfoException(InfoException.Type.INFO_Fetch_Error);
+        }
+
+        try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("Info 发送异常", e);
+            log.error("玩家信息：发送失败", e);
             throw new InfoException(InfoException.Type.INFO_Send_Error);
         }
-    }
-
-    public record InfoParam(BinUser user, OsuMode mode) {
     }
 }

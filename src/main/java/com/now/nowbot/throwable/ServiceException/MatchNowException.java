@@ -12,7 +12,7 @@ public class MatchNowException extends TipsException {
         MN_Render_Error("MatchNow 渲染图片超时，请重试，或者将问题反馈给开发者。"), //发送_发送失败
         MN_Send_Error("MatchNow 发送超时，请重试，或者将问题反馈给开发者。") //发送_发送失败
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type(String message) {
             this.message = message;
         }
