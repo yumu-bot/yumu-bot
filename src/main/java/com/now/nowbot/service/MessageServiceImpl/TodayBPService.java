@@ -59,40 +59,40 @@ public class TodayBPService implements MessageService<Matcher> {
         if (day == null) day = "1";
         if (name == null) name = "";
 
-        List<Score> bpAllList;
+        List<Score> BPs;
         List<Score> bpList = new ArrayList<>();
-        OsuUser ouMe;
+        OsuUser user;
         var rankList = new ArrayList<Integer>();
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if (at != null) {
             try {
-                var bUser = bindDao.getUserFromQQ(at.getTarget());
-                if (mode == OsuMode.DEFAULT) mode = bUser.getMode();
-                ouMe = userApiService.getPlayerInfo(bUser, mode);
-                bpAllList = scoreApiService.getBestPerformance(bUser, mode, 0, 100);
+                var bu = bindDao.getUserFromQQ(at.getTarget());
+                if (mode == OsuMode.DEFAULT) mode = bu.getMode();
+                user = userApiService.getPlayerInfo(bu, mode);
+                BPs = scoreApiService.getBestPerformance(bu, mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_FetchFailed);
             }
         } else if (!name.isEmpty()) {
             try {
-                ouMe = userApiService.getPlayerInfo(name, mode);
-                bpAllList = scoreApiService.getBestPerformance(ouMe.getUID(), mode, 0, 100);
+                user = userApiService.getPlayerInfo(name, mode);
+                BPs = scoreApiService.getBestPerformance(user.getUID(), mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
             }
         } else {
             try {
-                var buMe = bindDao.getUserFromQQ(event.getSender().getId());
-                if (mode == OsuMode.DEFAULT) mode = buMe.getMode();
-                ouMe = userApiService.getPlayerInfo(buMe, mode);
-                bpAllList = scoreApiService.getBestPerformance(buMe, mode, 0, 100);
+                var bu = bindDao.getUserFromQQ(event.getSender().getId());
+                if (mode == OsuMode.DEFAULT) mode = bu.getMode();
+                user = userApiService.getPlayerInfo(bu, mode);
+                BPs = scoreApiService.getBestPerformance(bu, mode, 0, 100);
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
             }
         }
 
-        if (CollectionUtils.isEmpty(bpAllList)) throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
+        if (CollectionUtils.isEmpty(BPs)) throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
 
         // 时间计算
         int _day = -1;
@@ -100,15 +100,15 @@ public class TodayBPService implements MessageService<Matcher> {
         if (!day.isEmpty()){
             _day = - Integer.parseInt(day);
         }
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(_day);
 
         if (_day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
 
-        //挑出来符合要求的
-        for (int i = 0; i < bpAllList.size(); i++) {
-            var bp = bpAllList.get(i);
+        LocalDateTime dayBefore = LocalDateTime.now().plusDays(_day);
 
-            // || user.getId().equals(17064371L) 你真的需要用这个功能？ !b 1-100
+        //挑出来符合要求的
+        for (int i = 0; i < BPs.size(); i++) {
+            var bp = BPs.get(i);
+
             if (dayBefore.isBefore(bp.getCreateTime())){
                 bpList.add(bp);
                 rankList.add(i + 1);
@@ -123,11 +123,19 @@ public class TodayBPService implements MessageService<Matcher> {
             }
         }
 
+        byte[] image;
+
         try {
-            var image = imageService.getPanelA4(ouMe, bpList, rankList);
+            image = imageService.getPanelA4(user, bpList, rankList);
+        } catch (Exception e) {
+            log.error("今日最好成绩：图片渲染失败", e);
+            throw new TodayBPException(TodayBPException.Type.TBP_Fetch_Error);
+        }
+
+        try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("TBP Error: ", e);
+            log.error("今日最好成绩：发送失败", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
         }
 

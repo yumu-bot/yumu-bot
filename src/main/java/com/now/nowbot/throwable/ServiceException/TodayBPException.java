@@ -12,7 +12,8 @@ public class TodayBPException extends TipsException {
         TBP_BP_No24H ("今天之内没有新增的 BP 呢...\n尝试扩大搜索天数吧"), //榜单_今天没有
         TBP_BP_NoPeriod ("这段时间之内都没有新增的 BP 呢...\n尝试扩大搜索天数吧"), //榜单_一段时间没有
         TBP_BP_TooLongAgo("你输入的天数范围太久远了！"),//榜单_时间错误
-        TBP_Send_Error ("TBP 发送失败，请耐心等待问题修复") //发送_发送失败
+        TBP_Fetch_Error ("今日最好成绩图片渲染失败。"),
+        TBP_Send_Error ("今日最好成绩发送失败，请耐心等待问题修复。") //发送_发送失败
 
         ;//逗号分隔
         final String message;
