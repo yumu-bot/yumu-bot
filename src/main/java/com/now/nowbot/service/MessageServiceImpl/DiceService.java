@@ -75,12 +75,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 if (param.number >= Integer.MAX_VALUE) {
                     throw new DiceException(DiceException.Type.DICE_Number_TooLarge);
                 }
-                if (param.number < 1D) {
+                if (param.number < 1L) {
                     throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
                 }
 
                 float r = getRandom(param.number);
-                String format = (r <= 1f) ? "%.2f" : "%.0f";
+                String format = (r < 1f) ? "%.2f" : "%.0f";
 
                 receipt = from.sendMessage(String.format(format, r));
 

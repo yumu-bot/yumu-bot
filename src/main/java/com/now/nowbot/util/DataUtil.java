@@ -9,15 +9,14 @@ import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class DataUtil {
@@ -35,10 +34,67 @@ public class DataUtil {
 
     static Typeface EXTRA;
 
+    private record Range(Integer offset, Integer limit) {}
+
+    /**
+     * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     * @param start 开始
+     * @param end 结束
+     * @return offset
+     */
+    @NonNull
+    public static int parseRange2Offset(@Nullable Integer start, @Nullable Integer end) {
+        return parseRange(start, end).offset;
+    }
+
+    /**
+     * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     * @param start 开始
+     * @param end 结束
+     * @return limit
+     */
+    @NonNull
+    public static int parseRange2Limit(@Nullable Integer start, @Nullable Integer end) {
+        return parseRange(start, end).limit;
+    }
+
+    /**
+     * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     * @param start 开始
+     * @param end 结束
+     * @return offset-limit 对
+     */
+    @NonNull
+    private static Range parseRange(@Nullable Integer start, @Nullable Integer end) {
+        int offset;
+        int limit;
+
+        if (Objects.isNull(start) || start < 1 || start > 100) start = 1;
+
+        if (Objects.isNull(end) || end < 1 || end > 100) {
+            offset = start - 1;
+            limit = 1;
+        } else {
+            //分流：正常，相等，相反
+            if (end > start) {
+                offset = start - 1;
+                limit = end - start + 1;
+            } else if (Objects.equals(start, end)) {
+                offset = start - 1;
+                limit = 1;
+            } else {
+                offset = end - 1;
+                limit = start - end + 1;
+            }
+        }
+
+        return new Range(offset, limit);
+    }
+
     public static String String2Markdown(String str) {
         return str.replace("\n", "\n\n");
     }
-    public static String JSONString2Markdown(String str) {
+    public static String JsonString2Markdown(String str) {
         if (Objects.isNull(str)) return null;
         return str.replace("},", "},\n\n");
     }

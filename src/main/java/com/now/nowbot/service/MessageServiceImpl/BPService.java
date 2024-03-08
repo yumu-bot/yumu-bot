@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,45 +70,37 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         //处理 n，m
         {
-            int n;
-            int m;
+            long n;
+            long m;
             if (! StringUtils.hasText(nStr)) {
-                n = 1;
+                n = 1L;
             } else {
                 try {
-                    n = Integer.parseInt(nStr);
+                    n = Long.parseLong(nStr);
                 } catch (NumberFormatException e) {
                     throw new BPException(BPException.Type.BP_Map_RankError);
                 }
             }
 
             //避免 !b lolol233 这样子被错误匹配
-            boolean nNotFit = (n < 1 || n > 100);
+            boolean nNotFit = (n < 1L || n > 100L);
             if (nNotFit) {
                 name += nStr;
-                n = 1;
+                n = 1L;
             }
 
             if (mStr == null || mStr.isBlank()) {
                 m = n;
             } else {
                 try {
-                    m = Integer.parseInt(mStr);
+                    m = Long.parseLong(mStr);
                 } catch (NumberFormatException e) {
                     throw new BPException(BPException.Type.BP_Map_RankError);
                 }
             }
-            //分流：正常，相等，相反
-            if (m > n) {
-                offset = n - 1;
-                limit = m - n + 1;
-            } else if (m == n) {
-                offset = n - 1;
-                limit = 1;
-            } else {
-                offset = m - 1;
-                limit = n - m + 1;
-            }
+
+            offset = DataUtil.parseRange2Offset(Math.toIntExact(n), Math.toIntExact(m));
+            limit = DataUtil.parseRange2Limit(Math.toIntExact(n), Math.toIntExact(m));
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s)) {

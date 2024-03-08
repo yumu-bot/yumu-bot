@@ -17,6 +17,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import org.slf4j.Logger;
@@ -113,17 +114,9 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                     throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
             }
-            //分流：正常，相等，相反
-            if (m > n) {
-                offset = Math.toIntExact(n - 1);
-                limit = Math.toIntExact(m - n + 1);
-            } else if (m == n) {
-                offset = Math.toIntExact(n - 1);
-                limit = 1;
-            } else {
-                offset = Math.toIntExact(m - 1);
-                limit = Math.toIntExact(n - m + 1);
-            }
+
+            offset = DataUtil.parseRange2Offset(Math.toIntExact(n), Math.toIntExact(m));
+            limit = DataUtil.parseRange2Limit(Math.toIntExact(n), Math.toIntExact(m));
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s) || StringUtils.hasText(es)) {

@@ -16,12 +16,13 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.*;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -40,21 +41,27 @@ import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
-    OsuUserApiService  userApiService;
+    OsuUserApiService userApiService;
     @Resource
     OsuScoreApiService scoreApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    MuRatingService    mraService;
+    MuRatingService muRatingService;
     @Resource
-    MatchNowService    monitorNowService;
+    MatchNowService monitorNowService;
     @Resource
-    ImageService       imageService;
+    ImageService imageService;
     @Resource
-    BPAnalysisService  bpAnalysisService;
+    BPAnalysisService bpAnalysisService;
     @Resource
-    DiceService        diceService;
+    DiceService diceService;
+    @Resource
+    MapStatisticsService mapStatisticsService;
+    @Resource
+    IMapperService iMapperService;
+    @Resource
+    NominationService nominationService;
 
 
     /**
@@ -64,33 +71,45 @@ public class BotWebApi {
      */
 
     @GetMapping(value = "ppm")
-    @OpenResource(name = "ppm", desp = "查询玩家的 PP- !ymppminus (!ppm)")
-    public ResponseEntity<byte[]> getPPM(@OpenResource(name = "user1", desp = "第一个用户的用户名", required = true) @RequestParam("u1") String user1,
-                                         @OpenResource(name = "user2", desp = "第二个用户的用户名") @Nullable @RequestParam("u2") String user2,
-                                         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
-        if (user2 != null) {
-            return getPPMVS(user1, user2, playMode);
+    @OpenResource(name = "pm", desp = "查询玩家的 PPM")
+    public ResponseEntity<byte[]> getPPM(
+            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("u1") String name,
+            @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("u2") String name2,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+
+        if (name2 != null) {
+            return getPPMVS(name, name2, playMode);
         }
+
         var mode = OsuMode.getMode(playMode);
-        var info = userApiService.getPlayerInfo(user1.trim(), mode);
+
+        var info = userApiService.getPlayerInfo(name.trim(), mode);
         var bplist = scoreApiService.getBestPerformance(info.getUID(), mode, 0, 100);
         var ppm = PPMinus.getInstance(mode, info, bplist);
         if (ppm == null) {
-            throw new RuntimeException("ppm 请求失败：ppmMe 不存在");
+            throw new RuntimeException("PPM：API 异常");
         } else {
             var data = imageService.getPanelB1(info, mode, ppm);
-            return new ResponseEntity<>(data, getImageHeader(user1.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
+            return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()}-pm.jpg", data.length), HttpStatus.OK);
         }
     }
 
-    @GetMapping(value = "ppmvs")
-    public ResponseEntity<byte[]> getPPMVS(@RequestParam("u1") String user1, @RequestParam("u2") String user2, @Nullable @RequestParam("mode") String playMode) {
+    @GetMapping(value = "ppm/vs")
+    @OpenResource(name = "pv", desp = "比较玩家的 PPM")
+    public ResponseEntity<byte[]> getPPMVS(
+            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "name2", desp = "第二个玩家的名称", required = true) @RequestParam("name2") String name2,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+
         var mode = OsuMode.getMode(playMode);
-        var info1 = userApiService.getPlayerInfo(user1.trim(), mode);
-        var info2 = userApiService.getPlayerInfo(user2.trim(), mode);
+
+        var info1 = userApiService.getPlayerInfo(name.trim(), mode);
+        var info2 = userApiService.getPlayerInfo(name2.trim(), mode);
         if (OsuMode.isDefault(mode)) mode = info1.getOsuMode();
+
         var bplist1 = scoreApiService.getBestPerformance(info1.getUID(), mode, 0, 100);
         var bplist2 = scoreApiService.getBestPerformance(info2.getUID(), mode, 0, 100);
+
         var ppm1 = PPMinus.getInstance(mode, info1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, info2, bplist2);
         if (ppm1 == null) {
@@ -99,7 +118,7 @@ public class BotWebApi {
             throw new RuntimeException(PPMinusException.Type.PPM_Player_FetchFailed.message);
         } else {
             var data = imageService.getPanelB1(info1, info2, ppm1, ppm2, mode);
-            return new ResponseEntity<>(data, getImageHeader(user1.trim() + " vs " + user2.trim() + "-ppm.jpg", data.length), HttpStatus.OK);
+            return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()} vs \{name2.trim()}-pv.jpg", data.length), HttpStatus.OK);
         }
     }
 
@@ -110,27 +129,29 @@ public class BotWebApi {
      * @param r include rematch
      * @return img
      */
-    @GetMapping(value = "match")
-    @OpenResource(name = "mn", desp = "查看比赛房间信息 !ymmonitornow (!mn)")
-    public ResponseEntity<byte[]> getMatchNow(@OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
-                                              @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
-                                              @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-                                              @OpenResource(name = "keep-low", desp = "保留低分成绩") @Nullable Boolean f,
-                                              @OpenResource(name = "ignore-repeat", desp = "忽略重复对局") @Nullable Boolean r) throws MatchNowException {
+    @GetMapping(value = "match/now")
+    @OpenResource(name = "mn", desp = "查询比赛结果")
+    public ResponseEntity<byte[]> getMatchNow(
+            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
+            @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
+            @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
+            @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
+            @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r) throws RuntimeException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
-        var data = monitorNowService.parseData(matchID, k, d, f, r);
+        byte[] image;
 
-        byte[] img;
         try {
-            img = imageService.getPanelF(data);
+            var data = monitorNowService.parseData(matchID, k, d, f, r);
+            image = imageService.getPanelF(data);
         } catch (Exception e) {
-            throw new MatchNowException(MatchNowException.Type.MN_Render_Error);
+            log.error("比赛结果：API 异常", e);
+            throw new RuntimeException(MatchNowException.Type.MN_Render_Error.message);
         }
 
-        return new ResponseEntity<>(img, getImageHeader(matchID + "-match.jpg", img.length), HttpStatus.OK);
+        return new ResponseEntity<>(image, getImageHeader(matchID + "-match.jpg", image.length), HttpStatus.OK);
     }
 
     /***
@@ -142,73 +163,61 @@ public class BotWebApi {
      * @param r include rematch
      * @return img
      */
-    @GetMapping(value = "rating")
-    @OpenResource(name = "ra", desp = "查看比赛评价 !ymrating (!ra)")
+    @GetMapping(value = "match/rating")
+    @OpenResource(name = "ra", desp = "查询比赛评分")
     public ResponseEntity<byte[]> getRating(
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
-            @OpenResource(name = "skip-end", desp = "忽略结尾") @Nullable Integer d,
-            @OpenResource(name = "keep-failed", desp = "保留低分成绩") @Nullable Boolean f,
-            @OpenResource(name = "remove-repeat", desp = "忽略重复对局") @Nullable Boolean r
+            @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
+            @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
+            @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r
     ) throws MRAException {
         if (k == null) k = 0;
         if (d == null) d = 0;
         if (f == null) f = true;
         if (r == null) r = true;
 
-        byte[] data = imageService.getPanelC(mraService.calculate(matchId, k, d, f, r));
-        return new ResponseEntity<>(data, getImageHeader(matchId + "-mra.jpg", data.length), HttpStatus.OK);
+        byte[] data = imageService.getPanelC(muRatingService.calculate(matchId, k, d, f, r));
+        return new ResponseEntity<>(data, getImageHeader(STR."\{matchId}-mra.jpg", data.length), HttpStatus.OK);
+    }
+
+    public enum scoreType {
+        TodayBP,
+
+        BP,
+
+        Pass,
+
+        Recent,
     }
 
     /**
      * 多组成绩接口（当然单成绩也行，我把接口改了）
      *
-     * @param userName 用户
+     * @param name 玩家名称
      * @param playMode 模式,可为空
-     * @param type     0，null: todaybp，此时只需要输入 value1，介于 1-999
-     *                 1: bp，
-     *                 2: pass，
-     *                 3: recent，
-     * @param value1   不传默认为 1,具体含义取决于 type,范围在 1-100 之间
-     * @param value2   可以不传，具体含义取决于 type,范围在 1-100 之间
-     * @return image
+     * @param type scoreType
+     * @param start !bp 45-55 或 !bp 45 里的 45
+     * @param end !bp 45-55 里的 55
+     * @return image 成绩图片
      */
-    public ResponseEntity<byte[]> getScore(@RequestParam("u1") String userName,
-                                           @Nullable @RequestParam("mode") String playMode,
-                                           @Nullable @RequestParam("type") Integer type,
-                                           @Nullable @RequestParam("value1") Integer value1,
-                                           @Nullable @RequestParam("value2") Integer value2
+    public ResponseEntity<byte[]> getScore(
+            @RequestParam("name") String name,
+            @Nullable @RequestParam("mode") String playMode,
+            @Nullable @RequestParam("type") scoreType type,
+            @Nullable @RequestParam("start") Integer start,
+            @Nullable @RequestParam("end") Integer end
     ) {
         var mode = OsuMode.getMode(playMode);
-        userName = userName.trim();
+        name = name.trim();
 
-        var osuUser = userApiService.getPlayerInfo(userName, mode);
+        var osuUser = userApiService.getPlayerInfo(name, mode);
         List<Score> scoreList;
 
-        int offset;
-        int limit;
-        boolean isMultipleScore;
+        int offset = DataUtil.parseRange2Offset(start, end);
+        int limit = DataUtil.parseRange2Limit(start, end);
 
-        if (Objects.isNull(value1) || value1 < 1 || value1 > 100) value1 = 1;
-
-        if (Objects.isNull(value2) || value2 < 1 || value2 > 100) {
-            offset = value1 - 1;
-            limit = 1;
-        } else {
-            //分流：正常，相等，相反
-            if (value2 > value1) {
-                offset = value1 - 1;
-                limit = value2 - value1 + 1;
-            } else if (Objects.equals(value1, value2)) {
-                offset = value1 - 1;
-                limit = 1;
-            } else {
-                offset = value2 - 1;
-                limit = value1 - value2 + 1;
-            }
-        }
-
-        isMultipleScore = (limit > 1);
+        boolean isMultipleScore = (limit > 1);
 
         //渲染面板
         byte[] data;
@@ -216,7 +225,7 @@ public class BotWebApi {
 
         switch (type) {
             // bp
-            case 1 -> {
+            case BP -> {
                 scoreList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, offset, limit);
 
                 ArrayList<Integer> rankList = new ArrayList<>();
@@ -231,7 +240,7 @@ public class BotWebApi {
                 }
             }
             // pass
-            case 2 -> {
+            case Pass -> {
                 scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
 
                 if (isMultipleScore) {
@@ -244,7 +253,7 @@ public class BotWebApi {
             }
 
             //recent
-            case 3 -> {
+            case Recent -> {
                 scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
 
                 if (isMultipleScore) {
@@ -259,10 +268,11 @@ public class BotWebApi {
             // todaybp
             case null, default -> {
                 // 时间计算
+                var day = Objects.nonNull(start) ? Math.max(Math.min(start, 999), 1) : 1;
                 var BPList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
                 ArrayList<Integer> rankList = new ArrayList<>();
 
-                LocalDateTime dayBefore = LocalDateTime.now().minusDays(value1);
+                LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
                 scoreList = new ArrayList<>();
@@ -275,105 +285,108 @@ public class BotWebApi {
                 }
 
                 data = imageService.getPanelA4(osuUser, scoreList, rankList);
-                suffix = "-tbp.jpg";
+                suffix = "-todaybp.jpg";
             }
         }
 
-        return new ResponseEntity<>(data, getImageHeader(userName + suffix, data.length), HttpStatus.OK);
+        return new ResponseEntity<>(data, getImageHeader(name + suffix, data.length), HttpStatus.OK);
     }
 
-    @GetMapping(value = "scores/bp-days")
-    @OpenResource(name = "ppm", desp = "查询今日最好成绩 !ymtodaybp (!t)")
+    @GetMapping(value = "bp/today")
+    @OpenResource(name = "t", desp = "查询今日最好成绩")
     public ResponseEntity<byte[]> getTodayBP(
-            @OpenResource(name = "username", desp = "玩家名称", required = true) @RequestParam("u1") String userName,
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "days", desp = "天数") @Nullable @RequestParam("n") Integer value
+            @OpenResource(name = "day", desp = "天数") @Nullable @RequestParam("day") Integer day
     ) {
-        if (value == null) value = 1;
-        if (value <= 0) value = 1;
-        else if (value > 999) value = 999;
-        return getScore(userName, playMode, 0, value, null);
+        return getScore(name, playMode, scoreType.TodayBP, day, null);
     }
 
-    @GetMapping(value = "scores/bp-range")
+    @GetMapping(value = "bp/scores")
+    @OpenResource(name = "bs", desp = "查询多个最好成绩")
     public ResponseEntity<byte[]> getBPScores(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value1,
-            @Nullable @RequestParam("m") Integer value2
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
+            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
     ) {
-        return getScore(userName, playMode, 1, value1, value2);
+        return getScore(name, playMode, scoreType.BP, start, end);
     }
 
     /**
      * 不计入 fail 成绩
      */
-    @GetMapping(value = "scores/pr")
+    @GetMapping(value = "score/passes")
+    @OpenResource(name = "ps", desp = "查询多个最近通过成绩")
     public ResponseEntity<byte[]> getPassedScores(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value1,
-            @Nullable @RequestParam("m") Integer value2
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
+            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
     ) {
-        return getScore(userName, playMode, 2, value1, value2);
+        return getScore(name, playMode, scoreType.Pass, start, end);
     }
 
     /**
      * 计入 fail 成绩
      */
-    @GetMapping(value = "scores/re")
+    @GetMapping(value = "score/recents")
+    @OpenResource(name = "rs", desp = "查询多个最近成绩")
     public ResponseEntity<byte[]> getRecentScores(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value1,
-            @Nullable @RequestParam("m") Integer value2
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
+            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
     ) {
-        return getScore(userName, playMode, 3, value1, value2);
+        return getScore(name, playMode, scoreType.Recent, start, end);
     }
 
     /**
      * n 从0开始, 不传默认为0
      */
-    @GetMapping(value = "score/bp")
+    @GetMapping(value = "bp")
+    @OpenResource(name = "b", desp = "查询最好成绩")
     public ResponseEntity<byte[]> getBPScore(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
     ) {
-        if (value == null) value = 0;
-        return getScore(userName, playMode, 1, value, null);
+        return getScore(name, playMode, scoreType.BP, start, null);
     }
 
     /**
      * n 从0开始, 不传默认为0
      */
-    @GetMapping(value = "score/pr")
+    @GetMapping(value = "score/pass")
+    @OpenResource(name = "p", desp = "查询最近通过成绩")
     public ResponseEntity<byte[]> getPassedScore(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
     ) {
-        return getScore(userName, playMode, 2, value, null);
+        return getScore(name, playMode, scoreType.Pass, start, null);
     }
 
     /**
      * n 从0开始, 不传默认为0
      */
-    @GetMapping(value = "score/re")
+    @GetMapping(value = "score/recent")
+    @OpenResource(name = "r", desp = "查询最近通过成绩")
     public ResponseEntity<byte[]> getRecentScore(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("n") Integer value
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
     ) {
-        return getScore(userName, playMode, 3, value, null);
+        return getScore(name, playMode, scoreType.Recent, start, null);
     }
 
     @GetMapping(value = "score")
+    @OpenResource(name = "s", desp = "查询玩家谱面成绩")
     public ResponseEntity<byte[]> getBeatMapScore(
-            @NotNull @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode,
-            @NotNull @RequestParam("bid") Integer bid,
-            @Nullable @RequestParam("mods") String mods
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "bid", desp = "谱面编号", required = true) @RequestParam("bid") Long bid,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @OpenResource(name = "mods", desp = "模组") @Nullable @RequestParam("mods") String mods
     ) {
         OsuUser osuUser;
 
@@ -386,7 +399,7 @@ public class BotWebApi {
         Score score = null;
 
         try {
-            osuUser = userApiService.getPlayerInfo(userName);
+            osuUser = userApiService.getPlayerInfo(name);
             uid = osuUser.getUID();
         } catch (WebClientResponseException.NotFound e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
@@ -412,29 +425,31 @@ public class BotWebApi {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
-            beatMap.setId(Long.valueOf(bid));
+            beatMap.setId(bid);
             score.setBeatMap(beatMap);
         }
 
-        var data = imageService.getPanelE(osuUser, score, beatmapApiService);
-        return new ResponseEntity<>(data, getImageHeader(STR."\{userName}-score.jpg", data.length), HttpStatus.OK);
+        var image = imageService.getPanelE(osuUser, score, beatmapApiService);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
     }
 
-    @GetMapping(value = "bpa")
+    @GetMapping(value = "bp/analysis")
+    @OpenResource(name = "ba", desp = "分析最好成绩")
     public ResponseEntity<byte[]> getBPAnalysis(
-            @RequestParam("u1") String userName,
-            @Nullable @RequestParam("mode") String playMode
+            @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode
     ) {
-        userName = userName.trim();
         var mode = OsuMode.getMode(playMode);
-        long uid = userApiService.getOsuId(userName);
+
+        name = name.trim();
+        long uid = userApiService.getOsuId(name);
         var osuUser = userApiService.getPlayerInfo(uid, mode);
         if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
         var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
 
-        var d = bpAnalysisService.parseData(osuUser, scores, userApiService);
-        var data = imageService.getPanelJ(d);
-        return new ResponseEntity<>(data, getImageHeader(STR."\{userName}-bp.jpg", data.length), HttpStatus.OK);
+        var data = bpAnalysisService.parseData(osuUser, scores, userApiService);
+        var image = imageService.getPanelJ(data);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
     }
 
     @PostMapping(value = "pool")
@@ -445,16 +460,16 @@ public class BotWebApi {
         var mapPool = new MapPoolDto(nameStr, dataMap, beatmapApiService);
         if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
 
-        var data = imageService.getPanelH(mapPool);
-        return new ResponseEntity<>(data, getImageHeader(mapPool.getName() + "-pool.jpg", data.length), HttpStatus.OK);
+        var image = imageService.getPanelH(mapPool);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
     }
 
 
     @GetMapping(value = "dice")
-    @OpenResource(name = "dice", desp = "扔骰子 !ymdice (!d)")
+    @OpenResource(name = "d", desp = "扔骰子")
     public ResponseEntity<byte[]> getDice(
             @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable Integer range,
-            @OpenResource(name = "compare", desp = "比较文本") @RequestParam("compare") @Nullable String compareStr
+            @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable String compareStr
     ) throws RuntimeException {
         String message;
 
@@ -476,69 +491,141 @@ public class BotWebApi {
                     String.format("%.0f", diceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
                     , HttpStatus.OK);
         } catch (Exception e) {
-            log.error("扔骰子：API 失败", e);
-            throw new RuntimeException(DiceException.Type.DICE_Send_Error.message);
+            log.error("扔骰子：API 异常", e);
+            throw new RuntimeException("扔骰子：API 异常");
         }
     }
 
-
-    @Resource
-    MapStatisticsService mapStatisticsService;
-
     /***
-     *
-     * @param bid -
-     * @param modeStr 模式
-     * @param accuracy acc, 0-1的浮点数
+     * 获取谱面信息 M
+     * @param bid 谱面编号
+     * @param modeStr 谱面模式
+     * @param accuracy acc, 0-1的浮点数，或1-100，或101-10000
      * @param combo 最大连击
-     * @param miss miss数
-     * @param modStr mod字符串, 比如 HDHR 等
-     * @return
-     * @throws RuntimeException
+     * @param miss 失误数量
+     * @param modStr 模组的字符串, 比如 HDHR 等
+     * @return 谱面信息图片
+     * @throws RuntimeException API 出错
      */
     @GetMapping(value = "map")
-    @OpenResource(name = "m", desp = "获取谱面`pp`等信息")
+    @OpenResource(name = "m", desp = "获取谱面信息")
     public ResponseEntity<byte[]> getMapInfo(
-            @OpenResource(name = "bid", desp = "bid") @RequestParam("bid") Long bid,
-            @OpenResource(name = "mode", desp = "mode") @RequestParam("mode") @Nullable String modeStr,
-            @OpenResource(name = "accuracy", desp = "accuracy") @RequestParam("accuracy") @Nullable Double accuracy,
-            @OpenResource(name = "combo", desp = "combo") @RequestParam("combo") @Nullable Integer combo,
-            @OpenResource(name = "miss", desp = "miss") @RequestParam("miss") @Nullable Integer miss,
-            @OpenResource(name = "mods", desp = "mods") @RequestParam("mods") @Nullable String modStr
+            @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") Long bid,
+            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr,
+            @OpenResource(name = "accuracy", desp = "准确率，允许输入 0-10000") @RequestParam("accuracy") @Nullable Double accuracy,
+            @OpenResource(name = "combo", desp = "连击数") @RequestParam("combo") @Nullable Integer combo,
+            @OpenResource(name = "miss", desp = "失误数") @RequestParam("miss") @Nullable Integer miss,
+            @OpenResource(name = "mods", desp = "模组，允许按成对的双字母输入") @RequestParam("mods") @Nullable String modStr
     ) throws RuntimeException {
         var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
-        if (Objects.isNull(accuracy)) accuracy = 0D;
+        if (Objects.isNull(accuracy)) accuracy = 1D;
         if (Objects.isNull(combo)) combo = 0;
         if (Objects.isNull(miss)) miss = 0;
         if (Objects.isNull(modStr)) modStr = "";
-        var parm = new MapStatisticsService.MapParam(bid, mode, accuracy, combo, miss, modStr);
+        var param = new MapStatisticsService.MapParam(bid, mode, accuracy, combo, miss, modStr);
         try {
-            var data = mapStatisticsService.getImage(parm, Optional.empty());
+            var image = mapStatisticsService.getImage(param, Optional.empty());
 
-            return new ResponseEntity<>(data, HttpStatus.OK);
+            return new ResponseEntity<>(image, getImageHeader(STR."\{param.bid()}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {
-            log.error("map api 出错", e);
-            throw new RuntimeException("map api 出错");
+            log.error("谱面信息：API 异常", e);
+            throw new RuntimeException("谱面信息：API 异常");
         }
+    }
+    /**
+     * 获取玩家信息 I
+     * @param uid 玩家编号
+     * @param name 玩家名称
+     * @param modeStr 游戏模式
+     * @return 玩家信息图片
+     */
+    @GetMapping(value = "info")
+    @OpenResource(name = "i", desp = "获取玩家信息")
+    public ResponseEntity<byte[]> getPlayerInfo(
+            @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable Long uid,
+            @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr
+    ) {
+        var osuUser = getPlayerInfoJson(uid, name, modeStr);
+
+        var BPs = scoreApiService.getBestPerformance(osuUser);
+        var recents = scoreApiService.getRecentIncludingFail(osuUser);
+        var image = imageService.getPanelD(osuUser, Optional.empty(), BPs, recents, osuUser.getOsuMode());
+
+        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-info.jpg", image.length), HttpStatus.OK);
     }
 
     /**
-     * 登录, 向 bot 发送 !login 获得验证码, 验证码不区分大小写, 1分钟过期
-     *
-     * @param code 验证码
+     * 获取谱师信息 IM
+     * @param uid 玩家编号
+     * @param name 玩家名称
+     * @return 谱师信息图片
      */
-    @GetMapping(value = "login")
-    public OsuUser doLogin(@RequestParam("code") @NotNull String code) {
-        var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
-        if (Objects.nonNull(u)) {
-            LOGIN_USER_MAP.remove(code.toUpperCase());
-            return userApiService.getPlayerInfo(u.uid());
-        }
-        throw new RuntimeException("已过期或者不存在");
+    @GetMapping(value = "info/mapper")
+    @OpenResource(name = "im", desp = "获取谱师信息")
+    public ResponseEntity<byte[]> getMapperInfo(
+            @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable Long uid,
+            @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name
+    ) {
+        var osuUser = getPlayerInfoJson(uid, name, null);
+        var data = iMapperService.parseData(osuUser, userApiService, beatmapApiService);
+        var image = imageService.getPanelM(data);
+
+        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-mapper.jpg", image.length), HttpStatus.OK);
     }
 
-    @GetMapping(value = "uui")
-    public OsuUser uui(
+    /**
+     * 获取提名信息 N
+     * @param sid 谱面集编号
+     * @param bid 谱面编号
+     * @return 提名信息图片
+     */
+
+    @GetMapping(value = "map/nomination")
+    @OpenResource(name = "n", desp = "获取提名信息")
+    public ResponseEntity<byte[]> getNomination(
+            @OpenResource(name = "sid", desp = "谱面集编号") @RequestParam("sid") @Nullable Integer sid,
+            @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") @Nullable Integer bid
+    ) throws RuntimeException {
+        Map<String, Object> data;
+
+        try {
+            if (Objects.isNull(sid)) {
+                if (Objects.isNull(bid)) {
+                    throw new NominationException(NominationException.Type.N_Map_NotFound);
+                } else {
+                    data = nominationService.parseData(bid, false);
+                }
+            } else {
+                data = nominationService.parseData(sid, true);
+            }
+        } catch (NominationException e) {
+            throw new RuntimeException(NominationException.Type.N_Map_NotFound.message);
+        }
+
+        try {
+            byte[] image = imageService.getPanelN(data);
+
+            return new ResponseEntity<>(image, getImageHeader(STR."\{Optional.ofNullable(sid).orElse(bid)}-nomination.jpg", image.length), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("提名信息：API 异常", e);
+            throw new RuntimeException("提名信息：API 异常");
+        }
+
+    }
+
+
+    //======================  以下是跨域调用 osu!API 的部分，可获取到各种原始 JSON  ===================================
+
+    /**
+     * 获取玩家信息的 OsuUser JSON，即原 uui
+     * @param uid 玩家编号
+     * @param name 玩家名称
+     * @param modeStr 玩家模组
+     * @return OsuUser JSON
+     */
+    @GetMapping(value = "info/json")
+    public OsuUser getPlayerInfoJson(
             @RequestParam("uid") @Nullable Long uid,
             @RequestParam("name") @Nullable String name,
             @RequestParam("mode") @Nullable String modeStr
@@ -551,6 +638,88 @@ public class BotWebApi {
         } else {
             return userApiService.getPlayerInfo(17064371L, mode);
         }
+    }
+
+    /**
+     * 获取 BP 信息的 JSON，
+     * @param uid 玩家编号
+     * @param name 玩家名称
+     * @param modeStr 玩家模组
+     * @param start !bp 45-55 或 !bp 45 里的 45
+     * @param end !bp 45-55 里的 55
+     * @return OsuUser JSON
+     */
+    @GetMapping(value = "bp/json")
+    public List<Score> getBPJson(
+            @RequestParam("uid") @Nullable Long uid,
+            @RequestParam("name") @Nullable String name,
+            @RequestParam("mode") @Nullable String modeStr,
+            @RequestParam("start") @Nullable Integer start,
+            @RequestParam("end") @Nullable Integer end
+    ) {
+        var mode = OsuMode.getMode(modeStr);
+
+        int offset = DataUtil.parseRange2Offset(start, end);
+        int limit = DataUtil.parseRange2Limit(start, end);
+
+        if (Objects.nonNull(uid)) {
+            return scoreApiService.getBestPerformance(uid, mode, offset, limit);
+        } else if (Objects.nonNull(name)) {
+            var user = userApiService.getPlayerInfo(name, mode);
+            return scoreApiService.getBestPerformance(user, offset, limit);
+        } else {
+            return scoreApiService.getBestPerformance(7003013L, OsuMode.DEFAULT, offset, limit);
+        }
+    }
+
+    /**
+     * 获取成绩信息的 JSON
+     * @param uid 玩家编号
+     * @param name 玩家名称
+     * @param modeStr 游戏模式
+     * @param start !bp 45-55 或 !bp 45 里的 45
+     * @param end !bp 45-55 里的 55
+     * @param isPassed 是否通过，默认通过（真）
+     * @return List<Score> JSON
+     */
+    @GetMapping(value = "score/json")
+    public List<Score> getScoreJson(
+            @RequestParam("uid") @Nullable Long uid,
+            @RequestParam("name") @Nullable String name,
+            @RequestParam("mode") @Nullable String modeStr,
+            @RequestParam("start") @Nullable Integer start,
+            @RequestParam("end") @Nullable Integer end,
+            @RequestParam("isPassed") @Nullable Boolean isPassed
+    ){
+        var mode = OsuMode.getMode(modeStr);
+        if (Objects.isNull(isPassed)) isPassed = true;
+
+        int offset = DataUtil.parseRange2Offset(start, end);
+        int limit = DataUtil.parseRange2Limit(start, end);
+
+        if (Objects.nonNull(uid)) {
+            return scoreApiService.getRecent(uid, mode, offset, limit, isPassed);
+        } else if (Objects.nonNull(name)) {
+            var user = userApiService.getPlayerInfo(name, mode);
+            return scoreApiService.getRecent(user.getUID(), mode, offset, limit, isPassed);
+        } else {
+            return scoreApiService.getRecent(7003013L, OsuMode.DEFAULT, offset, limit, isPassed);
+        }
+    }
+
+    /**
+     * 登录, 向 bot 发送 !login 获得验证码, 验证码不区分大小写, 1分钟过期
+     *
+     * @param code 验证码
+     */
+    @GetMapping(value = "login")
+    public OsuUser doLogin(@RequestParam("code") @NonNull String code) {
+        var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
+        if (Objects.nonNull(u)) {
+            LOGIN_USER_MAP.remove(code.toUpperCase());
+            return userApiService.getPlayerInfo(u.uid());
+        }
+        throw new RuntimeException("已过期或者不存在");
     }
 
     /**

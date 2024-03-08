@@ -81,13 +81,22 @@ public class IMapperService implements MessageService<Matcher> {
                 }
             }
         }
-        try {
-            var map = parseData(osuUser, userApiService, beatmapApiService);
-            var image = imageService.getPanelM(map);
 
+        var map = parseData(osuUser, userApiService, beatmapApiService);
+
+        byte[] image;
+
+        try {
+            image = imageService.getPanelM(map);
+        } catch (Exception e) {
+            log.error("谱师信息：图片渲染失败", e);
+            throw new IMapperException(IMapperException.Type.IM_Fetch_Error);
+        }
+
+        try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("IMapper", e);
+            log.error("谱师信息：发送失败", e);
             throw new IMapperException(IMapperException.Type.IM_Send_Error);
         }
     }
@@ -139,8 +148,11 @@ public class IMapperService implements MessageService<Matcher> {
                         //if (Objects.equals(last, e)) return;
                         mappingActivity.add(e);
                     });
+        } catch (NoSuchElementException ignored) {
 
-        } catch (Exception ignore) { }
+        } catch (Exception e) {
+            log.error("谱师信息：筛选出错", e);
+        }
 
         var mostPopularBeatmap = result
                 .stream()
@@ -176,7 +188,7 @@ public class IMapperService implements MessageService<Matcher> {
                 .findFirst()
                 .orElse(null);
 
-        var beatMapSum = search.getBeatmapSets().stream().flatMap(s -> s.getBeatMaps().stream()).toList();
+        var beatMapSum = search.getBeatmapSets().stream().flatMap(s -> Objects.requireNonNull(s.getBeatMaps()).stream()).toList();
 
         var diffArr = new int[8];
         {

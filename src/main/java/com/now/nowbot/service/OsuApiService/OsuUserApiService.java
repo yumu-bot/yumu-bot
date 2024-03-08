@@ -17,7 +17,6 @@ public interface OsuUserApiService {
      * 拼合授权链接
      *
      * @param state QQ[+群号]
-     * @return
      */
     default String getOauthUrl(String state) throws WebClientResponseException {
         return getOauthUrl(state, false);
@@ -42,8 +41,8 @@ public interface OsuUserApiService {
         return getPlayerInfo(userName, OsuMode.DEFAULT);
     }
 
-    default OsuUser getPlayerInfo(Long userId) throws WebClientResponseException {
-        return getPlayerInfo(userId, OsuMode.DEFAULT);
+    default OsuUser getPlayerInfo(Long UID) throws WebClientResponseException {
+        return getPlayerInfo(UID, OsuMode.DEFAULT);
     }
 
     default OsuUser getPlayerOsuInfo(BinUser user) throws WebClientResponseException {
@@ -62,20 +61,20 @@ public interface OsuUserApiService {
         return getPlayerInfo(user, OsuMode.MANIA);
     }
 
-    default OsuUser getPlayerOsuInfo(Long userId) throws WebClientResponseException {
-        return getPlayerInfo(userId, OsuMode.OSU);
+    default OsuUser getPlayerOsuInfo(Long UID) throws WebClientResponseException {
+        return getPlayerInfo(UID, OsuMode.OSU);
     }
 
-    default OsuUser getPlayerTaikoInfo(Long userId) throws WebClientResponseException {
-        return getPlayerInfo(userId, OsuMode.TAIKO);
+    default OsuUser getPlayerTaikoInfo(Long UID) throws WebClientResponseException {
+        return getPlayerInfo(UID, OsuMode.TAIKO);
     }
 
-    default OsuUser getPlayerCatchInfo(Long userId) throws WebClientResponseException {
-        return getPlayerInfo(userId, OsuMode.CATCH);
+    default OsuUser getPlayerCatchInfo(Long UID) throws WebClientResponseException {
+        return getPlayerInfo(UID, OsuMode.CATCH);
     }
 
-    default OsuUser getPlayerManiaInfo(Long userId) throws WebClientResponseException {
-        return getPlayerInfo(userId, OsuMode.MANIA);
+    default OsuUser getPlayerManiaInfo(Long UID) throws WebClientResponseException {
+        return getPlayerInfo(UID, OsuMode.MANIA);
     }
 
     Long getOsuId(String name);
@@ -89,7 +88,7 @@ public interface OsuUserApiService {
 
     List<MicroUser> getFriendList(BinUser user) throws WebClientResponseException;
 
-    List<ActivityEvent> getUserRecentActivity(long userId, int s, int e);
+    List<ActivityEvent> getUserRecentActivity(long UID, int s, int e);
 
     KudosuHistory getUserKudosu(BinUser user);
 
