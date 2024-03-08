@@ -13,7 +13,6 @@ import com.now.nowbot.util.QQMsgUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class Contact implements com.now.nowbot.qq.contact.Contact {
@@ -45,7 +44,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         try {
             getIfNewBot();
         } catch (NullPointerException e) {
-            throw new LogException(STR."获取bot为空, 本次消息内容:[\{getMsg4Chain(msg)}]");
+            log.error("获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送");
         }
         long id = 0;
         ActionData<MsgId> d;
@@ -75,7 +74,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         if (d != null && d.getData() != null && d.getData().getMessageId() != null) {
             return OneBotMessageReceipt.create(bot, d.getData().getMessageId(), this);
         } else {
-            throw new LogException(STR."发送消息时获取回执失败, 发送到[\{id}] 内容:[\{getMsg4Chain(msg)}]");
+            log.error(STR."发送消息时获取回执失败, 发送到[\{id}] 内容:[\{getMsg4Chain(msg)}]");
+            return OneBotMessageReceipt.create();
         }
     }
 
@@ -124,33 +124,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             bot = OneBotConfig.getBotContainer().robots.get(bot.getSelfId());
             if (testBot()) return;
         }
-        for (var botEntry : OneBotConfig.getBotContainer().robots.entrySet()) {
-            var newBot = botEntry.getValue();
-            if (! newBot.getStatus().getGood()) continue;
-            if (this instanceof Group g) {
-                var groups = newBot.getGroupInfo(g.getId(), false).getData();
-                if (groups.getMemberCount() > 0) {
-                    this.bot = newBot;
-                    return;
-                }
-            } else if (this instanceof GroupContact c) {
-                var groups = newBot.getGroupInfo(c.getGroupId(), false).getData();
-                if (groups.getMemberCount() > 0) {
-                    this.bot = newBot;
-                    return;
-                }
-            } else {
-                var friends = newBot.getFriendList().getData();
-                AtomicBoolean has = new AtomicBoolean(false);
-                friends.forEach(f -> {
-                    if (f.getUserId() == getId()) has.set(true);
-                });
-                if (has.get()) {
-                    this.bot = newBot;
-                    return;
-                }
-            }
-        }
-        throw new RuntimeException("当前bot离线, 且未找到代替bot");
+        // 移除冗余
+        throw new LogException("当前bot离线, 且未找到代替bot");
     }
 }

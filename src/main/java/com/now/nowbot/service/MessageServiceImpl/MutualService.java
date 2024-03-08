@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -91,11 +92,11 @@ public class MutualService implements MessageService<Matcher> {
         }
     }
 
-    private String parseData(Collection<MutualData> users) {
-        StringBuilder sb = new StringBuilder();
+    private MessageChain parseData(Collection<MutualData> users) {
+        var sb = new MessageChain.MessageChainBuilder();
         users.forEach(u -> {
             if (Objects.isNull(u.uid)) {
-                sb.append(u.name).append('\n');
+                sb.addText(u.name + '\n');
                 return;
             }
             var name4Url = u.name
@@ -106,13 +107,16 @@ public class MutualService implements MessageService<Matcher> {
                     .replaceAll("_", "%5F");
 
             var m = NumberPattern.matcher(name4Url);
+            if (Objects.nonNull(u.qq)) {
+                sb.addAt(u.qq);
+            }
             if (m.find()) {
                 //有数字，只能 uid
-                sb.append(STR."\{Objects.nonNull(u.qq) ? (new AtMessage(u.qq).getCQ() + '\n') : ""} \{u.name} : : https://osu.ppy.sh/users/\{u.uid}\n");
+                sb.addText(STR." \{u.name} : : https://osu.ppy.sh/users/\{u.uid}\n");
             } else {
-                sb.append(STR."\{Objects.nonNull(u.qq) ? (new AtMessage(u.qq).getCQ() + '\n') : ""} \{u.name} : https://osu.ppy.sh/users/\{name4Url}\n");
+                sb.addText(STR." \{u.name} : https://osu.ppy.sh/users/\{name4Url}\n");
             }
         });
-        return sb.toString();
+        return sb.build();
     }
 }

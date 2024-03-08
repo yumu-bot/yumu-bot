@@ -30,6 +30,6 @@ public class ReplyMessage extends Message {
 
     @Override
     public String toString() {
-        return STR."[at:\{id}]";
+        return STR."[reply:\{id}]";
     }
 }
