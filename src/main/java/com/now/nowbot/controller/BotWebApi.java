@@ -195,6 +195,25 @@ public class BotWebApi {
         return new ResponseEntity<>(data, getImageHeader(STR."\{matchID}-mra.jpg", data.length), HttpStatus.OK);
     }
 
+    /**
+     * 生成图池接口 (GP)
+     *
+     * @param name 玩家名称
+     * @param dataMap 需要传进来的图池请求体。结构是 {"HD": [114514, 1919810]} 组成的 Map
+     * @return image 生成图池图片
+     */
+    @PostMapping(value = "match/getpool")
+    public ResponseEntity<byte[]> getPool(
+            @RequestParam("name") @Nullable String name,
+            @RequestBody Map<String, List<Long>> dataMap
+    ) throws RuntimeException {
+        var mapPool = new MapPoolDto(name, dataMap, beatmapApiService);
+        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
+
+        var image = imageService.getPanelH(mapPool);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
+    }
+
     public enum scoreType {
         TodayBP,
 
@@ -515,25 +534,6 @@ public class BotWebApi {
         var data = bpAnalysisService.parseData(osuUser, scores, userApiService);
         var image = imageService.getPanelJ(data);
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
-    }
-
-    /**
-     * 生成图池接口 (GP)
-     *
-     * @param name 玩家名称
-     * @param dataMap 需要传进来的图池请求体。结构是 {"HD": [114514, 1919810]} 组成的 Map
-     * @return image 生成图池图片
-     */
-    @PostMapping(value = "pool")
-    public ResponseEntity<byte[]> getPool(
-            @RequestParam("name") @Nullable String name,
-            @RequestBody Map<String, List<Long>> dataMap
-    ) throws RuntimeException {
-        var mapPool = new MapPoolDto(name, dataMap, beatmapApiService);
-        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
-
-        var image = imageService.getPanelH(mapPool);
-        return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
     }
 
     /**
