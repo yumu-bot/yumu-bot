@@ -65,19 +65,21 @@ public class BotWebApi {
 
 
     /**
-     * 如果包含 u2 则响应为 ppmvs
+     * PM 图片接口 (PPM)
      *
-     * @return image
+     * @param name 玩家名称
+     * @param name2 第二个玩家名称，不为空会转到 PV 接口
+     * @param playMode 模式，可为空
+     * @return image PPM 图片
      */
-
     @GetMapping(value = "ppm")
     @OpenResource(name = "pm", desp = "查询玩家的 PPM")
     public ResponseEntity<byte[]> getPPM(
-            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("u1") String name,
-            @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("u2") String name2,
+            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") String name,
+            @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") String name2,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
 
-        if (name2 != null) {
+        if (Objects.nonNull(name2)) {
             return getPPMVS(name, name2, playMode);
         }
 
@@ -94,6 +96,14 @@ public class BotWebApi {
         }
     }
 
+    /**
+     * PV 图片接口 (PPMVS)
+     *
+     * @param name 玩家名称
+     * @param name2 第二个玩家名称，必填
+     * @param playMode 模式，可为空
+     * @return image PPM 图片
+     */
     @GetMapping(value = "ppm/vs")
     @OpenResource(name = "pv", desp = "比较玩家的 PPM")
     public ResponseEntity<byte[]> getPPMVS(
@@ -122,12 +132,15 @@ public class BotWebApi {
         }
     }
 
-    /***
-     * @param k skip round
-     * @param d delete end
-     * @param f include failed
-     * @param r include rematch
-     * @return img
+    /**
+     * 比赛结果图片接口 (MN)
+     *
+     * @param matchID 比赛编号
+     * @param k 跳过开头对局数量，跳过热手
+     * @param d 忽略结尾对局数量，忽略 TB 表演赛
+     * @param f 是否删除低于 1w 分的成绩，不传默认删除
+     * @param r 是否保留重复对局，不传默认保留
+     * @return image 比赛结果图片
      */
     @GetMapping(value = "match/now")
     @OpenResource(name = "mn", desp = "查询比赛结果")
@@ -154,19 +167,20 @@ public class BotWebApi {
         return new ResponseEntity<>(image, getImageHeader(matchID + "-match.jpg", image.length), HttpStatus.OK);
     }
 
-    /***
+    /**
+     * 比赛评分图片接口 (RA)
      *
-     * @param matchId match id
-     * @param k skip round
-     * @param d delete end
-     * @param f include failed
-     * @param r include rematch
-     * @return img
+     * @param matchID 比赛编号
+     * @param k 跳过开头对局数量，跳过热手
+     * @param d 忽略结尾对局数量，忽略 TB 表演赛
+     * @param f 是否删除低于 1w 分的成绩，不传默认删除
+     * @param r 是否保留重复对局，不传默认保留
+     * @return image 评分图片
      */
     @GetMapping(value = "match/rating")
     @OpenResource(name = "ra", desp = "查询比赛评分")
     public ResponseEntity<byte[]> getRating(
-            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchId,
+            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
             @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
@@ -177,8 +191,8 @@ public class BotWebApi {
         if (f == null) f = true;
         if (r == null) r = true;
 
-        byte[] data = imageService.getPanelC(muRatingService.calculate(matchId, k, d, f, r));
-        return new ResponseEntity<>(data, getImageHeader(STR."\{matchId}-mra.jpg", data.length), HttpStatus.OK);
+        byte[] data = imageService.getPanelC(muRatingService.calculate(matchID, k, d, f, r));
+        return new ResponseEntity<>(data, getImageHeader(STR."\{matchID}-mra.jpg", data.length), HttpStatus.OK);
     }
 
     public enum scoreType {
@@ -292,6 +306,14 @@ public class BotWebApi {
         return new ResponseEntity<>(data, getImageHeader(name + suffix, data.length), HttpStatus.OK);
     }
 
+    /**
+     * 今日最好成绩接口 (T)
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param day 天数，不传默认一天内
+     * @return image 今日最好成绩图片
+     */
     @GetMapping(value = "bp/today")
     @OpenResource(name = "t", desp = "查询今日最好成绩")
     public ResponseEntity<byte[]> getTodayBP(
@@ -314,7 +336,13 @@ public class BotWebApi {
     }
 
     /**
-     * 不计入 fail 成绩
+     * 多个最近通过成绩接口 (PS) 不计入 Failed 成绩
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param start 开始位置，不传默认 1
+     * @param end 结束位置，不传默认等于开始位置
+     * @return image 多个最近通过成绩图片
      */
     @GetMapping(value = "score/passes")
     @OpenResource(name = "ps", desp = "查询多个最近通过成绩")
@@ -328,7 +356,13 @@ public class BotWebApi {
     }
 
     /**
-     * 计入 fail 成绩
+     * 多个最近成绩接口 (RS) 计入 Failed 成绩
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param start 开始位置，不传默认 1
+     * @param end 结束位置，不传默认等于开始位置
+     * @return image 多个最近成绩图片
      */
     @GetMapping(value = "score/recents")
     @OpenResource(name = "rs", desp = "查询多个最近成绩")
@@ -342,7 +376,12 @@ public class BotWebApi {
     }
 
     /**
-     * n 从0开始, 不传默认为0
+     * 最好成绩接口 (B)
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param start 开始位置，不传默认 1
+     * @return image 最好成绩图片
      */
     @GetMapping(value = "bp")
     @OpenResource(name = "b", desp = "查询最好成绩")
@@ -355,7 +394,12 @@ public class BotWebApi {
     }
 
     /**
-     * n 从0开始, 不传默认为0
+     * 最近通过成绩接口 (P) 不计入 Failed 成绩
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param start 开始位置，不传默认 1
+     * @return image 最近通过成绩图片
      */
     @GetMapping(value = "score/pass")
     @OpenResource(name = "p", desp = "查询最近通过成绩")
@@ -368,10 +412,15 @@ public class BotWebApi {
     }
 
     /**
-     * n 从0开始, 不传默认为0
+     * 最近成绩接口 (R) 计入 Failed 成绩
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @param start 开始位置，不传默认 1
+     * @return image 最近成绩图片
      */
     @GetMapping(value = "score/recent")
-    @OpenResource(name = "r", desp = "查询最近通过成绩")
+    @OpenResource(name = "r", desp = "查询最近成绩")
     public ResponseEntity<byte[]> getRecentScore(
             @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
@@ -380,6 +429,15 @@ public class BotWebApi {
         return getScore(name, playMode, scoreType.Recent, start, null);
     }
 
+    /**
+     * 谱面成绩接口 (S)
+     *
+     * @param name 玩家名称
+     * @param bid 谱面编号
+     * @param playMode 模式，可为空
+     * @param mods 模组字符串，可为空
+     * @return image 谱面成绩图片
+     */
     @GetMapping(value = "score")
     @OpenResource(name = "s", desp = "查询玩家谱面成绩")
     public ResponseEntity<byte[]> getBeatMapScore(
@@ -433,6 +491,13 @@ public class BotWebApi {
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
     }
 
+    /**
+     * 分析最好成绩接口 (BA)
+     *
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @return image 分析最好成绩图片
+     */
     @GetMapping(value = "bp/analysis")
     @OpenResource(name = "ba", desp = "分析最好成绩")
     public ResponseEntity<byte[]> getBPAnalysis(
@@ -452,33 +517,46 @@ public class BotWebApi {
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
     }
 
+    /**
+     * 生成图池接口 (GP)
+     *
+     * @param name 玩家名称
+     * @param dataMap 需要传进来的图池请求体。结构是 {"HD": [114514, 1919810]} 组成的 Map
+     * @return image 生成图池图片
+     */
     @PostMapping(value = "pool")
     public ResponseEntity<byte[]> getPool(
-            @RequestParam("name") @Nullable String nameStr,
+            @RequestParam("name") @Nullable String name,
             @RequestBody Map<String, List<Long>> dataMap
     ) throws RuntimeException {
-        var mapPool = new MapPoolDto(nameStr, dataMap, beatmapApiService);
+        var mapPool = new MapPoolDto(name, dataMap, beatmapApiService);
         if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
 
         var image = imageService.getPanelH(mapPool);
         return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
     }
 
-
+    /**
+     * 扔骰子接口 (D)
+     *
+     * @param range 范围，支持 0 ~ 2147483647
+     * @param compare 需要比较的文本
+     * @return String 扔骰子结果
+     */
     @GetMapping(value = "dice")
     @OpenResource(name = "d", desp = "扔骰子")
     public ResponseEntity<byte[]> getDice(
             @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable Integer range,
-            @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable String compareStr
+            @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable String compare
     ) throws RuntimeException {
         String message;
 
         try {
             if (Objects.isNull(range)) {
-                if (Objects.isNull(compareStr)) {
+                if (Objects.isNull(compare)) {
                     message = String.format("%.0f", diceService.getRandom(100));
                 } else {
-                    message = diceService.Compare(compareStr);
+                    message = diceService.Compare(compare);
                 }
             } else {
                 message = String.format("%.0f", diceService.getRandom(range));
@@ -497,7 +575,7 @@ public class BotWebApi {
     }
 
     /***
-     * 获取谱面信息 M
+     * 获取谱面信息 (M)
      * @param bid 谱面编号
      * @param modeStr 谱面模式
      * @param accuracy acc, 0-1的浮点数，或1-100，或101-10000
@@ -533,7 +611,7 @@ public class BotWebApi {
         }
     }
     /**
-     * 获取玩家信息 I
+     * 获取玩家信息 (I)
      * @param uid 玩家编号
      * @param name 玩家名称
      * @param modeStr 游戏模式
@@ -556,7 +634,7 @@ public class BotWebApi {
     }
 
     /**
-     * 获取谱师信息 IM
+     * 获取谱师信息 (IM)
      * @param uid 玩家编号
      * @param name 玩家名称
      * @return 谱师信息图片
@@ -575,7 +653,7 @@ public class BotWebApi {
     }
 
     /**
-     * 获取提名信息 N
+     * 获取提名信息 (N)
      * @param sid 谱面集编号
      * @param bid 谱面编号
      * @return 提名信息图片
@@ -641,7 +719,7 @@ public class BotWebApi {
     }
 
     /**
-     * 获取 BP 信息的 JSON，
+     * 获取 BP 信息的 JSON
      * @param uid 玩家编号
      * @param name 玩家名称
      * @param modeStr 玩家模组
