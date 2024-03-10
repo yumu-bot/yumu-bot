@@ -26,12 +26,17 @@ public class MRAException extends TipsException {
 
         RATING_Permission_OnlyGroupAdmin("只有群聊管理员或群主可以使用此功能！"),
 
-        RATING_Parameter_Error("输入的参数范围错误！"),//参数_参数错误
+        RATING_Parameter_MatchIDError("输入的比赛房间参数范围错误！"),//参数_参数错误
         RATING_Parameter_SkipError("你要在虚空中热手吗？"),//参数_热手数量负数或者小数
         RATING_Parameter_SkipEndError("小沐无法推算未来的比赛哦"),//参数_结尾数量负数或者小数
 
+        RATING_Parameter_EasyError("输入的 Easy 参数范围错误！"),
+        RATING_Parameter_EasyTooLarge("你是 Easy 皇帝吗？这么高的倍率。"),//参数_参数错误
+        RATING_Parameter_EasyTooSmall("你是 HardRock 皇帝吗？这么低的倍率。"),//参数_参数错误
+
         RATING_Parse_ParameterError("输入的参数范围错误！\n错误参数：%s，错误位置：%s"),//参数_参数错误
         RATING_Parse_MissingMatch("看起来漏了一场比赛呢？\n这个参数之前缺失比赛房间号：%s，错误位置：%s"),//参数_参数错误
+        RATING_Parse_MissingRemove("看起来漏了移除结束符呢？\n这个参数之前缺失结束符：%s，错误位置：%s"),//参数_参数错误
 
         RATING_Round_Empty("房间内没有对局呢..."),//参数_RRA模式_比赛未找到
         RATING_Round_NotFound("小沐找不到这场对局..."),//参数_RRA模式_比赛未找到

@@ -13,8 +13,11 @@ import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
@@ -37,12 +40,13 @@ public class MuRatingService implements MessageService<Matcher> {
         } else return false;
     }
 
+    public record MRAParam(Integer matchID, Integer skip, Integer ignore, List<Integer> remove, Double easy, Boolean failed, Boolean rematch) {}
+
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
-        int matchID;
-        var matchIDStr = matcher.group("matchid");
 
+        var matchIDStr = matcher.group("matchid");
         if (Objects.isNull(matchIDStr) || matchIDStr.isBlank()) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/rating.md");
@@ -54,20 +58,11 @@ public class MuRatingService implements MessageService<Matcher> {
             }
         }
 
-        try {
-            matchID = Integer.parseInt(matchIDStr);
-        } catch (NumberFormatException e) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_Error);
-        }
-
-        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
-        int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
-        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
-
+        var param = parseParam(matcher);
         MatchData data;
+
         try {
-            data = calculate(matchID, skip, skipEnd, failed, rematch);
+            data = calculate(param);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -95,6 +90,66 @@ public class MuRatingService implements MessageService<Matcher> {
         }
     }
 
+    /**
+     * 提取通用方法：将消息匹配变成 MRA 参数
+     * @param matcher 消息匹配
+     * @return MRA 参数
+     * @throws MRAException 错误
+     */
+    public MRAParam parseParam(Matcher matcher) throws MRAException {
+        int matchID;
+        try {
+            var matchIDStr = matcher.group("matchid");
+            matchID = Integer.parseInt(matchIDStr);
+        } catch (NumberFormatException e) {
+            throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
+        }
+
+        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
+        int ignore = matcher.group("ignore") == null ? 0 : Integer.parseInt(matcher.group("ignore"));
+        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
+        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
+
+        List<Integer> remove = getIntegers(matcher);
+
+        var easyStr = matcher.group("easy");
+        double easy = 1d;
+
+        if (Objects.nonNull(easyStr) && ! easyStr.isBlank()) {
+            try {
+                easy = Double.parseDouble(easyStr);
+            } catch (NullPointerException | NumberFormatException e) {
+                throw new MRAException(MRAException.Type.RATING_Parameter_EasyError);
+            }
+        }
+
+        if (easy > 10d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge);
+        if (easy < 0d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall);
+
+        return new MRAParam(matchID, skip, ignore, remove, easy, failed, rematch);
+    }
+
+
+    @NonNull
+    private static List<Integer> getIntegers(Matcher matcher) {
+        var removeStrArr = matcher.group("remove");
+        List<Integer> remove = new ArrayList<>();
+
+        if (Objects.nonNull(removeStrArr) && ! removeStrArr.isBlank()) {
+            var split = removeStrArr.split("[\\s,，\\-|:]+");
+            for (var s : split) {
+                int r;
+                try {
+                    r = Integer.parseInt(s);
+                    remove.add(r);
+                } catch (NumberFormatException ignored) {
+
+                }
+            }
+        }
+        return remove;
+    }
+
     private String parseCSA(MatchData data) {
         //结果数据
         StringBuilder sb = new StringBuilder();
@@ -114,10 +169,14 @@ public class MuRatingService implements MessageService<Matcher> {
         return sb.toString();
     }
 
-    public MatchData calculate(int matchID, int skip, int skipEnd, boolean failed, boolean rematch) throws MRAException {
+    public MatchData calculate(MRAParam data) throws MRAException {
+        return calculate(data.matchID, data.skip, data.ignore, data.remove, data.easy, data.failed, data.rematch);
+    }
+
+    public MatchData calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch) throws MRAException {
 
         if (skip < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
-        if (skipEnd < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
+        if (ignore < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
 
         Match match;
         try {
@@ -133,7 +192,7 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         //真正的计算封装，就两行
-        MatchData matchData = new MatchData(match, skip, skipEnd, failed, rematch); //!keep = remove
+        MatchData matchData = new MatchData(match, skip, ignore, remove, easy, failed, rematch); //!keep = remove
         matchData.calculate();
 
         return matchData;

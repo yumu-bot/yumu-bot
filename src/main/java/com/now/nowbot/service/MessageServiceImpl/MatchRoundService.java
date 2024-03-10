@@ -130,7 +130,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         //获取所有轮的游戏
-        var cal = new MatchCal(match, 0, 0, true, true);
+        var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
 
         List<MatchRound> rounds = cal.getRoundList();
 

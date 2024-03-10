@@ -30,11 +30,15 @@ public class SeriesData {
     private Double minMQ = 100d;
     private double scalingFactor;
 
+    // easy Mod 倍率
+    double easyMultiplier;
 
-    public SeriesData(Series s, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean failed, boolean rematch) {
+
+    public SeriesData(Series s, @Nullable String name, List<Integer> skips, List<Integer> ignores, List<List<Integer>> removes, Double easy, boolean delete, boolean rematch) {
         series = s;
         series.getSeriesStat().setStartTime(OffsetDateTime.MAX);
         series.getSeriesStat().setEndTime(OffsetDateTime.MIN);
+        easyMultiplier = easy;
 
         Set<Long> playerUIDSet = new HashSet<>();
         List<PlayerData> playerDataFullList = new ArrayList<>();
@@ -42,7 +46,7 @@ public class SeriesData {
 
         matchCount = s.getMatches().size();
         for (int i = 0; i < matchCount; i++) {
-            var matchData = new MatchData(s.getMatches().get(i), skips.get(i), skipEnds.get(i), failed, rematch);
+            var matchData = new MatchData(s.getMatches().get(i), skips.get(i), ignores.get(i), removes.get(i), easy, delete, rematch);
             matchData.calculate();
 
             firstMapSIDs.add(matchData.getFirstMapSID());

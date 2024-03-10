@@ -1,6 +1,7 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.enums.Mod;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,12 +15,16 @@ public class MatchCal {
     List<MatchRound> roundList;
     List<MatchScore> scoreList;
 
+    // easy Mod 倍率
+    double easyMultiplier;
+
     /**
-     * @param failed 是否保留低于 1w 的成绩，true 为删除，false 为保留
+     * @param delete 是否保留低于 1w 的成绩，true 为删除，false 为保留
      * @param rematch 是否去重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
-    public MatchCal(Match match, int skip, int skipEnd, boolean failed, boolean rematch) {
+    public MatchCal(Match match, int skip, int ignore, List<Integer> remove, double easy, boolean delete, boolean rematch) {
         this.match = match;
+        this.easyMultiplier = easy;
 
         //包含所有玩家的映射表
         playerMap = match.getPlayers().stream().collect(Collectors.toMap(MicroUser::getId, p -> p, (p1, p2) -> p2));
@@ -29,7 +34,7 @@ public class MatchCal {
                 .filter(round -> (Objects.nonNull(round.getScoreInfoList()) && !round.getScoreInfoList().isEmpty()))
                 .filter(round -> round.getEndTime() != null);
 
-        if (failed) {
+        if (delete) {
             roundsStream = roundsStream.peek(round -> {
                 try {
                     round.getScoreInfoList().removeIf(s -> s.getScore() <= 10000);
@@ -47,7 +52,9 @@ public class MatchCal {
                     .values());
         }
 
-        skip(skip, skipEnd);
+        skip(skip, ignore, remove);
+
+        applyEasyMultiplier();
 
         constructScoreList();
 
@@ -64,6 +71,20 @@ public class MatchCal {
         addRanking4MatchScore();
     }
 
+    private void applyEasyMultiplier() {
+        // easy 处理
+        if (easyMultiplier != 1d) {
+            roundList = roundList.stream().peek(round -> round.setScoreInfoList(
+                    round.getScoreInfoList().stream().peek(
+                            s -> {
+                                if (Mod.hasEz(Mod.getModsValue(s.getMods()))) {
+                                    s.setScore((int) (s.getScore() * easyMultiplier));
+                                }
+                            }).toList())
+            ).toList();
+        }
+    }
+
     private void constructScoreList() {
         scoreList = roundList.stream()
                 .flatMap(r -> r.scoreInfoList.stream())
@@ -72,15 +93,31 @@ public class MatchCal {
     }
 
     //默认跳过
-    private void skip(int skip, int skipEnd) {
+    private void skip(int skip, int ignore, List<Integer> remove) {
         int size = roundList.size();
-        int limit = size - skipEnd;
+        int limit = size - ignore;
 
-        if (skip < 0 || skip > size || limit < 0 || limit > size || skip + skipEnd > size) return;
+        if (skip < 0 || skip > size || limit < 0 || limit > size || limit - skip < 0) return;
+
         roundList = getRoundList().stream()
                 .limit(limit)
                 .skip(skip)
                 .collect(Collectors.toList());
+
+        if (Objects.nonNull(remove) && ! remove.isEmpty()) {
+            remove = remove.stream().map(i -> i - skip).filter(i -> i < limit - skip && i > 0).map(i -> i - 1).toList();
+
+            for (int i = 0; i < roundList.size(); i++) {
+                for (var m : remove) {
+                    if (i == m) {
+                        roundList.set(i, null);
+                        break;
+                    }
+                }
+            }
+
+            roundList = roundList.stream().filter(Objects::nonNull).toList();
+        }
     }
 
     //默认设置

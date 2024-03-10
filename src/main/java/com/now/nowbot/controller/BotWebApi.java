@@ -146,21 +146,23 @@ public class BotWebApi {
     @OpenResource(name = "mn", desp = "查询比赛结果")
     public ResponseEntity<byte[]> getMatchNow(
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
+            @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable Double e,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
             @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
             @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r) throws RuntimeException {
         if (k == null) k = 0;
         if (d == null) d = 0;
+        if (e == null) e = 1d;
         if (f == null) f = true;
         if (r == null) r = true;
         byte[] image;
 
         try {
-            var data = monitorNowService.parseData(matchID, k, d, f, r);
+            var data = monitorNowService.parseData(matchID, k, d, null, e, f, r);
             image = imageService.getPanelF(data);
-        } catch (Exception e) {
-            log.error("比赛结果：API 异常", e);
+        } catch (Exception err) {
+            log.error("比赛结果：API 异常", err);
             throw new RuntimeException(MatchNowException.Type.MN_Render_Error.message);
         }
 
@@ -181,18 +183,28 @@ public class BotWebApi {
     @OpenResource(name = "ra", desp = "查询比赛评分")
     public ResponseEntity<byte[]> getRating(
             @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
+            @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable Double e,
             @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
             @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
             @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
             @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r
-    ) throws MRAException {
+    ) {
         if (k == null) k = 0;
         if (d == null) d = 0;
+        if (e == null) e = 1d;
         if (f == null) f = true;
         if (r == null) r = true;
+        byte[] image;
 
-        byte[] data = imageService.getPanelC(muRatingService.calculate(matchID, k, d, f, r));
-        return new ResponseEntity<>(data, getImageHeader(STR."\{matchID}-mra.jpg", data.length), HttpStatus.OK);
+        try {
+            var data = muRatingService.calculate(matchID, k, d, null, e, f, r);
+            image = imageService.getPanelC(data);
+        } catch (Exception err) {
+            log.error("比赛评分：API 异常", err);
+            throw new RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message);
+        }
+
+        return new ResponseEntity<>(image, getImageHeader(STR."\{matchID}-mra.jpg", image.length), HttpStatus.OK);
     }
 
     /**

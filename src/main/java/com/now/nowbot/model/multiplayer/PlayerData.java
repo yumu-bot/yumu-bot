@@ -12,7 +12,7 @@ public class PlayerData {
     //最初的分数
     List<Integer> scores = new ArrayList<>();
     //totalScore
-    Integer TTS = 0;
+    Long TTS = 0L;
     //标准化的单场个人得分 RRAs，即标准分 = score/TotalScore
     List<Double> RRAs = new ArrayList<>();
     //总得斗力点 TMG，也就是RRAs的和
@@ -58,7 +58,7 @@ public class PlayerData {
     }
 
     public void calculateTTS() {
-        TTS = 0;
+        TTS = 0L;
 
         for (Integer score : scores) {
             TTS += score;
@@ -131,11 +131,11 @@ public class PlayerData {
         this.scores = scores;
     }
 
-    public Integer getTTS() {
+    public Long getTTS() {
         return TTS;
     }
 
-    public void setTTS(Integer TTS) {
+    public void setTTS(Long TTS) {
         this.TTS = TTS;
     }
 

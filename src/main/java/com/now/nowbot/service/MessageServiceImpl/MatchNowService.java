@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("MATCH_NOW")
@@ -25,6 +26,8 @@ public class MatchNowService implements MessageService<Matcher> {
     OsuMatchApiService osuMatchApiService;
     @Resource
     ImageService imageService;
+    @Resource
+    MuRatingService muRatingService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
@@ -37,22 +40,9 @@ public class MatchNowService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        int matchID;
-
-        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
-        int skipEnd = matcher.group("skipend") == null ? 0 : Integer.parseInt(matcher.group("skipend"));
-        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
-        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
-
-        try {
-            matchID = Integer.parseInt(matcher.group("matchid"));
-        } catch (NullPointerException e) {
-            throw new MatchNowException(MatchNowException.Type.MN_MatchId_Error);
-        }
-
         var from = event.getSubject();
-
-        var data = parseData(matchID, skip, skipEnd, failed, rematch);
+        var param = muRatingService.parseParam(matcher);
+        var data = parseData(param);
 
         byte[] image;
         try {
@@ -64,12 +54,15 @@ public class MatchNowService implements MessageService<Matcher> {
         try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("MN:", e);
+            log.error("比赛结果：发送失败", e);
             throw new MatchNowException(MatchNowException.Type.MN_Send_Error);
         }
     }
+    public MatchData parseData(MuRatingService.MRAParam param) throws MatchNowException {
+        return parseData(param.matchID(), param.skip(), param.ignore(), param.remove(), param.easy(), param.failed(), param.rematch());
+    }
 
-    public MatchData parseData(int matchID, int skip, int skipEnd, boolean failed, boolean rematch) throws MatchNowException {
+    public MatchData parseData(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch) throws MatchNowException {
         Match match;
         try {
             match = osuMatchApiService.getMatchInfo(matchID, 10);
@@ -83,13 +76,13 @@ public class MatchNowService implements MessageService<Matcher> {
             match.getEvents().addAll(0, events);
         }
 
-        if (match.getEvents().size() - skipEnd - skip <= 0) {
+        if (match.getEvents().size() - ignore - skip <= 0) {
             throw new MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError);
         }
 
         MatchData matchData;
         try {
-            matchData = new MatchData(match, skip, skipEnd, failed, rematch);
+            matchData = new MatchData(match, skip, ignore, remove, easy, failed, rematch);
             matchData.calculate();
 
             //如果只有一两个人，则不排序（slot 从小到大）
@@ -108,7 +101,7 @@ public class MatchNowService implements MessageService<Matcher> {
             }
 
         } catch (Exception e) {
-            log.error("MN Parse:", e);
+            log.error("比赛结果：获取失败", e);
             throw new MatchNowException(MatchNowException.Type.MN_Match_ParseError);
         }
         return matchData;

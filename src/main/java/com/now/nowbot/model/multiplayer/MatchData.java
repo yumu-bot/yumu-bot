@@ -40,15 +40,19 @@ public class MatchData {
     private double minMQ = 100d;
     private double scalingFactor;
 
+    // easy Mod 倍率
+    double easyMultiplier;
+
     /**
-     * @param failed 是否保留低于 1w 的成绩，true 为删除，false 为保留
+     * @param delete 是否保留低于 1w 的成绩，true 为删除，false 为保留
      * @param rematch 是否去重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
-    public MatchData(Match match, int skip, int skipEnd, boolean failed, boolean rematch) {
+    public MatchData(Match match, int skip, int ignore, List<Integer> remove, double easy, boolean delete, boolean rematch) {
+        easyMultiplier = easy;
         matchStat = match.getMatchStat();
         isMatchEnd = match.isMatchEnd();
         hasCurrentGame = match.getCurrentGameId() != null;
-        var cal = new MatchCal(match, skip, skipEnd, failed, rematch);
+        var cal = new MatchCal(match, skip, ignore, remove, easy, delete, rematch);
 
         averageStar = cal.getAverageStar();
         firstMapSID = cal.getFirstMapSID();
@@ -119,20 +123,24 @@ public class MatchData {
         for (MatchRound round : roundList) {
             List<MatchScore> scoreList = round.getScoreInfoList();
 
-            int roundScore = scoreList.stream().mapToInt(MatchScore::getScore).reduce(Integer::sum).orElse(0);
+            long roundScore = scoreList.stream()
+                    .mapToLong(MatchScore::getScore)
+                    .reduce(Long::sum).orElse(0L);
+
             int roundScoreCount = scoreList.stream().filter(s -> s.getScore() > 0).toList().size();
             if (roundScore == 0) continue;
 
             //每一个分数
-            for (MatchScore score: scoreList) {
-                var player = playerData.get(score.getUserId());
-                if (Objects.isNull(player) || score.getScore() == 0) continue;
+            for (MatchScore s: scoreList) {
+                var player = playerData.get(s.getUserId());
+                if (Objects.isNull(player) || s.getScore() == 0) continue;
 
-                double RRA = 1.0d * score.getScore() * roundScoreCount / roundScore;
+                double RRA = 1.0d * s.getScore() * roundScoreCount / roundScore;
+
                 player.getRRAs().add(RRA);
-                player.getScores().add(score.getScore());
+                player.getScores().add(s.getScore());
                 if (Objects.isNull(player.getTeam())) {
-                    player.setTeam(score.getTeam());
+                    player.setTeam(s.getTeam());
                 }
             }
         }

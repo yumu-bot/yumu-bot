@@ -67,7 +67,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                 throw e;
             } catch (Exception e) {
                 log.error("CSV-Series 获取失败");
-                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
+                throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
             }
         } else {
             try {
@@ -80,7 +80,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                 throw e;
             } catch (Exception e) {
                 log.error("CSV-Round (Rating) 获取失败", e);
-                throw new MRAException(MRAException.Type.RATING_Parameter_Error);
+                throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
             }
         }
 
@@ -112,7 +112,7 @@ public class CsvMatchService implements MessageService<Matcher> {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        var cal = new MatchCal(match, 0, 0, true, true);
+        var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
         var rounds = cal.getRoundList();
 
         for (var r : rounds) {
@@ -136,7 +136,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                 throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
             }
 
-            var cal = new MatchCal(match, 0, 0, true, true);
+            var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
             var rounds = cal.getRoundList();
 
             //多比赛

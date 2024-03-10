@@ -24,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
@@ -65,12 +64,27 @@ public class SeriesRatingService implements MessageService<Matcher> {
         }
 
         var parsed = parseDataString(dataStr);
-        List<Integer> matchIDs = parsed.get("matchIDs");
-        List<Integer> skips = parsed.get("skips");
-        List<Integer> skipEnds = parsed.get("skipEnds");
+        List<Integer> matchIDs = parsed.matchIDs;
+        List<Integer> skips = parsed.skips;
+        List<Integer> ignores = parsed.ignores;
+        List<List<Integer>> removes = parsed.removes;
 
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
         boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
+
+        var easyStr = matcher.group("easy");
+        double easy = 1d;
+
+        if (Objects.isNull(easyStr) || easyStr.isBlank()) {
+            try {
+                easy = Double.parseDouble(easyStr);
+            } catch (NullPointerException | NumberFormatException e) {
+                throw new MRAException(MRAException.Type.RATING_Parameter_EasyError);
+            }
+        }
+
+        if (easy > 10d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge);
+        if (easy < 0d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall);
 
         if (matcher.group("csv") != null) {
             from.sendMessage(MRAException.Type.RATING_Series_Progressing.message);
@@ -82,7 +96,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
         SeriesData data;
         try {
-            data = calculate(matchIDs, nameStr, skips, skipEnds, failed, rematch, from);
+            data = calculate(matchIDs, nameStr, skips, ignores, removes, failed, rematch, easy, from);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -194,122 +208,152 @@ public class SeriesRatingService implements MessageService<Matcher> {
         return sb.toString();
     }
 
-    public Map<String, List<Integer>> parseDataString(String dataStr) throws MRAException {
+    public enum Status {
+        ID,
+        SKIP,
+        IGNORE,
+        REMOVE_RECEIVED,
+        REMOVE_FINISHED,
+        OK
+    }
+
+    public record ParsedData(List<Integer> matchIDs, List<Integer> skips, List<Integer> ignores, List<List<Integer>> removes) {}
+
+    public ParsedData parseDataString(String dataStr) throws MRAException {
         String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
 
         List<Integer> matchIDs = new ArrayList<>();
         List<Integer> skips = new ArrayList<>();
-        List<Integer> skipEnds = new ArrayList<>();
+        List<Integer> ignores = new ArrayList<>();
+        List<List<Integer>> removes = new ArrayList<>();
 
-        int status = 0; //0：收取 matchID 状态，1：收取 skip 状态，2：收取 skipEnd 状态。3：无需收取，直接输出。
+        Status status = Status.ID; //0：收取 matchID 状态，1：收取 skip 状态，2：收取 ignore 状态。3：收取 remove 状态。 4：无需收取，直接输出。
         int matchID = 0;
         int skip = 0;
-        int skipEnd = 0;
+        int ignore = 0;
+        List<Integer> remove = new ArrayList<>();
 
         for (int i = 0; i < dataStrArray.length; i++) {
 
             int v;
             String s = dataStrArray[i];
             if (s == null || s.isBlank()) continue;
+
+            if (s.contains("[")) {
+                status = Status.REMOVE_RECEIVED;
+                s = s.replaceAll("\\[", "");
+            } else if (s.contains("]")) {
+                status = Status.REMOVE_FINISHED;
+                s = s.replaceAll("]", "");
+            }
+
             try {
                 v = Integer.parseInt(s);
             } catch (NumberFormatException e) {
                 throw new MRAException(MRAException.Type.RATING_Parse_ParameterError, s, String.valueOf(i));
             }
 
+            switch (status) {
+                case REMOVE_RECEIVED -> remove.add(v);
+                case REMOVE_FINISHED -> {
+                    removes.add(remove);
+                    remove.clear();
+                    status = Status.OK;
+                }
+            }
+
+
             //如果最后一个参数是场比赛，需要重复 parse（结算）
             if (i == dataStrArray.length - 1) {
                 if (v < 1000) {
                     switch (status) {
-                        case 1 -> {
+                        case SKIP -> {
                             matchIDs.add(matchID);
                             skips.add(v);
-                            skipEnds.add(0);
-                            status = 0;
+                            ignores.add(0);
+                            status = Status.IGNORE;
                         }
-                        case 2 -> {
+                        case IGNORE -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
-                            skipEnds.add(v);
-                            status = 0;
+                            ignores.add(v);
+                            status = Status.ID;
                         }
-                        case 3 -> {
+                        case REMOVE_RECEIVED ->
+                                throw new MRAException(MRAException.Type.RATING_Parse_MissingRemove, String.valueOf(v), String.valueOf(i));
+                        case OK -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
-                            skipEnds.add(skipEnd);
-                            status = 0;
+                            ignores.add(ignore);
+                            status = Status.ID;
                         }
-                        case 0 -> throw new MRAException(MRAException.Type.RATING_Parse_MissingMatch, String.valueOf(v), String.valueOf(i));
+                        default -> throw new MRAException(MRAException.Type.RATING_Parse_MissingMatch, String.valueOf(v), String.valueOf(i));
                     }
                 } else {
                     switch (status) {
-                        case 1 -> {
+                        case SKIP -> {
                             matchIDs.add(matchID);
                             skips.add(0);
-                            skipEnds.add(0);
+                            ignores.add(0);
                         }
-                        case 2 -> {
+                        case IGNORE -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
-                            skipEnds.add(0);
+                            ignores.add(0);
                         }
-                        case 3 -> {
+                        case OK -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
-                            skipEnds.add(skipEnd);
+                            ignores.add(ignore);
                         }
                     }
                     matchIDs.add(v);
                     skips.add(0);
-                    skipEnds.add(0);
+                    ignores.add(0);
 
-                    status = 0;
+                    status = Status.ID;
                 }
             } else {
                 //正常 parse
                 if (v < 1000) {
                     switch (status) {
-                        case 1 -> {
+                        case SKIP -> {
                             skip = v;
-                            status = 2;
+                            status = Status.IGNORE;
                         }
-                        case 2 -> {
-                            skipEnd = v;
-                            status = 3;
+                        case IGNORE -> {
+                            ignore = v;
+                            status = Status.OK;
                         }
-                        case 0, 3 -> throw new MRAException(MRAException.Type.RATING_Parse_MissingMatch, String.valueOf(v), String.valueOf(i));
+                        case ID, OK -> throw new MRAException(MRAException.Type.RATING_Parse_MissingMatch, String.valueOf(v), String.valueOf(i));
                     }
                 } else {
                     switch (status) {
-                        case 0 -> {
+                        case ID -> {
                             matchID = v;
-                            status = 1;
+                            status = Status.SKIP;
                         }
-                        case 1, 2, 3 -> {
+                        case SKIP, IGNORE, OK -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
-                            skipEnds.add(skipEnd);
+                            ignores.add(ignore);
 
                             matchID = v;
                             skip = 0;
-                            skipEnd = 0;
-                            status = 1;
+                            ignore = 0;
+                            status = Status.SKIP;
                         }
                     }
                 }
             }
         }
 
-        return Map.of(
-                "matchIDs", matchIDs,
-                "skips", skips,
-                "skipEnds", skipEnds
-        );
+        return new ParsedData(matchIDs, skips, ignores, removes);
     }
 
 
-    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> skipEnds, boolean failed, boolean rematch, @Nullable Contact from) throws MRAException {
+    public SeriesData calculate(List<Integer> matchIDs, @Nullable String name, List<Integer> skips, List<Integer> ignores, List<List<Integer>> removes, boolean failed, boolean rematch, Double easy, @Nullable Contact from) throws MRAException {
 
         List<Match> matches = new ArrayList<>();
         int fetchMapFail = 0;
@@ -348,7 +392,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         }
         //真正的计算封装，就两行
 
-        SeriesData data = new SeriesData(new Series(matches), name, skips, skipEnds, failed, rematch);
+        SeriesData data = new SeriesData(new Series(matches), name, skips, ignores, removes, easy, failed, rematch);
         data.calculate();
 
         return data;
