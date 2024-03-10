@@ -29,6 +29,9 @@ public class OsuBindUserLite {
 //    @Lob
     @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
+
+    @Column(name = "update_count")
+    private Integer updateCount = 0;
     private Long time;
 
     //一些额外信息
@@ -117,5 +120,13 @@ public class OsuBindUserLite {
 
     public void setMainMode(OsuMode mainMode) {
         this.mainMode = mainMode;
+    }
+
+    public Integer getUpdateCount() {
+        return updateCount;
+    }
+
+    public void setUpdateCount(Integer updateCount) {
+        this.updateCount = updateCount;
     }
 }

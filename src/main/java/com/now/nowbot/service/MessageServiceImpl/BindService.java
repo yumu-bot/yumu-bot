@@ -28,8 +28,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -39,6 +38,9 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
+
+
+
     OsuUserApiService userApiService;
 
     BindDao bindDao;
@@ -155,60 +157,8 @@ public class BindService implements MessageService<BindService.BindParam> {
         bindQQ(event, me, param.isFull);
     }
 
-    //默认绑定路径
-    private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
-        var from = event.getSubject();
-        BinUser binUser;
-
-        //检查是否已经绑定
-        var qqLiteFromQQ = bindDao.getQQLiteFromQQ(qq);
-        QQBindLite qqBindLite;
-        if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
-            binUser = qqBindLite.getBinUser();
-            try {
-                var osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
-                if (!osuUser.getUID().equals(binUser.getOsuID())) {
-                    throw new RuntimeException();
-                }
-
-                from.sendMessage(
-                        String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
-                );
-
-                var lock = ASyncMessageUtil.getLock(event);
-                var s = lock.get();
-                if (Objects.isNull(s) || !s.getRawMessage().toUpperCase().contains("OK")) {
-                    return;
-                }
-
-            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized | BindException e) {
-                throw e;
-            } catch (Exception ignored) {
-                // 如果符合，直接允许绑定
-            }
-        }
-
-        // 需要绑定
-        // 将当前毫秒时间戳作为 key
-        long timeMillis = System.currentTimeMillis();
-        String state = STR."\{qq}+\{timeMillis}";
-
-        // 将消息回执作为 value
-        state = userApiService.getOauthUrl(state, isFull);
-        var send = new MessageChain.MessageChainBuilder()
-                .addAt(qq)
-                .addText("\n")
-                .addText(state)
-                .build();
-
-        MessageReceipt receipt;
-        if (Objects.nonNull(from)) {
-            receipt = from.sendMessage(send);
-
-            from.recallIn(receipt, 110 * 1000);
-            //此处在 controller.msgController 处理
-            putBind(timeMillis, new Bind(timeMillis, receipt, qq));
-        }
+    public static void main(String[] args) {
+        getQuestion(null);
     }
 
     private void unbindQQ(Long qq) throws BindException {
@@ -273,84 +223,103 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
     }
 
-    private void bindQQName(MessageEvent event, String name, long qq) {
-        Contact from = event.getSubject();
-        var u = bindDao.getQQLiteFromQQ(qq);
-        if (u.isPresent()) throw new BindException(BindException.Type.BIND_Response_AlreadyBound);
+    private static int find(int[][] map, int size, int start, int end) {
+        int[] toMin = new int[size];
+        int[] find = new int[size];
+        find[start] = 1;
+        Arrays.fill(toMin, Integer.MAX_VALUE);
+        int point = start;
+        int pointBef = start;
+        for (int n = 0; n < size - 1; n++) {
 
-        long UID;
-        try {
-            UID = userApiService.getOsuId(name);
-        } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
-            throw new BindException(BindException.Type.BIND_Player_Banned);
-        } catch (Exception e) {
-            throw new BindException(BindException.Type.BIND_Player_NotFound);
+            int minIndex = - 1;
+            int min = Integer.MAX_VALUE;
+            for (int i = 0; i < size; i++) {
+                if (find[i] == 1) continue;
+                if (map[pointBef][point] + map[point][i] >= toMin[i]) continue;
+                toMin[i] = map[pointBef][point] + map[point][i];
+                if (min > toMin[i]) {
+                    min = toMin[i];
+                    minIndex = i;
+                }
+            }
+            if (minIndex == end) return toMin[minIndex];
+            if (minIndex < 0) {
+                for (int i = 0; i < size; i++) {
+                    if (find[i] == 1) continue;
+                    if (min > toMin[i]) {
+                        min = toMin[i];
+                        minIndex = i;
+                    }
+                }
+            }
+            System.out.print((char) ('A' + minIndex));
+            System.out.println(STR."  \{Arrays.toString(toMin)}");
+            find[minIndex] = 1;
+            pointBef = point;
+            point = minIndex;
+
         }
-
-        var userFromID = bindDao.getQQLiteFromOsuId(UID);
-        if (userFromID.isPresent()) {
-            from.sendMessage(
-                    String.format(BindException.Type.BIND_Response_AlreadyBoundInfo.message, userFromID.get().getQq(), name)
-            );
-            //from.sendMessage(STR."\{name} 已绑定 (\{userFromID.get().getQq()})，若绑定错误，请尝试重新绑定！(命令不要带上任何参数)\n(!ymbind)");
-            return;
-        }
-
-        from.sendMessage(BindException.Type.BIND_Question_BindByName.message);
-
-        /*
-        from.sendMessage("""
-                将弃用直接绑定用户名的方法, 请直接发送 '!ymbind' 绑定，并且不带任何参数。
-                如果您执意使用绑定用户名的方式, 请回答下面问题:
-                设随机变量 X 与 Y 相互独立且都服从 U(0,1), 则 P(X+Y<1) 为
-                """);
-
-        from.sendMessage("""
-                别看了，乖乖发送 !ymbind 绑定吧，不要带任何参数。
-                现在没法直接单独绑定用户名，请点击链接绑定。
-                记得不要挂科学上网。
-                """);
-
-         */
-        var lock = ASyncMessageUtil.getLock(event, 30000);
-        event = lock.get();
-
-        if (Objects.isNull(event)) {
-            //from.sendMessage("回答超时，撤回绑定请求。");
-            throw new BindException(BindException.Type.BIND_Question_Overtime);
-        }
-
-        if (!event.getRawMessage().contains("0.5") && !event.getRawMessage().contains("1/2") && !event.getRawMessage().contains("50%")) {
-            //from.sendMessage("回答错误，请重试。");
-            throw new BindException(BindException.Type.BIND_Question_Wrong);
-        }
-
-        //from.sendMessage(STR."已将 \{qq} 绑定到 (\{UID}) \{name} 上");
-        from.sendMessage(
-                String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
-        );
-
-        bindDao.bindQQ(qq, new BinUser(UID, name));
+        return - 1;
     }
 
     public record Bind(Long key, MessageReceipt receipt, Long QQ) {
     }
 
-    private void putBind(Long t, Bind b) {
-        removeOldBind();
-        if (BIND_MSG_MAP.size() > 20 && !CLEAR) {
-            CLEAR = true;
-            taskExecutor.execute(() -> {
-                try {
-                    Thread.sleep(1000 * 5);
-                } catch (InterruptedException e) {
-                    // ignore
+    //默认绑定路径
+    private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
+        var from = event.getSubject();
+        BinUser binUser;
+
+        //检查是否已经绑定
+        var qqLiteFromQQ = bindDao.getQQLiteFromQQ(qq);
+        QQBindLite qqBindLite;
+        if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
+            binUser = qqBindLite.getBinUser();
+            try {
+                var osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
+                if (! osuUser.getUID().equals(binUser.getOsuID())) {
+                    throw new RuntimeException();
                 }
-                removeOldBind();
-                CLEAR = false;
-            });
+
+                from.sendMessage(
+                        String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                );
+
+                var lock = ASyncMessageUtil.getLock(event);
+                var s = lock.get();
+                if (Objects.isNull(s) || ! s.getRawMessage().toUpperCase().contains("OK")) {
+                    return;
+                }
+
+            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized | BindException e) {
+                throw e;
+            } catch (Exception ignored) {
+                // 如果符合，直接允许绑定
+            }
         }
-        BIND_MSG_MAP.put(t, b);
+
+        // 需要绑定
+        // 将当前毫秒时间戳作为 key
+        long timeMillis = System.currentTimeMillis();
+        String state = STR."\{qq}+\{timeMillis}";
+
+        // 将消息回执作为 value
+        state = userApiService.getOauthUrl(state, isFull);
+        var send = new MessageChain.MessageChainBuilder()
+                .addAt(qq)
+                .addText("\n")
+                .addText(state)
+                .build();
+
+        MessageReceipt receipt;
+        if (Objects.nonNull(from)) {
+            receipt = from.sendMessage(send);
+
+            from.recallIn(receipt, 110 * 1000);
+            //此处在 controller.msgController 处理
+            putBind(timeMillis, new Bind(timeMillis, receipt, qq));
+        }
     }
 
     public static boolean contains(Long t) {
@@ -370,4 +339,97 @@ public class BindService implements MessageService<BindService.BindParam> {
         BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
     }
 
+    private void putBind(Long t, Bind b) {
+        removeOldBind();
+        if (BIND_MSG_MAP.size() > 20 && ! CLEAR) {
+            CLEAR = true;
+            taskExecutor.execute(() -> {
+                try {
+                    Thread.sleep(1000 * 5);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                removeOldBind();
+                CLEAR = false;
+            });
+        }
+        BIND_MSG_MAP.put(t, b);
+    }
+
+    private void bindQQName(MessageEvent event, String name, long qq) {
+        Contact from = event.getSubject();
+        var u = bindDao.getQQLiteFromQQ(qq);
+        if (u.isPresent()) throw new BindException(BindException.Type.BIND_Response_AlreadyBound);
+
+        long UID;
+        try {
+            UID = userApiService.getOsuId(name);
+        } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
+            throw new BindException(BindException.Type.BIND_Player_Banned);
+        } catch (Exception e) {
+            throw new BindException(BindException.Type.BIND_Player_NotFound);
+        }
+
+        var userFromID = bindDao.getQQLiteFromOsuId(UID);
+        if (userFromID.isPresent()) {
+            from.sendMessage(
+                    String.format(BindException.Type.BIND_Response_AlreadyBoundInfo.message, userFromID.get().getQq(), name)
+            );
+            return;
+        }
+
+        var a = getQuestion(from);
+        var lock = ASyncMessageUtil.getLock(event, 30000);
+        event = lock.get();
+
+        if (Objects.isNull(event)) {
+            throw new BindException(BindException.Type.BIND_Question_Overtime);
+        }
+
+        if (! a.contains(event.getTextMessage())) {
+            throw new BindException(BindException.Type.BIND_Question_Wrong);
+        }
+
+        from.sendMessage(
+                String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
+        );
+
+        bindDao.bindQQ(qq, new BinUser(UID, name));
+    }
+
+    public static Set<String> getQuestion(Contact contact) {
+        Random random = new Random();
+        int start = random.nextInt(0, 5);
+        int end = random.nextInt(5, 10);
+        int[][] cost = new int[10][10];
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            sb.append('\t').append((char) ('A' + i));
+        }
+        sb.append('\n');
+        for (int i = 0; i < 100; i++) {
+            if (i / 10 != i % 10) cost[i / 10][i % 10] = random.nextInt(9, 1000);
+            if (i % 10 == 0) sb.append((char) ('A' + (i / 10)));
+            sb.append('\t').append(cost[i / 10][i % 10]);
+            if (i % 10 == 9) sb.append('\n');
+        }
+        var question = STR."""
+                ### 请回答本问题:
+
+                已知有向图, 由 A-J 10个节点组成, 下面是使用邻接矩阵表示
+
+                ```
+                \{sb.toString()}
+                ```
+
+                请半分钟内回答: \{(char) ('A' + start)} 到 \{(char) ('A' + end)} 的最短距离
+
+                直接回复数字即可
+                """;
+
+//        System.out.println(question);
+//        System.out.println(find(cost, 10, start, end));
+        contact.sendMessage("√(0.25)是多少");
+        return new HashSet<>(List.of("0.5", "1/2"));
+    }
 }

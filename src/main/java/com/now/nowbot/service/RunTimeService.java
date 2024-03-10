@@ -42,7 +42,7 @@ public class RunTimeService implements SchedulingConfigurer {
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
 
-    @Scheduled(cron = "0 0 6 * * *")
+    @Scheduled(cron = "0 0 4 * * *")
     public void refreshToken() {
         log.info("开始执行更新令牌任务");
         bindDao.refreshOldUserToken(userApiService);

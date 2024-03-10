@@ -211,6 +211,7 @@ public class BindDao {
         int succeedCount = 0;
         int errCount = 0;
         List<OsuBindUserLite> users;
+        // 更新暂时没失败过的
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             OsuBindUserLite u;
             WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet()));
@@ -223,13 +224,15 @@ public class BindDao {
                 }
                 log.info("更新用户 [{}]", u.getOsuName());
                 try {
-                    refreshOldUserToken(fromLite(u), osuGetService);
+                    refreshOldUserToken(u, osuGetService);
                     errCount = 0;
                 } catch (Exception e) {
+                    bindUserMapper.addUpdateCount(u.getId());
                     errCount++;
+                    sleepNoException(Duration.ofSeconds(errCount * 5L));
                 }
-                if (errCount > 100) {
-                    // 连续失败100次, 终止本次更新
+                if (errCount > 5) {
+                    // 一般连续错误意味着网络寄了
                     log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
                     return;
                 }
@@ -240,16 +243,51 @@ public class BindDao {
             } catch (InterruptedException ignore) {
             }
         }
+        // 重新尝试失败的
+        while (! (users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
+            OsuBindUserLite u;
+            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet()));
+            while (! users.isEmpty()) {
+                u = users.removeLast();
+                if (! WAIT_UPDATE_USERS.remove(u.getId())) continue;
+                if (ObjectUtils.isEmpty(u.getRefreshToken())) {
+                    bindUserMapper.backupBindByOsuId(u.getOsuId());
+                    continue;
+                }
+                // 出错超15次默认无法再次更新了
+                if (u.getUpdateCount() > 15) {
+                    // 回退到用户名绑定
+                    bindUserMapper.backupBindByOsuId(u.getId());
+                }
+                log.info("更新历史失败用户 [{}]", u.getOsuName());
+                try {
+                    refreshOldUserToken(u, osuGetService);
+                    bindUserMapper.clearUpdateCount(u.getId());
+                    errCount = 0;
+                } catch (Exception e) {
+                    bindUserMapper.addUpdateCount(u.getId());
+                    errCount++;
+                    sleepNoException(Duration.ofSeconds(errCount * 10L));
+                }
+                if (errCount > 15) {
+                    // 连续失败15次, 终止本次更新
+                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                    return;
+                }
+                succeedCount++;
+            }
+            sleepNoException(Duration.ofSeconds(30));
+        }
         log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
-    private void refreshOldUserToken(BinUser u, OsuUserApiService osuGetService) {
+    private void refreshOldUserToken(OsuBindUserLite u, OsuUserApiService osuGetService) {
         int sleepSecond = 5;
         int badRequest = 0;
         while (true) {
             try {
                 Thread.sleep(Duration.ofSeconds(sleepSecond));
-                osuGetService.refreshUserToken(u);
+                osuGetService.refreshUserToken(fromLite(u));
                 return;
             } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
                 sleepSecond *= 2;
@@ -265,6 +303,13 @@ public class BindDao {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static void sleepNoException(Duration duration) {
+        try {
+            Thread.sleep(duration);
+        } catch (InterruptedException ignore) {
         }
     }
 }
