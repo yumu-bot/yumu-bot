@@ -256,15 +256,14 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 throw new MRAException(MRAException.Type.RATING_Parse_ParameterError, s, String.valueOf(i));
             }
 
-            switch (status) {
-                case REMOVE_RECEIVED -> remove.add(v);
-                case REMOVE_FINISHED -> {
-                    removes.add(remove);
-                    remove.clear();
-                    status = Status.OK;
-                }
+            if (status == Status.REMOVE_RECEIVED) {
+                remove.add(v);
             }
 
+            if (status == Status.REMOVE_FINISHED) {
+                remove.add(v);
+                status = Status.OK;
+            }
 
             //如果最后一个参数是场比赛，需要重复 parse（结算）
             if (i == dataStrArray.length - 1) {
@@ -274,13 +273,16 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(v);
                             ignores.add(0);
-                            status = Status.IGNORE;
+                            
+                            removes.addLast(new ArrayList<>(remove));
+                            remove.clear();
                         }
                         case IGNORE -> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(v);
-                            status = Status.ID;
+                            removes.addLast(new ArrayList<>(remove));
+                            remove.clear();
                         }
                         case REMOVE_RECEIVED ->
                                 throw new MRAException(MRAException.Type.RATING_Parse_MissingRemove, String.valueOf(v), String.valueOf(i));
@@ -288,10 +290,13 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(ignore);
-                            status = Status.ID;
+                            removes.addLast(new ArrayList<>(remove));
+                            remove.clear();
                         }
                         default -> throw new MRAException(MRAException.Type.RATING_Parse_MissingMatch, String.valueOf(v), String.valueOf(i));
                     }
+
+                    status = Status.OK;
                 } else {
                     switch (status) {
                         case SKIP -> {
@@ -308,13 +313,15 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(ignore);
+                            removes.add(remove);
+                            remove.clear();
                         }
                     }
                     matchIDs.add(v);
                     skips.add(0);
                     ignores.add(0);
 
-                    status = Status.ID;
+                    status = Status.OK;
                 }
             } else {
                 //正常 parse
@@ -340,6 +347,8 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(ignore);
+                            removes.add(remove);
+                            remove.clear();
 
                             matchID = v;
                             skip = 0;
