@@ -313,7 +313,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(ignore);
-                            removes.add(remove);
+                            removes.addLast(new ArrayList<>(remove));
                             remove.clear();
                         }
                     }
