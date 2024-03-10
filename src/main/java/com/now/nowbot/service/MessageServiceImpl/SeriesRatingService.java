@@ -75,7 +75,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         var easyStr = matcher.group("easy");
         double easy = 1d;
 
-        if (Objects.isNull(easyStr) || easyStr.isBlank()) {
+        if (Objects.nonNull(easyStr) && ! easyStr.isBlank()) {
             try {
                 easy = Double.parseDouble(easyStr);
             } catch (NullPointerException | NumberFormatException e) {
@@ -243,7 +243,9 @@ public class SeriesRatingService implements MessageService<Matcher> {
             if (s.contains("[")) {
                 status = Status.REMOVE_RECEIVED;
                 s = s.replaceAll("\\[", "");
-            } else if (s.contains("]")) {
+            }
+
+            if (s.contains("]") && status == Status.REMOVE_RECEIVED) {
                 status = Status.REMOVE_FINISHED;
                 s = s.replaceAll("]", "");
             }
