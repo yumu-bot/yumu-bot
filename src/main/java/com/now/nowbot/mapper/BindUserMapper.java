@@ -49,8 +49,19 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null where o.osuId = :uid ")
+    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.osuId = :uid ")
     void backupBindByOsuId(Long uid);
+
+    @Modifying
+    @Transactional
+    @Query(value = "update osu_bind_user set update_count = update_count + 1 where id=:id", nativeQuery = true)
+    void addUpdateCount(Long id);
+
+
+    @Modifying
+    @Transactional
+    @Query(value = "update osu_bind_user set update_count = 0 where id=:id", nativeQuery = true)
+    void clearUpdateCount(Long id);
 
     @Modifying
     @Transactional
@@ -61,8 +72,11 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Query("delete DiscordBindLite d where d.osuUser.osuId = :uid ")
     void deleteDCByOsuId(Long uid);
 
-    @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now order by u.time limit 50")
+    @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 50")
     List<OsuBindUserLite> getOldBindUser(Long now);
+
+    @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 50")
+    List<OsuBindUserLite> getOldBindUserHasWrong(Long now);
 
     @Transactional
     default void deleteAllByOsuId(Long uid){
