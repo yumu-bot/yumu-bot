@@ -133,6 +133,8 @@ public class Instructions {
     public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：](?<save>([adscr]|add|delete|remove|save|clear)))?\\s*(?<type>([bc]|banner|card))?");
 
     /*
+    public static final Pattern SILENCE = Pattern.compile("^[!！]\\s*(?i)(ym)?(sleep|z+(?![A-Ya-y_]))(\\s+(?<time>\\d+.\\d*h?))?");
+
     public static final Pattern TEST = Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
 
      */

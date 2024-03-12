@@ -347,12 +347,12 @@ public class SeriesRatingService implements MessageService<Matcher> {
                             matchIDs.add(matchID);
                             skips.add(skip);
                             ignores.add(ignore);
-                            removes.add(remove);
-                            remove.clear();
+                            removes.addLast(new ArrayList<>(remove));
 
                             matchID = v;
                             skip = 0;
                             ignore = 0;
+                            remove.clear();
                             status = Status.SKIP;
                         }
                     }
