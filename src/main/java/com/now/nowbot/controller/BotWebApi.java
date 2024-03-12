@@ -639,8 +639,8 @@ public class BotWebApi {
         var osuUser = getPlayerInfoJson(uid, name, modeStr);
 
         var BPs = scoreApiService.getBestPerformance(osuUser);
-        var recents = scoreApiService.getRecentIncludingFail(osuUser);
-        var image = imageService.getPanelD(osuUser, Optional.empty(), BPs, recents, osuUser.getOsuMode());
+        //var recents = scoreApiService.getRecentIncludingFail(osuUser);
+        var image = imageService.getPanelD(osuUser, Optional.empty(), BPs, osuUser.getOsuMode());
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-info.jpg", image.length), HttpStatus.OK);
     }

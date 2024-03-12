@@ -112,7 +112,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         OsuUser osuUser;
         List<Score> BPs;
-        List<Score> recents;
+        //List<Score> recents;
 
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
@@ -133,8 +133,10 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             log.error("玩家信息：无法获取玩家 BP", e);
             throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
         }
+
+        //recents = scoreApiService.getRecent(user, mode, 0, 3);
+
         Optional<OsuUser> infoOpt;
-        recents = scoreApiService.getRecent(user, mode, 0, 3);
 
         infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode, LocalDate.now().minusDays(1))
                 /*
@@ -151,7 +153,8 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         byte[] image;
 
         try {
-            image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
+            //image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
+            image = imageService.getPanelD(osuUser, infoOpt, BPs, mode);
         } catch (Exception e) {
             log.error("玩家信息：图片渲染失败", e);
             throw new InfoException(InfoException.Type.INFO_Fetch_Error);

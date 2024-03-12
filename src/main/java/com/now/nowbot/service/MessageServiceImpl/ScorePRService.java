@@ -188,10 +188,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
         List<Score> scoreList;
 
         try {
-            if (binUser != null && binUser.isAuthorized()) {
-                scoreList = getData(binUser, mode, offset, limit, isRecent);
-            } else if (binUser != null) {
-                scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
+            if (binUser != null) {
+                scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, ! isRecent);
             } else {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
             }
@@ -203,23 +201,25 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 return;
             } else if (e instanceof WebClientResponseException.Unauthorized) {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-            } else if (e instanceof WebClientResponseException.NotFound) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
             } else {
-                log.error("Score List 获取失败", e);
-                throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
+                throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
             }
+        } catch (Exception e) {
+            log.error("成绩：列表获取失败", e);
+            throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
         }
+
         if (scoreList == null || scoreList.isEmpty()) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
         }
 
         try {
             osuUser = userApiService.getPlayerInfo(binUser, mode);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
         }
-
 
         //成绩发送
         if (isMultipleScore) {
@@ -242,7 +242,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 var image = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
                 from.sendImage(image);
             } catch (Exception e) {
-                log.error("绘图出错", e);
+                log.error("成绩：绘图出错", e);
                 getTextOutput(scoreList.getFirst(), from);
             }
         }
@@ -255,19 +255,5 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
         //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
         QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
-    }
-
-    private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {
-        if (isRecent)
-            return scoreApiService.getRecentIncludingFail(user, mode, offset, limit);
-        else
-            return scoreApiService.getRecent(user, mode, offset, limit);
-    }
-
-    private List<Score> getData(Long id, OsuMode mode, int offset, int limit, boolean isRecent) {
-        if (isRecent)
-            return scoreApiService.getRecentIncludingFail(id, mode, offset, limit);
-        else
-            return scoreApiService.getRecent(id, mode, offset, limit);
     }
 }

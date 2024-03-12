@@ -24,10 +24,6 @@ public class BeatmapUserScore {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("BeatmapUserScore{");
-        sb.append("position=").append(position);
-        sb.append(", score=").append(score);
-        sb.append('}');
-        return sb.toString();
+        return STR."BeatmapUserScore{position=\{position}, score=\{score}\{'}'}";
     }
 }

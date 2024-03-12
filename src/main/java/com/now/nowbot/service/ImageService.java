@@ -296,9 +296,10 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, List<Score> Recents, OsuMode mode) {
+    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, OsuMode mode) {
 
         double bonus = 0f;
+
         if (!BPs.isEmpty()) {
             var bpPPs = BPs.stream().mapToDouble(Score::getPP).toArray();
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
@@ -317,12 +318,10 @@ public class ImageService {
 
         var body = new HashMap<>(Map.of("user", osuUser,
                 "bp-time", bpTimes,
-                "bp-list", BPs.subList(0, Math.min(BPs.size(), 8)),
-                "re-list", Recents,
                 "bonus_pp", bonus,
-                "mode", mode.getName(),
-                "ranked_map_play_count", DataUtil.getPlayedRankedMapCount(bonus)
+                "mode", mode.getName()
         ));
+        //"ranked_map_play_count", DataUtil.getPlayedRankedMapCount(bonus)
         historyUser.ifPresent(user -> body.put("historyUser", user));
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_D", httpEntity);
