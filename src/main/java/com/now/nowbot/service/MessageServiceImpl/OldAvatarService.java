@@ -12,6 +12,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,11 @@ import java.util.Objects;
 @Service("OLD_AVATAR")
 public class OldAvatarService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
     @Autowired
     public OldAvatarService(OsuUserApiService userApiService, BindDao bindDao, ImageService imageService) {
@@ -64,7 +68,7 @@ public class OldAvatarService implements MessageService<UserParam> {
     @Override
     public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
         var from = event.getSubject();
-        OsuUser osuUser;
+        OsuUser osuUser = null;
 
         if (Objects.nonNull(param.qq())) {
             BinUser binUser;
@@ -95,23 +99,25 @@ public class OldAvatarService implements MessageService<UserParam> {
 
             try {
                 id = userApiService.getOsuId(name);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
                 try {
                     id = Long.parseLong(name);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException e1) {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Parameter_Error);
                 }
             }
 
             try {
-                osuUser = userApiService.getPlayerInfo(id);
+                if (userApiService != null) {
+                    osuUser = userApiService.getPlayerInfo(id);
+                }
             } catch (Exception e) {
                 throw new OldAvatarException(OldAvatarException.Type.OA_Player_NotFound);
             }
         }
 
         try {
-            var image = imageService.getPanelEpsilon(osuUser.getUsername(), osuUser.getUID());
+            var image = imageService.getPanelEpsilon(osuUser);
             from.sendImage(image);
         } catch (Exception e) {
             log.error("OA 发送失败: ", e);

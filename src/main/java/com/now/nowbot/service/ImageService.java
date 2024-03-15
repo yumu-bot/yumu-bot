@@ -459,12 +459,9 @@ public class ImageService {
         return doPost("panel_Delta", httpEntity);
     }
 
-    public byte[] getPanelEpsilon(String username, long uid) {
+    public byte[] getPanelEpsilon(OsuUser user) {
         var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("username", username);
-        body.put("uid", uid);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<OsuUser> httpEntity = new HttpEntity<>(user, headers);
         return doPost("panel_Epsilon", httpEntity);
     }
 
