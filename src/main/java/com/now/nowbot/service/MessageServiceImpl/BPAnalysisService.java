@@ -141,12 +141,12 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
                 from.sendImage(image2);
             } catch (Exception e1) {
-                log.error("BPA Error (to UUBA): ", e1);
+                log.error("最好成绩分析：UUBA 转换失败", e1);
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
             }
 
         } catch (Exception e) {
-            log.error("BPA Error (other than HTTP 500): ", e);
+            log.error("最好成绩分析：发送失败", e);
             throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
         }
 
@@ -175,16 +175,16 @@ public class BPAnalysisService implements MessageService<UserParam> {
             changedAttrsMap = imageService.getMapAttr(mapAttrGet);
         }
 
-        record map(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
-                   String[] mods) {
+        record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
+                          String[] mods) {
         }
 
         record attr(String index, int map_count, float pp_count, float percent) {
         }
 
-        List<map> mapList = new ArrayList<>(bpSize);
-        MultiValueMap<String, Float> modsPPSum = new LinkedMultiValueMap<>();
-        MultiValueMap<String, Float> rankSum = new LinkedMultiValueMap<>();
+        List<BeatMap4BA> beatMapList = new ArrayList<>(bpSize);
+        MultiValueMap<String, Float> modsPPMap = new LinkedMultiValueMap<>();
+        MultiValueMap<String, Float> rankMap = new LinkedMultiValueMap<>();
         int modsSum = 0;
         for (int i = 0; i < bpSize; i++) {
             var s = bps.get(i);
@@ -200,54 +200,54 @@ public class BPAnalysisService implements MessageService<UserParam> {
                         b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
                     }
                 }
-                var m = new map(
+                var m = new BeatMap4BA(
                         i + 1,
                         b.getTotalLength(),
                         s.getMaxCombo(),
                         b.getBPM(),
                         b.getStarRating(),
                         s.getRank(),
-                        s.getBeatMapSet().getCovers().getList2x(),
+                        s.getBeatMapSet().getCovers().getList(),
                         s.getMods().toArray(new String[0])
                 );
-                mapList.add(m);
+                beatMapList.add(m);
             }
 
             { // 统计 mods / rank
                 if (!CollectionUtils.isEmpty(s.getMods())) {
-                    s.getMods().forEach(m -> modsPPSum.add(m, s.getWeight().getPP()));
+                    s.getMods().forEach(m -> modsPPMap.add(m, s.getWeight().getPP()));
                     modsSum += s.getMods().size();
                 } else {
 //                    modsPPSum.add("NM", s.getWeight().getPP());
                     modsSum += 1;
                 }
                 if (s.isPerfect()) {
-                    rankSum.add("FC", s.getWeight().getPP());
+                    rankMap.add("FC", s.getWeight().getPP());
                 }
-                rankSum.add(s.getRank(), s.getWeight().getPP());
+                rankMap.add(s.getRank(), s.getWeight().getPP());
             }
         }
         // 0 length; 1 combo; 2 star; 3 bpm
-        ArrayList<map>[] mapStatistics = new ArrayList[4];
-        var bpListSortedByLength = mapList.stream().sorted(Comparator.comparingInt(map::length).reversed()).toList();
+        ArrayList<BeatMap4BA>[] mapStatistics = new ArrayList[4];
+        var bpListSortedByLength = beatMapList.stream().sorted(Comparator.comparingInt(BeatMap4BA::length).reversed()).toList();
         mapStatistics[0] = new ArrayList<>(3);
         mapStatistics[0].add(bpListSortedByLength.getFirst());
         mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
         mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
 
-        var bpListSortedByCombo = mapList.stream().sorted(Comparator.comparing(map::combo).reversed()).toList();
+        var bpListSortedByCombo = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::combo).reversed()).toList();
         mapStatistics[1] = new ArrayList<>(3);
         mapStatistics[1].add(bpListSortedByCombo.getFirst());
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
         mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
 
-        var bpListSortedByStar = mapList.stream().sorted(Comparator.comparing(map::star).reversed()).toList();
+        var bpListSortedByStar = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::star).reversed()).toList();
         mapStatistics[2] = new ArrayList<>(3);
         mapStatistics[2].add(bpListSortedByStar.getFirst());
         mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
         mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
 
-        var bpListSortedByBpm = mapList.stream().sorted(Comparator.comparing(map::bpm).reversed()).toList();
+        var bpListSortedByBpm = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::bpm).reversed()).toList();
         mapStatistics[3] = new ArrayList<>(3);
         mapStatistics[3].add(bpListSortedByBpm.getFirst());
         mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
@@ -265,12 +265,14 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 .sorted((v1, v2) -> v2.getValue().compareTo(v1.getValue()))
                 .map(Map.Entry::getKey)
                 .toList();
-        record mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
+        record Mapper(String avatar_url, String username, Integer map_count, Float pp_count) {
+
         }
-        var bpMapperMap = bps.stream()
+
+        var mapperMap = bps.stream()
                 .collect(Collectors.groupingBy(s -> s.getBeatMap().getMapperID(), Collectors.counting()));
-        int mappers = bpMapperMap.size();
-        var mapperCount = bpMapperMap
+        int mapperSize = mapperMap.size();
+        var mapperCount = mapperMap
                 .entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -294,7 +296,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                             break;
                         }
                     }
-                    return new mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
+                    return new Mapper(avatar, name, mapperCount.get(e.getKey()).intValue(), e.getValue().floatValue());
                 })
                 .toList();
 
@@ -310,17 +312,17 @@ public class BPAnalysisService implements MessageService<UserParam> {
         List<attr> modsAttr;
         {
             final int m = modsSum;
-            List<attr> modsAttrTmp = new ArrayList<>(modsPPSum.size());
-            modsPPSum.forEach((mod, value) -> {
+            List<attr> modsAttrTmp = new ArrayList<>(modsPPMap.size());
+            modsPPMap.forEach((mod, value) -> {
                 attr attr = new attr(mod, value.size(), value.stream().reduce(Float::sum).orElse(0F), (1F * value.size() / m));
                 modsAttrTmp.add(attr);
             });
             modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(attr::pp_count).reversed()).toList();
         }
 
-        List<attr> rankAttr = new ArrayList<>(rankSum.size());
+        List<attr> rankAttr = new ArrayList<>(rankMap.size());
         {
-            var fcList = rankSum.remove("FC");
+            var fcList = rankMap.remove("FC");
             attr fc;
             if (CollectionUtils.isEmpty(fcList)) {
                 fc = new attr("FC", 0, 0, 0);
@@ -330,8 +332,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
             }
             rankAttr.add(fc);
             for (var rank : RANK_ARRAY) {
-                if (rankSum.containsKey(rank)) {
-                    var value = rankSum.get(rank);
+                if (rankMap.containsKey(rank)) {
+                    var value = rankMap.get(rank);
                     float ppSum = 0f;
                     if (value != null) {
                         ppSum = value.stream().reduce(Float::sum).orElse(0F);
@@ -369,12 +371,12 @@ public class BPAnalysisService implements MessageService<UserParam> {
         data.put("bpCombo", mapStatistics[1]);
         data.put("bpSR", mapStatistics[2]);
         data.put("bpBpm", mapStatistics[3]);
-        data.put("favorite_mappers_count", mappers);
+        data.put("favorite_mappers_count", mapperSize);
         data.put("favorite_mappers", mapperList);
         data.put("pp_raw_arr", ppRawList);
         data.put("rank_arr", rankCount);
         data.put("rank_elect_arr", rankSort);
-        data.put("bp_length_arr", mapList.stream().map(map::length).toList());
+        data.put("bp_length_arr", beatMapList.stream().map(BeatMap4BA::length).toList());
         data.put("mods_attr", modsAttr);
         data.put("rank_attr", rankAttr);
         data.put("pp_raw", rawPP);
