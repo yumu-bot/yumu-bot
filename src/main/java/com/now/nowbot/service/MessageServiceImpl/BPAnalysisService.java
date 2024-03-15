@@ -135,6 +135,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             var data = parseData(u, bps, userApiService);
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
+            log.error("最好成绩分析：复杂面板生成失败", e);
             try {
                 var msg = uubaService.getAllMsg(bps, u.getUsername(), u.getPlayMode());
                 var image2 = imageService.getPanelAlpha(msg);
