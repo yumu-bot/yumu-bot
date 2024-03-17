@@ -612,7 +612,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             r = Integer.parseInt(String.valueOf(range));
         } catch (NumberFormatException e) {
             try {
-                r = Math.round((float) range);
+                if (Objects.nonNull(range)) {
+                    r = Math.round(range.floatValue());
+                } else {
+                    r = 100;
+                }
             } catch (NumberFormatException e1) {
                 return millis / 999f;
             }

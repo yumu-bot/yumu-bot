@@ -29,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -158,7 +159,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
     }
 
-    public Map<String, Object> parseData(OsuUser user, List<Score> bps, OsuUserApiService userApiService) {
+    public Map<String, Object> parseData(OsuUser user, List<Score> bps, OsuUserApiService userApiService) throws BPAnalysisException {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, Math.min(bpSize, 5));
@@ -173,7 +174,11 @@ public class BPAnalysisService implements MessageService<UserParam> {
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
         } else {
-            changedAttrsMap = imageService.getMapAttr(mapAttrGet);
+            try {
+                changedAttrsMap = imageService.getMapAttr(mapAttrGet);
+            } catch (HttpServerErrorException | WebClientResponseException e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Attr_FetchFailed);
+            }
         }
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
@@ -335,12 +340,10 @@ public class BPAnalysisService implements MessageService<UserParam> {
             for (var rank : RANK_ARRAY) {
                 if (rankMap.containsKey(rank)) {
                     var value = rankMap.get(rank);
-                    float ppSum = 0f;
-                    if (value != null) {
-                        ppSum = value.stream().reduce(Float::sum).orElse(0F);
-                    }
+                    float ppSum;
                     attr attr = null;
-                    if (value != null) {
+                    if (Objects.nonNull(value) && !value.isEmpty()) {
+                        ppSum = value.stream().reduce(Float::sum).orElse(0F);
                         attr = new attr(rank, value.size(), ppSum, (ppSum / bpPP));
                     }
                     rankAttr.add(attr);

@@ -13,10 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("SERVICE_COUNT")
@@ -41,7 +38,7 @@ public class ServiceCountService implements MessageService<Integer> {
 
         var d = matcher.group("days");
         var h = matcher.group("hours");
-        int hours = 0;
+        Integer hours = 0;
         boolean hasDays = true;
 
         try {
@@ -54,7 +51,7 @@ public class ServiceCountService implements MessageService<Integer> {
             hours += Integer.parseInt(h);
         } catch (NumberFormatException e) {
             if (! hasDays) {
-                hours = 7 * 24;
+                hours = null;
             }
         }
 
@@ -66,66 +63,114 @@ public class ServiceCountService implements MessageService<Integer> {
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
         var from = event.getSubject();
+
         StringBuilder sb = new StringBuilder();
         List<ServiceCallLite.ServiceCallResult> result;
-        List<ServiceCallLite.ServiceCallResultLimit> r1;
-        List<ServiceCallLite.ServiceCallResultLimit> r80;
-        List<ServiceCallLite.ServiceCallResultLimit> r50;
-        List<ServiceCallLite.ServiceCallResultLimit> r99;
-        if (Objects.isNull(hours) || hours == 0) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime before;
+
+        if (Objects.isNull(hours)) {
+            before = now.minusHours(24);
+            result = serviceCallRepository.countBetween(before, now);
+            sb.append("## 时间段：今天之内\n");
+        } else if (hours == 0) {
+            before = LocalDateTime.of(1900, 1, 1, 0, 0, 0);
             result = serviceCallRepository.countAll();
-            var now = LocalDateTime.now();
-            r1 = serviceCallRepository.countBetweenLimit(now.minusHours(24), now, 0.01);
-            r50 = serviceCallRepository.countBetweenLimit(now.minusHours(24), now, 0.50);
-            r80 = serviceCallRepository.countBetweenLimit(now.minusHours(24), now, 0.80);
-            r99 = serviceCallRepository.countBetweenLimit(now.minusHours(24), now, 0.99);
             sb.append("## 时间段：迄今为止\n");
         } else {
-            var now = LocalDateTime.now();
-            var before = now.minusHours(hours);
-            //event.getSubject().sendMessage(STR."处理 [\{before.format(dateTimeFormatter)}] - [\{now.format(dateTimeFormatter)}]");
+            before = now.minusHours(hours);
             sb.append(STR."## 时间段：**\{before.format(dateTimeFormatter)}** - **\{now.format(dateTimeFormatter)}**\n");
             result = serviceCallRepository.countBetween(before, now);
-            r1 = serviceCallRepository.countBetweenLimit(before, now, 0.01);
-            r50 = serviceCallRepository.countBetweenLimit(before, now, 0.50);
-            r80 = serviceCallRepository.countBetweenLimit(before, now, 0.80);
-            r99 = serviceCallRepository.countBetweenLimit(before, now, 0.99);
         }
-        Map<String, Long> r1map = r1.stream().collect(Collectors.toMap(
+
+        Map<String, Long> r1 = serviceCallRepository.countBetweenLimit(before, now, 0.01)
+                .stream().collect(Collectors.toMap(
                 ServiceCallLite.ServiceCallResultLimit::getService,
                 ServiceCallLite.ServiceCallResultLimit::getData
         ));
-        Map<String, Long> r50map = r50.stream().collect(Collectors.toMap(
+        Map<String, Long> r50 = serviceCallRepository.countBetweenLimit(before, now, 0.50)
+                .stream().collect(Collectors.toMap(
                 ServiceCallLite.ServiceCallResultLimit::getService,
                 ServiceCallLite.ServiceCallResultLimit::getData
         ));
-        Map<String, Long> r80map = r80.stream().collect(Collectors.toMap(
+        Map<String, Long> r80 = serviceCallRepository.countBetweenLimit(before, now, 0.80)
+                .stream().collect(Collectors.toMap(
                 ServiceCallLite.ServiceCallResultLimit::getService,
                 ServiceCallLite.ServiceCallResultLimit::getData
         ));
-        Map<String, Long> r99map = r99.stream().collect(Collectors.toMap(
+        Map<String, Long> r99 = serviceCallRepository.countBetweenLimit(before, now, 0.99)
+                .stream().collect(Collectors.toMap(
                 ServiceCallLite.ServiceCallResultLimit::getService,
                 ServiceCallLite.ServiceCallResultLimit::getData
         ));
 
+        Consumer(sb, result, r1, r50, r80, r99);
+
+        var image = imageService.getPanelA6(sb.toString(), "service");
+        from.sendImage(image);
+    }
+
+    //
+    private void Consumer(StringBuilder sb, List<ServiceCallLite.ServiceCallResult> result,
+                          Map<String, Long> r1, Map<String, Long> r50, Map<String, Long> r80, Map<String, Long> r99) {
+        if (Objects.isNull(result)) return;
+        
         sb.append("""
                 | 服务名 | 调用次数 | 最长用时 (100%) | 99% | 80% | 50% | 1% | 最短用时 (0%) |
                 | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
                 """);
-        Consumer<ServiceCallLite.ServiceCallResult> work = r -> sb
-                //.append('|').append(Math.round(r.getAvgTime()) / 1000D).append('s')
-                .append('|').append(r.getService())
-                .append('|').append(r.getSize())
-                .append('|').append(r.getMaxTime() / 1000D).append('s')
-                .append('|').append(r99map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
-                .append('|').append(r80map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
-                .append('|').append(r50map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
-                .append('|').append(r1map.getOrDefault(r.getService(), 0L) / 1000D).append('s')
-                .append('|').append(r.getMinTime() / 1000D).append('s')
-                .append("|\n");
-        result.forEach(work);
 
-        var image = imageService.getPanelA6(sb.toString(), "service");
-        from.sendImage(image);
+        int sum = 0;
+        var maxList = new ArrayList<Long>();
+        var r99List = new ArrayList<Long>();
+        var r80List = new ArrayList<Long>();
+        var r50List = new ArrayList<Long>();
+        var r1List = new ArrayList<Long>();
+        var minList = new ArrayList<Long>();
+        
+        for (var r : result) {
+            var s = r.getService();
+            var size = Optional.ofNullable(r.getSize()).orElse(0);
+
+            sum += size;
+            maxList.add(r.getMaxTime() * size);
+            r99List.add(r99.getOrDefault(s, 0L) * size);
+            r80List.add(r80.getOrDefault(s, 0L) * size);
+            r50List.add(r50.getOrDefault(s, 0L) * size);
+            r1List.add(r1.getOrDefault(s, 0L) * size);
+            minList.add(r.getMinTime() * size);
+            
+            sb.append("| ").append(r.getService())
+                    .append(" | ").append(size)
+                    .append(" | ").append(getRound(r.getMaxTime())).append('s')
+                    .append(" | ").append(getRound(r99.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getRound(r80.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getRound(r50.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getRound(r1.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getRound(r.getMinTime())).append('s')
+                    .append(" |\n");
+        }
+
+        sb.append("| ").append("总计和平均")
+                .append(" | ").append(sum)
+                .append(" | ").append(getRound(getListAverage(maxList, sum))).append('s')
+                .append(" | ").append(getRound(getListAverage(r99List, sum))).append('s')
+                .append(" | ").append(getRound(getListAverage(r80List, sum))).append('s')
+                .append(" | ").append(getRound(getListAverage(r50List, sum))).append('s')
+                .append(" | ").append(getRound(getListAverage(r1List, sum))).append('s')
+                .append(" | ").append(getRound(getListAverage(minList, sum))).append('s')
+                .append(" |\n");
+    }
+
+    //数组求平均值
+    private float getListAverage(List<Long> list, int sum) {
+        if (Objects.isNull(list) || list.isEmpty() || sum == 0) return 0f;
+        else return 1f * list.stream().reduce(Long::sum).orElse(0L) / sum;
+    }
+
+    //1926ms -> 1.9s
+    private <T extends Number> float getRound(T millis) {
+        return Math.round(millis.floatValue() / 100f) / 10f;
     }
 }

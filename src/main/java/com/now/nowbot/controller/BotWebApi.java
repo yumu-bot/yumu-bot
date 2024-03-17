@@ -543,7 +543,13 @@ public class BotWebApi {
         if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
         var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
 
-        var data = bpAnalysisService.parseData(osuUser, scores, userApiService);
+        Map<String, Object> data;
+        try {
+            data = bpAnalysisService.parseData(osuUser, scores, userApiService);
+        } catch (Exception e) {
+            throw new RuntimeException(BPAnalysisException.Type.BPA_Attr_FetchFailed.message);
+        }
+
         var image = imageService.getPanelJ(data);
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
     }

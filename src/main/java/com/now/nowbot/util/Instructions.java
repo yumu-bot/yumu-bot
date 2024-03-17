@@ -121,7 +121,7 @@ public class Instructions {
     public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
 
     // 未列入辅助的
-    public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?((wiki)|w(?![A-Za-z_]))\\s*(?<key>\\s*)?");
+    public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?(wiki)\\s*(?<key>\\s*)?");
 
     public static final Pattern COUNT_MESSAGE_LEGACY = Pattern.compile("^#统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 
