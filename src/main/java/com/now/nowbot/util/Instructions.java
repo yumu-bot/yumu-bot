@@ -76,15 +76,15 @@ public class Instructions {
 
     public static final Pattern MATCH_LISTENER = Pattern.compile("^[!！]\\s*(?i)(ym)?(make\\s*love|(match)?listen(er)?|ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?\\s*(?<operate>start|stop|end|off|on|[spefo](?![A-Za-z_]))?");
 
-    public static final Pattern MU_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![A-Za-z_])))|(?<main>((ym)?rating|(ym)?ra(?![A-Za-z_])|mra(?![A-Za-z_]))))\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+.?\\d*)x?)?(\\s*(?<skip>-?\\d+))?(\\s*(?<ignore>-?\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+    public static final Pattern MU_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![A-Za-z_])))|(?<main>((ym)?rating|(ym)?ra(?![A-Za-z_])|mra(?![A-Za-z_]))))\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<skip>-?\\d+))?(\\s*(?<ignore>-?\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
-    public static final Pattern SERIES_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![A-Za-z_])|sa(?![A-Za-z_])))|(ym)?(?<main>(seriesrating|series|sa(?![A-Za-z_])|sra(?![A-Za-z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![A-Za-z_])|cs(?![A-Za-z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\[\\]\\s,，|\\-]+)?(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+.?\\d*)x?)?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+    public static final Pattern SERIES_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![A-Za-z_])|sa(?![A-Za-z_])))|(ym)?(?<main>(seriesrating|series|sa(?![A-Za-z_])|sra(?![A-Za-z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![A-Za-z_])|cs(?![A-Za-z_]))))\\s*(#(?<name>.+)#)?\\s*(?<data>[\\d\\[\\]\\s,，|\\-]+)?(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     public static final Pattern CSV_MATCH = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-rt-wy-zA-RT-WY-Z_])|cra(?![a-rt-wy-zA-RT-WY-Z_])))\\s*(?<x>[xXsS])?\\s*(?<data>[\\d\\s,，|\\-]+)?");
 
     public static final Pattern MATCH_ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+))?");
 
-    public static final Pattern MATCH_NOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|matchnow|mn(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+.?\\d*)x?)?(\\s*(?<skip>\\d+))?(\\s*(?<ignore>\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
+    public static final Pattern MATCH_NOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|matchnow|mn(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<skip>\\d+))?(\\s*(?<ignore>\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
     public static final Pattern MINI = Pattern.compile("^[!！](?i)\\s*((ym)?)((?<ymx>x(?![A-Za-z_]))|(?<ymy>y(?![A-Za-z_])))+");
 
