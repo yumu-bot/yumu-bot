@@ -47,7 +47,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
         if (param.users.size() >= 50) from.sendMessage(CsvInfoException.Type.CI_Fetch_TooManyUser.message);
 
         //主获取
-        var sb = new StringBuilder("username,id,avatarUrl,countryCode,defaultGroup,isActive,isBot,isDeleted,isOnline,isSupporter,isRestricted,lastVisit,pmFriendsOnly,profileColor,coverUrl,discord,hasSupported,interests,joinDate,location,maxBlocks,maxFriends,occupation,playMode,playStyle,postCount,profileOrder,title,titleUrl,twitter,website,country.name,cover.custom,kudosu.total,beatmapPlaycount,CommentsCount,favoriteCount,followerCount,graveyardCount,guestCount,lovedCount,mappingFollowerCount,nominatedCount,pendingCount,previousNames,highestRank,rankedCount,replaysWatchedCounts,scoreBestCount,scoreFirstCount,scorePinnedCount,scoreRecentCount,accuracy,rankedScore,totalScore,playCount,playTime,totalHits,supportLevel,userAchievements,rankHistory,PP");
+        var sb = new StringBuilder("username,id,PP,4KPP,7KPP,accuracy,rankedScore,totalScore,playCount,playTime,totalHits,avatarUrl,countryCode,defaultGroup,isActive,isBot,isDeleted,isOnline,isSupporter,isRestricted,lastVisit,pmFriendsOnly,profileColor,coverUrl,discord,hasSupported,interests,joinDate,location,maxBlocks,maxFriends,occupation,playMode,playStyle,postCount,profileOrder,title,titleUrl,twitter,website,country.name,cover.custom,kudosu.total,beatmapPlaycount,CommentsCount,favoriteCount,followerCount,graveyardCount,guestCount,lovedCount,mappingFollowerCount,nominatedCount,pendingCount,previousNames,highestRank,rankedCount,replaysWatchedCounts,scoreBestCount,scoreFirstCount,scorePinnedCount,scoreRecentCount,supportLevel,userAchievements,rankHistory");
 
         int fetchUserFail = 0;
 
