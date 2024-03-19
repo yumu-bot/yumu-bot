@@ -73,7 +73,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
                     throw new CsvInfoException(CsvInfoException.Type.CI_Fetch_SleepingInterrupted, s);
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
-                sb.append('\n').append(s).append(-1);
+                sb.append('\n').append(s).append(',').append(-1);
             } catch (Exception e) {
                 log.error("玩家信息表：获取失败", e);
                 throw new CsvInfoException(CsvInfoException.Type.CI_Player_FetchFailed, s);
