@@ -47,7 +47,7 @@ public class Instructions {
 
     // i ymi yminfo :0-3 name
     public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
-    public static final Pattern CSV_INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(c(sv)?(information|info(?![A-Za-z_]))|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\w\\d\\[\\]\\s\\-_,，、|:：]+)?");
+    public static final Pattern CSV_INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(c(sv)?)(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\w\\d\\[\\]\\s\\-_,，、|:：]+)?");
 
     public static final Pattern UU_INFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
