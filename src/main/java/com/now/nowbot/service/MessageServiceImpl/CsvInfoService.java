@@ -73,6 +73,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
                     throw new CsvInfoException(CsvInfoException.Type.CI_Fetch_SleepingInterrupted, s);
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
+                log.error("玩家信息表：网络因素无法获取", e);
                 sb.append('\n').append(s).append(',').append(-1);
             } catch (Exception e) {
                 log.error("玩家信息表：获取失败", e);
