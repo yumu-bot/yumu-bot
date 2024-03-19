@@ -209,6 +209,7 @@ public class OsuUser {
     List<String> previousNames;
 
     @JsonProperty("rank_highest")
+    @Nullable
     HighestRank highestRank;
 
     public record HighestRank(Integer rank, @JsonProperty("updated_at") OffsetDateTime updatedAt) {}
@@ -769,11 +770,12 @@ public class OsuUser {
         this.previousNames = previousNames;
     }
 
+    @Nullable
     public HighestRank getHighestRank() {
         return highestRank;
     }
 
-    public void setHighestRank(HighestRank highestRank) {
+    public void setHighestRank(@Nullable HighestRank highestRank) {
         this.highestRank = highestRank;
     }
 
@@ -951,8 +953,14 @@ public class OsuUser {
     }
 
     public String toCSV() {
-        return STR."\{username},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{playMode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(previousNames)},\{highestRank.rank},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()},\{rankHistory.data.stream().filter(s -> s > 0).reduce(Integer::min).orElse(0)}";
+        return STR."\{username},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{playMode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(previousNames)},\{getHighestRank(highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()},\{rankHistory.data.stream().filter(s -> s > 0).reduce(Integer::min).orElse(0)}";
 
+    }
+
+    @NonNull
+    private int getHighestRank(HighestRank rank) {
+        if (Objects.nonNull(rank) && Objects.nonNull(rank.rank)) return rank.rank;
+        else return 0;
     }
 
     @Nullable
