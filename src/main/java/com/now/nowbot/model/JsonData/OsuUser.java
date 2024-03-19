@@ -6,12 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -948,6 +950,10 @@ public class OsuUser {
     @Override
     public String toString() {
         return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{pmFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{playMode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanner=\{profileBanner}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{CommentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
+    }
+
+    public String toCSV() {
+        return STR."\{username},\{id},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{discord},\{hasSupported},\{interests},\{joinDate},\{location},\{maxBlocks},\{maxFriends},\{occupation},\{playMode},\{playStyle},\{postCount},\{profileOrder},\{title},\{titleUrl},\{twitter},\{website},\{country},\{cover},\{kudosu},\{accountHistory},\{profileBanner},\{profileBanners},\{badges},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{groups},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{monthlyPlaycounts},\{nominatedCount},\{page},\{pendingCount},\{previousNames},\{highestRank},\{rankedCount},\{replaysWatchedCounts},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{statistics},\{supportLevel},\{userAchievements},\{rankHistory},\{PP}";
     }
 
     @Override

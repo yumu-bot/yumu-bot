@@ -68,16 +68,16 @@ public class UUIService implements MessageService<Matcher> {
 
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
 
-        byte[] imgBytes;
+        byte[] image;
         if (user != null) {
-            imgBytes = template.exchange(STR."https://a.ppy.sh/\{user.getOsuID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
+            image = template.exchange(STR."https://a.ppy.sh/\{user.getOsuID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
         } else {
-            imgBytes = null;
+            image = null;
         }
 
         String message = getText(user, mode);
         try {
-            QQMsgUtil.sendImageAndText(from, imgBytes, message);
+            QQMsgUtil.sendImageAndText(from, image, message);
             //event.getSubject().sendMessage(message);
         } catch (Exception e) {
             log.error("UUI 数据发送失败", e);

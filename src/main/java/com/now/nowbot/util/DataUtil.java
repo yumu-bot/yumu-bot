@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,6 +90,20 @@ public class DataUtil {
         }
 
         return new Range(offset, limit);
+    }
+
+    /**
+     * 根据分隔符，分割玩家名
+     * @param str 需要分割的，含分割符和玩家名的长文本
+     * @return 分割好的玩家名
+     */
+    @NonNull
+    public static List<String> parseUsername(@Nullable String str) {
+        if (Objects.isNull(str)) return Collections.singletonList("");
+        String[] split = str.trim().split("[,，、|:：]+");
+        if (split.length == 0) return Collections.singletonList(str);
+
+        return Arrays.stream(split).filter(StringUtils::hasText).toList();
     }
 
     public static String String2Markdown(String str) {

@@ -4,12 +4,10 @@ import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.contact.Group;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.Message;
 import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.qq.message.ReplyMessage;
-import io.github.humbleui.skija.EncodedImageFormat;
-import io.github.humbleui.skija.Image;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
@@ -41,21 +39,12 @@ public class QQMsgUtil {
         return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
     }
 
-
-    @Deprecated
-    public static void sendImage(Contact from, Image img) {
-        beforeContact(from);
-        from.sendImage(img.encodeToData(EncodedImageFormat.JPEG, 60).getBytes());
-    }
-
-    //这个太坑了，如果数据是空的，好像抛不出来
-    @Deprecated
-    public static void sendImage(Contact from, byte[] img) {
-        beforeContact(from);
-        from.sendImage(img);
+    public static void sendImage(MessageEvent event, byte[] image) {
+        var from = event.getSubject();
+        from.sendImage(image);
     }
     private static void beforeContact(Contact from) {
-//        from.sendMessage("正在处理图片请稍候...");
+        //from.sendMessage("正在处理图片请稍候...");
     }
     public static <T extends com.now.nowbot.qq.message.Message> List<T> getTypeAll(MessageChain msg, Class<T> T) {
         return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
@@ -65,9 +54,22 @@ public class QQMsgUtil {
         return qqMessageDao.getReply(reply);
     }
 
-    public static MessageReceipt sendImageAndText(Contact from, byte[] imgData, String text) {
+    public static void sendImageAndText(MessageEvent event, byte[] image, String text) {
+        var from = event.getSubject();
+        sendImageAndText(from, image, text);
+    }
+
+    public static void sendImageAndText(Contact from, byte[] image, String text) {
         beforeContact(from);
-        return from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgData).addText(text).build());
+        from.sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(text).build());
+    }
+
+    public static void sendGroupFile(MessageEvent event, String name, byte[] data) {
+        var from = event.getSubject();
+
+        if (from instanceof Group group) {
+            group.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"));
+        }
     }
 
     public static void sendGroupFile(Group group, String name, byte[] data) {
