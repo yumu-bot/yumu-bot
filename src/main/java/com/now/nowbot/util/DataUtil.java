@@ -103,7 +103,7 @@ public class DataUtil {
         String[] split = str.trim().split("[,，、|:：]+");
         if (split.length == 0) return Collections.singletonList(str);
 
-        return Arrays.stream(split).filter(StringUtils::hasText).toList();
+        return Arrays.stream(split).map(String::trim).filter(StringUtils::hasText).toList();
     }
 
     public static String String2Markdown(String str) {
