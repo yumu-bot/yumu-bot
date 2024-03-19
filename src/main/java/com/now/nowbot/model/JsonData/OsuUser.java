@@ -10,10 +10,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -953,8 +950,13 @@ public class OsuUser {
     }
 
     public String toCSV() {
-        return STR."\{username},\{id},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{discord},\{hasSupported},\{interests},\{joinDate},\{location},\{maxBlocks},\{maxFriends},\{occupation},\{playMode},\{playStyle.getFirst()},\{postCount},\{profileOrder.getFirst()},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{(accountHistory != null ? accountHistory.getFirst().description : "")},\{(profileBanner != null ? profileBanner.image : "")},\{(profileBanner != null ? profileBanners.getFirst().image : "")},\{(badges != null ? badges.getFirst().imageUrl : "")},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{groups.getFirst().identifier},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{monthlyPlaycounts.size()},\{nominatedCount},\{page},\{pendingCount},\{previousNames.getFirst()},\{highestRank},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{statistics.getTotalHits()},\{supportLevel},\{userAchievements},\{rankHistory.data.stream().filter(s -> s > 0).reduce(Integer::min)},\{PP}";
+        return STR."\{username},\{id},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{discord},\{hasSupported},\{interests},\{joinDate},\{location},\{maxBlocks},\{maxFriends},\{occupation},\{playMode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{page},\{pendingCount},\{getFirst(previousNames)},\{highestRank},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{supportLevel},\{userAchievements.size()},\{rankHistory.data.stream().filter(s -> s > 0).reduce(Integer::min)},\{PP}";
 
+    }
+
+    private <T> T getFirst(List<T> list) {
+        if (Objects.nonNull(list) && !list.isEmpty()) return list.getFirst();
+        else return null;
     }
 
     @Override
