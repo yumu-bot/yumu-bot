@@ -95,7 +95,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                     group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), STR."\{id}.csv");
                 }
             } catch (Exception e) {
-                log.error("CSV: 发送失败", e);
+                log.error("比赛评分表：发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_CRAFailed);
             }
         } else {

@@ -100,7 +100,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
-            log.error("SRA 数据计算失败", e);
+            log.error("系列比赛评分：数据计算失败", e);
             throw new MRAException(MRAException.Type.RATING_Rating_CalculatingFailed);
         }
 
@@ -110,7 +110,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
                 image = imageService.getPanelC2(data);
                 from.sendImage(image);
             } catch (Exception e) {
-                log.error("SRA 数据请求失败", e);
+                log.error("系列比赛评分：数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_SRAFailed);
             }
         } else if (matcher.group("uu") != null) {
@@ -118,7 +118,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
             try {
                 from.sendMessage(str).recallIn(60000);
             } catch (Exception e) {
-                log.error("USA 发送失败", e);
+                log.error("系列比赛评分文字：发送失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_USAFailed);
             }
         } else if (matcher.group("csv") != null) {

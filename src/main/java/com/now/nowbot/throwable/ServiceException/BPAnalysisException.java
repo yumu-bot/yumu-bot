@@ -13,7 +13,7 @@ public class BPAnalysisException extends TipsException {
         BPA_Me_NotEnoughBP("你在 %s 模式上的 BP 不足 10 个呢...\n灼热分析 EX"), //玩家_最好成绩范围错误
         BPA_Player_NotEnoughBP("对方在 %s 模式上的 BP 不足 10 个呢...\n灼热分析 EX"), //玩家_最好成绩范围错误
         BPA_Instruction_Deprecated("bpht 已移至 uuba。\n您也可以使用 !ba 来体验丰富版本。\n猫猫 Bot 的 bpht 需要输入 !get bpht。"), //不受支持
-        BPA_Send_Error("BPA 发送失败。\n请耐心等待问题修复。或者可以使用 !uuba。") //发送_发送失败
+        BPA_Send_Error("最好成绩分析发送失败。\n请耐心等待问题修复。或者可以使用 !uuba。") //发送_发送失败
 
         ;//逗号分隔
         public final String message;

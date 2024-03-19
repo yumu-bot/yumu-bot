@@ -9,7 +9,7 @@ public class MapMinusException extends TipsException {
         MM_Map_NotFound("找不到谱面。"),
         MM_Map_FetchFailed("谱面下载失败，请尝试重新获取！"),
         MM_Map_ModeError("谱面模式获取失败！"),
-        MM_Send_Error("MM 发送失败。请重试。") //发送_发送失败
+        MM_Send_Error("MM 信息发送失败。请重试。") //发送_发送失败
         ;//逗号分隔
         final String message;
         Type(String message) {

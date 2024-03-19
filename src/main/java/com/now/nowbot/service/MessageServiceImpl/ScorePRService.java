@@ -250,6 +250,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
     private void getTextOutput(Score score, Contact from) throws ScoreException {
         var d = ScoreLegacy.getInstance(score, beatmapApiService);
+
+        @SuppressWarnings("unchecked")
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 

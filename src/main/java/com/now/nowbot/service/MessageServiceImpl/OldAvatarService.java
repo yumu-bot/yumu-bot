@@ -120,7 +120,7 @@ public class OldAvatarService implements MessageService<UserParam> {
             var image = imageService.getPanelEpsilon(osuUser);
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("OA 发送失败: ", e);
+            log.error("旧头像：发送失败", e);
             throw new OldAvatarException(OldAvatarException.Type.OA_Send_Error);
         }
     }

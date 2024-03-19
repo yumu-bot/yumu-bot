@@ -97,7 +97,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
             var image = imageService.getPanelE3(param.matchData, beatMap, expected);
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("Map 发送失败: ", e);
+            log.error("比赛谱面信息：发送失败: ", e);
             from.sendMessage(MapStatisticsException.Type.M_Send_Error.message);
         }
     }

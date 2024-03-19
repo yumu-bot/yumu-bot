@@ -12,7 +12,7 @@ public class BPException extends TipsException {
         BP_Player_NotFound("这是谁呀，小沐找不到他哦"),//查询他人_未搜到玩家
         BP_Player_FetchFailed("获取 BP 失败，请重试。"), //玩家_获取失败
         BP_Player_NoBP("该玩家在 %s 模式内基本没玩过。"), //玩家_没有最好成绩
-        BP_Send_Error("BP 发送失败。\n请耐心等待问题修复。") //发送_发送失败
+        BP_Send_Error("最好成绩发送失败。\n请耐心等待问题修复。") //发送_发送失败
         ;//逗号分隔
         public final String message;
         Type(String message) {

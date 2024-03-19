@@ -10,7 +10,7 @@ public class KitaException extends TipsException {
         KITA_Parameter_RoundError("请输入正确的对局名称！(Qualifier)"),
         KITA_Map_FetchFailed("从官网获取谱面失败。重试一下吧。"),
         KITA_Send_NotGroup("请在群聊中使用 KITA-X！"),
-        KITA_Send_Error ("KITA 发送失败，请耐心等待问题修复。")
+        KITA_Send_Error("喜多谱面信息发送失败，请耐心等待问题修复。")
 
         ;//逗号分隔
         final String message;

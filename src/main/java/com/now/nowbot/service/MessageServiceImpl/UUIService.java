@@ -66,6 +66,7 @@ public class UUIService implements MessageService<Matcher> {
         //处理默认mode
         if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
 
+        @SuppressWarnings("unchecked")
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
 
         byte[] image;
