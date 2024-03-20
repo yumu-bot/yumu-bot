@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchCal;
 import com.now.nowbot.model.multiplayer.MatchRound;
@@ -41,9 +40,12 @@ public class CsvMatchService implements MessageService<Matcher> {
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
         var m = Instructions.CSV_MATCH.matcher(messageText);
         if (m.find()) {
-            if (!Permission.isGroupAdmin(event)) {
+            /*
+            if (! Permission.isGroupAdmin(event)) {
                 throw new MRAException(MRAException.Type.RATING_Permission_OnlyGroupAdmin);
             }
+
+             */
             data.setValue(m);
             return true;
         } else return false;
