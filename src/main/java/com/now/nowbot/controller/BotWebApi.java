@@ -77,11 +77,14 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getPPM(
             @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") String name,
             @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") String name2,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
+            @RequestParam("u1") String u1) {
 
         if (Objects.nonNull(name2)) {
             return getPPMVS(name, name2, playMode);
         }
+
+        if (Objects.isNull(name) && Objects.nonNull(u1)) name = u1;
 
         var mode = OsuMode.getMode(playMode);
 
