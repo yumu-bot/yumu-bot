@@ -205,8 +205,8 @@ public class NowbotConfig {
         return false;
     }
 
-    @Bean
-    @DependsOn("discordConfig")
+    //@Bean
+    //@DependsOn("discordConfig")
     public JDA jda(List<ListenerAdapter> listenerAdapters, OkHttpClient okHttpClient, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
         if (discordConfig.getToken().equals("*")) return null;
         WebSocketFactory factory = new WebSocketFactory();
