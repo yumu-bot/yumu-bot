@@ -4,7 +4,6 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
-import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
@@ -71,11 +70,18 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
                 if (rep != null) break;
             }
             if (Objects.isNull(rep) || Objects.isNull(rep.getData())) {
-                throw new TipsRuntimeException("框架加载文件错误");
+                rep = bot.downloadFile(url);
             }
+
+            if (Objects.isNull(rep.getData())) {
+                log.error("发送文件失败: 客户端不支持接收文件");
+                return;
+            }
+
             bot.uploadGroupFile(getId(), rep.getData().getFile(), name);
         } catch (Exception e) {
             log.error("文件上传错误", e);
+
         } finally {
             QQMsgUtil.removeFileUrl(url);
         }
