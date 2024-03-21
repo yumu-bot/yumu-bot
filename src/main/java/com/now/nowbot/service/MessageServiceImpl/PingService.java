@@ -4,7 +4,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import io.github.humbleui.skija.*;
@@ -21,10 +20,6 @@ public class PingService implements MessageService<Matcher> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
         var m = Instructions.PING.matcher(messageText);
-        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
-            event.getSubject().sendMessage(STR."原始消息内容:\n\{event.getRawMessage()}");
-            return false;
-        }
         if (m.find()) {
             data.setValue(m);
             return true;
