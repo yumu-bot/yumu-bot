@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -93,6 +94,12 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     bps = scoreApiService.getBestPerformance(bu, bu.getMode(), 0, 100);
                     u = userApiService.getPlayerInfo(bu, bu.getMode());
                 }
+            } catch (HttpClientErrorException | WebClientResponseException e) {
+                if (!param.at()) {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+                } else {
+                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                }
             } catch (Exception e) {
                 if (!param.at()) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_FetchFailed);
@@ -117,6 +124,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     u = userApiService.getPlayerInfo(id);
                     bps = scoreApiService.getBestPerformance(id, u.getOsuMode(), 0, 100);
                 }
+            } catch (HttpClientErrorException | WebClientResponseException e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
             }
@@ -234,6 +243,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             }
         }
         // 0 length; 1 combo; 2 star; 3 bpm
+        @SuppressWarnings("unchecked")
         ArrayList<BeatMap4BA>[] mapStatistics = new ArrayList[4];
         var bpListSortedByLength = beatMapList.stream().sorted(Comparator.comparingInt(BeatMap4BA::length).reversed()).toList();
         mapStatistics[0] = new ArrayList<>(3);

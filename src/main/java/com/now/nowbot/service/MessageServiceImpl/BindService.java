@@ -67,15 +67,15 @@ public class BindService implements MessageService<BindService.BindParam> {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         //!bind 给个提示
-        if (Objects.isNull(m.group("ym")) && Objects.nonNull(m.group("bind"))) {
+        if (Objects.isNull(m.group("ym")) && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
 
             //!bind osu
-            if (StringUtils.hasText(name) && Pattern.matches("(?i)osu", name)) {
+            if (StringUtils.hasText(name) && Pattern.matches("\\s*(?i)osu\\s*", name)) {
                 OsuUser user;
                 try {
                     user = userApiService.getPlayerInfo(name);
                 } catch (WebClientResponseException e) {
-                    log.info("Bind 退避成功：!bind osu <name>");
+                    log.info("绑定：退避成功：!bind osu <name>");
                     return false;
                 }
                 name = user.getUsername();
@@ -157,9 +157,13 @@ public class BindService implements MessageService<BindService.BindParam> {
         bindQQ(event, me, param.isFull);
     }
 
+    /*
+
     public static void main(String[] args) {
         getQuestion(null);
     }
+
+     */
 
     private void unbindQQ(Long qq) throws BindException {
         if (Objects.isNull(qq)) throw new BindException(BindException.Type.BIND_Player_NoQQ);
@@ -397,7 +401,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         bindDao.bindQQ(qq, new BinUser(UID, name));
     }
 
-    public static Set<String> getQuestion(Contact contact) {
+    public static Set<String> getQuestion(@NonNull Contact contact) {
         Random random = new Random();
         int start = random.nextInt(0, 5);
         int end = random.nextInt(5, 10);
