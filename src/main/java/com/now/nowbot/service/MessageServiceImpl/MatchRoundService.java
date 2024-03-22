@@ -175,7 +175,8 @@ public class MatchRoundService implements MessageService<Matcher> {
             BeatMap beatMap;
 
             try {
-                beatMap = infoList.get(i).getBeatmap();
+                beatMap = infoList.get(i).getBeatMap();
+                if (Objects.isNull(beatMap)) continue;
             } catch (NullPointerException ignored) {
                 continue;
             }

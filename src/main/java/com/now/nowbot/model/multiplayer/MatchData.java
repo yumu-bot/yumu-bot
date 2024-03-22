@@ -274,20 +274,20 @@ public class MatchData {
      * @param imageService 用于请求结果
      */
     public void updateBeatmapAttr(OsuMode mode, List<MatchRound> rounds, ImageService imageService) {
-        final var getParm = new MapAttrGet(mode);
+        final var getParam = new MapAttrGet(mode);
         // 统计需要修改的轮次
         for (var m : rounds) {
             if (Mod.hasChangeRating(m.getModInt())) {
-                getParm.addMap(m.getId().longValue(), m.getBid(), m.getModInt());
+                getParam.addMap(m.getId().longValue(), m.getBid(), m.getModInt());
             }
         }
 
         // 修改星级, 四维
-        var result = imageService.getMapAttr(getParm);
+        var result = imageService.getMapAttr(getParam);
         for (var m : rounds) {
             MapAttr attr;
             if (Objects.nonNull(attr = result.get(m.getId().longValue()))) {
-                var beatmap = m.getBeatmap();
+                var beatmap = Objects.requireNonNull(m.getBeatMap());
                 beatmap.setStarRating(attr.getStars());
                 beatmap.setAR(attr.getAr());
                 beatmap.setOD(attr.getOd());

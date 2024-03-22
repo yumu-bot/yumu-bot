@@ -450,7 +450,7 @@ public class ImageService {
     public byte[] getPanelDelta(BeatMap beatMap, String round, String mod, Short position, boolean hasBG) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
-        body.put("beatMap", beatMap);
+        body.put("beatmap", beatMap);
         body.put("round", round);
         body.put("mod", mod);
         body.put("position", position);

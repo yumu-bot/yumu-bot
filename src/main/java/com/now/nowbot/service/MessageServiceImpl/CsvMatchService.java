@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.multiplayer.MatchCal;
 import com.now.nowbot.model.multiplayer.MatchRound;
@@ -171,16 +172,28 @@ public class CsvMatchService implements MessageService<Matcher> {
 
     private void getRoundStrings(StringBuilder sb, MatchRound round){
         try {
+            BeatMap b;
+
+            if (Objects.nonNull(round.getBeatMap())) {
+                b = round.getBeatMap();
+            } else {
+                b = new BeatMap();
+                b.setStarRating(0f);
+                b.setTotalLength(0);
+                b.setId(-1L);
+                b.setMaxCombo(0);
+            }
+
             sb.append(round.getStartTime().format(Date1)).append(',')
                     .append(round.getStartTime().format(Date2)).append(',')
                     .append(round.getMode()).append(',')
                     .append(round.getScoringType()).append(',')
                     .append(round.getTeamType()).append(',')
-                    .append(round.getBeatmap().getStarRating()).append(',')
-                    .append(round.getBeatmap().getTotalLength()).append(',')
+                    .append(b.getStarRating()).append(',')
+                    .append(b.getTotalLength()).append(',')
                     .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
-                    .append(round.getBeatmap().getId()).append(',')
-                    .append(round.getBeatmap().getMaxCombo())
+                    .append(b.getId()).append(',')
+                    .append(b.getMaxCombo())
                     .append('\n');
         } catch (Exception e) {
             sb.append(e.getMessage()).append('\n');//.append("  error---->")

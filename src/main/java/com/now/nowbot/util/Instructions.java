@@ -47,13 +47,13 @@ public class Instructions {
 
     // i ymi yminfo :0-3 name
     public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+
     public static final Pattern CSV_INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(c(sv)?)(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\w\\d\\[\\]\\s\\-_,，、|:：]+)?");
 
     public static final Pattern UU_INFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     public static final Pattern I_MAPPER = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))+(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))?");
-
-
+    
     public static final Pattern FRIEND = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![A-Za-z_]))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
 
     public static final Pattern MUTUAL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mutual|mu(?![A-Za-z_]))\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?");

@@ -181,7 +181,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             //以后可以做个提示或者面板之类的，也可能和现在的面板互换
             if (CollectionUtils.isEmpty(scores)) {
                 var r = matchEvent.getRound();
-                var b = r.getBeatmap();
+                var b = Objects.requireNonNull(r.getBeatMap());
                 var s = b.getBeatMapSet();
 
                 /*

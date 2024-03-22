@@ -3,6 +3,7 @@ package com.now.nowbot.model.multiplayer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.JsonData.BeatMap;
+import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,7 +28,9 @@ public class MatchRound {
     @JsonProperty("team_type")
     String teamType;
     List<String> mods;
-    BeatMap beatmap;
+    @Nullable
+    @JsonProperty("beatmap")
+    BeatMap beatMap;
     @JsonProperty("scores")
     List<MatchScore> scoreInfoList;
 
@@ -107,12 +110,13 @@ public class MatchRound {
         this.mods = mods;
     }
 
-    public BeatMap getBeatmap() {
-        return beatmap;
+    @Nullable
+    public BeatMap getBeatMap() {
+        return beatMap;
     }
 
-    public void setBeatmap(BeatMap beatmap) {
-        this.beatmap = beatmap;
+    public void setBeatMap(@Nullable BeatMap beatMap) {
+        this.beatMap = beatMap;
     }
 
     public List<MatchScore> getScoreInfoList() {

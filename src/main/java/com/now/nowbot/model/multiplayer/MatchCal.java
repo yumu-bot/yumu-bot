@@ -227,8 +227,8 @@ public class MatchCal {
      */
     public float getAverageStar() {
         return (float) roundList.stream()
-                .filter(round -> round.getBeatmap() != null)
-                .mapToDouble(round -> round.getBeatmap().getStarRating())
+                .filter(round -> round.getBeatMap() != null)
+                .mapToDouble(round -> round.getBeatMap().getStarRating())
                 .average()
                 .orElse(0d);
     }
@@ -240,8 +240,8 @@ public class MatchCal {
      */
     public long getFirstMapSID() {
         for (var r : roundList) {
-            if (r.getBeatmap() != null) {
-                return r.getBeatmap().getSID();
+            if (r.getBeatMap() != null) {
+                return r.getBeatMap().getSID();
             }
         }
         return 0;
