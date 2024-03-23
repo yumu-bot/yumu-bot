@@ -9,8 +9,8 @@ public class MatchNowException extends TipsException {
         MN_Match_Empty("TNND，为什么一张谱面都没有？"),//这场比赛是空的！
         MN_Match_ParseError("对局过滤错误，请修改参数！"),
         MN_Match_OutOfBoundsError("输入的参数已经过滤掉了所有对局！"),
-        MN_Render_Error("MatchNow 渲染图片超时，请重试，或者将问题反馈给开发者。"), //发送_发送失败
-        MN_Send_Error("MatchNow 发送超时，请重试，或者将问题反馈给开发者。") //发送_发送失败
+        MN_Render_Error("比赛结果：渲染图片超时，请重试，或者将问题反馈给开发者。"), //发送_发送失败
+        MN_Send_Error("比赛结果：发送超时，请重试，或者将问题反馈给开发者。") //发送_发送失败
         ;//逗号分隔
         public final String message;
         Type(String message) {

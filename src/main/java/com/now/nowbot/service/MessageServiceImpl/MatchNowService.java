@@ -48,6 +48,7 @@ public class MatchNowService implements MessageService<Matcher> {
         try {
             image = imageService.getPanelF(data);
         } catch (Exception e) {
+            log.error("比赛结果：渲染图片失败");
             throw new MatchNowException(MatchNowException.Type.MN_Render_Error);
         }
 
