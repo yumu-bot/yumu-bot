@@ -10,9 +10,7 @@ import com.now.nowbot.util.Instructions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 
 
@@ -54,19 +52,11 @@ public class SwitchService implements MessageService<Matcher> {
                     [list] export all available service: <servicename> on/off
                     [banlist] export all operational name: ban/unban <name/"ALL">
                     """;
-
-            //from.sendMessage(tips);
             var image = imageService.getPanelA6(Arrays.toString(tips.split("\n")));
             from.sendImage(image);
-            // 等同于 case list
 
-            StringBuilder sb = new StringBuilder();
-            var list = Permission.getCloseServices();
-            for (String value : Permission.getAllService()) {
-                sb.append(list.contains(value)?"OFF":"ON").append(':').append(' ').append(value).append('\n');
-            }
-            //from.sendMessage(sb.toString());
-            var image2 = imageService.getPanelA6(sb.toString());
+            // 等同于 case list
+            var image2 = imageService.getPanelA6(getServiceListMarkdown());
             from.sendImage(image2);
             return;
         }
@@ -77,6 +67,7 @@ public class SwitchService implements MessageService<Matcher> {
                 if (Objects.nonNull(p2)){
                     try {
                         int time = Integer.parseInt(p2);
+                        Thread.sleep(Math.max(time * 1000, 8 * 60 * 1000));
                         from.sendMessage("晚安！");
                     } catch (NumberFormatException e){
                         from.sendMessage("请输入正确的休眠参数！");
@@ -89,13 +80,7 @@ public class SwitchService implements MessageService<Matcher> {
             case "wake" -> from.sendMessage("早安！");
 
             case "list" -> {
-                StringBuilder sb = new StringBuilder();
-                var list = Permission.getCloseServices();
-                for (String value : Permission.getAllService()) {
-                    sb.append("- ").append(list.contains(value)? "OFF" : "ON").append(':').append(' ').append(value).append('\n');
-                }
-                //from.sendMessage(sb.toString());
-                var image = imageService.getPanelA6(sb.toString());
+                var image = imageService.getPanelA6(getServiceListMarkdown());
                 from.sendImage(image);
                 return;
             }
@@ -130,5 +115,25 @@ public class SwitchService implements MessageService<Matcher> {
                 }
             }
         }
+    }
+
+    private String getServiceListMarkdown() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("## 服务：开关状态\n");
+
+        sb.append("""
+                | 状态 | 服务名 |
+                | :-: | :-- |
+                """);
+
+        var list = Permission.getCloseServices();
+
+        for (String serviceName : Permission.getAllService()) {
+            sb.append("| ").append(list.contains(serviceName) ? "-" : "O")
+                    .append(" | ").append(serviceName)
+                    .append(" |\n");
+        }
+
+        return sb.toString();
     }
 }
