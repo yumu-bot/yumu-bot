@@ -7,5 +7,5 @@ public abstract class MessageReceipt {
     public abstract void recallIn(long time);
 
     public abstract Contact getTarget();
-    public abstract ReplyMessage replay();
+    public abstract ReplyMessage reply();
 }

@@ -6,6 +6,7 @@ import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.qq.onebot.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
@@ -63,7 +64,7 @@ public class OneBotListener {
         }
     }
 
-    public void errorHandle(com.now.nowbot.qq.onebot.event.MessageEvent event, Throwable e) {
+    public void errorHandle(MessageEvent event, Throwable e) {
         var from = event.getSubject();
         // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
         if (e instanceof BotException botException) {

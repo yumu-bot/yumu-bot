@@ -72,7 +72,8 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
                         m = new TextMessage("[图片;加载异常]");
                     }
                 }
-                default -> m = new TextMessage(String.format("[%s;不支持的操作类型]", arrayMsg.getType().toString()));
+
+                case null, default -> m = new TextMessage(String.format("[%s;不支持的操作类型]", arrayMsg.getType().toString()));
             }
             return m;
         }).toList();

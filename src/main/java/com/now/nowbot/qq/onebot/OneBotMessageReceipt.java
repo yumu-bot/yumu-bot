@@ -34,8 +34,7 @@ public class OneBotMessageReceipt extends MessageReceipt {
     }
 
     public static OneBotMessageReceipt create() {
-        var r = new OneBotMessageReceipt();
-        return r;
+        return new OneBotMessageReceipt();
     }
 
     @Override
@@ -58,7 +57,7 @@ public class OneBotMessageReceipt extends MessageReceipt {
     }
 
     @Override
-    public ReplyMessage replay() {
+    public ReplyMessage reply() {
         return new ReplyMessage(mid);
     }
 }
