@@ -4,6 +4,7 @@ import com.mikuac.shiro.common.utils.MsgUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.common.MsgId;
+import com.mikuac.shiro.exception.ShiroException;
 import com.now.nowbot.config.OneBotConfig;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
@@ -48,7 +49,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         }
         long id = 0;
         ActionData<MsgId> d;
-        if (this instanceof Group g) {
+        if (this instanceof Group) {
             d = bot.customRequest(() -> "send_group_msg", Map.of(
                     "group_id", getId(),
                     "message", getMsgJson(msg),
@@ -111,6 +112,12 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         try {
             bot.getLoginInfo().getData();
             return true;
+        } catch (ShiroException.SendMessageException e) {
+            log.error("Shiro 框架：发送消息失败", e);
+            return false;
+        } catch (ShiroException.SessionCloseException e) {
+            log.error("Shiro 框架：失去与 Bot 实例的连接", e);
+            return false;
         } catch (Exception e) {
             log.error("test bot only", e);
             return false;

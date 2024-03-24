@@ -374,7 +374,17 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             switch (split) {
                 case AM -> {
                     if (StringUtils.hasText(right)) {
-                        return STR."\{leftFormat}不是\{right}。";
+                        var botMatcher = Pattern.compile("(?i)((\\s*Yumu\\s*)|雨沐)\\s*(机器人|Bot)?").matcher(right);
+                        if (botMatcher.find()) {
+                            //你是 Yumu
+                            if (getRandom(100) < 50) {
+                                return STR."不不不。你才是\{right}。";
+                            } else {
+                                return "我还以为你不知道呢。";
+                            }
+                        } else {
+                            return STR."\{leftFormat}不是\{right}。";
+                        }
                     }
                     return leftFormat;
                 }
