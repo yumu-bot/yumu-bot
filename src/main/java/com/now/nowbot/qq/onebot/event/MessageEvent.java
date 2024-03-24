@@ -2,6 +2,7 @@ package com.now.nowbot.qq.onebot.event;
 
 import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
+import com.mikuac.shiro.enums.MsgTypeEnum;
 import com.mikuac.shiro.model.ArrayMsg;
 import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.contact.Contact;
@@ -12,10 +13,11 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MessageEvent extends Event implements com.now.nowbot.qq.event.MessageEvent {
-    private static final Logger l = LoggerFactory.getLogger("msg");
+    private static final Logger log = LoggerFactory.getLogger("msg");
     com.mikuac.shiro.dto.event.message.MessageEvent event;
 
     public MessageEvent(com.mikuac.shiro.dto.event.message.MessageEvent event, Bot bot) {
@@ -73,7 +75,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
                     }
                 }
 
-                case null, default -> m = new TextMessage(String.format("[%s;不支持的操作类型]", arrayMsg.getType().toString()));
+                case null, default -> m = new TextMessage(String.format("[%s;不支持的操作类型]", Optional.ofNullable(arrayMsg.getType()).orElse(MsgTypeEnum.unknown)));
             }
             return m;
         }).toList();
