@@ -2,6 +2,7 @@ package com.now.nowbot.config;
 
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
+import com.now.nowbot.listener.LocalCommandListener;
 import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 import org.springframework.context.ApplicationContext;
@@ -23,30 +25,32 @@ import java.util.concurrent.Executor;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
-    Logger log = LoggerFactory.getLogger("IocAllReadyRunner");
+    Logger      log = LoggerFactory.getLogger("IocAllReadyRunner");
     ApplicationContext applicationContext;
     CheckAspect check;
-    Permission permission;
+    Permission  permission;
     @Resource
     WebServerApplicationContext webServerApplicationContext;
     @Resource(name = "mainExecutor")
     Executor executor;
 
     @Autowired
-    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission){
+    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
         oneBotListener.init(services);
+        LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;
     }
+
     @Override
     /*
       ioc容器加载完毕运行
      */
     public void run(String... args) {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
-        MoliUtil.init(applicationContext.getBean("template",RestTemplate.class));
+        MoliUtil.init(applicationContext.getBean("template", RestTemplate.class));
         permission.init(applicationContext);
 //        initFountWidth();
 
@@ -58,11 +62,20 @@ public class IocAllReadyRunner implements CommandLineRunner {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
-            ((ThreadPoolTaskExecutor)executor).shutdown();
+            ((ThreadPoolTaskExecutor) executor).shutdown();
             MatchListenerService.stopAllListener();
         }, "endThread"));
-        log.info("启动成功");
+
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());
+
+        boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");
+
+        if (debuging) {
+            log.info("命令行输入已启动!");
+            LocalCommandListener.startListener();
+        }
+
+        log.info("启动成功");
     }
 }

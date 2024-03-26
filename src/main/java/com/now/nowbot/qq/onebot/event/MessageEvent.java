@@ -47,7 +47,7 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
     }
 
     public String getRawMessage() {
-        return decode(event.getRawMessage());
+        return event.getRawMessage();
     }
 
     @Override
