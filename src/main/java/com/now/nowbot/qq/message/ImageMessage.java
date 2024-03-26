@@ -22,7 +22,7 @@ public class ImageMessage extends Message {
 
     public ImageMessage(String path) {
         data = null;
-        this.path = "file:///" + path;
+        this.path = STR."file:///\{path}";
         type = Type.FILE;
     }
 
@@ -34,6 +34,10 @@ public class ImageMessage extends Message {
 
     public boolean isByteArray() {
         return type == Type.BYTE_ARRAY;
+    }
+
+    public boolean isUrl() {
+        return type == Type.URL;
     }
 
     public byte[] getData() {
