@@ -30,8 +30,9 @@ public class LocalCommandListener {
         Thread.startVirtualThread(() -> {
             Scanner sc = new Scanner(System.in);
             String cmd;
-            while (StringUtils.hasText((cmd = sc.nextLine()))) {
-                listener.onMessage(cmd);
+            while (true) {
+                if (StringUtils.hasText((cmd = sc.nextLine())))
+                    listener.onMessage(cmd);
             }
         });
     }
