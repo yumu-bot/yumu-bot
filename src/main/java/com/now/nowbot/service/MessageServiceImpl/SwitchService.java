@@ -114,7 +114,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
                     }
                 } catch (TipsRuntimeException e) {
                     throw new SwitchException(SwitchException.Type.SW_Service_RemoveNotExists, service);
-                } catch (IllegalArgumentException e) {
+                } catch (RuntimeException e) {
                     throw new SwitchException(SwitchException.Type.SW_Service_NotFound, service);
                 }
             }
@@ -133,7 +133,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
                     }
                 } catch (TipsRuntimeException e) {
                     throw new SwitchException(SwitchException.Type.SW_Service_AddExists, service);
-                } catch (IllegalArgumentException e) {
+                } catch (RuntimeException e) {
                     throw new SwitchException(SwitchException.Type.SW_Service_NotFound, service);
                 }
             }
