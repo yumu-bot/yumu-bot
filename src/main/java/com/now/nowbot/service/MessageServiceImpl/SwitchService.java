@@ -5,118 +5,150 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.ServiceException.SwitchException;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Random;
-import java.util.regex.Matcher;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 
 @Service("SWITCH") //修改service名 "switch" 一定要修改 Permission
-public class SwitchService implements MessageService<Matcher> {
+public class SwitchService implements MessageService<SwitchService.SwitchParam> {
+    @Resource
     Permission permission;
+    @Resource
     ImageService imageService;
+
+    public record SwitchParam(long groupID, String serviceName, Operation operation) {
+    }
+
+    public enum Operation {
+        REVIEW,
+        ON,
+        OFF,
+    }
+
+    private static Operation getOperation(String str) {
+        return switch (str) {
+            case "on", "start", "o", "s" -> Operation.ON;
+            case "off", "close", "end", "f", "c", "e" -> Operation.OFF;
+            case null, default -> Operation.REVIEW;
+        };
+    }
+
     @Autowired
-    public SwitchService(Permission permission, ImageService imageService){
+    public SwitchService(Permission permission, ImageService imageService) {
         this.permission = permission;
         this.imageService = imageService;
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<SwitchParam> data) throws Throwable {
         var m = Instructions.SWITCH.matcher(messageText);
-        if (m.find()) {
+        if (!m.find()) {
+            return false;
+        }
 
-            if (!Permission.isSuperAdmin(event.getSender().getId())) {
-                throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
+        if (!Permission.isSuperAdmin(event.getSender().getId())) {
+            throw new SwitchException(SwitchException.Type.SW_Permission_Admin);
+        }
+
+        var service = m.group("service");
+        var operate = m.group("operate");
+        //var o = Pattern.compile("(black|white)?list|on|off|start|close|[bkwlofsc]+");
+
+        var groupID = m.group("group");
+
+        if (StringUtils.hasText(service)) {
+            if (StringUtils.hasText(operate)) {
+                if (StringUtils.hasText(groupID)) {
+                    data.setValue(new SwitchParam(Long.parseLong(groupID), service.toUpperCase(), getOperation(operate)));
+                } else {
+                    data.setValue(new SwitchParam(-1L, service.toUpperCase(), getOperation(operate)));
+                }
+            } else {
+                if (StringUtils.hasText(groupID)) {
+                    throw new SwitchException(SwitchException.Type.SW_Parameter_OnlyGroup);
+                } else {
+                    var op = getOperation(service.toUpperCase());
+                    if (op != Operation.REVIEW) {
+                        throw new SwitchException(SwitchException.Type.SW_Service_Missing);
+                    }
+                    data.setValue(new SwitchParam(-1L, null, Operation.REVIEW));
+                }
             }
+        } else {
+            if (StringUtils.hasText(groupID)) {
+                throw new SwitchException(SwitchException.Type.SW_Parameter_OnlyGroup);
+            } else {
+                throw new SwitchException(SwitchException.Type.SW_Instructions);
+            }
+        }
 
-            data.setValue(m);
-            return true;
-        } else return false;
+        return true;
     }
 
     @Override
     @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, SwitchParam param) throws Throwable {
         var from = event.getSubject();
+        var service = param.serviceName;
+        var group = param.groupID;
 
-        String p1 = matcher.group("p1");
-        String p2 = matcher.group("p2");
-
-        if (Objects.isNull(p1)) {
-            var tips = """
-                    [sleep] wake/sleep <time>
-                    [list] export all available service: <servicename> on/off
-                    [banlist] export all operational name: ban/unban <name/"ALL">
-                    """;
-            var image = imageService.getPanelA6(Arrays.toString(tips.split("\n")));
-            from.sendImage(image);
-
-            // 等同于 case list
-            var image2 = imageService.getPanelA6(getServiceListMarkdown());
-            from.sendImage(image2);
-            return;
-        }
-
-        // sleep awake 功能应该放在其他的地方吧，比如新开一个重启bot的服务，里面附带这个功能
-        switch (p1.toLowerCase()) {
-            case "sleep" -> {
-                if (Objects.nonNull(p2)){
-                    try {
-                        int time = Integer.parseInt(p2);
-//                        Thread.sleep(Math.max(time * 1000, 8 * 60 * 1000));
-                        from.sendMessage("晚安！");
-                    } catch (NumberFormatException e){
-                        from.sendMessage("请输入正确的休眠参数！");
+        switch (param.operation) {
+            case ON -> {
+                try {
+                    if (group == -1L) {
+                        Permission.openService(service);
+                        from.sendMessage(STR."已启动 \{service} 服务");
+                    } else if (group == 0L) {
+                        permission.removeGroupAll(service, true);
+                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
+                    } else {
+                        permission.removeGroup(service, group, true, false);
+                        from.sendMessage(STR."已解禁群聊 \{group} 的 \{service} 服务");
                     }
-                } else {
-                    from.sendMessage("请输入休眠参数！");
+                } catch (TipsRuntimeException e) {
+                    throw new SwitchException(SwitchException.Type.SW_Service_RemoveNotExists, service);
+                } catch (IllegalArgumentException e) {
+                    throw new SwitchException(SwitchException.Type.SW_Service_NotFound, service);
                 }
             }
 
-            case "wake" -> from.sendMessage("早安！");
-
-            case "list" -> {
-                var image = imageService.getPanelA6(getServiceListMarkdown());
-                from.sendImage(image);
-                return;
-            }
-
-            case "banlist" -> {
-                var texts = permission.list();
-                var random = new Random();
-                for (var text : texts){
-                    Thread.sleep(random.nextInt(1300,3000));
-                    event.getSubject().sendMessage(text);
+            case OFF -> {
+                try {
+                    if (group == -1L) {
+                        Permission.closeService(service);
+                        from.sendMessage(STR."已关闭 \{service} 服务");
+                    } else if (group == 0L) {
+                        permission.removeGroupAll(service, true);
+                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
+                    } else {
+                        permission.addGroup(service, group, true, false);
+                        from.sendMessage(STR."已禁止群聊 \{group} 的 \{service} 服务");
+                    }
+                } catch (TipsRuntimeException e) {
+                    throw new SwitchException(SwitchException.Type.SW_Service_AddExists, service);
+                } catch (IllegalArgumentException e) {
+                    throw new SwitchException(SwitchException.Type.SW_Service_NotFound, service);
                 }
             }
-        }
 
-        if (Objects.nonNull(p2)) {
-            switch (p2.toLowerCase()){
-                case "off" -> {
-                    try {
-                        Permission.closeService(p1);
-                        from.sendMessage(STR."已关闭 \{p1} 服务");
-                    } catch (IllegalArgumentException e) {
-                        from.sendMessage("请输入正确的服务名");
-                    }
-                }
-                case "on" -> {
-                    try {
-                        Permission.openService(p1);
-                        from.sendMessage(STR."已启动 \{p1} 服务");
-                    } catch (IllegalArgumentException e) {
-                        from.sendMessage("请输入正确的服务名");
-                    }
+            case REVIEW -> {
+                var md = getServiceListMarkdown();
+                try {
+                    var image = imageService.getPanelA6(md, "switch");
+                    from.sendImage(image);
+                } catch (HttpServerErrorException.InternalServerError | WebClientResponseException.InternalServerError e) {
+                    throw new SwitchException(SwitchException.Type.SW_Render_Failed);
                 }
             }
         }
+
     }
 
     private String getServiceListMarkdown() {
@@ -124,8 +156,8 @@ public class SwitchService implements MessageService<Matcher> {
         sb.append("## 服务：开关状态\n");
 
         sb.append("""
-                | 状态 | 服务名 |
-                | :-: | :-- |
+                | 状态 | 服务名 | 无法使用的群聊 |
+                | :-: | :-- | :-- |
                 """);
 
         var list = Permission.getCloseServices();
@@ -133,35 +165,10 @@ public class SwitchService implements MessageService<Matcher> {
         for (String serviceName : Permission.getAllService()) {
             sb.append("| ").append(list.contains(serviceName) ? "-" : "O")
                     .append(" | ").append(serviceName)
+                    .append(" | ").append("-") //114514, 1919810
                     .append(" |\n");
         }
 
         return sb.toString();
-    }
-
-    /**
-     * 对单个功能锁群
-     *
-     * @param groupId 群号
-     * @param service 服务名, 大小写随便但是下划线不能省
-     */
-    private void blockGroup(Long groupId, String service) {
-        permission.addGroup(service, groupId, true);
-    }
-
-    /**
-     * 解锁 对单个功能锁群
-     */
-    private void unblockGroup(Long groupId, String service) {
-        permission.removeGroup(service, groupId, true);
-    }
-
-    /**
-     * 解锁整个功能 对单个功能锁群 (只是删除所有封禁群号, Permission.closeService是另一套规则, 不一样
-     *
-     * @param service
-     */
-    private void unblockAllGroup(String service) {
-        permission.removeGroupAll(service, true);
     }
 }

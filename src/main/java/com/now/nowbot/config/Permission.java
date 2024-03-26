@@ -210,15 +210,15 @@ public class Permission {
                 sortServiceMap.put(name, 0);
             }
 
-            if ($beansCheck != null) {
+            // 读取一条默认的注解
+            if ($beansCheck == null) {
                 try {
                     $beansCheck = Permission.class.getDeclaredMethod("CheckPermission").getAnnotation(CheckPermission.class);
-                } catch (NoSuchMethodException ignore) {
-                }
+                } catch (NoSuchMethodException ignore) {}
             }
 
-            //如果包含权限注解 则初始化权限列表
-
+            // 如果包含权限注解 则初始化权限列表
+            if ($beansCheck != null) {
                 if ($beansCheck.isSuperAdmin()) {
                     var obj = new PermissionParam(true);
                     Permission.PERMISSIONS.put(name, obj);
@@ -247,7 +247,7 @@ public class Permission {
                     obj.setWhite($beansCheck.isWhite());
                     Permission.PERMISSIONS.put(name, obj);
                 }
-
+            }
         });
 
         ALL_SERVICE = sortServiceMap.entrySet()
@@ -290,6 +290,13 @@ public class Permission {
         return addGroup(service, id, isSuper, perm);
     }
 
+    public boolean addGroup(String name, Long id, boolean isSuper, boolean isWhite) {
+        String service = getServiceName(name);
+        var perm = PERMISSIONS.get(service);
+        perm.setWhite(isWhite);
+        return addGroup(service, id, isSuper, perm);
+    }
+
     public static String getServiceName(String name) {
         for (String s : ALL_SERVICE) {
             if (s.equalsIgnoreCase(name)) {
@@ -307,6 +314,13 @@ public class Permission {
     public boolean removeGroup(Long id, boolean isWhite, boolean isSuper) {
         var param = isWhite ? WHITELIST : BLACKLIST;
         return removeGroup(PERMISSION_ALL, id, isSuper, param);
+    }
+
+    public boolean removeGroup(String name, Long id, boolean isSuper, boolean isWhite) {
+        String service = getServiceName(name);
+        var perm = PERMISSIONS.get(service);
+        perm.setWhite(isWhite);
+        return removeGroup(service, id, isSuper, perm);
     }
 
     private boolean removeGroup(String name, Long id, boolean isSuper, PermissionParam param) {

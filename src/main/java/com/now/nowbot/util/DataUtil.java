@@ -419,7 +419,7 @@ public class DataUtil {
             bonusPP = playerPP - bpPP - remainPP;
         }
 
-        return (float) Math.max(Math.min(bonusPP, 416.6667f), 0f);
+        return (float) Math.max(Math.min(bonusPP, 413.894f), 0f);
     }
 
     public static double getV3ScoreProgress(Score score) { //下下策

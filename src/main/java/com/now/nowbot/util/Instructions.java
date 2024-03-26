@@ -18,7 +18,7 @@ public class Instructions {
 
     public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black|white|ban)?list|add|remove|(un)?ban|[lkarubw]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]+)?");
 
-    public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))\\s*(?<p1>\\w*)?\\s*(?<p2>\\w*)?");
+    public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))\\s*(([:：]|group=)\\s*(?<group>\\d+))?\\s*(?<service>\\w+)?\\s*(?<operate>\\w+)?");
 
     public static final Pattern ECHO = Pattern.compile("^[!！＃#]\\s*(?i)(ym)?(echo|ec(?![A-Za-z_]))\\s*(?<any>[\\s\\S]*)");
 

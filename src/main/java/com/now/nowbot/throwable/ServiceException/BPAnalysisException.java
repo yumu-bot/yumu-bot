@@ -17,7 +17,7 @@ public class BPAnalysisException extends TipsException {
         BA_Send_Error("最好成绩分析发送失败。\n请耐心等待问题修复。或者可以使用 !uuba。"),
         BA_Send_UUError("最好成绩分析（文字版）发送失败。"),
 
-        ;//逗号分隔
+        ;
         public final String message;
         Type(String message) {
             this.message = message;
