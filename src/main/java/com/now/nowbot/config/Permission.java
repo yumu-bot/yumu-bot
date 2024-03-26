@@ -55,6 +55,109 @@ public class Permission {
     private static ArrayList<String> ALL_SERVICE = null;
     private static CopyOnWriteArraySet<String> OFF_SERVICE = null;
 
+    public static void closeService(String name) {
+        String service = getServiceName(name);
+        OFF_SERVICE.add(service);
+        serviceSwitchMapper.save(new ServiceSwitchLite(service, false));
+    }
+
+    public Set<String> list() {
+        Set<String> out = new HashSet<>();
+        PERMISSIONS.forEach((name, perm) -> {
+            if (perm.isAdministrator()) {
+                out.add(perm.getMessage(name));
+            }
+        });
+        return out;
+    }
+
+    public static PermissionParam getWhiteList() {
+        return WHITELIST;
+    }
+
+    public static PermissionParam getBlackList() {
+        return BLACKLIST;
+    }
+
+    public boolean hasGroup(String name, Long id) {
+        //不存在该名单默认为无限制
+        if (!PERMISSIONS.containsKey(name)) return true;
+        var p = PERMISSIONS.get(name);
+        /*   真值表
+        p.isWhite();
+        p.hasGroup(id);
+        * w   1  0  1  0
+        * h   0  0  1  1
+        * y   0  1  1  0
+        * */
+        return p.hasGroup(id);
+    }
+
+    public boolean hasUser(String name, Long id) {
+        //不存在该名单默认为无限制
+        if (!PERMISSIONS.containsKey(name)) return true;
+        var p = PERMISSIONS.get(name);
+        return p.hasUser(id);
+    }
+
+    public static void openService(String name) {
+        String service = getServiceName(name);
+        OFF_SERVICE.remove(service);
+        serviceSwitchMapper.save(new ServiceSwitchLite(service, true));
+    }
+
+
+    public boolean addGroup(Long id, boolean isWhite, boolean isSuper) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return addGroup(PERMISSION_ALL, id, isSuper, param);
+    }
+
+    private boolean addGroup(String name, Long id, boolean isSuper, PermissionParam param) {
+        if (param == null || (!isSuper && param.isAdministrator())) {
+            return false;
+        }
+        if (param.isWhite()) {
+            if (param.getGroupList().add(id)) {
+                permissionDao.addGroup(name, PermissionType.GROUP_W, id);
+                return true;
+            } else {
+                throw new TipsRuntimeException("已经有了");
+            }
+        } else {
+            if (param.getGroupList().add(id)) {
+                permissionDao.addGroup(name, PermissionType.GROUP_B, id);
+                return true;
+            } else {
+                throw new TipsRuntimeException("已经有了");
+            }
+        }
+    }
+
+    @CheckPermission
+    static void CheckPermission() {
+    }
+
+
+    public boolean addUser(Long id, boolean isWhite) {
+        var param = isWhite ? WHITELIST : BLACKLIST;
+        return addUser(id, param, PERMISSION_ALL);
+    }
+
+    private boolean addUser(Long id, PermissionParam param, String name) {
+        if (param == null) {
+            return false;
+        }
+
+        var type = param.isWhite() ? PermissionType.FRIEND_W : PermissionType.FRIEND_B;
+
+        if (param.getUserList().add(id)) {
+            permissionDao.addUser(name, type, id);
+            return true;
+        } else {
+            throw new TipsRuntimeException("本身不存在");
+        }
+    }
+
     void init(ApplicationContext applicationContext) {
         //初始化全局名单
         assert permissionDao != null;
@@ -107,8 +210,15 @@ public class Permission {
                 sortServiceMap.put(name, 0);
             }
 
-            //如果包含权限注解 则初始化权限列表
             if ($beansCheck != null) {
+                try {
+                    $beansCheck = Permission.class.getDeclaredMethod("CheckPermission").getAnnotation(CheckPermission.class);
+                } catch (NoSuchMethodException ignore) {
+                }
+            }
+
+            //如果包含权限注解 则初始化权限列表
+
                 if ($beansCheck.isSuperAdmin()) {
                     var obj = new PermissionParam(true);
                     Permission.PERMISSIONS.put(name, obj);
@@ -137,7 +247,7 @@ public class Permission {
                     obj.setWhite($beansCheck.isWhite());
                     Permission.PERMISSIONS.put(name, obj);
                 }
-            }
+
         });
 
         ALL_SERVICE = sortServiceMap.entrySet()
@@ -152,108 +262,6 @@ public class Permission {
         testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, - 10086L);
 
         log.info("名单初始化完成");
-    }
-
-    public Set<String> list() {
-        Set<String> out = new HashSet<>();
-        PERMISSIONS.forEach((name, perm) -> {
-            if (perm.isAdministrator()) {
-                out.add(perm.getMessage(name));
-            }
-        });
-        return out;
-    }
-
-    public static PermissionParam getWhiteList() {
-        return WHITELIST;
-    }
-
-    public static PermissionParam getBlackList() {
-        return BLACKLIST;
-    }
-
-    public boolean hasGroup(String name, Long id) {
-        //不存在该名单默认为无限制
-        if (!PERMISSIONS.containsKey(name)) return true;
-        var p = PERMISSIONS.get(name);
-        /*   真值表
-        p.isWhite();
-        p.hasGroup(id);
-        * w   1  0  1  0
-        * h   0  0  1  1
-        * y   0  1  1  0
-        * */
-        return p.hasGroup(id);
-    }
-
-    public boolean hasUser(String name, Long id) {
-        //不存在该名单默认为无限制
-        if (!PERMISSIONS.containsKey(name)) return true;
-        var p = PERMISSIONS.get(name);
-        return p.hasUser(id);
-    }
-
-    public boolean addGroup(String name, Long id, boolean isSuper) {
-        var perm = PERMISSIONS.get(name);
-        return addGroup(name, id, isSuper, perm);
-    }
-
-
-    public boolean addGroup(Long id, boolean isWhite, boolean isSuper) {
-        var param = isWhite ? WHITELIST : BLACKLIST;
-        return addGroup(PERMISSION_ALL, id, isSuper, param);
-    }
-
-    private boolean addGroup(String name, Long id, boolean isSuper, PermissionParam param) {
-        if (param == null || (!isSuper && param.isAdministrator())) {
-            return false;
-        }
-        if (param.isWhite()) {
-            if (param.getGroupList().add(id)) {
-                permissionDao.addGroup(name, PermissionType.GROUP_W, id);
-                return true;
-            } else {
-                throw new TipsRuntimeException("已经有了");
-            }
-        } else {
-            if (param.getGroupList().add(id)) {
-                permissionDao.addGroup(name, PermissionType.GROUP_B, id);
-                return true;
-            } else {
-                throw new TipsRuntimeException("已经有了");
-            }
-        }
-    }
-
-    public boolean addUser(String name, Long id) {
-        var param = PERMISSIONS.get(name);
-        return addUser(id, param, name);
-    }
-
-
-    public boolean addUser(Long id, boolean isWhite) {
-        var param = isWhite ? WHITELIST : BLACKLIST;
-        return addUser(id, param, PERMISSION_ALL);
-    }
-
-    private boolean addUser(Long id, PermissionParam param, String name) {
-        if (param == null) {
-            return false;
-        }
-
-        var type = param.isWhite() ? PermissionType.FRIEND_W : PermissionType.FRIEND_B;
-
-        if (param.getUserList().add(id)) {
-            permissionDao.addUser(name, type, id);
-            return true;
-        } else {
-            throw new TipsRuntimeException("本身不存在");
-        }
-    }
-
-    public boolean removeUser(String name, Long id) {
-        var param = PERMISSIONS.get(name);
-        return removeUser(id, param, name);
     }
 
     public boolean removeUser(Long id, boolean isWhite) {
@@ -276,9 +284,19 @@ public class Permission {
         }
     }
 
-    public boolean removeGroup(String name, Long id, boolean isSuper) {
-        var param = PERMISSIONS.get(name);
-        return removeGroup(name, id, isSuper, param);
+    public boolean addGroup(String name, Long id, boolean isSuper) {
+        String service = getServiceName(name);
+        var perm = PERMISSIONS.get(service);
+        return addGroup(service, id, isSuper, perm);
+    }
+
+    public static String getServiceName(String name) {
+        for (String s : ALL_SERVICE) {
+            if (s.equalsIgnoreCase(name)) {
+                return s;
+            }
+        }
+        throw new RuntimeException("未找到对应的服务");
     }
 
     public boolean removeGroup(Long id, boolean isSuper) {
@@ -339,14 +357,16 @@ public class Permission {
         return OFF_SERVICE.contains(name) && !name.equals("SWITCH");
     }
 
-    public static void closeService(String name) {
-        OFF_SERVICE.add(name);
-        serviceSwitchMapper.save(new ServiceSwitchLite(name, false));
+    public boolean addUser(String name, Long id) {
+        String service = getServiceName(name);
+        var param = PERMISSIONS.get(service);
+        return addUser(id, param, service);
     }
 
-    public static void openService(String name) {
-        OFF_SERVICE.remove(name);
-        serviceSwitchMapper.save(new ServiceSwitchLite(name, true));
+    public boolean removeUser(String name, Long id) {
+        String service = getServiceName(name);
+        var param = PERMISSIONS.get(service);
+        return removeUser(id, param, service);
     }
 
     /**
@@ -386,5 +406,23 @@ public class Permission {
 
     public static boolean checkStopListener() {
         return Boolean.TRUE.equals(ContextUtil.getContext("StopListener", Boolean.class));
+    }
+
+    public boolean removeGroup(String name, Long id, boolean isSuper) {
+        String service = getServiceName(name);
+        var param = PERMISSIONS.get(service);
+        return removeGroup(service, id, isSuper, param);
+    }
+
+    public void removeGroupAll(String name, boolean isSuper) {
+        String service = getServiceName(name);
+        var param = PERMISSIONS.get(service);
+        if (param == null || (! isSuper && param.isAdministrator())) {
+            return;
+        }
+
+        var type = param.isWhite() ? PermissionType.GROUP_W : PermissionType.GROUP_B;
+        param.getGroupList().clear();
+        permissionDao.deleteGroupAll(name, type);
     }
 }

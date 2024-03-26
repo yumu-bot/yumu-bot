@@ -10,7 +10,9 @@ import com.now.nowbot.util.Instructions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Random;
 import java.util.regex.Matcher;
 
 
@@ -67,7 +69,7 @@ public class SwitchService implements MessageService<Matcher> {
                 if (Objects.nonNull(p2)){
                     try {
                         int time = Integer.parseInt(p2);
-                        Thread.sleep(Math.max(time * 1000, 8 * 60 * 1000));
+//                        Thread.sleep(Math.max(time * 1000, 8 * 60 * 1000));
                         from.sendMessage("晚安！");
                     } catch (NumberFormatException e){
                         from.sendMessage("请输入正确的休眠参数！");
@@ -135,5 +137,31 @@ public class SwitchService implements MessageService<Matcher> {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * 对单个功能锁群
+     *
+     * @param groupId 群号
+     * @param service 服务名, 大小写随便但是下划线不能省
+     */
+    private void blockGroup(Long groupId, String service) {
+        permission.addGroup(service, groupId, true);
+    }
+
+    /**
+     * 解锁 对单个功能锁群
+     */
+    private void unblockGroup(Long groupId, String service) {
+        permission.removeGroup(service, groupId, true);
+    }
+
+    /**
+     * 解锁整个功能 对单个功能锁群 (只是删除所有封禁群号, Permission.closeService是另一套规则, 不一样
+     *
+     * @param service
+     */
+    private void unblockAllGroup(String service) {
+        permission.removeGroupAll(service, true);
     }
 }

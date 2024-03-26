@@ -36,6 +36,11 @@ public class PermissionDao {
         Long pid = permissionMapper.getId(service, type);
         qqMapper.deleteQQIDByPermissionIdAndIsGroupAndQQ(pid,true,id);
     }
+
+    public void deleteGroupAll(String service, PermissionType type) {
+        Long pid = permissionMapper.getId(service, type);
+        qqMapper.deleteQQIDByPermissionIdAndIsGroup(pid, true);
+    }
     public void addUser(String service, PermissionType type, Long id){
         Long pid = permissionMapper.getId(service, type);
         var data = new QQID();

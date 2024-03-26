@@ -1,5 +1,6 @@
 package com.now.nowbot.listener;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.local.Bot;
 import com.now.nowbot.qq.local.Event;
@@ -45,6 +46,7 @@ public class LocalCommandListener {
 
     public void doAction(MessageEvent event, String serviceName, MessageService service) {
         try {
+            if (Permission.isServiceClose(serviceName) && ! Permission.isSuperAdmin(event.getSender().getId())) return;
             var data = new MessageService.DataValue();
             boolean ihandle = service.isHandle(event, event.getTextMessage(), data);
             if (ihandle) {
