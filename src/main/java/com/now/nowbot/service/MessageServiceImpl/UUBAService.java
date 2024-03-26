@@ -66,7 +66,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         //旧功能指引
         var matcher2 = Instructions.DEPRECATED_BPHT.matcher(messageText);
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Instruction_Deprecated);
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated);
         }
 
         var matcher = Instructions.UU_BA.matcher(messageText);
@@ -102,9 +102,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 bu = bindDao.getUserFromQQ(param.user().qq());
             } catch (BindException e) {
                 if (!param.user().at()) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
                 } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
                 }
             }
         } else {
@@ -120,7 +120,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 bu.setOsuID(id);
                 bu.setOsuName(name);
             } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound);
             }
         }
 
@@ -135,20 +135,20 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
             // 请求失败 超时/断网
             if (param.user().qq() == event.getSender().getId()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
             }
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
             // 未绑定
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
         }
 
         if (bps == null || bps.size() <= 10) {
             if (!param.user().at() && Objects.isNull(param.user().name())) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP, mode.getName());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, mode.getName());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP, mode.getName());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, mode.getName());
             }
         }
 
@@ -167,8 +167,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         }
 
-        var image = imageService.getPanelAlpha(Lines);
-        from.sendImage(image);
+        try {
+            var image = imageService.getPanelAlpha(Lines);
+            from.sendImage(image);
+        } catch (Exception e) {
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError);
+        }
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {
@@ -297,9 +301,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var changedStarMap = imageService.getMapAttr(mapAttrGet);
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var map = bp.getBeatMap();
-            float length = map.getTotalLength();
-            float bpm = map.getBPM();
+            var b = bp.getBeatMap();
+            float length = b.getTotalLength();
+            float bpm = b.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
                     modSum.get(r).add(bp.getWeight().getPP());
@@ -356,16 +360,16 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
             avgCombo += bp.getMaxCombo();
 
-            float tthToPp = (bp.getPP()) / (map.getSliders() + map.getSpinners() + map.getCircles());
+            float tthToPp = (bp.getPP()) / (b.getSliders() + b.getSpinners() + b.getCircles());
             if (maxTTHPP < tthToPp) {
                 maxTTHPPBP = i;
                 maxTTHPP = tthToPp;
             }
 
-            if (mapperSum.containsKey(map.getMapperID())) {
-                mapperSum.get(map.getMapperID()).add(bp.getPP());
+            if (mapperSum.containsKey(b.getMapperID())) {
+                mapperSum.get(b.getMapperID()).add(bp.getPP());
             } else {
-                mapperSum.put(map.getMapperID(), new mapperData(bp.getPP(), map.getMapperID()));
+                mapperSum.put(b.getMapperID(), new mapperData(bp.getPP(), b.getMapperID()));
             }
             nowPP += bp.getWeight().getPP();
         }
@@ -437,10 +441,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             this.uid = uid;
         }
 
-        mapperData add(float pp) {
+        void add(float pp) {
             allPP += pp;
             size++;
-            return this;
         }
 
         public int getSize() {
@@ -457,10 +460,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             size = 1;
         }
 
-        modData add(float pp) {
+        void add(float pp) {
             allPP += pp;
             size++;
-            return this;
         }
 
         public float getAllPP() {
@@ -474,9 +476,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
     String getTimeStr(int l) {
         if (l < 60) {
-            return l + "秒";
+            return STR."\{l}秒";
         } else {
-            return l / 60 + "分" + l % 60 + "秒";
+            return STR."\{l / 60}分\{l % 60}秒";
         }
     }
 }

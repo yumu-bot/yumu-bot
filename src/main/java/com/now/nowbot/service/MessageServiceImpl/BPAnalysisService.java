@@ -31,6 +31,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
@@ -78,6 +79,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
     @Override
     public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
+        var start = System.currentTimeMillis();
         var from = event.getSubject();
         var mode = param.mode();
 
@@ -97,15 +99,15 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
                 if (!param.at()) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_TokenExpired);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
                 } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
                 }
             } catch (Exception e) {
                 if (!param.at()) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_FetchFailed);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_FetchFailed);
                 } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_FetchFailed);
                 }
             }
         } else {
@@ -114,7 +116,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             try {
                 id = userApiService.getOsuId(name);
             } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotFound);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound);
             }
             try {
                 if (mode != OsuMode.DEFAULT) {
@@ -126,46 +128,52 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     bps = scoreApiService.getBestPerformance(id, u.getOsuMode(), 0, 100);
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_TokenExpired);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
             } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_FetchFailed);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_FetchFailed);
             }
         }
 
         if (Objects.isNull(bps) || bps.size() <= 5) {
             if (Objects.nonNull(param.qq()) && param.qq() == event.getSender().getId()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Me_NotEnoughBP, u.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, u.getPlayMode());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Player_NotEnoughBP, u.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, u.getPlayMode());
             }
         }
 
+        System.out.println(System.currentTimeMillis() - start);
+
         byte[] image = new byte[0];
 
+        var data = parseData(u, bps, userApiService);
+
         try {
-            var data = parseData(u, bps, userApiService);
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             log.error("最好成绩分析：复杂面板生成失败", e);
             try {
                 var msg = uubaService.getAllMsg(bps, u.getUsername(), u.getPlayMode());
                 var image2 = imageService.getPanelAlpha(msg);
-
                 from.sendImage(image2);
+
+            } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e1) {
+                log.error("最好成绩分析：渲染失败", e1);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Failed);
             } catch (Exception e1) {
                 log.error("最好成绩分析：UUBA 转换失败", e1);
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError);
             }
 
         } catch (Exception e) {
             log.error("最好成绩分析：发送失败", e);
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_Error);
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BPA_Send_Error);
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_Error);
         }
     }
 
@@ -186,8 +194,10 @@ public class BPAnalysisService implements MessageService<UserParam> {
         } else {
             try {
                 changedAttrsMap = imageService.getMapAttr(mapAttrGet);
+            } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Failed);
             } catch (HttpServerErrorException | WebClientResponseException e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BPA_Attr_FetchFailed);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Attr_FetchFailed);
             }
         }
 
@@ -195,7 +205,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                           String[] mods) {
         }
 
-        record attr(String index, int map_count, float pp_count, float percent) {
+        record Attr(String index, int map_count, float pp_count, float percent) {
         }
 
         List<BeatMap4BA> beatMapList = new ArrayList<>(bpSize);
@@ -294,7 +304,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 .stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, e) -> o, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k, LinkedHashMap::new));
         var mapperInfo = userApiService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getMapperID()))
@@ -326,40 +336,40 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeight().getPP()).orElse(0f)).sum();
         var rawPP = (float) (userPP - bonusPP);
 
-        List<attr> modsAttr;
+        List<Attr> modsAttr;
         {
             final int m = modsSum;
-            List<attr> modsAttrTmp = new ArrayList<>(modsPPMap.size());
+            List<Attr> modsAttrTmp = new ArrayList<>(modsPPMap.size());
             modsPPMap.forEach((mod, value) -> {
 
-                attr attr = new attr(mod,
+                Attr attr = new Attr(mod,
                         value.stream().map(BPAnalysisService::null2Zero).toList().size(),
                         value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F),
                         (1F * value.size() / m));
                 modsAttrTmp.add(attr);
             });
-            modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(attr::pp_count).reversed()).toList();
+            modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(Attr::pp_count).reversed()).toList();
         }
 
-        List<attr> rankAttr = new ArrayList<>(rankMap.size());
+        List<Attr> rankAttr = new ArrayList<>(rankMap.size());
         {
             var fcList = rankMap.remove("FC");
-            attr fc;
+            Attr fc;
             if (CollectionUtils.isEmpty(fcList)) {
-                fc = new attr("FC", 0, 0, 0);
+                fc = new Attr("FC", 0, 0, 0);
             } else {
                 float ppSum = fcList.stream().reduce(Float::sum).orElse(0F);
-                fc = new attr("FC", fcList.size(), ppSum, (ppSum / bpPP));
+                fc = new Attr("FC", fcList.size(), ppSum, (ppSum / bpPP));
             }
             rankAttr.add(fc);
             for (var rank : RANK_ARRAY) {
                 if (rankMap.containsKey(rank)) {
                     var value = rankMap.get(rank);
                     float ppSum;
-                    attr attr = null;
+                    Attr attr = null;
                     if (Objects.nonNull(value) && !value.isEmpty()) {
                         ppSum = value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F);
-                        attr = new attr(rank,
+                        attr = new Attr(rank,
                                 value.stream().map(BPAnalysisService::null2Zero).toList().size(),
                                 ppSum, (ppSum / bpPP));
                     }

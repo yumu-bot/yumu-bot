@@ -270,7 +270,14 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         if (num <= 0f) num = 0f;
                     }
 
-                    case LIKE, IS -> is = matcher.group("c3");
+                    case LIKE -> is = matcher.group("c3");
+
+                    case IS -> {
+                        is = matcher.group("c3");
+                        // 有时候，”是“结尾的句子并不是问是否，还可以问比如时间。
+                        // 比如，“OWC 的开启时间是？”
+                        if (! StringUtils.hasText(right)) return "我怎么知道。";
+                    }
 
                     case REAL -> {
                         // 10% 触发彩蛋。
@@ -471,11 +478,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>是?多少|数量(?!级)|[个件位条只匹头颗根]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[是有]?多少[人个件位条只匹头颗根辆]?|数量(?!级)|[人个件位条只匹头颗根辆]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //是不是
         //A是。A不是。
-        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[个件位条只匹头颗根]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[人个件位条只匹头颗根辆]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //A和B比谁更C？
         //正常选择

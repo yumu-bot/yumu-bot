@@ -171,7 +171,7 @@ public class BotWebApi {
             throw new RuntimeException(MatchNowException.Type.MN_Render_Error.message);
         }
 
-        return new ResponseEntity<>(image, getImageHeader(matchID + "-match.jpg", image.length), HttpStatus.OK);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{matchID}-match.jpg", image.length), HttpStatus.OK);
     }
 
     /**
@@ -552,7 +552,7 @@ public class BotWebApi {
         try {
             data = bpAnalysisService.parseData(osuUser, scores, userApiService);
         } catch (Exception e) {
-            throw new RuntimeException(BPAnalysisException.Type.BPA_Attr_FetchFailed.message);
+            throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
         }
 
         var image = imageService.getPanelJ(data);
