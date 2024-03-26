@@ -63,7 +63,16 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
         var msg = msgs.stream().map(arrayMsg -> {
             Message m;
             switch (arrayMsg.getType()) {
-                case at -> m = new AtMessage(Long.parseLong(arrayMsg.getData().getOrDefault("qq", "0")));
+                case at -> {
+                    var qqStr = arrayMsg.getData().getOrDefault("qq", "0");
+
+                    try {
+                        m = new AtMessage(Long.parseLong(qqStr));
+                    } catch (NumberFormatException e) {
+                        //艾特全体是 -1。扔过来的可能是 "all"
+                        m = new AtMessage(-1L);
+                    }
+                }
                 case text -> m = new TextMessage(decodeArr(arrayMsg.getData().getOrDefault("text", "")));
                 case reply -> m = new ReplyMessage(Integer.parseInt(arrayMsg.getData().getOrDefault("id", "0")),
                         decodeArr(arrayMsg.getData().getOrDefault("text", "")));
@@ -75,7 +84,9 @@ public class MessageEvent extends Event implements com.now.nowbot.qq.event.Messa
                     }
                 }
 
-                case null, default -> m = new TextMessage(String.format("[%s;不支持的操作类型]", Optional.ofNullable(arrayMsg.getType()).orElse(MsgTypeEnum.unknown)));
+                case null, default -> m = new TextMessage(
+                        String.format("[%s;不支持的操作类型]", Optional.ofNullable(arrayMsg.getType()).orElse(MsgTypeEnum.unknown))
+                );
             }
             return m;
         }).toList();

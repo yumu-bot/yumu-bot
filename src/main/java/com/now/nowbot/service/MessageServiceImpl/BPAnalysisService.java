@@ -24,6 +24,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
@@ -330,7 +331,11 @@ public class BPAnalysisService implements MessageService<UserParam> {
             final int m = modsSum;
             List<attr> modsAttrTmp = new ArrayList<>(modsPPMap.size());
             modsPPMap.forEach((mod, value) -> {
-                attr attr = new attr(mod, value.size(), value.stream().reduce(Float::sum).orElse(0F), (1F * value.size() / m));
+
+                attr attr = new attr(mod,
+                        value.stream().map(BPAnalysisService::null2Zero).toList().size(),
+                        value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F),
+                        (1F * value.size() / m));
                 modsAttrTmp.add(attr);
             });
             modsAttr = modsAttrTmp.stream().sorted(Comparator.comparingDouble(attr::pp_count).reversed()).toList();
@@ -353,8 +358,10 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     float ppSum;
                     attr attr = null;
                     if (Objects.nonNull(value) && !value.isEmpty()) {
-                        ppSum = value.stream().reduce(Float::sum).orElse(0F);
-                        attr = new attr(rank, value.size(), ppSum, (ppSum / bpPP));
+                        ppSum = value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F);
+                        attr = new attr(rank,
+                                value.stream().map(BPAnalysisService::null2Zero).toList().size(),
+                                ppSum, (ppSum / bpPP));
                     }
                     rankAttr.add(attr);
                 }
@@ -400,4 +407,12 @@ public class BPAnalysisService implements MessageService<UserParam> {
         return data;
     }
 
+    @NonNull
+    private static <T extends Number> float null2Zero(T v) {
+        if (v == null) {
+            return 0f;
+        } else {
+            return v.floatValue();
+        }
+    }
 }
