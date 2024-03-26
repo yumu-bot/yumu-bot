@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_MAP;
 
@@ -563,7 +564,7 @@ public class BotWebApi {
      * 扔骰子接口 (D)
      *
      * @param range 范围，支持 0 ~ 2147483647
-     * @param compare 需要比较的文本
+     * @param compare 需要比较的文本，也可以把范围输入到这里来
      * @return String 扔骰子结果
      */
     @GetMapping(value = "dice")
@@ -579,10 +580,32 @@ public class BotWebApi {
                 if (Objects.isNull(compare)) {
                     message = String.format("%.0f", diceService.getRandom(100));
                 } else {
-                    message = diceService.Compare(compare);
+                    var isOnlyNumbers = Pattern.matches("^[0-9.]+$", compare);
+
+                    if (isOnlyNumbers) {
+                        try {
+                            var r = diceService.getRandom(Integer.parseInt(compare));
+
+                            if (r <= 1) {
+                                message = String.format("%.2f", r);
+                            } else {
+                                message = String.format("%.0f", r);
+                            }
+                        } catch (NumberFormatException e) {
+                            message = diceService.Compare(compare);
+                        }
+                    } else {
+                        message = diceService.Compare(compare);
+                    }
                 }
             } else {
-                message = String.format("%.0f", diceService.getRandom(range));
+                var r = diceService.getRandom(range);
+
+                if (r <= 1) {
+                    message = String.format("%.2f", r);
+                } else {
+                    message = String.format("%.0f", r);
+                }
             }
 
             return new ResponseEntity<>(message.getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
