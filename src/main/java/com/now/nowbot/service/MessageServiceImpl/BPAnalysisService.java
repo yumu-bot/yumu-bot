@@ -24,7 +24,6 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
@@ -79,7 +78,6 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
     @Override
     public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
-        var start = System.currentTimeMillis();
         var from = event.getSubject();
         var mode = param.mode();
 
@@ -141,8 +139,6 @@ public class BPAnalysisService implements MessageService<UserParam> {
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, u.getPlayMode());
             }
         }
-
-        System.out.println(System.currentTimeMillis() - start);
 
         byte[] image = new byte[0];
 
@@ -343,8 +339,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
             modsPPMap.forEach((mod, value) -> {
 
                 Attr attr = new Attr(mod,
-                        value.stream().map(BPAnalysisService::null2Zero).toList().size(),
-                        value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F),
+                        value.stream().filter(Objects::nonNull).toList().size(),
+                        value.stream().filter(Objects::nonNull).reduce(Float::sum).orElse(0F),
                         (1F * value.size() / m));
                 modsAttrTmp.add(attr);
             });
@@ -368,9 +364,9 @@ public class BPAnalysisService implements MessageService<UserParam> {
                     float ppSum;
                     Attr attr = null;
                     if (Objects.nonNull(value) && !value.isEmpty()) {
-                        ppSum = value.stream().map(BPAnalysisService::null2Zero).reduce(Float::sum).orElse(0F);
+                        ppSum = value.stream().filter(Objects::nonNull).reduce(Float::sum).orElse(0F);
                         attr = new Attr(rank,
-                                value.stream().map(BPAnalysisService::null2Zero).toList().size(),
+                                value.stream().filter(Objects::nonNull).toList().size(),
                                 ppSum, (ppSum / bpPP));
                     }
                     rankAttr.add(attr);
@@ -415,14 +411,5 @@ public class BPAnalysisService implements MessageService<UserParam> {
         data.put("game_mode", bps.getFirst().getMode());
 
         return data;
-    }
-
-    @NonNull
-    private static <T extends Number> float null2Zero(T v) {
-        if (v == null) {
-            return 0f;
-        } else {
-            return v.floatValue();
-        }
     }
 }

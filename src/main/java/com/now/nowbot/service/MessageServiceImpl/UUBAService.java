@@ -24,10 +24,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service("UU_BA")
@@ -306,9 +303,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             float bpm = b.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
-                    modSum.get(r).add(bp.getWeight().getPP());
+                    modSum.get(r).add(Optional.ofNullable(bp.getWeight().getPP()).orElse(0f));
                 } else {
-                    modSum.put(r, new modData(bp.getWeight().getPP()));
+                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeight().getPP()).orElse(0f)));
                 }
             });
             if (bp.getMods().contains("DT") || bp.getMods().contains("NC")) {
