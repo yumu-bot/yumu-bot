@@ -5,4 +5,5 @@ public enum PermissionType {
     GROUP_B,
     FRIEND_W,
     FRIEND_B,
+    GROUP_SELF_B,
 }

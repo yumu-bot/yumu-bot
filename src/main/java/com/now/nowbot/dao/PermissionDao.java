@@ -32,6 +32,12 @@ public class PermissionDao {
         data.setQQ(id);
         qqMapper.saveAndFlush(data);
     }
+
+    public List<Long> queryGroup(String service, PermissionType type) {
+        var pid = permissionMapper.getId(service, type);
+        return qqMapper.getQQIDByPermissionId(pid);
+    }
+
     public void deleteGroup(String service, PermissionType type, Long id){
         Long pid = permissionMapper.getId(service, type);
         qqMapper.deleteQQIDByPermissionIdAndIsGroupAndQQ(pid,true,id);
@@ -39,8 +45,8 @@ public class PermissionDao {
 
     // QQIDMapper
     public void deleteGroupAll(String service, PermissionType type) {
-        // Long pid = permissionMapper.getId(service, type);
-        // qqMapper.deleteQQIDByPermissionIdAndIsGroup(pid, true);
+        Long pid = permissionMapper.getId(service, type);
+        qqMapper.deleteQQIDByPermissionIdAndIsGroup(pid, true);
     }
 
     public void addUser(String service, PermissionType type, Long id){

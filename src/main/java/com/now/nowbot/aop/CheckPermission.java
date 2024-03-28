@@ -11,7 +11,25 @@ public @interface CheckPermission {
     /***
      * 黑/白 名单类型 true白  false黑
      */
+
+    boolean userWhite() default false;
+
+    boolean groupWhite() default false;
+
+    /**
+     * 超级管理员专用功能
+     */
+    boolean isSuperAdmin() default false;
+
+    /***
+     * true群主/管理员可修改 false 禁止修改
+     * @return false
+     */
+    boolean userSet() default false;
+
+    /*******************************old******************************/
     boolean isWhite() default false;
+
 
     /***
      * 群组记录
@@ -22,17 +40,6 @@ public @interface CheckPermission {
      * 个人记录
      */
     boolean friend() default true;
-
-    /***
-     * true群主/管理员可修改 false 禁止修改
-     * @return false
-     */
-    boolean userSet() default false;
-
-    /**
-     * 超级管理员专用功能
-     */
-    boolean isSuperAdmin() default false;
 
     /**
      * 群聊管理员专用功能
