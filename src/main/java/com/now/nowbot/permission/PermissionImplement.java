@@ -80,6 +80,7 @@ public class PermissionImplement implements PermissionController {
     }
 
     private static boolean isBlock(String name, MessageEvent event) {
+        if (event != null) return false;
         var servicePermission = permissionMap.get(name);
         var globalPermission = AllService;
         assert servicePermission != null;
