@@ -43,7 +43,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     @Resource
     ImageService      imageService;
 
-    public record InfoParam(BinUser user, OsuMode mode) {
+    public record InfoParam(BinUser user, OsuMode mode, boolean isMyself) {
     }
 
     @Override
@@ -58,13 +58,13 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         if (Objects.nonNull(at)) {
             data.setValue(new InfoParam(
                     getBinUser(at.getTarget(), messageText.toLowerCase()),
-                    mode));
+                    mode, false));
             return true;
         }
         if (Objects.nonNull(qq)) {
             data.setValue(new InfoParam(
                     getBinUser(Long.parseLong(qq), messageText.toLowerCase()),
-                    mode));
+                    mode, false));
             return true;
         }
         String name = matcher.group("name");
@@ -74,17 +74,17 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             try {
                 id = userApiService.getOsuId(name);
             } catch (WebClientResponseException.NotFound e) {
-                throw new InfoException(InfoException.Type.INFO_Player_NotFound);
+                throw new InfoException(InfoException.Type.I_Player_NotFound);
             }
             user = new BinUser();
             user.setOsuID(id);
             user.setMode(OsuMode.DEFAULT);
-            data.setValue(new InfoParam(user, mode));
+            data.setValue(new InfoParam(user, mode, false));
             return true;
         }
         data.setValue(new InfoParam(
                 getBinUser(event.getSender().getId(), messageText.toLowerCase()),
-                mode));
+                mode, true));
         return true;
     }
 
@@ -96,7 +96,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             if (! messageText.contains("information") && messageText.contains("info")) {
                 throw new LogException("info 退避成功");
             } else {
-                throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
+                throw new InfoException(InfoException.Type.I_Me_TokenExpired);
             }
         }
     }
@@ -117,21 +117,28 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
         } catch (WebClientResponseException.NotFound e) {
-            throw new InfoException(InfoException.Type.INFO_Me_NotFound);
+            if (param.isMyself()) {
+                throw new InfoException(InfoException.Type.I_Me_NotFound);
+            } else {
+                throw new InfoException(InfoException.Type.I_Player_NotFound);
+            }
         } catch (WebClientResponseException.Unauthorized | BindException e) {
-            throw new InfoException(InfoException.Type.INFO_Me_TokenExpired);
+            throw new InfoException(InfoException.Type.I_Me_TokenExpired);
+        } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
+            log.error("玩家信息：连接失败", e);
+            throw new InfoException(InfoException.Type.I_API_Unavailable);
         } catch (Exception e) {
-            log.error("玩家信息：找不到玩家信息", e);
-            throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
+            log.error("玩家信息：其他错误", e);
+            throw new InfoException(InfoException.Type.I_Player_FetchFailed);
         }
 
         try {
             BPs = scoreApiService.getBestPerformance(user, mode, 0, 100);
         } catch (WebClientResponseException.NotFound e) {
-            throw new InfoException(InfoException.Type.INFO_Player_NoBP);
+            throw new InfoException(InfoException.Type.I_Player_NoBP, param.mode());
         } catch (Exception e) {
             log.error("玩家信息：无法获取玩家 BP", e);
-            throw new InfoException(InfoException.Type.INFO_Player_FetchFailed);
+            throw new InfoException(InfoException.Type.I_BP_FetchFailed);
         }
 
         //recents = scoreApiService.getRecent(user, mode, 0, 3);
@@ -157,14 +164,14 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             image = imageService.getPanelD(osuUser, infoOpt, BPs, mode);
         } catch (Exception e) {
             log.error("玩家信息：图片渲染失败", e);
-            throw new InfoException(InfoException.Type.INFO_Fetch_Error);
+            throw new InfoException(InfoException.Type.I_Fetch_Error);
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
             log.error("玩家信息：发送失败", e);
-            throw new InfoException(InfoException.Type.INFO_Send_Error);
+            throw new InfoException(InfoException.Type.I_Send_Error);
         }
     }
 }
