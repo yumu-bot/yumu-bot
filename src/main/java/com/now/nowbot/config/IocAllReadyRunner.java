@@ -40,7 +40,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission, PermissionImplement permissionImplement) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
-        permissionImplement.init(services);
         LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;
