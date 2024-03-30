@@ -150,7 +150,11 @@ public class OsuUser {
     List<UserBadge> badges;
 
     public record UserBadge (
-            @JsonProperty("awarded_at") OffsetDateTime awardAt, String description, @JsonProperty("image@2x_url") String image2xUrl, @JsonProperty("image_url") String imageUrl, String url) {}
+            @JsonProperty("awarded_at") OffsetDateTime awardAt,
+            String description,
+            @JsonProperty("image@2x_url") String image2xUrl,
+            @JsonProperty("image_url") String imageUrl,
+            @Nullable String url) {}
 
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapPlaycount;
