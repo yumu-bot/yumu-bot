@@ -4,6 +4,7 @@ import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.LocalCommandListener;
 import com.now.nowbot.listener.OneBotListener;
+import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.util.MoliUtil;
@@ -29,19 +30,20 @@ public class IocAllReadyRunner implements CommandLineRunner {
     ApplicationContext applicationContext;
     CheckAspect check;
     Permission  permission;
+    PermissionImplement permissionImplement;
     @Resource
     WebServerApplicationContext webServerApplicationContext;
     @Resource(name = "mainExecutor")
     Executor executor;
 
     @Autowired
-    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission) {
+    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission, PermissionImplement permissionImplement) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
-        oneBotListener.init(services);
         LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;
+        this.permissionImplement = permissionImplement;
     }
 
     @Override
@@ -51,7 +53,10 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public void run(String... args) {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
         MoliUtil.init(applicationContext.getBean("template", RestTemplate.class));
+        var services = applicationContext.getBeansOfType(MessageService.class);
+        permissionImplement.init(services);
         permission.init(applicationContext);
+
 //        initFountWidth();
 
         ((TomcatWebServer) webServerApplicationContext.getWebServer())

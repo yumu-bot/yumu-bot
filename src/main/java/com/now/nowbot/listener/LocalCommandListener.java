@@ -1,7 +1,6 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.local.Bot;
 import com.now.nowbot.qq.local.Event;
 import com.now.nowbot.qq.local.contact.LocalGroup;
@@ -41,19 +40,12 @@ public class LocalCommandListener {
     void onMessage(String message) {
         var group = new LocalGroup();
         var event = new Event.GroupMessageEvent(bot, group, message);
-        handler.forEach((name, action) -> doAction(event, name, action));
-    }
-
-    public void doAction(MessageEvent event, String serviceName, MessageService service) {
         try {
-            if (Permission.isServiceClose(serviceName) && ! Permission.isSuperAdmin(event.getSender().getId())) return;
-            var data = new MessageService.DataValue();
-            boolean ihandle = service.isHandle(event, event.getTextMessage(), data);
-            if (ihandle) {
-                log.debug("{} 被本地调用", serviceName);
-                service.HandleMessage(event, data.getValue());
-            }
-        } catch (Throwable e) {
+            PermissionImplement.onMessage(event, ((ev, throwable) -> {
+                log.info("bot: (错误提示) {}", throwable.getMessage());
+                log.debug("详细信息: ", throwable);
+            }));
+        } catch (Exception e) {
             log.info("bot err: {}", e.getMessage());
             log.debug("详细信息: ", e);
         }

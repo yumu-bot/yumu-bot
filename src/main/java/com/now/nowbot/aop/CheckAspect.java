@@ -93,7 +93,7 @@ public class CheckAspect {
      * 加了@CheckPermission注解的
      * @throws TipsException
      */
-    @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
+//    @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
     public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) throws Exception {
         if (ContextUtil.isBreakAop()) {
             return point.getArgs();
@@ -139,7 +139,7 @@ public class CheckAspect {
         return args;
     }
 
-    @Before("servicePoint() && @target(Service)")
+    //    @Before("servicePoint() && @target(Service)")
     public Object[] checkRepeat(JoinPoint point, Service Service) throws Exception {
         if (ContextUtil.isBreakAop()) {
             return point.getArgs();
@@ -224,10 +224,13 @@ public class CheckAspect {
         if (pjp.getArgs()[0] instanceof MessageEvent e) {
             log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
         }
-        pjp.proceed(pjp.getArgs());
-        long end = System.currentTimeMillis();
-        long work = end - now;
-        serviceCall.saveCall(name, work);
+        try {
+            pjp.proceed(pjp.getArgs());
+        } finally {
+            long end = System.currentTimeMillis();
+            long work = end - now;
+            serviceCall.saveCall(name, work);
+        }
     }
 
     private Object parse(Object param) {

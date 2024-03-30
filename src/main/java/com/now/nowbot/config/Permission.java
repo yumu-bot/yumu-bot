@@ -5,6 +5,7 @@ import com.now.nowbot.aop.ServiceOrder;
 import com.now.nowbot.dao.PermissionDao;
 import com.now.nowbot.entity.ServiceSwitchLite;
 import com.now.nowbot.mapper.ServiceSwitchMapper;
+import com.now.nowbot.permission.PermissionType;
 import com.now.nowbot.qq.Bot;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.contact.GroupContact;

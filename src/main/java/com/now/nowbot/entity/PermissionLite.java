@@ -1,7 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.config.PermissionType;
-
+import com.now.nowbot.permission.PermissionType;
 import jakarta.persistence.*;
 
 @Entity
