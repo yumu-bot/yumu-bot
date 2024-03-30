@@ -28,7 +28,7 @@ import java.util.function.ToIntFunction;
 public class PermissionImplement implements PermissionController {
     private static final Logger                          log               = LoggerFactory.getLogger(PermissionImplement.class);
     private static final ScheduledExecutorService        EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.V_THREAD_FACORY);
-    private static final String                          GLOBAL_PERMISSION = "PERMISSION_ALL";
+    public static final String GLOBAL_PERMISSION = "PERMISSION_ALL";
     private static final Long                            LOCAL_GROUP_ID    = - 10086L;
     private static final Set<String>                     superService      = new CopyOnWriteArraySet<>();
     private static final Map<String, PermissionService>  permissionMap     = new LinkedHashMap<>();
@@ -423,19 +423,25 @@ public class PermissionImplement implements PermissionController {
     @Override
     public List<LockRecord> queryAllBlock() {
         var result = new ArrayList<LockRecord>(permissionMap.size() + 1);
-        result.add(new LockRecord(
-                "ALL",
-                AllService.getGroupList(),
-                AllService.getUserList(),
-                new HashSet<>()
-        ));
+        result.add(queryGlobal());
         permissionMap.forEach((name, p) -> result.add(new LockRecord(
                 name,
+                ! p.isDisable(),
                 Objects.requireNonNullElseGet(p.getGroupList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.getUserList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.getGroupSelfBlackList(), HashSet::new)
         )));
         return result;
+    }
+
+    public LockRecord queryGlobal() {
+        return new LockRecord(
+                GLOBAL_PERMISSION,
+                true,
+                AllService.getGroupList(),
+                AllService.getUserList(),
+                new HashSet<>()
+        );
     }
 
     @Override
@@ -444,6 +450,7 @@ public class PermissionImplement implements PermissionController {
 
         return new LockRecord(
                 p.name,
+                ! p.permission.isDisable(),
                 Objects.requireNonNullElseGet(p.permission().getGroupList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.permission().getUserList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.permission().getGroupSelfBlackList(), HashSet::new)

@@ -102,8 +102,10 @@ public interface PermissionController {
 
     List<LockRecord> queryAllBlock();
 
+    LockRecord queryGlobal();
+
     LockRecord queryBlock(String service);
 
-    record LockRecord(String namee, Set<Long> groups, Set<Long> users, Set<Long> ignores) {
+    record LockRecord(String name, boolean enable, Set<Long> groups, Set<Long> users, Set<Long> ignores) {
     }
 }

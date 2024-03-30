@@ -2,6 +2,8 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.permission.PermissionController;
+import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -9,7 +11,6 @@ import com.now.nowbot.throwable.ServiceException.SwitchException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpServerErrorException;
@@ -19,9 +20,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @Service("SWITCH") //修改service名 "switch" 一定要修改 Permission
 public class SwitchService implements MessageService<SwitchService.SwitchParam> {
     @Resource
-    Permission permission;
+    PermissionController controller;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
     public record SwitchParam(long groupID, String serviceName, Operation operation) {
     }
@@ -38,12 +39,6 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
             case "off", "close", "end", "f", "c", "e" -> Operation.OFF;
             case null, default -> Operation.REVIEW;
         };
-    }
-
-    @Autowired
-    public SwitchService(Permission permission, ImageService imageService) {
-        this.permission = permission;
-        this.imageService = imageService;
     }
 
     @Override
@@ -103,13 +98,16 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
             case ON -> {
                 try {
                     if (group == -1L) {
-                        Permission.openService(service);
+                        controller.switchService(service, true);
+//                        Permission.openService(service);
                         from.sendMessage(STR."已启动 \{service} 服务");
                     } else if (group == 0L) {
-                        permission.removeGroupAll(service, true);
-                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
+                        // 貌似没这功能
+//                        permission.removeGroupAll(service, true);
+//                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
                     } else {
-                        permission.removeGroup(service, group, true, false);
+                        controller.unblockGroup(service, group);
+//                        permission.removeGroup(service, group, true, false);
                         from.sendMessage(STR."已解禁群聊 \{group} 的 \{service} 服务");
                     }
                 } catch (TipsRuntimeException e) {
@@ -122,13 +120,14 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
             case OFF -> {
                 try {
                     if (group == -1L) {
-                        Permission.closeService(service);
+                        controller.switchService(service, false);
                         from.sendMessage(STR."已关闭 \{service} 服务");
                     } else if (group == 0L) {
-                        permission.removeGroupAll(service, true);
-                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
+//                        permission.removeGroupAll(service, true);
+//                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
                     } else {
-                        permission.addGroup(service, group, true, false);
+                        controller.unblockGroup(service, group);
+//                        permission.addGroup(service, group, true, false);
                         from.sendMessage(STR."已禁止群聊 \{group} 的 \{service} 服务");
                     }
                 } catch (TipsRuntimeException e) {
@@ -152,6 +151,26 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
     }
 
     private String getServiceListMarkdown() {
+        // 这里的状态很复杂, 每个服务有三个id list(群, qq, ignore的群)
+        var data = controller.queryAllBlock();
+        var service1 = data.getFirst();
+        // 是否为开启状态
+        service1.enable();
+
+        // 群黑名单
+        service1.groups();
+
+        // 用户黑名单
+        service1.users();
+
+        // ignore
+        service1.ignores();
+
+        // 另外作用在全局服务的状态是第一个, 可以通过下面来判断
+        service1.name().equals(PermissionImplement.GLOBAL_PERMISSION);
+        // 或者直接获取
+        controller.queryGlobal();
+
         StringBuilder sb = new StringBuilder();
         sb.append("## 服务：开关状态\n");
 
