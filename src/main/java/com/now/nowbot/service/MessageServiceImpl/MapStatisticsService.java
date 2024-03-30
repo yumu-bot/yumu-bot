@@ -111,9 +111,13 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             log.error("谱面信息：无法生成空对象", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
+
         try {
+
             var image = getImage(param, osuUser);
             from.sendImage(image);
+        } catch (MapStatisticsException e) {
+            throw e;
         } catch (Exception e) {
             log.error("谱面信息：发送失败", e);
             throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
