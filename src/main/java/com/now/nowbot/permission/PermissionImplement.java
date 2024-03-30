@@ -80,12 +80,8 @@ public class PermissionImplement implements PermissionController {
     }
 
     private static boolean isBlock(String name, MessageEvent event) {
-        PermissionRecord record = null;
-        try {
-            record = getService(name);
-        } catch (Exception e) {
-            return false;
-        }
+        if (superService.contains(name)) return true;
+        PermissionRecord record = getService(name);
         var servicePermission = record.permission;
         var globalPermission = AllService;
         if (Objects.isNull(globalPermission) || Objects.isNull(servicePermission)) return true;
@@ -180,7 +176,7 @@ public class PermissionImplement implements PermissionController {
         supetList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
         testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
 
-        log.info("权限模块初始化完成, size {} - {} [{}]", permissionMap.size(), servicesMap.size(), services.size());
+        log.info("权限模块初始化完成, all[{}], size {} - {} [{}]", Objects.isNull(AllService), permissionMap.size(), servicesMap.size(), services.size());
         if (permissionMap.size() != services.size()) {
             for (var s : services.keySet()) {
                 if (! permissionMap.containsKey(s)) {
