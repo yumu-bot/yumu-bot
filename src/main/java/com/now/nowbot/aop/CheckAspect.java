@@ -224,10 +224,13 @@ public class CheckAspect {
         if (pjp.getArgs()[0] instanceof MessageEvent e) {
             log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
         }
-        pjp.proceed(pjp.getArgs());
-        long end = System.currentTimeMillis();
-        long work = end - now;
-        serviceCall.saveCall(name, work);
+        try {
+            pjp.proceed(pjp.getArgs());
+        } finally {
+            long end = System.currentTimeMillis();
+            long work = end - now;
+            serviceCall.saveCall(name, work);
+        }
     }
 
     private Object parse(Object param) {
