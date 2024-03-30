@@ -80,10 +80,10 @@ public class PermissionImplement implements PermissionController {
     }
 
     private static boolean isBlock(String name, MessageEvent event) {
-        if (event != null) return false;
-        var servicePermission = permissionMap.get(name);
+        var record = getService(name);
+        var servicePermission = record.permission;
         var globalPermission = AllService;
-        assert servicePermission != null;
+        if (Objects.isNull(globalPermission) || Objects.isNull(servicePermission)) return true;
         if (event instanceof GroupMessageEvent group) {
             var gid = group.getGroup().getId();
             var uid = group.getSender().getId();
