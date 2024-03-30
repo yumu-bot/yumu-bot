@@ -1,4 +1,4 @@
-package com.now.nowbot.config;
+package com.now.nowbot.permission;
 
 import java.util.HashSet;
 import java.util.List;
@@ -69,11 +69,43 @@ public class PermissionService {
         groupList.add(id);
     }
 
+    public void deleteGroup(Long id) {
+        groupList.remove(id);
+    }
+
     public void addSelfGroup(Long id) {
         if (Objects.nonNull(groupSelfBlackList)) groupSelfBlackList.add(id);
     }
 
+    public void deleteSelfGroup(Long id) {
+        if (Objects.nonNull(groupSelfBlackList)) groupSelfBlackList.remove(id);
+    }
+
     public void addUser(Long id) {
         userList.add(id);
+    }
+
+    public void deleteUser(Long id) {
+        userList.remove(id);
+    }
+
+    public boolean isGroupWhite() {
+        return isGroupWhite;
+    }
+
+    public boolean isUserWhite() {
+        return isUserWhite;
+    }
+
+    public Set<Long> getGroupList() {
+        return groupList;
+    }
+
+    public Set<Long> getUserList() {
+        return userList;
+    }
+
+    public Set<Long> getGroupSelfBlackList() {
+        return groupSelfBlackList;
     }
 }

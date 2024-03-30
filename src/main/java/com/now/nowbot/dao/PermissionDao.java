@@ -1,10 +1,10 @@
 package com.now.nowbot.dao;
 
-import com.now.nowbot.config.PermissionType;
 import com.now.nowbot.entity.PermissionLite;
 import com.now.nowbot.entity.QQID;
 import com.now.nowbot.mapper.PermissionMapper;
 import com.now.nowbot.mapper.QQIDMapper;
+import com.now.nowbot.permission.PermissionType;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 

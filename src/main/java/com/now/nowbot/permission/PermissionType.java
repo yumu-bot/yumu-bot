@@ -1,4 +1,4 @@
-package com.now.nowbot.config;
+package com.now.nowbot.permission;
 
 public enum PermissionType {
     GROUP_W,

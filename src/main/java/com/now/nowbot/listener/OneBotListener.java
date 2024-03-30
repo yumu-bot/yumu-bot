@@ -6,12 +6,11 @@ import com.mikuac.shiro.common.utils.ShiroUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.qq.onebot.event.MessageEvent;
+import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
-import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,25 +45,10 @@ public class OneBotListener {
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }
-        ASyncMessageUtil.put(event);
-        String textMessage = event.getTextMessage().trim();
-        for (var ins : Permission.getAllService()) {
-            //功能关闭 优先级高于aop拦截
-            if (Permission.isServiceClose(ins) && !Permission.isSuperAdmin(event.getSender().getId())) continue;
-            if (Permission.checkStopListener()) break;
-            try {
-                var service = messageServiceMap.get(ins);
-                var d = new MessageService.DataValue();
-                if (service.isHandle(event, textMessage, d)) {
-                    service.HandleMessage(event, d.getValue());
-                }
-            } catch (Throwable e) {
-                errorHandle(event, e);
-            }
-        }
+        PermissionImplement.onMessage(event, this::errorHandle);
     }
 
-    public void errorHandle(MessageEvent event, Throwable e) {
+    public void errorHandle(com.now.nowbot.qq.event.MessageEvent event, Throwable e) {
         var from = event.getSubject();
         // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
         if (e instanceof BotException botException) {
