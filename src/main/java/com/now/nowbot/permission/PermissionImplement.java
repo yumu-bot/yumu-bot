@@ -80,7 +80,12 @@ public class PermissionImplement implements PermissionController {
     }
 
     private static boolean isBlock(String name, MessageEvent event) {
-        var record = getService(name);
+        PermissionRecord record = null;
+        try {
+            record = getService(name);
+        } catch (Exception e) {
+            return false;
+        }
         var servicePermission = record.permission;
         var globalPermission = AllService;
         if (Objects.isNull(globalPermission) || Objects.isNull(servicePermission)) return true;
@@ -92,6 +97,16 @@ public class PermissionImplement implements PermissionController {
             var uid = event.getSender().getId();
             return ! globalPermission.check(null, uid) || ! servicePermission.check(null, uid);
         }
+    }
+
+    private static PermissionRecord getService(String name) {
+        for (var entry : permissionMap.entrySet()) {
+            if (name.equalsIgnoreCase(entry.getKey())) {
+                return PermissionRecord.fromEntry(entry);
+            }
+        }
+        log.debug("未找到对应的服务 [{}], {}", name, permissionMap.size());
+        throw new RuntimeException("未找到对应的服务");
     }
 
     public void init(
@@ -165,14 +180,7 @@ public class PermissionImplement implements PermissionController {
         supetList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
         testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
 
-        log.info("权限模块初始化完成");
-    }    private static PermissionRecord getService(String name) {
-        for (var entry : permissionMap.entrySet()) {
-            if (name.equalsIgnoreCase(entry.getKey())) {
-                return PermissionRecord.fromEntry(entry);
-            }
-        }
-        throw new RuntimeException("未找到对应的服务");
+        log.info("权限模块初始化完成, size {} - {} [{}]", permissionMap.size(), servicesMap.size(), services.size());
     }
 
     /**
@@ -258,6 +266,12 @@ public class PermissionImplement implements PermissionController {
         }
         permissionDao.deleteGroup(name, PermissionType.GROUP_SELF_B, id);
         perm.deleteSelfGroup(id);
+    }
+
+    record PermissionRecord(String name, PermissionService permission) {
+        static PermissionRecord fromEntry(Map.Entry<String, PermissionService> e) {
+            return new PermissionRecord(e.getKey(), e.getValue());
+        }
     }    /**
      * 功能开关控制
      *
@@ -272,11 +286,9 @@ public class PermissionImplement implements PermissionController {
         futureMap.computeIfPresent(name, this::cancelFuture);
     }
 
-    record PermissionRecord(String name, PermissionService permission) {
-        static PermissionRecord fromEntry(Map.Entry<String, PermissionService> e) {
-            return new PermissionRecord(e.getKey(), e.getValue());
-        }
-    }    /**
+
+
+    /**
      * 功能开关控制
      *
      * @param name 名
@@ -395,9 +407,6 @@ public class PermissionImplement implements PermissionController {
     }
 
 
-
-
-
     /**
      * 忽略群
      *
@@ -451,7 +460,6 @@ public class PermissionImplement implements PermissionController {
         var record = getService(service);
         unblockServiceSelf(record.name, record.permission, id, time);
     }
-
 
 
     private ScheduledFuture<?> cancelFuture(String name, ScheduledFuture<?> future) {
