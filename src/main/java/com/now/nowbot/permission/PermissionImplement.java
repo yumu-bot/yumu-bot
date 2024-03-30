@@ -181,6 +181,13 @@ public class PermissionImplement implements PermissionController {
         testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
 
         log.info("权限模块初始化完成, size {} - {} [{}]", permissionMap.size(), servicesMap.size(), services.size());
+        if (permissionMap.size() != services.size()) {
+            for (var s : services.keySet()) {
+                if (! permissionMap.containsKey(s)) {
+                    log.info("{} 服务初始化失败", s);
+                }
+            }
+        }
     }
 
     /**
@@ -272,12 +279,8 @@ public class PermissionImplement implements PermissionController {
         static PermissionRecord fromEntry(Map.Entry<String, PermissionService> e) {
             return new PermissionRecord(e.getKey(), e.getValue());
         }
-    }    /**
-     * 功能开关控制
-     *
-     * @param name 名
-     * @param open true:开; false:关
-     */
+    }
+
     @Override
     public void switchService(String name, boolean open) {
         var record = getService(name);
@@ -287,14 +290,6 @@ public class PermissionImplement implements PermissionController {
     }
 
 
-
-    /**
-     * 功能开关控制
-     *
-     * @param name 名
-     * @param open true:开; false:关
-     * @param time 到指定时间撤销修改
-     */
     @Override
     public void switchService(String name, boolean open, Long time) {
         switchService(name, open);
@@ -305,22 +300,12 @@ public class PermissionImplement implements PermissionController {
         }
     }
 
-    /**
-     * 拉黑群
-     *
-     * @param id 群id
-     */
+
     @Override
     public void blockGroup(Long id) {
         blockService(GLOBAL_PERMISSION, AllService, id, true, null);
     }
 
-    /**
-     * 拉黑群一段时间
-     *
-     * @param id   群id
-     * @param time 时间, 单位毫秒
-     */
     @Override
     public void blockGroup(Long id, Long time) {
         blockService(GLOBAL_PERMISSION, AllService, id, true, time);
@@ -356,22 +341,11 @@ public class PermissionImplement implements PermissionController {
     }
 
 
-    /**
-     * 拉黑个人
-     *
-     * @param id qq
-     */
     @Override
     public void blockUser(Long id) {
         blockService(GLOBAL_PERMISSION, AllService, id, false, null);
     }
 
-    /**
-     * 拉黑个人一段时间
-     *
-     * @param id   qq
-     * @param time 多少时间
-     */
     @Override
     public void blockUser(Long id, Long time) {
         blockService(GLOBAL_PERMISSION, AllService, id, false, time);
@@ -407,11 +381,6 @@ public class PermissionImplement implements PermissionController {
     }
 
 
-    /**
-     * 忽略群
-     *
-     * @param id 群号
-     */
     @Override
     public void ignoreAll(Long id) {
         blockServiceSelf(GLOBAL_PERMISSION, AllService, id, null);
@@ -434,11 +403,6 @@ public class PermissionImplement implements PermissionController {
         blockServiceSelf(record.name, record.permission, id, time);
     }
 
-    /**
-     * 取消忽略群
-     *
-     * @param id 群号
-     */
     @Override
     public void unignoreAll(Long id) {
         unblockServiceSelf(GLOBAL_PERMISSION, AllService, id, null);
