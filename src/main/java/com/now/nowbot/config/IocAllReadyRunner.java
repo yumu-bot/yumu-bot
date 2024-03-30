@@ -30,6 +30,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
     ApplicationContext applicationContext;
     CheckAspect check;
     Permission  permission;
+    PermissionImplement permissionImplement;
     @Resource
     WebServerApplicationContext webServerApplicationContext;
     @Resource(name = "mainExecutor")
@@ -40,10 +41,10 @@ public class IocAllReadyRunner implements CommandLineRunner {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
         permissionImplement.init(services);
-        oneBotListener.init(services);
         LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;
+        this.permissionImplement = permissionImplement;
     }
 
     @Override
@@ -53,6 +54,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
     public void run(String... args) {
         QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
         MoliUtil.init(applicationContext.getBean("template", RestTemplate.class));
+        var services = applicationContext.getBeansOfType(MessageService.class);
+        permissionImplement.init(services);
         permission.init(applicationContext);
 
 //        initFountWidth();
