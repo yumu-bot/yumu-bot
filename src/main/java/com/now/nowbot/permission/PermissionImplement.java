@@ -81,7 +81,7 @@ public class PermissionImplement implements PermissionController {
 
     private static boolean isBlock(String name, MessageEvent event) {
         var servicePermission = permissionMap.get(name);
-        var globalPermission = permissionMap.get(GLOBAL_PERMISSION);
+        var globalPermission = AllService;
         assert servicePermission != null;
         if (event instanceof GroupMessageEvent group) {
             var gid = group.getGroup().getId();
