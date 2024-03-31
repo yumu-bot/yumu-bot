@@ -183,7 +183,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var mapAttrGet = new MapAttrGet(user.getOsuMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
         Map<Long, MapAttr> changedAttrsMap;
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;
@@ -212,8 +212,8 @@ public class BPAnalysisService implements MessageService<UserParam> {
             var s = bps.get(i);
             {// 处理 mapList
                 var b = s.getBeatMap();
-                if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreId())) {
-                    var attr = changedAttrsMap.get(s.getScoreId());
+                if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreID())) {
+                    var attr = changedAttrsMap.get(s.getScoreID());
                     b.setStarRating(attr.getStars());
                     b.setBPM(attr.getBpm());
                     if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
@@ -237,16 +237,16 @@ public class BPAnalysisService implements MessageService<UserParam> {
 
             { // 统计 mods / rank
                 if (!CollectionUtils.isEmpty(s.getMods())) {
-                    s.getMods().forEach(m -> modsPPMap.add(m, s.getWeight().getPP()));
+                    s.getMods().forEach(m -> modsPPMap.add(m, s.getWeight().weightedPP()));
                     modsSum += s.getMods().size();
                 } else {
 //                    modsPPSum.add("NM", s.getWeight().getPP());
                     modsSum += 1;
                 }
                 if (s.isPerfect()) {
-                    rankMap.add("FC", s.getWeight().getPP());
+                    rankMap.add("FC", s.getWeight().weightedPP());
                 }
-                rankMap.add(s.getRank(), s.getWeight().getPP());
+                rankMap.add(s.getRank(), s.getWeight().weightedPP());
             }
         }
         // 0 length; 1 combo; 2 star; 3 bpm
@@ -329,7 +329,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
         var bonusPP = DataUtil.getBonusPP(userPP, bpPPs);
 
         //bpPP + remainPP (bp100之后的) = rawPP
-        var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeight().getPP()).orElse(0f)).sum();
+        var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeight().weightedPP()).orElse(0f)).sum();
         var rawPP = (float) (userPP - bonusPP);
 
         List<Attr> modsAttr;

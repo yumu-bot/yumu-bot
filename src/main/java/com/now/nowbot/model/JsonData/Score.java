@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,31 +16,66 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
-    static final DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+    static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .appendLiteral("T")
+            .appendPattern("HH:mm:ss")
+            .appendZoneId().toFormatter();
+
+    //DateTimeFormatter.ofPattern("yyyy-MM-ddThh:mm:ssZ");
     //    @JsonProperty("statistics")
     Double accuracy;
+
     @JsonProperty("best_id")
-    Long bestId;
+    Long bestID;
+
     @JsonProperty("max_combo")
     Integer maxCombo;
+
     @JsonProperty("user_id")
-    Long userId;
+    Long UID;
+
     @JsonProperty("created_at")
     String createTime;
+
     @JsonProperty("id")
-    Long scoreId;
+    Long scoreID;
+
     @JsonIgnoreProperties
     OsuMode mode;
+
     @JsonProperty("mode_int")
     Integer modeInt;
+
     List<String> mods;
+
     Boolean passed;
+
     Boolean perfect;
-    Float pp;
+
+    @JsonProperty("pp")
+    Float PP;
+
     String rank;
+
     Boolean replay;
+
     Integer score;
+
     Statistics statistics;
+
+    String type;
+
+    @JsonIgnoreProperties
+    boolean legacy;
+
+    // 仅查询bp时存在
+    @JsonProperty("weight")
+    Weight weight;
+
+    public record Weight(
+            @JsonProperty("percentage") Float percentage,
+            @JsonProperty("pp") Float weightedPP) {}
 
     @JsonProperty("beatmap")
     BeatMap beatMap;
@@ -48,10 +84,6 @@ public class Score {
     BeatMapSet beatMapSet;
 
     MicroUser user;
-    /***
-     * 仅查询bp时存在
-     */
-    Weight weight;
 
     @JsonProperty("mode")
     public void setMode(String mode){
@@ -66,26 +98,27 @@ public class Score {
         this.accuracy = accuracy;
     }
 
-    public Long getBestId() {
-        return bestId;
+    public Long getBestID() {
+        return bestID;
     }
 
-    public void setBestId(Long bestId) {
-        this.bestId = bestId;
+    public void setBestID(Long bestID) {
+        this.bestID = bestID;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getUID() {
+        return UID;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUID(Long UID) {
+        this.UID = UID;
     }
 
     public LocalDateTime getCreateTime() {
         if (createTime != null) return LocalDateTime.parse(createTime, formatter);
         return LocalDateTime.now();
     }
+
     @JsonProperty("create_at_str")
     public String getCreateTimeStr() {
         return createTime;
@@ -95,12 +128,12 @@ public class Score {
         this.createTime = createTime;
     }
 
-    public Long getScoreId() {
-        return scoreId;
+    public Long getScoreID() {
+        return scoreID;
     }
 
-    public void setScoreId(Long scoreId) {
-        this.scoreId = scoreId;
+    public void setScoreID(Long scoreID) {
+        this.scoreID = scoreID;
     }
 
     public OsuMode getMode() {
@@ -144,20 +177,20 @@ public class Score {
     }
 
     public Float getPP() {
-        if (Objects.nonNull(pp)) {
-            return pp;
+        if (Objects.nonNull(PP)) {
+            return PP;
         }
 
         // PPY PP 有时候是 null
-        if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.pp) && weight.percentage > 0) {
-            return weight.pp / (weight.percentage / 100f);
+        if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.weightedPP) && weight.percentage > 0) {
+            return weight.weightedPP / (weight.percentage / 100f);
         }
 
         return 0f;
     }
 
     public void setPP(Float pp) {
-        this.pp = pp;
+        this.PP = pp;
     }
 
     public String getRank() {
@@ -182,6 +215,23 @@ public class Score {
 
     public void setScore(Integer score) {
         this.score = score;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public boolean isLegacy() {
+        legacy = Objects.nonNull(type) && !Objects.equals(type, "solo_score"); //目前只看见有这个类别，mp 房也是这个类别
+        return legacy;
+    }
+
+    public void setLegacy(boolean legacy) {
+        this.legacy = legacy;
     }
 
     public Statistics getStatistics() {
@@ -224,6 +274,10 @@ public class Score {
         this.maxCombo = maxCombo;
     }
 
+    public Boolean isPerfect() {
+        return perfect;
+    }
+
     public Weight getWeight() {
         return weight;
     }
@@ -232,41 +286,8 @@ public class Score {
         this.weight = weight;
     }
 
-    public Boolean isPerfect() {
-        return perfect;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Weight {
-        @JsonProperty("percentage")
-        Float percentage;
-        @JsonProperty("pp")
-        Float pp;
-
-        public Float getPercentage() {
-            return percentage;
-        }
-
-        public void setPercentage(Float percentage) {
-            this.percentage = percentage;
-        }
-
-        public Float getPP() {
-            return pp;
-        }
-
-        public void setPP(Float pp) {
-            this.pp = pp;
-        }
-
-        @Override
-        public String toString() {
-            return STR."Weight{percentage=\{percentage}, pp=\{pp}\{'}'}";
-        }
-    }
-
     @Override
     public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestId=\{bestId}, maxCombo=\{maxCombo}, userId=\{userId}, createTime='\{createTime}\{'\''}, scoreId=\{scoreId}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, pp=\{pp}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
+        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
     }
 }

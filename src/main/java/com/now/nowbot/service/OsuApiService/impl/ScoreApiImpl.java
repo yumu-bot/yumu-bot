@@ -25,7 +25,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/best")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
@@ -42,7 +42,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/best")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
@@ -69,7 +69,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid, uid))
                 .headers(base::insertHeader)
@@ -83,7 +83,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid, user.getOsuID()))
                 .headers(base.insertHeader(user))
@@ -107,7 +107,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid, uid))
                 .headers(base::insertHeader)
@@ -122,7 +122,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid, user.getOsuID()))
                 .headers(base.insertHeader(user))
@@ -137,7 +137,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid, uid))
                 .headers(base::insertHeader)
@@ -152,7 +152,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 1) //这里 stable 和 lazer 记录不一样。优先查 lazer，或者改个接口
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid))
                 .headers(base::insertHeader)
@@ -166,7 +166,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/recent")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParam("include_fails", includeFails ? 1 : 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
@@ -183,7 +183,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/recent")
-                        .queryParam("legacy_only", 1)
+                        .queryParam("legacy_only", 0)
                         .queryParam("include_fails", includeFails ? 1 : 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)

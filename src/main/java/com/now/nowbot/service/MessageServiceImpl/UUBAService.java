@@ -294,7 +294,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreId(), s.getBeatMap().getId(), s.getScore()));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), s.getScore()));
         var changedStarMap = imageService.getMapAttr(mapAttrGet);
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
@@ -303,9 +303,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             float bpm = b.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
-                    modSum.get(r).add(Optional.ofNullable(bp.getWeight().getPP()).orElse(0f));
+                    modSum.get(r).add(Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f));
                 } else {
-                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeight().getPP()).orElse(0f)));
+                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f)));
                 }
             });
             if (bp.getMods().contains("DT") || bp.getMods().contains("NC")) {
@@ -318,8 +318,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
             avgLength += length;
 
-            if (changedStarMap.containsKey(bp.getScoreId())) {
-                star = changedStarMap.get(bp.getScoreId()).getStars();
+            if (changedStarMap.containsKey(bp.getScoreID())) {
+                star = changedStarMap.get(bp.getScoreID()).getStars();
                 avgStar += star;
             } else {
                 star =  bp.getBeatMap().getStarRating();
@@ -368,7 +368,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             } else {
                 mapperSum.put(b.getMapperID(), new mapperData(bp.getPP(), b.getMapperID()));
             }
-            nowPP += bp.getWeight().getPP();
+            nowPP += bp.getWeight().weightedPP();
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();

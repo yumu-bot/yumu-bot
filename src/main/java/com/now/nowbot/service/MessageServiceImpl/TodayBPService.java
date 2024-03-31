@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
@@ -13,25 +14,30 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
 
 @Service("TODAY_BP")
-public class TodayBPService implements MessageService<Matcher> {
+public class TodayBPService implements MessageService<TodayBPService.TodayBPParam> {
     private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     OsuUserApiService userApiService;
     OsuScoreApiService scoreApiService;
     BindDao bindDao;
     ImageService imageService;
+
+    public record TodayBPParam(BinUser user, OsuMode mode, int day, boolean isMyself) {}
+
     @Autowired
     public TodayBPService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
         this.userApiService = userApiService;
@@ -41,82 +47,95 @@ public class TodayBPService implements MessageService<Matcher> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TODAY_BP.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<TodayBPParam> data) throws Throwable {
+        var matcher = Instructions.TODAY_BP.matcher(messageText);
+        if (!matcher.find()) return false;
+
+        var name = matcher.group("name");
+        var dayStr = matcher.group("day");
+
+        // 时间计算
+        int day = 1;
+
+        if (StringUtils.hasText(dayStr)) {
+            try {
+                day = Integer.parseInt(dayStr);
+            } catch (NumberFormatException ignored) {
+
+            }
+        }
+
+        if (day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
+
+        // 传递其他参数
+        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        var qq = matcher.group("qq");
+
+        if (Objects.nonNull(at)) {
+            data.setValue(new TodayBPParam(
+                    new BinUser(at.getTarget(), messageText.toLowerCase()), mode, day, false));
             return true;
-        } else return false;
+        }
+        if (Objects.nonNull(qq)) {
+            data.setValue(new TodayBPParam(
+                    new BinUser(Long.parseLong(qq), messageText.toLowerCase()), mode, day, false));
+            return true;
+        }
+        if (Strings.isNotBlank(name)) {
+            long id;
+            var user = new BinUser();
+
+            try {
+                id = userApiService.getOsuId(name);
+            } catch (WebClientResponseException.NotFound e) {
+                throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+            }
+            user.setOsuID(id);
+            user.setMode(mode);
+            data.setValue(new TodayBPParam(user, mode, day, false));
+            return true;
+        } else {
+            data.setValue(new TodayBPParam(
+                    new BinUser(event.getSender().getId(), messageText.toLowerCase()), mode, day, true));
+            return true;
+        }
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, TodayBPParam param) throws Throwable {
         var from = event.getSubject();
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        var name = matcher.group("name");
-        var day = matcher.group("day");
-
-        if (day == null) day = "1";
-        if (name == null) name = "";
 
         List<Score> BPs;
-        List<Score> bpList = new ArrayList<>();
+        List<Score> TodayBPs = new ArrayList<>();
         OsuUser user;
         var rankList = new ArrayList<Integer>();
 
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        if (at != null) {
-            try {
-                var bu = bindDao.getUserFromQQ(at.getTarget());
-                if (mode == OsuMode.DEFAULT) mode = bu.getMode();
-                user = userApiService.getPlayerInfo(bu, mode);
-                BPs = scoreApiService.getBestPerformance(bu, mode, 0, 100);
-            } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_Player_FetchFailed);
-            }
-        } else if (!name.isEmpty()) {
-            try {
-                user = userApiService.getPlayerInfo(name, mode);
-                BPs = scoreApiService.getBestPerformance(user.getUID(), mode, 0, 100);
-            } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
-            }
-        } else {
-            try {
-                var bu = bindDao.getUserFromQQ(event.getSender().getId());
-                if (mode == OsuMode.DEFAULT) mode = bu.getMode();
-                user = userApiService.getPlayerInfo(bu, mode);
-                BPs = scoreApiService.getBestPerformance(bu, mode, 0, 100);
-            } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
-            }
+        try {
+            user = userApiService.getPlayerInfo(param.user, param.mode);
+            BPs = scoreApiService.getBestPerformance(param.user, param.mode, 0, 100);
+        } catch (Exception e) {
+            throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
         }
 
         if (CollectionUtils.isEmpty(BPs)) throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
 
-        // 时间计算
-        int _day = -1;
-
-        if (!day.isEmpty()){
-            _day = - Integer.parseInt(day);
-        }
-
-        if (_day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
-
-        LocalDateTime dayBefore = LocalDateTime.now().plusDays(_day);
-
         //挑出来符合要求的
+
+        LocalDateTime dayBefore = LocalDateTime.now().minusDays(param.day);
+
         for (int i = 0; i < BPs.size(); i++) {
             var bp = BPs.get(i);
 
             if (dayBefore.isBefore(bp.getCreateTime())){
-                bpList.add(bp);
+                TodayBPs.add(bp);
                 rankList.add(i + 1);
             }
         }
+
         //没有的话
-        if (bpList.isEmpty()){
-            if (day.isEmpty() || Objects.equals(day, "1")) {
+        if (TodayBPs.isEmpty()){
+            if (param.day <= 1) {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H);
             } else {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod);
@@ -126,7 +145,7 @@ public class TodayBPService implements MessageService<Matcher> {
         byte[] image;
 
         try {
-            image = imageService.getPanelA4(user, bpList, rankList);
+            image = imageService.getPanelA4(user, TodayBPs, rankList);
         } catch (Exception e) {
             log.error("今日最好成绩：图片渲染失败", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Fetch_Error);

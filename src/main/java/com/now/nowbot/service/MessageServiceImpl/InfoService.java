@@ -67,25 +67,27 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                     mode, false));
             return true;
         }
+
         String name = matcher.group("name");
         if (Strings.isNotBlank(name)) {
+            var user = new BinUser();
             long id;
-            BinUser user;
+
             try {
                 id = userApiService.getOsuId(name);
             } catch (WebClientResponseException.NotFound e) {
                 throw new InfoException(InfoException.Type.I_Player_NotFound);
             }
-            user = new BinUser();
             user.setOsuID(id);
-            user.setMode(OsuMode.DEFAULT);
+            user.setMode(mode);
             data.setValue(new InfoParam(user, mode, false));
             return true;
+        } else {
+            data.setValue(new InfoParam(
+                    getBinUser(event.getSender().getId(), messageText.toLowerCase()),
+                    mode, true));
+            return true;
         }
-        data.setValue(new InfoParam(
-                getBinUser(event.getSender().getId(), messageText.toLowerCase()),
-                mode, true));
-        return true;
     }
 
     private BinUser getBinUser(long qq, String messageText) throws InfoException {
