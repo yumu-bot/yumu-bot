@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Instructions;
@@ -51,48 +52,57 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         var name = matcher.group("name");
         var dayStr = matcher.group("day");
         var hasHash = StringUtils.hasText(matcher.group("hash"));
-        var hasSpaceAtEnd = StringUtils.hasText(matcher.group("name")) && name.endsWith(" ");
 
         // 时间计算
         int day = 1;
 
+        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+
         if (StringUtils.hasText(dayStr)) {
-            if (hasSpaceAtEnd) {
-                //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+            if (noSpaceAtEnd) {
+                // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
+                name += dayStr;
+                dayStr = "";
+            } else {
+                // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                // 没有名字，但有 n 匹配的也走这边 parse
                 try {
                     day = Integer.parseInt(dayStr);
-                } catch (NumberFormatException ignored) {
-
+                } catch (NumberFormatException e) {
+                    throw new BPException(BPException.Type.BP_Map_RankError);
                 }
-            } else {
-                //避免 !b lolol233 这样子被错误匹配
-                name += dayStr;
             }
         }
 
-        //避免 !b lolol233 这样子被错误匹配
+        //避免 !b 970 这样子被错误匹配
         if (day < 1 || day > 999) {
             if (hasHash) {
                 throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
-            } else {
-                name += dayStr;
-                day = 1;
             }
+
+            if (StringUtils.hasText(name)) {
+                name += dayStr;
+            } else {
+                name = dayStr;
+            }
+
+            dayStr = "";
+            day = 1;
         }
 
         // 传递其他参数
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qq = matcher.group("qq");
+        var qqStr = matcher.group("qq");
 
         if (Objects.nonNull(at)) {
             data.setValue(new TodayBPParam(
-                    new BinUser(at.getTarget(), messageText.toLowerCase()), mode, day, false));
+                    bindDao.getUserFromQQ(at.getTarget()), mode, day, false));
             return true;
         }
-        if (Objects.nonNull(qq)) {
+        if (Objects.nonNull(qqStr)) {
             data.setValue(new TodayBPParam(
-                    new BinUser(Long.parseLong(qq), messageText.toLowerCase()), mode, day, false));
+                    bindDao.getUserFromQQ(Long.parseLong(qqStr)), mode, day, false));
             return true;
         }
         if (Strings.isNotBlank(name)) {
@@ -102,12 +112,14 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             try {
                 id = userApiService.getOsuId(name.trim());
             } catch (WebClientResponseException.NotFound e) {
-                if (Objects.isNull(dayStr)) throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
-
-                // 补救机制 1
-                try {
-                    id = userApiService.getOsuId(name.concat(dayStr));
-                } catch (WebClientResponseException.NotFound e1) {
+                if (StringUtils.hasText(dayStr)) {
+                    // 补救机制 1
+                    try {
+                        id = userApiService.getOsuId(name.concat(dayStr));
+                    } catch (WebClientResponseException.NotFound e1) {
+                        throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+                    }
+                } else {
                     throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
                 }
             } catch (Exception e) {

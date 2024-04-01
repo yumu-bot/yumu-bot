@@ -14,6 +14,7 @@ public class BPException extends TipsException {
         BP_Player_FetchFailed("无法获取玩家信息，请检查。"),
         BP_List_FetchFailed("获取 BP 失败，请重试。"),
         BP_Player_NoBP("该玩家在 %s 模式内基本没玩过。"),
+        BP_Render_Error("最好成绩渲染失败。"),
         BP_Send_Error("最好成绩发送失败。\n请耐心等待问题修复。"),
 
         ;

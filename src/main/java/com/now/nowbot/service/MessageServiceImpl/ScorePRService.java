@@ -70,32 +70,39 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         boolean isRecent;
         boolean isMultipleScore;
 
-        var hasSpaceAtEnd = StringUtils.hasText(name) && name.endsWith(" ");
-
         {   // !p 45-55 offset/n = 44 limit/m = 11
             //处理 n，m
             long n = 1L;
             long m;
 
+            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+
             if (StringUtils.hasText(nStr)) {
-                if (hasSpaceAtEnd) {
-                    //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                if (noSpaceAtEnd) {
+                    // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
+                    name += nStr;
+                    nStr = "";
+                } else {
+                    // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                    // 没有名字，但有 n 匹配的也走这边 parse
                     try {
                         n = Long.parseLong(nStr);
                     } catch (NumberFormatException e) {
                         throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                     }
-                } else {
-                    //避免 !b lolol233 这样子被错误匹配
-                    name += nStr;
                 }
             }
 
+            //避免 !b 970 这样子被错误匹配
+            var isIllegalN = n < 1L || n > 100L;
+            if (isIllegalN) {
+                if (StringUtils.hasText(name)) {
+                    name += nStr;
+                } else {
+                    name = nStr;
+                }
 
-            //避免 !b lolol233 这样子被错误匹配
-            var nNotFit = n < 1L || n > 100L;
-            if (nNotFit) {
-                name += nStr;
+                nStr = "";
                 n = 1L;
             }
 
@@ -115,7 +122,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s) || StringUtils.hasText(es)) {
                 offset = 0;
-                if (! StringUtils.hasText(nStr) || nNotFit) {
+                if (! StringUtils.hasText(nStr) || isIllegalN) {
                     limit = 20;
                 } else if (! StringUtils.hasText(mStr)) {
                     limit = Math.toIntExact(n);
@@ -147,12 +154,15 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
                 id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
-
-                // 补救机制 1
-                try {
-                    id = userApiService.getOsuId(name.concat(nStr));
-                    binUser.setOsuID(id);
-                } catch (WebClientResponseException.NotFound e1) {
+                if (StringUtils.hasText(nStr)) {
+                    // 补救机制 1
+                    try {
+                        id = userApiService.getOsuId(name.concat(nStr));
+                        binUser.setOsuID(id);
+                    } catch (WebClientResponseException.NotFound e1) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
+                    }
+                } else {
                     throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
                 }
             } catch (Exception e) {

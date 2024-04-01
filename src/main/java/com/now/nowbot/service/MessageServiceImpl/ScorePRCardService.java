@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MiniCardException;
+import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -55,29 +56,39 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         }
 
         var name = matcher.group("name");
-        var hasSpaceAtEnd = StringUtils.hasText(name) && name.endsWith(" ");
         var nStr = matcher.group("n");
 
         //处理 n
         long n = 1L;
 
+        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+
         if (StringUtils.hasText(nStr)) {
-            if (hasSpaceAtEnd) {
-                //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+            if (noSpaceAtEnd) {
+                // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
+                name += nStr;
+                nStr = "";
+            } else {
+                // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                // 没有名字，但有 n 匹配的也走这边 parse
                 try {
                     n = Long.parseLong(nStr);
                 } catch (NumberFormatException e) {
-                    throw new MiniCardException(MiniCardException.Type.MINI_Score_RankError);
+                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
                 }
-            } else {
-                //避免 !b lolol233 这样子被错误匹配
-                name += nStr;
             }
         }
 
-        //避免 !b lolol233 这样子被错误匹配
-        if (n < 1L || n > 100L) {
-            name += nStr;
+        //避免 !b 970 这样子被错误匹配
+        var isIllegalN = n < 1L || n > 100L;
+        if (isIllegalN) {
+            if (StringUtils.hasText(name)) {
+                name += nStr;
+            } else {
+                name = nStr;
+            }
+
+            nStr = "";
             n = 1L;
         }
 
@@ -96,12 +107,15 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
                 id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
-
-                // 补救机制 1
-                try {
-                    id = userApiService.getOsuId(name.concat(nStr));
-                    binUser.setOsuID(id);
-                } catch (WebClientResponseException.NotFound e1) {
+                if (StringUtils.hasText(nStr)) {
+                    // 补救机制 1
+                    try {
+                        id = userApiService.getOsuId(name.concat(nStr));
+                        binUser.setOsuID(id);
+                    } catch (WebClientResponseException.NotFound e1) {
+                        throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, binUser.getOsuName());
+                    }
+                } else {
                     throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, binUser.getOsuName());
                 }
             } catch (Exception e) {

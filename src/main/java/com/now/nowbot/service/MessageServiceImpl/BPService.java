@@ -21,6 +21,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -60,32 +61,39 @@ public class BPService implements MessageService<BPService.BPParam> {
         boolean isMyself = false;
         boolean isMultipleScore;
 
-        var hasSpaceAtEnd = StringUtils.hasText(name) && name.endsWith(" ");
-
         {   // !p 45-55 offset/n = 44 limit/m = 11
             //处理 n，m
             long n = 1L;
             long m;
 
+            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+
             if (StringUtils.hasText(nStr)) {
-                if (hasSpaceAtEnd) {
-                    //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                if (noSpaceAtEnd) {
+                    // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
+                    name += nStr;
+                    nStr = "";
+                } else {
+                    // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                    // 没有名字，但有 n 匹配的也走这边 parse
                     try {
                         n = Long.parseLong(nStr);
                     } catch (NumberFormatException e) {
                         throw new BPException(BPException.Type.BP_Map_RankError);
                     }
-                } else {
-                    //避免 !b lolol233 这样子被错误匹配
-                    name += nStr;
                 }
             }
 
+            //避免 !b 970 这样子被错误匹配
+            var isIllegalN = n < 1L || n > 100L;
+            if (isIllegalN) {
+                if (StringUtils.hasText(name)) {
+                    name += nStr;
+                } else {
+                    name = nStr;
+                }
 
-            //避免 !b lolol233 这样子被错误匹配
-            var nNotFit = n < 1L || n > 100L;
-            if (nNotFit) {
-                name += nStr;
+                nStr = "";
                 n = 1L;
             }
 
@@ -105,7 +113,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s)) {
                 offset = 0;
-                if (! StringUtils.hasText(nStr) || nNotFit) {
+                if (! StringUtils.hasText(nStr) || isIllegalN) {
                     limit = 20;
                 } else if (! StringUtils.hasText(mStr)) {
                     limit = Math.toIntExact(n);
@@ -129,12 +137,15 @@ public class BPService implements MessageService<BPService.BPParam> {
                 id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
-
-                // 补救机制 1
-                try {
-                    id = userApiService.getOsuId(name.concat(nStr));
-                    binUser.setOsuID(id);
-                } catch (WebClientResponseException.NotFound e1) {
+                if (StringUtils.hasText(nStr)) {
+                    // 补救机制 1
+                    try {
+                        id = userApiService.getOsuId(name.concat(nStr));
+                        binUser.setOsuID(id);
+                    } catch (WebClientResponseException.NotFound e1) {
+                        throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
+                    }
+                } else {
                     throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
                 }
             } catch (Exception e) {
@@ -178,7 +189,6 @@ public class BPService implements MessageService<BPService.BPParam> {
         var from = event.getSubject();
 
         List<Score> bpList;
-        ArrayList<Integer> rankList = new ArrayList<>();
 
         var mode = param.mode();
         OsuUser osuUser;
@@ -197,7 +207,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             if (param.isMyself()) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {
-                throw new BPException(BPException.Type.BP_Player_NotFound, param.user().getOsuName());
+                throw new BPException(BPException.Type.BP_Player_NotFound, param.user.getOsuName());
             }
         } catch (Exception e) {
             log.error("最好成绩：玩家获取失败", e);
@@ -211,17 +221,20 @@ public class BPService implements MessageService<BPService.BPParam> {
             throw new BPException(BPException.Type.BP_List_FetchFailed);
         }
 
-        if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
+        if (CollectionUtils.isEmpty(bpList)) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
+
+        byte[] image;
 
         try {
             if (param.isMultipleBP()) {
-                for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
-                var image = imageService.getPanelA4(osuUser, bpList, rankList);
-                from.sendImage(image);
+                ArrayList<Integer> rankList = new ArrayList<>();
+                for (int i = offset; i <= (offset + limit); i++) {
+                    rankList.add(i + 1);
+                }
+                image = imageService.getPanelA4(osuUser, bpList, rankList);
             } else {
                 var score = bpList.getFirst();
-                var image = imageService.getPanelE(osuUser, score, beatmapApiService);
-                from.sendImage(image);
+                image = imageService.getPanelE(osuUser, score, beatmapApiService);
             }
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
             if (param.isMyself()) {
@@ -229,6 +242,13 @@ public class BPService implements MessageService<BPService.BPParam> {
             } else {
                 throw new BPException(BPException.Type.BP_Player_TokenExpired);
             }
+        } catch (Exception e) {
+            log.error("最好成绩：渲染失败", e);
+            throw new BPException(BPException.Type.BP_Render_Error);
+        }
+
+        try {
+            from.sendImage(image);
         } catch (Exception e) {
             log.error("最好成绩：发送失败", e);
             throw new BPException(BPException.Type.BP_Send_Error);
