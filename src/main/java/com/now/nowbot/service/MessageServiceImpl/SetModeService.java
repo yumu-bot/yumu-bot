@@ -5,18 +5,15 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instructions;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
 @Service("SET_MODE")
 public class SetModeService implements MessageService<Matcher> {
+    @Resource
     BindDao bindDao;
-    @Autowired
-    public SetModeService(BindDao bindDao){
-        this.bindDao = bindDao;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

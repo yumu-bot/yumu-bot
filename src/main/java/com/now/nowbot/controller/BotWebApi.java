@@ -234,12 +234,11 @@ public class BotWebApi {
 
     public enum scoreType {
         TodayBP,
-
         BP,
-
         Pass,
-
         Recent,
+        PassCard,
+        RecentCard,
     }
 
     /**
@@ -314,6 +313,30 @@ public class BotWebApi {
                     data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
                     suffix = "-recent.jpg";
                 }
+            }
+
+            //passCard
+            case PassCard -> {
+                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, 1, true);
+                var score = scoreList.getFirst();
+                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                score.setBeatMap(beatMap);
+                score.setBeatMapSet(beatMap.getBeatMapSet());
+
+                data = imageService.getPanelGamma(score);
+                suffix = "-pass_card.jpg";
+            }
+
+            //recentCard
+            case RecentCard -> {
+                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, 1, false);
+                var score = scoreList.getFirst();
+                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                score.setBeatMap(beatMap);
+                score.setBeatMapSet(beatMap.getBeatMapSet());
+
+                data = imageService.getPanelGamma(score);
+                suffix = "-recent_card.jpg";
             }
 
             // todaybp

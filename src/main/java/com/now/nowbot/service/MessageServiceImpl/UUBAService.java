@@ -17,8 +17,8 @@ import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -29,21 +29,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service("UU_BA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
 
     //bpht 的全称大概是 BP Head / Tail
     public record BPHeadTailParam(UserParam user, boolean info){}
-
-    @Autowired
-    public UUBAService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.bindDao = bindDao;
-        this.imageService = imageService;
-    }
 
     static class intValue {
         int value = 1;

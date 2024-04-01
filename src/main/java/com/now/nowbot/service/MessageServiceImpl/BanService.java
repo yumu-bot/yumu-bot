@@ -9,24 +9,20 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.BanException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
 @Service("BAN")
 public class BanService implements MessageService<BanService.BanParam> {
+    @Resource
     Permission permission;
+    @Resource
     ImageService imageService;
 
     public record BanParam(Long qq, String name, String operate, boolean isUser) {
 
-    }
-
-    @Autowired
-    public BanService(Permission permission, ImageService imageService) {
-        this.permission = permission;
-        this.imageService = imageService;
     }
 
     @Override

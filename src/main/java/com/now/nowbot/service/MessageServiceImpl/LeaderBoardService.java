@@ -10,9 +10,9 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,16 +24,12 @@ import java.util.regex.Matcher;
 @Service("LEADER_BOARD")
 public class LeaderBoardService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(LeaderBoardService.class);
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     ImageService imageService;
-
-    @Autowired
-    public LeaderBoardService(OsuBeatmapApiService beatmapApiService, OsuScoreApiService scoreApiService, ImageService image) {
-        this.beatmapApiService = beatmapApiService;
-        this.scoreApiService = scoreApiService;
-        imageService = image;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

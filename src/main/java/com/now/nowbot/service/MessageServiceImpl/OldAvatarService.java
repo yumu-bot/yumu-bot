@@ -16,7 +16,6 @@ import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -31,12 +30,6 @@ public class OldAvatarService implements MessageService<UserParam> {
     BindDao bindDao;
     @Resource
     ImageService imageService;
-    @Autowired
-    public OldAvatarService(OsuUserApiService userApiService, BindDao bindDao, ImageService imageService) {
-        this.userApiService = userApiService;
-        this.bindDao = bindDao;
-        this.imageService = imageService;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {

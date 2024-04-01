@@ -17,10 +17,10 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -35,24 +35,15 @@ import java.util.regex.Pattern;
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
     private static final Logger log = LoggerFactory.getLogger(BindService.class);
-
     public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
 
-
-
+    @Resource
     OsuUserApiService userApiService;
-
+    @Resource
     BindDao bindDao;
-
+    @Resource
     TaskExecutor taskExecutor;
-
-    @Autowired
-    public BindService(OsuUserApiService userApiService, BindDao bindDao, TaskExecutor taskExecutor) {
-        this.userApiService = userApiService;
-        this.bindDao = bindDao;
-        this.taskExecutor = taskExecutor;
-    }
 
     // full: 全绑定，只有 bot 开发可以这样做
     public record BindParam(@NonNull Long qq, String name, boolean at, boolean unbind, boolean isSuper, boolean isFull) {}
@@ -286,9 +277,15 @@ public class BindService implements MessageService<BindService.BindParam> {
                     throw new RuntimeException();
                 }
 
-                from.sendMessage(
-                        String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
-                );
+                if (binUser.isAuthorized()) {
+                    from.sendMessage(
+                            String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                    );
+                } else {
+                    from.sendMessage(
+                            String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                    );
+                }
 
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
@@ -350,7 +347,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             taskExecutor.execute(() -> {
                 try {
                     Thread.sleep(1000 * 5);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                     // ignore
                 }
                 removeOldBind();
@@ -426,7 +423,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                 \{sb.toString()}
                 ```
 
-                请半分钟内回答: \{(char) ('A' + start)} 到 \{(char) ('A' + end)} 的最短距离
+                请半分钟内回答：\{(char) ('A' + start)} 到 \{(char) ('A' + end)} 的最短距离
 
                 直接回复数字即可
                 """;

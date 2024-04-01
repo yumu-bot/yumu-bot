@@ -9,9 +9,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
@@ -19,15 +19,10 @@ import java.util.regex.Matcher;
 @Service("MAP_MINUS")
 public class MapMinusService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MapMinusService.class);
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     ImageService imageService;
-
-
-    @Autowired
-    public MapMinusService(OsuBeatmapApiService beatmapApiService, ImageService image) {
-        this.beatmapApiService = beatmapApiService;
-        imageService = image;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

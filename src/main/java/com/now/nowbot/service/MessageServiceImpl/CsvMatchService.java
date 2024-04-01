@@ -12,9 +12,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -30,12 +30,8 @@ public class CsvMatchService implements MessageService<Matcher> {
     static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    @Resource
     OsuMatchApiService osuMatchApiService;
-
-    @Autowired
-    CsvMatchService(OsuMatchApiService osuMatchApiService) {
-        this.osuMatchApiService = osuMatchApiService;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {

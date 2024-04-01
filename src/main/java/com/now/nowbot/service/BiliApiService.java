@@ -1,15 +1,14 @@
 package com.now.nowbot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.live.LiveRoom;
 import com.now.nowbot.model.live.LiveStatus;
 import com.now.nowbot.qq.Bot;
 import com.now.nowbot.util.QQMsgUtil;
 import com.now.nowbot.util.SkiaImageUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,21 +25,12 @@ public class BiliApiService {
     private static final String USER_API         = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
     private static final String USER_ALLINFO_API = "https://api.bilibili.com/x/space/acc/info?mid=";
     private static final String ALL_ROOM_API     = "http://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids";
+    @Resource
     RestTemplate restTemplate;
-    Bot          bot;
+    Bot bot;
 
     private static final HashMap<Long, Long> sendGroupMap = new HashMap<>();
-    private static final Set<Long>           lastList     = new HashSet<>();
-
-    @Autowired
-    public BiliApiService(NoProxyRestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-//        this.bot = bot;
-//        sendGroupMap.put(545149341L, 733244168L);
-//        sendGroupMap.put(73769122L, 733244168L);
-//        sendGroupMap.put(14172231L, 135214594L);
-//        sendGroupMap.put(4995808L, 446316073L);
-    }
+    private static final Set<Long> lastList = new HashSet<>();
 
     public List<LiveRoom> getLiveRooms(Long[] roomid) {
         //live_status 0：未开播 1：直播中 2：轮播中   live_time 秒时间戳

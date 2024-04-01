@@ -24,7 +24,10 @@ public class BindException extends TipsRuntimeException{
 
         BIND_Progress_Binding("正在将 %s 绑定到 (%s) %s 上"),
         BIND_Progress_BindingRecoverInfo("""
-                您已绑定 (%s) %s。
+                您已绑定 (%s) %s，但是令牌可能还没有失效。
+                如果要改绑，请回复 OK。"""),
+        BIND_Progress_NeedToReBindInfo("""
+                您已绑定 (%s) %s，但是令牌已经失效。
                 如果要改绑，请回复 OK。"""),
         BIND_Progress_BindingRecover("正在将 %s 绑定在 QQ %s 上，是否覆盖？回复 OK 生效。"),
 
@@ -46,12 +49,12 @@ public class BindException extends TipsRuntimeException{
 
 
         BIND_Response_AlreadyBound("""
-                不要重复绑定哟，小沐已经记住你啦！
-                如果要改绑，请输入 !unbind 解绑后再操作。
+                您已绑定，并且 Oauth2 令牌仍旧生效。
+                如果要改绑，请先输入 !unbind 解绑。
                 """),
         BIND_Response_AlreadyBoundInfo("""
-                %s 已绑定 %s。
-                如果要改绑，请输入 !unbind 解绑后再操作。
+                %s 已绑定 %s，并且 Oauth2 令牌仍旧生效（也许？）。
+                如果要改绑，请先输入 !unbind 解绑。
                 """),
         BIND_Response_Success("已绑定成功！"),
 

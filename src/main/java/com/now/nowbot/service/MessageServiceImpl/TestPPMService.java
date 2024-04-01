@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
@@ -12,9 +11,9 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -29,15 +28,10 @@ import static com.now.nowbot.util.DataUtil.getBonusPP;
 @Service("TEST_PPM")
 public class TestPPMService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(TestPPMService.class);
-    private final OsuUserApiService userApiService;
-    BindDao bindDao;
-    private final OsuScoreApiService scoreApiService;
-    @Autowired
-    public TestPPMService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao) {
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.bindDao = bindDao;
-    }
+    @Resource
+    OsuUserApiService userApiService;
+    @Resource
+    OsuScoreApiService scoreApiService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

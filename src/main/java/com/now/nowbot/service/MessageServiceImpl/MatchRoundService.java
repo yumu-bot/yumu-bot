@@ -12,10 +12,10 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -25,11 +25,11 @@ import java.util.regex.Matcher;
 
 @Service("MATCH_ROUND")
 public class MatchRoundService implements MessageService<Matcher> {
-    Logger log = LoggerFactory.getLogger(MatchRoundService.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchRoundService.class);
 
-    @Autowired
+    @Resource
     OsuMatchApiService osuMatchApiService;
-    @Autowired
+    @Resource
     ImageService imageService;
 
     @Override

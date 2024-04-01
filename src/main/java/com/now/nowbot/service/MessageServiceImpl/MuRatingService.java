@@ -10,9 +10,9 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
@@ -25,9 +25,9 @@ import java.util.regex.Matcher;
 public class MuRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
 
-    @Autowired
+    @Resource
     OsuMatchApiService osuMatchApiService;
-    @Autowired
+    @Resource
     ImageService imageService;
 
     @Override

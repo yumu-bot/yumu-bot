@@ -1,6 +1,5 @@
 package com.now.nowbot.service;
 
-import com.now.nowbot.config.NoProxyRestTemplate;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -15,9 +14,9 @@ import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -33,13 +32,9 @@ import java.util.stream.Collectors;
 @Service("NOWBOT_IMAGE")
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
+    @Resource
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
-
-    @Autowired
-    ImageService(NoProxyRestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替
@@ -75,7 +70,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
-        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(IMAGE_PATH + "attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
+        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(STR."\{IMAGE_PATH}attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
         });
         List<MapAttr> result = s.getBody();
         if (CollectionUtils.isEmpty(result)) {
@@ -111,13 +106,13 @@ public class ImageService {
         return doPost("panel_A3", httpEntity);
     }
 
-    public byte[] getPanelA4(OsuUser osuUser, List<Score> bpList, ArrayList<Integer> bpRank) {
+    public byte[] getPanelA4(OsuUser osuUser, List<Score> todayBPs, ArrayList<Integer> BPRanks) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
                 "me", osuUser,
-                "bps", bpList,
-                "rank", bpRank
+                "bps", todayBPs,
+                "rank", BPRanks
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A4", httpEntity);

@@ -10,9 +10,9 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -23,20 +23,14 @@ import java.util.regex.Matcher;
 @Service("I_MAPPER")
 public class IMapperService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(IMapperService.class);
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
-
-    @Autowired
-    public IMapperService(OsuUserApiService userApiService,
-                          OsuBeatmapApiService beatmapApiService,
-                          BindDao bindDao, ImageService image) {
-        this.userApiService = userApiService;
-        this.beatmapApiService = beatmapApiService;
-        this.bindDao = bindDao;
-        imageService = image;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

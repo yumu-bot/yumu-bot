@@ -19,9 +19,9 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
@@ -35,27 +35,18 @@ import java.util.regex.Matcher;
 public class ScorePRDeluxeService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRDeluxeService.class);
 
+    @Resource
     RestTemplate template;
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
-
-    @Autowired
-    public ScorePRDeluxeService(RestTemplate restTemplate,
-                                OsuUserApiService userApiService,
-                                OsuScoreApiService scoreApiService,
-                                OsuBeatmapApiService beatmapApiService,
-                                BindDao bindDao,
-                                ImageService image) {
-        template = restTemplate;
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.beatmapApiService = beatmapApiService;
-        this.bindDao = bindDao;
-        imageService = image;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
@@ -151,7 +142,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                     id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
                 } catch (WebClientResponseException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
                 }
             } else {
                 if (event.getSender().getId() == 365246692L && false) {
@@ -160,7 +151,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                     try {
                         img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
                     } catch (RuntimeException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, osuUser.getUsername());
                         //log.error("s: ", e);
                         //throw new TipsException("24h内无记录");
                     }
@@ -202,13 +193,13 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
         }
 
         if (scoreList == null || scoreList.isEmpty()) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFoundDefault);
         }
 
         try {
             osuUser = userApiService.getPlayerInfo(binUser, mode);
         } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
         }
 
         //成绩发送
@@ -240,10 +231,11 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
     }
 
     private byte[] getAlphaPanel(OsuMode mode, int offset, int limit, boolean isRecent) throws ScoreException {
-        var s = getData(bindDao.getUserFromQQ(365246692L), mode, offset, limit, isRecent);
+        var u = bindDao.getUserFromQQ(365246692L);
+        var s = getData(u, mode, offset, limit, isRecent);
         if (CollectionUtils.isEmpty(s)) {
             //throw new RuntimeException("没打");
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, u.getOsuName());
         }
         return imageService.getPanelBeta(s.getFirst());
     }

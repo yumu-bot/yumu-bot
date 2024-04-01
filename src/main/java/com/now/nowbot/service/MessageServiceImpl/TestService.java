@@ -11,7 +11,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,18 +22,15 @@ import java.util.regex.Pattern;
 
 @Service("TEST")
 public class TestService implements MessageService<Matcher> {
-    private final Logger log = LoggerFactory.getLogger(TestService.class);
+    private static final Logger log = LoggerFactory.getLogger(TestService.class);
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     QQMessageDao qqMessageDao;
     @Resource
     ImageService imageService;
 
     private static final Pattern pattern =  Pattern.compile("!testname (?<ids>[0-9a-zA-Z\\[\\]\\-_ ,]+)");
-    @Autowired
-    public TestService(OsuUserApiService userApiService, QQMessageDao qqMessageDao) {
-        this.userApiService = userApiService;
-        this.qqMessageDao = qqMessageDao;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

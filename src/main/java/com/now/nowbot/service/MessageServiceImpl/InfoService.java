@@ -98,7 +98,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             if (! messageText.contains("information") && messageText.contains("info")) {
                 throw new LogException("info 退避成功");
             } else {
-                throw new InfoException(InfoException.Type.I_Me_TokenExpired);
+                throw new InfoException(InfoException.Type.I_QQ_NotFound, String.valueOf(qq));
             }
         }
     }

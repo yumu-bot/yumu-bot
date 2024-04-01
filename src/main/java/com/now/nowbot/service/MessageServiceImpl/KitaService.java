@@ -8,9 +8,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.KitaException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
@@ -18,15 +18,10 @@ import java.util.regex.Matcher;
 @Service("KITA")
 public class KitaService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(KitaService.class);
+    @Resource
     OsuBeatmapApiService beatmapApiService;
-    ImageService         imageService;
-
-    @Autowired
-    public KitaService (OsuBeatmapApiService beatmapApiService,
-                        ImageService image) {
-        this.beatmapApiService = beatmapApiService;
-        imageService = image;
-    }
+    @Resource
+    ImageService imageService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {

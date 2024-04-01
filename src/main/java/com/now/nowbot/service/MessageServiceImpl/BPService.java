@@ -6,19 +6,20 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BPException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -26,28 +27,21 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
     private static final Logger log = LoggerFactory.getLogger(BPService.class);
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
-
-    @Autowired
-    public BPService(OsuUserApiService userApiService,
-                     OsuScoreApiService scoreApiService,
-                     OsuBeatmapApiService beatmapApiService,
-                     BindDao bindDao,
-                     ImageService image) {
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.beatmapApiService = beatmapApiService;
-        this.bindDao = bindDao;
-        imageService = image;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws BPException {
@@ -55,41 +49,47 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (!matcher.find()) {
             return false;
         }
-        int offset;
-        int limit;
-        boolean isMultipleBP;
-        boolean hasName;
-        BinUser user;
-        OsuMode mode;
 
+        var name = matcher.group("name");
+        var s = matcher.group("s");
         var nStr = matcher.group("n");
         var mStr = matcher.group("m");
-        var name = matcher.group("name");
-        hasName = StringUtils.hasText(name);
-        var s = matcher.group("s");
 
-        //处理 n，m
-        {
-            long n;
+        int offset;
+        int limit;
+        boolean isMyself = false;
+        boolean isMultipleScore;
+
+        var hasSpaceAtEnd = StringUtils.hasText(name) && name.endsWith(" ");
+
+        {   // !p 45-55 offset/n = 44 limit/m = 11
+            //处理 n，m
+            long n = 1L;
             long m;
-            if (! StringUtils.hasText(nStr)) {
-                n = 1L;
-            } else {
-                try {
-                    n = Long.parseLong(nStr);
-                } catch (NumberFormatException e) {
-                    throw new BPException(BPException.Type.BP_Map_RankError);
+
+            if (StringUtils.hasText(nStr)) {
+                if (hasSpaceAtEnd) {
+                    //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                    try {
+                        n = Long.parseLong(nStr);
+                    } catch (NumberFormatException e) {
+                        throw new BPException(BPException.Type.BP_Map_RankError);
+                    }
+                } else {
+                    //避免 !b lolol233 这样子被错误匹配
+                    name += nStr;
                 }
             }
 
+
             //避免 !b lolol233 这样子被错误匹配
-            boolean nNotFit = (n < 1L || n > 100L);
+            var nNotFit = n < 1L || n > 100L;
             if (nNotFit) {
                 name += nStr;
                 n = 1L;
             }
 
-            if (mStr == null || mStr.isBlank()) {
+            if (! StringUtils.hasText(mStr)) {
                 m = n;
             } else {
                 try {
@@ -104,46 +104,69 @@ public class BPService implements MessageService<BPService.BPParam> {
 
             //如果匹配多成绩模式，则自动设置 offset 和 limit
             if (StringUtils.hasText(s)) {
+                offset = 0;
                 if (! StringUtils.hasText(nStr) || nNotFit) {
-                    offset = 0;
                     limit = 20;
-                } else {
-                    limit = offset + 1;
-                    offset = 0;
+                } else if (! StringUtils.hasText(mStr)) {
+                    limit = Math.toIntExact(n);
                 }
             }
-
-            isMultipleBP = (limit > 1);
+            isMultipleScore = (limit > 1);
         }
 
-        if (! hasName) {
+        // 构建参数
+        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        String qqStr = matcher.group("qq");
+        BinUser binUser;
+        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
+
+        if (Objects.nonNull(at)) {
+            binUser = bindDao.getUserFromQQ(at.getTarget());
+        } else if (StringUtils.hasText(name)) {
+            binUser = new BinUser();
+            Long id;
             try {
-                user = bindDao.getUserFromQQ(event.getSender().getId());
-            } catch (BindException e) {
-                //退避 !bp
-                if (event.getRawMessage().toLowerCase().contains("bp")) {
-                    throw new LogException("bp 退避成功");
-                } else {
-                    throw new BPException(BPException.Type.BP_Me_NoBind);
+                id = userApiService.getOsuId(name.trim());
+                binUser.setOsuID(id);
+            } catch (WebClientResponseException.NotFound e) {
+
+                // 补救机制 1
+                try {
+                    id = userApiService.getOsuId(name.concat(nStr));
+                    binUser.setOsuID(id);
+                } catch (WebClientResponseException.NotFound e1) {
+                    throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
                 }
+            } catch (Exception e) {
+                throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
+            }
+        } else if (StringUtils.hasText(qqStr)) {
+            try {
+                long qq = Long.parseLong(qqStr);
+                binUser = bindDao.getUserFromQQ(qq);
+            } catch (BindException e) {
+                throw new BPException(BPException.Type.BP_QQ_NotFound, qqStr);
             }
         } else {
             try {
-                long uid = userApiService.getOsuId(name);
-                user = new BinUser();
-                user.setOsuID(uid);
-                user.setMode(OsuMode.DEFAULT);
-            } catch (Exception e) {
-                throw new BPException(BPException.Type.BP_Player_NotFound);
+                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                isMyself = true;
+            } catch (BindException e) {
+                //退避 !bp
+                if (event.getRawMessage().toLowerCase().contains("bp")) {
+                    log.info("bp 退避成功");
+                    return false;
+                } else {
+                    throw new BPException(BPException.Type.BP_Me_TokenExpired);
+                }
             }
         }
 
-        mode = OsuMode.getMode(matcher.group("mode"));
-        if (OsuMode.isDefault(mode)) {
-            mode = user.getMode();
+        if (Objects.isNull(binUser)) {
+            throw new BPException(BPException.Type.BP_Me_TokenExpired);
         }
-        var param = new BPParam(user, offset, limit, mode, isMultipleBP, hasName);
-        data.setValue(param);
+
+        data.setValue(new BPParam(binUser, offset, limit, mode, isMultipleScore, isMyself));
         return true;
     }
 
@@ -165,23 +188,27 @@ public class BPService implements MessageService<BPService.BPParam> {
                 mode = osuUser.getOsuMode();
             }
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-            throw new BPException(BPException.Type.BP_Me_TokenExpired);
+            if (param.isMyself()) {
+                throw new BPException(BPException.Type.BP_Me_TokenExpired);
+            } else {
+                throw new BPException(BPException.Type.BP_Player_TokenExpired);
+            }
         } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
-            if (param.hasName()) {
+            if (param.isMyself()) {
                 throw new BPException(BPException.Type.BP_Me_Banned);
             } else {
-                throw new BPException(BPException.Type.BP_Player_NotFound);
+                throw new BPException(BPException.Type.BP_Player_NotFound, param.user().getOsuName());
             }
         } catch (Exception e) {
-            log.error("BP 获取出错", e);
+            log.error("最好成绩：玩家获取失败", e);
             throw new BPException(BPException.Type.BP_Player_FetchFailed);
         }
 
         try {
             bpList = scoreApiService.getBestPerformance(param.user(), mode, offset, limit);
         } catch (Exception e) {
-            log.error("BP 请求出错", e);
-            throw new BPException(BPException.Type.BP_Player_FetchFailed);
+            log.error("最好成绩：列表获取失败", e);
+            throw new BPException(BPException.Type.BP_List_FetchFailed);
         }
 
         if (bpList == null || bpList.isEmpty()) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
@@ -197,13 +224,17 @@ public class BPService implements MessageService<BPService.BPParam> {
                 from.sendImage(image);
             }
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-            throw new BPException(BPException.Type.BP_Me_TokenExpired);
+            if (param.isMyself()) {
+                throw new BPException(BPException.Type.BP_Me_TokenExpired);
+            } else {
+                throw new BPException(BPException.Type.BP_Player_TokenExpired);
+            }
         } catch (Exception e) {
-            log.error("BP 发送出错", e);
+            log.error("最好成绩：发送失败", e);
             throw new BPException(BPException.Type.BP_Send_Error);
         }
     }
 
-    public record BPParam(BinUser user, int offset, int limit, OsuMode mode, boolean isMultipleBP, boolean hasName) {
+    public record BPParam(BinUser user, int offset, int limit, OsuMode mode, boolean isMultipleBP, boolean isMyself) {
     }
 }

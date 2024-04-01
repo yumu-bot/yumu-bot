@@ -23,7 +23,6 @@ import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
@@ -42,20 +41,16 @@ import java.util.stream.Collectors;
 public class BPAnalysisService implements MessageService<UserParam> {
     private static final Logger log = LoggerFactory.getLogger(BPAnalysisService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
     @Resource
     UUBAService uubaService;
-
-    @Autowired
-    public BPAnalysisService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.bindDao = bindDao;
-        this.imageService = imageService;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {

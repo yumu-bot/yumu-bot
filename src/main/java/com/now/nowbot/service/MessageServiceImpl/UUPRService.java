@@ -15,41 +15,36 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 @Service("UU_PR")
 public class UUPRService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
+    @Resource
     RestTemplate template;
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     BindDao bindDao;
-
-    @Autowired
-    public UUPRService(RestTemplate restTemplate,
-                       OsuUserApiService userApiService,
-                       OsuScoreApiService scoreApiService,
-                       OsuBeatmapApiService beatmapApiService,
-                       BindDao bindDao) {
-        template = restTemplate;
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.beatmapApiService = beatmapApiService;
-        this.bindDao = bindDao;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
@@ -69,9 +64,9 @@ public class UUPRService implements MessageService<Matcher> {
         int limit;
         boolean isRecent;
 
-        if (matcher.group("recent") != null) {
+        if (StringUtils.hasText(matcher.group("recent"))) {
             isRecent = true;
-        } else if (matcher.group("pass") != null) {
+        } else if (StringUtils.hasText(matcher.group("pass"))) {
             isRecent = false;
         } else {
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
@@ -82,7 +77,7 @@ public class UUPRService implements MessageService<Matcher> {
             int n;
             var nStr = matcher.group("n");
 
-            if (nStr == null || nStr.isBlank()) {
+            if (! StringUtils.hasText(nStr)) {
                 n = 1;
             } else {
                 try {
@@ -105,42 +100,37 @@ public class UUPRService implements MessageService<Matcher> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         BinUser binUser;
 
-        if (at != null) {
+        if (Objects.nonNull(at)) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
-        } else {
-            if (name != null && !name.trim().isEmpty()) {
-                binUser = new BinUser();
-                Long id;
-                try {
-                    id = userApiService.getOsuId(name.trim());
-                    binUser.setOsuID(id);
-                } catch (HttpClientErrorException | WebClientResponseException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
-                }
-
-            } else {
-                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+        } else if (StringUtils.hasText(name)) {
+            binUser = new BinUser();
+            Long id;
+            try {
+                id = userApiService.getOsuId(name.trim());
+                binUser.setOsuID(id);
+            } catch (HttpClientErrorException | WebClientResponseException e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
             }
+        } else {
+            binUser = bindDao.getUserFromQQ(event.getSender().getId());
         }
+
+        if (Objects.isNull(binUser)) throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
 
         //处理默认mode
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
+        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
 
-        List<Score> scoreList = null;
+        List<Score> scoreList;
 
         try {
-            if (binUser != null && binUser.isAuthorized()) {
-                scoreList = getData(binUser, mode, offset, limit, isRecent);
-            } else if (binUser != null) {
-                scoreList = getData(binUser.getOsuID(), mode, offset, limit, isRecent);
-            }
+            scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, ! isRecent);
         } catch (HttpClientErrorException | WebClientResponseException e) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        if (scoreList == null || scoreList.isEmpty()) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+        if (CollectionUtils.isEmpty(scoreList)) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
         //单成绩发送
@@ -161,22 +151,7 @@ public class UUPRService implements MessageService<Matcher> {
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
-        //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
         QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
-    }
-
-    private List<Score> getData(BinUser user, OsuMode mode, int offset, int limit, boolean isRecent) {
-        if (isRecent)
-            return scoreApiService.getRecentIncludingFail(user, mode, offset, limit);
-        else
-            return scoreApiService.getRecent(user, mode, offset, limit);
-    }
-
-    private List<Score> getData(Long id, OsuMode mode, int offset, int limit, boolean isRecent) {
-        if (isRecent)
-            return scoreApiService.getRecentIncludingFail(id, mode, offset, limit);
-        else
-            return scoreApiService.getRecent(id, mode, offset, limit);
     }
 }
 

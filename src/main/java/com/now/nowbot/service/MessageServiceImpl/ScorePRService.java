@@ -14,98 +14,92 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Objects;
 
 //UUPR，Multiple Score也合并进来了
-
 @Service("SCORE_PR")
-public class ScorePRService implements MessageService<ScorePRService.ScorePrParam> {
+public class ScorePRService implements MessageService<ScorePRService.ScorePRParam> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
 
-    RestTemplate          template;
-    OsuUserApiService     userApiService;
-    OsuScoreApiService    scoreApiService;
-    OsuBeatmapApiService  beatmapApiService;
-    BindDao               bindDao;
-    ImageService          imageService;
+    @Resource
+    RestTemplate template;
+    @Resource
+    OsuUserApiService userApiService;
+    @Resource
+    OsuScoreApiService scoreApiService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
+    BindDao bindDao;
+    @Resource
+    ImageService imageService;
 
-    @Autowired
-    public ScorePRService(RestTemplate restTemplate,
-                          OsuUserApiService userApiService,
-                          OsuScoreApiService scoreApiService,
-                          OsuBeatmapApiService beatmapApiService,
-                          BindDao bindDao, ImageService image) {
-        template = restTemplate;
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.beatmapApiService = beatmapApiService;
-        this.bindDao = bindDao;
-        imageService = image;
-    }
+    public record ScorePRParam(@NonNull BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {}
 
-    public record ScorePrParam(BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
-    }
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePrParam> data) throws ScoreException {
-        var m = Instructions.SCORE_PR.matcher(messageText);
-        if (m.find()) {
-            getData(m, event, data);
-            return true;
-        } else return false;
-    }
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
+        var matcher = Instructions.SCORE_PR.matcher(messageText);
+        if (! matcher.find()) return false;
 
-    private void getData(Matcher matcher, MessageEvent event, DataValue<ScorePrParam> data) throws ScoreException {
         var name = matcher.group("name");
         var s = matcher.group("s");
         var es = matcher.group("es");
+        var nStr = matcher.group("n");
+        var mStr = matcher.group("m");
 
         int offset;
         int limit;
         boolean isRecent;
         boolean isMultipleScore;
 
+        var hasSpaceAtEnd = StringUtils.hasText(name) && name.endsWith(" ");
+
         {   // !p 45-55 offset/n = 44 limit/m = 11
             //处理 n，m
-            long n;
+            long n = 1L;
             long m;
-            var nStr = matcher.group("n");
-            var mStr = matcher.group("m");
 
-            if (nStr == null || nStr.isBlank()) {
-                n = 1;
-            } else {
-                try {
-                    n = Long.parseLong(nStr);
-                } catch (NumberFormatException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+            if (StringUtils.hasText(nStr)) {
+                if (hasSpaceAtEnd) {
+                    //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                    try {
+                        n = Long.parseLong(nStr);
+                    } catch (NumberFormatException e) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+                    }
+                } else {
+                    //避免 !b lolol233 这样子被错误匹配
+                    name += nStr;
                 }
             }
 
+
             //避免 !b lolol233 这样子被错误匹配
-            boolean nNotFit = (n < 1L || n > 100L);
+            var nNotFit = n < 1L || n > 100L;
             if (nNotFit) {
                 name += nStr;
                 n = 1L;
             }
 
-            if (mStr == null || mStr.isBlank()) {
+            if (! StringUtils.hasText(mStr)) {
                 m = n;
             } else {
                 try {
@@ -138,39 +132,63 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
+        // 构建参数
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        String qqStr = matcher.group("qq");
         BinUser binUser;
-        if (at != null) {
+        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
+
+        if (Objects.nonNull(at)) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
-        } else {
-            if (name != null && ! name.trim().isEmpty()) {
-                binUser = new BinUser();
-                Long id;
+        } else if (StringUtils.hasText(name)) {
+            binUser = new BinUser();
+            Long id;
+            try {
+                id = userApiService.getOsuId(name.trim());
+                binUser.setOsuID(id);
+            } catch (WebClientResponseException.NotFound e) {
+
+                // 补救机制 1
                 try {
-                    id = userApiService.getOsuId(name.trim());
+                    id = userApiService.getOsuId(name.concat(nStr));
                     binUser.setOsuID(id);
-                } catch (WebClientResponseException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+                } catch (WebClientResponseException.NotFound e1) {
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
                 }
-            } else {
-                try {
-                    binUser = bindDao.getUserFromQQ(event.getSender().getId());
-                } catch (BindException e) {
-                    //退避 !recent
-                    if (event.getRawMessage().toLowerCase().contains("recent")) {
-                        throw new LogException("recent 退避成功");
-                    } else {
-                        throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-                    }
+            } catch (Exception e) {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
+            }
+        } else if (StringUtils.hasText(qqStr)) {
+            try {
+                long qq = Long.parseLong(qqStr);
+                binUser = bindDao.getUserFromQQ(qq);
+            } catch (BindException e) {
+                throw new ScoreException(ScoreException.Type.SCORE_QQ_NotFound, qqStr);
+            }
+        } else {
+            try {
+                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+            } catch (BindException e) {
+                //退避 !recent
+                if (event.getRawMessage().toLowerCase().contains("recent")) {
+                    log.info("recent 退避成功");
+                    return false;
+                } else {
+                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
                 }
             }
         }
 
-        data.setValue(new ScorePrParam(binUser, offset, limit, isRecent, isMultipleScore, OsuMode.getMode(matcher.group("mode"))));
+        if (Objects.isNull(binUser)) {
+            throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+        }
+
+        data.setValue(new ScorePRParam(binUser, offset, limit, isRecent, isMultipleScore, mode));
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, ScorePrParam param) throws Throwable {
+    public void HandleMessage(MessageEvent event, ScorePRParam param) throws Throwable {
         var from = event.getSubject();
 
         int offset = param.offset();
@@ -183,17 +201,12 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
 
         //处理默认mode
         var mode = param.mode();
-        if (mode == OsuMode.DEFAULT && binUser != null && binUser.getMode() != null) mode = binUser.getMode();
+        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
 
         List<Score> scoreList;
 
         try {
-            if (binUser != null) {
-                scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, ! isRecent);
-            } else {
-                throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-            }
-
+            scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, !isRecent);
         } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
@@ -201,16 +214,18 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
                 return;
             } else if (e instanceof WebClientResponseException.Unauthorized) {
                 throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-            } else {
+            } else if (e instanceof WebClientResponseException.Forbidden) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
+            } else {
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
             }
         } catch (Exception e) {
             log.error("成绩：列表获取失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
         }
 
-        if (scoreList == null || scoreList.isEmpty()) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound);
+        if (CollectionUtils.isEmpty(scoreList)) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
         try {
@@ -218,7 +233,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePrPara
         } catch (WebClientResponseException.Forbidden e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
         } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound);
+            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
         }
 
         //成绩发送

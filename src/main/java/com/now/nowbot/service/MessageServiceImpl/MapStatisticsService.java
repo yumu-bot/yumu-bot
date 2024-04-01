@@ -15,9 +15,9 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
 import com.now.nowbot.util.Instructions;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -29,20 +29,16 @@ import java.util.Optional;
 @Service("MAP")
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
     private static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
+    @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
     OsuUserApiService osuUserApiService;
+    @Resource
     BindDao bindDao;
+    @Resource
     ImageService imageService;
-    @Autowired
-    public MapStatisticsService(OsuBeatmapApiService beatmapApiService, OsuUserApiService osuUserApiService,
-                                OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
-        this.beatmapApiService = beatmapApiService;
-        this.osuUserApiService = osuUserApiService;
-        this.scoreApiService = scoreApiService;
-        this.bindDao = bindDao;
-        this.imageService = imageService;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) {

@@ -11,13 +11,14 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -31,20 +32,16 @@ import java.util.Objects;
 @Service("TODAY_BP")
 public class TodayBPService implements MessageService<TodayBPService.TodayBPParam> {
     private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
-    BindDao bindDao;
+    @Resource
     ImageService imageService;
+    @Resource
+    BindDao bindDao;
 
     public record TodayBPParam(BinUser user, OsuMode mode, int day, boolean isMyself) {}
-
-    @Autowired
-    public TodayBPService(OsuUserApiService userApiService, OsuScoreApiService scoreApiService, BindDao bindDao, ImageService imageService) {
-        this.userApiService = userApiService;
-        this.scoreApiService = scoreApiService;
-        this.bindDao = bindDao;
-        this.imageService = imageService;
-    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<TodayBPParam> data) throws Throwable {
@@ -53,19 +50,35 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
 
         var name = matcher.group("name");
         var dayStr = matcher.group("day");
+        var hasHash = StringUtils.hasText(matcher.group("hash"));
+        var hasSpaceAtEnd = StringUtils.hasText(matcher.group("name")) && name.endsWith(" ");
 
         // 时间计算
         int day = 1;
 
         if (StringUtils.hasText(dayStr)) {
-            try {
-                day = Integer.parseInt(dayStr);
-            } catch (NumberFormatException ignored) {
+            if (hasSpaceAtEnd) {
+                //如果输入的有空格，并且后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                try {
+                    day = Integer.parseInt(dayStr);
+                } catch (NumberFormatException ignored) {
 
+                }
+            } else {
+                //避免 !b lolol233 这样子被错误匹配
+                name += dayStr;
             }
         }
 
-        if (day > 999) throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
+        //避免 !b lolol233 这样子被错误匹配
+        if (day < 1 || day > 999) {
+            if (hasHash) {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
+            } else {
+                name += dayStr;
+                day = 1;
+            }
+        }
 
         // 传递其他参数
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
@@ -87,8 +100,17 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             var user = new BinUser();
 
             try {
-                id = userApiService.getOsuId(name);
+                id = userApiService.getOsuId(name.trim());
             } catch (WebClientResponseException.NotFound e) {
+                if (Objects.isNull(dayStr)) throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+
+                // 补救机制 1
+                try {
+                    id = userApiService.getOsuId(name.concat(dayStr));
+                } catch (WebClientResponseException.NotFound e1) {
+                    throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+                }
+            } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
             }
             user.setOsuID(id);
@@ -96,9 +118,13 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             data.setValue(new TodayBPParam(user, mode, day, false));
             return true;
         } else {
-            data.setValue(new TodayBPParam(
-                    new BinUser(event.getSender().getId(), messageText.toLowerCase()), mode, day, true));
-            return true;
+            try {
+                data.setValue(
+                        new TodayBPParam(bindDao.getUserFromQQ(event.getSender().getId()), mode, day, true));
+                return true;
+            } catch (BindException e) {
+                throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
+            }
         }
     }
 
@@ -107,45 +133,66 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         var from = event.getSubject();
 
         List<Score> BPs;
-        List<Score> TodayBPs = new ArrayList<>();
+        List<Score> todayBPs = new ArrayList<>();
         OsuUser user;
-        var rankList = new ArrayList<Integer>();
+        var BPRanks = new ArrayList<Integer>();
 
         try {
             user = userApiService.getPlayerInfo(param.user, param.mode);
-            BPs = scoreApiService.getBestPerformance(param.user, param.mode, 0, 100);
         } catch (Exception e) {
             throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
         }
 
-        if (CollectionUtils.isEmpty(BPs)) throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP);
+        try {
+            BPs = scoreApiService.getBestPerformance(param.user, param.mode, 0, 100);
+        } catch (Exception e) {
+            log.error("今日最好成绩：获取列表失败");
+            throw new TodayBPException(TodayBPException.Type.TBP_List_FetchError);
+        }
 
-        //挑出来符合要求的
+        if (CollectionUtils.isEmpty(BPs)) {
+            if (param.day <= 1) {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP, param.user.getOsuName());
+            }
 
+            // 补救机制 2
+            try {
+                var id = userApiService.getOsuId(param.user.getOsuName() + param.day);
+                user = userApiService.getPlayerInfo(id, param.mode);
+                BPs = scoreApiService.getBestPerformance(id, param.mode, 0, 100);
+            } catch (Exception e) {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP, param.user.getOsuName() + param.day);
+            }
+        }
+
+        //筛选
         LocalDateTime dayBefore = LocalDateTime.now().minusDays(param.day);
 
         for (int i = 0; i < BPs.size(); i++) {
             var bp = BPs.get(i);
 
             if (dayBefore.isBefore(bp.getCreateTime())){
-                TodayBPs.add(bp);
-                rankList.add(i + 1);
+                todayBPs.add(bp);
+                BPRanks.add(i + 1);
             }
         }
 
         //没有的话
-        if (TodayBPs.isEmpty()){
+        if (todayBPs.isEmpty()) {
+            if (! user.getActive()) {
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_Inactive, user.getUsername());
+            }
             if (param.day <= 1) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H);
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H, user.getUsername());
             } else {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod);
+                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod, user.getUsername());
             }
         }
 
         byte[] image;
 
         try {
-            image = imageService.getPanelA4(user, TodayBPs, rankList);
+            image = imageService.getPanelA4(user, todayBPs, BPRanks);
         } catch (Exception e) {
             log.error("今日最好成绩：图片渲染失败", e);
             throw new TodayBPException(TodayBPException.Type.TBP_Fetch_Error);

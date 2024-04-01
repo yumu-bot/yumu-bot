@@ -9,9 +9,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -24,17 +24,13 @@ import java.util.regex.Matcher;
 public class UUIService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(UUIService.class);
 
-
+    @Resource
     RestTemplate template;
+    @Resource
     OsuUserApiService userApiService;
+    @Resource
     BindDao bindDao;
 
-    @Autowired
-    public UUIService(RestTemplate restTemplate, OsuUserApiService userApiService, BindDao bindDao) {
-        template = restTemplate;
-        this.userApiService = userApiService;
-        this.bindDao = bindDao;
-    }
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
         var m = Instructions.UU_INFO.matcher(messageText);

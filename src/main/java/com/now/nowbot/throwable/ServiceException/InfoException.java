@@ -6,6 +6,7 @@ public class InfoException extends TipsException {
     public enum Type {
         I_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),
         I_Me_NotFound("找不到您绑定的 osu! 玩家！"),
+        I_QQ_NotFound("找不到 %s 所绑定的玩家！"),
         I_Player_NotFound("找不到此玩家，请检查。"),
         I_Player_NoBP("找不到 BP！\n该玩家可能在 %s 模式上基本上没玩过。"),
         I_Player_FetchFailed("获取玩家信息失败。\n请耐心等待问题修复。"),

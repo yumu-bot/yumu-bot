@@ -12,7 +12,6 @@ import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -22,19 +21,12 @@ import java.util.Objects;
 
 @Service("MATCH_MAP")
 public class MatchMapService implements MessageService<MatchMapService.MatchMapParam> {
-    static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
 
     @Resource
     OsuBeatmapApiService beatmapApiService;
-
     @Resource
     ImageService imageService;
-
-    @Autowired
-    public MatchMapService(OsuBeatmapApiService beatmapApiService, ImageService imageService) {
-        this.beatmapApiService = beatmapApiService;
-        this.imageService = imageService;
-    }
 
     public record MatchMapParam (Long bid, OsuMode osuMode, MatchData matchData, String modStr) {
 
