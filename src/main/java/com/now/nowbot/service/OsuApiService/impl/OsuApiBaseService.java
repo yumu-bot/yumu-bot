@@ -66,7 +66,11 @@ public class OsuApiBaseService {
         body.add("grant_type", "client_credentials");
         body.add("scope", "public");
 
-        var s = osuApiWebClient.post().uri("https://osu.ppy.sh/oauth/token").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
+        var s = osuApiWebClient.post()
+                .uri("https://osu.ppy.sh/oauth/token")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
 
         if (s != null) {
             accessToken = s.get("access_token").asText();

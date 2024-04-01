@@ -7,9 +7,17 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.util.JacksonUtil;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriBuilder;
+import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Service
 public class ScoreApiImpl implements OsuScoreApiService {
@@ -21,7 +29,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
 
     @Override
     public List<Score> getBestPerformance(BinUser user, OsuMode mode, int offset, int limit) {
-        if (!user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, offset, limit);
+        if (! user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, offset, limit);
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/best")
@@ -65,34 +73,6 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, uid))
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatmapUserScore.class)
-                .block();
-    }
-
-    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
-        if (!user.isAuthorized()) return getScore(bid, user.getOsuID(), mode);
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, user.getOsuID()))
-                .headers(base.insertHeader(user))
-                .retrieve()
-                .bodyToMono(BeatmapUserScore.class)
-                .block();
-    }
-
-    @Override
     public List<Score> getRecent(long uid, OsuMode mode, int offset, int limit) {
         return getRecent(uid, mode, false, offset, limit);
     }
@@ -103,22 +83,54 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, int modsValue) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) {
+        return do404Retry(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
                         .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, uid))
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatmapUserScore.class)
-                .block();
+                        .build(bid, uid), base::insertHeader, BeatmapUserScore.class,
+                uriBuilder -> uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", 1)
+                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .build(bid, uid)
+        ).block();
+    }
+
+    @Override
+    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
+        if (! user.isAuthorized()) return getScore(bid, user.getOsuID(), mode);
+        return do404Retry(uriBuilder -> uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .build(bid, user.getOsuID()), base.insertHeader(user), BeatmapUserScore.class,
+                uriBuilder -> uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", 1)
+                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .build(bid, user.getOsuID())
+        ).block();
+    }
+
+    @Override
+    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, int modsValue) {
+        return do404Retry(uriBuilder -> uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .build(bid, uid), base::insertHeader, BeatmapUserScore.class,
+                uriBuilder -> uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", 1)
+                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .build(bid, uid)
+        ).block();
     }
 
     @Override
     public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
-        if (!user.isAuthorized()) getScoreAll(bid, user.getOsuID(), mode);
+        if (! user.isAuthorized()) getScoreAll(bid, user.getOsuID(), mode);
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}/all")
@@ -152,7 +164,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores")
-                        .queryParam("legacy_only", 1) //这里 stable 和 lazer 记录不一样。优先查 lazer，或者改个接口
+                        .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(bid))
                 .headers(base::insertHeader)
@@ -194,6 +206,14 @@ public class ScoreApiImpl implements OsuScoreApiService {
                 .bodyToFlux(Score.class)
                 .collectList()
                 .block();
+    }
+
+    private <T> Mono<T> do404Retry(Function<UriBuilder, URI> uri, Consumer<HttpHeaders> headers, Class<T> clazz, Function<UriBuilder, URI> retry) {
+        var mono = base.osuApiWebClient.get().uri(uri).headers(headers).retrieve().bodyToMono(clazz);
+        if (Objects.nonNull(retry)) {
+            return mono.onErrorResume(WebClientResponseException.NotFound.class, e ->
+                    base.osuApiWebClient.get().uri(retry).headers(headers).retrieve().bodyToMono(clazz));
+        } else return mono;
     }
 
     @Override
