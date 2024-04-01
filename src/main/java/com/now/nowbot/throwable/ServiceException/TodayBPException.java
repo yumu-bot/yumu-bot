@@ -6,7 +6,8 @@ public class TodayBPException extends TipsException {
     public enum Type {
         TBP_Me_TokenExpired("您的令牌已过期，请重新授权。(!ymbind)"),
         TBP_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),
-        TBP_Player_NotFound("这是谁呀，小沐找不到他哦。"),
+        TBP_QQ_NotFound("找不到 %s 所绑定的玩家！"),
+        TBP_Player_NotFound("找不到玩家 %s，请检查。"),
         TBP_Player_FetchFailed("获取对方的今日最好成绩失败，请重试。\n或者，也可以让他重新绑定。"),
         TBP_BP_NoBP("无法获取玩家 %s 的 BP...\n如果这不是你想查询的玩家，请在末尾添加 #1。"),
         TBP_BP_Inactive("玩家 %s 最近不活跃...\n如果这不是你想查询的玩家，请在末尾添加 #1。"),

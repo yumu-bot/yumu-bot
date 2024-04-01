@@ -129,7 +129,18 @@ public class BPService implements MessageService<BPService.BPParam> {
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
 
         if (Objects.nonNull(at)) {
-            binUser = bindDao.getUserFromQQ(at.getTarget());
+            try {
+                binUser = bindDao.getUserFromQQ(at.getTarget());
+            } catch (BindException e) {
+                throw new BPException(BPException.Type.BP_Player_TokenExpired);
+            }
+        } else if (StringUtils.hasText(qqStr)) {
+            try {
+                long qq = Long.parseLong(qqStr);
+                binUser = bindDao.getUserFromQQ(qq);
+            } catch (BindException e) {
+                throw new BPException(BPException.Type.BP_QQ_NotFound, qqStr);
+            }
         } else if (StringUtils.hasText(name)) {
             binUser = new BinUser();
             Long id;
@@ -143,20 +154,13 @@ public class BPService implements MessageService<BPService.BPParam> {
                         id = userApiService.getOsuId(name.concat(nStr));
                         binUser.setOsuID(id);
                     } catch (WebClientResponseException.NotFound e1) {
-                        throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
+                        throw new BPException(BPException.Type.BP_Player_NotFound, name.concat(nStr));
                     }
                 } else {
-                    throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
+                    throw new BPException(BPException.Type.BP_Player_NotFound, name.trim());
                 }
             } catch (Exception e) {
-                throw new BPException(BPException.Type.BP_Player_NotFound, binUser.getOsuName());
-            }
-        } else if (StringUtils.hasText(qqStr)) {
-            try {
-                long qq = Long.parseLong(qqStr);
-                binUser = bindDao.getUserFromQQ(qq);
-            } catch (BindException e) {
-                throw new BPException(BPException.Type.BP_QQ_NotFound, qqStr);
+                throw new BPException(BPException.Type.BP_Player_NotFound, name.trim());
             }
         } else {
             try {

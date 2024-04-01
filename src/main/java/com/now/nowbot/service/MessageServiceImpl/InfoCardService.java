@@ -81,7 +81,7 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
         try {
             osuUser = userApiService.getPlayerInfo(param.user(), param.mode());
         } catch (Exception e) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, param.user().getOsuName());
+            throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, param.user().getOsuID());
         }
 
         byte[] image;

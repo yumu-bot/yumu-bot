@@ -96,14 +96,22 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         var qqStr = matcher.group("qq");
 
         if (Objects.nonNull(at)) {
-            data.setValue(new TodayBPParam(
-                    bindDao.getUserFromQQ(at.getTarget()), mode, day, false));
-            return true;
+            try {
+                data.setValue(new TodayBPParam(
+                        bindDao.getUserFromQQ(at.getTarget()), mode, day, false));
+                return true;
+            } catch (BindException e) {
+                throw new TodayBPException(TodayBPException.Type.TBP_Player_TokenExpired);
+            }
         }
         if (Objects.nonNull(qqStr)) {
-            data.setValue(new TodayBPParam(
-                    bindDao.getUserFromQQ(Long.parseLong(qqStr)), mode, day, false));
-            return true;
+            try {
+                data.setValue(new TodayBPParam(
+                        bindDao.getUserFromQQ(Long.parseLong(qqStr)), mode, day, false));
+                return true;
+            } catch (BindException e) {
+                throw new TodayBPException(TodayBPException.Type.TBP_QQ_NotFound, qqStr);
+            }
         }
         if (Strings.isNotBlank(name)) {
             long id;
@@ -117,13 +125,13 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
                     try {
                         id = userApiService.getOsuId(name.concat(dayStr));
                     } catch (WebClientResponseException.NotFound e1) {
-                        throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+                        throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound, name.concat(dayStr));
                     }
                 } else {
-                    throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+                    throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound, name.trim());
                 }
             } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound);
+                throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound, name.trim());
             }
             user.setOsuID(id);
             user.setMode(mode);

@@ -113,13 +113,13 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
                         id = userApiService.getOsuId(name.concat(nStr));
                         binUser.setOsuID(id);
                     } catch (WebClientResponseException.NotFound e1) {
-                        throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, binUser.getOsuName());
+                        throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.concat(nStr));
                     }
                 } else {
-                    throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, binUser.getOsuName());
+                    throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
                 }
             } catch (Exception e) {
-                throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, binUser.getOsuName());
+                throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
             }
         } else if (StringUtils.hasText(qqStr)) {
             try {
@@ -155,9 +155,11 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         BeatMap beatMap;
 
         try {
-            score = scoreApiService.getRecent(param.user().getOsuID(), param.mode(), param.offset(), param.limit(), ! param.isRecent()).getFirst();
+            score = scoreApiService.getRecent(
+                    param.user().getOsuID(), param.mode(), param.offset(), param.limit(), ! param.isRecent()
+            ).getFirst();
         } catch (Exception e) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Recent_NotFound, param.user().getOsuName());
+            throw new MiniCardException(MiniCardException.Type.MINI_Recent_NotFound, param.user().getOsuID());
         }
 
         try {

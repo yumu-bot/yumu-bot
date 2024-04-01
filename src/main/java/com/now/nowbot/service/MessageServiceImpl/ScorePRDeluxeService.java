@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -135,14 +136,14 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
         if (at != null) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
         } else {
-            if (name != null && !name.trim().isEmpty()) {
+            if (StringUtils.hasText(name)) {
                 binUser = new BinUser();
                 Long id;
                 try {
                     id = userApiService.getOsuId(name.trim());
                     binUser.setOsuID(id);
                 } catch (WebClientResponseException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name);
                 }
             } else {
                 if (event.getSender().getId() == 365246692L && false) {
@@ -151,7 +152,7 @@ public class ScorePRDeluxeService implements MessageService<Matcher> {
                     try {
                         img = getAlphaPanel(mode, offset, 1, isRecent); //这里的limit没法是多的
                     } catch (RuntimeException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, osuUser.getUsername());
+                        throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, event.getSender().getId());
                         //log.error("s: ", e);
                         //throw new TipsException("24h内无记录");
                     }
