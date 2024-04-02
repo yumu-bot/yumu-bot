@@ -125,34 +125,32 @@ public class BPService implements MessageService<BPService.BPParam> {
         // 构建参数
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         String qqStr = matcher.group("qq");
-        BinUser binUser;
+        BinUser user;
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
 
         if (Objects.nonNull(at)) {
             try {
-                binUser = bindDao.getUserFromQQ(at.getTarget());
+                user = bindDao.getUserFromQQ(at.getTarget());
             } catch (BindException e) {
                 throw new BPException(BPException.Type.BP_Player_TokenExpired);
             }
         } else if (StringUtils.hasText(qqStr)) {
             try {
                 long qq = Long.parseLong(qqStr);
-                binUser = bindDao.getUserFromQQ(qq);
+                user = bindDao.getUserFromQQ(qq);
             } catch (BindException e) {
                 throw new BPException(BPException.Type.BP_QQ_NotFound, qqStr);
             }
         } else if (StringUtils.hasText(name)) {
-            binUser = new BinUser();
-            Long id;
+            user = new BinUser();
+            long id;
             try {
                 id = userApiService.getOsuId(name.trim());
-                binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
                 if (StringUtils.hasText(nStr)) {
                     // 补救机制 1
                     try {
                         id = userApiService.getOsuId(name.concat(nStr));
-                        binUser.setOsuID(id);
                     } catch (WebClientResponseException.NotFound e1) {
                         throw new BPException(BPException.Type.BP_Player_NotFound, name.concat(nStr));
                     }
@@ -162,9 +160,11 @@ public class BPService implements MessageService<BPService.BPParam> {
             } catch (Exception e) {
                 throw new BPException(BPException.Type.BP_Player_NotFound, name.trim());
             }
+            user.setOsuID(id);
+            user.setMode(mode);
         } else {
             try {
-                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                user = bindDao.getUserFromQQ(event.getSender().getId());
                 isMyself = true;
             } catch (BindException e) {
                 //退避 !bp
@@ -177,11 +177,15 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        if (Objects.isNull(binUser)) {
+        if (Objects.isNull(user)) {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         }
 
-        data.setValue(new BPParam(binUser, offset, limit, mode, isMultipleScore, isMyself));
+        if (OsuMode.isDefault(mode) && ! OsuMode.isDefault(user.getMode())) {
+            mode = user.getMode();
+        }
+
+        data.setValue(new BPParam(user, offset, limit, mode, isMultipleScore, isMyself));
         return true;
     }
 

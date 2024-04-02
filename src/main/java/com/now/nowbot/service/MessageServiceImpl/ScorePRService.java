@@ -143,23 +143,21 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         // 构建参数
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         String qqStr = matcher.group("qq");
-        BinUser binUser;
+        BinUser user;
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
 
         if (Objects.nonNull(at)) {
-            binUser = bindDao.getUserFromQQ(at.getTarget());
+            user = bindDao.getUserFromQQ(at.getTarget());
         } else if (StringUtils.hasText(name)) {
-            binUser = new BinUser();
-            Long id;
+            user = new BinUser();
+            long id;
             try {
                 id = userApiService.getOsuId(name.trim());
-                binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
                 if (StringUtils.hasText(nStr)) {
                     // 补救机制 1
                     try {
                         id = userApiService.getOsuId(name.concat(nStr));
-                        binUser.setOsuID(id);
                     } catch (WebClientResponseException.NotFound e1) {
                         throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.concat(nStr));
                     }
@@ -169,16 +167,18 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
             }
+            user.setOsuID(id);
+            user.setMode(mode);
         } else if (StringUtils.hasText(qqStr)) {
             try {
                 long qq = Long.parseLong(qqStr);
-                binUser = bindDao.getUserFromQQ(qq);
+                user = bindDao.getUserFromQQ(qq);
             } catch (BindException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_QQ_NotFound, qqStr);
             }
         } else {
             try {
-                binUser = bindDao.getUserFromQQ(event.getSender().getId());
+                user = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (BindException e) {
                 //退避 !recent
                 if (event.getRawMessage().toLowerCase().contains("recent")) {
@@ -190,11 +190,11 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             }
         }
 
-        if (Objects.isNull(binUser)) {
+        if (Objects.isNull(user)) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        data.setValue(new ScorePRParam(binUser, offset, limit, isRecent, isMultipleScore, mode));
+        data.setValue(new ScorePRParam(user, offset, limit, isRecent, isMultipleScore, mode));
         return true;
     }
 

@@ -94,29 +94,26 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         var qqStr = matcher.group("qq");
+        boolean isMyself = false;
+
+        BinUser user;
 
         if (Objects.nonNull(at)) {
             try {
-                data.setValue(new TodayBPParam(
-                        bindDao.getUserFromQQ(at.getTarget()), mode, day, false));
-                return true;
+                user = bindDao.getUserFromQQ(at.getTarget());
             } catch (BindException e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_TokenExpired);
             }
-        }
-        if (Objects.nonNull(qqStr)) {
+        } else if (Objects.nonNull(qqStr)) {
             try {
-                data.setValue(new TodayBPParam(
-                        bindDao.getUserFromQQ(Long.parseLong(qqStr)), mode, day, false));
-                return true;
-            } catch (BindException e) {
+                user = bindDao.getUserFromQQ(Long.parseLong(qqStr));
+            } catch (BindException | NumberFormatException e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_QQ_NotFound, qqStr);
             }
-        }
-        if (Strings.isNotBlank(name)) {
-            long id;
-            var user = new BinUser();
+        } else if (Strings.isNotBlank(name)) {
+            user = new BinUser();
 
+            long id;
             try {
                 id = userApiService.getOsuId(name.trim());
             } catch (WebClientResponseException.NotFound e) {
@@ -133,19 +130,28 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             } catch (Exception e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Player_NotFound, name.trim());
             }
+
             user.setOsuID(id);
             user.setMode(mode);
-            data.setValue(new TodayBPParam(user, mode, day, false));
-            return true;
         } else {
             try {
-                data.setValue(
-                        new TodayBPParam(bindDao.getUserFromQQ(event.getSender().getId()), mode, day, true));
-                return true;
+                user = bindDao.getUserFromQQ(event.getSender().getId());
+                isMyself = true;
             } catch (BindException e) {
                 throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
             }
         }
+
+        if (Objects.isNull(user)) {
+            throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
+        }
+
+        if (OsuMode.isDefault(mode) && ! OsuMode.isDefault(user.getMode())) {
+            mode = user.getMode();
+        }
+
+        data.setValue(new TodayBPParam(user, mode, day, isMyself));
+        return true;
     }
 
     @Override
