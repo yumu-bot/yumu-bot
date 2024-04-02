@@ -115,7 +115,7 @@ public class Instructions {
 
     // #8 辅助指令
 
-    public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
+    public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*)?");
 
     public static final Pattern OVER_SR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
 
