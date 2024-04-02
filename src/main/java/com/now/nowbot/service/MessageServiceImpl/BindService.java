@@ -267,21 +267,22 @@ public class BindService implements MessageService<BindService.BindParam> {
         if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
             binUser = qqBindLite.getBinUser();
             try {
-                var osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
-                if (! osuUser.getUID().equals(binUser.getOsuID())) {
-                    throw new RuntimeException();
-                }
-
-                if (binUser.isAuthorized()) {
+                OsuUser osuUser = null;
+                try {
+                    osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
                     from.sendMessage(
                             String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
                     );
-                } else {
+                } catch (WebClientResponseException.Unauthorized e) {
                     from.sendMessage(
                             String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message,
                                     binUser.getOsuID(), Optional.ofNullable(binUser.getOsuName()).orElse("?")
                             )
                     );
+                }
+
+                if (Objects.nonNull(osuUser) && ! osuUser.getUID().equals(binUser.getOsuID())) {
+                    throw new RuntimeException();
                 }
 
                 var lock = ASyncMessageUtil.getLock(event);
