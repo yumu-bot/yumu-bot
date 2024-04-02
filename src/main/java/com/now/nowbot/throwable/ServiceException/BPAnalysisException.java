@@ -13,7 +13,7 @@ public class BPAnalysisException extends TipsException {
         BA_Me_NotEnoughBP("你在 %s 模式上的 BP 不足 10 个呢...\n灼热分析 EX"),
         BA_Player_NotEnoughBP("对方在 %s 模式上的 BP 不足 10 个呢...\n灼热分析 EX"),
         BA_Instruction_Deprecated("bpht 已移至 uuba。\n您也可以使用 !ba 来体验丰富版本。\n猫猫 Bot 的 bpht 需要输入 !get bpht。"),
-        BA_Render_Failed("最好成绩渲染失败。"),
+        BA_Render_Error("最好成绩渲染失败。"),
         BA_Send_Error("最好成绩分析发送失败。\n请耐心等待问题修复。或者可以使用 !uuba。"),
         BA_Send_UUError("最好成绩分析（文字版）发送失败。"),
 

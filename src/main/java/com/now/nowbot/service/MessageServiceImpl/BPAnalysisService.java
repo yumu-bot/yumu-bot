@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.Service.UserParam;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -20,13 +19,13 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -38,7 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("BP_ANALYSIS")
-public class BPAnalysisService implements MessageService<UserParam> {
+public class BPAnalysisService implements MessageService<BPAnalysisService.BAParam> {
     private static final Logger log = LoggerFactory.getLogger(BPAnalysisService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     @Resource
@@ -52,73 +51,82 @@ public class BPAnalysisService implements MessageService<UserParam> {
     @Resource
     UUBAService uubaService;
 
+    public record BAParam(Long qq, String name, OsuMode mode, boolean at, boolean isMyself) {
+    }
+
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BAParam> data) {
         var matcher = Instructions.BP_ANALYSIS.matcher(messageText);
         if (!matcher.find()) return false;
-        var mode = OsuMode.getMode(matcher.group("mode"));
+
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        var mode = OsuMode.getMode(matcher.group("mode"));
+        var name = matcher.group("name");
+        var qqStr = matcher.group("qq");
+
         if (Objects.nonNull(at)) {
-            data.setValue(new UserParam(at.getTarget(), null, mode, true));
+            data.setValue(new BAParam(at.getTarget(), null, mode, true, false));
+            return true;
+        } else if (StringUtils.hasText(name)) {
+            data.setValue(new BAParam(null, name.trim(), mode, false, false));
+            return true;
+        } else if (StringUtils.hasText(qqStr)) {
+            data.setValue(new BAParam(Long.parseLong(qqStr), null, mode, false, false));
+            return true;
+        } else {
+            data.setValue(new BAParam(event.getSender().getId(), null, mode, false, true));
             return true;
         }
-        String name = matcher.group("name");
-        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new UserParam(null, name, mode, false));
-            return true;
-        }
-        data.setValue(new UserParam(event.getSender().getId(), null, mode, false));
-        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
+    public void HandleMessage(MessageEvent event, BAParam param) throws Throwable {
         var from = event.getSubject();
         var mode = param.mode();
 
         //bp列表
         List<Score> bps;
-        OsuUser u;
-        if (Objects.nonNull(param.qq())) {
-            BinUser bu = bindDao.getUserFromQQ(param.qq());
+        OsuUser osuUser;
+        if (Objects.nonNull(param.qq)) {
+            BinUser binUser = bindDao.getUserFromQQ(param.qq);
             try {
                 if (mode != OsuMode.DEFAULT) {
-                    u = userApiService.getPlayerInfo(bu, mode);
-                    u.setPlayMode(mode.getName());
-                    bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);
+                    osuUser = userApiService.getPlayerInfo(binUser, mode);
+                    osuUser.setPlayMode(mode.getName());
+                    bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
                 } else {
-                    bps = scoreApiService.getBestPerformance(bu, bu.getMode(), 0, 100);
-                    u = userApiService.getPlayerInfo(bu, bu.getMode());
+                    bps = scoreApiService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
+                    osuUser = userApiService.getPlayerInfo(binUser, binUser.getMode());
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
-                if (!param.at()) {
+                if (param.isMyself) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
                 } else {
                     throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
                 }
             } catch (Exception e) {
-                if (!param.at()) {
+                if (param.isMyself) {
                     throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_FetchFailed);
                 } else {
                     throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_FetchFailed);
                 }
             }
         } else {
-            String name = param.name().trim();
             long id;
             try {
-                id = userApiService.getOsuId(name);
+                id = userApiService.getOsuId(param.name);
             } catch (Exception e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound);
             }
             try {
                 if (mode != OsuMode.DEFAULT) {
                     bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-                    u = userApiService.getPlayerInfo(id, mode);
-                    u.setPlayMode(mode.getName());
+                    osuUser = userApiService.getPlayerInfo(id, mode);
+                    osuUser.setPlayMode(mode.getName());
                 } else {
-                    u = userApiService.getPlayerInfo(id);
-                    bps = scoreApiService.getBestPerformance(id, u.getOsuMode(), 0, 100);
+                    osuUser = userApiService.getPlayerInfo(id);
+                    bps = scoreApiService.getBestPerformance(id, osuUser.getOsuMode(), 0, 100);
                 }
             } catch (HttpClientErrorException | WebClientResponseException e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
@@ -128,42 +136,43 @@ public class BPAnalysisService implements MessageService<UserParam> {
         }
 
         if (Objects.isNull(bps) || bps.size() <= 5) {
-            if (Objects.nonNull(param.qq()) && param.qq() == event.getSender().getId()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, u.getPlayMode());
+            if (param.isMyself) {
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, osuUser.getPlayMode());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, u.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, osuUser.getPlayMode());
             }
         }
 
         byte[] image = new byte[0];
 
-        var data = parseData(u, bps, userApiService);
+        var data = parseData(osuUser, bps, userApiService);
 
         try {
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             log.error("最好成绩分析：复杂面板生成失败", e);
             try {
-                var msg = uubaService.getAllMsg(bps, u.getUsername(), u.getPlayMode());
+                var msg = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
                 var image2 = imageService.getPanelAlpha(msg);
                 from.sendImage(image2);
 
             } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e1) {
                 log.error("最好成绩分析：渲染失败", e1);
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Failed);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Error);
             } catch (Exception e1) {
                 log.error("最好成绩分析：UUBA 转换失败", e1);
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError);
             }
 
         } catch (Exception e) {
-            log.error("最好成绩分析：发送失败", e);
-            throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_Error);
+            log.error("最好成绩分析：渲染失败", e);
+            throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Error);
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
+            log.error("最好成绩分析：发送失败", e);
             throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_Error);
         }
     }
@@ -186,7 +195,7 @@ public class BPAnalysisService implements MessageService<UserParam> {
             try {
                 changedAttrsMap = imageService.getMapAttr(mapAttrGet);
             } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Failed);
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Error);
             } catch (HttpServerErrorException | WebClientResponseException e) {
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Attr_FetchFailed);
             }
