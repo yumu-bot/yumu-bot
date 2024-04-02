@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.Service.UserParam;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
@@ -13,16 +13,16 @@ import com.now.nowbot.throwable.ServiceException.OldAvatarException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
 
 @Service("OLD_AVATAR")
-public class OldAvatarService implements MessageService<UserParam> {
+public class OldAvatarService implements MessageService<OldAvatarService.OAParam> {
     private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
     @Resource
     OsuUserApiService userApiService;
@@ -31,64 +31,73 @@ public class OldAvatarService implements MessageService<UserParam> {
     @Resource
     ImageService imageService;
 
+    public record OAParam(Long qq, Long uid, String name, OsuMode mode, boolean at, boolean isMyself) {}
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<UserParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<OAParam> data) {
         var matcher = Instructions.OLD_AVATAR.matcher(messageText);
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        var qqStr = matcher.group("qq");
+        var uidStr = matcher.group("uid");
+        var name = matcher.group("name");
+
         if (Objects.nonNull(at)) {
-            data.setValue(new UserParam(at.getTarget(), null, null, true));
+            data.setValue(new OAParam(at.getTarget(), null, null, null, true, false));
+            return true;
+        } else if (StringUtils.hasText(qqStr)) {
+            data.setValue(new OAParam(Long.parseLong(qqStr), null, null, null, false, false));
             return true;
         }
 
-        String qq = matcher.group("qq");
-        if (Objects.nonNull(qq) && Strings.isNotBlank(qq)) {
-            data.setValue(new UserParam(Long.parseLong(qq), null, null, false));
+        if (StringUtils.hasText(uidStr)) {
+            data.setValue(new OAParam(null, Long.parseLong(uidStr), null, null, false, false));
+            return true;
+        } else if (StringUtils.hasText(name)) {
+            data.setValue(new OAParam(null, null, name.trim(), null, false, false));
+            return true;
+        } else {
+            data.setValue(new OAParam(event.getSender().getId(), null, null, null, false, true));
             return true;
         }
-
-        String name = matcher.group("name");
-        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new UserParam(null, name, null, false));
-            return true;
-        }
-
-        data.setValue(new UserParam(event.getSender().getId(), null, null, false));
-        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, UserParam param) throws Throwable {
+    public void HandleMessage(MessageEvent event, OAParam param) throws Throwable {
         var from = event.getSubject();
         OsuUser osuUser = null;
 
-        if (Objects.nonNull(param.qq())) {
+        if (Objects.nonNull(param.uid)) {
+            try {
+                osuUser = userApiService.getPlayerInfo(param.uid);
+            } catch (Exception e) {
+                throw new OldAvatarException(OldAvatarException.Type.OA_Player_NotFound);
+            }
+
+        } else if (Objects.nonNull(param.qq)) {
             BinUser binUser;
             try {
-                binUser = bindDao.getUserFromQQ(param.qq());
+                binUser = bindDao.getUserFromQQ(param.qq);
             } catch (Exception e) {
-                if (event.getSender().getId() == param.qq()) {
+                if (param.isMyself) {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Me_NotBind);
                 } else {
                     throw new OldAvatarException(OldAvatarException.Type.OA_Player_TokenExpired);
                 }
             }
+
             try {
                 osuUser = userApiService.getPlayerInfo(binUser);
             } catch (WebClientResponseException e) {
-                if (param.at()) {
-                    throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
-                } else {
-                    throw new OldAvatarException(OldAvatarException.Type.OA_Me_FetchFailed);
-                }
+                throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
             } catch (Exception e) {
-                log.error("OA 获取玩家信息失败: ", e);
-                throw new OldAvatarException(OldAvatarException.Type.OA_Me_FetchFailed);
+                log.error("旧头像：获取玩家信息失败: ", e);
+                throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
             }
         } else {
-            String name = param.name().trim();
-            Long id;
+            String name = param.name;
+            long id;
 
             try {
                 id = userApiService.getOsuId(name);
