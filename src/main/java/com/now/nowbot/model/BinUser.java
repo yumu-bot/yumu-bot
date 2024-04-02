@@ -1,11 +1,14 @@
 package com.now.nowbot.model;
 
 import com.now.nowbot.model.enums.OsuMode;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public class BinUser {
+    private static final Logger log = LoggerFactory.getLogger(BinUser.class);
+
     Long baseId;
     /**
      * osu name
@@ -91,8 +94,8 @@ public class BinUser {
         try {
             // 请求 token ，如果过期会报 Unauthorized
             auth = Objects.nonNull(accessToken) && Objects.nonNull(time) && time > 0;
-        } catch (WebClientResponseException.Unauthorized ignored) {
-
+        } catch (Exception ignored) {
+            log.info(String.format("玩家 %s 已掉绑", osuName));
         }
         return auth;
     }
