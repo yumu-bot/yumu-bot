@@ -21,7 +21,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 @Service
@@ -102,7 +101,7 @@ public class OsuApiBaseService {
             user.setAccessToken(accessToken);
             refreshToken = s.get("refresh_token").asText();
             user.setRefreshToken(refreshToken);
-            time = user.nextTime(s.get("expires_in").asLong());
+            time = user.setTimeToAfter(s.get("expires_in").asLong() * 1000);
         } else {
             throw new RuntimeException("更新 Oauth 令牌, 接口格式错误");
         }
@@ -119,7 +118,7 @@ public class OsuApiBaseService {
 
     Consumer<HttpHeaders> insertHeader(BinUser user) {
         final String token;
-        if (Objects.isNull(user.getAccessToken())) {
+        if (! user.isAuthorized()) {
             token = getBotToken();
         } else if (user.isPassed()) {
             try {

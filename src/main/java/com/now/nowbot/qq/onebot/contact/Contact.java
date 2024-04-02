@@ -4,6 +4,7 @@ import com.mikuac.shiro.common.utils.MsgUtils;
 import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.common.MsgId;
+import com.mikuac.shiro.dto.action.response.LoginInfoResp;
 import com.mikuac.shiro.exception.ShiroException;
 import com.now.nowbot.config.OneBotConfig;
 import com.now.nowbot.qq.message.*;
@@ -47,7 +48,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         } catch (NullPointerException e) {
             log.error("获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送");
         }
-        long id = 0;
+        long id;
         ActionData<MsgId> d;
         if (this instanceof Group) {
             d = bot.customRequest(() -> "send_group_msg", Map.of(
@@ -109,9 +110,16 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
     }
 
     private boolean testBot() {
+        ActionData<LoginInfoResp> info;
         try {
-            bot.getLoginInfo().getData();
-            return true;
+            info = bot.getLoginInfo();
+        } catch (NullPointerException e) {
+            log.error("Shiro 框架：无法获取 Bot 实例的登录信息", e);
+            return false;
+        }
+
+        try {
+            info.getData();
         } catch (ShiroException.SendMessageException e) {
             log.error("Shiro 框架：发送消息失败", e);
             return false;
@@ -122,6 +130,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             log.error("test bot only", e);
             return false;
         }
+
+        return true;
     }
 
     private void getIfNewBot() {

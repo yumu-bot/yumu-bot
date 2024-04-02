@@ -3,6 +3,7 @@ package com.now.nowbot.model;
 import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
 
@@ -36,7 +37,7 @@ public class BinUser {
     OsuMode mode;
 
     public BinUser() {
-        reTime();
+        setTimeToNow();
     }
 
     public BinUser(long base) {
@@ -47,16 +48,17 @@ public class BinUser {
         this.osuID = osuId;
         this.osuName = osuName;
         mode = OsuMode.DEFAULT;
-        time=0L;
-        reTime();
+        time = 0L;
+        setTimeToNow();
     }
 
     public static BinUser create(String refreshToken) {
         var user = new BinUser();
         user.refreshToken = refreshToken;
-        user.reTime();
+        user.setTimeToNow();
         return user;
     }
+
     public String getOsuName() {
         return osuName;
     }
@@ -85,19 +87,19 @@ public class BinUser {
         this.refreshToken = refreshToken;
     }
 
-    public String getAccessToken() {
+    public String getAccessToken() throws WebClientResponseException.Unauthorized {
         return accessToken;
     }
 
     public boolean isAuthorized() {
-        boolean auth = false;
+        boolean expired = true; // auth 的反
         try {
             // 请求 token ，如果过期会报 Unauthorized
-            auth = Objects.nonNull(accessToken) && Objects.nonNull(time) && time > 0;
+            expired = Objects.isNull(time) || time <= 0 || Objects.isNull(accessToken);
         } catch (Exception ignored) {
             log.info(String.format("玩家 %s 已掉绑", osuName));
         }
-        return auth;
+        return ! expired;
     }
 
     public void setAccessToken(String accessToken) {
@@ -112,12 +114,12 @@ public class BinUser {
         this.time = time;
     }
 
-    public void reTime() {
+    public void setTimeToNow() {
         time = System.currentTimeMillis();
     }
 
-    public Long nextTime(Long addTime) {
-        time = System.currentTimeMillis() + addTime * 1000;
+    public Long setTimeToAfter(Long millis) {
+        time = System.currentTimeMillis() + millis;
         return time;
     }
 
@@ -144,12 +146,6 @@ public class BinUser {
 
     @Override
     public String toString() {
-        return "BinUser{" +
-                ", osuName='" + osuName + '\'' +
-                ", osuID='" + osuID + '\'' +
-                ", refresh_token='" + refreshToken + '\'' +
-                ", access_token='" + accessToken + '\'' +
-                ", time=" + time +
-                '}';
+        return STR."BinUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
     }
 }

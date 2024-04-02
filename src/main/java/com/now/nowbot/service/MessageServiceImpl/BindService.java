@@ -260,6 +260,7 @@ public class BindService implements MessageService<BindService.BindParam> {
     private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
         var from = event.getSubject();
         BinUser binUser;
+        OsuUser osuUser = null;
 
         //检查是否已经绑定
         var qqLiteFromQQ = bindDao.getQQLiteFromQQ(qq);
@@ -267,7 +268,6 @@ public class BindService implements MessageService<BindService.BindParam> {
         if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
             binUser = qqBindLite.getBinUser();
             try {
-                OsuUser osuUser = null;
                 try {
                     osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
                     from.sendMessage(
@@ -288,6 +288,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
                 if (Objects.isNull(s) || ! s.getRawMessage().toUpperCase().contains("OK")) {
+                    from.sendMessage(BindException.Type.BIND_Receive_Refused.message);
                     return;
                 }
 
