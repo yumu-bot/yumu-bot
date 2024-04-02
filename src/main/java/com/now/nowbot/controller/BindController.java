@@ -78,7 +78,7 @@ public class BindController {
         return doBind(sb, code, msg, key);
     }
 
-    private String doBind(StringBuilder sb, String code, BindService.Bind msg, long key) {
+    private String doBind(StringBuilder sb, String code, BindService.BindData msg, long key) {
         try {
 
             BinUser bd = BinUser.create(code);

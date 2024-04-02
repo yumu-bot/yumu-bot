@@ -18,7 +18,6 @@ import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskExecutor;
@@ -35,7 +34,7 @@ import java.util.regex.Pattern;
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
     private static final Logger log = LoggerFactory.getLogger(BindService.class);
-    public static final Map<Long, Bind> BIND_MSG_MAP = new ConcurrentHashMap<>();
+    public static final Map<Long, BindData> BIND_MSG_MAP = new ConcurrentHashMap<>();
     private static boolean CLEAR = false;
 
     @Resource
@@ -53,7 +52,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         var m = Instructions.BIND.matcher(messageText);
         if (!m.find()) return false;
 
-        var qq = m.group("qq");
+        var qqStr = m.group("qq");
         var name = m.group("name");
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
@@ -86,33 +85,29 @@ public class BindService implements MessageService<BindService.BindParam> {
             }
         }
 
-        var meQQ = event.getSender().getId();
+        var qq = event.getSender().getId();
         boolean unbind = Objects.nonNull(m.group("un")) || Objects.nonNull(m.group("ub"));
-        boolean isSuper = Permission.isSuperAdmin(meQQ);
+        boolean isSuper = Permission.isSuperAdmin(qq);
         boolean isFull = Objects.nonNull(m.group("full"));
 
         if (Objects.nonNull(at)) {
             data.setValue(new BindParam(at.getTarget(), null, true, unbind, isSuper, isFull));
             return true;
-        }
-
-        if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            if (Objects.nonNull(qq)) {
-                data.setValue(new BindParam(Long.parseLong(qq), name, false, unbind, isSuper, isFull));
+        } else if (StringUtils.hasText(name)) {
+            if (Objects.nonNull(qqStr)) {
+                data.setValue(new BindParam(Long.parseLong(qqStr), name, false, unbind, isSuper, isFull));
                 return true;
             } else {
-                data.setValue(new BindParam(meQQ, name, false, unbind, isSuper, isFull));
+                data.setValue(new BindParam(qq, name, false, unbind, isSuper, isFull));
                 return true;
             }
-        }
-
-        if (Objects.nonNull(qq) && Strings.isNotBlank(qq) && ! qq.trim().equals("0")) {
-            data.setValue(new BindParam(Long.parseLong(qq), null, false, unbind, isSuper, isFull));
+        } else if (StringUtils.hasText(qqStr) && ! qqStr.trim().equals("0")) {
+            data.setValue(new BindParam(Long.parseLong(qqStr), null, false, unbind, isSuper, isFull));
+            return true;
+        } else {
+            data.setValue(new BindParam(qq, null, false, unbind, isSuper, isFull));
             return true;
         }
-
-        data.setValue(new BindParam(meQQ, null, false, unbind, isSuper, isFull));
-        return true;
     }
 
     @Override
@@ -258,7 +253,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         return - 1;
     }
 
-    public record Bind(Long key, MessageReceipt receipt, Long QQ) {
+    public record BindData(Long key, MessageReceipt receipt, Long QQ) {
     }
 
     //默认绑定路径
@@ -283,7 +278,9 @@ public class BindService implements MessageService<BindService.BindParam> {
                     );
                 } else {
                     from.sendMessage(
-                            String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                            String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message,
+                                    binUser.getOsuID(), Optional.ofNullable(binUser.getOsuName()).orElse("?")
+                            )
                     );
                 }
 
@@ -319,7 +316,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
             from.recallIn(receipt, 110 * 1000);
             //此处在 controller.msgController 处理
-            putBind(timeMillis, new Bind(timeMillis, receipt, qq));
+            putBind(timeMillis, new BindData(timeMillis, receipt, qq));
         }
     }
 
@@ -327,7 +324,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         return BIND_MSG_MAP.containsKey(t);
     }
 
-    public static Bind getBind(Long t) {
+    public static BindData getBind(Long t) {
         removeOldBind();
         return BIND_MSG_MAP.get(t);
     }
@@ -340,7 +337,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         BIND_MSG_MAP.keySet().removeIf(k -> (k + 120 * 1000) < System.currentTimeMillis());
     }
 
-    private void putBind(Long t, Bind b) {
+    private void putBind(Long t, BindData b) {
         removeOldBind();
         if (BIND_MSG_MAP.size() > 20 && ! CLEAR) {
             CLEAR = true;
