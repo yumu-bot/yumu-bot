@@ -360,10 +360,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             }
         }
 
-        //更换主语和和谐
+        //更换主语、和谐
         {
             left = ChangeCase(left);
             right = ChangeCase(right);
+            is = ChangeCase(is);
         }
 
         //如果还是有条件。那么进入多匹配模式。
