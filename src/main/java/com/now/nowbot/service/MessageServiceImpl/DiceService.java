@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -132,22 +133,18 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split split = null;
 
         //记得这里才是需要查询的
-        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, AMOUNT, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST);
+        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, AMOUNT, WHETHER, BETTER, COMPARE, OR, AM, WHAT, WHY, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST, QUESTION);
 
         for (var sp : splits) {
             var onlyC3 =
                     sp == TIME || sp == AMOUNT || sp == WHY ||
                     sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == REAL ||
-                    sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT;
+                    sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT || sp == QUESTION;
             var hasC3 = sp == BETTER || onlyC3;
+            var matcher = sp.pattern.matcher(s);
 
-            if (isPerfectMatch(sp.pattern, s, hasC3, onlyC3)) {
+            if (isPerfectMatch(matcher, hasC3, onlyC3)) {
                 split = sp;
-
-                var matcher = sp.pattern.matcher(s);
-                if (! matcher.find()) {
-                    continue;
-                }
 
                 left = matcher.group("m1");
                 right = matcher.group("m2");
@@ -279,7 +276,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         if (! StringUtils.hasText(right)) return "我怎么知道。";
                     }
 
-                    case REAL -> {
+                    case REAL, QUESTION -> {
                         // 10% 触发彩蛋。
                         if (getRandom(100) <= 10f) return "我怎么知道。";
                     }
@@ -316,7 +313,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case WHAT, WHY -> "我怎么知道。";
                 case REAL -> "我觉得，是真的。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
-                case ASSUME, LIKE, IS -> "%s。";
+                case ASSUME, LIKE, IS, QUESTION -> "%s。";
                 case COULD, WHETHER -> "%s%s%s。";
                 case CONDITION -> "是的。";
                 case THINK -> "嗯。";
@@ -341,6 +338,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case CONDITION -> "不是。";
                 case LIKE, IS -> "不%s。";
                 case THINK -> "也没有吧。";
+                case QUESTION -> "不。";
             };
 
             //改变几率
@@ -406,7 +404,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case TIME, POSSIBILITY -> {
                     return String.format(leftFormat, num, is);
                 }
-                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE-> {
+                case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, QUESTION-> {
                     return String.format(leftFormat, left);
                 }
                 //注意，这个会忽视A
@@ -429,7 +427,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else if (result > boundary + 0.002f) {
             //选第二个
             switch (split) {
-                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST, REAL -> {
+                case WHAT, WHY, AM, ASSUME, CONDITION, THINK, NEST, REAL, QUESTION -> {
                     return rightFormat;
                 }
                 case RANGE, AMOUNT -> {
@@ -556,6 +554,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //嗯。也没有吧。
         THINK(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<c3>(觉得|认为))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
+        //....吗？
+        //....。 不。
+        QUESTION(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>吗[?？]?)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+
         ;
 
         public final Pattern pattern;
@@ -594,22 +596,20 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     /**
      * 是否完美匹配
-     * @param p 格式
-     * @param s 字符串
+     * @param m 匹配
      * @param hasC3 含有C3
      * @param onlyC3 只有C3
      * @return 结果
      */
-    private boolean isPerfectMatch(Pattern p, String s, boolean hasC3, boolean onlyC3) {
-        var matcher = p.matcher(s);
+    private boolean isPerfectMatch(Matcher m, boolean hasC3, boolean onlyC3) {
 
-        if (! matcher.find()) {
+        if (! m.find()) {
             return false;
         }
 
-        var m1 = Objects.nonNull(matcher.group("m1")) && StringUtils.hasText(matcher.group("m1"));
-        var m2 = Objects.nonNull(matcher.group("m2")) && StringUtils.hasText(matcher.group("m2"));
-        var c3 = hasC3 && Objects.nonNull(matcher.group("c3")) && StringUtils.hasText(matcher.group("c3"));
+        var m1 = Objects.nonNull(m.group("m1")) && StringUtils.hasText(m.group("m1"));
+        var m2 = Objects.nonNull(m.group("m2")) && StringUtils.hasText(m.group("m2"));
+        var c3 = hasC3 && Objects.nonNull(m.group("c3")) && StringUtils.hasText(m.group("c3"));
 
         if (onlyC3) return c3;
         if (hasC3) return m1 && m2 && c3;
