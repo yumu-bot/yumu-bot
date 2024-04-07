@@ -8,6 +8,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.IMapperException;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,11 +48,36 @@ public class IMapperService implements MessageService<Matcher> {
         var from = event.getSubject();
 
         OsuUser osuUser;
-        String name = matcher.group("name").trim();
+        BinUser binUser;
+        String name = matcher.group("name");
+        String qqStr = matcher.group("qq");
+        String idStr = matcher.group("id");
 
-        if (name.isEmpty()) {
-            BinUser binUser;
+        if (StringUtils.hasText(name)) {
+            try {
+                osuUser = userApiService.getPlayerInfo(name.trim());
+            } catch (Exception e) {
+                throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
+            }
+        } else if (StringUtils.hasText(qqStr)) {
+            try {
+                binUser = bindDao.getUserFromQQ(Long.parseLong(qqStr));
+            } catch (BindException e) {
+                throw new IMapperException(IMapperException.Type.IM_Player_TokenExpired);
+            }
 
+            try {
+                osuUser = userApiService.getPlayerInfo(binUser.getOsuID());
+            } catch (Exception e) {
+                throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
+            }
+        } else if (StringUtils.hasText(idStr)) {
+            try {
+                osuUser = userApiService.getPlayerInfo(Long.parseLong(idStr));
+            } catch (Exception e) {
+                throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
+            }
+        } else {
             try {
                 binUser = bindDao.getUserFromQQ(event.getSender().getId());
             } catch (Exception e) {
@@ -58,21 +85,9 @@ public class IMapperService implements MessageService<Matcher> {
             }
 
             try {
-                osuUser = userApiService.getPlayerInfo(binUser);
+                osuUser = userApiService.getPlayerInfo(binUser.getOsuID());
             } catch (Exception e) {
                 throw new IMapperException(IMapperException.Type.IM_Me_NotFound);
-            }
-
-        } else {
-            try {
-                osuUser = userApiService.getPlayerInfo(name);
-            } catch (Exception e) {
-                try {
-                    var uid = Long.parseLong(matcher.group("name"));
-                    osuUser = userApiService.getPlayerInfo(uid);
-                } catch (Exception e1) {
-                    throw new IMapperException(IMapperException.Type.IM_Player_NotFound);
-                }
             }
         }
 
@@ -243,7 +258,7 @@ public class IMapperService implements MessageService<Matcher> {
         var lengthArr = new int[8];
         {
             var lengthAll = beatMapSum.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
-            var lengthMaxBoundary = new double[]{60, 90, 120, 150, 180, 210, 240, Double.MAX_VALUE};
+            var lengthMaxBoundary = new double[]{60, 100, 140, 180, 220, 260, 300, Double.MAX_VALUE};
             for (var f : lengthAll) {
                 for (int i = 0; i < 8; i++) {
                     if (f <= lengthMaxBoundary[i]) {
