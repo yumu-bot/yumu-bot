@@ -146,7 +146,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
         }
 
-        if (OsuMode.isDefault(mode) && ! OsuMode.isDefault(user.getMode())) {
+        if (OsuMode.isDefault(mode)) {
             mode = user.getMode();
         }
 

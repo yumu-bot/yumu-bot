@@ -181,7 +181,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             throw new BPException(BPException.Type.BP_Me_TokenExpired);
         }
 
-        if (OsuMode.isDefault(mode) && ! OsuMode.isDefault(user.getMode())) {
+        if (OsuMode.isDefault(mode)) {
             mode = user.getMode();
         }
 
