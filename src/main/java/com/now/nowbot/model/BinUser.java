@@ -3,6 +3,7 @@ package com.now.nowbot.model;
 import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
@@ -127,8 +128,9 @@ public class BinUser {
         return System.currentTimeMillis() > time;
     }
 
+    @NonNull
     public OsuMode getMode() {
-        return mode;
+        return mode != null ? mode : OsuMode.DEFAULT;
     }
 
     public void setMode(OsuMode mode) {

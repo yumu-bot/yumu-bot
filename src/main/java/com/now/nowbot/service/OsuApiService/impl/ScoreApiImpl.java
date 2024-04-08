@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriBuilder;
@@ -98,7 +99,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode) {
+    public BeatmapUserScore getScore(long bid, BinUser user, @NonNull OsuMode mode) {
         if (! user.isAuthorized()) return getScore(bid, user.getOsuID(), mode);
         return do404Retry(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
