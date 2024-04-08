@@ -143,23 +143,23 @@ public class ServiceCountService implements MessageService<Integer> {
             
             sb.append("| ").append(r.getService())
                     .append(" | ").append(size)
-                    .append(" | ").append(getRound(r.getMaxTime())).append('s')
-                    .append(" | ").append(getRound(r99.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getRound(r80.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getRound(r50.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getRound(r1.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getRound(r.getMinTime())).append('s')
+                    .append(" | ").append(getString(r.getMaxTime())).append('s')
+                    .append(" | ").append(getString(r99.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getString(r80.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getString(r50.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getString(r1.getOrDefault(s, 0L))).append('s')
+                    .append(" | ").append(getString(r.getMinTime())).append('s')
                     .append(" |\n");
         }
 
         sb.append("| ").append("总计和平均")
                 .append(" | ").append(sum)
-                .append(" | ").append(getRound(getListAverage(maxList, sum))).append('s')
-                .append(" | ").append(getRound(getListAverage(r99List, sum))).append('s')
-                .append(" | ").append(getRound(getListAverage(r80List, sum))).append('s')
-                .append(" | ").append(getRound(getListAverage(r50List, sum))).append('s')
-                .append(" | ").append(getRound(getListAverage(r1List, sum))).append('s')
-                .append(" | ").append(getRound(getListAverage(minList, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(maxList, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(r99List, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(r80List, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(r50List, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(r1List, sum))).append('s')
+                .append(" | ").append(getString(getListAverage(minList, sum))).append('s')
                 .append(" |\n");
     }
 
@@ -170,7 +170,13 @@ public class ServiceCountService implements MessageService<Integer> {
     }
 
     //1926ms -> 1.9s
-    private <T extends Number> float getRound(T millis) {
-        return Math.round(millis.floatValue() / 100f) / 10f;
+    private <T extends Number> String getString(T millis) {
+        String str = String.format("%.1f", Math.round(millis.floatValue() / 100f) / 10f);
+
+        if (str.endsWith(".0")) {
+            return str.replaceAll(".0", "");
+        }
+
+        return str;
     }
 }
