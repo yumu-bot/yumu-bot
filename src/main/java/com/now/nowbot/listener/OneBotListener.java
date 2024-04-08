@@ -40,6 +40,12 @@ public class OneBotListener {
     @GroupMessageHandler()
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
+        var nowTime = System.currentTimeMillis();
+        if (onebotEvent.getTime() < 1e10) {
+            nowTime /= 1000;
+        }
+        // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
+        if (nowTime - onebotEvent.getTime() > 30) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
         if (event.getSender().getId() == 365246692L) {
