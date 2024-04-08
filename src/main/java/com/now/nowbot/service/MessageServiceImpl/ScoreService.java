@@ -59,9 +59,10 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         BinUser user;
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         boolean isMyself = false;
+        boolean isDefault = false;
 
         var bid = Long.parseLong(matcher.group("bid"));
-        var modsStr = matcher.group("mod");
+        var mod = matcher.group("mod");
         var name = matcher.group("name");
 
         if (Objects.nonNull(at)) {
@@ -104,12 +105,13 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        if (OsuMode.isDefault(mode) && ! OsuMode.isDefault(user.getMode())) {
+        if (OsuMode.isDefault(mode)) {
+            isDefault = true;
             mode = user.getMode();
         }
 
         data.setValue(
-                new ScoreParam(user, mode, bid, modsStr, OsuMode.isDefault(mode), isMyself)
+                new ScoreParam(user, mode, bid, mod, isDefault, isMyself)
         );
         return true;
     }

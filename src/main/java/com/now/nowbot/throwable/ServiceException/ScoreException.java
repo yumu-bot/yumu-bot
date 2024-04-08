@@ -18,7 +18,7 @@ public class ScoreException extends TipsException {
         SCORE_Recent_NotFound("找不到玩家 %s 在 24 小时内的成绩。"),
         SCORE_Mod_NotFound("找不到这张谱面上含有相应模组的成绩，请检查。"),
         SCORE_ModList_NotFound("找不到这张谱面上含有 %s 的成绩，请检查。"),
-        SCORE_Mode_NotFound("找不到谱面在默认游戏模式下的成绩，请检查。"),
+        SCORE_Mode_NotFound("找不到谱面在其默认游戏模式下的成绩，请检查。"),
         SCORE_Mode_SpecifiedNotFound("找不到这张谱面在指定 %s 模式内的成绩，请检查。\n或者，不要指定游戏模式，让 Bot 自行处理。"),
         SCORE_Render_Error("成绩渲染失败，请重试。"),
         SCORE_Send_Error("成绩发送失败，请重试。"),
