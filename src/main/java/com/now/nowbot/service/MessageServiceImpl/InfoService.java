@@ -12,16 +12,15 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDate;
@@ -43,7 +42,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     @Resource
     ImageService      imageService;
 
-    public record InfoParam(BinUser user, OsuMode mode, boolean isMyself) {
+    public record InfoParam(BinUser user, OsuMode mode, int day, boolean isMyself) {
     }
 
     @Override
@@ -53,64 +52,73 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qq = matcher.group("qq");
+        var qqStr = matcher.group("qq");
+        var name = matcher.group("name");
+        var dayStr = matcher.group("day");
+        boolean isMyself = false;
 
-        if (Objects.nonNull(at)) {
-            data.setValue(new InfoParam(
-                    getBinUser(at.getTarget(), messageText.toLowerCase()),
-                    mode, false));
-            return true;
-        }
-        if (Objects.nonNull(qq)) {
-            data.setValue(new InfoParam(
-                    getBinUser(Long.parseLong(qq), messageText.toLowerCase()),
-                    mode, false));
-            return true;
-        }
-
-        String name = matcher.group("name");
-        if (Strings.isNotBlank(name)) {
-            var user = new BinUser();
-            long id;
-
-            try {
-                id = userApiService.getOsuId(name);
-            } catch (WebClientResponseException.NotFound e) {
-                throw new InfoException(InfoException.Type.I_Player_NotFound);
-            }
-            user.setOsuID(id);
-            user.setMode(mode);
-            data.setValue(new InfoParam(user, mode, false));
-            return true;
-        } else {
-            data.setValue(new InfoParam(
-                    getBinUser(event.getSender().getId(), messageText.toLowerCase()),
-                    mode, true));
-            return true;
-        }
-    }
-
-    private BinUser getBinUser(long qq, String messageText) throws InfoException {
+        BinUser user;
 
         try {
-            return bindDao.getUserFromQQ(qq);
+            if (Objects.nonNull(at)) {
+                user = bindDao.getUserFromQQ(at.getTarget());
+
+            } else if (Objects.nonNull(qqStr)) {
+                user = bindDao.getUserFromQQ(Long.parseLong(qqStr));
+
+            } else if (StringUtils.hasText(name)) {
+                long id;
+
+                try {
+                    id = userApiService.getOsuId(name);
+                } catch (WebClientResponseException.NotFound e) {
+                    throw new InfoException(InfoException.Type.I_Player_NotFound);
+                }
+                user = new BinUser();
+                user.setOsuID(id);
+                user.setMode(mode);
+
+            } else {
+                user = bindDao.getUserFromQQ(event.getSender().getId());
+                isMyself = true;
+            }
         } catch (BindException e) {
             if (! messageText.contains("information") && messageText.contains("info")) {
-                throw new LogException("info 退避成功");
+                log.info("info 退避成功");
+                return false;
             } else {
-                throw new InfoException(InfoException.Type.I_QQ_NotFound, String.valueOf(qq));
+                log.error("玩家信息：获取绑定信息失败", e);
+                throw new InfoException(InfoException.Type.I_Player_NotFound);
             }
         }
+
+        // 处理回溯天数，默认比对昨天的
+        int day;
+        if (StringUtils.hasText(dayStr)) {
+            try {
+                day = Integer.parseInt(dayStr);
+            } catch (NumberFormatException e) {
+                day = 1;
+            }
+        } else {
+            day = 1;
+        }
+
+        // 处理默认 mode
+        if (OsuMode.isDefault(mode)) {
+            mode = user.getMode();
+        }
+
+        data.setValue(new InfoParam(user, mode, day, isMyself));
+        return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, InfoParam param) throws Throwable {
         var from = event.getSubject();
-        BinUser user = param.user;
 
-        //处理默认mode
-        var mode = param.mode();
-        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
+        var user = param.user;
+        var mode = param.mode;
 
         OsuUser osuUser;
         List<Score> BPs;
@@ -119,7 +127,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         try {
             osuUser = userApiService.getPlayerInfo(user, mode);
         } catch (WebClientResponseException.NotFound e) {
-            if (param.isMyself()) {
+            if (param.isMyself) {
                 throw new InfoException(InfoException.Type.I_Me_NotFound);
             } else {
                 throw new InfoException(InfoException.Type.I_Player_NotFound);
@@ -145,17 +153,18 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         //recents = scoreApiService.getRecent(user, mode, 0, 3);
 
-        Optional<OsuUser> infoOpt;
-
-        infoOpt = infoDao.getLastFrom(osuUser.getUID(), OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode, LocalDate.now().minusDays(1))
-                /*
-                .map(arch -> {
-                    if (osuUser.getUID().equals(17064371L))
-                        log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
-                    return arch;
-                })
-                */
-                .map(OsuUserInfoDao::fromArchive);
+        Optional<OsuUser> historyUser =
+                infoDao.getLastFrom(osuUser.getUID(),
+                                OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode,
+                                LocalDate.now().minusDays(param.day))
+                        /*
+                        .map(arch -> {
+                            if (osuUser.getUID().equals(17064371L))
+                                log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
+                            return arch;
+                        })
+                        */
+                        .map(OsuUserInfoDao::fromArchive);
         /*
         log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
          */
@@ -163,7 +172,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         try {
             //image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
-            image = imageService.getPanelD(osuUser, infoOpt, BPs, mode);
+            image = imageService.getPanelD(osuUser, historyUser, param.day, BPs, mode);
         } catch (Exception e) {
             log.error("玩家信息：图片渲染失败", e);
             throw new InfoException(InfoException.Type.I_Fetch_Error);

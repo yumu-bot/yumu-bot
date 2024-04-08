@@ -49,7 +49,7 @@ public class Instructions {
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 name
-    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
+    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?([＃#](?<day>\\d+))?");
 
     public static final Pattern INFO_CARD = Pattern.compile("^[!！]\\s*(?i)(ym)?(informationcard|infocard(?![A-Za-z_])|ic(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
 

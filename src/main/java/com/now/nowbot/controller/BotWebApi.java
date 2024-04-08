@@ -691,13 +691,15 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getPlayerInfo(
             @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable Long uid,
             @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr
+            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr,
+            @OpenResource(name = "day", desp = "回溯天数") @RequestParam("day") @Nullable Integer day
     ) {
+        if (Objects.isNull(day)) day = 1;
         var osuUser = getPlayerInfoJson(uid, name, modeStr);
 
         var BPs = scoreApiService.getBestPerformance(osuUser);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);
-        var image = imageService.getPanelD(osuUser, Optional.empty(), BPs, osuUser.getOsuMode());
+        var image = imageService.getPanelD(osuUser, Optional.empty(), day, BPs, osuUser.getOsuMode());
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-info.jpg", image.length), HttpStatus.OK);
     }

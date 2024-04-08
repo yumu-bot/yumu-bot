@@ -41,13 +41,13 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
         if (Objects.nonNull(at)) {
             data.setValue(new InfoService.InfoParam(
                     new BinUser(at.getTarget(), messageText.toLowerCase()),
-                    mode, false));
+                    mode, 1, false));
             return true;
         }
         if (Objects.nonNull(qq)) {
             data.setValue(new InfoService.InfoParam(
                     new BinUser(Long.parseLong(qq), messageText.toLowerCase()),
-                    mode, false));
+                    mode, 1, false));
             return true;
         }
 
@@ -63,12 +63,12 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
             }
             user.setOsuID(id);
             user.setMode(mode);
-            data.setValue(new InfoService.InfoParam(user, mode, false));
+            data.setValue(new InfoService.InfoParam(user, mode, 1, false));
             return true;
         } else {
             data.setValue(new InfoService.InfoParam(
                     new BinUser(event.getSender().getId(), messageText.toLowerCase()),
-                    mode, true));
+                    mode, 1, true));
             return true;
         }
     }

@@ -291,21 +291,22 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, OsuMode mode) {
+    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, Integer day, List<Score> BPs, OsuMode mode) {
 
         double bonus = 0f;
 
-        if (!BPs.isEmpty()) {
+        if (! BPs.isEmpty()) {
             var bpPPs = BPs.stream().mapToDouble(Score::getPP).toArray();
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
+
         var times = BPs.stream().map(Score::getCreateTime).toList();
         var now = LocalDate.now();
         var bpTimes = new int[90];
         times.forEach(time -> {
-            var day = (int) (now.toEpochDay() - time.toLocalDate().toEpochDay());
-            if (day > 0 && day <= 90) {
-                bpTimes[90 - day]++;
+            var d = (int) (now.toEpochDay() - time.toLocalDate().toEpochDay());
+            if (d > 0 && d <= 90) {
+                bpTimes[90 - d]++;
             }
         });
 
@@ -316,8 +317,14 @@ public class ImageService {
                 "bonus_pp", bonus,
                 "mode", mode.getName()
         ));
-        //"ranked_map_play_count", DataUtil.getPlayedRankedMapCount(bonus)
-        historyUser.ifPresent(user -> body.put("historyUser", user));
+
+        historyUser.ifPresent(user -> {
+            if (day != null) {
+                body.put("day", day);
+            }
+            body.put("historyUser", user);
+        });
+
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_D", httpEntity);
     }
