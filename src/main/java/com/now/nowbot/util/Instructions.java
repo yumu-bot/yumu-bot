@@ -57,7 +57,7 @@ public class Instructions {
 
     public static final Pattern UU_INFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
 
-    public static final Pattern I_MAPPER = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(u?id=\\s*(?<uid>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern I_MAPPER = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(u?id=\\s*(?<id>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
     
     public static final Pattern FRIEND = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![A-Za-z_]))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
 
