@@ -7,7 +7,6 @@ variables:
 
 stages:
   - update
-  # - restart
 
 job-build:
   stage: update
@@ -29,10 +28,3 @@ job-update:
     - cd ~/nowbot
     - mv ~/nowbot/target/nowbot-linux.jar ~/work
     - sudo systemctl restart nowbot
-# job-restart-server:
-#   stage: restart
-#   needs: 
-#     - job-update
-#   script:
-    
-#   when: manual
