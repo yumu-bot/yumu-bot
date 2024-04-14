@@ -11,6 +11,7 @@ import com.now.nowbot.qq.message.*;
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.util.QQMsgUtil;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -82,8 +83,9 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
     }
 
     protected static String getMsg4Chain(MessageChain messageChain) {
-        var s = messageChain.getMessageList().stream().map(Message::toString).collect(Collectors.joining());
-        if (Objects.nonNull(s)) return s;
+        var s = messageChain.getMessageList();
+        if (! CollectionUtils.isEmpty(s)) return s.stream().map(Message::toString).collect(Collectors.joining());
+
         var builder = MsgUtils.builder();
         for (var msg : messageChain.getMessageList()) {
             switch (msg) {
@@ -125,6 +127,10 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             return false;
         } catch (ShiroException.SessionCloseException e) {
             log.error("Shiro 框架：失去与 Bot 实例的连接", e);
+            return false;
+        } catch (NullPointerException e) {
+            // com.now.nowbot.qq.contact.Contact
+            // 获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送
             return false;
         } catch (Exception e) {
             log.error("test bot only", e);
