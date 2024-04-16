@@ -41,7 +41,7 @@ public class Instructions {
 
     public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|bestperformance)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
 
-    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))+(\\s*[:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?(qq=\\s*(?<qq>\\d+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
 
     public static final Pattern UU_BA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
