@@ -206,6 +206,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var hasC3 = sp == BETTER || onlyC3;
             var matcher = sp.pattern.matcher(s);
 
+            if (Objects.nonNull(split)) break;
+
             if (isPerfectMatch(matcher, hasC3, onlyC3)) {
                 split = sp;
 
@@ -292,8 +294,23 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     case WHETHER -> {
                         is = matcher.group("c3");
                         not = matcher.group("m3");
-                        if (! StringUtils.hasText(left)) left = "...";
-                        if (! StringUtils.hasText(right)) right = "";
+
+                        // 还是可能需要走多匹配模式，比如 1d 睡午觉 睡午觉 睡午觉 睡午觉 不睡
+                        if (StringUtils.hasText(left)) {
+                            if (left.trim().contains(" ")) {
+                                return chooseMultiple(s); //LR一样的
+                            }
+                        } else {
+                            left = "...";
+                        }
+
+                        if (StringUtils.hasText(right)) {
+                            if (right.trim().contains(" ")) {
+                                return chooseMultiple(s); //LR一样的
+                            }
+                        } else {
+                            right = "";
+                        }
 
                         try {
                             var is2 = matcher.group("c2");
