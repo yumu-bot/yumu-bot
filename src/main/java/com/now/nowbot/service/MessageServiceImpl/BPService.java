@@ -55,6 +55,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         var s = matcher.group("s");
         var nStr = matcher.group("n");
         var mStr = matcher.group("m");
+        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
         int offset;
         int limit;
@@ -66,7 +67,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             long n = 1L;
             long m;
 
-            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
 
             if (StringUtils.hasText(nStr)) {
                 if (noSpaceAtEnd) {

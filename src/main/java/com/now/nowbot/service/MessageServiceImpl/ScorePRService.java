@@ -65,6 +65,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         var es = matcher.group("es");
         var nStr = matcher.group("n");
         var mStr = matcher.group("m");
+        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
         int offset;
         int limit;
@@ -76,7 +77,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             long n = 1L;
             long m;
 
-            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
 
             if (StringUtils.hasText(nStr)) {
                 if (noSpaceAtEnd) {
@@ -212,7 +213,9 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         //处理默认mode
         var mode = param.mode();
-        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
+        if (mode == OsuMode.DEFAULT) {
+            mode = binUser.getMode();
+        }
 
         List<Score> scoreList;
 

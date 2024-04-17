@@ -57,11 +57,12 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
 
         var name = matcher.group("name");
         var nStr = matcher.group("n");
+        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
         //处理 n
         long n = 1L;
 
-        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
 
         if (StringUtils.hasText(nStr)) {
             if (noSpaceAtEnd) {

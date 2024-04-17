@@ -59,6 +59,7 @@ public class UUPRService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var name = matcher.group("name");
+        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
         int offset;
         int limit;
@@ -74,26 +75,41 @@ public class UUPRService implements MessageService<Matcher> {
 
         //处理 n
         {
-            int n;
+            long n = 1L;
             var nStr = matcher.group("n");
 
-            if (! StringUtils.hasText(nStr)) {
-                n = 1;
-            } else {
-                try {
-                    n = Integer.parseInt(nStr);
-                } catch (NumberFormatException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
+
+            if (StringUtils.hasText(nStr)) {
+                if (noSpaceAtEnd) {
+                    // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
+                    name += nStr;
+                    nStr = "";
+                } else {
+                    // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
+                    // 没有名字，但有 n 匹配的也走这边 parse
+                    try {
+                        n = Long.parseLong(nStr);
+                    } catch (NumberFormatException e) {
+                        throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
+                    }
                 }
             }
 
-            //避免 !b lolol233 这样子被错误匹配
-            if (n < 1 || n > 100) {
-                name += nStr;
-                n = 1;
+            //避免 !b 970 这样子被错误匹配
+            var isIllegalN = n < 1L || n > 100L;
+            if (isIllegalN) {
+                if (StringUtils.hasText(name)) {
+                    name += nStr;
+                } else {
+                    name = nStr;
+                }
+
+                // nStr = "";
+                n = 1L;
             }
 
-            offset = n - 1;
+            offset = Math.toIntExact(n - 1);
             limit = 1;
         }
 
@@ -119,7 +135,9 @@ public class UUPRService implements MessageService<Matcher> {
 
         //处理默认mode
         var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT && binUser.getMode() != null) mode = binUser.getMode();
+        if (mode == OsuMode.DEFAULT) {
+            mode = binUser.getMode();
+        }
 
         List<Score> scoreList;
 

@@ -56,7 +56,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         // 时间计算
         int day = 1;
 
-        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ");
+        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
 
         if (StringUtils.hasText(dayStr)) {
             if (noSpaceAtEnd) {

@@ -32,7 +32,7 @@ public class Instructions {
 
     public static final Pattern PR_CARD = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(passcard|pc(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+))?$");
 
-    public static final Pattern UU_PR = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![A-Za-z_])))|uu(?<recent>(recent|r(?![A-Za-z_]))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?\\s*([＃#]?(?<n>\\d+))?$");
+    public static final Pattern UU_PR = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![A-Za-z_])))|uu(?<recent>(recent|r(?![A-Za-z_]))))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?\\s*((?<hash>[＃#]\\s*)?(?<n>\\d+))?$");
 
     public static final Pattern SCORE = Pattern.compile("^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![A-Za-z_])))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
@@ -41,10 +41,10 @@ public class Instructions {
 
     public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|bestperformance)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
 
-    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?(qq=\\s*(?<qq>\\d+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
 
 
-    public static final Pattern UU_BA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?(ba|bpa))(?<info>(-?i))?\\s*([:：](?<mode>[\\w\\d]+))?(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
+    public static final Pattern UU_BA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?((bp?)?a))(?<info>(-?i))?\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,})?");
 
     // #3 osu! 玩家指令
 
