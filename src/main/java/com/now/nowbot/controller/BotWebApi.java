@@ -563,14 +563,20 @@ public class BotWebApi {
     public ResponseEntity<byte[]> getBPAnalysis(
             @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") String name,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode
-    ) {
-        var mode = OsuMode.getMode(playMode);
+    ) throws RuntimeException {
+        List<Score> scores;
+        OsuUser osuUser;
 
-        name = name.trim();
-        long uid = userApiService.getOsuId(name);
-        var osuUser = userApiService.getPlayerInfo(uid, mode);
-        if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
-        var scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
+        try {
+            var mode = OsuMode.getMode(playMode);
+            name = name.trim();
+            long uid = userApiService.getOsuId(name);
+            osuUser = userApiService.getPlayerInfo(uid, mode);
+            if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
+            scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
+        } catch (Exception e) {
+            throw new RuntimeException(BPAnalysisException.Type.BA_Fetch_Failed.message);
+        }
 
         Map<String, Object> data;
         try {
