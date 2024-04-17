@@ -92,6 +92,14 @@ public class DataUtil {
         return new Range(offset, limit);
     }
 
+
+    @NonNull
+    public static boolean isHelp(@Nullable String str) {
+        if (str == null) return false;
+
+        return str.trim().equalsIgnoreCase("help") || str.trim().equalsIgnoreCase("帮助");
+    }
+
     /**
      * 根据分隔符，分割玩家名
      * @param str 需要分割的，含分割符和玩家名的长文本

@@ -77,6 +77,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             try {
                 id = userApiService.getOsuId(name.trim());
                 user.setOsuID(id);
+                user.setOsuName(name.trim());
             } catch (WebClientResponseException.NotFound | NumberFormatException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
             }

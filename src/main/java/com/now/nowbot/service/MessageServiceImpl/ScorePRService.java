@@ -33,9 +33,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-//UUPR，Multiple Score也合并进来了
+//Multiple Score也合并进来了
 @Service("SCORE_PR")
 public class ScorePRService implements MessageService<ScorePRService.ScorePRParam> {
     private static final Logger log = LoggerFactory.getLogger(ScorePRService.class);
@@ -154,11 +153,13 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             long id;
             try {
                 id = userApiService.getOsuId(name.trim());
+                user.setOsuName(name.trim());
             } catch (WebClientResponseException.NotFound e) {
                 if (StringUtils.hasText(nStr)) {
                     // 补救机制 1
                     try {
                         id = userApiService.getOsuId(name.concat(nStr));
+                        user.setOsuName(name.concat(nStr));
                     } catch (WebClientResponseException.NotFound e1) {
                         throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.concat(nStr));
                     }
@@ -168,6 +169,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
             }
+
             user.setOsuID(id);
             user.setMode(mode);
         } else if (StringUtils.hasText(qqStr)) {
@@ -239,7 +241,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         if (CollectionUtils.isEmpty(scoreList)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuID().toString());
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
         try {
@@ -247,9 +249,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } catch (WebClientResponseException.Forbidden e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
         } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound,
-                    Optional.ofNullable(binUser.getOsuName()).orElse(param.user.getOsuID().toString())
-            );
+            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
         }
 
         //成绩发送

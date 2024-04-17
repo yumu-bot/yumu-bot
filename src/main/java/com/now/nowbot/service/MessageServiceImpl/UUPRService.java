@@ -124,6 +124,7 @@ public class UUPRService implements MessageService<Matcher> {
             try {
                 id = userApiService.getOsuId(name.trim());
                 binUser.setOsuID(id);
+                binUser.setOsuName(name.trim());
             } catch (HttpClientErrorException | WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
             }
