@@ -6,7 +6,12 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
-import io.github.humbleui.skija.*;
+import io.github.humbleui.skija.Canvas;
+import io.github.humbleui.skija.Font;
+import io.github.humbleui.skija.Image;
+import io.github.humbleui.skija.Paint;
+import io.github.humbleui.skija.Surface;
+import io.github.humbleui.skija.TextLine;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -31,7 +36,7 @@ public class PingService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         byte[] image;
-        try (Surface surface = Surface.makeRasterN32Premul(240, 240)) {
+        try (Surface surface = Surface.makeRasterN32Premul(648, 648)) {
             Canvas canvas = surface.getCanvas();
 
             try {
@@ -45,15 +50,16 @@ public class PingService implements MessageService<Matcher> {
                 //throw new RuntimeException("ping failed cuz no BG??!");
             }
 
-            Font x = new Font(DataUtil.getTorusRegular(), 60);
-            TextLine t = TextLine.make("PONG!", x);
-            canvas.drawTextLine(t, (240 - t.getWidth()) / 2, t.getHeight(), new Paint().setARGB(255, 192, 219, 288));
+            Font x = new Font(DataUtil.getTorusRegular(), 160);
+            TextLine t = TextLine.make("?", x);
+            canvas.drawTextLine(t, (648 - t.getWidth()) / 2, 208, new Paint().setARGB(255,191,193,124));
 
             x.close();
             t.close();
-            x = new Font(DataUtil.getTorusRegular(), 20);
+
+            x = new Font(DataUtil.getTorusRegular(), 40);
             t = TextLine.make(STR."\{System.currentTimeMillis()}ms", x);
-            canvas.drawTextLine(t, 0, t.getCapHeight() + 4, new Paint().setARGB(200, 255, 255, 255));
+            canvas.drawTextLine(t, 10, t.getCapHeight() + 10, new Paint().setARGB(200,191,193,124));
             x.close();
             t.close();
             image = surface.makeImageSnapshot().encodeToData().getBytes();
