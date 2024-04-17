@@ -97,14 +97,13 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
             };
 
         } else {
-            // 只有一个字段，默认删除，直接跳出
+            // 只有一个字段，默认添加，直接跳出
+            operate = Operate.ADD;
+
             type = switch (operateStr) {
                 case "c", "card" -> Type.CARD;
                 case null, default -> Type.BANNER;
             };
-
-            data.setValue(new CustomParam(u.getOsuID(), type, null));
-            return true;
         }
 
         ReplyMessage reply = null;
