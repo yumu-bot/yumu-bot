@@ -4,6 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.DiceException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,8 @@ import static com.now.nowbot.service.MessageServiceImpl.DiceService.Split.*;
 public class DiceService implements MessageService<DiceService.DiceParam> {
     private static final Logger log = LoggerFactory.getLogger(DiceService.class);
 
-    public record DiceParam(Long number, String text) {}
+    // dice：骰子次数，默认为 1
+    public record DiceParam(Long dice, Long number, String text) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<DiceParam> data) throws Throwable {
@@ -34,32 +36,75 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         var m = Instructions.DICE.matcher(messageText);
         if (!m.find()) return false;
 
+        var dice = m.group("dice");
         var number = m.group("number");
         var text = m.group("text");
 
         if (StringUtils.hasText(text)) {
+            // 如果 dice 有符合，但是并不是 1，选择主动忽视
+            if (StringUtils.hasText(dice)) {
+                try {
+                    if (Long.parseLong(dice) > 1) {
+                        return false;
+                    }
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+
             if (StringUtils.hasText(number)) {
-                data.setValue(new DiceParam(null, (number + text).trim()));
+                data.setValue(new DiceParam(null, null, (number + text).trim()));
                 return true;
-            } else if (text.trim().equalsIgnoreCase("help") || text.trim().equalsIgnoreCase("帮助")) {
+            } else if (DataUtil.isHelp(text)) {
                 throw new DiceException(DiceException.Type.DICE_Instruction);
             } else {
-                data.setValue(new DiceParam(null, text.trim()));
+                data.setValue(new DiceParam(null, null, text.trim()));
                 return true;
             }
-        }
+        } else if (StringUtils.hasText(dice)) {
+            long d;
+            long n;
 
-        if (StringUtils.hasText(number)) {
             try {
-                if (number.contains("-")) {
-                    throw new DiceException(DiceException.Type.DICE_Number_NotSupportNegative);
-                }
-                data.setValue(new DiceParam(Long.parseLong(number), null));
+                d = Long.parseLong(dice);
             } catch (NumberFormatException e) {
                 throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);
             }
+
+            if (StringUtils.hasText(number)) {
+
+                if (number.contains("-")) {
+                    throw new DiceException(DiceException.Type.DICE_Number_NotSupportNegative);
+                }
+
+                try {
+                    n = Long.parseLong(number);
+                } catch (NumberFormatException e) {
+                    throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);
+                }
+            } else {
+                n = 100L;
+            }
+
+            if (d > 100L) throw new DiceException(DiceException.Type.DICE_Dice_TooMany, d);
+
+            data.setValue(new DiceParam(d, n, null));
+        } else if (StringUtils.hasText(number)) {
+            long n;
+
+            if (number.contains("-")) {
+                throw new DiceException(DiceException.Type.DICE_Number_NotSupportNegative);
+            }
+
+            try {
+                n = Long.parseLong(number);
+            } catch (NumberFormatException e) {
+                throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);
+            }
+
+            data.setValue(new DiceParam(1L, n, null));
         } else {
-            data.setValue(new DiceParam(100L, null));
+            data.setValue(new DiceParam(1L, 100L, null));
         }
         return true;
 
@@ -80,16 +125,34 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                     throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
                 }
 
-                float r = getRandom(param.number);
-                String format = (r < 1f) ? "%.2f" : "%.0f";
+                // 单次匹配 !d, 1d100 和多次匹配 20d100
+                if (param.number == 1L) {
+                    float r = getRandom(param.number);
+                    String format = (r < 1f) ? "%.2f" : "%.0f";
 
-                receipt = from.sendMessage(String.format(format, r));
+                    receipt = from.sendMessage(String.format(format, r));
 
-                //容易被识别成 QQ
-                if (r >= 1000_000f && r < 1000_000_000f) {
-                    receipt.recallIn(60 * 1000);
+                    //容易被识别成 QQ
+                    if (r >= 1000_000f && r < 1000_000_000f) {
+                        receipt.recallIn(60 * 1000);
+                    }
+                    return;
+                } else {
+                    var sb = new StringBuilder();
+
+                    for (long i = 1L; i <= param.dice; i++) {
+                        double r = getRandomInstantly(param.number);
+                        String format = (r < 1f) ? "%.2f" : "%.0f";
+
+                        sb.append(String.format(format, r));
+
+                        if (i != param.dice) {
+                            sb.append(", ");
+                        }
+                    }
+
+                    from.sendMessage(sb.toString());
                 }
-                return;
             }
 
             if (Objects.nonNull(param.text)) {
@@ -138,8 +201,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         for (var sp : splits) {
             var onlyC3 =
                     sp == TIME || sp == AMOUNT || sp == WHY ||
-                    sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == REAL ||
-                    sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT || sp == QUESTION;
+                            sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == REAL ||
+                            sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT || sp == QUESTION;
             var hasC3 = sp == BETTER || onlyC3;
             var matcher = sp.pattern.matcher(s);
 
@@ -617,7 +680,39 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
     }
 
     /**
-     * 获取随机数
+     * 获取短时间内的多个随机数
+     * @param range 范围
+     * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
+     * @param <T> 数字的子类
+     */
+    public <T extends Number> double getRandomInstantly(@Nullable T range) {
+        double random = Math.random();
+
+        int r;
+
+        try {
+            r = Integer.parseInt(String.valueOf(range));
+        } catch (NumberFormatException e) {
+            try {
+                if (Objects.nonNull(range)) {
+                    r = Math.round(range.floatValue());
+                } else {
+                    r = 100;
+                }
+            } catch (NumberFormatException e1) {
+                return random;
+            }
+        }
+
+        if (r > 1) {
+            return Math.round(random * (r - 1)) + 1d;
+        } else {
+            return random;
+        }
+    }
+
+    /**
+     * 获取随机数。注意，随机数的来源是系统毫秒，因此不能短时间内多次获取，如果要多次获取请使用 getRandomInstantly 提供的伪随机数
      * @param range 范围
      * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
      * @param <T> 数字的子类

@@ -9,6 +9,7 @@ public class Instructions {
 
     // #0 调出帮助
     public static final Pattern HELP = Pattern.compile("^[!！]\\s*(?i)(ym)?(帮助|help|h)\\s*(?<module>[\\s\\S]*)?");
+
     public static final Pattern AUDIO = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![AaC-RT-Zc-rt-z_]))\\s*([:：]?(?<type>(bid|b|sid|s)))?\\s*(?<id>\\d+)?");
 
     // #1 BOT 内部指令
@@ -104,7 +105,7 @@ public class Instructions {
     // ...
 
     // #7 娱乐指令
-    public static final Pattern DICE = Pattern.compile("^[!！1]\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>-?\\d*)?(?<text>[\\s\\S]+)?");
+    public static final Pattern DICE = Pattern.compile("^([!！]|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?![A-Za-z_]))\\s*(?<number>-?\\d*)?(?<text>[\\s\\S]+)?");
 
     public static final Pattern DRAW = Pattern.compile("^[!！]\\s*(?i)(ym)?(draw|w(?![A-Za-z_]))\\s*(?<d>\\d+)?");
 

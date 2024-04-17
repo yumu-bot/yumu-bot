@@ -9,6 +9,7 @@ public class DiceException extends TipsException {
                 !ymdice / !d (number) (compare)
                 number：要 roll 的数字。不输入默认 100。
                 compare：要比较的字符串，最好使用中文常见关联词。也可以输入冒号来分隔需要比较的两个对象。"""),
+        DICE_Dice_TooMany("扔了 %s 枚骰子，也排解不了你内心的空虚吗？"),
         DICE_Number_TooLarge("选这么大干什么！"),
         DICE_Number_TooSmall("和你的杂鱼脑子一样小！"),
         DICE_Number_ParseFailed("请不要输入天文数字！"),
