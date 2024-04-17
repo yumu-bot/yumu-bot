@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.file.Files;
@@ -75,61 +76,91 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
 
         var firstMessage = event.getMessage().getMessageList().getFirst();
 
-        var save = matcher.group("save");
-        String imgPath;
+        String imgPath = null;
 
-        if (Objects.nonNull(save) && ! (save.equals("s") || save.equals("save") || save.equals("a") || save.equals("add"))) {
-            // 需要删除
-            imgPath = null;
-        } else if (! (firstMessage instanceof ReplyMessage reply)) {
-            // 不是回复。发送引导
-            try {
-                var md = DataUtil.getMarkdownFile("Help/custom.md");
-                var image = imageService.getPanelA6(md, "help");
-                from.sendImage(image);
-                return false;
-            } catch (Exception e) {
-                throw new CustomException(CustomException.Type.CUSTOM_Instructions);
-            }
+        var operateStr = matcher.group("operate");
+        var typeStr = matcher.group("type");
+
+        Operate operate;
+        Type type;
+
+        if (StringUtils.hasText(typeStr)) {
+            operate = switch (operateStr) {
+                case "s", "save", "a", "add" -> Operate.ADD;
+                case "c", "clear", "d", "delete", "r", "remove" -> Operate.DELETE;
+                case null, default -> Operate.UNKNOWN;
+            };
+
+            type = switch (typeStr) {
+                case "c", "card" -> Type.CARD;
+                default -> Type.BANNER;
+            };
+
         } else {
-            // 正常
-            if (Objects.isNull(event.getBot())) {
-                throw new CustomException(CustomException.Type.CUSTOM_Receive_NoBot);
-            }
+            // 只有一个字段，默认删除，直接跳出
+            type = switch (operateStr) {
+                case "c", "card" -> Type.CARD;
+                case null, default -> Type.BANNER;
+            };
 
-            var msg = event.getBot().getMessage(reply.getId());
-            ImageMessage img;
+            data.setValue(new CustomParam(u.getOsuID(), type, null));
+            return true;
+        }
 
-            if (Objects.isNull(msg) || Objects.isNull(img = QQMsgUtil.getType(msg, ImageMessage.class))) {
-                //消息为空，并且不是回复的图片。询问是否删除
-                var receipt = from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message);
+        ReplyMessage reply = null;
 
-                var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
-                event = lock.get();
-
-                if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
-                    //不删除。失败撤回
-                    from.recall(receipt);
-                    return false;
-                } else {
-                    //确定删除
-                    from.recall(receipt);
-                    imgPath = null;
-                }
+        if (operate == Operate.ADD) {
+            if (firstMessage instanceof ReplyMessage r) {
+                reply = r;
             } else {
-                //成功
-                imgPath = img.getPath();
+                operate = Operate.UNKNOWN;
             }
         }
 
-        switch (matcher.group("type")) {
-            case "c", "card" -> data.setValue(
-                    new CustomParam(u.getOsuID(), Type.card, imgPath)
-            );
-            case null, default -> data.setValue(
-                    new CustomParam(u.getOsuID(), Type.banner, imgPath)
-            );
+        switch (operate) {
+            case ADD -> {
+                // 正常
+                if (Objects.isNull(event.getBot())) {
+                    throw new CustomException(CustomException.Type.CUSTOM_Receive_NoBot);
+                }
+
+                var msg = event.getBot().getMessage(reply.getId());
+                ImageMessage img;
+
+                if (Objects.isNull(msg) || Objects.isNull(img = QQMsgUtil.getType(msg, ImageMessage.class))) {
+                    //消息为空，并且不是回复的图片。询问是否删除
+                    var receipt = from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message);
+
+                    var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
+                    event = lock.get();
+
+                    if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
+                        //不删除。失败撤回
+                        from.recall(receipt);
+                        return false;
+                    } else {
+                        //确定删除
+                        from.recall(receipt);
+                    }
+                } else {
+                    //成功
+                    imgPath = img.getPath();
+                }
+            }
+            case UNKNOWN -> {
+                // 不是回复。发送引导
+                try {
+                    var md = DataUtil.getMarkdownFile("Help/custom.md");
+                    var image = imageService.getPanelA6(md, "help");
+                    from.sendImage(image);
+                    return false;
+                } catch (Exception e) {
+                    throw new CustomException(CustomException.Type.CUSTOM_Instructions);
+                }
+            }
         }
+
+        data.setValue(new CustomParam(u.getOsuID(), type, imgPath));
 
         return true;
     }
@@ -159,8 +190,8 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
                 throw new CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type);
             }
             switch (param.type) {
-                case card -> profile.setCard(path.toAbsolutePath().toString());
-                case banner -> profile.setBanner(path.toAbsolutePath().toString());
+                case CARD -> profile.setCard(path.toAbsolutePath().toString());
+                case BANNER -> profile.setBanner(path.toAbsolutePath().toString());
             }
             userProfileMapper.saveAndFlush(profile);
             throw new CustomException(CustomException.Type.CUSTOM_Set_Success, param.type);
@@ -175,20 +206,26 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
                 throw new CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type);
             }
             switch (param.type) {
-                case card -> profile.setCard(null);
-                case banner -> profile.setBanner(null);
+                case CARD -> profile.setCard(null);
+                case BANNER -> profile.setBanner(null);
             }
             userProfileMapper.saveAndFlush(profile);
             throw new CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type);
         }
     }
 
+    enum Operate {
+        ADD,
+        DELETE,
+        UNKNOWN
+    }
+
     enum Type {
-        banner,
-        card,
-        header,
-        info,
-        score,
-        ppm,
+        BANNER,
+        CARD,
+        AVATAR_FRAME,
+        PANEL_INFO,
+        PANEL_SCORE,
+        PANEL_PPM,
     }
 }

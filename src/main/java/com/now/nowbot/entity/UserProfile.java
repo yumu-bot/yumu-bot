@@ -20,7 +20,7 @@ public class UserProfile {
     @Column(columnDefinition = "TEXT")
     String card;
     /**
-     * 自定义 banner
+     * 自定义横幅
      */
     @JsonProperty("banner")
     @Column(columnDefinition = "TEXT")

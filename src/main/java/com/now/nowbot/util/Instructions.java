@@ -135,7 +135,7 @@ public class Instructions {
     public static final Pattern GROUP_STATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))(?!\\w)");
 
     // #9 自定义
-    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：](?<save>([adscr]|add|delete|remove|save|clear)))?\\s*(?<type>([bc]|banner|card))?");
+    public static final Pattern CUSTOM = Pattern.compile("^[!！]\\s*(?i)(ym)?(custom|c(?![AD-Zad-z_]))\\s*([:：]?(?<operate>\\w+))?\\s*(?<type>\\w+)?");
 
     /*
     public static final Pattern SILENCE = Pattern.compile("^[!！]\\s*(?i)(ym)?(sleep|z+(?![A-Ya-y_]))(\\s+(?<time>\\d+.\\d*h?))?");
