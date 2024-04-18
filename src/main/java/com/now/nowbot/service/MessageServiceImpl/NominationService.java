@@ -67,8 +67,16 @@ public class NominationService implements MessageService<Matcher> {
 
         var data = parseData(sid, isSID);
 
+        byte[] image;
+
         try {
-            var image = imageService.getPanelN(data);
+            image = imageService.getPanelN(data);
+        } catch (Exception e) {
+            log.error("提名信息：渲染失败", e);
+            throw new NominationException(NominationException.Type.N_Render_Failed);
+        }
+
+        try {
             from.sendImage(image);
         } catch (Exception e) {
             log.error("提名信息：发送失败", e);
@@ -84,26 +92,46 @@ public class NominationService implements MessageService<Matcher> {
         final List<DiscussionDetails> hypes;
         Map<String, Object> more = new HashMap<>();
 
-        try {
-            if (!isSID) {
+        if (isSID) {
+            try {
+                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+            } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
+                try {
+                    var b = osuBeatmapApiService.getBeatMapInfo(sid);
+                    sid = b.getSID();
+                    s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+                } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
+                    throw new NominationException(NominationException.Type.N_Map_NotFound);
+                } catch (Exception e1) {
+                    log.error("提名信息：谱面获取失败", e1);
+                    throw new NominationException(NominationException.Type.N_Map_FetchFailed);
+                }
+            } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
+                throw new NominationException(NominationException.Type.N_API_Unavailable);
+            } catch (Exception e) {
+                log.error("提名信息：谱面获取失败", e);
+                throw new NominationException(NominationException.Type.N_Map_FetchFailed);
+            }
+        } else {
+            try {
                 var b = osuBeatmapApiService.getBeatMapInfo(sid);
                 sid = b.getSID();
+                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+            } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
+                throw new NominationException(NominationException.Type.N_Map_NotFound);
+            } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
+                throw new NominationException(NominationException.Type.N_API_Unavailable);
+            } catch (Exception e) {
+                log.error("提名信息：谱面获取失败", e);
+                throw new NominationException(NominationException.Type.N_Map_FetchFailed);
             }
-
-            s = osuBeatmapApiService.getBeatMapSetInfo(sid);
-
-            if (Objects.nonNull(s.getCreatorData())) {
-                s.getCreatorData().parseFull(osuUserApiService);
-            }
-
-        } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
-            throw new NominationException(NominationException.Type.N_Map_NotFound);
-        } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
-            throw new NominationException(NominationException.Type.N_API_Unavailable);
-        } catch (Exception e) {
-            log.error("提名信息：谱面获取失败", e);
-            throw new NominationException(NominationException.Type.N_Map_FetchFailed);
         }
+
+        if (Objects.nonNull(s.getCreatorData())) {
+            s.getCreatorData().parseFull(osuUserApiService);
+        }
+
+
 
         try {
             d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);

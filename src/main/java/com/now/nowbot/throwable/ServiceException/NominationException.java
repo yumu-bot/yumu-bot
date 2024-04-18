@@ -14,6 +14,7 @@ public class NominationException extends TipsException {
         N_Map_FetchFailed("提名信息：谱面获取失败。\n请重试，或者将信息反馈给开发者。"),
         N_Discussion_FetchFailed("提名信息：讨论区获取失败。\n请重试，或者将信息反馈给开发者。"),
         N_API_Unavailable("ppy API 状态异常！"),
+        N_Render_Failed("提名信息：渲染失败。"),
         N_Send_Error("提名信息：发送失败。\n请重试，或者将信息反馈给开发者。"),
 
         ;
