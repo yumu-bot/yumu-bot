@@ -1,5 +1,6 @@
 package com.now.nowbot.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
@@ -70,7 +71,10 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
-        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(URI.create(STR."\{IMAGE_PATH}attr"), HttpMethod.POST, httpEntity, new ParameterizedTypeReference<>() {
+        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(
+                URI.create(STR."\{IMAGE_PATH}attr")
+                , HttpMethod.POST, httpEntity
+                , new ParameterizedTypeReference<>() {
         });
         List<MapAttr> result = s.getBody();
         if (CollectionUtils.isEmpty(result)) {
@@ -78,6 +82,23 @@ public class ImageService {
         }
 
         return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
+    }
+
+    public void deleteLocalFile(long bid) {
+        HttpHeaders headers = getDefaultHeader();
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(Map.of("bid", bid), headers);
+        var result = restTemplate.exchange(
+                URI.create(STR."\{IMAGE_PATH}del"),
+                HttpMethod.POST,
+                httpEntity,
+                JsonNode.class
+        );
+
+        if (! result.getStatusCode().is2xxSuccessful()) {
+            var body = result.getBody();
+            if (body != null)
+                throw new RuntimeException(body.get("status").asText());
+        }
     }
 
     public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
