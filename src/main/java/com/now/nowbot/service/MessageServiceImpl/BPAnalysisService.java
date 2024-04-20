@@ -187,7 +187,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var mapAttrGet = new MapAttrGet(user.getOsuMode());
         bps.stream()
                 .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods())));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods()), s.getBeatMap().getRanked()));
         Map<Long, MapAttr> changedAttrsMap;
         if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
             changedAttrsMap = null;

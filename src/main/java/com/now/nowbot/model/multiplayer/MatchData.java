@@ -276,9 +276,17 @@ public class MatchData {
     public void updateBeatmapAttr(OsuMode mode, List<MatchRound> rounds, ImageService imageService) {
         final var getParam = new MapAttrGet(mode);
         // 统计需要修改的轮次
-        for (var m : rounds) {
-            if (Mod.hasChangeRating(m.getModInt())) {
-                getParam.addMap(m.getId().longValue(), m.getBid(), m.getModInt());
+        for (var r : rounds) {
+            if (Mod.hasChangeRating(r.getModInt())) {
+                int ranked;
+
+                if (Objects.nonNull(r.getBeatMap())) {
+                    ranked = r.getBeatMap().getRanked();
+                } else {
+                    ranked = 0;
+                }
+
+                getParam.addMap(r.getId().longValue(), r.getBid(), r.getModInt(), ranked);
             }
         }
 

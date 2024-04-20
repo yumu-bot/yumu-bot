@@ -122,7 +122,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         //分别处理mode
         var mode = param.user().mode();
         //处理默认mode
-        if (mode == OsuMode.DEFAULT && bu.getMode() != null) mode = bu.getMode();
+        if (mode == OsuMode.DEFAULT) mode = bu.getMode();
         try {
             bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);
         } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
@@ -290,7 +290,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), s.getScore()));
+                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), s.getScore(), s.getBeatMap().getRanked()));
         var changedStarMap = imageService.getMapAttr(mapAttrGet);
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);

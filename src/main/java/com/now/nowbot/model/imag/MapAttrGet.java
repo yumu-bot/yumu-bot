@@ -11,11 +11,21 @@ class MapAttrGetItem implements Serializable {
     Long id;
     long bid;
     int mods;
+    int ranked;
 
-    public MapAttrGetItem(long id, long b, int m) {
+    public MapAttrGetItem(long id, long bid, int mods, int ranked) {
         this.id = id;
-        bid = b;
-        mods = m;
+        this.bid = bid;
+        this.mods = mods;
+        this.ranked = ranked;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public long getBid() {
@@ -34,8 +44,12 @@ class MapAttrGetItem implements Serializable {
         this.mods = mods;
     }
 
-    public Long getId() {
-        return id;
+    public int getRanked() {
+        return ranked;
+    }
+
+    public void setRanked(int ranked) {
+        this.ranked = ranked;
     }
 
     @Override
@@ -66,8 +80,8 @@ public class MapAttrGet {
         modeInt = m.getModeValue();
     }
 
-    public boolean addMap(long id, long bid, int mods) {
-        var c = new MapAttrGetItem(id, bid, mods);
+    public boolean addMap(long id, long bid, int mods, int ranked) {
+        var c = new MapAttrGetItem(id, bid, mods, ranked);
         return maps.add(c);
     }
 
