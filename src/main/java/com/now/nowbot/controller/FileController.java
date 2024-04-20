@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
-@CrossOrigin("http://localhost:5173")
+@CrossOrigin({"http://localhost:5173", "https://siyuyuko.github.io"})
 public class FileController {
     private static final String API_URL = NowbotConfig.BS_API_URL;
     @Resource

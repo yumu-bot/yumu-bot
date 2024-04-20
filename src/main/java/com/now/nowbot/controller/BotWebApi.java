@@ -37,7 +37,7 @@ import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_
 
 @RestController
 @ResponseBody
-@CrossOrigin("http://localhost:5173")
+@CrossOrigin({"http://localhost:5173", "https://siyuyuko.github.io"})
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
