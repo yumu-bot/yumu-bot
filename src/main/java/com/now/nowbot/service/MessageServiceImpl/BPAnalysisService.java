@@ -195,8 +195,10 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             try {
                 changedAttrsMap = imageService.getMapAttr(mapAttrGet);
             } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
+                log.error("最好成绩分析：渲染失败", e);
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Error);
             } catch (HttpServerErrorException | WebClientResponseException e) {
+                log.error("最好成绩分析：获取变化的谱面超时", e);
                 throw new BPAnalysisException(BPAnalysisException.Type.BA_Attr_FetchFailed);
             }
         }
