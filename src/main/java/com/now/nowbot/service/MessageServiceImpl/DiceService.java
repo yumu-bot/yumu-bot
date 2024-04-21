@@ -262,9 +262,12 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         } else if (c3.contains("时辰")) {
                             num = getRandom(12);
                             is = "时辰";
-                        } else if (c3.contains("时") || c3.contains("钟")) {
+                        } else if ((c3.contains("时") && ! (c3.contains("时候") || c3.contains("时间"))) || c3.contains("小时")) {
                             num = getRandom(24);
                             is = "小时";
+                        } else if (c3.contains("点")) {
+                            num = getRandom(24);
+                            is = "点";
                         } else if (c3.contains("柱香")) {
                             num = getRandom(48);
                             is = "柱香";
