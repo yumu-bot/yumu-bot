@@ -2,6 +2,7 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +127,8 @@ public class Score {
 
     @JsonProperty("created_at")
     public void setCreateTime(String createTime) {
-        log.info("set created at");
+        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class))
+            log.info("set created at, this:[{}], set=[{}]", this.createTime, createTime);
         this.createTime = createTime;
     }
 
