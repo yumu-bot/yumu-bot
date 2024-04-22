@@ -191,10 +191,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
                 .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .mapNotNull(json -> {
-                    log.info("json.created_at=[{}]", json.get(0).get("created_at").asText());
-                    return JacksonUtil.parseObjectList(json, Score.class);
-                })
+                .mapNotNull(json -> JacksonUtil.parseObjectList(json, Score.class))
                 .block();
     }
 
@@ -209,9 +206,11 @@ public class ScoreApiImpl implements OsuScoreApiService {
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
                         .build(uid))
                 .headers(base::insertHeader)
-                .retrieve()
-                .bodyToFlux(Score.class)
-                .collectList()
+                .retrieve().bodyToMono(JsonNode.class)
+                .mapNotNull(json -> {
+                    log.info("json.created_at=[{}]", json.get(0).get("created_at").asText());
+                    return JacksonUtil.parseObjectList(json, Score.class);
+                })
                 .block();
     }
 
