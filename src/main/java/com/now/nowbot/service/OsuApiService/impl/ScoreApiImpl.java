@@ -6,7 +6,6 @@ import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,30 +190,12 @@ public class ScoreApiImpl implements OsuScoreApiService {
                         .build(user.getOsuID()))
                 .headers(base.insertHeader(user))
                 .retrieve()
-                .bodyToFlux(Score.class)
-                .collectList()
+                .bodyToMono(String.class)
+                .mapNotNull(s -> JacksonUtil.parseObjectList(s, Score.class))
                 .block();
     }
 
     public List<Score> getRecent(long uid, OsuMode mode, boolean includeFails, int offset, int limit) {
-        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
-            var node = base.osuApiWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("users/{uid}/scores/recent")
-                            .queryParam("legacy_only", 0)
-                            .queryParam("include_fails", includeFails ? 1 : 0)
-                            .queryParam("offset", offset)
-                            .queryParam("limit", limit)
-                            .queryParamIfPresent("mode", OsuMode.getName(mode))
-                            .build(uid))
-                    .headers(base::insertHeader)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-            if (node == null) log.error("node is null");
-            log.info("json_row: {}", node.toString());
-        }
-
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("users/{uid}/scores/recent")
