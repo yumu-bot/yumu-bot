@@ -211,12 +211,8 @@ public class ScoreApiImpl implements OsuScoreApiService {
                     var list = JacksonUtil.parseObjectList(json, Score.class);
                     for (int i = 0; i < list.size(); i++) {
                         var timeStr = json.get(i).get("created_at").asText();
-                        var s = list.get(i);
-                        s.setCreateTime(timeStr);
-                        log.info("set({}) [{}] -> {}", s.getUser().getUserName(), timeStr, s.getCreateTimeStr());
+                        list.get(i).setCreateTime(timeStr);
                     }
-                    log.info("json.created_at=[{}]", json.get(0).get("created_at").asText());
-                    log.info("to score.creatTime=[{}]", list.getFirst().getCreateTimeStr());
                     return list;
                 })
                 .block();
