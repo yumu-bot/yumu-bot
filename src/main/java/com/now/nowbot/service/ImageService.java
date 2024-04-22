@@ -13,6 +13,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.MapMinus;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
@@ -355,6 +356,11 @@ public class ImageService {
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
 
+        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
+            log.info("score.created_at_str: {}", score.getCreateTimeStr());
+            log.info(score.toString());
+            log.info(JacksonUtil.objectToJsonPretty(score));
+        }
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of("user", user,
                 "score", score
