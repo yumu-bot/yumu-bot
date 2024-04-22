@@ -34,7 +34,7 @@ public class Score {
     @JsonProperty("user_id")
     Long UID;
 
-    @JsonProperty("created_at")
+
     String createTime;
 
     @JsonProperty("id")
@@ -124,6 +124,7 @@ public class Score {
         return createTime;
     }
 
+    @JsonProperty("created_at")
     public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
