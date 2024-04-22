@@ -1,9 +1,6 @@
 package com.now.nowbot.model.JsonData;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.LocalDateTime;
@@ -13,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
     static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
@@ -34,7 +31,7 @@ public class Score {
     @JsonProperty("user_id")
     Long UID;
 
-
+    @JsonIgnore
     String createTime;
 
     @JsonProperty("id")
