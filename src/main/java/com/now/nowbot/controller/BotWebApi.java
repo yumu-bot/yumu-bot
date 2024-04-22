@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
@@ -792,6 +793,42 @@ public class BotWebApi {
             return userApiService.getPlayerInfo(name, mode);
         } else {
             return userApiService.getPlayerInfo(17064371L, mode);
+        }
+    }
+
+    /**
+     * 获取谱面信息的 BeatMap JSON
+     * @param bid 谱面编号
+     * @return BeatMap JSON
+     */
+    @GetMapping(value = "map/json")
+    public BeatMap getBeatMapInfoJson(
+            @RequestParam("bid") @Nullable Long bid
+    ) {
+        if (Objects.nonNull(bid)) {
+            return beatmapApiService.getBeatMapInfo(bid);
+        } else {
+            return new BeatMap();
+        }
+    }
+
+    /**
+     * 获取谱面的附加信息 Attr JSON
+     * @param bid 谱面编号
+     * @param mods 模组字符串，通过逗号分隔
+     * @param mode 游戏模式，默认为谱面自己的
+     * @return BeatMap JSON
+     */
+    @GetMapping(value = "attr/json")
+    public BeatmapDifficultyAttributes getDifficultyAttributes(
+            @RequestParam("bid") @Nullable Long bid,
+            @RequestParam("mods") @Nullable String mods,
+            @RequestParam("mode") @Nullable String mode
+    ) {
+        if (Objects.nonNull(bid)) {
+            return beatmapApiService.getAttributes(bid, OsuMode.getMode(mode), Mod.getModsValue(mods));
+        } else {
+            return new BeatmapDifficultyAttributes();
         }
     }
 
