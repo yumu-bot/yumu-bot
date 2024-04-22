@@ -212,8 +212,12 @@ public class ScoreApiImpl implements OsuScoreApiService {
                     var j = json.iterator();
                     var s = list.iterator();
                     while (j.hasNext() && s.hasNext()) {
-                        s.next().setCreateTime(j.next().get("created_at").asText());
+                        var timeStr = j.next().get("created_at").asText();
+                        s.next().setCreateTime(timeStr);
+                        log.info("set [{}]", timeStr);
                     }
+                    log.info("json.created_at=[{}]", json.get(0).get("created_at").asText());
+                    log.info("to score.creatTime=[{}]", list.getFirst().getCreateTimeStr());
                     return list;
                 })
                 .block();
