@@ -22,7 +22,6 @@ public class Score {
             .appendPattern("HH:mm:ss")
             .appendZoneId().toFormatter();
 
-    //DateTimeFormatter.ofPattern("yyyy-MM-ddThh:mm:ssZ");
     //    @JsonProperty("statistics")
     Double accuracy;
 
@@ -114,6 +113,7 @@ public class Score {
         this.UID = UID;
     }
 
+    @JsonProperty("created_at")
     public LocalDateTime getCreateTime() {
         if (createTime != null) return LocalDateTime.parse(createTime, formatter);
         return LocalDateTime.now();
