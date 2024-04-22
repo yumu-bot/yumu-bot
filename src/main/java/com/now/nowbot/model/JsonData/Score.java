@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,16 +16,11 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ssZ");
-
-    /*
     static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .appendLiteral("T")
             .appendPattern("HH:mm:ss")
             .appendZoneId().toFormatter();
-
-     */
 
     //DateTimeFormatter.ofPattern("yyyy-MM-ddThh:mm:ssZ");
     //    @JsonProperty("statistics")
