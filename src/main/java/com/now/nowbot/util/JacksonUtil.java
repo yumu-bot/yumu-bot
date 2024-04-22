@@ -17,7 +17,7 @@ import java.util.Map;
 public class JacksonUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JacksonUtil.class);
-    private static final ObjectMapper mapper = JsonMapper.builder().build().registerModules(new JavaTimeModule());
+    public static final ObjectMapper mapper = JsonMapper.builder().build().registerModules(new JavaTimeModule());
     private static TypeFactory typeFactory = mapper.getTypeFactory();
 
     public static <T>String objectToJsonPretty(T obj){

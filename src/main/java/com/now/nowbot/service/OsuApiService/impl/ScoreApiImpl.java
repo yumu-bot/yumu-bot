@@ -208,9 +208,12 @@ public class ScoreApiImpl implements OsuScoreApiService {
                 .headers(base::insertHeader)
                 .retrieve().bodyToMono(JsonNode.class)
                 .mapNotNull(json -> {
-                    log.info("json.created_at=[{}]", json.get(0).get("created_at").asText());
                     var list = JacksonUtil.parseObjectList(json, Score.class);
-                    log.info("to score.creatTime=[{}]", list.getFirst().getCreateTimeStr());
+                    var j = json.iterator();
+                    var s = list.iterator();
+                    while (j.hasNext() && s.hasNext()) {
+                        s.next().setCreateTime(j.next().get("created_at").asText());
+                    }
                     return list;
                 })
                 .block();

@@ -358,8 +358,6 @@ public class ImageService {
 
         if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
             log.info("score.created_at_str: {}", score.getCreateTimeStr());
-            log.info(score.toString());
-            log.info(JacksonUtil.objectToJsonPretty(score));
         }
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of("user", user,
