@@ -2,6 +2,8 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,11 +15,12 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
-    static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+    static final         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .appendLiteral("T")
             .appendPattern("HH:mm:ss")
             .appendZoneId().toFormatter();
+    private static final Logger            log       = LoggerFactory.getLogger(Score.class);
 
     //    @JsonProperty("statistics")
     Double accuracy;
@@ -123,6 +126,7 @@ public class Score {
 
     @JsonProperty("created_at")
     public void setCreateTime(String createTime) {
+        log.info("set created at");
         this.createTime = createTime;
     }
 
