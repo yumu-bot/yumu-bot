@@ -10,7 +10,6 @@ import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.AsyncMethodExecutor;
-import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,16 +62,6 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Override
     public BeatMap getBeatMapInfo(long bid) {
-        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
-            var node = base.osuApiWebClient.get()
-                    .uri("beatmaps/{bid}", bid)
-                    .headers(base::insertHeader)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-            if (node == null) log.error("node is null");
-            log.info("json_row: {}", node.toString());
-        }
         return base.osuApiWebClient.get()
                 .uri("beatmaps/{bid}", bid)
                 .headers(base::insertHeader)
