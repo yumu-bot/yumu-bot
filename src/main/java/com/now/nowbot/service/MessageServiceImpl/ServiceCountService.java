@@ -9,7 +9,9 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instructions;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -165,16 +167,18 @@ public class ServiceCountService implements MessageService<Integer> {
 
     //数组求平均值
     private float getListAverage(List<Long> list, int sum) {
-        if (Objects.isNull(list) || list.isEmpty() || sum == 0) return 0f;
+        if (CollectionUtils.isEmpty(list) || sum == 0) return 0f;
         else return 1f * list.stream().reduce(Long::sum).orElse(0L) / sum;
     }
 
     //1926ms -> 1.9s
-    private <T extends Number> String getString(T millis) {
+    private <T extends Number> String getString(@Nullable T millis) {
+        if (millis == null) return "0";
+
         String str = String.format("%.1f", Math.round(millis.floatValue() / 100f) / 10f);
 
         if (str.endsWith(".0")) {
-            return str.replaceAll(".0", "");
+            return str.replace(".0", "");
         }
 
         return str;

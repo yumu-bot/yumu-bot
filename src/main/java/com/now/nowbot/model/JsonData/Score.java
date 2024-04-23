@@ -15,12 +15,12 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Score {
-    static final         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+    static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .appendLiteral("T")
             .appendPattern("HH:mm:ss")
             .appendZoneId().toFormatter();
-    private static final Logger            log       = LoggerFactory.getLogger(Score.class);
+    private static final Logger log = LoggerFactory.getLogger(Score.class);
 
     //    @JsonProperty("statistics")
     Double accuracy;
