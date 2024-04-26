@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.ppminus3.MapMinus;
+import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -69,9 +69,9 @@ public class MapMinusService implements MessageService<Matcher> {
         }
 
         var beatMap = beatmapApiService.getMapInfoFromDB(bid);
-        MapMinus mapMinus = null;
+        PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = MapMinus.getInstance(file);
+            mapMinus = PPMinus3.getInstance(file);
         }
 
         try {

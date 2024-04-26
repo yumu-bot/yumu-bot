@@ -10,7 +10,7 @@ import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.model.ppminus3.MapMinus;
+import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.ContextUtil;
@@ -285,7 +285,7 @@ public class ImageService {
         return doPost("panel_B1", httpEntity);
     }
 
-    public byte[] getPanelB2(BeatMap beatMap, MapMinus mapMinus) {
+    public byte[] getPanelB2(BeatMap beatMap, PPMinus3 mapMinus) {
 
         HttpHeaders headers = getDefaultHeader();
 

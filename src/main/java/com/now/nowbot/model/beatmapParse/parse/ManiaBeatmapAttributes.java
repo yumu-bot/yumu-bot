@@ -21,7 +21,7 @@ public class ManiaBeatmapAttributes extends OsuBeatmapAttributes {
         boolean empty = true;
         String line;
         hitObjects = new LinkedList<>();
-        while ((line = reader.readLine()) != null && !line.equals("")) {
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
             var entity = line.split(",");
             if (entity.length < 5) throw new IOException("解析 [HitObjects] 错误");
             int x = Integer.parseInt(entity[0]);
@@ -39,7 +39,7 @@ public class ManiaBeatmapAttributes extends OsuBeatmapAttributes {
         return empty;
     }
 
-    private int getColumn(double x, int key) {
+    private static int getColumn(double x, int key) {
         int column = (int) Math.floor(x * key / 512f);
         column = Math.min(Math.max(0, column), key - 1);
         return column;
