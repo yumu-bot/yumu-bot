@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.ppminus3.PPMinus3;
@@ -39,15 +40,17 @@ public class MapMinusService implements MessageService<Matcher> {
         long bid;
         OsuMode mode;
         String fileStr;
+        BeatMap beatMap;
 
         try {
             bid = Long.parseLong(matcher.group("id"));
-        } catch (NullPointerException e) {
+        } catch (NumberFormatException e) {
             throw new MapMinusException(MapMinusException.Type.MM_Bid_Error);
         }
 
         try {
-            mode = OsuMode.getMode(beatmapApiService.getBeatMapInfo(bid).getModeInt());
+            beatMap = beatmapApiService.getBeatMapInfo(bid);
+            mode = OsuMode.getMode(beatMap.getModeInt());
             fileStr = beatmapApiService.getBeatMapFile(bid);
             //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
         } catch (Exception e) {
@@ -68,7 +71,6 @@ public class MapMinusService implements MessageService<Matcher> {
             }
         }
 
-        var beatMap = beatmapApiService.getBeatMapInfo(bid);
         PPMinus3 mapMinus = null;
         if (file != null) {
             mapMinus = PPMinus3.getInstanceTest(file);
