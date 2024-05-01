@@ -38,9 +38,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             valueList = Arrays.asList(
                     1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
                     1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
-                    1.05d * Math.pow(PPMinus3.Sum(coordination), 0.48d),
-                    0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
-                    2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
+                    Math.pow(PPMinus3.Sum(coordination), 0.48d),
+                    0.43d * Math.pow(PPMinus3.Sum(stamina) *
+                            dividedByKey(getLengthIndex(file.getLength()), file.getCS().intValue()), 0.83d),
+                    2.65d * Math.pow(PPMinus3.Sum(speed) *
+                            dividedByKey(getBurstIndex(maxBurst), file.getCS().intValue()), 0.32d),
                     0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
                     PPMinus3.Sum(sv)
             );
@@ -201,8 +203,10 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
                 1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
                 Math.pow(PPMinus3.Sum(coordination), 0.48d),
-                0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
-                2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
+                0.43d * Math.pow(PPMinus3.Sum(stamina) *
+                        dividedByKey(getLengthIndex(file.getLength()), file.getCS().intValue()), 0.83d),
+                2.65d * Math.pow(PPMinus3.Sum(speed) *
+                        dividedByKey(getBurstIndex(maxBurst), file.getCS().intValue()), 0.32d),
                 0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
                 PPMinus3.Sum(sv)
         );
@@ -567,8 +571,13 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     // 获取爆发因数。一般认为 5s 内 28 物件 的时候大概是 0.95x
-    private double getBurstIndex(double burst, int key) {
-        return 1 - (1 / Math.exp((burst / Math.pow(key, 0.9)) / 7));
+    private double getBurstIndex(double burst) {
+        return 1 - (1 / Math.exp(burst) / 7);
+    }
+
+    // 消除多键位带来的影响
+    private double dividedByKey(double value, int key) {
+        return value / Math.pow(key, 0.9);
     }
 
 
@@ -622,7 +631,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     @Override
     public String toString() {
-        return STR."PPMinus3ManiaImpl{rice=\{rice}, ln=\{ln}, sv=\{sv}, stamina=\{stamina}, speed=\{speed}, precision=\{precision}\{'}'}";
+        return STR."PPMinus3ManiaImpl{rice=\{rice}, ln=\{ln}, coordination=\{coordination}, stamina=\{stamina}, speed=\{speed}, precision=\{precision}, sv=\{sv}, maxBurst=\{maxBurst}, valueList=\{valueList}, nameList=\{nameList}, abbrList=\{abbrList}\{'}'}";
     }
 
     /*
