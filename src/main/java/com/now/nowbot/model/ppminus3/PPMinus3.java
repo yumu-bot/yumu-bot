@@ -44,6 +44,14 @@ public abstract class PPMinus3 {
         return pm3;
     }
 
+    public static PPMinus3 getInstanceTest(OsuFile file) throws IOException {
+        PPMinus3 pm3 = null;
+        if (file.getMode() == OsuMode.MANIA) {
+            pm3 = new PPMinus3ManiaImpl(file.getMania(), true);
+        }
+        return pm3;
+    }
+
     public List<Double> getValueList() {
         return valueList;
     }
@@ -77,16 +85,17 @@ public abstract class PPMinus3 {
         List<Double> d = new ArrayList<>();
 
         for (var list : lists) {
-            if (CollectionUtils.isEmpty(list)) {
-                d.add(0d);
-            }
-
-            d.add(0.8d * list.stream().reduce(Double::max).orElse(0d)
-                    + 0.2d * list.stream().reduce(Double::sum).orElse(0d) / list.size());
-
+            d.add(PPMinus3.Sum(list));
         }
 
         return d;
+    }
+
+    protected static Double Sum(List<Double> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return 0d;
+        }
+        return 0.8d * list.stream().reduce(Double::max).orElse(0d) + 0.2d * list.stream().reduce(Double::sum).orElse(0d) / list.size();
     }
 
     @NonNull

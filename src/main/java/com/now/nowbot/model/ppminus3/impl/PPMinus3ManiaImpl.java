@@ -4,6 +4,7 @@ import com.now.nowbot.model.beatmapParse.HitObject;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes;
 import com.now.nowbot.model.ppminus3.PPMinus3;
+import com.now.nowbot.model.ppminus3.data.PPMinus3ManiaData;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
@@ -17,7 +18,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     List<Double> ln = new ArrayList<>();
 
-    List<Double> sv = new ArrayList<>();
+    List<Double> coordination = new ArrayList<>();
 
     List<Double> stamina = new ArrayList<>();
 
@@ -25,14 +26,194 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     List<Double> precision = new ArrayList<>();
 
-    private double U = 0d;
+    List<Double> sv = new ArrayList<>();
+
+    private double maxBurst = 0d;
+
+    public PPMinus3ManiaImpl(ManiaBeatmapAttributes file, boolean isTest) {
+        if (isTest) {
+            valueList = calculateTest(file);
+        } else {
+            calculate(file);
+            valueList = Arrays.asList(
+                    1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
+                    1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
+                    1.05d * Math.pow(PPMinus3.Sum(coordination), 0.48d),
+                    0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
+                    2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
+                    0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
+                    PPMinus3.Sum(sv)
+            );
+        }
+    }
 
     public PPMinus3ManiaImpl(ManiaBeatmapAttributes file) {
-        calculate(file);
+        new PPMinus3ManiaImpl(file, false);
+    }
 
-        valueList = PPMinus3.CollectData(rice, ln, sv, stamina, speed, precision);
-        nameList = Arrays.asList("rice", "long note", "speed variation", "stamina", "speed", "precision");
-        abbrList = Arrays.asList("RC", "LN", "SV", "STA", "SPD", "PRE");
+    private List<Double> calculateTest(ManiaBeatmapAttributes file) {
+
+        List<Double> stream = new ArrayList<>();
+        List<Double> jack = new ArrayList<>();
+
+        List<Double> release = new ArrayList<>();
+        List<Double> shield = new ArrayList<>();
+        List<Double> reverseShield = new ArrayList<>();
+
+        List<Double> bracket = new ArrayList<>();
+        List<Double> handLock = new ArrayList<>();
+        List<Double> overlap = new ArrayList<>();
+
+        List<Double> riceDensity = new ArrayList<>();
+        List<Double> lnDensity = new ArrayList<>();
+
+        List<Double> speedJack = new ArrayList<>();
+        List<Double> trill = new ArrayList<>();
+        List<Double> burst = new ArrayList<>();
+
+        List<Double> grace = new ArrayList<>();
+        List<Double> delayedTail = new ArrayList<>();
+
+        List<Double> bump = new ArrayList<>();
+        List<Double> stop = new ArrayList<>();
+        List<Double> fastJam = new ArrayList<>();
+        List<Double> slowJam = new ArrayList<>();
+        List<Double> teleport = new ArrayList<>();
+        List<Double> negative = new ArrayList<>();
+
+        // 下面代码的照搬
+        var hitObjectList = file.getHitObjects();
+        if (CollectionUtils.isEmpty(hitObjectList)) return new ArrayList<>();
+
+        // 初始化
+        int now = hitObjectList.getFirst().getStartTime();
+        int deltaNow = calculateUnit;
+        int chord = 1;
+
+        int key = file.getCS().intValue(); // 1~9
+
+        List<List<HitObject>> noteCategory = new ArrayList<>(key);
+
+        for (int i = 0; i < key; i++) {
+            noteCategory.add(new ArrayList<>());
+        }
+
+        // 遍历数据，并存储在 noteCategory 中
+        for (var h : hitObjectList) {
+            int column = h.getColumn();
+            if (column > key) return new ArrayList<>();
+
+            noteCategory.get(column).add(h);
+        }
+
+        // 缓存
+        var d = new PPMinus3ManiaData();
+
+        // 遍历数据，开始计算
+        for (var h : hitObjectList) {
+            var recordChord = 1; //将被记录的多押数量
+            if (h.getStartTime() == now) {
+                chord++;
+            } else {
+                recordChord = chord;
+                chord = 1;
+            }
+
+            now = h.getStartTime();
+            var column = h.getColumn();
+
+            var next = getTopestNote(h, noteCategory.get(column));
+
+            // 左右的边界
+            if (column == 0) {
+                d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
+            } else if (column == key - 1) {
+                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
+            } else {
+                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), getNearestNote(h, noteCategory.get(column + 1)), next));
+            }
+
+            d.increaseBurst();
+
+            // 计算元已满足要求，收集数据输出
+            if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
+                deltaNow += calculateUnit;
+
+                maxBurst = Math.max(d.getBurst(), maxBurst);
+
+                rice.add(Math.sqrt(recordChord) * (
+                                d.getStream() + d.getJack()
+                        )
+                );
+
+                ln.add(Math.sqrt(recordChord) * (
+                                d.getRelease() + d.getShield() + d.getReverseShield()
+                        )
+                );
+
+                coordination.add(d.getBracket() + d.getHandLock() + d.getOverlap());
+
+                stamina.add(d.getRiceDensity() + d.getLnDensity());
+                speed.add(d.getSpeedJack() + d.getTrill());
+                precision.add(d.getGrace() + d.getDelayedTail() + file.getOD());
+
+                sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
+
+
+                chord = 1;
+
+                {
+                    stream.add(d.getStream());
+                    jack.add(d.getJack());
+
+                    release.add(d.getRelease());
+                    shield.add(d.getShield());
+                    reverseShield.add(d.getReverseShield());
+
+                    bracket.add(d.getBracket());
+                    handLock.add(d.getHandLock());
+                    overlap.add(d.getOverlap());
+
+                    riceDensity.add(d.getRiceDensity());
+                    lnDensity.add(d.getLnDensity());
+
+                    speedJack.add(d.getSpeedJack());
+                    trill.add(d.getTrill());
+                    burst.add(d.getBurst());
+
+                    grace.add(d.getGrace());
+                    delayedTail.add(d.getDelayedTail());
+
+                    bump.add(d.getBump());
+                    stop.add(d.getStop());
+                    fastJam.add(d.getFastJam());
+                    slowJam.add(d.getSlowJam());
+                    teleport.add(d.getTeleport());
+                    negative.add(d.getNegative());
+                }
+
+
+                d.clear();
+            }
+        }
+
+        var a = Arrays.asList(
+                1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
+                1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
+                1.05d * Math.pow(PPMinus3.Sum(coordination), 0.48d),
+                0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
+                2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
+                0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
+                PPMinus3.Sum(sv)
+        );
+
+        var a1 = new ArrayList<>(a);
+
+        List<Double> b = PPMinus3.CollectData(stream, jack, release, shield, reverseShield, bracket, handLock, overlap, riceDensity, lnDensity, speedJack, trill, burst, grace, delayedTail, bump, stop, fastJam, slowJam, teleport, negative);
+
+        a1.addAll(b);
+
+        return a1;
     }
 
     // 主计算
@@ -62,7 +243,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         }
 
         // 缓存
-        var cache = new Cache(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 0, 0, 0, 0,0, 0, 0);
+        var d = new PPMinus3ManiaData();
 
         // 遍历数据，开始计算
         for (var h : hitObjectList) {
@@ -77,148 +258,189 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             now = h.getStartTime();
             var column = h.getColumn();
 
-            var next = getNearestNote(h, noteCategory.get(column));
+            var next = getTopestNote(h, noteCategory.get(column));
 
             // 左右的边界
             if (column == 0) {
-                cache = merge2Cache(cache, calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
+                d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
             } else if (column == key - 1) {
-                cache = merge2Cache(cache, calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
+                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
             } else {
-                cache = merge2Cache(cache, calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), getNearestNote(h, noteCategory.get(column + 1)), next));
+                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), getNearestNote(h, noteCategory.get(column + 1)), next));
             }
 
+            d.increaseBurst();
 
             // 计算元已满足要求，收集数据输出
             if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
                 deltaNow += calculateUnit;
 
-                U = Math.max(cache.C + cache.D, U);
+                maxBurst = Math.max(d.getBurst(), maxBurst);
 
-                rice.add(Math.sqrt(recordChord) * (cache.C + cache.J + cache.B));
-                ln.add(Math.sqrt(recordChord) * (cache.H + cache.O + cache.R + cache.E * 100f));
-                sv.add(cache.M + cache.F + cache.W + cache.P + cache.T + cache.N);
-                stamina.add(cache.C + cache.D);
-                speed.add(cache.K * 5f + cache.I * 1000f);
-                precision.add(cache.G * 5f + cache.Y);
+                rice.add(Math.sqrt(recordChord) * (
+                                d.getStream() + d.getJack()
+                        )
+                );
+
+                ln.add(Math.sqrt(recordChord) * (
+                                d.getRelease() + d.getShield() + d.getReverseShield()
+                        )
+                );
+
+                coordination.add(d.getBracket() + d.getHandLock() + d.getOverlap());
+
+                stamina.add(d.getRiceDensity() + d.getLnDensity());
+                speed.add(d.getSpeedJack() + d.getTrill());
+                precision.add(d.getGrace() + d.getDelayedTail() + file.getOD());
+
+                sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
 
                 chord = 1;
-                cache = new Cache(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 0, 0, 0, 0,0, 0, 0);
+                d.clear();
             }
         }
     }
 
     //计算 note 的值
-    private Cache calculateNote(HitObject now, @Nullable HitObject left, @Nullable HitObject right, @Nullable HitObject after) {
-        var cache = new Cache(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0, 0, 0, 0, 0,0, 0, 0);
+    private PPMinus3ManiaData calculateNote(HitObject now, @Nullable HitObject left, @Nullable HitObject right, @Nullable HitObject after) {
+        var data = new PPMinus3ManiaData();
 
         if (after != null) {
-            cache = merge2Cache(cache, calculateAfter(now, after));
+            data.add(calculateAfter(now, after));
         }
 
         if (left != null && right != null) {
-            cache = merge2Cache(cache, calculateBetween(now, left, right));
+            data.add(calculateBetween(now, left, right));
         }
 
         if (right != null) {
-            cache = merge2Cache(cache, calculateAside(now, right));
+            data.add(calculateAside(now, right));
         }
 
         if (left != null) {
-            cache = merge2Cache(cache, calculateAside(now, left));
+            data.add(calculateAside(now, left));
         }
 
-        return cache;
+        return data;
     }
 
     // 比较该物件和同轨道的下一个物件
-    private Cache calculateAfter(HitObject now, HitObject after) {
+    private PPMinus3ManiaData calculateAfter(HitObject now, HitObject after) {
         // 缓存
-        double S = 0d; double J = 0d; double B = 0d;
-        double H = 0d; double O = 0d; double R = 0d; double E = 0d;
-        double M = 0d; double F = 0d; double W = 0d; double P = 0d; double T = 0d; double N = 0d;
-        double C = 0d; double D = 0d;
-        double K = 0d; double I = 0d; double U = 0d;
-        double G = 0d; double Y = 0d;
+        var data = new PPMinus3ManiaData();
 
         // 叠键
-        J += calcJack(now.getStartTime(), after.getStartTime());
-        K += calcSpeedJack(now.getStartTime(), after.getStartTime());
+
+        data.setJack(
+                calcJack(now.getStartTime(), after.getStartTime())
+        );
+
+        data.setSpeedJack(
+                calcSpeedJack(now.getStartTime(), after.getStartTime())
+        );
 
         // 盾和反盾 o o== // o== o
-        if (now.getType() == HitObjectType.LONGNOTE) {
-            E += calcShield(now.getEndTime(), after.getStartTime());
 
-        } else if (after.getType() == HitObjectType.LONGNOTE) {
-            Y += calcShield(now.getStartTime(), after.getEndTime());
+        switch (now.getType()) {
+            case CIRCLE -> {
+                if (after.getType() == HitObjectType.LONGNOTE) {
+                    data.setReverseShield(
+                            calcShield(now.getStartTime(), after.getStartTime())
+                    );
+                }
+            }
+            case LONGNOTE -> {
+
+                switch (after.getType()) {
+                    case CIRCLE -> data.setShield(
+                            calcShield(now.getEndTime(), after.getStartTime())
+                    );
+                    case LONGNOTE -> data.setRelease(
+                            calcStream(now.getEndTime(), after.getStartTime())
+                    );
+                }
+            }
         }
 
-        return new Cache(S, J, B, H, O, R, E, M, F, W, P, T, N, C, D, K, I, U, G, Y);
+        return data;
     }
 
     // 比较该物件和周围轨道的下一个物件
-    private Cache calculateBetween(HitObject now, HitObject left, HitObject right) {
+    private PPMinus3ManiaData calculateBetween(HitObject now, HitObject left, HitObject right) {
         // 缓存
-        double S = 0d; double J = 0d; double B = 0d;
-        double H = 0d; double O = 0d; double R = 0d; double E = 0d;
-        double M = 0d; double F = 0d; double W = 0d; double P = 0d; double T = 0d; double N = 0d;
-        double C = 0d; double D = 0d;
-        double K = 0d; double I = 0d; double U = 0d;
-        double G = 0d; double Y = 0d;
+        var data = new PPMinus3ManiaData();
 
         /*
           裤衩
           o   o
             o
          */
-        I += calcTrill(now.getStartTime(), left.getStartTime(), right.getStartTime());
-        B += calcBracket(now.getStartTime(), left.getStartTime(), right.getStartTime());
+        data.setTrill(
+                calcTrill(now.getStartTime(), left.getStartTime(), right.getStartTime())
+        );
 
-        return new Cache(S, J, B, H, O, R, E, M, F, W, P, T, N, C, D, K, I, U, G, Y);
+        data.setBracket(
+                calcBracket(now.getStartTime(), left.getStartTime(), right.getStartTime()));
+
+        return data;
     }
 
     // 比较该物件和附近轨道的下一个物件
-    private Cache calculateAside(HitObject now, HitObject aside) {
+    private PPMinus3ManiaData calculateAside(HitObject now, HitObject aside) {
         // 缓存
-        double S = 0d; double J = 0d; double B = 0d;
-        double H = 0d; double O = 0d; double R = 0d; double E = 0d;
-        double M = 0d; double F = 0d; double W = 0d; double P = 0d; double T = 0d; double N = 0d;
-        double C = 0d; double D = 0d;
-        double K = 0d; double I = 0d; double U = 0d;
-        double G = 0d; double Y = 0d;
+        var data = new PPMinus3ManiaData();
 
-        S += calcStream(now.getStartTime(), aside.getStartTime());
-        G += calcGrace(now.getStartTime(), aside.getStartTime());
+        data.setStream(
+                calcStream(now.getStartTime(), aside.getStartTime())
+        );
+
+        data.setGrace(
+                calcGrace(now.getStartTime(), aside.getStartTime())
+        );
 
         switch (now.getType()) {
             case CIRCLE -> {
-                C++;
+                data.setRiceDensity(1);
 
                 if (aside.getType() == HitObjectType.LONGNOTE) {
-                    H += calcHandLock(now.getStartTime(), aside.getStartTime(), aside.getEndTime());
-                    R += calcStream(now.getStartTime(), aside.getEndTime());
+                    data.setHandLock(
+                            calcHandLock(now.getStartTime(), aside.getStartTime(), aside.getEndTime())
+                    );
+                    data.setRelease(
+                            calcStream(now.getStartTime(), aside.getEndTime())
+                    );
                 }
             }
             case LONGNOTE -> {
-                D++;
-                R += calcStream(now.getStartTime(), aside.getStartTime());
+                data.setLnDensity(
+                        calcSliderDensity(now.getStartTime(), now.getEndTime())
+                );
 
                 if (aside.getType() == HitObjectType.LONGNOTE) {
-                    Y += calcDelayedTail(now.getEndTime(), aside.getEndTime());
-                    O += calcOverlap(now.getStartTime(), now.getEndTime(), aside.getStartTime(), aside.getEndTime());
+                    data.setRelease(
+                            calcStream(now.getEndTime(), aside.getEndTime())
+                    );
+
+                    data.setDelayedTail(
+                            calcDelayedTail(now.getEndTime(), aside.getEndTime())
+                    );
+
+                    data.setOverlap(
+                            calcOverlap(now.getStartTime(), now.getEndTime(), aside.getStartTime(), aside.getEndTime())
+                    );
                 }
             }
         }
 
-        return new Cache(S, J, B, H, O, R, E, M, F, W, P, T, N, C, D, K, I, U, G, Y);
+        return data;
     }
 
     // 返回这个物件与这一组物件对比，最靠上，或是被 LN 包围的这个 LN
     @Nullable
-    private HitObject getNearestNote(HitObject now, List<HitObject> nearColumn) {
+    private HitObject getNearestNote(HitObject now, List<HitObject> asideColumn) {
         var n = now.getStartTime();
 
-        for (var h : nearColumn) {
+        for (var h : asideColumn) {
             var s = h.getStartTime();
             var e = h.getEndTime();
 
@@ -230,10 +452,24 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return null;
     }
 
+    // 获取同轨道靠上面的物件
+    @Nullable
+    private HitObject getTopestNote(HitObject now, List<HitObject> thisColumn) {
+        var n = now.getStartTime();
+
+        for (var h : thisColumn) {
+            if (h.getStartTime() - n > 0) {
+                return h;
+            }
+        }
+
+        return null;
+    }
+
     private double calcStream(int hit, int aside_hit) {
         double p = 0f;
         if (aside_hit - hit < frac_1) {
-            p = NormalDistribution(aside_hit - hit, frac_16, frac_1);
+            p = 100 * NormalDistribution(aside_hit - hit, frac_16, frac_1);
         }
         return p;
     }
@@ -241,7 +477,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcBracket(int hit, int left_hit, int right_hit) {
         double p = 0f;
         if (Math.abs(left_hit - hit) < frac_3 && Math.abs(right_hit - hit) < frac_3) {
-            p += (NormalDistribution(left_hit - hit, frac_16, frac_3) + NormalDistribution(right_hit - hit, frac_16, frac_3)); // 180bpm 1/4
+            p = 150 * NormalDistribution(left_hit - hit, frac_16, frac_3) + NormalDistribution(right_hit - hit, frac_16, frac_3); // 180bpm 1/4
         }
         return p;
     }
@@ -249,7 +485,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcGrace(int hit, int aside_hit) {
         double p = 0f;
         if (aside_hit - hit <= frac_6 && aside_hit - hit >= frac_MIN) {
-            p = NormalDistribution(aside_hit - hit, frac_16, frac_6); // 180bpm 1/4
+            p = 200 * NormalDistribution(aside_hit - hit, frac_16, frac_6); // 180bpm 1/4
         }
 
         return p;
@@ -258,7 +494,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcDelayedTail(int release, int aside_release) {
         double p = 0f;
         if (aside_release - release <= frac_3) {
-            p = NormalDistribution(aside_release - release, frac_16, frac_3); // 180bpm 1/4
+            p = 100 * NormalDistribution(aside_release - release, frac_16, frac_3); // 180bpm 1/4
         }
 
         return p;
@@ -267,52 +503,49 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcJack(int hit, int after_hit) {
         double p = 0f;
         if (after_hit - hit <= frac_2) {
-            p += InverseProportionalFunction(after_hit - hit, frac_8, calculateUnit, frac_4); // 180bpm 1/2
+            p = 200 * NormalDistribution(after_hit - hit, frac_8, frac_2); // 180bpm 1/2
         }
         return p;
     }
 
     private double calcShield(int release, int after_hit) {
-        return NormalDistribution(after_hit - release, frac_16, frac_1); // 180bpm 1/2
+        return 300 * NormalDistribution(after_hit - release, frac_8, frac_1); // 180bpm 1/2
     }
 
     private double calcSpeedJack(int hit, int after_hit) {
         double p = 0f;
-        if (after_hit - hit <= frac_4) {
-            p += InverseProportionalFunction(after_hit - hit, frac_16, calculateUnit, frac_4); // 180bpm 1/4
+        if (after_hit - hit <= frac_3) {
+            p = 200 * NormalDistribution(after_hit - hit, frac_8, frac_3); // 180bpm 1/4
         }
         return p;
     }
 
     private double calcHandLock(int hit, int aside_hit, int aside_release){
-        double p = 0f;
         var isHandLock = (aside_release - frac_16 > hit && aside_hit < hit - frac_16);
 
         if (aside_release != 0 && aside_hit != 0 && isHandLock) {
-            p++;
+            return 1f;
         }
 
-        return p;
+        return 0f;
     }
 
     private double calcOverlap(int hit, int release, int aside_hit, int aside_release){
-        double p;
-        double delta = 0f;
         var isOverlap = ! ((hit < aside_hit && release < aside_release) || (hit > aside_hit && release > aside_release));
 
         if (isOverlap) {
-            delta = (Math.min(aside_release, release) - Math.max(aside_hit, hit));
+            var delta = (Math.min(aside_release, release) - Math.max(aside_hit, hit));
+
+            return 1.2f - (0.2f / Math.exp(- delta / 1000f));
         }
 
-        p = 6f / (5f + Math.exp(- delta / 1000f));
-
-        return p;
+        return 0f;
     }
 
     private double calcSliderDensity(int hit, int release) {
         int delta = release - hit;
         if (delta > 0) {
-            return 6f / (5f + Math.exp(- delta / 1000f));
+            return 1.2f - (0.2f / Math.exp(- delta / 1000f));
         } else {
             return 0f;
         }
@@ -320,12 +553,22 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     private double calcTrill(int hit, int left_hit, int right_hit) {
         if (Math.abs(left_hit - hit) <= frac_8 && Math.abs(right_hit - hit) > frac_8) {
-            return NormalDistribution(Math.abs(right_hit - hit), frac_8, frac_2);
+            return 150 * NormalDistribution(Math.abs(right_hit - hit), frac_8, frac_2);
         } else if (Math.abs(left_hit - hit) > frac_8 && Math.abs(right_hit - hit) <= frac_8) {
-            return NormalDistribution(Math.abs(left_hit - hit), frac_8, frac_2);
+            return 150 * NormalDistribution(Math.abs(left_hit - hit), frac_8, frac_2);
         } else {
             return 0f;
         }
+    }
+
+    // 获取长度因数。一般认为 300s 的时候大概是 0.95x
+    private double getLengthIndex(int length) {
+        return 1 - (1 / Math.exp(length / 100d));
+    }
+
+    // 获取爆发因数。一般认为 5s 内 28 物件 的时候大概是 0.95x
+    private double getBurstIndex(double burst, int key) {
+        return 1 - (1 / Math.exp((burst / Math.pow(key, 0.9)) / 7));
     }
 
 
@@ -382,37 +625,21 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return STR."PPMinus3ManiaImpl{rice=\{rice}, ln=\{ln}, sv=\{sv}, stamina=\{stamina}, speed=\{speed}, precision=\{precision}\{'}'}";
     }
 
-    private record Cache(
-            double S, double J, double B,
-            double H, double O, double R, double E,
-            double M, double F, double W, double P, double T, double N,
-            double C, double D,
-            double K, double I, double U,
-            double G, double Y) {
+    /*
+    @Override
+    public List<Double> getValueList() {
+        return PPMinus3.CollectData(rice, ln, coordination, stamina, speed, precision, sv);
     }
 
-    private Cache merge2Cache(Cache c1, Cache c2) {
-        return new Cache(
-                c1.S + c2.S,
-                c1.J + c2.J,
-                c1.B + c2.B,
-                c1.H + c2.H,
-                c1.O + c2.O,
-                c1.R + c2.R,
-                c1.E + c2.E,
-                c1.M + c2.M,
-                c1.F + c2.F,
-                c1.W + c2.W,
-                c1.P + c2.P,
-                c1.T + c2.T,
-                c1.N + c2.N,
-                c1.C + c2.C,
-                c1.D + c2.D,
-                c1.K + c2.K,
-                c1.I + c2.I,
-                c1.U + c2.U,
-                c1.G + c2.G,
-                c1.Y + c2.Y
-        );
+     */
+
+    @Override
+    public List<String> getNameList() {
+        return Arrays.asList("rice", "long note", "coordination", "stamina", "speed", "precision", "speed variation");
+    }
+
+    @Override
+    public List<String> getAbbrList() {
+        return Arrays.asList("RC", "LN", "CO", "ST", "SP", "PR", "SV");
     }
 }

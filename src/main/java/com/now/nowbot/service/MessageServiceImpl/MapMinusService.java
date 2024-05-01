@@ -68,10 +68,10 @@ public class MapMinusService implements MessageService<Matcher> {
             }
         }
 
-        var beatMap = beatmapApiService.getMapInfoFromDB(bid);
+        var beatMap = beatmapApiService.getBeatMapInfo(bid);
         PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = PPMinus3.getInstance(file);
+            mapMinus = PPMinus3.getInstanceTest(file);
         }
 
         try {

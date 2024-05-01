@@ -6,6 +6,7 @@ import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
 import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import org.springframework.util.CollectionUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class OsuBeatmapAttributes {
     protected Double sliderTickRate;
     protected Double sliderMultiplier;
     protected Double stackLeniency = -1D;
+
+    protected int length = 0;
 
     List<HitObject> hitObjects;
 
@@ -149,6 +152,11 @@ public class OsuBeatmapAttributes {
             var obj = new HitObject(x, y, time);
             hitObjects.add(obj);
         }
+
+        if (! CollectionUtils.isEmpty(hitObjects)) {
+            length = hitObjects.getLast().getEndTime();
+        }
+
         return empty;
     }
 
@@ -270,6 +278,14 @@ public class OsuBeatmapAttributes {
 
     public void setTimings(List<Timing> timings) {
         this.timings = timings;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
     }
 
     public boolean isConverted() {

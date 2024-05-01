@@ -2,6 +2,7 @@ package com.now.nowbot.model.beatmapParse.parse;
 
 import com.now.nowbot.model.beatmapParse.HitObject;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
+import org.springframework.util.CollectionUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,6 +37,11 @@ public class ManiaBeatmapAttributes extends OsuBeatmapAttributes {
 
             hitObjects.add(obj);
         }
+
+        if (! CollectionUtils.isEmpty(hitObjects)) {
+            length = hitObjects.getLast().getEndTime();
+        }
+
         return empty;
     }
 
