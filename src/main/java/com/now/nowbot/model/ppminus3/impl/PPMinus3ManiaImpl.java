@@ -38,7 +38,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             valueList = Arrays.asList(
                     1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
                     1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
-                    1.05d * Math.pow(PPMinus3.Sum(coordination), 0.48d),
+                    Math.pow(PPMinus3.Sum(coordination), 0.48d),
                     0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
                     2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
                     0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
@@ -200,7 +200,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         var a = Arrays.asList(
                 1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
                 1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
-                1.05d * Math.pow(PPMinus3.Sum(coordination), 0.48d),
+                Math.pow(PPMinus3.Sum(coordination), 0.48d),
                 0.25d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 0.7d),
                 2.65d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst, file.getCS().intValue()), 0.32d),
                 0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
@@ -477,7 +477,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcBracket(int hit, int left_hit, int right_hit) {
         double p = 0f;
         if (Math.abs(left_hit - hit) < frac_3 && Math.abs(right_hit - hit) < frac_3) {
-            p = 150 * NormalDistribution(left_hit - hit, frac_16, frac_3) + NormalDistribution(right_hit - hit, frac_16, frac_3); // 180bpm 1/4
+            p = 150 * NormalDistribution(left_hit - hit, frac_8, frac_3) + NormalDistribution(right_hit - hit, frac_8, frac_3); // 180bpm 1/4
         }
         return p;
     }
