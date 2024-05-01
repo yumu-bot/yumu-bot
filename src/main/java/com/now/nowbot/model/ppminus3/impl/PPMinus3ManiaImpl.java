@@ -360,8 +360,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                             calcShield(now.getEndTime(), after.getStartTime())
                     );
                     case LONGNOTE -> data.setRelease(
-                            calcStream(now.getEndTime(), after.getStartTime())
-                    );
+                            (Math.min(now.getEndTime() - now.getStartTime(), 100) / 100d) * calcStream(now.getEndTime(), after.getStartTime())
+                    ); //这里避免超短面 （小于 100 ms） 增加 release 的值
                 }
             }
         }
@@ -422,7 +422,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 if (aside.getType() == HitObjectType.LONGNOTE) {
                     data.setRelease(
-                            calcStream(now.getEndTime(), aside.getEndTime())
+                            (Math.min(now.getEndTime() - now.getStartTime(), 100) / 100d) * calcStream(now.getEndTime(), aside.getEndTime())
                     );
 
                     data.setDelayedTail(
