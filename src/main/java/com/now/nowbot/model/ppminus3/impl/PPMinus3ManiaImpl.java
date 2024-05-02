@@ -549,7 +549,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcSliderDensity(int hit, int release) {
         int delta = release - hit;
         if (delta > 0) {
-            return 1.2f - (0.2f / Math.exp(- delta / 1000f));
+            return 1.4f - (0.4f / Math.exp(- delta / 1000f));
         } else {
             return 0f;
         }
