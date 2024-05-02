@@ -39,8 +39,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                     1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
                     1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
                     Math.pow(PPMinus3.Sum(coordination), 0.48d),
-                    0.43d * Math.pow(PPMinus3.Sum(stamina) *
-                            dividedByKey(getLengthIndex(file.getLength()), file.getCS().intValue()), 0.83d),
+                    0.43d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
+                            getLengthIndex(file.getLength()), 0.83d),
                     2.65d * Math.pow(PPMinus3.Sum(speed) *
                             getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.32d),
                     0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
@@ -577,7 +577,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     // 消除多键位带来的影响
     private double dividedByKey(double value, int key) {
-        return value / Math.pow(key, 0.9);
+        return value / Math.pow(key, 0.8);
     }
 
 
