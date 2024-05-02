@@ -42,7 +42,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                     0.43d * Math.pow(PPMinus3.Sum(stamina) *
                             dividedByKey(getLengthIndex(file.getLength()), file.getCS().intValue()), 0.83d),
                     2.65d * Math.pow(PPMinus3.Sum(speed) *
-                            dividedByKey(getBurstIndex(maxBurst), file.getCS().intValue()), 0.32d),
+                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.32d),
                     0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
                     PPMinus3.Sum(sv)
             );
@@ -206,7 +206,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 0.43d * Math.pow(PPMinus3.Sum(stamina) *
                         dividedByKey(getLengthIndex(file.getLength()), file.getCS().intValue()), 0.83d),
                 2.65d * Math.pow(PPMinus3.Sum(speed) *
-                        dividedByKey(getBurstIndex(maxBurst), file.getCS().intValue()), 0.32d),
+                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.32d),
                 0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
                 PPMinus3.Sum(sv)
         );
