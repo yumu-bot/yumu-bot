@@ -43,7 +43,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                             getLengthIndex(file.getLength()), 0.93d),
                     2.3d * Math.pow(PPMinus3.Sum(speed) *
                             getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
-                    0.9d * Math.pow(PPMinus3.Sum(precision), 0.5d),
+                    0.88d * Math.pow(PPMinus3.Sum(precision), 0.52d),
                     PPMinus3.Sum(sv)
             );
         }
@@ -208,7 +208,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                         getLengthIndex(file.getLength()), 0.93d),
                 2.3d * Math.pow(PPMinus3.Sum(speed) *
                         getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
-                0.9d * Math.pow(PPMinus3.Sum(precision), 0.5d),
+                0.88d * Math.pow(PPMinus3.Sum(precision), 0.52d),
                 PPMinus3.Sum(sv)
         );
 
@@ -296,7 +296,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 stamina.add(d.getRiceDensity() + d.getLnDensity());
                 speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(2 * Math.max(file.getOD() - 7, 0)));
+                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(Math.max(file.getOD() - 7, 0)));
 
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
 
