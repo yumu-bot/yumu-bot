@@ -82,7 +82,6 @@ public class MapMinusService implements MessageService<Matcher> {
         } catch (Exception e) {
             log.error("MapMinus", e);
             throw new MapMinusException(MapMinusException.Type.MM_Send_Error);
-            //from.sendMessage("出错了出错了,问问管理员");
         }
     }
 }

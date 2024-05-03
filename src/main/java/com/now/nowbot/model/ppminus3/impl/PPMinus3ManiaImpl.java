@@ -334,20 +334,20 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         // 缓存
         var data = new PPMinus3ManiaData();
 
-        // 叠键
-
-        data.setJack(
-                calcJack(now.getStartTime(), after.getStartTime())
-        );
-
-        data.setSpeedJack(
-                calcSpeedJack(now.getStartTime(), after.getStartTime())
-        );
-
         // 盾和反盾 o o== // o== o
 
         switch (now.getType()) {
             case CIRCLE -> {
+
+                // 叠键
+                data.setJack(
+                        calcJack(now.getStartTime(), after.getStartTime())
+                );
+
+                data.setSpeedJack(
+                        calcSpeedJack(now.getStartTime(), after.getStartTime())
+                );
+
                 if (after.getType() == HitObjectType.LONGNOTE) {
                     data.setReverseShield(
                             calcShield(now.getStartTime(), after.getStartTime())
@@ -395,17 +395,17 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         // 缓存
         var data = new PPMinus3ManiaData();
 
-        data.setStream(
-                calcStream(now.getStartTime(), aside.getStartTime())
-        );
-
-        data.setGrace(
-                calcGrace(now.getStartTime(), aside.getStartTime())
-        );
-
         switch (now.getType()) {
             case CIRCLE -> {
                 data.setRiceDensity(1);
+
+                data.setStream(
+                        calcStream(now.getStartTime(), aside.getStartTime())
+                );
+
+                data.setGrace(
+                        calcGrace(now.getStartTime(), aside.getStartTime())
+                );
 
                 if (aside.getType() == HitObjectType.LONGNOTE) {
                     data.setHandLock(
