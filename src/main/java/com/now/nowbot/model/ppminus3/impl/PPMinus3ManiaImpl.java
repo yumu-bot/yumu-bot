@@ -36,14 +36,14 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         } else {
             calculate(file);
             valueList = Arrays.asList(
-                    1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
-                    1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
-                    Math.pow(PPMinus3.Sum(coordination), 0.48d),
-                    0.43d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
-                            getLengthIndex(file.getLength()), 0.83d),
-                    2.65d * Math.pow(PPMinus3.Sum(speed) *
-                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.32d),
-                    0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
+                    0.95d * Math.pow(PPMinus3.Sum(rice), 0.47d),
+                    0.86d * Math.pow(PPMinus3.Sum(ln), 0.54d),
+                    0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
+                    0.23d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
+                            getLengthIndex(file.getLength()), 0.82d),
+                    2.3d * Math.pow(PPMinus3.Sum(speed) *
+                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
+                    0.9d * Math.pow(PPMinus3.Sum(precision), 0.5d),
                     PPMinus3.Sum(sv)
             );
         }
@@ -157,7 +157,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 stamina.add(d.getRiceDensity() + d.getLnDensity());
                 speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + d.getDelayedTail() + file.getOD());
+                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(2 * Math.max(file.getOD() - 7, 0)));
 
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
 
@@ -199,15 +199,16 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             }
         }
 
+        // todo 测试代码
         var a = Arrays.asList(
-                1.32d * Math.pow(PPMinus3.Sum(rice), 0.37d),
-                1.68d * Math.pow(PPMinus3.Sum(ln), 0.35d),
-                Math.pow(PPMinus3.Sum(coordination), 0.48d),
-                0.43d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
-                        getLengthIndex(file.getLength()), 0.83d),
-                2.65d * Math.pow(PPMinus3.Sum(speed) *
-                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.32d),
-                0.8d * Math.pow(PPMinus3.Sum(precision), 0.54d),
+                0.95d * Math.pow(PPMinus3.Sum(rice), 0.47d),
+                0.86d * Math.pow(PPMinus3.Sum(ln), 0.54d),
+                0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
+                0.23d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
+                        getLengthIndex(file.getLength()), 0.82d),
+                2.3d * Math.pow(PPMinus3.Sum(speed) *
+                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
+                0.9d * Math.pow(PPMinus3.Sum(precision), 0.5d),
                 PPMinus3.Sum(sv)
         );
 
@@ -295,7 +296,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 stamina.add(d.getRiceDensity() + d.getLnDensity());
                 speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + d.getDelayedTail() + file.getOD());
+                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(2 * Math.max(file.getOD() - 7, 0)));
 
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
 
@@ -471,45 +472,40 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     private double calcStream(int hit, int aside_hit) {
-        double p = 0f;
         if (aside_hit - hit < frac_1) {
-            p = 100 * NormalDistribution(aside_hit - hit, frac_16, frac_1);
+            return 100 * NormalDistribution(aside_hit - hit, frac_16, frac_1);
         }
-        return p;
+        return 0f;
     }
 
     private double calcBracket(int hit, int left_hit, int right_hit) {
-        double p = 0f;
         if (Math.abs(left_hit - hit) <= frac_2 && Math.abs(right_hit - hit) <= frac_2) {
-            p = 100 * NormalDistribution(left_hit - hit, frac_8, frac_2) + 100 * NormalDistribution(right_hit - hit, frac_8, frac_2); // 180bpm 1/2
+            return 100 * NormalDistribution(left_hit - hit, frac_8, frac_2) + 100 * NormalDistribution(right_hit - hit, frac_8, frac_2); // 180bpm 1/2
         }
-        return p;
+        return 0f;
     }
 
     private double calcGrace(int hit, int aside_hit) {
-        double p = 0f;
         if (aside_hit - hit <= frac_6 && aside_hit - hit >= frac_MIN) {
-            p = 200 * NormalDistribution(aside_hit - hit, frac_16, frac_6); // 180bpm 1/4
+            return 200 * NormalDistribution(aside_hit - hit, frac_16, frac_6); // 180bpm 1/4
         }
 
-        return p;
+        return 0f;
     }
 
     private double calcDelayedTail(int release, int aside_release) {
-        double p = 0f;
         if (aside_release - release <= frac_3) {
-            p = 100 * NormalDistribution(aside_release - release, frac_16, frac_3); // 180bpm 1/4
+            return 100 * NormalDistribution(aside_release - release, frac_16, frac_3); // 180bpm 1/4
         }
 
-        return p;
+        return 0f;
     }
 
     private double calcJack(int hit, int after_hit) {
-        double p = 0f;
         if (after_hit - hit <= frac_2) {
-            p = 200 * NormalDistribution(after_hit - hit, frac_8, frac_2); // 180bpm 1/2
+            return 200 * NormalDistribution(after_hit - hit, frac_8, frac_2); // 180bpm 1/2
         }
-        return p;
+        return 0f;
     }
 
     private double calcShield(int release, int after_hit) {
@@ -517,11 +513,10 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     private double calcSpeedJack(int hit, int after_hit) {
-        double p = 0f;
         if (after_hit - hit <= frac_3) {
-            p = 200 * NormalDistribution(after_hit - hit, frac_8, frac_3); // 180bpm 1/4
+            return 200 * NormalDistribution(after_hit - hit, frac_8, frac_3); // 180bpm 1/4
         }
-        return p;
+        return 0f;
     }
 
     private double calcHandLock(int hit, int aside_hit, int aside_release){
@@ -540,7 +535,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         if (isOverlap) {
             var delta = (Math.min(aside_release, release) - Math.max(aside_hit, hit));
 
-            return 1.2f - (0.2f / Math.exp(- delta / 1000f));
+            if (delta >= 0) return 1.4f - (1.4f / Math.exp(delta * 1d / beat_2));
+            else return 0f;
         }
 
         return 0f;
@@ -549,7 +545,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private double calcSliderDensity(int hit, int release) {
         int delta = release - hit;
         if (delta > 0) {
-            return 1.4f - (0.4f / Math.exp(- delta / 1000f));
+            return 1.4f - (0.4f / Math.exp(delta * 1d / beat_2));
         } else {
             return 0f;
         }
@@ -566,18 +562,18 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     // 获取长度因数。一般认为 300s 的时候大概是 0.95x
-    private double getLengthIndex(int length) {
-        return 1 - (1 / Math.exp(length / 100d));
+    private double getLengthIndex(int millis) {
+        return 1d - (1d / Math.exp(millis / 100_000d));
     }
 
-    // 获取爆发因数。一般认为 5s 内 28 物件 的时候大概是 0.95x
+    // 获取爆发因数。一般认为一计算元 5s 内 30 物件 的时候大概是 0.95x
     private double getBurstIndex(double burst) {
-        return 1 - (1 / Math.exp(burst) / 7);
+        return 1d - (1d / Math.exp(burst / 10d));
     }
 
-    // 消除多键位带来的影响
+    // 消除多键位带来的影响。4K：1.0，7K：0.6391
     private double dividedByKey(double value, int key) {
-        return value / Math.pow(key, 0.8);
+        return value * Math.pow(4d, 0.8d) / Math.pow(key, 0.8d);
     }
 
 

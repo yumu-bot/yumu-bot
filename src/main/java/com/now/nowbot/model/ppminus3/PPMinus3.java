@@ -34,6 +34,8 @@ public abstract class PPMinus3 {
 
     protected final int frac_1 = 333;
 
+    protected final int beat_2 = 666;
+
     protected final int calculateUnit = 2500; //一个标准单位计算元的区域（毫秒）。这段时间的数据，会统计到单一一个计算元中。
 
     public static PPMinus3 getInstance(OsuFile file) throws IOException {
@@ -91,11 +93,12 @@ public abstract class PPMinus3 {
         return d;
     }
 
+    @NonNull
     protected static Double Sum(List<Double> list) {
         if (CollectionUtils.isEmpty(list)) {
             return 0d;
         }
-        return 0.8d * list.stream().reduce(Double::max).orElse(0d) + 0.2d * list.stream().reduce(Double::sum).orElse(0d) / list.size();
+        return 0.7d * list.stream().reduce(Double::max).orElse(0d) + 0.3d * list.stream().reduce(Double::sum).orElse(0d) / list.size();
     }
 
     @NonNull
