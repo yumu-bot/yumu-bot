@@ -41,9 +41,9 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                     0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
                     0.12d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
                             getLengthIndex(file.getLength()), 0.93d),
-                    2.3d * Math.pow(PPMinus3.Sum(speed) *
-                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
-                    0.88d * Math.pow(PPMinus3.Sum(precision), 0.52d),
+                    2.0d * Math.pow(PPMinus3.Sum(speed) *
+                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.5d),
+                    0.56d * Math.pow(PPMinus3.Sum(precision), 0.68d),
                     PPMinus3.Sum(sv)
             );
         }
@@ -206,9 +206,9 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
                 0.12d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
                         getLengthIndex(file.getLength()), 0.93d),
-                2.3d * Math.pow(PPMinus3.Sum(speed) *
-                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.4d),
-                0.88d * Math.pow(PPMinus3.Sum(precision), 0.52d),
+                2.0d * Math.pow(PPMinus3.Sum(speed) *
+                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.5d),
+                0.56d * Math.pow(PPMinus3.Sum(precision), 0.68d),
                 PPMinus3.Sum(sv)
         );
 
