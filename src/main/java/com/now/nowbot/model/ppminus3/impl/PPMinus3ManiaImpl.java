@@ -36,14 +36,12 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         } else {
             calculate(file);
             valueList = Arrays.asList(
-                    0.95d * Math.pow(PPMinus3.Sum(rice), 0.47d),
-                    0.86d * Math.pow(PPMinus3.Sum(ln), 0.54d),
-                    0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
-                    0.12d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
-                            getLengthIndex(file.getLength()), 0.93d),
-                    2.0d * Math.pow(PPMinus3.Sum(speed) *
-                            getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.5d),
-                    0.56d * Math.pow(PPMinus3.Sum(precision), 0.68d),
+                    0.066d * Math.pow(PPMinus3.Sum(rice), 0.68d),
+                    0.24d * Math.pow(PPMinus3.Sum(ln), 0.6d),
+                    0.272d * Math.pow(PPMinus3.Sum(coordination), 0.72d),
+                    0.06d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 1.16d),
+                    0.6d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst), 0.52d),
+                    0.25d * Math.pow(PPMinus3.Sum(precision), 0.73d),
                     PPMinus3.Sum(sv)
             );
         }
@@ -141,7 +139,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
                 deltaNow += calculateUnit;
 
-                maxBurst = Math.max(d.getBurst(), maxBurst);
+                maxBurst = Math.max(
+                        dividedByKey(d.getBurst(), key), maxBurst);
 
                 rice.add(Math.sqrt(recordChord) * (
                                 d.getStream() + d.getJack()
@@ -153,14 +152,14 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                         )
                 );
 
-                coordination.add(d.getBracket() + d.getHandLock() + d.getOverlap());
-
-                stamina.add(d.getRiceDensity() + d.getLnDensity());
+                coordination.add(d.getBracket() + 10d * d.getHandLock() + 10d * d.getOverlap());
+                stamina.add(
+                        dividedByKey(d.getRiceDensity() + d.getLnDensity(), key)
+                );
                 speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(2 * Math.max(file.getOD() - 7, 0)));
+                precision.add(d.getGrace() + affectedByOD(d.getDelayedTail(), file.getOD()));
 
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
-
 
                 chord = 1;
 
@@ -201,14 +200,21 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         // todo 测试代码
         var a = Arrays.asList(
-                0.95d * Math.pow(PPMinus3.Sum(rice), 0.47d),
-                0.86d * Math.pow(PPMinus3.Sum(ln), 0.54d),
-                0.66d * Math.pow(PPMinus3.Sum(coordination), 0.69d),
-                0.12d * Math.pow(dividedByKey(PPMinus3.Sum(stamina), file.getCS().intValue()) *
-                        getLengthIndex(file.getLength()), 0.93d),
-                2.0d * Math.pow(PPMinus3.Sum(speed) *
-                        getBurstIndex(dividedByKey(maxBurst, file.getCS().intValue())), 0.5d),
-                0.56d * Math.pow(PPMinus3.Sum(precision), 0.68d),
+                /*
+                PPMinus3.Sum(rice),
+                PPMinus3.Sum(ln),
+                PPMinus3.Sum(coordination),
+                PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()),
+                PPMinus3.Sum(speed) * getBurstIndex(maxBurst),
+                PPMinus3.Sum(precision),
+                 */
+                0.066d * Math.pow(PPMinus3.Sum(rice), 0.68d),
+                0.24d * Math.pow(PPMinus3.Sum(ln), 0.6d),
+                0.272d * Math.pow(PPMinus3.Sum(coordination), 0.72d),
+                0.06d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 1.16d),
+                0.6d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst), 0.52d),
+                0.25d * Math.pow(PPMinus3.Sum(precision), 0.73d),
+
                 PPMinus3.Sum(sv)
         );
 
@@ -280,7 +286,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
                 deltaNow += calculateUnit;
 
-                maxBurst = Math.max(d.getBurst(), maxBurst);
+                maxBurst = Math.max(
+                        dividedByKey(d.getBurst(), key), maxBurst);
 
                 rice.add(Math.sqrt(recordChord) * (
                                 d.getStream() + d.getJack()
@@ -292,13 +299,15 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                         )
                 );
 
-                coordination.add(d.getBracket() + d.getHandLock() + d.getOverlap());
-
-                stamina.add(d.getRiceDensity() + d.getLnDensity());
+                coordination.add(d.getBracket() + 10d * d.getHandLock() + 10d * d.getOverlap());
+                stamina.add(
+                        dividedByKey(d.getRiceDensity() + d.getLnDensity(), key)
+                );
                 speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + d.getDelayedTail() + Math.expm1(Math.max(file.getOD() - 7, 0)));
+                precision.add(d.getGrace() + affectedByOD(d.getDelayedTail(), file.getOD()));
 
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
+
 
                 chord = 1;
                 d.clear();
@@ -334,11 +343,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         // 缓存
         var data = new PPMinus3ManiaData();
 
-        // 盾和反盾 o o== // o== o
-
         switch (now.getType()) {
             case CIRCLE -> {
-
                 // 叠键
                 data.setJack(
                         calcJack(now.getStartTime(), after.getStartTime())
@@ -350,12 +356,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 if (after.getType() == HitObjectType.LONGNOTE) {
                     data.setReverseShield(
-                            calcShield(now.getStartTime(), after.getStartTime())
+                            calcReverseShield(now.getStartTime(), after.getStartTime())
                     );
                 }
             }
             case LONGNOTE -> {
-
                 switch (after.getType()) {
                     case CIRCLE -> data.setShield(
                             calcShield(now.getEndTime(), after.getStartTime())
@@ -423,7 +428,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
                 if (aside.getType() == HitObjectType.LONGNOTE) {
                     data.setRelease(
-                            Math.pow(Math.min(now.getEndTime() - now.getStartTime(), 100) / 100d, 2d) * calcStream(now.getEndTime(), aside.getEndTime())
+                            calcStream(now.getEndTime(), aside.getEndTime())
                     );
 
                     data.setDelayedTail(
@@ -472,61 +477,59 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     private double calcStream(int hit, int aside_hit) {
-        if (aside_hit - hit < frac_1) {
-            return 100 * NormalDistribution(aside_hit - hit, frac_16, frac_1);
-        }
-        return 0f;
+        return 5d * ExponentFunction(aside_hit - hit, frac_4, frac_1);
     }
 
     private double calcBracket(int hit, int left_hit, int right_hit) {
-        if (Math.abs(left_hit - hit) <= frac_2 && Math.abs(right_hit - hit) <= frac_2) {
-            return 100 * NormalDistribution(left_hit - hit, frac_8, frac_2) + 100 * NormalDistribution(right_hit - hit, frac_8, frac_2); // 180bpm 1/2
+        int lx = Math.abs(left_hit - hit);
+        int rx = Math.abs(right_hit - hit);
+
+        if (lx <= frac_2 && rx <= frac_2) {
+            return ExponentFunction(lx, frac_4, frac_1) + ExponentFunction(rx, frac_4, frac_1);
         }
-        return 0f;
+        return 0d;
     }
 
     private double calcGrace(int hit, int aside_hit) {
-        if (aside_hit - hit <= frac_6 && aside_hit - hit >= frac_MIN) {
-            return 200 * NormalDistribution(aside_hit - hit, frac_16, frac_6); // 180bpm 1/4
+        if (aside_hit - hit <= frac_6) {
+            return 10d * ExponentFunction(aside_hit - hit, frac_8, frac_1);
         }
 
-        return 0f;
+        return 0d;
     }
 
     private double calcDelayedTail(int release, int aside_release) {
         if (aside_release - release <= frac_3) {
-            return 100 * NormalDistribution(aside_release - release, frac_16, frac_3); // 180bpm 1/4
+            return 10d * ExponentFunction(aside_release - release, frac_6, frac_2);
         }
-
-        return 0f;
+        return 0d;
     }
 
     private double calcJack(int hit, int after_hit) {
-        if (after_hit - hit <= frac_2) {
-            return 200 * NormalDistribution(after_hit - hit, frac_8, frac_2); // 180bpm 1/2
-        }
-        return 0f;
+        return 10d * InverseProportionalFunction(after_hit - hit, frac_2, frac_1, 0);
     }
 
     private double calcShield(int release, int after_hit) {
-        return 300 * NormalDistribution(after_hit - release, frac_8, frac_1); // 180bpm 1/2
+        return 5d * InverseProportionalFunction(after_hit - release, frac_2, frac_1, frac_16);
+    }
+
+    private double calcReverseShield(int hit, int after_hit) {
+        return 10d * InverseProportionalFunction(after_hit - hit, frac_2, frac_1, 0);
     }
 
     private double calcSpeedJack(int hit, int after_hit) {
-        if (after_hit - hit <= frac_3) {
-            return 200 * NormalDistribution(after_hit - hit, frac_8, frac_3); // 180bpm 1/4
-        }
-        return 0f;
+        return 5d * InverseProportionalFunction(after_hit - hit, frac_4, frac_2, 0);
+
     }
 
     private double calcHandLock(int hit, int aside_hit, int aside_release){
-        var isHandLock = (aside_release - frac_16 > hit && aside_hit < hit - frac_16);
+        var isHandLock = (aside_release - frac_8 > hit && aside_hit < hit - frac_8);
 
-        if (aside_release != 0 && aside_hit != 0 && isHandLock) {
-            return 1f;
+        if (aside_release > 0 && aside_hit > 0 && isHandLock) {
+            return 1d;
         }
 
-        return 0f;
+        return 0d;
     }
 
     private double calcOverlap(int hit, int release, int aside_hit, int aside_release){
@@ -534,34 +537,37 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         if (isOverlap) {
             var delta = (Math.min(aside_release, release) - Math.max(aside_hit, hit));
+            if (delta <= 0) return 0d;
 
-            if (delta >= 0) return 1.4f - (1.4f / Math.exp(delta * 1d / beat_2));
-            else return 0f;
+            return 1.4d - (1.4d / Math.exp(delta * 1d / beat_2));
         }
 
-        return 0f;
+        return 0d;
     }
 
     private double calcSliderDensity(int hit, int release) {
         int delta = release - hit;
         if (delta > 0) {
-            return 1.4f - (0.4f / Math.exp(delta * 1d / beat_2));
+            return 1.4d - (0.4d / Math.exp(delta * 1d / beat_2));
         } else {
-            return 0f;
+            return 0d;
         }
     }
 
     private double calcTrill(int hit, int left_hit, int right_hit) {
-        if (Math.abs(left_hit - hit) <= frac_8 && Math.abs(right_hit - hit) > frac_8) {
-            return 150 * NormalDistribution(Math.abs(right_hit - hit), frac_8, frac_2);
-        } else if (Math.abs(left_hit - hit) > frac_8 && Math.abs(right_hit - hit) <= frac_8) {
-            return 150 * NormalDistribution(Math.abs(left_hit - hit), frac_8, frac_2);
+        int lx = Math.abs(left_hit - hit);
+        int rx = Math.abs(right_hit - hit);
+
+        if (lx <= frac_8 && rx > frac_8) {
+            return 5d * ExponentFunction(rx, frac_4, frac_1);
+        } else if (lx > frac_8 && rx <= frac_8) {
+            return 5d * ExponentFunction(lx, frac_4, frac_1);
         } else {
-            return 0f;
+            return 0d;
         }
     }
 
-    // 获取长度因数。一般认为 300s 的时候大概是 0.95x
+    // 获取长度因数。一般认为长度 = 300s 的时候，大概是 0.95x
     private double getLengthIndex(int millis) {
         return 1d - (1d / Math.exp(millis / 100_000d));
     }
@@ -571,11 +577,15 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return 1d - (1d / Math.exp(burst / 10d));
     }
 
-    // 消除多键位带来的影响。4K：1.0，7K：0.6391
+    // 消除多键位带来的影响。4K：1.0，7K：0.755
     private double dividedByKey(double value, int key) {
-        return value * Math.pow(4d, 0.8d) / Math.pow(key, 0.8d);
+        return value * 2d / Math.sqrt(key); //Math.sqrt(4d)
     }
 
+    // 增强 OD 带来的影响。OD7: 1.0x, OD10: 4.48x
+    public double affectedByOD(double value, double od) {
+        return value * Math.exp(Math.max(od - 7d, 0d) / 2d);
+    }
 
     public List<Double> getRice() {
         return rice;
