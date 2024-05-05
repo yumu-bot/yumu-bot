@@ -1,9 +1,9 @@
 package com.now.nowbot.model.ppminus3;
 
 import com.now.nowbot.model.beatmapParse.OsuFile;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.ppminus3.impl.PPMinus3ManiaImpl;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
@@ -11,11 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PPMinus3 {
-    protected List<Double> valueList = new ArrayList<>(6);
+    protected List<Double> valueList = new ArrayList<>(7);
 
-    protected List<String> nameList = new ArrayList<>(6);
+    protected List<Double> subList = new ArrayList<>();
 
-    protected List<String> abbrList = new ArrayList<>(6);
+    protected List<String> nameList = new ArrayList<>(7);
+
+    protected List<String> abbrList = new ArrayList<>(7);
+
+    protected Double star = 0d;
 
     protected final int frac_16 = 21;
 
@@ -36,43 +40,14 @@ public abstract class PPMinus3 {
     protected final int calculateUnit = 2500; //一个标准单位计算元的区域（毫秒）。这段时间的数据，会统计到单一一个计算元中。
 
     public static PPMinus3 getInstance(OsuFile file) throws IOException {
-        PPMinus3 pm3 = null;
-        if (file.getMode() == OsuMode.MANIA) {
-            pm3 = new PPMinus3ManiaImpl(file.getMania());
+        switch (file.getMode()) {
+            case MANIA -> {
+                return new PPMinus3ManiaImpl(file.getMania());
+            }
+            case null, default -> {
+                return null;
+            }
         }
-        return pm3;
-    }
-
-    public static PPMinus3 getInstanceTest(OsuFile file) throws IOException {
-        PPMinus3 pm3 = null;
-        if (file.getMode() == OsuMode.MANIA) {
-            pm3 = new PPMinus3ManiaImpl(file.getMania(), true);
-        }
-        return pm3;
-    }
-
-    public List<Double> getValueList() {
-        return valueList;
-    }
-
-    public void setValueList(List<Double> valueList) {
-        this.valueList = valueList;
-    }
-
-    public List<String> getNameList() {
-        return nameList;
-    }
-
-    public void setNameList(List<String> nameList) {
-        this.nameList = nameList;
-    }
-
-    public List<String> getAbbrList() {
-        return abbrList;
-    }
-
-    public void setAbbrList(List<String> abbrList) {
-        this.abbrList = abbrList;
     }
 
     // 公用算法
@@ -90,9 +65,21 @@ public abstract class PPMinus3 {
         return d;
     }
 
-    //求和算法： 0.7 平均 + 0.2 最大 + 0.1 总和
+    // 求值算法，y = a(cx)^b, x = ∑ list
     @NonNull
-    protected static Double Sum(List<Double> list) {
+    protected static double Eval(List<Double> valueList, double multiplier, double index, @Nullable Double additional) {
+        double a = (additional == null) ? 1d : additional;
+        return multiplier * Math.pow(Sum(valueList) * a, index);
+    }
+
+    @NonNull
+    protected static double Eval(List<Double> valueList, double multiplier, double index) {
+        return Eval(valueList, multiplier, index, null);
+    }
+
+    // 求和算法： 0.8 平均 + 0.2 最大
+    @NonNull
+    protected static double Sum(List<Double> list) {
         if (CollectionUtils.isEmpty(list)) {
             return 0d;
         }
@@ -152,5 +139,45 @@ public abstract class PPMinus3 {
         double x = Math.abs(delta_time * 1d / standard_time);
         //平方是为了方便、快速达到缩减的值
         return Math.pow(Math.E * x / Math.exp(x), 2d);
+    }
+
+    public List<Double> getValueList() {
+        return valueList;
+    }
+
+    public void setValueList(List<Double> valueList) {
+        this.valueList = valueList;
+    }
+
+    public List<Double> getSubList() {
+        return subList;
+    }
+
+    public void setSubList(List<Double> subList) {
+        this.subList = subList;
+    }
+
+    public List<String> getNameList() {
+        return nameList;
+    }
+
+    public void setNameList(List<String> nameList) {
+        this.nameList = nameList;
+    }
+
+    public List<String> getAbbrList() {
+        return abbrList;
+    }
+
+    public void setAbbrList(List<String> abbrList) {
+        this.abbrList = abbrList;
+    }
+
+    public Double getStar() {
+        return star;
+    }
+
+    public void setStar(Double star) {
+        this.star = star;
     }
 }

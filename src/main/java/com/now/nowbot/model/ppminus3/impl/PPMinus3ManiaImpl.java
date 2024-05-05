@@ -16,223 +16,53 @@ import java.util.List;
 public class PPMinus3ManiaImpl extends PPMinus3 {
     // 主要六维
     List<Double> rice = new ArrayList<>();
-
     List<Double> ln = new ArrayList<>();
-
     List<Double> coordination = new ArrayList<>();
-
     List<Double> stamina = new ArrayList<>();
-
     List<Double> speed = new ArrayList<>();
-
     List<Double> precision = new ArrayList<>();
-
     List<Double> sv = new ArrayList<>();
+
+    // 子参数
+    List<Double> stream = new ArrayList<>();
+    List<Double> jack = new ArrayList<>();
+
+    List<Double> release = new ArrayList<>();
+    List<Double> shield = new ArrayList<>();
+    List<Double> reverseShield = new ArrayList<>();
+
+    List<Double> bracket = new ArrayList<>();
+    List<Double> handLock = new ArrayList<>();
+    List<Double> overlap = new ArrayList<>();
+
+    List<Double> riceDensity = new ArrayList<>();
+    List<Double> lnDensity = new ArrayList<>();
+
+    List<Double> speedJack = new ArrayList<>();
+    List<Double> trill = new ArrayList<>();
+    List<Double> burst = new ArrayList<>();
+
+    List<Double> grace = new ArrayList<>();
+    List<Double> delayedTail = new ArrayList<>();
+
+    List<Double> bump = new ArrayList<>();
+    List<Double> stop = new ArrayList<>();
+    List<Double> fastJam = new ArrayList<>();
+    List<Double> slowJam = new ArrayList<>();
+    List<Double> teleport = new ArrayList<>();
+    List<Double> negative = new ArrayList<>();
 
     private double maxBurst = 0d;
 
-    public PPMinus3ManiaImpl(ManiaBeatmapAttributes file, boolean isTest) {
-        if (isTest) {
-            valueList = calculateTest(file);
-        } else {
-            calculate(file);
-            valueList = Arrays.asList(
-                    0.066d * Math.pow(PPMinus3.Sum(rice), 0.68d),
-                    0.24d * Math.pow(PPMinus3.Sum(ln), 0.6d),
-                    0.272d * Math.pow(PPMinus3.Sum(coordination), 0.72d),
-                    0.06d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 1.16d),
-                    0.6d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst), 0.52d),
-                    0.25d * Math.pow(PPMinus3.Sum(precision), 0.73d),
-                    PPMinus3.Sum(sv)
-            );
-        }
-    }
+    private final ManiaBeatmapAttributes file;
 
     public PPMinus3ManiaImpl(ManiaBeatmapAttributes file) {
-        new PPMinus3ManiaImpl(file, false);
-    }
-
-    private List<Double> calculateTest(ManiaBeatmapAttributes file) {
-
-        List<Double> stream = new ArrayList<>();
-        List<Double> jack = new ArrayList<>();
-
-        List<Double> release = new ArrayList<>();
-        List<Double> shield = new ArrayList<>();
-        List<Double> reverseShield = new ArrayList<>();
-
-        List<Double> bracket = new ArrayList<>();
-        List<Double> handLock = new ArrayList<>();
-        List<Double> overlap = new ArrayList<>();
-
-        List<Double> riceDensity = new ArrayList<>();
-        List<Double> lnDensity = new ArrayList<>();
-
-        List<Double> speedJack = new ArrayList<>();
-        List<Double> trill = new ArrayList<>();
-        List<Double> burst = new ArrayList<>();
-
-        List<Double> grace = new ArrayList<>();
-        List<Double> delayedTail = new ArrayList<>();
-
-        List<Double> bump = new ArrayList<>();
-        List<Double> stop = new ArrayList<>();
-        List<Double> fastJam = new ArrayList<>();
-        List<Double> slowJam = new ArrayList<>();
-        List<Double> teleport = new ArrayList<>();
-        List<Double> negative = new ArrayList<>();
-
-        // 下面代码的照搬
-        var hitObjectList = file.getHitObjects();
-        if (CollectionUtils.isEmpty(hitObjectList)) return new ArrayList<>();
-
-        // 初始化
-        int now = hitObjectList.getFirst().getStartTime();
-        int deltaNow = calculateUnit;
-        int chord = 1;
-
-        int key = file.getCS().intValue(); // 1~9
-
-        List<List<HitObject>> noteCategory = new ArrayList<>(key);
-
-        for (int i = 0; i < key; i++) {
-            noteCategory.add(new ArrayList<>());
-        }
-
-        // 遍历数据，并存储在 noteCategory 中
-        for (var h : hitObjectList) {
-            int column = h.getColumn();
-            if (column > key) return new ArrayList<>();
-
-            noteCategory.get(column).add(h);
-        }
-
-        // 缓存
-        var d = new PPMinus3ManiaData();
-
-        // 遍历数据，开始计算
-        for (var h : hitObjectList) {
-            var recordChord = 1; //将被记录的多押数量
-            if (h.getStartTime() == now) {
-                chord++;
-            } else {
-                recordChord = chord;
-                chord = 1;
-            }
-
-            now = h.getStartTime();
-            var column = h.getColumn();
-
-            var next = getTopestNote(h, noteCategory.get(column));
-
-            // 左右的边界
-            if (key <= 1) {
-                //1K 没有左右
-                d.add(calculateNote(h, null, null, next));
-            } else if (column == 0) {
-                d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
-            } else if (column == key - 1) {
-                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
-            } else {
-                d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), getNearestNote(h, noteCategory.get(column + 1)), next));
-            }
-
-            d.increaseBurst();
-
-            // 计算元已满足要求，收集数据输出
-            if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
-                deltaNow += calculateUnit;
-
-                maxBurst = Math.max(
-                        dividedByKey(d.getBurst(), key), maxBurst);
-
-                rice.add(Math.sqrt(recordChord) * (
-                                d.getStream() + d.getJack()
-                        )
-                );
-
-                ln.add(Math.sqrt(recordChord) * (
-                                d.getRelease() + d.getShield() + d.getReverseShield()
-                        )
-                );
-
-                coordination.add(d.getBracket() + 10d * d.getHandLock() + 10d * d.getOverlap());
-                stamina.add(
-                        dividedByKey(d.getRiceDensity() + d.getLnDensity(), key)
-                );
-                speed.add(d.getSpeedJack() + d.getTrill());
-                precision.add(d.getGrace() + affectedByOD(d.getDelayedTail(), file.getOD()));
-
-                sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
-
-                chord = 1;
-
-                {
-                    stream.add(d.getStream());
-                    jack.add(d.getJack());
-
-                    release.add(d.getRelease());
-                    shield.add(d.getShield());
-                    reverseShield.add(d.getReverseShield());
-
-                    bracket.add(d.getBracket());
-                    handLock.add(d.getHandLock());
-                    overlap.add(d.getOverlap());
-
-                    riceDensity.add(d.getRiceDensity());
-                    lnDensity.add(d.getLnDensity());
-
-                    speedJack.add(d.getSpeedJack());
-                    trill.add(d.getTrill());
-                    burst.add(d.getBurst());
-
-                    grace.add(d.getGrace());
-                    delayedTail.add(d.getDelayedTail());
-
-                    bump.add(d.getBump());
-                    stop.add(d.getStop());
-                    fastJam.add(d.getFastJam());
-                    slowJam.add(d.getSlowJam());
-                    teleport.add(d.getTeleport());
-                    negative.add(d.getNegative());
-                }
-
-
-                d.clear();
-            }
-        }
-
-        // todo 测试代码
-        var a = Arrays.asList(
-                /*
-                PPMinus3.Sum(rice),
-                PPMinus3.Sum(ln),
-                PPMinus3.Sum(coordination),
-                PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()),
-                PPMinus3.Sum(speed) * getBurstIndex(maxBurst),
-                PPMinus3.Sum(precision),
-                 */
-                0.066d * Math.pow(PPMinus3.Sum(rice), 0.68d),
-                0.24d * Math.pow(PPMinus3.Sum(ln), 0.6d),
-                0.272d * Math.pow(PPMinus3.Sum(coordination), 0.72d),
-                0.06d * Math.pow(PPMinus3.Sum(stamina) * getLengthIndex(file.getLength()), 1.16d),
-                0.6d * Math.pow(PPMinus3.Sum(speed) * getBurstIndex(maxBurst), 0.52d),
-                0.25d * Math.pow(PPMinus3.Sum(precision), 0.73d),
-
-                PPMinus3.Sum(sv)
-        );
-
-        var a1 = new ArrayList<>(a);
-
-        List<Double> b = PPMinus3.CollectData(stream, jack, release, shield, reverseShield, bracket, handLock, overlap, riceDensity, lnDensity, speedJack, trill, burst, grace, delayedTail, bump, stop, fastJam, slowJam, teleport, negative);
-
-        a1.addAll(b);
-
-        return a1;
+        this.file = file;
+        calculate();
     }
 
     // 主计算
-    private void calculate(ManiaBeatmapAttributes file) {
+    private void calculate() {
         var hitObjectList = file.getHitObjects();
         if (CollectionUtils.isEmpty(hitObjectList)) return;
 
@@ -293,28 +123,49 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
                 deltaNow += calculateUnit;
 
-                maxBurst = Math.max(
-                        dividedByKey(d.getBurst(), key), maxBurst);
+                maxBurst = Math.max(dividedByKey(d.getBurst(), key), maxBurst);
 
-                rice.add(Math.sqrt(recordChord) * (
-                                d.getStream() + d.getJack()
-                        )
+                rice.add(
+                        Math.sqrt(recordChord) * (d.getStream() + d.getJack())
                 );
-
-                ln.add(Math.sqrt(recordChord) * (
-                                d.getRelease() + d.getShield() + d.getReverseShield()
-                        )
+                ln.add(
+                        Math.sqrt(recordChord) * (d.getRelease() + d.getShield() + d.getReverseShield())
                 );
-
                 coordination.add(d.getBracket() + 10d * d.getHandLock() + 10d * d.getOverlap());
-                stamina.add(
-                        dividedByKey(d.getRiceDensity() + d.getLnDensity(), key)
-                );
+                stamina.add(dividedByKey(d.getRiceDensity() + d.getLnDensity(), key));
                 speed.add(d.getSpeedJack() + d.getTrill());
                 precision.add(d.getGrace() + affectedByOD(d.getDelayedTail(), file.getOD()));
-
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
 
+                {
+                    stream.add(d.getStream());
+                    jack.add(d.getJack());
+
+                    release.add(d.getRelease());
+                    shield.add(d.getShield());
+                    reverseShield.add(d.getReverseShield());
+
+                    bracket.add(d.getBracket());
+                    handLock.add(d.getHandLock());
+                    overlap.add(d.getOverlap());
+
+                    riceDensity.add(d.getRiceDensity());
+                    lnDensity.add(d.getLnDensity());
+
+                    speedJack.add(d.getSpeedJack());
+                    trill.add(d.getTrill());
+                    burst.add(d.getBurst());
+
+                    grace.add(d.getGrace());
+                    delayedTail.add(d.getDelayedTail());
+
+                    bump.add(d.getBump());
+                    stop.add(d.getStop());
+                    fastJam.add(d.getFastJam());
+                    slowJam.add(d.getSlowJam());
+                    teleport.add(d.getTeleport());
+                    negative.add(d.getNegative());
+                }
 
                 chord = 1;
                 d.clear();
@@ -356,7 +207,6 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     private PPMinus3ManiaData calculateThis(@NonNull HitObject now) {
         // 缓存
         var data = new PPMinus3ManiaData();
-
         switch (now.getType()) {
             case CIRCLE ->
                     data.setRiceDensity(1);
@@ -612,6 +462,57 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return value * Math.exp(Math.max(od - 7d, 0d) / 2d);
     }
 
+    // 重写
+    @Override
+    public List<Double> getValueList() {
+        return Arrays.asList(
+                PPMinus3.Eval(rice, 0.066d, 0.68d),
+                PPMinus3.Eval(ln, 0.24d, 0.6d),
+                PPMinus3.Eval(coordination, 0.272d, 0.72d),
+                PPMinus3.Eval(stamina, 0.068d, 1.24d, getLengthIndex(file.getLength())),
+                PPMinus3.Eval(speed, 0.6d, 0.52d, getBurstIndex(maxBurst)),
+                PPMinus3.Eval(precision, 0.25d, 0.73d),
+                PPMinus3.Eval(sv, 1d, 1d)
+        );
+    }
+
+    @Override
+    public List<Double> getSubList() {
+        return PPMinus3.CollectData(stream, jack, release, shield, reverseShield, bracket, handLock, overlap, riceDensity, lnDensity, speedJack, trill, burst, grace, delayedTail, bump, stop, fastJam, slowJam, teleport, negative);
+    }
+
+    @Override
+    public List<String> getNameList() {
+        return Arrays.asList("rice", "long note", "coordination", "stamina", "speed", "precision", "speed variation");
+    }
+
+    @Override
+    public List<String> getAbbrList() {
+        return Arrays.asList("RC", "LN", "CO", "ST", "SP", "PR", "SV");
+    }
+
+    @Override
+    public Double getStar() {
+        List<Double> values = getValueList();
+
+        if (CollectionUtils.isEmpty(values) || values.size() < 7) return 0d;
+
+        List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.2d, 0.8d, 0.2d);
+        double divided = 3.8d;
+        double star = 0d;
+
+        for (int i = 0; i < 6; i++) {
+            var p = powers.get(i);
+            var v = values.get(i);
+
+            star += p * v;
+        }
+
+        star /= divided;
+
+        return star;
+    }
+
     public List<Double> getRice() {
         return rice;
     }
@@ -660,26 +561,184 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         this.precision = precision;
     }
 
+    public List<Double> getCoordination() {
+        return coordination;
+    }
+
+    public void setCoordination(List<Double> coordination) {
+        this.coordination = coordination;
+    }
+
+    public List<Double> getStream() {
+        return stream;
+    }
+
+    public void setStream(List<Double> stream) {
+        this.stream = stream;
+    }
+
+    public List<Double> getJack() {
+        return jack;
+    }
+
+    public void setJack(List<Double> jack) {
+        this.jack = jack;
+    }
+
+    public List<Double> getRelease() {
+        return release;
+    }
+
+    public void setRelease(List<Double> release) {
+        this.release = release;
+    }
+
+    public List<Double> getShield() {
+        return shield;
+    }
+
+    public void setShield(List<Double> shield) {
+        this.shield = shield;
+    }
+
+    public List<Double> getReverseShield() {
+        return reverseShield;
+    }
+
+    public void setReverseShield(List<Double> reverseShield) {
+        this.reverseShield = reverseShield;
+    }
+
+    public List<Double> getBracket() {
+        return bracket;
+    }
+
+    public void setBracket(List<Double> bracket) {
+        this.bracket = bracket;
+    }
+
+    public List<Double> getHandLock() {
+        return handLock;
+    }
+
+    public void setHandLock(List<Double> handLock) {
+        this.handLock = handLock;
+    }
+
+    public List<Double> getOverlap() {
+        return overlap;
+    }
+
+    public void setOverlap(List<Double> overlap) {
+        this.overlap = overlap;
+    }
+
+    public List<Double> getRiceDensity() {
+        return riceDensity;
+    }
+
+    public void setRiceDensity(List<Double> riceDensity) {
+        this.riceDensity = riceDensity;
+    }
+
+    public List<Double> getLnDensity() {
+        return lnDensity;
+    }
+
+    public void setLnDensity(List<Double> lnDensity) {
+        this.lnDensity = lnDensity;
+    }
+
+    public List<Double> getSpeedJack() {
+        return speedJack;
+    }
+
+    public void setSpeedJack(List<Double> speedJack) {
+        this.speedJack = speedJack;
+    }
+
+    public List<Double> getTrill() {
+        return trill;
+    }
+
+    public void setTrill(List<Double> trill) {
+        this.trill = trill;
+    }
+
+    public List<Double> getBurst() {
+        return burst;
+    }
+
+    public void setBurst(List<Double> burst) {
+        this.burst = burst;
+    }
+
+    public List<Double> getGrace() {
+        return grace;
+    }
+
+    public void setGrace(List<Double> grace) {
+        this.grace = grace;
+    }
+
+    public List<Double> getDelayedTail() {
+        return delayedTail;
+    }
+
+    public void setDelayedTail(List<Double> delayedTail) {
+        this.delayedTail = delayedTail;
+    }
+
+    public List<Double> getBump() {
+        return bump;
+    }
+
+    public void setBump(List<Double> bump) {
+        this.bump = bump;
+    }
+
+    public List<Double> getStop() {
+        return stop;
+    }
+
+    public void setStop(List<Double> stop) {
+        this.stop = stop;
+    }
+
+    public List<Double> getFastJam() {
+        return fastJam;
+    }
+
+    public void setFastJam(List<Double> fastJam) {
+        this.fastJam = fastJam;
+    }
+
+    public List<Double> getSlowJam() {
+        return slowJam;
+    }
+
+    public void setSlowJam(List<Double> slowJam) {
+        this.slowJam = slowJam;
+    }
+
+    public List<Double> getTeleport() {
+        return teleport;
+    }
+
+    public void setTeleport(List<Double> teleport) {
+        this.teleport = teleport;
+    }
+
+    public List<Double> getNegative() {
+        return negative;
+    }
+
+    public void setNegative(List<Double> negative) {
+        this.negative = negative;
+    }
+
     @Override
     public String toString() {
-        return STR."PPMinus3ManiaImpl{rice=\{rice}, ln=\{ln}, coordination=\{coordination}, stamina=\{stamina}, speed=\{speed}, precision=\{precision}, sv=\{sv}, maxBurst=\{maxBurst}, valueList=\{valueList}, nameList=\{nameList}, abbrList=\{abbrList}\{'}'}";
-    }
-
-    /*
-    @Override
-    public List<Double> getValueList() {
-        return PPMinus3.CollectData(rice, ln, coordination, stamina, speed, precision, sv);
-    }
-
-     */
-
-    @Override
-    public List<String> getNameList() {
-        return Arrays.asList("rice", "long note", "coordination", "stamina", "speed", "precision", "speed variation");
-    }
-
-    @Override
-    public List<String> getAbbrList() {
-        return Arrays.asList("RC", "LN", "CO", "ST", "SP", "PR", "SV");
+        return STR."PPMinus3ManiaImpl{rice=\{rice}, ln=\{ln}, coordination=\{coordination}, stamina=\{stamina}, speed=\{speed}, precision=\{precision}, sv=\{sv}, stream=\{stream}, jack=\{jack}, release=\{release}, shield=\{shield}, reverseShield=\{reverseShield}, bracket=\{bracket}, handLock=\{handLock}, overlap=\{overlap}, riceDensity=\{riceDensity}, lnDensity=\{lnDensity}, speedJack=\{speedJack}, trill=\{trill}, burst=\{burst}, grace=\{grace}, delayedTail=\{delayedTail}, bump=\{bump}, stop=\{stop}, fastJam=\{fastJam}, slowJam=\{slowJam}, teleport=\{teleport}, negative=\{negative}, maxBurst=\{maxBurst}}";
     }
 }

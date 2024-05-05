@@ -39,7 +39,7 @@ public class ManiaBeatmapAttributes extends OsuBeatmapAttributes {
         }
 
         if (! CollectionUtils.isEmpty(hitObjects)) {
-            length = hitObjects.getLast().getEndTime();
+            length = hitObjects.getLast().getEndTime() - hitObjects.getFirst().getStartTime();
         }
 
         return empty;

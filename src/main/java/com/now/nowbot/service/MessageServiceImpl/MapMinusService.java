@@ -73,7 +73,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
         PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = PPMinus3.getInstanceTest(file);
+            mapMinus = PPMinus3.getInstance(file);
         }
 
         byte[] image;
