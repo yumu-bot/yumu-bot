@@ -76,11 +76,19 @@ public class MapMinusService implements MessageService<Matcher> {
             mapMinus = PPMinus3.getInstanceTest(file);
         }
 
+        byte[] image;
+
         try {
-            var image = imageService.getPanelB2(beatMap, mapMinus);
+            image = imageService.getPanelB2(beatMap, mapMinus);
+        } catch (Exception e) {
+            log.error("谱面 Minus：渲染失败", e);
+            throw new MapMinusException(MapMinusException.Type.MM_Render_Error);
+        }
+
+        try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("MapMinus", e);
+            log.error("谱面 Minus：发送失败", e);
             throw new MapMinusException(MapMinusException.Type.MM_Send_Error);
         }
     }

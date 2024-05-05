@@ -5,6 +5,7 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.model.ppminus3.data.PPMinus3ManiaData;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
@@ -125,7 +126,10 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             var next = getTopestNote(h, noteCategory.get(column));
 
             // 左右的边界
-            if (column == 0) {
+            if (key <= 1) {
+                //1K 没有左右
+                d.add(calculateNote(h, null, null, next));
+            } else if (column == 0) {
                 d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
             } else if (column == key - 1) {
                 d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
@@ -272,7 +276,10 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             var next = getTopestNote(h, noteCategory.get(column));
 
             // 左右的边界
-            if (column == 0) {
+            if (key <= 1) {
+                //1K 没有左右
+                d.add(calculateNote(h, null, null, next));
+            } else if (column == 0) {
                 d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
             } else if (column == key - 1) {
                 d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
@@ -315,24 +322,48 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         }
     }
 
+    @NonNull
     //计算 note 的值
-    private PPMinus3ManiaData calculateNote(HitObject now, @Nullable HitObject left, @Nullable HitObject right, @Nullable HitObject after) {
+    private PPMinus3ManiaData calculateNote(@NonNull HitObject now, @Nullable HitObject left, @Nullable HitObject right, @Nullable HitObject after) {
         var data = new PPMinus3ManiaData();
 
+        //计算自己
+        data.add(calculateThis(now));
+
+        //计算同轨：叠、盾
         if (after != null) {
             data.add(calculateAfter(now, after));
         }
 
+        //计算交叉轨：交互、裤衩
         if (left != null && right != null) {
             data.add(calculateBetween(now, left, right));
         }
 
+        //计算侧轨：滑键/楼梯、切换
         if (right != null) {
             data.add(calculateAside(now, right));
         }
 
         if (left != null) {
             data.add(calculateAside(now, left));
+        }
+
+        return data;
+    }
+
+    // 返回此物件的一些特征值
+    private PPMinus3ManiaData calculateThis(@NonNull HitObject now) {
+        // 缓存
+        var data = new PPMinus3ManiaData();
+
+        switch (now.getType()) {
+            case CIRCLE ->
+                    data.setRiceDensity(1);
+            case LONGNOTE ->
+                    data.setLnDensity(
+                            calcLnDensity(now.getStartTime(), now.getEndTime())
+                    );
         }
 
         return data;
@@ -402,8 +433,6 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         switch (now.getType()) {
             case CIRCLE -> {
-                data.setRiceDensity(1);
-
                 data.setStream(
                         calcStream(now.getStartTime(), aside.getStartTime())
                 );
@@ -422,10 +451,6 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 }
             }
             case LONGNOTE -> {
-                data.setLnDensity(
-                        calcSliderDensity(now.getStartTime(), now.getEndTime())
-                );
-
                 if (aside.getType() == HitObjectType.LONGNOTE) {
                     data.setRelease(
                             calcStream(now.getEndTime(), aside.getEndTime())
@@ -545,7 +570,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return 0d;
     }
 
-    private double calcSliderDensity(int hit, int release) {
+    private double calcLnDensity(int hit, int release) {
         int delta = release - hit;
         if (delta > 0) {
             return 1.4d - (0.4d / Math.exp(delta * 1d / beat_2));

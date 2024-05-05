@@ -6,12 +6,13 @@ public class MapMinusException extends TipsException {
     public enum Type {
         MM_Bid_Error("请输入正确的 BID！"),
         MM_Function_NotSupported("抱歉，本功能暂不支持除 Mania 模式以外的谱面！"),
-        MM_Map_NotFound("找不到谱面。"),
-        MM_Map_FetchFailed("谱面下载失败，请尝试重新获取！"),
+        MM_Map_NotFound("找不到谱面，或是 ppy API 无法访问。"),
+        MM_Map_FetchFailed("谱面文件获取失败，请尝试重新！"),
         MM_Map_ModeError("谱面模式获取失败！"),
-        MM_Send_Error("MM 信息发送失败。请重试。") //发送_发送失败
-        ;//逗号分隔
-        final String message;
+        MM_Render_Error("谱面 Minus 信息渲染失败。请耐心等待问题修复或稍后重试。"),
+        MM_Send_Error("谱面 Minus 信息发送失败。请耐心等待问题修复或稍后重试。")
+        ;
+        public final String message;
         Type(String message) {
             this.message = message;
         }
