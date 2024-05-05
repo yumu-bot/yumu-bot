@@ -123,7 +123,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             if (now - deltaNow >= calculateUnit || h.equals(hitObjectList.getLast())) {
                 deltaNow += calculateUnit;
 
-                maxBurst = Math.max(dividedByKey(d.getBurst(), key), maxBurst);
+                maxBurst = Math.max(d.getBurst(), maxBurst);
 
                 rice.add(
                         Math.sqrt(recordChord) * (d.getStream() + d.getJack())
@@ -132,7 +132,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                         Math.sqrt(recordChord) * (d.getRelease() + d.getShield() + d.getReverseShield())
                 );
                 coordination.add(d.getBracket() + 10d * d.getHandLock() + 10d * d.getOverlap());
-                stamina.add(dividedByKey(d.getRiceDensity() + d.getLnDensity(), key));
+                stamina.add(d.getRiceDensity() + d.getLnDensity());
                 speed.add(d.getSpeedJack() + d.getTrill());
                 precision.add(d.getGrace() + affectedByOD(d.getDelayedTail(), file.getOD()));
                 sv.add(d.getBump() + d.getFastJam() + d.getSlowJam() + d.getStop() + d.getTeleport() + d.getNegative());
@@ -447,14 +447,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return 1d - (1d / Math.exp(millis / 100_000d));
     }
 
-    // 获取爆发因数。一般认为一计算元 5s 内 30 物件 的时候大概是 0.95x
-    private double getBurstIndex(double burst) {
-        return 1d - (1d / Math.exp(burst / 10d));
-    }
+    // 由于爆发是记录的最大值，在低难度内，爆发需要缩减至 0。
+    private double decreaseLowBurst(double burst) {
+        if (burst >= 30) return burst;
 
-    // 消除多键位带来的影响。4K：1.0，7K：0.755
-    private double dividedByKey(double value, int key) {
-        return value * 2d / Math.sqrt(key); //Math.sqrt(4d)
+        return burst * (Math.E * (burst / 30) / Math.exp(burst / 30));
     }
 
     // 增强 OD 带来的影响。OD7: 1.0x, OD10: 4.48x
@@ -470,7 +467,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 PPMinus3.Eval(ln, 0.24d, 0.6d),
                 PPMinus3.Eval(coordination, 0.272d, 0.72d),
                 PPMinus3.Eval(stamina, 0.068d, 1.24d, getLengthIndex(file.getLength())),
-                PPMinus3.Eval(speed, 0.6d, 0.52d, getBurstIndex(maxBurst)),
+                PPMinus3.Eval(speed, 0.112d, 0.8d, null, decreaseLowBurst(maxBurst)),
                 PPMinus3.Eval(precision, 0.25d, 0.73d),
                 PPMinus3.Eval(sv, 1d, 1d)
         );
@@ -497,7 +494,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         if (CollectionUtils.isEmpty(values) || values.size() < 7) return 0d;
 
-        List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.2d, 0.8d, 0.2d);
+        List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.4d, 0.6d, 0.2d);
         double divided = 3.8d;
         double star = 0d;
 

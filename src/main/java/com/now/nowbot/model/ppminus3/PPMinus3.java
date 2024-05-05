@@ -67,14 +67,20 @@ public abstract class PPMinus3 {
 
     // 求值算法，y = a(cx)^b, x = ∑ list
     @NonNull
-    protected static double Eval(List<Double> valueList, double multiplier, double index, @Nullable Double additional) {
-        double a = (additional == null) ? 1d : additional;
-        return multiplier * Math.pow(Sum(valueList) * a, index);
+    protected static double Eval(List<Double> valueList, double multiplier, double index, @Nullable Double multiply, @Nullable Double addend) {
+        double a = (addend == null) ? 0d : addend;
+        double m = (multiply == null) ? 1d : multiply;
+
+        return multiplier * Math.pow(Sum(valueList) * m + a, index);
     }
 
     @NonNull
     protected static double Eval(List<Double> valueList, double multiplier, double index) {
-        return Eval(valueList, multiplier, index, null);
+        return Eval(valueList, multiplier, index, null, null);
+    }
+    @NonNull
+    protected static double Eval(List<Double> valueList, double multiplier, double index, double multiply) {
+        return Eval(valueList, multiplier, index, multiply, null);
     }
 
     // 求和算法： 0.8 平均 + 0.2 最大
