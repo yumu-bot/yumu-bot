@@ -1,8 +1,6 @@
 package com.now.nowbot.model.ppminus3.data;
 
-import com.now.nowbot.model.ppminus3.PPMinus3;
-
-public class PPMinus3ManiaData extends PPMinus3 {
+public class PPMinus3ManiaData {
     double stream = 0d;
     double jack = 0d;
     
