@@ -47,9 +47,9 @@ public class OsuBeatmapAttributes {
 
     protected int length = 0;
 
-    List<HitObject> hitObjects;
+    List<HitObject> hitObjects = new LinkedList<>();
 
-    List<Timing> timings;
+    List<Timing> timings = new LinkedList<>();
 
     /**
      * 逐行读取
@@ -59,105 +59,74 @@ public class OsuBeatmapAttributes {
      * @throws io exception {@link IOException}
      */
     public OsuBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
-
         String line;
+        String section = "";
         // 逐行
         while ((line = read.readLine()) != null) {
-            if (line.startsWith("[Difficulty]")) {
-                // 读取 Difficulty 块
-                parseDifficulty(read);
-            } else if (line.startsWith("[TimingPoints]")) {
-                // 读取 TimingPoints 块
-                parseTiming(read);
-            } else if (line.startsWith("[HitObjects]")) {
-                parseHitObject(read);
+            if (line.startsWith("[")) {
+                section = line;
+                line = read.readLine();
             }
-
-        }
-    }
-
-    boolean parseDifficulty(BufferedReader reader) throws IOException {
-        boolean empty = true;
-        String line;
-        while ((line = reader.readLine()) != null && !line.equals("")) {
-            var entity = line.split(":");
-            if (entity.length == 2) {
-                var key = entity[0].trim();
-                var val = entity[1].trim();
-
-                if (key.equals("ApproachRate")) {
-                    AR = Double.parseDouble(val);
-                    empty = false;
+            if (line.isBlank()) {
+                continue;
+            }
+            switch (section) {
+                case "[Difficulty]" -> {
+                    // 读取 Difficulty 块
+                    parseDifficulty(line);
                 }
-                if (key.equals("OverallDifficulty")) {
-                    OD = Double.parseDouble(val);
-                    empty = false;
+                case "[TimingPoints]" -> {
+                    // 读取 TimingPoints 块
+                    parseTiming(line);
                 }
-                if (key.equals("CircleSize")) {
-                    CS = Double.parseDouble(val);
-                    empty = false;
-                }
-                if (key.equals("HPDrainRate")) {
-                    HP = Double.parseDouble(val);
-                    empty = false;
-                }
-                if (key.equals("SliderTickRate")) {
-                    sliderTickRate = Double.parseDouble(val);
-                    empty = false;
-                }
-                if (key.equals("SliderMultiplier")) {
-                    sliderMultiplier = Double.parseDouble(val);
-                    empty = false;
+                case "[HitObjects]" -> {
+                    // 读取 HitObjects 块
+                    parseHitObject(line);
                 }
             }
         }
-        return empty;
-    }
-
-    boolean parseTiming(BufferedReader reader) throws IOException {
-        boolean empty = true;
-        String line;
-        timings = new LinkedList<>();
-        while ((line = reader.readLine()) != null && !line.equals("")) {
-            var entity = line.split(",");
-            if (entity.length < 8) throw new IOException("解析 [TimingPoints] 错误");
-
-            int start_time = (int) Math.floor(Double.parseDouble(entity[0]));
-            Double beat_length = Double.parseDouble(entity[1]);
-            int meter = Integer.parseInt(entity[2]); //节拍
-            TimingSampleSet sample_set = TimingSampleSet.getType(Integer.parseInt(entity[3]));
-            int sample_parameter = Integer.parseInt(entity[4]);
-            int volume = Integer.parseInt(entity[5]);
-            boolean isRedLine = Boolean.parseBoolean(entity[6]);
-            TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
-
-            var obj = new Timing(start_time, beat_length, meter, sample_set, sample_parameter, volume, isRedLine, effect);
-            timings.add(obj);
-        }
-        return empty;
-    }
-
-
-    boolean parseHitObject(BufferedReader reader) throws IOException {
-        boolean empty = true;
-        String line;
-        hitObjects = new LinkedList<>();
-        while ((line = reader.readLine()) != null && !line.equals("")) {
-            var entity = line.split(",");
-            if (entity.length < 3) throw new IOException("解析 [HitObjects] 错误");
-            int x = Integer.parseInt(entity[0]);
-            int y = Integer.parseInt(entity[1]);
-            int time = Integer.parseInt(entity[2]);
-
-            var obj = new HitObject(x, y, time);
-            hitObjects.add(obj);
-        }
-
         if (! CollectionUtils.isEmpty(hitObjects)) {
-            length = hitObjects.getLast().getEndTime() - hitObjects.getFirst().getStartTime();
+            length = hitObjects.getLast().getStartTime() - hitObjects.getFirst().getStartTime();
         }
+    }
 
-        return empty;
+    void parseDifficulty(String line) {
+        var entity = line.split(":");
+        if (entity.length == 2) {
+            var key = entity[0].trim();
+            var val = entity[1].trim();
+
+            switch (key) {
+                case "ApproachRate" -> AR = Double.parseDouble(val);
+                case "OverallDifficulty" -> OD = Double.parseDouble(val);
+                case "CircleSize" -> CS = Double.parseDouble(val);
+                case "HPDrainRate" -> HP = Double.parseDouble(val);
+                case "SliderTickRate" -> sliderTickRate = Double.parseDouble(val);
+                case "SliderMultiplier" -> sliderMultiplier = Double.parseDouble(val);
+            }
+        }
+    }
+
+    void parseTiming(String line) {
+        var entity = line.split(",");
+        timings = new LinkedList<>();
+        if (entity.length < 8) throw new RuntimeException("解析 [TimingPoints] 错误");
+
+        int startTime = (int) Math.floor(Double.parseDouble(entity[0]));
+        Double beatLength = Double.parseDouble(entity[1]);
+        int meter = Integer.parseInt(entity[2]); //节拍
+        TimingSampleSet timingSampleSet = TimingSampleSet.getType(Integer.parseInt(entity[3]));
+        int sampleParameter = Integer.parseInt(entity[4]);
+        int volume = Integer.parseInt(entity[5]);
+        boolean isRedLine = Boolean.parseBoolean(entity[6]);
+        TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
+
+        var obj = new Timing(startTime, beatLength, meter, timingSampleSet, sampleParameter, volume, isRedLine, effect);
+        timings.add(obj);
+    }
+
+    void parseHitObject(String line) {
+        hitObjects.add(new HitObject(line));
     }
 
     public Integer getVersion() {
