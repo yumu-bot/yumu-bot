@@ -1,7 +1,6 @@
 package com.now.nowbot.model.beatmapParse;
 
 import com.now.nowbot.entity.BeatMapFileLite;
-import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.model.beatmapParse.parse.*;
 import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
@@ -150,7 +149,7 @@ public class OsuFile {
         var versionStr = read.readLine();
         int versionInt;
         if (versionStr != null && versionStr.startsWith("osu file format v")) {
-            versionInt = Integer.parseInt(versionStr.substring(17));
+            versionInt = Integer.parseInt(versionStr.substring(17).trim());
         } else {
             throw new RuntimeException("解析错误,文件无效");
         }
