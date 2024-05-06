@@ -337,6 +337,7 @@ public class OsuBeatmapAttributes {
         var type = HitObjectType.getType(Integer.parseInt(entity[3]));
         var startTime = Integer.parseInt(entity[2]);
         var hit = new HitObject();
+        hit.setType(type);
 
         switch (type) {
             // 普通泡泡
