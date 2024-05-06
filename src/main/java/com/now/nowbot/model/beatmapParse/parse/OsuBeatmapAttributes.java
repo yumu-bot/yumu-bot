@@ -2,10 +2,13 @@ package com.now.nowbot.model.beatmapParse.parse;
 
 import com.now.nowbot.model.beatmapParse.HitObject;
 import com.now.nowbot.model.beatmapParse.Timing;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition;
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
 import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.util.ContextUtil;
 import org.springframework.util.CollectionUtils;
 
 import java.io.BufferedReader;
@@ -51,6 +54,42 @@ public class OsuBeatmapAttributes {
 
     List<Timing> timings = new LinkedList<>();
 
+    private static String THREAD_KEY = "R6a8s4d/*9";
+
+    void parseDifficulty(String line) {
+        var entity = line.split(":");
+        if (entity.length == 2) {
+            var key = entity[0].trim();
+            var val = entity[1].trim();
+
+            switch (key) {
+                case "ApproachRate" -> AR = Double.parseDouble(val);
+                case "OverallDifficulty" -> OD = Double.parseDouble(val);
+                case "CircleSize" -> CS = Double.parseDouble(val);
+                case "HPDrainRate" -> HP = Double.parseDouble(val);
+                case "SliderTickRate" -> sliderTickRate = Double.parseDouble(val);
+                case "SliderMultiplier" -> sliderMultiplier = Double.parseDouble(val);
+            }
+        }
+    }
+
+    void parseTiming(String line) {
+        var entity = line.split(",");
+        if (entity.length < 8) throw new RuntimeException("解析 [TimingPoints] 错误");
+
+        int startTime = (int) Math.floor(Double.parseDouble(entity[0]));
+        Double beatLength = Double.parseDouble(entity[1]);
+        int meter = Integer.parseInt(entity[2]); //节拍
+        TimingSampleSet timingSampleSet = TimingSampleSet.getType(Integer.parseInt(entity[3]));
+        int sampleParameter = Integer.parseInt(entity[4]);
+        int volume = Integer.parseInt(entity[5]);
+        boolean isRedLine = Boolean.parseBoolean(entity[6]);
+        TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
+
+        var obj = new Timing(startTime, beatLength, meter, timingSampleSet, sampleParameter, volume, isRedLine, effect);
+        timings.add(obj);
+    }
+
     /**
      * 逐行读取
      *
@@ -86,47 +125,8 @@ public class OsuBeatmapAttributes {
             }
         }
         if (! CollectionUtils.isEmpty(hitObjects)) {
-            length = hitObjects.getLast().getStartTime() - hitObjects.getFirst().getStartTime();
+            length = hitObjects.getLast().getEndTime() - hitObjects.getFirst().getStartTime();
         }
-    }
-
-    void parseDifficulty(String line) {
-        var entity = line.split(":");
-        if (entity.length == 2) {
-            var key = entity[0].trim();
-            var val = entity[1].trim();
-
-            switch (key) {
-                case "ApproachRate" -> AR = Double.parseDouble(val);
-                case "OverallDifficulty" -> OD = Double.parseDouble(val);
-                case "CircleSize" -> CS = Double.parseDouble(val);
-                case "HPDrainRate" -> HP = Double.parseDouble(val);
-                case "SliderTickRate" -> sliderTickRate = Double.parseDouble(val);
-                case "SliderMultiplier" -> sliderMultiplier = Double.parseDouble(val);
-            }
-        }
-    }
-
-    void parseTiming(String line) {
-        var entity = line.split(",");
-        timings = new LinkedList<>();
-        if (entity.length < 8) throw new RuntimeException("解析 [TimingPoints] 错误");
-
-        int startTime = (int) Math.floor(Double.parseDouble(entity[0]));
-        Double beatLength = Double.parseDouble(entity[1]);
-        int meter = Integer.parseInt(entity[2]); //节拍
-        TimingSampleSet timingSampleSet = TimingSampleSet.getType(Integer.parseInt(entity[3]));
-        int sampleParameter = Integer.parseInt(entity[4]);
-        int volume = Integer.parseInt(entity[5]);
-        boolean isRedLine = Boolean.parseBoolean(entity[6]);
-        TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
-
-        var obj = new Timing(startTime, beatLength, meter, timingSampleSet, sampleParameter, volume, isRedLine, effect);
-        timings.add(obj);
-    }
-
-    void parseHitObject(String line) {
-        hitObjects.add(new HitObject(line));
     }
 
     public Integer getVersion() {
@@ -327,5 +327,73 @@ public class OsuBeatmapAttributes {
         } else {
             return mid;
         }
+    }
+
+    void parseHitObject(String line) {
+        // line 就是 '320,192,153921,1,0,0:0:0:0:' 这种格式的字符串
+        var entity = line.split(",");
+        if (entity.length < 4) throw new RuntimeException("解析 [HitObjects] 错误");
+        // 解析类型
+        var type = HitObjectType.getType(Integer.parseInt(entity[3]));
+        var startTime = Integer.parseInt(entity[2]);
+        var hit = new HitObject();
+
+        switch (type) {
+            // 普通泡泡
+            case CIRCLE -> {
+                int x = Integer.parseInt(entity[0]);
+                int y = Integer.parseInt(entity[1]);
+                hit.setPosition(new HitObjectPosition(x, y));
+                hit.setStartTime(startTime);
+                // 普通泡泡没有结束时间
+                hit.setEndTime(startTime);
+            }
+            // 滑条
+            case SLIDER -> {
+                int x = Integer.parseInt(entity[0]);
+                int y = Integer.parseInt(entity[1]);
+                // 滑条计算 time = length / (SliderMultiplier * 100 * SV) * beatLength
+                int length = Integer.parseInt(entity[7]);
+                double sliderMultiplier = getSliderMultiplier();
+                var timing = getBeforeTiming(startTime);
+                int sliderTime;
+                if (timing.isRedLine()) {
+                    sliderTime = (int) (length / (sliderMultiplier * 100 * 1) * timing.getBeatLength());
+                } else {
+                    double sv = timing.getBeatLength() / - 100;
+                    sliderTime = (int) (length / (sliderMultiplier * 100 * sv) * timing.getBeatLength());
+                }
+                hit.setPosition(new HitObjectPosition(x, y));
+                hit.setStartTime(startTime);
+                hit.setStartTime(startTime + sliderTime);
+            }
+            // 转盘
+            case SPINNER -> {
+                hit.setPosition(new HitObjectPosition(256, 192));
+                hit.setStartTime(startTime);
+                hit.setEndTime(Integer.parseInt(entity[5]));
+            }
+            // mania 长条
+            case LONGNOTE -> {
+                int x = Integer.parseInt(entity[0]);
+                // 骂娘的长条不看 y (does not affect holds. It defaults to the centre of the playfield)
+                hit.setPosition(new HitObjectPosition(x, 192));
+                hit.setStartTime(startTime);
+                hit.setEndTime(Integer.parseInt(entity[5].split(":")[0]));
+            }
+        }
+        hitObjects.add(hit);
+    }
+
+    private Timing getBeforeTiming(int time) {
+        int n = ContextUtil.getContext(THREAD_KEY, 0, Integer.class);
+        int all = timings.size();
+        if (n >= (all - 1)) return timings.get(n);
+        int i = n;
+        while (i < all && timings.get(i + 1).getStartTime() < time) {
+            i++;
+        }
+        ContextUtil.setContext(THREAD_KEY, i);
+        return timings.get(i);
     }
 }

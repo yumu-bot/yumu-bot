@@ -19,21 +19,13 @@ public class HitObject {
      */
     SliderAttr sliderAttr;
 
-    public HitObject(String line) {
-        // line 就是 '320,192,153921,1,0,0:0:0:0:' 这种格式的字符串
-        var entity = line.split(",");
-        if (entity.length < 3) throw new RuntimeException("解析 [HitObjects] 错误");
-        int x = Integer.parseInt(entity[0]);
-        int y = Integer.parseInt(entity[1]);
-        int time = Integer.parseInt(entity[2]);
-
-        position = new HitObjectPosition(x, y);
-        startTime = time;
+    public HitObject() {
     }
 
-    public HitObject(int x, int y, int time) {
+    public HitObject(int x, int y, HitObjectType type, int time, int end) {
         position = new HitObjectPosition(x, y);
         startTime = time;
+        endTime = end;
     }
 
     public HitObjectPosition getPosition() {
