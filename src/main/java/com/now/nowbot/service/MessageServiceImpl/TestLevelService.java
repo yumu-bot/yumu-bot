@@ -12,6 +12,7 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.QQMsgUtil;
@@ -32,6 +33,8 @@ public class TestLevelService implements MessageService<BinUser> {
     BindDao            bindDao;
     @Resource
     OsuScoreApiService scoreApiService;
+    @Resource
+    OsuUserApiService  osuUserApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
@@ -58,7 +61,7 @@ public class TestLevelService implements MessageService<BinUser> {
                 user = bindDao.getUserFromQQ(at.getQQ());
             } else {
                 user = new BinUser();
-                user.setOsuID(bindDao.getOsuId(name));
+                user.setOsuID(osuUserApiService.getOsuId(name));
             }
             user.setMode(OsuMode.OSU);
             data.setValue(user);
