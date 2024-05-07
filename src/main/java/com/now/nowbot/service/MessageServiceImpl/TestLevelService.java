@@ -7,12 +7,14 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.AsyncMethodExecutor;
+import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +27,7 @@ import java.util.function.Function;
 @Service("TEST_LEVEL")
 public class TestLevelService implements MessageService<BinUser> {
 
-    //意思你要做 PPM4 ？
+    // 娱乐评分
     @Resource
     BindDao            bindDao;
     @Resource
@@ -36,17 +38,34 @@ public class TestLevelService implements MessageService<BinUser> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BinUser> data) throws Throwable {
-        if (!messageText.equals("测测我的")) {
-            return false;
+        if (messageText.equals("测测我的")) {
+            var qqId = event.getSender().getId();
+            var user = bindDao.getUserFromQQ(qqId);
+            if (user.getMode() != OsuMode.OSU) {
+                event.getSubject().sendMessage("本功能仅支持osu!");
+            }
+            user.setMode(OsuMode.OSU);
+            data.setValue(user);
+            return true;
+        } else if (messageText.startsWith("测测他的")) {
+            var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+            var name = messageText.substring(4).trim();
+            if (at == null && name.isEmpty()) {
+                return false;
+            }
+            BinUser user;
+            if (at != null) {
+                user = bindDao.getUserFromQQ(at.getQQ());
+            } else {
+                user = new BinUser();
+                user.setOsuID(bindDao.getOsuId(name));
+            }
+            user.setMode(OsuMode.OSU);
+            data.setValue(user);
+            return true;
         }
-        var qqId = event.getSender().getId();
-        var user = bindDao.getUserFromQQ(qqId);
-        if (user.getMode() != OsuMode.OSU) {
-            event.getSubject().sendMessage("本功能仅支持osu!");
-        }
-        user.setMode(OsuMode.OSU);
-        data.setValue(user);
-        return true;
+
+        return false;
     }
 
     @Override
