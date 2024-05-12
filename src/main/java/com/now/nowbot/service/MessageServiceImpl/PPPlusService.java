@@ -27,7 +27,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPPlusParam> data) throws Throwable {
-        var handle = messageText.equals("+");
+        var handle = messageText.equals("屁屁加");
         if (! handle) return false;
         var user = bindDao.getUserFromQQ(event.getSender().getId());
         data.setValue(new PPPlusParam(user.getOsuID(), user.getMode()));
