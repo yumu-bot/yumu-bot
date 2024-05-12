@@ -10,6 +10,7 @@ import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -61,6 +62,7 @@ public class PerformancePlusService {
 
         return webClient.post()
                 .uri(API + "/api/batch/calculation")
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
