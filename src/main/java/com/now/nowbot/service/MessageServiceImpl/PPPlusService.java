@@ -155,13 +155,13 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         suppliers.add(() -> {
             var stream = ppPlus.stream();
-            ppPlusMap.put("jumpAim",
+            ppPlusMap.put("total",
                     stream
-                            .map(p -> p.getPerformance().aim())
+                            .map(p -> p.getPerformance().total())
                             .sorted(Comparator.reverseOrder())
                             .toList()
             );
-            return "aim";
+            return "total";
         });
 
         AsyncMethodExecutor.AsyncSupplier(suppliers);
@@ -176,8 +176,8 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             speed += ppPlusMap.get("speed").get(n) * proportion;
             stamina += ppPlusMap.get("stamina").get(n) * proportion;
             accuracy += ppPlusMap.get("accuracy").get(n) * proportion;
+            total += ppPlusMap.get("total").get(n) * proportion;
         }
-        total += (aim + precision + speed + stamina + accuracy);
 
         var sb = new StringBuilder("掐指算了算你的屁屁加\n");
         sb.append("Aim: ").append(String.format("%.2f", aim)).append('\n');
