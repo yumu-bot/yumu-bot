@@ -23,6 +23,8 @@ public interface OsuBeatmapApiService {
 
     boolean downloadBeatMapFile(long bid);
 
+    String downloadBeatMapFileForce(long bid);
+
     /**
      * 查一下文件是否跟 checksum 是否对起来
      *
