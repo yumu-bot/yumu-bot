@@ -47,7 +47,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         if (Files.isRegularFile(osuDir.resolve(bid + ".osu"))) {
             return Files.readString(osuDir.resolve(bid + ".osu"));
         } else {
-            return AsyncMethodExecutor.execute(() -> $downloadOsuFile(bid), "_getBetamapFile" + bid, (String) null);
+            return AsyncMethodExecutor.execute(() -> downloadBeatMapFileForce(bid), "_getBetamapFile" + bid, (String) null);
         }
     }
 
@@ -57,18 +57,27 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         if (Files.isRegularFile(f)) {
             return false;
         }
-        String osuStr;
+        downloadBeatMapFileForce(bid);
+        return true;
+    }
+
+    @Override
+    public String downloadBeatMapFileForce(long bid) {
         try {
-            $downloadOsuFile(bid);
+            String osuStr = base.osuApiWebClient.get()
+                    .uri("https://osu.ppy.sh/osu/{bid}", bid)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            if (Objects.isNull(osuStr)) return null;
+            Files.writeString(osuDir.resolve(bid + ".osu"), osuStr);
+            return osuStr;
         } catch (WebClientResponseException e) {
             log.error("请求失败: ", e);
-            return false;
         } catch (IOException e) {
             log.error("文件写入失败: ", e);
-            return false;
         }
-
-        return true;
+        return null;
     }
 
     @Override
@@ -151,17 +160,6 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 .bodyToMono(JsonNode.class)
                 .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
                 .block();
-    }
-
-    private String $downloadOsuFile(long bid) throws IOException {
-        String osuStr = base.osuApiWebClient.get()
-                .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-        if (Objects.isNull(osuStr)) return null;
-        Files.writeString(osuDir.resolve(bid + ".osu"), osuStr);
-        return osuStr;
     }
 
     @Override
