@@ -63,7 +63,7 @@ public class PerformancePlusService {
         return webClient.post()
                 .uri(API + "/api/batch/calculation")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
+                .bodyValue(JacksonUtil.toJson(body))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
