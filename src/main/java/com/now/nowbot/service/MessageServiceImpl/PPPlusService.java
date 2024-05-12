@@ -8,10 +8,17 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
+import com.now.nowbot.util.AsyncMethodExecutor;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service("PP_PLUS")
 public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> {
@@ -60,6 +67,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         var bps = scoreApiService.getBestPerformance(param.uid(), param.mode(), 0, 100);
 
         var ppPlus = performancePlusService.getScorePerformancePlus(bps);
+        int size = ppPlus.size();
 
         double aim = 0;
         double jumpAim = 0;
@@ -69,19 +77,105 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         double stamina = 0;
         double accuracy = 0;
         double total = 0;
+        List<AsyncMethodExecutor.Supplier<String>> suppliers = new ArrayList<>(7);
+        Map<String, List<Double>> ppPlusMap = new ConcurrentHashMap<>(7);
 
-        int n = 0;
-        for (var ppp : ppPlus) {
+        // 逐个排序
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("aim",
+                    stream
+                            .map(p -> p.getPerformance().aim())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "aim";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("jumpAim",
+                    stream
+                            .map(p -> p.getPerformance().jumpAim())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "jumpAim";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("flowAim",
+                    stream
+                            .map(p -> p.getPerformance().flowAim())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "flowAim";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("precision",
+                    stream
+                            .map(p -> p.getPerformance().precision())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "precision";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("speed",
+                    stream
+                            .map(p -> p.getPerformance().speed())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "speed";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("stamina",
+                    stream
+                            .map(p -> p.getPerformance().stamina())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "stamina";
+        });
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("accuracy",
+                    stream
+                            .map(p -> p.getPerformance().accuracy())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "accuracy";
+        });
+
+        suppliers.add(() -> {
+            var stream = ppPlus.stream();
+            ppPlusMap.put("jumpAim",
+                    stream
+                            .map(p -> p.getPerformance().aim())
+                            .sorted(Comparator.reverseOrder())
+                            .toList()
+            );
+            return "aim";
+        });
+
+        AsyncMethodExecutor.AsyncSupplier(suppliers);
+
+        // 计算加权和
+        for (int n = 0; n < size; n++) {
             double proportion = Math.pow(0.95, n);
-            aim += ppp.getPerformance().aim() * proportion;
-            jumpAim += ppp.getPerformance().jumpAim() * proportion;
-            flowAim += ppp.getPerformance().flowAim() * proportion;
-            precision += ppp.getPerformance().precision() * proportion;
-            speed += ppp.getPerformance().speed() * proportion;
-            stamina += ppp.getPerformance().stamina() * proportion;
-            accuracy += ppp.getPerformance().accuracy() * proportion;
-            total += ppp.getPerformance().total() * proportion;
-            n++;
+            aim += ppPlusMap.get("aim").get(n) * proportion;
+            jumpAim += ppPlusMap.get("jumpAim").get(n) * proportion;
+            flowAim += ppPlusMap.get("flowAim").get(n) * proportion;
+            precision += ppPlusMap.get("precision").get(n) * proportion;
+            speed += ppPlusMap.get("speed").get(n) * proportion;
+            stamina += ppPlusMap.get("stamina").get(n) * proportion;
+            accuracy += ppPlusMap.get("accuracy").get(n) * proportion;
+            total += aim + precision + speed + stamina + accuracy;
         }
 
         var sb = new StringBuilder("算了算你的pp加\n");
