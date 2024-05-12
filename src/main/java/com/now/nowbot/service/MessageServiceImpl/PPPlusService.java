@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
@@ -175,20 +176,25 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             speed += ppPlusMap.get("speed").get(n) * proportion;
             stamina += ppPlusMap.get("stamina").get(n) * proportion;
             accuracy += ppPlusMap.get("accuracy").get(n) * proportion;
-            total += aim + precision + speed + stamina + accuracy;
         }
+        total += (aim + precision + speed + stamina + accuracy);
 
-        var sb = new StringBuilder("算了算你的pp加\n");
-        sb.append("Aim: ").append(aim).append('\n');
-        sb.append("JumpAim: ").append(jumpAim).append('\n');
-        sb.append("FlowAim: ").append(flowAim).append('\n');
-        sb.append("Precision: ").append(precision).append('\n');
-        sb.append("Speed: ").append(speed).append('\n');
-        sb.append("Stamina: ").append(stamina).append('\n');
-        sb.append("Accuracy: ").append(accuracy).append('\n');
-        sb.append("Total: ").append(total).append('\n');
+        var sb = new StringBuilder("掐指算了算你的屁屁加\n");
+        sb.append("Aim: ").append(String.format("%.2f", aim)).append('\n');
+        sb.append("JumpAim: ").append(String.format("%.2f", jumpAim)).append('\n');
+        sb.append("FlowAim: ").append(String.format("%.2f", flowAim)).append('\n');
+        sb.append("Precision: ").append(String.format("%.2f", precision)).append('\n');
+        sb.append("Speed: ").append(String.format("%.2f", speed)).append('\n');
+        sb.append("Stamina: ").append(String.format("%.2f", stamina)).append('\n');
+        sb.append("Accuracy: ").append(String.format("%.2f", accuracy)).append('\n');
+        sb.append("Total: ").append(String.format("%.2f", total)).append('\n');
 
-        event.getSubject().sendMessage(sb.toString());
+        event.getSubject().sendMessage(
+                new MessageChain.MessageChainBuilder()
+                        .addAt(event.getSender().getId())
+                        .addText(sb.toString())
+                        .build()
+        );
 /*        try {
             image = imageService.getPanelB3(beatMap, plus);
         } catch (Exception e) {
