@@ -37,7 +37,7 @@ public class PerformancePlusService {
         checkFile(beatmapId);
         return webClient.get()
                 .uri(
-                        u -> u.pathSegment(API, "/api/calculation")
+                        u -> u.pathSegment(API + "/api/calculation")
                                 .queryParam("BeatmapId", beatmapId)
                                 .build()
                 )
@@ -60,7 +60,7 @@ public class PerformancePlusService {
         }
 
         return webClient.post()
-                .uri(API, "/api/batch/calculation")
+                .uri(API + "/api/batch/calculation")
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
