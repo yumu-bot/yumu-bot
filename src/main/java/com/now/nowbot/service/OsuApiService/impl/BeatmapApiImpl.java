@@ -13,8 +13,8 @@ import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
@@ -29,65 +29,71 @@ import java.util.Optional;
 public class BeatmapApiImpl implements OsuBeatmapApiService {
     private static final Logger log = LoggerFactory.getLogger(BeatmapApiImpl.class);
     OsuApiBaseService base;
-    FileConfig fileConfig;
     BeatMapDao beatMapDao;
+    private final Path osuDir;
 
-    public BeatmapApiImpl(OsuApiBaseService baseService,
-                          @Lazy FileConfig config,
-                          @Lazy BeatMapDao mapDao
+    public BeatmapApiImpl(
+            OsuApiBaseService baseService,
+            FileConfig config,
+            BeatMapDao mapDao
     ) {
         base = baseService;
-        fileConfig = config;
+        osuDir = Path.of(config.getOsuFilePath());
         beatMapDao = mapDao;
     }
 
     @Override
     public String getBeatMapFile(long bid) throws Exception {
-        return AsyncMethodExecutor.execute(() -> _getBeatMapFile(bid), "_getBetamapFile" + bid, (String) null);
+        if (Files.isRegularFile(osuDir.resolve(bid + ".osu"))) {
+            return Files.readString(osuDir.resolve(bid + ".osu"));
+        } else {
+            return AsyncMethodExecutor.execute(() -> $downloadOsuFile(bid), "_getBetamapFile" + bid, (String) null);
+        }
     }
 
     @Override
-    public boolean downloadBeatMapFile(long bid, boolean isRanked) {
-        Path f = Path.of(fileConfig.getOsuFilePath(), bid + ".osu");
-        if (Files.isRegularFile(f) && isRanked) {
+    public boolean downloadBeatMapFile(long bid) {
+        Path f = osuDir.resolve(bid + ".osu");
+        if (Files.isRegularFile(f)) {
             return false;
         }
         String osuStr;
         try {
-            osuStr = base.osuApiWebClient.get()
-                    .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            $downloadOsuFile(bid);
         } catch (WebClientResponseException e) {
+            log.error("请求失败: ", e);
             return false;
-        }
-
-        if (Objects.isNull(osuStr)) return false;
-
-        try {
-            Files.writeString(f, osuStr);
-        } catch (RuntimeException | IOException e) {
+        } catch (IOException e) {
+            log.error("文件写入失败: ", e);
             return false;
         }
 
         return true;
     }
 
-
-    private String _getBeatMapFile(long bid) throws IOException {
-        Path f = Path.of(fileConfig.getOsuFilePath(), bid + ".osu");
-        if (Files.isRegularFile(f)) {
-            return Files.readString(f);
+    @Override
+    public boolean checkBeatMap(long bid, String checkStr) throws IOException {
+        var path = osuDir.resolve(bid + ".osu");
+        if (Files.isRegularFile(path)) {
+            return DigestUtils.md5DigestAsHex(Files.readAllBytes(path)).equals(checkStr);
         }
-        String osuStr = base.osuApiWebClient.get()
-                .uri("https://osu.ppy.sh/osu/{bid}", bid)
+        return false;
+    }
+
+    @Override
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode) {
+        Map<String, Object> body = new HashMap<>();
+        if (! OsuMode.isDefault(mode)) {
+            body.put("ruleset_id", mode.getModeValue());
+        }
+        return base.osuApiWebClient.post()
+                .uri("beatmaps/{id}/attributes", id)
+                .headers(base::insertHeader)
+                .bodyValue(body)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(JsonNode.class)
+                .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
                 .block();
-        if (Objects.isNull(osuStr)) return null;
-        Files.writeString(f, osuStr);
-        return osuStr;
     }
 
     @Override
@@ -129,25 +135,9 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode) {
-        Map<String, Object> body = new HashMap<>();
-        if (!OsuMode.isDefault(mode)) {
-            body.put("ruleset_id", mode.getModeValue());
-        }
-        return base.osuApiWebClient.post()
-                .uri("beatmaps/{id}/attributes", id)
-                .headers(base::insertHeader)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
-                .block();
-    }
-
-    @Override
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue) {
         Map<String, Object> body = new HashMap<>();
-        if (!OsuMode.isDefault(mode)) {
+        if (! OsuMode.isDefault(mode)) {
             body.put("ruleset_id", mode.getModeValue());
         }
         if (modsValue != 0) {
@@ -161,6 +151,17 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 .bodyToMono(JsonNode.class)
                 .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
                 .block();
+    }
+
+    private String $downloadOsuFile(long bid) throws IOException {
+        String osuStr = base.osuApiWebClient.get()
+                .uri("https://osu.ppy.sh/osu/{bid}", bid)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+        if (Objects.isNull(osuStr)) return null;
+        Files.writeString(osuDir.resolve(bid + ".osu"), osuStr);
+        return osuStr;
     }
 
     @Override

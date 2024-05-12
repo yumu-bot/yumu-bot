@@ -1,43 +1,36 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuPPPlusApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
+import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
-import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.Objects;
 
 @Service("PP_PLUS")
 public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> {
     private static final Logger log = LoggerFactory.getLogger(PPPlusService.class);
     @Resource
-    OsuBeatmapApiService beatmapApiService;
+    OsuScoreApiService     scoreApiService;
     @Resource
-    OsuPPPlusApiService ppPlusApiService;
+    BindDao                bindDao;
     @Resource
-    BindDao bindDao;
+    PerformancePlusService performancePlusService;
     @Resource
     ImageService imageService;
 
-    public record PPPlusParam(long bid, OsuMode mode) {}
-
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPPlusParam> data) throws Throwable {
-        var matcher = Instructions.PP_PLUS.matcher(messageText);
-        if (! matcher.find()) return false;
-
+        var handle = messageText.equals("+");
+        if (! handle) return false;
+        var user = bindDao.getUserFromQQ(event.getSender().getId());
+        data.setValue(new PPPlusParam(user.getOsuID(), user.getMode()));
         /*
         long bid;
 
@@ -53,23 +46,56 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         return true;
 
          */
-        return false;
+        return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, PPPlusParam param) throws Throwable {
         var from = event.getSubject();
 
-        BeatMap beatMap = getBeatMap(param);
+        // 不支持其他模式
+        if (! param.mode().equals(OsuMode.OSU))
+            throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
 
-        // todo 按道理说 pp+ 是四模式均支持的！
-        if (OsuMode.getMode(beatMap.getMode()) != OsuMode.OSU) throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
+        var bps = scoreApiService.getBestPerformance(param.uid(), param.mode(), 0, 100);
 
-        PPPlus plus = getBeatMapPPPlus(beatMap, param.mode);
+        var ppPlus = performancePlusService.getScorePerformancePlus(bps);
 
-        byte[] image;
+        double aim = 0;
+        double jumpAim = 0;
+        double flowAim = 0;
+        double precision = 0;
+        double speed = 0;
+        double stamina = 0;
+        double accuracy = 0;
+        double total = 0;
 
-        try {
+        int n = 0;
+        for (var ppp : ppPlus) {
+            double proportion = Math.pow(0.95, n);
+            aim += ppp.getPerformance().aim() * proportion;
+            jumpAim += ppp.getPerformance().jumpAim() * proportion;
+            flowAim += ppp.getPerformance().flowAim() * proportion;
+            precision += ppp.getPerformance().precision() * proportion;
+            speed += ppp.getPerformance().speed() * proportion;
+            stamina += ppp.getPerformance().stamina() * proportion;
+            accuracy += ppp.getPerformance().accuracy() * proportion;
+            total += ppp.getPerformance().total() * proportion;
+            n++;
+        }
+
+        var sb = new StringBuilder("算了算你的pp加\n");
+        sb.append("Aim: ").append(aim).append('\n');
+        sb.append("JumpAim: ").append(jumpAim).append('\n');
+        sb.append("FlowAim: ").append(flowAim).append('\n');
+        sb.append("Precision: ").append(precision).append('\n');
+        sb.append("Speed: ").append(speed).append('\n');
+        sb.append("Stamina: ").append(stamina).append('\n');
+        sb.append("Accuracy: ").append(accuracy).append('\n');
+        sb.append("Total: ").append(total).append('\n');
+
+        event.getSubject().sendMessage(sb.toString());
+/*        try {
             image = imageService.getPanelB3(beatMap, plus);
         } catch (Exception e) {
             log.error("PP+ 渲染失败", e);
@@ -82,8 +108,12 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             log.error("PP+ 发送失败", e);
             throw new PPPlusException(PPPlusException.Type.PL_Send_Error);
         }
+*/
     }
 
+    public record PPPlusParam(long uid, OsuMode mode) {
+    }
+/*
     private BeatMap getBeatMap(PPPlusParam param) throws PPPlusException {
         BeatMap beatMap;
 
@@ -111,4 +141,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         }
 
     }
+*/
+
 }

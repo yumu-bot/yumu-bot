@@ -46,20 +46,8 @@ public class PerformancePlusService {
                 .block();
     }
 
-    private void checkFile(Long beatmapId) {
-        var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
-        if (! Files.exists(beatmapFiles)) {
-            try {
-                beatmapApi.getBeatMapFile(beatmapId);
-            } catch (Exception e) {
-                log.error("下载谱面文件失败", e);
-                throw new RuntimeException("下载谱面文件失败");
-            }
-        }
-    }
-
-    public List<PPPlus> getScorePerformancePlus(Score... scores) {
-        List<ScorePerformancePlus> body = new ArrayList<>(scores.length);
+    public List<PPPlus> getScorePerformancePlus(Iterable<Score> scores) {
+        List<ScorePerformancePlus> body = new ArrayList<>();
         for (var score : scores) {
             checkFile(score.getBeatMap().getId());
             var mods = Mod.getModsValueFromStr(score.getMods());
@@ -82,5 +70,18 @@ public class PerformancePlusService {
 
     // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
     record ScorePerformancePlus(String beatmapId, int mods, int combo, int misses, int mehs, int oks) {
+    }
+
+
+    private void checkFile(Long beatmapId) {
+        var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
+        if (! Files.isRegularFile(beatmapFiles)) {
+            try {
+                beatmapApi.getBeatMapFile(beatmapId);
+            } catch (Exception e) {
+                log.error("下载谱面文件失败", e);
+                throw new RuntimeException("下载谱面文件失败");
+            }
+        }
     }
 }

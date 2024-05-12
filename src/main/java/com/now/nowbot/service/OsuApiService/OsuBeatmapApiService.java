@@ -8,6 +8,7 @@ import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -20,11 +21,19 @@ public interface OsuBeatmapApiService {
      */
     String getBeatMapFile(long bid) throws Exception;
 
-    default boolean downloadBeatMapFile(long bid) {
-        return downloadBeatMapFile(bid, false);
+    boolean downloadBeatMapFile(long bid);
+
+    /**
+     * 查一下文件是否跟 checksum 是否对起来
+     *
+     * @return 是否对得上
+     */
+    default boolean checkBeatMap(BeatMap beatMap) throws IOException {
+        if (beatMap == null) return false;
+        return checkBeatMap(beatMap.getId(), beatMap.getMd5());
     }
 
-    boolean downloadBeatMapFile(long bid, boolean isRanked) ;
+    boolean checkBeatMap(long bid, String checkStr) throws IOException;
 
     BeatMap getBeatMapInfo(long bid);
 
