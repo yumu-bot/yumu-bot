@@ -60,7 +60,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         try {
             accuracy = Double.parseDouble(matcher.group("accuracy"));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException | NullPointerException e) {
             accuracy = 1d;
         }
 
