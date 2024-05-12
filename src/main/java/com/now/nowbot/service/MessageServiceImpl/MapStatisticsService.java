@@ -54,25 +54,25 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
         try {
             bid = Long.parseLong(matcher.group("bid"));
-        } catch (RuntimeException e) {
+        } catch (NumberFormatException e) {
             bid = 0L;
         }
 
         try {
             accuracy = Double.parseDouble(matcher.group("accuracy"));
-        } catch (RuntimeException e) {
+        } catch (NumberFormatException e) {
             accuracy = 1d;
         }
 
         try {
             combo = Integer.parseInt(matcher.group("combo"));
-        } catch (RuntimeException e) {
+        } catch (NumberFormatException e) {
             combo = 0;
         }
 
         try {
             miss = Integer.parseInt(matcher.group("miss"));
-        } catch (RuntimeException e) {
+        } catch (NumberFormatException e) {
             miss = 0;
         }
 
@@ -82,7 +82,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         return true;
     }
 
-    public record Expected (OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
+    public record Expected(OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
 
     }
 

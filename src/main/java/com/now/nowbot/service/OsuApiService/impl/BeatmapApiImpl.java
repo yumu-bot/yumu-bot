@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,10 +43,39 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Override
     public String getBeatMapFile(long bid) throws Exception {
-        return AsyncMethodExecutor.execute(() -> _getBetamapFile(bid), "_getBetamapFile" + bid, (String) null);
+        return AsyncMethodExecutor.execute(() -> _getBeatMapFile(bid), "_getBetamapFile" + bid, (String) null);
     }
 
-    private String _getBetamapFile(long bid) throws IOException {
+    @Override
+    public boolean downloadBeatMapFile(long bid, boolean isRanked) {
+        Path f = Path.of(fileConfig.getOsuFilePath(), bid + ".osu");
+        if (Files.isRegularFile(f) && isRanked) {
+            return false;
+        }
+        String osuStr;
+        try {
+            osuStr = base.osuApiWebClient.get()
+                    .uri("https://osu.ppy.sh/osu/{bid}", bid)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        } catch (WebClientResponseException e) {
+            return false;
+        }
+
+        if (Objects.isNull(osuStr)) return false;
+
+        try {
+            Files.writeString(f, osuStr);
+        } catch (RuntimeException | IOException e) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private String _getBeatMapFile(long bid) throws IOException {
         Path f = Path.of(fileConfig.getOsuFilePath(), bid + ".osu");
         if (Files.isRegularFile(f)) {
             return Files.readString(f);

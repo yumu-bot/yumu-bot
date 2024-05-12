@@ -5,7 +5,6 @@ import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.entity.BeatMapFileLite;
 import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
@@ -14,19 +13,14 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.UnknownHttpStatusCodeException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +29,8 @@ import java.util.zip.ZipEntry;
 
 // qnmd, 瞎 warning
 @SuppressWarnings("all")
+// ??
+
 public class OsuGetServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
 
@@ -66,7 +62,7 @@ public class OsuGetServiceImpl {
         }
         HashMap<String, Path> fileMap = new HashMap<>();
         var account = osuMapDownloadUtil.getAccount();
-        try (var in = osuMapDownloadUtil.download(sid, account);) {
+        try (var in = osuMapDownloadUtil.download(sid, account)) {
             var zip = new ZipArchiveInputStream(in);
             ZipEntry zipFile;
             Files.createDirectories(tmp);
@@ -159,48 +155,8 @@ public class OsuGetServiceImpl {
         return c.getBody();
     }
 
-    /***
-     * PP+获取
-     * @param name
-     * @return
-     */
-
-    @Retryable(retryFor = {SocketTimeoutException.class, ConnectException.class, UnknownHttpStatusCodeException.class}, //超时类 SocketTimeoutException, 连接失败ConnectException, 其他未知异常UnknownHttpStatusCodeException
-            maxAttempts = 5, backoff = @Backoff(delay = 5000L, random = true, multiplier = 1))
-    public PPPlus ppPlus(String name) {
-        URI uri = UriComponentsBuilder.fromHttpUrl("https://syrin.me/pp+/api/user/" + name).build().encode().toUri();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
-        ResponseEntity<JsonNode> response = null;
-
-        response = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
 
 
-        var data = response.getBody().get("user_data");
-        if (data != null) return JacksonUtil.parseObject(data, PPPlus.class);
-        else throw new RuntimeException("get response error");
-    }
-
-
-
-    /***
-     * pp+比例
-     * @param ppP
-     * @return
-     */
-
-    public float[] ppPlus(float[] ppP) {
-        if (ppP.length != 6) return null;
-        float[] date = new float[6];
-        int[] fall = {5800, 1400, 3200, 2800, 3800, 1200};
-        for (int i = 0; i < date.length; i++) {
-            date[i] = ppP[i] / fall[i];
-            if (date[i] > 1) date[i] = 1;
-        }
-        return date;
-    }
 
 
     public JsonNode chatGetChannels(BinUser user) {

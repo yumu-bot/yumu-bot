@@ -20,6 +20,12 @@ public interface OsuBeatmapApiService {
      */
     String getBeatMapFile(long bid) throws Exception;
 
+    default boolean downloadBeatMapFile(long bid) {
+        return downloadBeatMapFile(bid, false);
+    }
+
+    boolean downloadBeatMapFile(long bid, boolean isRanked) ;
+
     BeatMap getBeatMapInfo(long bid);
 
     default BeatMap getBeatMapInfo(int bid) {

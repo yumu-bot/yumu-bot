@@ -78,6 +78,7 @@ public abstract class PPMinus3 {
     protected static double Eval(List<Double> valueList, double multiplier, double index) {
         return Eval(valueList, multiplier, index, null, null);
     }
+
     @NonNull
     protected static double Eval(List<Double> valueList, double multiplier, double index, double multiply) {
         return Eval(valueList, multiplier, index, multiply, null);

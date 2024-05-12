@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
+
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -463,6 +463,17 @@ public class BeatMapSet {
 
     public void setBeatMaps(@Nullable List<BeatMap> beatMaps) {
         this.beatMaps = beatMaps;
+    }
+
+    //获取最高难度
+    public @Nullable BeatMap getTopDiff() {
+        if (CollectionUtils.isEmpty(beatMaps)) return null;
+        if (beatMaps.size() == 1) return beatMaps.getFirst();
+
+        Comparator<BeatMap> starComparator = (o1, o2) -> (int) (o1.starRating * 100f - o2.starRating * 100f);
+
+        return Collections.max(beatMaps, starComparator);
+
     }
 
     @Nullable

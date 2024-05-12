@@ -286,7 +286,6 @@ public class ImageService {
     }
 
     public byte[] getPanelB2(BeatMap beatMap, PPMinus3 mapMinus) {
-
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -296,6 +295,18 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B2", httpEntity);
+    }
+
+    public byte[] getPanelB3(BeatMap beatMap, PPPlus plus) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "beatMap", beatMap,
+                "ppPlus", plus
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_B3", httpEntity);
     }
 
     public byte[] getPanelC(MatchData matchData) {
