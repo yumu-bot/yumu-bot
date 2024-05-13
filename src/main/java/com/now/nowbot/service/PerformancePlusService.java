@@ -23,7 +23,7 @@ import java.util.Objects;
 @Service("PP_PLUS_SEV")
 public class PerformancePlusService {
     private static final Logger log = LoggerFactory.getLogger(PerformancePlusService.class);
-    private final String API = "https://ppp.365246692.xyz"; //"http://localhost:46880";
+    private final String API = "http://localhost:46880";//"https://ppp.365246692.xyz";
     private final Path   OSU_FILE_DIR;
     @Resource
     WebClient      webClient;
