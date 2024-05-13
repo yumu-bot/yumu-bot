@@ -7,6 +7,7 @@ import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
+import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -26,10 +27,10 @@ import java.util.concurrent.Executor;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
-    Logger      log = LoggerFactory.getLogger("IocAllReadyRunner");
+    Logger             log = LoggerFactory.getLogger("IocAllReadyRunner");
     ApplicationContext applicationContext;
-    CheckAspect check;
-    Permission  permission;
+    CheckAspect        check;
+    Permission         permission;
     PermissionImplement permissionImplement;
     @Resource
     WebServerApplicationContext webServerApplicationContext;
@@ -74,21 +75,21 @@ public class IocAllReadyRunner implements CommandLineRunner {
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());
 
-        try {
-            startCommandListener();
-        } catch (Exception e) {
-            log.info("非 debug 环境, 停止加载命令行输入");
+        boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");
+        if (debuging) {
+            PerformancePlusService.runDevelopment();
+            try {
+                startCommandListener();
+            } catch (Exception e) {
+                log.info("非 debug 环境, 停止加载命令行输入");
+            }
         }
-
         log.info("启动成功");
     }
 
     private void startCommandListener() {
-        boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");
+        LocalCommandListener.startListener();
+        log.info("命令行输入已启动!");
 
-        if (debuging) {
-            log.info("命令行输入已启动!");
-            LocalCommandListener.startListener();
-        }
     }
 }
