@@ -76,7 +76,7 @@ public class ImageService {
                 URI.create(STR."\{IMAGE_PATH}attr")
                 , HttpMethod.POST, httpEntity
                 , new ParameterizedTypeReference<>() {
-        });
+                });
         List<MapAttr> result = s.getBody();
         if (CollectionUtils.isEmpty(result)) {
             return new HashMap<>();
@@ -297,15 +297,36 @@ public class ImageService {
         return doPost("panel_B2", httpEntity);
     }
 
+    public byte[] getPanelB3(OsuUser user, PPPlus plus) {
+        var hashMap = new HashMap<String, Object>(6);
+
+        hashMap.put("isUser", true);
+        hashMap.put("isVs", false);
+        hashMap.put("me", user);
+        hashMap.put("my", plus);
+        hashMap.put("other", null);
+        hashMap.put("others", null);
+
+        return getPanelB3(hashMap);
+    }
+
     public byte[] getPanelB3(BeatMap beatMap, PPPlus plus) {
+        var hashMap = new HashMap<String, Object>(6);
+
+        hashMap.put("isUser", false);
+        hashMap.put("isVs", false);
+        hashMap.put("me", beatMap);
+        hashMap.put("my", plus);
+        hashMap.put("other", null);
+        hashMap.put("others", null);
+
+        return getPanelB3(hashMap);
+    }
+
+    public byte[] getPanelB3(HashMap<String, Object> hashMap) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of(
-                "beatMap", beatMap,
-                "ppPlus", plus
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(hashMap, headers);
         return doPost("panel_B3", httpEntity);
     }
 

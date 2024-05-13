@@ -79,7 +79,8 @@ public class Instructions {
 
     public static final Pattern NOMINATION = Pattern.compile("^[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))\\s*([:：]?(?<mode>(bid|sid|s|b)))?\\s*(?<sid>\\d+)?");
 
-    public static final Pattern PP_PLUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(ppplus|ppp|pl|ppl(?![a-rtw-zA-RTW-Z_]))\\s*(?<vs>vs|u)?\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)?");
+    // pp px ppp pp+ p+ ppplus ppv pppvs ppplusvs/ pa pc ppa ppc ppplusmap pppmap plusmapvs pluscompare ppplusmapvs plusmapcompare pppmv
+    public static final Pattern PP_PLUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p[px]|pp[pvx]|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa|ppplusmap|pppmap|plusmap|p?pc|(pp)?plusmapvs|pppmv|(pp)?plusmapcompare))\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
     // #5 osu! 比赛指令
 

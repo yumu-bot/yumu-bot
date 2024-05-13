@@ -2,8 +2,6 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 public class PPPlus {
 
     public record Stats(
@@ -19,11 +17,12 @@ public class PPPlus {
             Double total
     ) {}
 
+
     Double accuracy;
     Integer combo;
     Stats difficulty;
     Stats performance;
-    Stats skill = calculateSkill();
+    Stats skill;
 
     public Double getAccuracy() {
         return accuracy;
@@ -62,9 +61,9 @@ public class PPPlus {
         return Math.pow(difficultyValue, 3d) * 3.9d;
     }
 
-    public Stats calculateSkill() {
-        if (Objects.nonNull(difficulty)) {
-            return new Stats(
+    public Stats getSkill() {
+        if (skill == null && difficulty != null) {
+            skill = new Stats(
                     calculateSkillValue(difficulty.aim),
                     calculateSkillValue(difficulty.jumpAim),
                     calculateSkillValue(difficulty.flowAim),
@@ -74,12 +73,8 @@ public class PPPlus {
                     calculateSkillValue(difficulty.accuracy),
                     calculateSkillValue(difficulty.total)
             );
-        }
-        return null;
-    }
-
-    public Stats getSkill() {
-        return skill;
+            return skill;
+        } else return null;
     }
 
     public void setSkill(Stats skill) {
