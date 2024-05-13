@@ -38,7 +38,7 @@ public class PerformancePlusService {
         checkFile(beatmapId);
         return webClient.get()
                 .uri(
-                        u -> u.pathSegment(API + "/api/calculation")
+                        u -> u.path(API + "/api/calculation")
                                 .queryParam("BeatmapId", beatmapId)
                                 .build()
                 )
