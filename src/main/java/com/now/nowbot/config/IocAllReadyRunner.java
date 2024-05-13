@@ -75,14 +75,14 @@ public class IocAllReadyRunner implements CommandLineRunner {
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());
 
-        boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");
-        if (debuging) {
-            PerformancePlusService.runDevelopment();
-            try {
+        try {
+            boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");
+            if (debuging) {
+                PerformancePlusService.runDevelopment();
                 startCommandListener();
-            } catch (Exception e) {
-                log.info("非 debug 环境, 停止加载命令行输入");
             }
+        } catch (Exception e) {
+            log.info("非 debug 环境, 停止加载命令行输入");
         }
         log.info("启动成功");
     }
