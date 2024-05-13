@@ -23,7 +23,14 @@ import java.util.Objects;
 @Service("PP_PLUS_SEV")
 public class PerformancePlusService {
     private static final Logger log = LoggerFactory.getLogger(PerformancePlusService.class);
-    private final String API = "http://localhost:46880";//"https://ppp.365246692.xyz";
+    private static String API_SCHEME = "http";// 不用改了
+    private static String API_HOST   = "localhost:46880";
+
+    public static void runDevelopment() {
+        API_SCHEME = "https";
+        API_HOST = "ppp.365246692.xyz";
+    }
+
     private final Path   OSU_FILE_DIR;
     @Resource
     WebClient      webClient;
@@ -38,7 +45,9 @@ public class PerformancePlusService {
         checkFile(beatmapId);
         return webClient.get()
                 .uri(
-                        u -> u.path(API + "/api/calculation")
+                        u -> u.scheme(API_SCHEME)
+                                .host(API_HOST)
+                                .path("/api/calculation")
                                 .queryParam("BeatmapId", beatmapId)
                                 .build()
                 )
@@ -61,7 +70,7 @@ public class PerformancePlusService {
         }
 
         return webClient.post()
-                .uri(API + "/api/batch/calculation")
+                .uri(u -> u.scheme(API_SCHEME).host(API_HOST).path("/api/batch/calculation").build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(JacksonUtil.toJson(body))
                 .retrieve()
