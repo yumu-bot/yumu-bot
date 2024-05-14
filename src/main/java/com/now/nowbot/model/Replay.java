@@ -6,42 +6,42 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class Replay {
     // 0 = osu!, 1 = osu!taiko, 2 = osu!catch, 3 = osu!mania
-    byte mode;
+    byte      mode;
     //创建该回放文件的游戏版本 例如：20131216
-    int version;
-    String MapHash;
-    String username;
+    int       version;
+    String    MapHash;
+    String    username;
     // 回放文件的 MD5 hash
-    String RepHash;
-    short n_300;
-    short n_100;
-    short n_50;
-    short n_geki;
-    short n_katu;
-    short n_miss;
-    int score;
-    short combo;
+    String    RepHash;
+    short     n_300;
+    short     n_100;
+    short     n_50;
+    short     n_geki;
+    short     n_katu;
+    short     n_miss;
+    int       score;
+    short     combo;
     // full combo（1 = 没有Miss和断滑条，并且没有提前完成的滑条）
-    boolean perfect;
-    int mods;
+    boolean   perfect;
+    int       mods;
     Map<Integer, Float> HPList;
-    //时间戳
-    long date;
-    int dataLength;
-    List<hit> hitList;
-    long scoreId;
-    double tp;
+    // 时间戳 注意这个是以公元0年开始, 不是1970年的时间戳
+    long      date;
+    int       dataLength;
+    List<Hit> hitList;
+    // 与 url 中的末尾数字不是同一个
+    long      scoreId;
+    double    tp;
 
-    private Replay(ByteBuffer bf){
-        if (bf.order() == ByteOrder.BIG_ENDIAN){
+    private Replay(ByteBuffer bf) {
+        if (bf.order() == ByteOrder.BIG_ENDIAN) {
             bf.order(ByteOrder.LITTLE_ENDIAN);
         }
         mode = bf.get();
@@ -60,116 +60,94 @@ public class Replay {
         perfect = bf.get() == 1;
         mods = bf.getInt();
         var Hp = readString(bf);
-        date = readLong(bf);
+        date = bf.getLong();
         dataLength = bf.getInt();
         var data = new byte[dataLength];
         bf.get(data, 0, dataLength);
         hitList = hitList(data);
-        scoreId = readLong(bf);
-        if (bf.limit() >= 8 + bf.position()){
+        scoreId = bf.getLong();
+        if (bf.limit() >= 8 + bf.position()) {
             tp = bf.getDouble();
         }
-
-        HPList = readHp(Hp);
+        if (! Hp.isBlank()) {
+            HPList = readHp(Hp);
+        }
     }
-    private static String readString(ByteBuffer bf){
+
+    private static String readString(ByteBuffer bf) {
 //        int p = (0xFF & e[offset]) |
 //                (0xFF & e[offset+1])<<8 |
 //                (0xFF & e[offset+2])<<16 |
 //                (0xFF & e[offset+3])<<24 ;
-        if (bf.get() == 11){
+        if (bf.get() == 11) {
             // 读取第二位 可变长int 值string byte长度
-            int strLength = 0;
-            int b = 0;
-            byte temp;
-            do {
-                temp = bf.get();
-                strLength += (0x7F & temp) << b;
-                b += 7;
-            }while ((temp & 0x80) != 0);
+            int strLength = readLength(bf);
             //得到长度 读取string byte
             byte[] strData = new byte[strLength];
             bf.get(strData, 0, strLength);
             //转换string
             return new String(strData);
-        }else {
+        } else {
             return "";
         }
     }
-    private static long readLong(ByteBuffer bf){
-        long value = 0;
-        for (int i = 0; i < 8; i++) {
-            int shift = (7-i) << 3;
-            value |= ((long)0xff << i) & ((long)bf.get() << i);
-        }
-        return value;
-    }
-    private static Map<Integer, Float> readHp(String data){
-        var p = Pattern.compile("(?<time>\\d+)\\|(?<hp>(\\d+)(\\.\\d+)?),");
-        var m = p.matcher(data);
-        var map = new LinkedHashMap<Integer, Float>();
-        while (m.find()){
-            int time = Integer.parseInt(m.group("time"));
-            float hp = Float.parseFloat(m.group("hp"));
-            map.put(time, hp);
-        }
-        return map;
-    }
-    private static List<hit> hitList(byte[] data){
-        var hit_list = new LinkedList<hit>();
+
+    private static List<Hit> hitList(byte[] data) {
+        List<Hit> hitList = null;
         try {
             String s = new String(new LZMAInputStream(new ByteArrayInputStream(data)).readAllBytes());
-            var p = Pattern.compile("(?<time>\\d+)\\|(?<x>(\\d+)(\\.\\d+)?)\\|(?<y>(\\d+)(\\.\\d+)?)\\|(?<key>(\\d+)),");
-            var m = p.matcher(s);
-            while (m.find()){
-                long time = Long.parseLong(m.group("time"));
-                float x = Float.parseFloat(m.group("x"));
-                float y = Float.parseFloat(m.group("y"));
-                int key = Integer.parseInt(m.group("key"));
-                hit_list.addLast(new hit(time, x, y, key));
+            var lines = s.split(",");
+            hitList = new ArrayList<>(lines.length);
+            for (var line : lines) {
+                var split = line.split("\\|");
+                hitList.add(new Hit(
+                        Long.parseLong(split[0]),
+                        Float.parseFloat(split[1]),
+                        Float.parseFloat(split[2]),
+                        Integer.parseInt(split[3])
+                ));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return hit_list;
+        return hitList;
     }
-    static class hit{
-        long befTime;
-//        鼠标的X坐标（从0到512）
-        float x;
-//        鼠标的Y坐标（从0到384）
-        float y;
-        //鼠标、键盘按键的组合（M1 = 1, M2 = 2, K1 = 4, K2 = 8, 烟雾 = 16）（K1 总是与 M1 一起使用，K2 总是与 M2 一起使用。所以 1+4=5 2+8=10。）
-        int ket;
 
-        public hit(long befTime, float x, float y, int ket) {
-            this.befTime = befTime;
-            this.x = x;
-            this.y = y;
-            this.ket = ket;
-        }
+    private static Map<Integer, Float> readHp(String data) {
+        Map<Integer, Float> map;
+        var lines = data.split(",");
+        map = new LinkedHashMap<Integer, Float>(lines.length);
+        for (var line : lines) {
+            var k = line.split("\\|");
+            Integer time = Integer.parseInt(k[0]);
+            Float hp = Float.parseFloat(k[1]);
 
-        public long getBefTime() {
-            return befTime;
         }
-
-        public float getX() {
-            return x;
-        }
-
-        public float getY() {
-            return y;
-        }
-
-        public int getKet() {
-            return ket;
-        }
+        return map;
     }
-    public static Replay readByteToRep(ByteBuffer buffer){
+
+    private static int readLength(ByteBuffer bf) {
+        int result = 0;
+        int shift = 0;
+        byte b;
+        do {
+            b = bf.get();
+            result |= (b & 0x7F) << shift;
+            shift += 7;
+        } while ((0x80 & b) != 0);
+        return result;
+    }
+
+    public static Replay readByteToRep(ByteBuffer buffer) {
         return new Replay(buffer);
     }
-    public static Replay readByteToRep(byte[] buffer){
+
+    public static Replay readByteToRep(byte[] buffer) {
         return new Replay(ByteBuffer.wrap(buffer));
+    }
+
+    public List<Hit> getHitList() {
+        return hitList;
     }
 
     public byte getMode() {
@@ -244,8 +222,37 @@ public class Replay {
         return dataLength;
     }
 
-    public List<hit> getHitList() {
-        return hitList;
+    static class Hit {
+        long  befTime;
+        //        鼠标的X坐标（从0到512）
+        float x;
+        //        鼠标的Y坐标（从0到384）
+        float y;
+        //鼠标、键盘按键的组合（M1 = 1, M2 = 2, K1 = 4, K2 = 8, 烟雾 = 16）（K1 总是与 M1 一起使用，K2 总是与 M2 一起使用。所以 1+4=5 2+8=10。）
+        int   ket;
+
+        public Hit(long befTime, float x, float y, int ket) {
+            this.befTime = befTime;
+            this.x = x;
+            this.y = y;
+            this.ket = ket;
+        }
+
+        public long getBefTime() {
+            return befTime;
+        }
+
+        public float getX() {
+            return x;
+        }
+
+        public float getY() {
+            return y;
+        }
+
+        public int getKet() {
+            return ket;
+        }
     }
 
     public long getScoreId() {
