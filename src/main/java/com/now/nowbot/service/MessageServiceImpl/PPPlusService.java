@@ -363,10 +363,13 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     private double calculateLevel(double value, int[] array) {
         if (array == null || array.length < 13) return 0;
 
-        int lv = -2;
+        int lv = 11;
 
         for (int i = 0; i < 13; i++) {
-            if (value > array[i]) lv = i - 1;
+            if (value < array[i]) {
+                lv = i - 2;
+                break;
+            }
         }
 
         switch (lv) {
@@ -410,7 +413,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         double stamina = calculateLevel(performance.stamina(), staminaArray);
         double accuracy = calculateLevel(performance.accuracy(), accuracyArray);
 
-        generalIndex = Math.sqrt(getPiCent(performance.jumpAim(), 1300, 1700) + 8d) * (getPiCent(performance.flowAim(), 200, 450) + 3) * 10d
+        generalIndex = Math.sqrt(getPiCent(performance.jumpAim(), 1300, 1700) + 8d) * (getPiCent(performance.flowAim(), 200, 450) + 3d) * 10d
                 + getPiCent(performance.precision(), 200, 400)
                 + getPiCent(performance.speed(), 950, 1250) * 7d
                 + getPiCent(performance.speed(), 950, 1250) * 3d
@@ -426,7 +429,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                 getDetail(performance.accuracy(), accuracy, accuracyArray[0], accuracyArray[11])
                 ).sorted().toList().get(4); // 第二大
 
-        var index = Arrays.asList(jumpAim, flowAim, precision, speed, stamina, accuracy);
+        var index = Arrays.asList(jumpAim, flowAim, accuracy, stamina, speed, precision);
         double sum = index.stream().reduce(Double::sum).orElse(0d);
 
         return new PPPlus.AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4);
