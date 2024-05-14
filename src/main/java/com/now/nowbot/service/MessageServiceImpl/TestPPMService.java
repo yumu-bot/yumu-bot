@@ -50,7 +50,7 @@ public class TestPPMService implements MessageService<Matcher> {
         var nameList = parseDataString(matcher.group("data"));
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        if (Objects.isNull(nameList) || nameList.isEmpty()) throw new PPMinusException(PPMinusException.Type.PPM_Test_Empty);
+        if (Objects.isNull(nameList) || nameList.isEmpty()) throw new PPMinusException(PPMinusException.Type.PM_Test_Empty);
 
         StringBuilder sb = new StringBuilder();
 
@@ -113,10 +113,10 @@ public class TestPPMService implements MessageService<Matcher> {
                 group.sendFile(result.getBytes(StandardCharsets.UTF_8), STR."\{nameList.getFirst()}...-testppm.csv");
             } catch (Exception e) {
                 log.error("TESTPPM:", e);
-                throw new PPMinusException(PPMinusException.Type.PPM_Test_SendError);
+                throw new PPMinusException(PPMinusException.Type.PM_Test_SendError);
             }
         } else {
-            throw new PPMinusException(PPMinusException.Type.PPM_Test_NotGroup);
+            throw new PPMinusException(PPMinusException.Type.PM_Test_NotGroup);
         }
 
         //event.getSubject().sendMessage(sb.toString());

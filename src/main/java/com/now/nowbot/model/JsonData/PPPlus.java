@@ -1,7 +1,13 @@
 package com.now.nowbot.model.JsonData;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PPPlus {
 
     public record Stats(
@@ -17,12 +23,20 @@ public class PPPlus {
             Double total
     ) {}
 
+    public record AdvancedStats(
+            List<Double> index,
+            Double general,
+            Double advanced,
+            Double sum,
+            Double approval
+    ) {}
 
     Double accuracy;
     Integer combo;
     Stats difficulty;
     Stats performance;
     Stats skill;
+    AdvancedStats advancedStats;
 
     public Double getAccuracy() {
         return accuracy;
@@ -80,6 +94,15 @@ public class PPPlus {
     public void setSkill(Stats skill) {
         this.skill = skill;
     }
+
+    public AdvancedStats getAdvancedStats() {
+        return advancedStats;
+    }
+
+    public void setAdvancedStats(AdvancedStats advancedStats) {
+        this.advancedStats = advancedStats;
+    }
+
 
     @Override
     public String toString() {

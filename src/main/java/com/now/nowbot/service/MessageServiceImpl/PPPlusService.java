@@ -162,7 +162,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     public void HandleMessage(MessageEvent event, PPPlusParam param) throws Throwable {
         var from = event.getSubject();
 
-        var hashMap = new HashMap<String, Object>(6);
+        var hashMap = new HashMap<String, Object>(6, 0.25f);
 
         hashMap.put("isUser", param.isUser);
         hashMap.put("isVs", param.isVs);
@@ -170,22 +170,14 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         if (param.isUser) {
             OsuUser u1 = (OsuUser) param.me;
 
-            var mePlus = calculateUserPerformancePlus(u1.getUID());
-
             hashMap.put("me", u1);
-            hashMap.put("my", mePlus);
+            hashMap.put("my", getUserPerformancePlus(u1.getUID()));
 
             if (param.isVs) {
                 OsuUser u2 = (OsuUser) param.other;
-                var otherPlus = calculateUserPerformancePlus(u2.getUID());
 
                 hashMap.put("other", u2);
-                hashMap.put("others", otherPlus);
-                hashMap.put("mePlus", C8N16O32(mePlus));
-                hashMap.put("otherPlus", C8N16O32(otherPlus));
-            } else {
-                // 单人 pp+，右边会放化学式的进阶指标
-                hashMap.put("mePlus", C8N16O32(mePlus));
+                hashMap.put("others", getUserPerformancePlus(u2.getUID()));
             }
         } else {
             BeatMap m1 = (BeatMap) param.me;
@@ -196,7 +188,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             }
 
             hashMap.put("me", m1);
-            hashMap.put("my", getBeatMapPPPlus(m1.getId()));
+            hashMap.put("my", getBeatMapPerformancePlus(m1.getId()));
 
             if (param.isVs) {
                 BeatMap m2 = (BeatMap) param.other;
@@ -207,8 +199,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                 }
 
                 hashMap.put("other", m2);
-                hashMap.put("others", getBeatMapPPPlus(m2.getId()));
-
+                hashMap.put("others", getBeatMapPerformancePlus(m2.getId()));
             }
         }
 
@@ -230,9 +221,33 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
     }
 
-    // 你妈 不用接口的形式写我还真头大了 按道理这个要放在 pp+ 的实现类下面去
+    // 把数据合并一下 。这个才是真传过去的 PP+
+    private PPPlus getUserPerformancePlus(long uid) {
+        var plus = new PPPlus();
+        var performance = calculateUserPerformance(uid);
 
-    private PPPlus.Stats calculateUserPerformancePlus(long uid) {
+        plus.setPerformance(performance);
+        plus.setAdvancedStats(calculateUserAdvancedStats(performance));
+
+        return plus;
+    }
+
+    private PPPlus getBeatMapPerformancePlus(long bid) throws PPPlusException {
+        try {
+            return performancePlusService.getMapPerformancePlus(bid);
+        } catch (RuntimeException e) {
+            log.error("PP+：获取失败", e);
+            throw new PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed);
+        }
+    }
+
+    /**
+     * 你妈 不用接口的形式写我还真头大了 按道理这个要放在 pp+ 的实现类下面去。
+     * 注意，这个仅仅是获取玩家的 PP+ 总和，还需要和化学式进阶指标综合起来使用
+     * @param uid 玩家号
+     * @return 符合 Stats 标准的数据
+     */
+    private PPPlus.Stats calculateUserPerformance(long uid) {
         var bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100);
         var ppPlus = performancePlusService.getScorePerformancePlus(bps);
 
@@ -344,72 +359,77 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         return new PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total);
     }
 
-    private Map<String, Object> C8N16O32(PPPlus.Stats difficulty) {
-        if (difficulty == null) return null;
+    // 计算进阶指数的等级
+    private double calculateLevel(double value, int[] array) {
+        if (array == null || array.length < 13) return 0;
 
-        Map<String, Object> hashMap = new HashMap<>();
+        int lv = -2;
 
-        int[] jumpArray = {1700, 1975, 2250, 2525, 2800, 3075, 3365, 3800, 4400, 4900, 5900, 6900};
-        int[] flowArray = {450, 563, 675, 788, 900, 1013, 1225, 1500, 1825, 2245, 3200, 4400};
-        int[] precisionArray = {400, 463, 525, 588, 650, 713, 825, 950, 1350, 1650, 2300, 3050};
-        int[] speedArray = {1250, 1363, 1475, 1588, 1700, 1813, 1925, 2200, 2400, 2650, 3100, 3600};
-        int[] staminaArray = {1000, 1100, 1200, 1300, 1400, 1500, 1625, 1800, 2000, 2200, 2600, 3050};
-        int[] accuracyArray = {900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400};
+        for (int i = 0; i < 13; i++) {
+            if (value > array[i]) lv = i - 1;
+        }
 
-        double jumpAim = 0;
-        double flowAim = 0;
-        double precision = 0;
-        double speed = 0;
-        double stamina = 0;
-        double accuracy = 0;
+        switch (lv) {
+            case -2 -> {
+                // 0 - 25
+                return 0.25d * value / array[0];
+            }
+            case -1 -> {
+                // 25 - 75
+                return 0.25d + 0.5d * (value - array[0]) / (array[1] - array[0]);
+            }
+            case 0 -> {
+                // 75 - 100
+                return 0.75d + 0.25d * (value - array[1]) / (array[2] - array[1]);
+            }
+            default -> {
+                return lv;
+            }
+        }
+    }
+
+    private PPPlus.AdvancedStats calculateUserAdvancedStats(PPPlus.Stats performance) {
+        if (performance == null) return null;
+
+        //第一个是 25%，第二个是 75%，第三个是LV1
+        int[] jumpArray = {1300, 1700, 1975, 2250, 2525, 2800, 3075, 3365, 3800, 4400, 4900, 5900, 6900};
+        int[] flowArray = {200, 450, 563, 675, 788, 900, 1013, 1225, 1500, 1825, 2245, 3200, 4400};
+        int[] precisionArray = {200, 400, 463, 525, 588, 650, 713, 825, 950, 1350, 1650, 2300, 3050};
+        int[] speedArray = {950, 1250, 1363, 1475, 1588, 1700, 1813, 1925, 2200, 2400, 2650, 3100, 3600};
+        int[] staminaArray = {600, 1000, 1100, 1200, 1300, 1400, 1500, 1625, 1800, 2000, 2200, 2600, 3050};
+        int[] accuracyArray = {600, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400};
 
         // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
         double generalIndex;
         double advancedIndex;
 
-        for (int i = 0; i < 12; i++) {
-            if (jumpArray[i] > difficulty.jumpAim()) jumpAim = i;
-            if (flowArray[i] > difficulty.flowAim()) flowAim = i;
-            if (precisionArray[i] > difficulty.precision()) precision = i;
-            if (speedArray[i] > difficulty.speed()) speed = i;
-            if (staminaArray[i] > difficulty.stamina()) stamina = i;
-            if (accuracyArray[i] > difficulty.accuracy()) accuracy = i;
-        }
+        double jumpAim = calculateLevel(performance.jumpAim(), jumpArray);
+        double flowAim = calculateLevel(performance.flowAim(), flowArray);
+        double precision = calculateLevel(performance.precision(), precisionArray);
+        double speed = calculateLevel(performance.speed(), speedArray);
+        double stamina = calculateLevel(performance.stamina(), staminaArray);
+        double accuracy = calculateLevel(performance.accuracy(), accuracyArray);
 
-        if (jumpAim == 0) jumpAim = difficulty.jumpAim() / 1700f;
-        if (flowAim == 0) flowAim = difficulty.flowAim() / 450f;
-        if (precision == 0) precision = difficulty.precision() / 400f;
-        if (speed == 0) speed = difficulty.speed() / 1250f;
-        if (stamina == 0) stamina = difficulty.stamina() / 1000f;
-        if (accuracy == 0) accuracy = difficulty.accuracy() / 900f;
-
-        generalIndex = Math.sqrt(getPiCent(difficulty.jumpAim(), 1300, 1700) + 8d) * (getPiCent(difficulty.flowAim(), 200, 450) + 3) * 10d
-                + getPiCent(difficulty.precision(), 200, 400)
-                + getPiCent(difficulty.speed(), 950, 1250) * 7d
-                + getPiCent(difficulty.speed(), 950, 1250) * 3d
-                + getPiCent(difficulty.accuracy(), 600, 1200) * 10d
+        generalIndex = Math.sqrt(getPiCent(performance.jumpAim(), 1300, 1700) + 8d) * (getPiCent(performance.flowAim(), 200, 450) + 3) * 10d
+                + getPiCent(performance.precision(), 200, 400)
+                + getPiCent(performance.speed(), 950, 1250) * 7d
+                + getPiCent(performance.speed(), 950, 1250) * 3d
+                + getPiCent(performance.accuracy(), 600, 1200) * 10d
         ;
 
         advancedIndex = Stream.of(
-                getDetail(difficulty.jumpAim(), jumpAim, jumpArray[0], jumpArray[11]),
-                getDetail(difficulty.flowAim(), flowAim, flowArray[0], flowArray[11]),
-                getDetail(difficulty.precision(), precision, precisionArray[0], precisionArray[11]),
-                getDetail(difficulty.speed(), speed, speedArray[0], speedArray[11]),
-                getDetail(difficulty.stamina(), stamina, staminaArray[0], staminaArray[11]),
-                getDetail(difficulty.accuracy(), accuracy, accuracyArray[0], accuracyArray[11])
+                getDetail(performance.jumpAim(), jumpAim, jumpArray[0], jumpArray[11]),
+                getDetail(performance.flowAim(), flowAim, flowArray[0], flowArray[11]),
+                getDetail(performance.precision(), precision, precisionArray[0], precisionArray[11]),
+                getDetail(performance.speed(), speed, speedArray[0], speedArray[11]),
+                getDetail(performance.stamina(), stamina, staminaArray[0], staminaArray[11]),
+                getDetail(performance.accuracy(), accuracy, accuracyArray[0], accuracyArray[11])
                 ).sorted().toList().get(4); // 第二大
 
-        // jump 放在前面
-        var index = Arrays.asList(accuracy, jumpAim, flowAim, precision, speed, stamina);
+        var index = Arrays.asList(jumpAim, flowAim, precision, speed, stamina, accuracy);
         double sum = index.stream().reduce(Double::sum).orElse(0d);
 
-        hashMap.put("index", index);
-        hashMap.put("general", generalIndex);
-        hashMap.put("advanced", advancedIndex);
-        hashMap.put("sum", sum);
-        hashMap.put("approval", advancedIndex * 6 - 4);
-
-        return hashMap;
+        return new PPPlus.AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4);
     }
 
     // 化学式进阶指数 获取百分比 * Pi（加权 1）
@@ -442,14 +462,5 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         }
 
         return beatMap;
-    }
-
-    private PPPlus getBeatMapPPPlus(long bid) throws PPPlusException {
-        try {
-            return performancePlusService.getMapPerformancePlus(bid);
-        } catch (RuntimeException e) {
-            log.error("PP+：获取失败", e);
-            throw new PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed);
-        }
     }
 }

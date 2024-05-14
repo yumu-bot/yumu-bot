@@ -130,9 +130,9 @@ public class BotWebApi {
         var ppm1 = PPMinus.getInstance(mode, info1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, info2, bplist2);
         if (ppm1 == null) {
-            throw new RuntimeException(PPMinusException.Type.PPM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
+            throw new RuntimeException(PPMinusException.Type.PM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
         } else if (ppm2 == null) {
-            throw new RuntimeException(PPMinusException.Type.PPM_Player_FetchFailed.message);
+            throw new RuntimeException(PPMinusException.Type.PM_Player_FetchFailed.message);
         } else {
             var data = imageService.getPanelB1(info1, info2, ppm1, ppm2, mode);
             return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()} vs \{name2.trim()}-pv.jpg", data.length), HttpStatus.OK);

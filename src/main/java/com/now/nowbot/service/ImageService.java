@@ -240,7 +240,7 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
-    public byte[] getPanelB1(OsuUser userMe, OsuUser userOther, PPMinus PPMinusMe, PPMinus PPMinusOther, OsuMode mode) {
+    public byte[] getPanelB1(OsuUser me, OsuUser other, PPMinus my, PPMinus others, OsuMode mode) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -249,38 +249,39 @@ public class ImageService {
             STBPRE = "STB";
         }
         //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
-        var Card_A = List.of(userMe, userOther);
+        var CardA1 = List.of(me, other);
 
         var cardB1 = Map.of(
-                "ACC", PPMinusMe.getValue1(),
-                "PTT", PPMinusMe.getValue2(),
-                "STA", PPMinusMe.getValue3(),
-                STBPRE, PPMinusMe.getValue4(),
-                "EFT", PPMinusMe.getValue5(),
-                "STH", PPMinusMe.getValue6(),
-                "OVA", PPMinusMe.getValue7(),
-                "SAN", PPMinusMe.getValue8()
+                "ACC", my.getValue1(),
+                "PTT", my.getValue2(),
+                "STA", my.getValue3(),
+                STBPRE, my.getValue4(),
+                "EFT", my.getValue5(),
+                "STH", my.getValue6(),
+                "OVA", my.getValue7(),
+                "SAN", my.getValue8()
         );
-        var cardB2 = Map.of(
-                "ACC", PPMinusOther.getValue1(),
-                "PTT", PPMinusOther.getValue2(),
-                "STA", PPMinusOther.getValue3(),
-                STBPRE, PPMinusOther.getValue4(),
-                "EFT", PPMinusOther.getValue5(),
-                "STH", PPMinusOther.getValue6(),
-                "OVA", PPMinusOther.getValue7(),
-                "SAN", PPMinusOther.getValue8()
-        );
+        var cardB2 = (others != null) ? Map.of(
+                "ACC", others.getValue1(),
+                "PTT", others.getValue2(),
+                "STA", others.getValue3(),
+                STBPRE, others.getValue4(),
+                "EFT", others.getValue5(),
+                "STH", others.getValue6(),
+                "OVA", others.getValue7(),
+                "SAN", others.getValue8()
+        ) : null;
 
         var statistics = Map.of("isVS", true, "gameMode", mode.getModeValue());
         HttpHeaders headers = getDefaultHeader();
 
-        var body = Map.of(
-                "card_A1", Card_A,
-                "card_b_1", cardB1,
-                "card_b_2", cardB2,
-                "statistics", statistics
-        );
+        var body = new HashMap<String, Object>(4);
+
+        body.put("card_A1", CardA1);
+        body.put("card_b_1", cardB1);
+        body.putIfAbsent("card_b_2", cardB2);
+        body.put("statistics", statistics);
+
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
