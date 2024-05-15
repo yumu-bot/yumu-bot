@@ -134,4 +134,30 @@ public class TestLevelService implements MessageService<BinUser> {
 
         return sum;
     }
+
+    private double proportion(double score) {
+        return 1 - Math.pow((score - 300) / 300, 2);
+    }
+
+    private short getLevel(double score) {
+        if (score > 250) {
+            return 0;
+        } else if (score > 220) {
+            return 1;
+        } else if (score > 200) {
+            return 2;
+        } else if (score > 170) {
+            return 3;
+        } else if (score > 130) {
+            return 4;
+        } else if (score > 100) {
+            return 5;
+        } else if (score > 70) {
+            return 6;
+        } else if (score > 30) {
+            return 7;
+        } else {
+            return 8;
+        }
+    }
 }

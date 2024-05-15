@@ -14,21 +14,18 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
-import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.stream.Stream;
-
-import static com.now.nowbot.service.MessageServiceImpl.PPPlusService.PPPlusStatus.*;
 
 @Service("PP_PLUS")
 public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> {
@@ -46,126 +43,41 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     @Resource
     ImageService imageService;
 
-    // T/F: pp+user(pp), F/F: pp+map(pa), F/T: pp+mapvs(pc), T/T pp+uservs(px)
-    public record PPPlusParam <T> (boolean isUser, boolean isVs, T me, T other) {}
-
-    enum PPPlusStatus {
-        USER, USER_VS, MAP, MAP_VS
-    }
-
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPPlusParam> data) throws Throwable {
         var matcher = Instructions.PP_PLUS.matcher(messageText);
         if (! matcher.find()) return false;
 
-        var status = switch (Optional.ofNullable(
-                matcher.group("function")
-        ).orElse("pp").trim().toLowerCase()) {
-            case "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> USER;
-            case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> USER_VS;
-            case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm" -> MAP;
-            case "pc", "ppc", "ppplusmapvs", "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> MAP_VS;
-            default -> throw new RuntimeException("PP+：未知的类型");
-        };
-
-        boolean isUser = switch (status) {
-            case USER, USER_VS -> true;
-            default -> false;
-        };
-
-        boolean isVS = switch (status) {
-            case MAP_VS, USER_VS -> true;
-            default -> false;
-        };
-
-        var area1 = matcher.group("area1");
-        var area2 = matcher.group("area2");
+        var cmd = Objects.requireNonNullElse(matcher.group("function"), "pp");
+        var a1 = matcher.group("area1");
+        var a2 = matcher.group("area2");
+        boolean isUser = true;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-
-        // 艾特
-        if (at != null) {
-            switch (status) {
-                case USER -> //pp @
-                        data.setValue(new PPPlusParam<>(
-                                true, false, userApiService.getPlayerInfo(
-                                bindDao.getUserFromQQ(at.getTarget())), null
-                        ));
-
-                case USER_VS -> //px 0v@
-                        data.setValue(new PPPlusParam<>(
-                                true, true,
-                                userApiService.getPlayerInfo(
-                                        bindDao.getUserFromQQ(event.getSender().getId())),
-                                userApiService.getPlayerInfo(
-                                        bindDao.getUserFromQQ(at.getTarget()))
-                        ));
-            }
+        if (Objects.nonNull(at)) {
+            var user = bindDao.getUserFromQQ(at.getQQ());
+            a2 = user.getOsuName();
         }
 
         try {
-
-            if (StringUtils.hasText(area1)) {
-                if (StringUtils.hasText(area2)) {
-                    if (isUser) {
-                        // px 1v2
-                        data.setValue(new PPPlusParam<>(
-                                true, true, userApiService.getPlayerInfo(area1.trim()), userApiService.getPlayerInfo(area2.trim())
-                        ));
-                    } else {
-                        // pc 1v2
-                        data.setValue(new PPPlusParam<>(
-                                false, true, getBeatMap(area1), getBeatMap(area2)
-                        ));
-                    }
-                } else {
-                    if (isUser) {
-                        if (isVS) {
-                            // px 0v1
-                            data.setValue(new PPPlusParam<>(
-                                    true, true, userApiService.getPlayerInfo(
-                                    bindDao.getUserFromQQ(event.getSender().getId())), userApiService.getPlayerInfo(area1.trim())
-                            ));
-                        } else {
-                            // pp 1
-                            data.setValue(new PPPlusParam<>(
-                                    true, false, userApiService.getPlayerInfo(area1.trim()), null
-                            ));
-                        }
-                    } else {
-                        // pa 1
-                        data.setValue(new PPPlusParam<>(
-                                false, false, beatmapApiService.getBeatMapInfo(Long.parseLong(area1)), null
-                        ));
-                    }
+            switch (cmd.toLowerCase()) {
+                case "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> {
+                    // user 非vs
+                    setUser(a1, a2, event.getSender().getId(), false, data);
                 }
-            } else {
-                if (StringUtils.hasText(area2)) {
-                    if (isUser) {
-                        if (isVS) {
-                            // px 0v2
-                            data.setValue(new PPPlusParam<>(
-                                    true, true, userApiService.getPlayerInfo(
-                                    bindDao.getUserFromQQ(event.getSender().getId())), userApiService.getPlayerInfo(area2.trim())
-                            ));
-                        } else {
-                            // pp 2
-                            data.setValue(new PPPlusParam<>(
-                                    true, false, userApiService.getPlayerInfo(area2.trim()), null
-                            ));
-                        }
-                    } else {
-                        // pa 2
-                        data.setValue(new PPPlusParam<>(
-                                false, false, getBeatMap(area2), null
-                        ));
-                    }
-                } else {
-                    // pp 0
-                    data.setValue(new PPPlusParam<>(
-                            true, false, userApiService.getPlayerInfo(
-                            bindDao.getUserFromQQ(event.getSender().getId())), null
-                    ));
+                case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
+                    // user vs
+                    setUser(a1, a2, event.getSender().getId(), true, data);
+                }
+                case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "pc", "ppc", "ppplusmapvs",
+                     "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> {
+                    // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
+                    isUser = false;
+                    setMap(a1, a2, data);
+                }
+                default -> {
+                    log.error("PP+ 指令解析失败: [{}]", cmd);
+                    return false;
                 }
             }
         } catch (WebClientResponseException e) {
@@ -188,40 +100,26 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         var hashMap = new HashMap<String, Object>(6);
 
-        hashMap.put("isUser", param.isUser);
-        hashMap.put("isVs", param.isVs);
-
-        if (param.isUser) {
+        if (param.isUser()) {
+            // user 对比
+            hashMap.put("isUser", true);
             OsuUser u1 = (OsuUser) param.me;
-
             hashMap.put("me", u1);
             hashMap.put("my", getUserPerformancePlus(u1.getUID()));
 
-            if (param.isVs) {
+            if (Objects.nonNull(param.other)) {
+                // 包含另一个就是 vs, 直接判断了
                 OsuUser u2 = (OsuUser) param.other;
-
                 hashMap.put("other", u2);
                 hashMap.put("others", getUserPerformancePlus(u2.getUID()));
             }
         } else {
+            hashMap.put("isUser", false);
             BeatMap m1 = (BeatMap) param.me;
-
-            // 不支持其他模式
-            if (OsuMode.getMode(m1.getMode()) != OsuMode.OSU) {
-                throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
-            }
-
             hashMap.put("me", m1);
             hashMap.put("my", getBeatMapPerformancePlus(m1.getId()));
-
-            if (param.isVs) {
+            if (Objects.nonNull(param.other)) {
                 BeatMap m2 = (BeatMap) param.other;
-
-                // 不支持其他模式
-                if (OsuMode.getMode(m2.getMode()) != OsuMode.OSU) {
-                    throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
-                }
-
                 hashMap.put("other", m2);
                 hashMap.put("others", getBeatMapPerformancePlus(m2.getId()));
             }
@@ -248,12 +146,78 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     // 把数据合并一下 。这个才是真传过去的 PP+
     private PPPlus getUserPerformancePlus(long uid) {
         var plus = new PPPlus();
-        var performance = calculateUserPerformance(uid);
+        var bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100);
+        var performance = performancePlusService.calculateUserPerformance(bps);
 
         plus.setPerformance(performance);
         plus.setAdvancedStats(calculateUserAdvancedStats(performance));
 
         return plus;
+    }
+
+    private void setUser(String a1, String a2, Long senderId, boolean isVs, DataValue<PPPlusParam> data) {
+        OsuUser p1 = Objects.nonNull(a1) ?
+                userApiService.getPlayerInfo(a1, OsuMode.OSU) :
+                userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
+
+        OsuUser p2 = Objects.nonNull(a2) ? userApiService.getPlayerInfo(a2, OsuMode.OSU) : null;
+
+        if (isVs && Objects.isNull(p2)) {
+            p2 = p1;
+            p1 = userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
+        }
+        if (! isVs && Objects.nonNull(p2)) {
+            p1 = p2;
+            p2 = null;
+        }
+
+        data.setValue(new PPPlusParam(true, p1, p2));
+    }
+
+    private void setMap(String a1, String a2, DataValue<PPPlusParam> data) throws PPPlusException {
+        BeatMap m1 = Objects.nonNull(a1) ? getBeatMap(a1) : null;
+        BeatMap m2 = Objects.nonNull(a2) ? getBeatMap(a2) : null;
+
+        if (Objects.isNull(m1) && Objects.isNull(m2)) {
+            throw new PPPlusException(PPPlusException.Type.PL_Player_VSNotFound);
+        } else if (Objects.isNull(m1)) {
+            m1 = m2;
+            m2 = null;
+        }
+
+        // 不支持其他模式
+        if (OsuMode.getMode(m1.getMode()) != OsuMode.OSU || (Objects.nonNull(m2) && OsuMode.getMode(m2.getMode()) != OsuMode.OSU)) {
+            throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
+        }
+
+        data.setValue(new PPPlusParam(true, m1, m2));
+    }
+
+    private BeatMap getBeatMap(String bidStr) throws PPPlusException {
+        BeatMap beatMap;
+        long id;
+        try {
+            id = Long.parseLong(bidStr);
+        } catch (NumberFormatException e) {
+            throw new PPPlusException(PPPlusException.Type.PL_Map_BIDParseError);
+        }
+        try {
+            beatMap = beatmapApiService.getMapInfoFromDB(id);
+        } catch (WebClientResponseException ignored) {
+            try {
+                beatMap = beatmapApiService.getBeatMapSetInfo(id).getTopDiff();
+            } catch (WebClientResponseException e) {
+                throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
+            }
+        }
+        if (Objects.isNull(beatMap)) {
+            throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
+        }
+        return beatMap;
+    }
+
+    enum PPPlusStatus {
+        USER, USER_VS, MAP, MAP_VS, NONE;
     }
 
     private PPPlus getBeatMapPerformancePlus(long bid) throws PPPlusException {
@@ -263,124 +227,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             log.error("PP+：获取失败", e);
             throw new PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed);
         }
-    }
-
-    /**
-     * 你妈 不用接口的形式写我还真头大了 按道理这个要放在 pp+ 的实现类下面去。
-     * 注意，这个仅仅是获取玩家的 PP+ 总和，还需要和化学式进阶指标综合起来使用
-     * @param uid 玩家号
-     * @return 符合 Stats 标准的数据
-     */
-    private PPPlus.Stats calculateUserPerformance(long uid) {
-        var bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100);
-        var ppPlus = performancePlusService.getScorePerformancePlus(bps);
-
-        double aim = 0;
-        double jumpAim = 0;
-        double flowAim = 0;
-        double precision = 0;
-        double speed = 0;
-        double stamina = 0;
-        double accuracy = 0;
-        double total = 0;
-
-        List<AsyncMethodExecutor.Supplier<String>> suppliers = new ArrayList<>(7);
-        Map<String, List<Double>> ppPlusMap = new ConcurrentHashMap<>(7);
-
-        // 逐个排序
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("aim", stream
-                    .map(p -> p.getPerformance().aim())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "aim";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("jumpAim", stream
-                    .map(p -> p.getPerformance().jumpAim())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "jumpAim";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("flowAim", stream
-                    .map(p -> p.getPerformance().flowAim())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "flowAim";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("precision", stream
-                    .map(p -> p.getPerformance().precision())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "precision";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("speed", stream
-                    .map(p -> p.getPerformance().speed())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "speed";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("stamina", stream
-                    .map(p -> p.getPerformance().stamina())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "stamina";
-        });
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("accuracy", stream
-                    .map(p -> p.getPerformance().accuracy())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "accuracy";
-        });
-
-        suppliers.add(() -> {
-            var stream = ppPlus.stream();
-            ppPlusMap.put("total", stream
-                    .map(p -> p.getPerformance().total())
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return "total";
-        });
-
-        AsyncMethodExecutor.AsyncSupplier(suppliers);
-
-        // 计算加权和
-        double weight = 1d / 0.95d;
-
-        for (int n = 0; n < ppPlus.size(); n++) {
-            weight *= 0.95d;
-
-            aim += ppPlusMap.get("aim").get(n) * weight;
-            jumpAim += ppPlusMap.get("jumpAim").get(n) * weight;
-            flowAim += ppPlusMap.get("flowAim").get(n) * weight;
-            precision += ppPlusMap.get("precision").get(n) * weight;
-            speed += ppPlusMap.get("speed").get(n) * weight;
-            stamina += ppPlusMap.get("stamina").get(n) * weight;
-            accuracy += ppPlusMap.get("accuracy").get(n) * weight;
-            total += ppPlusMap.get("total").get(n) * weight;
-        }
-
-        return new PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total);
     }
 
     // 计算进阶指数的等级
@@ -470,24 +316,8 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         else return level;
     }
 
-    private BeatMap getBeatMap(String bidStr) throws PPPlusException {
-        BeatMap beatMap;
-
-        try {
-            beatMap = beatmapApiService.getBeatMapInfo(Long.parseLong(bidStr));
-        } catch (WebClientResponseException ignored) {
-            try {
-                beatMap = beatmapApiService.getBeatMapSetInfo(Long.parseLong(bidStr)).getTopDiff();
-                if (Objects.isNull(beatMap)) {
-                    throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
-                }
-            } catch (WebClientResponseException e) {
-                throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
-            }
-        } catch (NumberFormatException e) {
-            throw new PPPlusException(PPPlusException.Type.PL_Map_BIDParseError);
-        }
-
-        return beatMap;
+    // T/F: pp+user(pp), F/F: pp+map(pa), F/T: pp+mapvs(pc), T/T pp+uservs(px)
+    public record PPPlusParam(boolean isUser, Object me, Object other) {
     }
+
 }

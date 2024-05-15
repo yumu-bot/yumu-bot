@@ -331,6 +331,7 @@ public class ImageService {
     }
 
     public byte[] getPanelB3(HashMap<String, Object> hashMap) {
+        hashMap.put("isVs", hashMap.containsKey("other"));
         HttpHeaders headers = getDefaultHeader();
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(hashMap, headers);
