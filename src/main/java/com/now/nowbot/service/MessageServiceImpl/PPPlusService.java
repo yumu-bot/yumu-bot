@@ -6,6 +6,7 @@ import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -15,6 +16,7 @@ import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +80,28 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         var area1 = matcher.group("area1");
         var area2 = matcher.group("area2");
+
+        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+
+        // 艾特
+        if (at != null) {
+            switch (status) {
+                case USER -> //pp @
+                        data.setValue(new PPPlusParam<>(
+                                true, false, userApiService.getPlayerInfo(
+                                bindDao.getUserFromQQ(at.getTarget())), null
+                        ));
+
+                case USER_VS -> //px 0v@
+                        data.setValue(new PPPlusParam<>(
+                                true, true,
+                                userApiService.getPlayerInfo(
+                                        bindDao.getUserFromQQ(event.getSender().getId())),
+                                userApiService.getPlayerInfo(
+                                        bindDao.getUserFromQQ(at.getTarget()))
+                        ));
+            }
+        }
 
         try {
 
@@ -162,7 +186,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     public void HandleMessage(MessageEvent event, PPPlusParam param) throws Throwable {
         var from = event.getSubject();
 
-        var hashMap = new HashMap<String, Object>(6, 0.25f);
+        var hashMap = new HashMap<String, Object>(6);
 
         hashMap.put("isUser", param.isUser);
         hashMap.put("isVs", param.isVs);
@@ -427,7 +451,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                 getDetail(performance.speed(), speed, speedArray[0], speedArray[11]),
                 getDetail(performance.stamina(), stamina, staminaArray[0], staminaArray[11]),
                 getDetail(performance.accuracy(), accuracy, accuracyArray[0], accuracyArray[11])
-                ).sorted().toList().get(4); // 第二大
+        ).sorted().toList().get(4); // 第二大
 
         var index = Arrays.asList(jumpAim, flowAim, accuracy, stamina, speed, precision);
         double sum = index.stream().reduce(Double::sum).orElse(0d);

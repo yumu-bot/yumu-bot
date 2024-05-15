@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -240,39 +241,44 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
-    public byte[] getPanelB1(OsuUser me, OsuUser other, PPMinus my, PPMinus others, OsuMode mode) {
-        String STBPRE;
+    public byte[] getPanelB1(OsuUser me, @Nullable OsuUser other, PPMinus my, @Nullable PPMinus others, OsuMode mode) {
+        String value4;
+        boolean isVs = other != null && others != null;
 
         if (mode == OsuMode.MANIA) {
-            STBPRE = "PRE";
+            value4 = "PRE";
         } else {
-            STBPRE = "STB";
+            value4 = "STB";
         }
         //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
-        var CardA1 = List.of(me, other);
+
+        var CardA1 = new ArrayList<OsuUser>(2);
+        CardA1.add(me);
+
+        if (isVs) CardA1.add(other);
 
         var cardB1 = Map.of(
                 "ACC", my.getValue1(),
                 "PTT", my.getValue2(),
                 "STA", my.getValue3(),
-                STBPRE, my.getValue4(),
+                value4, my.getValue4(),
                 "EFT", my.getValue5(),
                 "STH", my.getValue6(),
                 "OVA", my.getValue7(),
                 "SAN", my.getValue8()
         );
-        var cardB2 = (others != null) ? Map.of(
+        var cardB2 = isVs ? Map.of(
                 "ACC", others.getValue1(),
                 "PTT", others.getValue2(),
                 "STA", others.getValue3(),
-                STBPRE, others.getValue4(),
+                value4, others.getValue4(),
                 "EFT", others.getValue5(),
                 "STH", others.getValue6(),
                 "OVA", others.getValue7(),
                 "SAN", others.getValue8()
         ) : null;
 
-        var statistics = Map.of("isVS", true, "gameMode", mode.getModeValue());
+        var statistics = Map.of("isVS", isVs, "gameMode", mode.getModeValue());
         HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>(4);
