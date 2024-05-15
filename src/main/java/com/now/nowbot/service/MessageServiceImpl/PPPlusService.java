@@ -63,16 +63,23 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             switch (cmd.toLowerCase()) {
                 case "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> {
                     // user 非vs
+                    if (Objects.nonNull(a1) && a1.isBank()) a1 = null;
+                    if (Objects.nonNull(a2) && a2.isBank()) a2 = null;
+
                     setUser(a1, a2, event.getSender().getId(), false, data);
                 }
                 case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
                     // user vs
+                    if (Objects.nonNull(a1) && a1.isBank()) a1 = null;
+                    if (Objects.nonNull(a2) && a2.isBank()) a2 = null;
                     setUser(a1, a2, event.getSender().getId(), true, data);
                 }
                 case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "pc", "ppc", "ppplusmapvs",
                      "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> {
                     // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
                     isUser = false;
+                    if (Objects.nonNull(a1) && a1.isBank()) a1 = null;
+                    if (Objects.nonNull(a2) && a2.isBank()) a2 = null;
                     setMap(a1, a2, data);
                 }
                 default -> {
