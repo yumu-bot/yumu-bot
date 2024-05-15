@@ -54,10 +54,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         boolean isUser = true;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        if (Objects.nonNull(at)) {
-            var user = bindDao.getUserFromQQ(at.getQQ());
-            // a2 = user.getOsuName();
-        }
 
         try {
             switch (cmd.toLowerCase()) {
@@ -65,14 +61,21 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                     // user 非vs
                     if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
                     if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
-
-                    setUser(a1, a2, event.getSender().getId(), false, data);
+                    if (Objects.nonNull(at)) 
+                        setUser(null, null, at.getQQ(), false, data);
+                    else
+                        setUser(a1, a2, event.getSender().getId(), false, data);
                 }
                 case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
                     // user vs
                     if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
                     if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
-                    setUser(a1, a2, event.getSender().getId(), true, data);
+                    if (Objects.nonNull(at)) {
+                        var user = bindDao.getUserFromQQ(at.getQQ());
+                        setUser(null, user.getOsuName(), event.getSender().getId(), true, data);
+                    } else {
+                        setUser(a1, a2, event.getSender().getId(), true, data);
+                    }
                 }
                 case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "pc", "ppc", "ppplusmapvs",
                      "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> {
