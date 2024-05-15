@@ -56,7 +56,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         if (Objects.nonNull(at)) {
             var user = bindDao.getUserFromQQ(at.getQQ());
-            a2 = user.getOsuName();
+            // a2 = user.getOsuName();
         }
 
         try {
@@ -165,10 +165,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         if (isVs && Objects.isNull(p2)) {
             p2 = p1;
             p1 = userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
-        }
-        if (! isVs && Objects.nonNull(p2)) {
-            p1 = p2;
-            p2 = null;
         }
 
         data.setValue(new PPPlusParam(true, p1, p2));
