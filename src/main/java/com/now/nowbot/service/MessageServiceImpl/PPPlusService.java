@@ -81,6 +81,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                 }
             }
         } catch (WebClientResponseException e) {
+            log.error("pp+ 请求异常", e);
             if (isUser) {
                 throw new PPPlusException(PPPlusException.Type.PL_User_NotFound);
             } else {
