@@ -4,6 +4,9 @@ import com.now.nowbot.throwable.TipsException;
 
 public class MapMinusException extends TipsException {
     public enum Type {
+        MM_Rate_TooSmall("这是什么奇怪的倍速？"),
+        MM_Rate_Error("请输入正确的倍速，或是输入 + DT/HT 修改倍速！"),
+        MM_Rate_TooLarge("我觉得吧，你要是能按这个倍速去打，早就进入天空之城了。"),
         MM_Bid_Error("请输入正确的 BID！"),
         MM_Function_NotSupported("抱歉，本功能暂不支持除 Mania 模式以外的谱面！"),
         MM_Map_NotFound("找不到谱面，或是 ppy API 无法访问。"),

@@ -268,7 +268,7 @@ public class OsuBeatmapAttributes {
     }
 
     // 备注：这个倍率假如说是 DT 给的 1.5 倍，作用在图上，就是图被缩短（除法）了。
-    public void setClockRate(Double clockRate) {
+    public void setClockRate(double clockRate) {
         this.clockRate = clockRate;
 
         if (clockRate != 1d && clockRate > 0d) {

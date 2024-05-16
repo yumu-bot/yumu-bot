@@ -40,11 +40,14 @@ public class MapMinusService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         long bid;
+        double rate;
         OsuMode mode;
         String fileStr;
         BeatMap beatMap;
 
         int modsValue = Mod.getModsValue(matcher.group("mod"));
+        boolean isChangedRating = Mod.hasChangeRating(modsValue);
+
 
         try {
             bid = Long.parseLong(matcher.group("id"));
@@ -52,28 +55,43 @@ public class MapMinusService implements MessageService<Matcher> {
             throw new MapMinusException(MapMinusException.Type.MM_Bid_Error);
         }
 
+        try {
+            rate = Double.parseDouble(matcher.group("rate"));
+        } catch (NumberFormatException e) {
+            throw new MapMinusException(MapMinusException.Type.MM_Rate_Error);
+        } catch (NullPointerException e) {
+            rate = 1d;
+        }
+
+        if (rate < 0.1d) throw new MapMinusException(MapMinusException.Type.MM_Rate_TooSmall);
+        if (rate > 5d) throw new MapMinusException(MapMinusException.Type.MM_Rate_TooLarge);
+
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
 
             //todo 很复杂的 获取变化星级的谱面的方式。感觉以后这种事情不要交给绘图面板做，应该写进 Beatmap 或者相关的 util 类里。
-            var mapAttrGet = new MapAttrGet(mode);
-            mapAttrGet.addMap(beatMap.getSID(), beatMap.getId(), modsValue, beatMap.getRanked());
-            var changedAttrsMap = imageService.getMapAttr(mapAttrGet);
 
-            var attr = changedAttrsMap.get(beatMap.getSID().longValue());
-            beatMap.setStarRating(attr.getStars());
-            beatMap.setBPM(attr.getBpm());
-            beatMap.setAR(attr.getAr());
-            beatMap.setCS(attr.getCs());
-            beatMap.setOD(attr.getOd());
-            beatMap.setHP(attr.getHp());
-            if (Mod.hasDt(modsValue)) {
-                beatMap.setTotalLength(Math.round(beatMap.getTotalLength() / 1.5f));
-            } else if (Mod.hasHt(modsValue)) {
-                beatMap.setTotalLength(Math.round(beatMap.getTotalLength() / 0.75f));
+            if (isChangedRating) {
+                var mapAttrGet = new MapAttrGet(mode);
+                mapAttrGet.addMap(beatMap.getSID(), beatMap.getId(), modsValue, beatMap.getRanked());
+                var changedAttrsMap = imageService.getMapAttr(mapAttrGet);
+
+                var attr = changedAttrsMap.get(beatMap.getSID().longValue());
+                beatMap.setStarRating(attr.getStars());
+                beatMap.setBPM(attr.getBpm());
+                beatMap.setAR(attr.getAr());
+                beatMap.setCS(attr.getCs());
+                beatMap.setOD(attr.getOd());
+                beatMap.setHP(attr.getHp());
+                if (Mod.hasDt(modsValue)) {
+                    beatMap.setTotalLength(Math.round(beatMap.getTotalLength() / 1.5f));
+                } else if (Mod.hasHt(modsValue)) {
+                    beatMap.setTotalLength(Math.round(beatMap.getTotalLength() / 0.75f));
+                }
             }
+
 
             fileStr = beatmapApiService.getBeatMapFile(bid);
             //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
@@ -97,7 +115,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
         PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = PPMinus3.getInstance(file, Mod.getModsClockRate(modsValue));
+            mapMinus = PPMinus3.getInstance(file, isChangedRating ? Mod.getModsClockRate(modsValue) : rate);
         }
 
         byte[] image;
