@@ -508,7 +508,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         star /= divided;
 
-        return 0.8 * star + 0.2 * values.stream().sorted().toList().get(4);
+        return 0.6 * star + 0.4 * values.stream().sorted().toList().get(4);
     }
 
     public List<Double> getRice() {
