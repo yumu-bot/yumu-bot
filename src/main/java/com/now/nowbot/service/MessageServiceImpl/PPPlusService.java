@@ -20,6 +20,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Arrays;
@@ -31,17 +32,17 @@ import java.util.stream.Stream;
 public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> {
     private static final Logger log = LoggerFactory.getLogger(PPPlusService.class);
     @Resource
-    OsuUserApiService userApiService;
+    OsuUserApiService    userApiService;
     @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    BindDao bindDao;
+    BindDao              bindDao;
     @Resource
     PerformancePlusService performancePlusService;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPPlusParam> data) throws Throwable {
@@ -61,15 +62,13 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                     // user 非vs
                     if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
                     if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
-                    if (Objects.nonNull(at)) 
+                    if (Objects.nonNull(at))
                         setUser(null, null, at.getQQ(), false, data);
                     else
                         setUser(a1, a2, event.getSender().getId(), false, data);
                 }
                 case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
                     // user vs
-                    if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
-                    if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
                     if (Objects.nonNull(at)) {
                         var user = bindDao.getUserFromQQ(at.getQQ());
                         setUser(null, user.getOsuName(), event.getSender().getId(), true, data);
@@ -81,8 +80,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                      "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> {
                     // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
                     isUser = false;
-                    if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
-                    if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
                     setMap(a1, a2, data);
                 }
                 default -> {
@@ -167,11 +164,11 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     }
 
     private void setUser(String a1, String a2, Long senderId, boolean isVs, DataValue<PPPlusParam> data) {
-        OsuUser p1 = Objects.nonNull(a1) ?
+        OsuUser p1 = StringUtils.hasText(a1) ?
                 userApiService.getPlayerInfo(a1, OsuMode.OSU) :
                 userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
 
-        OsuUser p2 = Objects.nonNull(a2) ? userApiService.getPlayerInfo(a2, OsuMode.OSU) : null;
+        OsuUser p2 = StringUtils.hasText(a2) ? userApiService.getPlayerInfo(a2, OsuMode.OSU) : null;
 
         if (isVs && Objects.isNull(p2)) {
             p2 = p1;
@@ -182,8 +179,8 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     }
 
     private void setMap(String a1, String a2, DataValue<PPPlusParam> data) throws PPPlusException {
-        BeatMap m1 = Objects.nonNull(a1) ? getBeatMap(a1) : null;
-        BeatMap m2 = Objects.nonNull(a2) ? getBeatMap(a2) : null;
+        BeatMap m1 = StringUtils.hasText(a1) ? getBeatMap(a1) : null;
+        BeatMap m2 = StringUtils.hasText(a2) ? getBeatMap(a2) : null;
 
         if (Objects.isNull(m1) && Objects.isNull(m2)) {
             throw new PPPlusException(PPPlusException.Type.PL_Player_VSNotFound);
@@ -223,10 +220,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         return beatMap;
     }
 
-    enum PPPlusStatus {
-        USER, USER_VS, MAP, MAP_VS, NONE;
-    }
-
     private PPPlus getBeatMapPerformancePlus(long bid) throws PPPlusException {
         try {
             return performancePlusService.getMapPerformancePlus(bid);
@@ -250,11 +243,11 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         }
 
         switch (lv) {
-            case -2 -> {
+            case - 2 -> {
                 // 0 - 25
                 return 0.25d * value / array[0];
             }
-            case -1 -> {
+            case - 1 -> {
                 // 25 - 75
                 return 0.25d + 0.5d * (value - array[0]) / (array[1] - array[0]);
             }
@@ -316,9 +309,10 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     private double getPiCent(double val, int percent25, int percent75) {
         return (Math.atan((val * 2d - (percent75 + percent25)) / (percent75 - percent25)) / Math.PI + 0.5d) * Math.PI;
     }
+
     // 化学式进阶指数 获取详细情况（用于进阶指数求和）
     private double getDetail(double val, double level, int percent75, int percentEX) {
-        if (val < percent75) return -2;
+        if (val < percent75) return - 2;
         else if (val > percentEX) return Math.floor(val / percentEX * 10d) + 1d;
         else return level;
     }

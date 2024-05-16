@@ -37,7 +37,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     @Resource
     OsuMatchApiService osuMatchApiService;
     @Resource
-    ImageService imageService;
+    ImageService    imageService;
     @Resource
     MatchMapService matchMapService;
 
@@ -52,6 +52,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
         var param = new MatchListenerService.ListenerParam();
 
         if (! matcher.find()) return false;
+
+        if (false && event instanceof GroupMessageEvent groupEvent) {
+            var list = getGroupListener(groupEvent.getGroup().getId());
+            if (list.isEmpty()) {
+                groupEvent.getGroup().sendMessage("本群中没有进行的监听.");
+            } else {
+                var sb = new StringBuilder("本群中的监听有: ");
+                list.forEach(mid ->
+                        sb.append('\n').append(mid)
+                );
+                groupEvent.getGroup().sendMessage(sb.toString());
+            }
+            return false;
+        }
 
         var id = matcher.group("matchid");
         var op = matcher.group("operate");
@@ -213,9 +227,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 } catch (Throwable e) {
                     String info;
                     if (Objects.nonNull(s)) {
-                        info = STR. "(\{ b.getId() }) \{ s.getArtistUnicode() } - (\{ s.getTitleUnicode() }) [\{ b.getDifficultyName() }]";
+                        info = STR."(\{b.getId()}) \{s.getArtistUnicode()} - (\{s.getTitleUnicode()}) [\{b.getDifficultyName()}]";
                     } else {
-                        info = STR."(\{ b.getId() }) [\{ b.getDifficultyName() }]";
+                        info = STR."(\{b.getId()}) [\{b.getDifficultyName()}]";
                     }
                     var image = imageService.getPanelA6(String.format(MatchListenerException.Type.ML_Match_Start.message, param.id, info));
                     from.sendImage(image);
@@ -367,5 +381,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
         }
+    }
+
+    static List<Long> getGroupListener(long group) {
+        return ListenerCheck.listeners.keySet().stream()
+                .filter(handlers -> handlers.group == group)
+                .map(handlers -> handlers.mid)
+                .toList();
     }
 }
