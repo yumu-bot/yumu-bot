@@ -16,6 +16,7 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.regex.Matcher;
 
@@ -40,7 +41,7 @@ public class MapMinusService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         long bid;
-        double rate;
+        double rate = 1d;
         OsuMode mode;
         String fileStr;
         BeatMap beatMap;
@@ -55,12 +56,12 @@ public class MapMinusService implements MessageService<Matcher> {
             throw new MapMinusException(MapMinusException.Type.MM_Bid_Error);
         }
 
-        try {
-            rate = Double.parseDouble(matcher.group("rate"));
-        } catch (NumberFormatException e) {
-            throw new MapMinusException(MapMinusException.Type.MM_Rate_Error);
-        } catch (NullPointerException e) {
-            rate = 1d;
+        if (StringUtils.hasText(matcher.group("rate"))) {
+            try {
+                rate = Double.parseDouble(matcher.group("rate"));
+            } catch (NumberFormatException e) {
+                throw new MapMinusException(MapMinusException.Type.MM_Rate_Error);
+            }
         }
 
         if (rate < 0.1d) throw new MapMinusException(MapMinusException.Type.MM_Rate_TooSmall);
