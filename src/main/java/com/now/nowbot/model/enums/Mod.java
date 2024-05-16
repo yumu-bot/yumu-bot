@@ -1,6 +1,7 @@
 package com.now.nowbot.model.enums;
 
 import com.now.nowbot.throwable.ModsException;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,6 +132,7 @@ public enum Mod {
     }
 
     private static String[] getModsString(String modsStr) {
+        if (! StringUtils.hasText(modsStr)) return new String[]{};
         var newStr = modsStr.replaceAll("\\s+", "");
         if (newStr.length() % 2 != 0) {
             throw new ModsException(ModsException.Type.MOD_Receive_CharNotPaired);
@@ -154,6 +156,26 @@ public enum Mod {
         if (modList.contains(DoubleTime) && modList.contains(Nightcore)) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{Nightcore.abbreviation}");
         }
+    }
+
+    public static double getModsClockRate(int modsValue) {
+        // 这里不能用 getModsValue，会误报重复
+        return getModsClockRate(Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & modsValue)).distinct().toList());
+    }
+
+    public static double getModsClockRate(List<Mod> mList) {
+        for (var m : mList) {
+            switch (m) {
+                case HalfTime -> {
+                    return 0.75d;
+                }
+                case DoubleTime, Nightcore -> {
+                    return 1.5d;
+                }
+            }
+        }
+
+        return 1d;
     }
 
     public static int getModsValueFromStr(List<String> mList) {

@@ -39,15 +39,19 @@ public abstract class PPMinus3 {
 
     protected final int calculateUnit = 2500; //一个标准单位计算元的区域（毫秒）。这段时间的数据，会统计到单一一个计算元中。
 
-    public static PPMinus3 getInstance(OsuFile file) throws IOException {
+    public static PPMinus3 getInstance(OsuFile file, Double clockRate) throws IOException {
         switch (file.getMode()) {
             case MANIA -> {
-                return new PPMinus3ManiaImpl(file.getMania());
+                var f = file.getMania();
+                f.setClockRate(clockRate);
+
+                return new PPMinus3ManiaImpl(f);
             }
             case null, default -> {
                 return null;
             }
         }
+
     }
 
     // 公用算法

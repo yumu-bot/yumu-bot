@@ -222,9 +222,9 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
                     var attr = changedAttrsMap.get(s.getScoreID());
                     b.setStarRating(attr.getStars());
                     b.setBPM(attr.getBpm());
-                    if (s.getMods().contains("DT") || s.getMods().contains("NC")) {
+                    if (Mod.hasDt(Mod.getModsValueFromStr(s.getMods()))) {
                         b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
-                    } else if (s.getMods().stream().anyMatch(r -> r.equals("HT"))) {
+                    } else if (Mod.hasHt(Mod.getModsValueFromStr(s.getMods()))) {
                         b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
                     }
                 }

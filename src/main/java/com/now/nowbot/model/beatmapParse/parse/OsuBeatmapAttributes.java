@@ -30,6 +30,8 @@ public class OsuBeatmapAttributes {
     static final double AR_MS_MID = 1200;
     static final double AR_MS_MIN = 450;
 
+    protected double clockRate = 1d;
+
     protected Integer version;
 
     protected Integer circleCount;
@@ -259,6 +261,28 @@ public class OsuBeatmapAttributes {
 
     public boolean isConverted() {
         return this.getClass() != OsuBeatmapAttributes.class && mode == OsuMode.OSU;
+    }
+
+    public double getClockRate() {
+        return clockRate;
+    }
+
+    // 备注：这个倍率假如说是 DT 给的 1.5 倍，作用在图上，就是图被缩短（除法）了。
+    public void setClockRate(Double clockRate) {
+        this.clockRate = clockRate;
+
+        if (clockRate != 1d && clockRate > 0d) {
+            for (var h : hitObjects) {
+                h.setStartTime((int) (h.getStartTime() / clockRate));
+                h.setEndTime((int) (h.getEndTime() / clockRate));
+            }
+
+            for (var t : timings) {
+                t.setBeatLength(t.getBeatLength() / clockRate);
+                t.setBpm(t.getBpm() * clockRate);
+                t.setStartTime((int) (t.getStartTime() / clockRate));
+            }
+        }
     }
 
     public double getArHitWindow(int mods, double clockRate) {
