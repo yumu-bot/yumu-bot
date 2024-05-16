@@ -50,7 +50,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<PPMinusParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<PPMinusParam> data) throws Throwable {
         var matcher = Instructions.PP_MINUS.matcher(messageText);
         if (!matcher.find()) return false;
 
@@ -70,44 +70,53 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
         BinUser me = new BinUser();
         BinUser other = new BinUser();
 
+        boolean isMyself = false;
+
         // 艾特
-        if (at != null) {
-            switch (status) {
-                case USER -> //pm @
-                        me = bindDao.getUserFromQQ(at.getTarget());
-
-                case USER_VS -> {
-                    //pv 0v@
-                    me = bindDao.getUserFromQQ(event.getSender().getId());
-                    other = bindDao.getUserFromQQ(at.getTarget());
-                }
-            }
-        }
-
-        if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
-            if (StringUtils.hasText(area1) && StringUtils.hasText(area2)) {
-                //pv 1v2
-                me.setOsuName(area1);
-                other.setOsuName(area2);
-            } else {
-                var area = StringUtils.hasText(area1) ? area1 : area2;
-
+        try {
+            if (at != null) {
                 switch (status) {
-                    case USER -> //pm 1 or 2
-                            me.setOsuName(area);
+                    case USER -> //pm @
+                            me = bindDao.getUserFromQQ(at.getTarget());
 
                     case USER_VS -> {
-                        //pv 0v1 or 0v2
+                        //pv 0v@
                         me = bindDao.getUserFromQQ(event.getSender().getId());
-                        other.setOsuName(area);
+                        other = bindDao.getUserFromQQ(at.getTarget());
                     }
                 }
-            }
-        } else {
-            // pm 0
-            me = bindDao.getUserFromQQ(event.getSender().getId());
-        }
+            } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
+                if (StringUtils.hasText(area1) && StringUtils.hasText(area2)) {
+                    //pv 1v2
+                    me.setOsuName(area1);
+                    other.setOsuName(area2);
+                } else {
+                    var area = StringUtils.hasText(area1) ? area1 : area2;
 
+                    switch (status) {
+                        case USER -> //pm 1 or 2
+                                me.setOsuName(area);
+
+                        case USER_VS -> {
+                            isMyself = true;
+                            //pv 0v1 or 0v2
+                            me = bindDao.getUserFromQQ(event.getSender().getId());
+                            other.setOsuName(area);
+                        }
+                    }
+                }
+            } else {
+                // pm 0
+                isMyself = true;
+                me = bindDao.getUserFromQQ(event.getSender().getId());
+            }
+        } catch (WebClientResponseException e) {
+            if (isMyself) {
+                throw new PPMinusException(PPMinusException.Type.PM_Me_TokenExpired);
+            } else {
+                throw new PPMinusException(PPMinusException.Type.PM_Player_TokenExpired);
+            }
+        }
         // 处理默认模式
         var mode = OsuMode.getMode(matcher.group("mode"), me.getMode());
 

@@ -488,11 +488,12 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return Arrays.asList("RC", "LN", "CO", "ST", "SP", "PR", "SV");
     }
 
+    // 新版获取星数的方法
     @Override
     public Double getStar() {
-        List<Double> values = getValueList();
+        List<Double> values = getValueList().subList(0, 6);
 
-        if (CollectionUtils.isEmpty(values) || values.size() < 7) return 0d;
+        if (CollectionUtils.isEmpty(values) || values.size() < 6) return 0d;
 
         List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.4d, 0.6d, 0.2d);
         double divided = 3.8d;
@@ -507,7 +508,7 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         star /= divided;
 
-        return star;
+        return 0.8 * star + 0.2 * values.stream().sorted().toList().get(4);
     }
 
     public List<Double> getRice() {
