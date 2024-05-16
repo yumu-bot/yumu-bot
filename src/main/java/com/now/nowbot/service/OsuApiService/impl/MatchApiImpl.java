@@ -5,6 +5,7 @@ import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.util.Optional;
 
 @Service
@@ -39,6 +40,7 @@ public class MatchApiImpl implements OsuMatchApiService {
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Match.class)
+                .timeout(Duration.ofSeconds(5))
                 .block();
     }
 
