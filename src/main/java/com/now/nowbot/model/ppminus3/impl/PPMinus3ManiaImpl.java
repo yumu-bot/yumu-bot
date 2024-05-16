@@ -320,10 +320,44 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return data;
     }
 
-    // 返回这个物件与这一组物件对比，最靠上，或是被 LN 包围的这个 LN
+    // 返回这个物件与这一组物件对比，最靠上，或是被 LN 包围的这个 LN，使用二分法查询
     @Nullable
     private HitObject getNearestNote(HitObject now, List<HitObject> asideColumn) {
         var n = now.getStartTime();
+
+        int min = 0;
+        int max = asideColumn.size() - 1;
+
+        // 筛除超过区域的物件
+        if (asideColumn.getFirst().getStartTime() > n) return asideColumn.getFirst();
+        if (asideColumn.getLast().getEndTime() < n) return null;
+
+        while (max - min > 1) {
+            int mid = (min + max) / 2;
+            int m = asideColumn.get(mid).getStartTime();
+
+            if (n < m) {
+                max = mid;
+            } else {
+                //n >= m
+                min = mid;
+            }
+        }
+
+        int xs = asideColumn.get(max).getStartTime();
+        int xe = asideColumn.get(max).getEndTime();
+        int ms = asideColumn.get(min).getStartTime();
+        int me = asideColumn.get(min).getEndTime();
+
+        if (min == asideColumn.size() - 1) return null;
+
+        if (n >= ms) {
+            if (n <= me) return asideColumn.get(min);
+            if (n <= xs || n <= xe) return asideColumn.get(max); //n <= xe 是针对最后的物件做的
+        }
+
+
+        /*
 
         for (var h : asideColumn) {
             var s = h.getStartTime();
@@ -334,14 +368,37 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
             }
         }
 
+         */
+
         return null;
     }
 
-    // 获取同轨道靠上面的物件
+    // 获取同轨道靠上面的物件，使用二分法查询
     @Nullable
     private HitObject getTopestNote(HitObject now, List<HitObject> thisColumn) {
         var n = now.getStartTime();
 
+        int min = 0;
+        int max = thisColumn.size() - 1;
+
+        // 筛除超过区域的物件（最后一个）
+        if (thisColumn.getLast().getStartTime() == n) return null;
+
+        while (max - min > 1) {
+            int mid = (min + max) / 2;
+            int m = thisColumn.get(mid).getStartTime();
+
+            if (n < m) {
+                max = mid;
+            } else {
+                //n >= m
+                min = mid;
+            }
+        }
+
+        return thisColumn.get(max);
+
+        /*
         for (var h : thisColumn) {
             if (h.getStartTime() - n > 0) {
                 return h;
@@ -349,6 +406,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         }
 
         return null;
+         */
+
     }
 
     private double calcStream(int hit, int aside_hit) {
