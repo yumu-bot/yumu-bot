@@ -108,7 +108,7 @@ public class OsuBeatmapAttributes {
                 section = line;
                 line = read.readLine();
             }
-            if (line.isBlank()) {
+            if (line == null || line.isBlank()) { //空谱面会 null
                 continue;
             }
             switch (section) {

@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class PPMinus3ManiaImpl extends PPMinus3 {
     // 主要六维
@@ -113,6 +114,8 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 d.add(calculateNote(h, null, getNearestNote(h, noteCategory.get(column + 1)), next));
             } else if (column == key - 1) {
                 d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), null, next));
+            } else if (column >= key) {
+                continue;
             } else {
                 d.add(calculateNote(h, getNearestNote(h, noteCategory.get(column - 1)), getNearestNote(h, noteCategory.get(column + 1)), next));
             }
@@ -322,7 +325,9 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     // 返回这个物件与这一组物件对比，最靠上，或是被 LN 包围的这个 LN，使用二分法查询
     @Nullable
-    private HitObject getNearestNote(HitObject now, List<HitObject> asideColumn) {
+    private HitObject getNearestNote(HitObject now, @Nullable List<HitObject> asideColumn) {
+        if (CollectionUtils.isEmpty(asideColumn)) return null;
+
         var n = now.getStartTime();
 
         int min = 0;
