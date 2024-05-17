@@ -430,18 +430,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     }
 
     private double calcGrace(int hit, int aside_hit) {
-        if (aside_hit - hit <= frac_6) {
-            return 10d * ExponentFunction(aside_hit - hit, frac_8, frac_1);
-        }
-
-        return 0d;
+        return 5d * ExponentFunction(aside_hit - hit, frac_12, frac_6);
     }
 
     private double calcDelayedTail(int release, int aside_release) {
-        if (aside_release - release <= frac_3) {
-            return 10d * ExponentFunction(aside_release - release, frac_6, frac_2);
-        }
-        return 0d;
+        return 10d * ExponentFunction(aside_release - release, frac_6, frac_3);
     }
 
     private double calcJack(int hit, int after_hit) {
@@ -527,6 +520,20 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
     @Override
     public List<Double> getValueList() {
         return Arrays.asList(
+                // v0.7
+
+                PPMinus3.Eval(rice, 0.06367296d, 0.66588798d),
+                PPMinus3.Eval(ln, 0.5184874d, 0.4541511d),
+                PPMinus3.Eval(coordination, 0.1309091d
+                        , 0.8785463d),
+                PPMinus3.Eval(stamina, 0.17030721d, 0.9559876d, getLengthIndex(file.getLength())),
+                PPMinus3.Eval(speed, 0.1584118d, 0.7111474d, null, decreaseLowBurst(maxBurst)),
+                PPMinus3.Eval(precision, 0.1974495d, 0.7550981d),
+                PPMinus3.Eval(sv, 1d, 1d)
+
+                /*
+                // v0.6.2
+
                 PPMinus3.Eval(rice, 0.066d, 0.68d),
                 PPMinus3.Eval(ln, 0.24d, 0.6d),
                 PPMinus3.Eval(coordination, 0.272d, 0.72d),
@@ -534,6 +541,21 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 PPMinus3.Eval(speed, 0.112d, 0.8d, null, decreaseLowBurst(maxBurst)),
                 PPMinus3.Eval(precision, 0.25d, 0.73d),
                 PPMinus3.Eval(sv, 1d, 1d)
+
+                 */
+
+                /*
+
+                // test
+                PPMinus3.Eval(rice),
+                PPMinus3.Eval(ln),
+                PPMinus3.Eval(coordination),
+                PPMinus3.Eval(stamina, 1d, 1d, getLengthIndex(file.getLength())),
+                PPMinus3.Eval(speed, 1d, 1d, null, decreaseLowBurst(maxBurst)),
+                PPMinus3.Eval(precision),
+                PPMinus3.Eval(sv)
+
+                 */
         );
     }
 
@@ -559,8 +581,14 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
         if (CollectionUtils.isEmpty(values) || values.size() < 6) return 0d;
 
+        /*
         List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.4d, 0.6d, 0.2d);
         double divided = 3.8d;
+
+         */
+        List<Double> powers = Arrays.asList(0.8d, 0.8d, 0.8d, 1.2d, 0.6d, 0.4d);
+        double divided = 3.6d;
+
         double star = 0d;
 
         for (int i = 0; i < 6; i++) {

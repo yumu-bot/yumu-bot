@@ -23,6 +23,8 @@ public abstract class PPMinus3 {
 
     protected final int frac_16 = 21;
 
+    protected final int frac_12 = 28;
+
     protected final int frac_8 = 42;
 
     protected final int frac_6 = 55;
@@ -71,31 +73,42 @@ public abstract class PPMinus3 {
 
     // 求值算法，y = a(cx)^b, x = ∑ list
     @NonNull
-    protected static double Eval(List<Double> valueList, double multiplier, double index, @Nullable Double multiply, @Nullable Double addend) {
+    protected static double Eval(List<Double> valueList, double multiplier, double exponent, @Nullable Double multiply, @Nullable Double addend) {
         double a = (addend == null) ? 0d : addend;
         double m = (multiply == null) ? 1d : multiply;
 
-        return multiplier * Math.pow(Sum(valueList) * m + a, index);
+        return multiplier * Math.pow(Sum(valueList) * m + a, exponent);
     }
 
     @NonNull
-    protected static double Eval(List<Double> valueList, double multiplier, double index) {
-        return Eval(valueList, multiplier, index, null, null);
+    protected static double Eval(List<Double> valueList) {
+        return Eval(valueList, 1d, 1d, null, null);
     }
 
     @NonNull
-    protected static double Eval(List<Double> valueList, double multiplier, double index, double multiply) {
-        return Eval(valueList, multiplier, index, multiply, null);
+    protected static double Eval(List<Double> valueList, double multiplier, double exponent) {
+        return Eval(valueList, multiplier, exponent, null, null);
     }
 
-    // 求和算法： 0.8 平均 + 0.2 最大
+    @NonNull
+    protected static double Eval(List<Double> valueList, double multiplier, double exponent, double multiply) {
+        return Eval(valueList, multiplier, exponent, multiply, null);
+    }
+
+    // 求和算法： 0.8 平均（去掉 0） + 0.2 最大
     @NonNull
     protected static double Sum(List<Double> list) {
         if (CollectionUtils.isEmpty(list)) {
             return 0d;
         }
 
-        return 0.8d * list.stream().reduce(Double::sum).orElse(0d) / list.size() + 0.2d * list.stream().reduce(Double::max).orElse(0d);
+        var nonZeroList = list.stream().filter(d -> d > 0).toList();
+
+        if (CollectionUtils.isEmpty(nonZeroList)) {
+            return 0d;
+        }
+
+        return 0.8d * nonZeroList.stream().reduce(Double::sum).orElse(0d) / nonZeroList.size() + 0.2d * nonZeroList.stream().reduce(Double::max).orElse(0d);
     }
 
     /**

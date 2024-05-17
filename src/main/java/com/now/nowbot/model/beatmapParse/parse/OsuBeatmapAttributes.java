@@ -272,6 +272,8 @@ public class OsuBeatmapAttributes {
         this.clockRate = clockRate;
 
         if (clockRate != 1d && clockRate > 0d) {
+            this.setLength((int) (this.getLength() / clockRate));
+
             for (var h : hitObjects) {
                 h.setStartTime((int) (h.getStartTime() / clockRate));
                 h.setEndTime((int) (h.getEndTime() / clockRate));
