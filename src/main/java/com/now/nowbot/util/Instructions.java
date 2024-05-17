@@ -80,7 +80,7 @@ public class Instructions {
     public static final Pattern NOMINATION = Pattern.compile("^[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))\\s*([:：]?(?<mode>(bid|sid|s|b)))?\\s*(?<sid>\\d+)?");
 
     // pp px ppp pp+ p+ ppplus ppv pppvs ppplusvs/ pa pc ppa ppc ppplusmap pppmap plusmapvs pluscompare ppplusmapvs plusmapcompare pppmv
-    public static final Pattern PP_PLUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap|p?pc(?![A-Za-z_])|(pp)?plusmapvs|pppmv|(pp)?plusmapcompare))\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern PP_PLUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
     // #5 osu! 比赛指令
 

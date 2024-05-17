@@ -57,6 +57,8 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
+        var me = event.getSender().getId();
+
         try {
             switch (cmd.toLowerCase()) {
                 case "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> {
@@ -66,19 +68,18 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                     if (Objects.nonNull(at))
                         setUser(null, null, at.getQQ(), false, data);
                     else
-                        setUser(a1, a2, event.getSender().getId(), false, data);
+                        setUser(a1, a2, me, false, data);
                 }
                 case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
                     // user vs
                     if (Objects.nonNull(at)) {
                         var user = bindDao.getUserFromQQ(at.getQQ());
-                        setUser(null, user.getOsuName(), event.getSender().getId(), true, data);
+                        setUser(null, user.getOsuName(), me, true, data);
                     } else {
-                        setUser(a1, a2, event.getSender().getId(), true, data);
+                        setUser(a1, a2, me, true, data);
                     }
                 }
-                case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "pc", "ppc", "ppplusmapvs",
-                     "ppplusmapcompare", "plusmapvs", "plusmapcompare", "pppmv" -> {
+                case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "ppplusmapvs", "plusmapvs", "pppmv" -> {
                     // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
                     isUser = false;
                     setMap(a1, a2, data);

@@ -95,7 +95,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
 
         // 构建参数
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        String qqStr = matcher.group("qq");
+        String qq = matcher.group("qq");
         BinUser binUser;
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
 
@@ -122,12 +122,11 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
             } catch (Exception e) {
                 throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
             }
-        } else if (StringUtils.hasText(qqStr)) {
+        } else if (StringUtils.hasText(qq)) {
             try {
-                long qq = Long.parseLong(qqStr);
-                binUser = bindDao.getUserFromQQ(qq);
+                binUser = bindDao.getUserFromQQ(Long.parseLong(qq));
             } catch (BindException e) {
-                throw new MiniCardException(MiniCardException.Type.MINI_QQ_NotFound, qqStr);
+                throw new MiniCardException(MiniCardException.Type.MINI_QQ_NotFound, qq);
             }
         } else {
             try {
@@ -135,10 +134,6 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
             } catch (BindException e) {
                 throw new MiniCardException(MiniCardException.Type.MINI_Me_TokenExpired);
             }
-        }
-
-        if (Objects.isNull(binUser)) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Me_TokenExpired);
         }
 
         data.setValue(
@@ -160,7 +155,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
                     param.user().getOsuID(), param.mode(), param.offset(), param.limit(), ! param.isRecent()
             ).getFirst();
         } catch (Exception e) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Recent_NotFound, param.user().getOsuID());
+            throw new MiniCardException(MiniCardException.Type.MINI_Recent_NotFound, param.user().getOsuName());
         }
 
         try {
