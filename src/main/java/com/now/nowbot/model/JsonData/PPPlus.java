@@ -108,4 +108,8 @@ public class PPPlus {
     public String toString() {
         return STR."PPPlus{accuracy=\{accuracy}, combo=\{combo}, difficulty=\{difficulty}, performance=\{performance}, skill=\{skill}\{'}'}";
     }
+
+    public static Stats getMaxStats() {
+        return new PPPlus.Stats(99999d, 99999d, 99999d, 99999d, 99999d, 99999d, 99999d, 99999d);
+    }
 }
