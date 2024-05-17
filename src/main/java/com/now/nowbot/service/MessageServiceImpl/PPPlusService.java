@@ -323,6 +323,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     public record PPPlusParam(boolean isUser, Object me, Object other) {
     }
 
+    // 、、、、、、、、、、、、、、、、、、
     private void beforePost(Map<String, Object> data) {
         var o = data.get("other");
         if (Objects.nonNull(o) && o instanceof OsuUser u && u.getId() == 17064371L) {
