@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -12,9 +13,8 @@ import com.now.nowbot.throwable.ServiceException.MiniCardException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.util.StringUtils;
 
 import java.util.Objects;
 
@@ -25,6 +25,8 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
     OsuUserApiService userApiService;
     @Resource
     ImageService imageService;
+    @Resource
+    BindDao bindDao;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<InfoService.InfoParam> data) throws Throwable {
@@ -38,39 +40,31 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         var qq = matcher.group("qq");
 
+        String name = matcher.group("name");
+
         if (Objects.nonNull(at)) {
             data.setValue(new InfoService.InfoParam(
-                    new BinUser(at.getTarget(), messageText.toLowerCase()),
-                    mode, 1, false));
-            return true;
-        }
-        if (Objects.nonNull(qq)) {
+                    bindDao.getUserFromQQ(at.getTarget()), mode, 1, false
+            ));
+        } else if (StringUtils.hasText(qq)) {
             data.setValue(new InfoService.InfoParam(
-                    new BinUser(Long.parseLong(qq), messageText.toLowerCase()),
-                    mode, 1, false));
-            return true;
-        }
-
-        String name = matcher.group("name");
-        if (Strings.isNotBlank(name)) {
+                    bindDao.getUserFromQQ(Long.parseLong(qq)),
+                    mode, 1, false
+            ));
+        } else if (StringUtils.hasText(name)) {
             var user = new BinUser();
-            long id;
 
-            try {
-                id = userApiService.getOsuId(name.trim());
-            } catch (WebClientResponseException.NotFound e) {
-                throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
-            }
-            user.setOsuID(id);
+            user.setOsuName(name.trim());
             user.setMode(mode);
-            data.setValue(new InfoService.InfoParam(user, mode, 1, false));
-            return true;
+            data.setValue(new InfoService.InfoParam(
+                    user, mode, 1, false
+            ));
         } else {
             data.setValue(new InfoService.InfoParam(
-                    new BinUser(event.getSender().getId(), messageText.toLowerCase()),
+                    bindDao.getUserFromQQ(event.getSender().getId()),
                     mode, 1, true));
-            return true;
         }
+        return true;
     }
 
     @Override
@@ -79,9 +73,9 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
 
         OsuUser osuUser;
         try {
-            osuUser = userApiService.getPlayerInfo(param.user(), param.mode());
+            osuUser = userApiService.getPlayerInfo(param.user().getOsuName(), param.mode());
         } catch (Exception e) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, param.user().getOsuID());
+            throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, param.user().getOsuName());
         }
 
         byte[] image;
