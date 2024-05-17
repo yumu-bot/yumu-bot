@@ -25,10 +25,13 @@ public class MatchListenerException extends TipsException {
         ML_Listen_StopRequest("收到停止监听 %s 的请求"),
         ML_Listen_Stop("停止监听 %s：%s。"), //标准停止输出
 
-        ML_Send_NotGroup("请在群聊中使用这个功能！"),
-        ML_Send_Error("对局信息发送失败。\n请耐心等待问题修复。")
+        ML_Info_NoListener("本群没有监听实例。"),
+        ML_Info_List("本群的监听对局有：%s"),
 
-        ;//逗号分隔
+        ML_Send_NotGroup("请在群聊中使用这个功能！"),
+        ML_Send_Error("对局监听图片发送失败。\n请耐心等待问题修复。"),
+
+        ;
         public final String message;
         Type(String message) {
             this.message = message;

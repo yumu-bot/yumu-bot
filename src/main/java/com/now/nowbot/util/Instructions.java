@@ -84,7 +84,7 @@ public class Instructions {
 
     // #5 osu! 比赛指令
 
-    public static final Pattern MATCH_LISTENER = Pattern.compile("^[!！]\\s*(?i)(ym)?(make\\s*love|(match)?listen(er)?|ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?\\s*(?<operate>start|stop|end|off|on|[spefo](?![A-Za-z_]))?");
+    public static final Pattern MATCH_LISTENER = Pattern.compile("^[!！]\\s*(?i)(ym)?(make\\s*love|(match)?listen(er)?|ml(?![A-Za-z_])|li(?![A-Za-z_]))\\s*(?<matchid>\\d+)?\\s*(?<operate>info|list|start|stop|end|off|on|[lispefo](?![A-Za-z_]))?");
 
     public static final Pattern MU_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(rating|ra(?![A-Za-z_])))|(?<main>((ym)?rating|(ym)?ra(?![A-Za-z_])|mra(?![A-Za-z_]))))\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<skip>-?\\d+))?(\\s*(?<ignore>-?\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 

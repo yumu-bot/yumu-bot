@@ -108,7 +108,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         try {
             from.sendImage(image);
         } catch (Exception e) {
-            log.error("MR 数据请求失败", e);
+            log.error("对局信息数据请求失败", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Send_Error);
         }
     }
@@ -154,7 +154,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         try {
             img = imageService.getPanelF2(match.getMatchStat(), cal.getRoundList().get(index), index);
         } catch (Exception e) {
-            log.error("MR 图片渲染失败：", e);
+            log.error("对局信息图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
         }
 
