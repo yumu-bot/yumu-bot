@@ -127,13 +127,13 @@ public class IMapperService implements MessageService<Matcher> {
                 if (Objects.isNull(search)) {
                     search = beatmapApiService.searchBeatmap(query);
                     resultCount += search.getBeatmapSets().size();
-                    continue;
+                } else {
+                    page++;
+                    query.put("page", page);
+                    var result = beatmapApiService.searchBeatmap(query);
+                    resultCount += result.getBeatmapSets().size();
+                    search.getBeatmapSets().addAll(result.getBeatmapSets());
                 }
-                page++;
-                query.put("page", page);
-                var result = beatmapApiService.searchBeatmap(query);
-                resultCount += result.getResultCount();
-                search.getBeatmapSets().addAll(result.getBeatmapSets());
             } while (resultCount < search.getTotal() && page < 10);
         }
 
