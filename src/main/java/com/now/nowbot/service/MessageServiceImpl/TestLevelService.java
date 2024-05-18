@@ -76,7 +76,7 @@ public class TestLevelService implements MessageService<BinUser> {
         var bp = scoreApiService.getBestPerformance(user, user.getMode(), 0, 100);
         var lastBp = bp.getLast();
         if (lastBp.getPP() < 100 || bp.size() != 100) {
-            throw new TipsException("你太强了, 测不出来爆表了");
+            throw new TipsException("没测出来, 要不你再刷一下pp?");
         }
         double level = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
