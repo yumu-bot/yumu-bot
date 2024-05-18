@@ -29,6 +29,10 @@ public class ContextUtil {
         threadLocalService.get().put(name, o);
     }
 
+    public static boolean isTestUser() {
+        return getContext("isTest", Boolean.FALSE, Boolean.class);
+    }
+
     public static boolean isBreakAop() {
         return ContextUtil.getContext("break aop", Object.class) != null;
     }
