@@ -78,13 +78,13 @@ public class TestLevelService implements MessageService<BinUser> {
         if (lastBp.getPP() < 100 || bp.size() != 100) {
             throw new TipsException("你太菜了, 不好评价");
         }
-        double data = getLevel(bp, user);
+        double level = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
-        b.addAt(event.getSender().getId()).addText(String.format(" 你的评分 %.2f", data));
+        double s = level > 5 ? (level / 3) : 99;
+        b.addAt(event.getSender().getId()).addText(String.format(" 你的评分 %s, 击败%.2f%%的人", getLevelStr(level), s));
         event.getSubject().sendMessage(b.build());
     }
 
-    int[] testBpIndex = new int[]{7, 13, 19, 29, 37};
     static final Function<Integer, Double> calculator = (i) -> {
         double r;
 
@@ -97,20 +97,29 @@ public class TestLevelService implements MessageService<BinUser> {
 
     public double getLevel(List<Score> bp, BinUser user) throws TipsException {
         var mapIdSet = new HashSet<Long>();
-        bp.forEach(s ->s.setBeatMap(beatmapApiService.getMapInfoFromDB(s.getBeatMap().getId())));
-        for (var index : testBpIndex) {
+        bp.forEach(s -> s.setBeatMap(beatmapApiService.getMapInfoFromDB(s.getBeatMap().getId())));
+        // 随机取数
+        for (var index : getRandomIndex(user.getOsuID())) {
             mapIdSet.add(bp.get(index).getBeatMap().getId());
         }
+
+
         bp.stream()
-                .filter(s -> !mapIdSet.contains(s.getBeatMap().getId()))
+                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
                 .sorted(Comparator.comparingInt(Score::getMaxCombo).reversed())
                 .limit(5)
                 .forEach(s -> mapIdSet.add(s.getBeatMap().getId()));
+
         bp.stream()
-                .filter(s -> !mapIdSet.contains(s.getBeatMap().getId()))
-                .sorted(Comparator.comparingDouble(s -> (1 - s.getAccuracy()) + (s.getBeatMap().getMaxCombo() - s.getMaxCombo())))
-                .limit(5)
-                .forEach(s ->mapIdSet.add(s.getBeatMap().getId()));
+                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
+                .map(s -> new ScoreLite(s.getMaxCombo(), s.getBeatMap().getMaxCombo() - s.getMaxCombo(),
+                        s.getAccuracy(), Mod.getModsValueFromStr(s.getMods()), s.getBeatMap().getId()))
+                .sorted(Comparator.comparingInt(ScoreLite::diff)
+                        .thenComparingInt(ScoreLite::combo).reversed()
+                        .thenComparingDouble(ScoreLite::acc).reversed()
+                        .thenComparingInt(ScoreLite::mods))
+                .limit(5).forEach(s -> mapIdSet.add(s.mapId));
+
         var suppliers = mapIdSet.stream().<AsyncMethodExecutor.Supplier<BeatmapUserScore>>map(bid -> () -> scoreApiService
                 .getScore(bid, user, user.getMode())).toList();
         var scores = AsyncMethodExecutor.AsyncSupplier(suppliers);
@@ -119,10 +128,6 @@ public class TestLevelService implements MessageService<BinUser> {
         try {
             for (var s : scores) {
                 double score = calculator.apply(s.getPosition());
-                // 严查 mod
-                if (Mod.hasChangeRating(s.getScore().getMods())) {
-                    score *= 0.8;
-                }
                 // acc 修正
                 score *= 2 - s.getScore().getAccuracy();
                 sum += score;
@@ -133,6 +138,40 @@ public class TestLevelService implements MessageService<BinUser> {
         }
 
         return sum;
+    }
+
+    private String getLevelStr(double score) {
+        if (score > 250) {
+            return "X";
+        } else if (score > 220) {
+            return "SS";
+        } else if (score > 200) {
+            return "S";
+        } else if (score > 170) {
+            return "A+";
+        } else if (score > 130) {
+            return "A";
+        } else if (score > 100) {
+            return "B";
+        } else if (score > 70) {
+            return "C";
+        } else if (score > 5) {
+            return "D";
+        } else {
+            return "X+";
+        }
+    }
+
+    private int[] getRandomIndex(long uid) {
+        long c = 45648973;
+        long m = 81901;
+        long a = 143519;
+        int[] index = new int[5];
+        for (int i = 0; i < 5; i++) {
+            long random = (a * uid + c) % m;
+            index[i] = (i * 5) + (int) (random % 5 * (i + 1));
+        }
+        return index;
     }
 
     private double proportion(double score) {
@@ -159,5 +198,8 @@ public class TestLevelService implements MessageService<BinUser> {
         } else {
             return 8;
         }
+    }
+
+    record ScoreLite(int combo, int diff, double acc, int mods, long mapId) {
     }
 }
