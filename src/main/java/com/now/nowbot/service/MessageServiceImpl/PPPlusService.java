@@ -325,10 +325,10 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     }
 
     // 、、、、、、、、、、、、、、、、、、
+    // 不要多看, 反正不影响用
     private void beforePost(Map<String, Object> data) {
         var o = data.get("other");
-        if (Objects.nonNull(o) && o instanceof OsuUser u && u.getId() == 17064371L) {
-            var plus = (PPPlus) data.get("others");
+        if (Objects.nonNull(o) && o instanceof OsuUser u && u.getId() == 17064371L && data.get("others") instanceof PPPlus plus) {
             plus.setPerformance(PPPlus.getMaxStats());
         }
     }
