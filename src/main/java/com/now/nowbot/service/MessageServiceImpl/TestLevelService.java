@@ -167,9 +167,15 @@ public class TestLevelService implements MessageService<BinUser> {
         long m = 81901;
         long a = 143519;
         int[] index = new int[5];
+        var set = new HashSet<Integer>();
         for (int i = 0; i < 5; i++) {
             long random = (a * uid + c) % m;
-            index[i] = (i * 5) + (int) (random % 5 * (i + 1));
+            int tmp = (i * 5) + (int) (random % 5 * (i + 1));
+            if (set.add(tmp)) {
+                index[i] = tmp;
+            } else {
+                i--;
+            }
         }
         return index;
     }
