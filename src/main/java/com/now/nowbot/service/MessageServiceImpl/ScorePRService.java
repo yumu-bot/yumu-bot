@@ -16,7 +16,6 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -28,7 +27,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -223,12 +221,9 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         List<Score> scoreList;
 
-        var w = new StopWatch();
-        w.start("获取成绩");
         try {
             scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, !isRecent);
         } catch (WebClientResponseException e) {
-            w.stop();
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
                 log.info("recent 退避成功");
@@ -244,13 +239,11 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             log.error("成绩：列表获取失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
         }
-        w.stop();
 
         if (CollectionUtils.isEmpty(scoreList)) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
-        w.start("获取用户信息");
         try {
             osuUser = userApiService.getPlayerInfo(binUser, mode);
         } catch (WebClientResponseException.Forbidden e) {
@@ -258,7 +251,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } catch (Exception e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
         }
-        w.stop();
+
         //成绩发送
         if (isMultipleScore) {
             int scoreSize = scoreList.size();
@@ -268,13 +261,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
 
             try {
-                w.start("绘图");
                 var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
-                w.stop();
-
-                if (ContextUtil.isTestUser()) {
-                    from.sendMessage(w.prettyPrint());
-                }
                 from.sendImage(image);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
@@ -283,12 +270,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } else {
             //单成绩发送
             try {
-                w.start("绘图");
                 var image = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
-                w.stop();
-                if (ContextUtil.isTestUser()) {
-                    from.sendMessage(w.prettyPrint());
-                }
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩：绘图出错", e);
