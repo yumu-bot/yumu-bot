@@ -197,7 +197,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
         }
 
-        data.setValue(new PPPlusParam(true, m1, m2));
+        data.setValue(new PPPlusParam(false, m1, m2));
     }
 
     private BeatMap getBeatMap(String bidStr) throws PPPlusException {
