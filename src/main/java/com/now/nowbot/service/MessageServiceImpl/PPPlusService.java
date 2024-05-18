@@ -14,12 +14,14 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -107,6 +109,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     @Override
     public void HandleMessage(MessageEvent event, PPPlusParam param) throws Throwable {
         var from = event.getSubject();
+        var w = new StopWatch();
 
         var dataMap = new HashMap<String, Object>(6);
 
@@ -115,13 +118,13 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             dataMap.put("isUser", true);
             OsuUser u1 = (OsuUser) param.me;
             dataMap.put("me", u1);
-            dataMap.put("my", getUserPerformancePlus(u1.getUID()));
+            dataMap.put("my", getUserPerformancePlus(u1.getUID(), w));
 
             if (Objects.nonNull(param.other)) {
                 // 包含另一个就是 vs, 直接判断了
                 OsuUser u2 = (OsuUser) param.other;
                 dataMap.put("other", u2);
-                dataMap.put("others", getUserPerformancePlus(u2.getUID()));
+                dataMap.put("others", getUserPerformancePlus(u2.getUID(), w));
             }
         } else {
             dataMap.put("isUser", false);
@@ -137,14 +140,19 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         byte[] image;
 
+
         try {
+            w.start("getImage");
             beforePost(dataMap);
             image = imageService.getPanelB3(dataMap);
+            w.stop();
         } catch (Exception e) {
             log.error("PP+ 渲染失败", e);
             throw new PPPlusException(PPPlusException.Type.PL_Render_Error);
         }
-
+        if (ContextUtil.isTestUser()) {
+            event.getSubject().sendMessage(w.prettyPrint());
+        }
         try {
             from.sendImage(image);
         } catch (Exception e) {
@@ -155,11 +163,14 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     }
 
     // 把数据合并一下 。这个才是真传过去的 PP+
-    private PPPlus getUserPerformancePlus(long uid) {
+    private PPPlus getUserPerformancePlus(long uid, StopWatch watch) {
         var plus = new PPPlus();
+        watch.start("user");
         var bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100);
+        watch.stop();
+        watch.start("calc");
         var performance = performancePlusService.calculateUserPerformance(bps);
-
+        watch.stop();
         plus.setPerformance(performance);
         plus.setAdvancedStats(calculateUserAdvancedStats(performance));
 
