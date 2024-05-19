@@ -44,7 +44,9 @@ public class BeatMapDao {
     }
 
     public static BeatMap fromBeatmapLite(BeatmapLite bl){
-        return bl.toBeatMap();
+        var b = bl.toBeatMap();
+        b.setBeatMapSet(fromMapsetLite(bl.getMapSet()));
+        return b;
     }
 
     public static BeatmapLite fromBeatmapModel(BeatMap b){

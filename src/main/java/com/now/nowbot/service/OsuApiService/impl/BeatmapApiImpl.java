@@ -3,6 +3,7 @@ package com.now.nowbot.service.OsuApiService.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.dao.BeatMapDao;
+import com.now.nowbot.mapper.MapSetMapper;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
@@ -29,7 +30,8 @@ import java.util.Optional;
 public class BeatmapApiImpl implements OsuBeatmapApiService {
     private static final Logger log = LoggerFactory.getLogger(BeatmapApiImpl.class);
     OsuApiBaseService base;
-    BeatMapDao beatMapDao;
+    BeatMapDao   beatMapDao;
+    MapSetMapper mapSetMapper;
     private final Path osuDir;
 
     public BeatmapApiImpl(
