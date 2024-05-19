@@ -2,7 +2,6 @@ package com.now.nowbot.entity;
 
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.OsuMode;
-
 import jakarta.persistence.*;
 @Entity
 @Table(name = "osu_beatmap",indexes = {
@@ -60,6 +59,33 @@ public class BeatmapLite {
     @ManyToOne()
     @JoinColumn(name = "map_id")
     MapSetLite mapSet;
+
+    public BeatmapLite() {
+    }
+
+    public BeatmapLite(BeatMap beatMap) {
+        setId(beatMap.getId());
+        setBeatmapsetId(beatMap.getSID());
+        setConvert(beatMap.getConvert());
+        setVersion(beatMap.getDifficultyName());
+        setPlaycount(beatMap.getPlayCount());
+        setPasscount(beatMap.getPassCount());
+        setOD(beatMap.getOD());
+        setCS(beatMap.getCS());
+        setAR(beatMap.getAR());
+        setHP(beatMap.getHP());
+        setDifficultyRating(beatMap.getStarRating());
+        setBpm(beatMap.getBPM());
+        setMaxCombo(beatMap.getMaxCombo());
+        setStatus(beatMap.getStatus());
+        setCircles(beatMap.getCircles());
+        setSliders(beatMap.getSliders());
+        setSpinners(beatMap.getSpinners());
+        setTotalLength(beatMap.getTotalLength());
+        setHitLength(beatMap.getHitLength());
+        setModeInt(beatMap.getModeInt());
+        setUserId(beatMap.getMapperID());
+    }
 
     public Long getId() {
         return id;

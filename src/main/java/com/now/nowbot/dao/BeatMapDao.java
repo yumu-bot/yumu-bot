@@ -7,7 +7,6 @@ import com.now.nowbot.mapper.MapSetMapper;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.Covers;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,12 +48,11 @@ public class BeatMapDao {
     }
 
     public static BeatmapLite fromBeatmapModel(BeatMap b){
-        var s = new BeatmapLite();
+        var s = new BeatmapLite(b);
         MapSetLite mapSet = null;
         if (b.getBeatMapSet() != null) {
             mapSet = fromMapSetModel(b.getBeatMapSet());
         }
-        BeanUtils.copyProperties(b, s);
         s.setMapSet(mapSet);
         return s;
     }
