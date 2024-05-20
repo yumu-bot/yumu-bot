@@ -12,7 +12,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class PPMinus3ManiaImpl extends PPMinus3 {
     // 主要六维
@@ -526,9 +525,9 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
                 PPMinus3.Eval(ln, 0.5184874d, 0.4541511d),
                 PPMinus3.Eval(coordination, 0.1309091d
                         , 0.8785463d),
-                PPMinus3.Eval(stamina, 0.17030721d, 0.9559876d, getLengthIndex(file.getLength())),
-                PPMinus3.Eval(speed, 0.1584118d, 0.7111474d, null, decreaseLowBurst(maxBurst)),
                 PPMinus3.Eval(precision, 0.1974495d, 0.7550981d),
+                PPMinus3.Eval(speed, 0.1584118d, 0.7111474d, null, decreaseLowBurst(maxBurst)),
+                PPMinus3.Eval(stamina, 0.17030721d, 0.9559876d, getLengthIndex(file.getLength())),
                 PPMinus3.Eval(sv, 1d, 1d)
 
                 /*
@@ -571,22 +570,16 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
 
     @Override
     public List<String> getAbbrList() {
-        return Arrays.asList("RC", "LN", "CO", "ST", "SP", "PR", "SV");
+        return Arrays.asList("RC", "LN", "CO", "PR", "SP", "ST", "SV");
     }
 
     // 新版获取星数的方法
     @Override
     public Double getStar() {
+        if (CollectionUtils.isEmpty(getValueList()) || getValueList().size() < 6) return 0d;
+
         List<Double> values = getValueList().subList(0, 6);
-
-        if (CollectionUtils.isEmpty(values) || values.size() < 6) return 0d;
-
-        /*
-        List<Double> powers = Arrays.asList(0.6d, 0.6d, 0.8d, 1.4d, 0.6d, 0.2d);
-        double divided = 3.8d;
-
-         */
-        List<Double> powers = Arrays.asList(0.8d, 0.8d, 0.8d, 1.2d, 0.6d, 0.4d);
+        List<Double> powers = Arrays.asList(0.8d, 0.8d, 0.8d, 0.4d, 0.6d, 1.2d);
         double divided = 3.6d;
 
         double star = 0d;
