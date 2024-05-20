@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PPPlus;
@@ -13,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -53,11 +55,10 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         var cmd = Objects.requireNonNullElse(matcher.group("function"), "pp");
         var a1 = matcher.group("area1");
         var a2 = matcher.group("area2");
-        boolean isUser = true;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        var me = event.getSender().getId();
+        var me = bindDao.getUserFromQQ(event.getSender().getId());
 
         try {
             switch (cmd.toLowerCase()) {
@@ -66,22 +67,20 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                     if (Objects.nonNull(a1) && a1.isBlank()) a1 = null;
                     if (Objects.nonNull(a2) && a2.isBlank()) a2 = null;
                     if (Objects.nonNull(at))
-                        setUser(null, null, at.getQQ(), false, data);
+                        setUser(null, null, bindDao.getUserFromQQ(at.getTarget()), false, data);
                     else
                         setUser(a1, a2, me, false, data);
                 }
                 case "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> {
                     // user vs
                     if (Objects.nonNull(at)) {
-                        var user = bindDao.getUserFromQQ(at.getQQ());
-                        setUser(null, user.getOsuName(), me, true, data);
+                        setUser(null, bindDao.getUserFromQQ(at.getTarget()).getOsuName(), me, true, data);
                     } else {
                         setUser(a1, a2, me, true, data);
                     }
                 }
                 case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "ppplusmapvs", "plusmapvs", "pppmv" -> {
                     // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
-                    isUser = false;
                     setMap(a1, a2, data);
                 }
                 default -> {
@@ -89,15 +88,11 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                     return false;
                 }
             }
-        } catch (WebClientResponseException e) {
+        } catch (BindException e) {
+            throw e;
+        } catch (Exception e) {
             log.error("pp+ 请求异常", e);
-            if (isUser) {
-                throw new PPPlusException(PPPlusException.Type.PL_User_NotFound);
-            } else {
-                throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
-            }
-        } catch (NumberFormatException e) {
-            throw new PPPlusException(PPPlusException.Type.PL_Map_BIDParseError);
+            throw new PPPlusException(PPPlusException.Type.PL_Send_Error);
         }
 
         return true;
@@ -156,25 +151,40 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
     // 把数据合并一下 。这个才是真传过去的 PP+
     private PPPlus getUserPerformancePlus(long uid) {
-        var plus = new PPPlus();
         var bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100);
         var performance = performancePlusService.calculateUserPerformance(bps);
+
+        var plus = new PPPlus();
         plus.setPerformance(performance);
-        plus.setAdvancedStats(calculateUserAdvancedStats(performance));
+        plus.setAdvancedStats(
+                calculateUserAdvancedStats(performance)
+        );
 
         return plus;
     }
 
-    private void setUser(String a1, String a2, Long senderId, boolean isVs, DataValue<PPPlusParam> data) {
-        OsuUser p1 = StringUtils.hasText(a1) ?
-                userApiService.getPlayerInfo(a1, OsuMode.OSU) :
-                userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
+    private void setUser(String a1, String a2, BinUser me, boolean isVs, DataValue<PPPlusParam> data) throws PPPlusException {
+        OsuUser p1;
+        OsuUser p2;
 
-        OsuUser p2 = StringUtils.hasText(a2) ? userApiService.getPlayerInfo(a2, OsuMode.OSU) : null;
+        try {
 
-        if (isVs && Objects.isNull(p2)) {
-            p2 = p1;
-            p1 = userApiService.getPlayerInfo(bindDao.getUserFromQQ(senderId), OsuMode.OSU);
+            p1 = StringUtils.hasText(a1) ?
+                    userApiService.getPlayerInfo(a1, OsuMode.OSU) :
+                    userApiService.getPlayerInfo(me, OsuMode.OSU);
+
+            p2 = StringUtils.hasText(a2) ? userApiService.getPlayerInfo(a2, OsuMode.OSU) : null;
+
+            if (isVs && Objects.isNull(p2)) {
+                p2 = p1;
+                p1 = userApiService.getPlayerInfo(me, OsuMode.OSU);
+            }
+        } catch (WebClientResponseException.NotFound e) {
+            throw new PPPlusException(PPPlusException.Type.PL_User_NotFound);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new PPPlusException(PPPlusException.Type.PL_User_Banned);
+        } catch (WebClientResponseException e) {
+            throw new PPPlusException(PPPlusException.Type.PL_API_NotAccessible);
         }
 
         data.setValue(new PPPlusParam(true, p1, p2));
@@ -202,11 +212,13 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     private BeatMap getBeatMap(String bidStr) throws PPPlusException {
         BeatMap beatMap;
         long id;
+
         try {
             id = Long.parseLong(bidStr);
         } catch (NumberFormatException e) {
             throw new PPPlusException(PPPlusException.Type.PL_Map_BIDParseError);
         }
+
         try {
             beatMap = beatmapApiService.getMapInfoFromDB(id);
         } catch (WebClientResponseException ignored) {
@@ -216,9 +228,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                 throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
             }
         }
-        if (Objects.isNull(beatMap)) {
-            throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
-        }
+
         return beatMap;
     }
 

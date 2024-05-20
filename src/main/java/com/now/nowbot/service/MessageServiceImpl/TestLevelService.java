@@ -58,7 +58,7 @@ public class TestLevelService implements MessageService<BinUser> {
             }
             BinUser user;
             if (at != null) {
-                user = bindDao.getUserFromQQ(at.getQQ());
+                user = bindDao.getUserFromQQ(at.getTarget());
             } else {
                 user = new BinUser();
                 user.setOsuID(osuUserApiService.getOsuId(name));
