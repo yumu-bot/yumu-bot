@@ -2,8 +2,6 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.*;
 import com.now.nowbot.model.enums.OsuMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +18,6 @@ public class Score {
             .appendLiteral("T")
             .appendPattern("HH:mm:ss")
             .appendZoneId().toFormatter();
-    private static final Logger log = LoggerFactory.getLogger(Score.class);
 
     //    @JsonProperty("statistics")
     Double accuracy;
@@ -83,6 +80,9 @@ public class Score {
     BeatMapSet beatMapSet;
 
     MicroUser user;
+
+    // 目前这个值仅在 BPFixService 内使用
+    Float perfectPP;
 
     @JsonProperty("mode")
     public void setMode(String mode){
@@ -285,8 +285,16 @@ public class Score {
         this.weight = weight;
     }
 
+    public Float getPerfectPP() {
+        return perfectPP;
+    }
+
+    public void setPerfectPP(Float perfectPP) {
+        this.perfectPP = perfectPP;
+    }
+
     @Override
     public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
+        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}, perfectPP=\{perfectPP}\{'}'}";
     }
 }

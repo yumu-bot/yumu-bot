@@ -1,6 +1,9 @@
 package com.now.nowbot.model.enums;
 
 import com.now.nowbot.throwable.ModsException;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -178,7 +181,10 @@ public enum Mod {
         return 1d;
     }
 
-    public static int getModsValueFromStr(List<String> mList) {
+    @NonNull
+    public static int getModsValueFromStr(@Nullable List<String> mList) {
+        if (CollectionUtils.isEmpty(mList)) return 0;
+
         return getModsValue(mList.stream().map(Mod::fromStr).distinct().toList());
     }
 

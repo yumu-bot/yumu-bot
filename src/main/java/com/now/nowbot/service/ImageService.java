@@ -11,6 +11,7 @@ import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
+import com.now.nowbot.service.MessageServiceImpl.BPFixService;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.ContextUtil;
@@ -150,6 +151,17 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A5", httpEntity);
+    }
+
+    public byte[] getPanelA6(OsuUser user, List<BPFixService.BPFix> fixes) {
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of(
+                "user", user,
+                "score", fixes
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A6", httpEntity);
     }
 
     /**

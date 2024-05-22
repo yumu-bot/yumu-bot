@@ -4,10 +4,8 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.imag.MapAttr;
-import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
@@ -15,6 +13,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -32,7 +31,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -177,31 +175,14 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         }
     }
 
-    public Map<String, Object> parseData(OsuUser user, List<Score> bps, OsuUserApiService userApiService) throws BPAnalysisException {
+    public Map<String, Object> parseData(OsuUser user, List<Score> bps, OsuUserApiService userApiService) throws TipsException {
         var bpSize = bps.size();
         // top
         var t5 = bps.subList(0, Math.min(bpSize, 5));
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
-        var mapAttrGet = new MapAttrGet(user.getOsuMode());
-        bps.stream()
-                .filter(s -> Mod.hasChangeRating(Mod.getModsValueFromStr(s.getMods())))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), Mod.getModsValueFromStr(s.getMods()), s.getBeatMap().getRanked()));
-        Map<Long, MapAttr> changedAttrsMap;
-        if (CollectionUtils.isEmpty(mapAttrGet.getMaps())) {
-            changedAttrsMap = null;
-        } else {
-            try {
-                changedAttrsMap = imageService.getMapAttr(mapAttrGet);
-            } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
-                log.error("最好成绩分析：渲染失败", e);
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Render_Error);
-            } catch (HttpServerErrorException | WebClientResponseException e) {
-                log.error("最好成绩分析：获取变化的谱面超时", e);
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Attr_FetchFailed);
-            }
-        }
+        MapAttr.applyModChangeForScores(bps, user.getOsuMode(), imageService);
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                           String[] mods) {
@@ -213,21 +194,14 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         List<BeatMap4BA> beatMapList = new ArrayList<>(bpSize);
         MultiValueMap<String, Float> modsPPMap = new LinkedMultiValueMap<>();
         MultiValueMap<String, Float> rankMap = new LinkedMultiValueMap<>();
+
         int modsSum = 0;
+
         for (int i = 0; i < bpSize; i++) {
             var s = bps.get(i);
-            {// 处理 mapList
-                var b = s.getBeatMap();
-                if (!CollectionUtils.isEmpty(changedAttrsMap) && changedAttrsMap.containsKey(s.getScoreID())) {
-                    var attr = changedAttrsMap.get(s.getScoreID());
-                    b.setStarRating(attr.getStars());
-                    b.setBPM(attr.getBpm());
-                    if (Mod.hasDt(Mod.getModsValueFromStr(s.getMods()))) {
-                        b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
-                    } else if (Mod.hasHt(Mod.getModsValueFromStr(s.getMods()))) {
-                        b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
-                    }
-                }
+            var b = s.getBeatMap();
+
+            {
                 var m = new BeatMap4BA(
                         i + 1,
                         b.getTotalLength(),
@@ -238,6 +212,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
                         s.getBeatMapSet().getCovers().getList(),
                         s.getMods().toArray(new String[0])
                 );
+
                 beatMapList.add(m);
             }
 
@@ -379,6 +354,8 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
                 }
             }
         }
+
+        /*
         if (changedAttrsMap != null) {
             Consumer<Score> f = (s) -> {
                 long id = s.getBeatMap().getId();
@@ -396,6 +373,8 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             b5.forEach(f);
             t5.forEach(f);
         }
+
+         */
         Map<String, Object> data = new HashMap<>();
         data.put("card_A1", user);
         data.put("bpTop5", t5);
