@@ -82,7 +82,7 @@ public class Score {
     MicroUser user;
 
     // 目前这个值仅在 BPFixService 内使用
-    Float perfectPP;
+    Float fcPP;
 
     @JsonProperty("mode")
     public void setMode(String mode){
@@ -113,13 +113,13 @@ public class Score {
         this.UID = UID;
     }
 
-    public LocalDateTime getCreateTime() {
+    public LocalDateTime createTimePretty() {
         if (createTime != null) return LocalDateTime.parse(createTime, formatter);
         return LocalDateTime.now();
     }
 
     @JsonProperty("create_at_str")
-    public String getCreateTimeStr() {
+    public String getCreateTime() {
         return createTime;
     }
 
@@ -285,16 +285,16 @@ public class Score {
         this.weight = weight;
     }
 
-    public Float getPerfectPP() {
-        return perfectPP;
+    public Float getFcPP() {
+        return fcPP;
     }
 
-    public void setPerfectPP(Float perfectPP) {
-        this.perfectPP = perfectPP;
+    public void setFcPP(Float fcPP) {
+        this.fcPP = fcPP;
     }
 
     @Override
     public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}, perfectPP=\{perfectPP}\{'}'}";
+        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}, perfectPP=\{fcPP}\{'}'}";
     }
 }

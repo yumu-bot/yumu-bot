@@ -353,7 +353,7 @@ public class BotWebApi {
                 scoreList = new ArrayList<>();
                 for (int i = 0; i < BPList.size(); i++) {
                     var s = BPList.get(i);
-                    if (dayBefore.isBefore(s.getCreateTime())) {
+                    if (dayBefore.isBefore(s.createTimePretty())) {
                         scoreList.add(s);
                         rankList.add(i + 1);
                     }

@@ -110,7 +110,7 @@ public class BeatMap {
     Boolean scoreAble;
 
     @JsonProperty("last_updated")
-    OffsetDateTime lastUpdated;
+    String lastUpdated;
 
     @JsonProperty("mode_int")
     Integer modeInt;
@@ -341,11 +341,11 @@ public class BeatMap {
         this.scoreAble = scoreAble;
     }
 
-    public OffsetDateTime getLastUpdated() {
+    public String getLastUpdated() {
         return lastUpdated;
     }
 
-    public void setLastUpdated(OffsetDateTime lastUpdated) {
+    public void setLastUpdated(String lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
 

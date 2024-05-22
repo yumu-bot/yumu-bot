@@ -197,7 +197,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         for (int i = 0; i < BPs.size(); i++) {
             var bp = BPs.get(i);
 
-            if (dayBefore.isBefore(bp.getCreateTime())){
+            if (dayBefore.isBefore(bp.createTimePretty())){
                 todayBPs.add(bp);
                 BPRanks.add(i + 1);
             }

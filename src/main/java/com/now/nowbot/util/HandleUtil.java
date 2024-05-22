@@ -1,8 +1,10 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
@@ -33,9 +35,9 @@ public class HandleUtil {
      * @throws TipsException 提示
      */
     @NonNull
-    public static List<Score> getOsuBPFromMessageText(@NonNull MessageEvent event, String name, String qqStr, BindDao bindDao, OsuUserApiService userApiService, OsuScoreApiService scoreApiService) throws TipsException {
-        var user = getOsuUserFromMessageText(event, name, qqStr, bindDao, userApiService);
-        return getOsuBPFromMessageText(user, scoreApiService);
+    public static List<Score> getOsuBPFromMessageText(@NonNull MessageEvent event, String name, String qqStr, String mode, BindDao bindDao, OsuUserApiService userApiService, OsuScoreApiService scoreApiService) throws TipsException {
+        var user = getOsuUserFromMessageText(event, name, qqStr, mode, bindDao, userApiService);
+        return getOsuBPFromMessageText(user, mode, scoreApiService);
     }
 
     /**
@@ -47,9 +49,11 @@ public class HandleUtil {
      * @throws TipsException 提示
      */
     @NonNull
-    public static List<Score> getOsuBPFromMessageText(@NonNull OsuUser user, OsuScoreApiService scoreApiService) throws TipsException {
+    public static List<Score> getOsuBPFromMessageText(@NonNull OsuUser user, String mode, int offset, int limit, OsuScoreApiService scoreApiService) throws TipsException {
+        var m = (OsuMode.getMode(mode) == OsuMode.DEFAULT) ? user.getOsuMode() : OsuMode.getMode(mode);
+
         try {
-            return scoreApiService.getBestPerformance(user);
+            return scoreApiService.getBestPerformance(user.getId(), m, offset, limit);
         } catch (WebClientResponseException.NotFound e) {
             throw new TipsException("找不到此玩家的最好成绩！");
         } catch (WebClientResponseException e) {
@@ -57,6 +61,11 @@ public class HandleUtil {
         } catch (Exception e) {
             throw new TipsException("MessageUtil：获取最好成绩失败！");
         }
+    }
+
+    @NonNull
+    public static List<Score> getOsuBPFromMessageText(@NonNull OsuUser user, String mode, OsuScoreApiService scoreApiService) throws TipsException {
+        return getOsuBPFromMessageText(user, mode, 0, 100, scoreApiService);
     }
 
     /**
@@ -70,7 +79,7 @@ public class HandleUtil {
      * @throws TipsException 提示
      */
     @NonNull
-    public static OsuUser getOsuUserFromMessageText(@NonNull MessageEvent event, String name, String qqStr, BindDao bindDao, OsuUserApiService userApiService) throws TipsException {
+    public static OsuUser getOsuUserFromMessageText(@NonNull MessageEvent event, String name, String qqStr, String mode, BindDao bindDao, OsuUserApiService userApiService) throws TipsException {
         var myQQ = event.getSender().getId();
 
         var nameMatcher = Pattern.compile("(?<name>[\\w\\s\\-\\[\\]]{3,})\\s*\\|")
@@ -79,12 +88,13 @@ public class HandleUtil {
         var myName = nameMatcher.find() ? nameMatcher.group("name") : null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        String osuName;
+        BinUser binUser;
 
         if (Objects.nonNull(at)) {
-            osuName = bindDao.getUserFromQQ(at.getTarget()).getOsuName();
+            binUser = bindDao.getUserFromQQ(at.getTarget());
         } else if (StringUtils.hasText(name)) {
-            osuName = name.trim();
+            binUser = new BinUser();
+            binUser.setOsuName(name.trim());
         } else if (StringUtils.hasText(qqStr)) {
             long qq;
 
@@ -94,13 +104,14 @@ public class HandleUtil {
                 throw new TipsException("请输入正确的 qq！");
             }
 
-            osuName = bindDao.getUserFromQQ(qq).getOsuName();
+            binUser = bindDao.getUserFromQQ(qq);
         } else {
             try {
-                osuName = bindDao.getUserFromQQ(myQQ).getOsuName();
+                binUser = bindDao.getUserFromQQ(myQQ);
             } catch (BindException e) {
                 if (StringUtils.hasText(myName)) {
-                    osuName = myName.trim();
+                    binUser = new BinUser();
+                    binUser.setOsuName(myName.trim());
                 } else {
                     throw new TipsException("您的令牌已过期，请重新授权。(!ymbind)");
                     // throw new BindException(BindException.Type.BIND_Me_TokenExpired);
@@ -108,8 +119,10 @@ public class HandleUtil {
             }
         }
 
+        var m = (OsuMode.getMode(mode) == OsuMode.DEFAULT) ? binUser.getMode() : OsuMode.getMode(mode);
+
         try {
-            return userApiService.getPlayerInfo(osuName);
+            return userApiService.getPlayerInfo(binUser.getOsuName(), m);
         } catch (WebClientResponseException.Forbidden e) {
             throw new TipsException("该玩家被 ban 了。");
         } catch (WebClientResponseException.NotFound e) {

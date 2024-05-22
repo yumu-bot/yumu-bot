@@ -101,7 +101,7 @@ public class ScoreLegacy {
         combo = score.getMaxCombo();
         passed = score.getPassed();
         key = score.getBeatMap().getCS().intValue();
-        play_time = score.getCreateTime().toString();
+        play_time = score.createTimePretty().toString();
 
         var stat = score.getStatistics();
         n_300 = Optional.ofNullable(stat.getCount300()).orElse(0);

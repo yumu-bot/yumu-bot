@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -79,12 +80,37 @@ public class ImageService {
                 , HttpMethod.POST, httpEntity
                 , new ParameterizedTypeReference<>() {
                 });
+
         List<MapAttr> result = s.getBody();
+
         if (CollectionUtils.isEmpty(result)) {
             return new HashMap<>();
         }
 
         return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
+    }
+
+    public Map<Long, Float> getBPFix(@NonNull List<Score> BPList) {
+        HttpHeaders headers = getDefaultHeader();
+
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("scores", BPList);
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(map, headers);
+        ResponseEntity<List<BPFixService.BPFix>> s = restTemplate.exchange(
+                URI.create(STR."\{IMAGE_PATH}pp")
+                , HttpMethod.POST, httpEntity
+                , new ParameterizedTypeReference<>() {
+                });
+
+        List<BPFixService.BPFix> result = s.getBody();
+
+        if (CollectionUtils.isEmpty(result)) {
+            return new HashMap<>();
+        }
+
+        return result.stream().collect(Collectors.toMap(BPFixService.BPFix::id, BPFixService.BPFix::fixPP));
     }
 
     public void deleteLocalFile(long bid) {
@@ -152,18 +178,6 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A5", httpEntity);
     }
-
-    public byte[] getPanelA6(OsuUser user, List<BPFixService.BPFix> fixes) {
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "user", user,
-                "score", fixes
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A6", httpEntity);
-    }
-
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， name 默认 ""
      */
@@ -218,6 +232,19 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A6", httpEntity);
     }
+
+    public byte[] getPanelA7(OsuUser user, Map<String, Object> fixes) {
+        HttpHeaders headers = getDefaultHeader();
+        var body = Map.of(
+                "user", user,
+                "scores", fixes.get("scores"),
+                "ranks", fixes.get("ranks")
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A7", httpEntity);
+    }
+
 
     public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus PPMinusMe) {
         String STBPRE;
@@ -374,7 +401,7 @@ public class ImageService {
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
 
-        var times = BPs.stream().map(Score::getCreateTime).toList();
+        var times = BPs.stream().map(Score::createTimePretty).toList();
         var now = LocalDate.now();
         var bpTimes = new int[90];
         times.forEach(time -> {
@@ -409,7 +436,7 @@ public class ImageService {
         score.setBeatMapSet(map.getBeatMapSet());
 
         if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
-            log.info("score.created_at_str: {}", score.getCreateTimeStr());
+            log.info("score.created_at_str: {}", score.getCreateTime());
         }
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of("user", user,
