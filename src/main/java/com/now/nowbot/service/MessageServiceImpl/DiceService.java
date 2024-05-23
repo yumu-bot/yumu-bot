@@ -8,6 +8,7 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -184,6 +185,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @throws DiceException 错
      */
     public String Compare(String s) throws DiceException {
+        s = transferApostrophe(s);
+
         float result = getRandom(0);
         float boundary;
         String left = "";
@@ -767,7 +770,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @param s 未和谐
      * @return 和谐
      */
-    private String ChangeCase(String s) {
+    private String ChangeCase(@NonNull String s) {
+        s = recoveryApostrophe(s);
+
         return s.trim()
                 .replaceAll("你们?", "雨沐")
                 .replaceAll("(?i)\\syours?\\s", " yumu's ")
@@ -782,5 +787,17 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 .replaceAll("[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安[門门]|极[左右](主义)?|革命|(社会)?主义|自由|解放|中[華华]民[国國]|情趣|迪克|高潮|色[诱情欲色]|擦边|露出|[蛇射受授吞]精|潮喷|成人|性交|小?男娘|小?南梁|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18", "[和谐]")
                 .replaceAll("[黨党吊批逼操肏肛杀穴屁萎猥]", "○");
+    }
+
+    // 避免撇号影响结果，比如 It's time to go bed
+    @SuppressWarnings("all")
+    private String transferApostrophe(@NonNull String s) {
+        return s.trim().replaceAll("'", "\\" + "'").replaceAll("\"", "\\" + "\"");
+    }
+
+    // 把撇号影响的结果转换回去，比如 It's time to go bed
+    @SuppressWarnings("all")
+    private String recoveryApostrophe(@NonNull String s) {
+        return s.trim().replaceAll("\\" + "'", "'").replaceAll("\\" + "\"", "\"");
     }
 }
