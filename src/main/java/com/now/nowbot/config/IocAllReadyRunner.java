@@ -8,6 +8,7 @@ import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.service.PerformancePlusService;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -57,6 +58,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         var services = applicationContext.getBeansOfType(MessageService.class);
         permissionImplement.init(services);
         permission.init(applicationContext);
+        HandleUtil.init(applicationContext);
 
 //        initFountWidth();
 
@@ -71,6 +73,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
             ((ThreadPoolTaskExecutor) executor).shutdown();
             MatchListenerService.stopAllListener();
         }, "endThread"));
+
+        var rsource = applicationContext.getResource("classpath:/model/nsfw.onnx");
 
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());

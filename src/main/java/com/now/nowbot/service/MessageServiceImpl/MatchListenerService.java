@@ -106,11 +106,13 @@ public class MatchListenerService implements MessageService<MatchListenerService
             case INFO -> {
                 var listenerList = getGroupListenerList(groupEvent.getGroup().getId());
                 if (listenerList.isEmpty()) {
-                    throw new MatchListenerException(MatchListenerException.Type.ML_Info_NoListener);
+                    from.sendMessage(MatchListenerException.Type.ML_Info_NoListener.message);
+                    return;
                 } else {
                     var sb = new StringBuilder();
                     listenerList.forEach(matchID -> sb.append('\n').append(matchID));
-                    throw new MatchListenerException(MatchListenerException.Type.ML_Info_List, sb.toString());
+                    from.sendMessage(String.format(MatchListenerException.Type.ML_Info_List.message, sb));
+                    return;
                 }
             }
             case START -> {

@@ -97,13 +97,17 @@ public class Match implements Cloneable {
         if (CollectionUtils.isEmpty(m.getEvents())) return;
         // 合并事件
         if (events.getFirst().getId() > m.getEvents().getLast().getId()) {
+            // 新事件在前
             this.events.addAll(0, m.getEvents());
         } else if (events.getLast().getId() < m.getEvents().getFirst().getId()){
+            // 新事件在后
             this.events.addAll(m.getEvents());
         } else if (events.getFirst().getId() > m.getEvents().getFirst().getId()) {
+            // 在中间
             events.removeIf(e -> e.getId() <= m.getEvents().getLast().getId());
             this.events.addAll(0, m.getEvents());
         } else if (events.getLast().getId() < m.getEvents().getLast().getId()){
+            // 在中间
             events.removeIf(e -> e.getId() >= m.getEvents().getFirst().getId());
             this.events.addAll(m.getEvents());
         }

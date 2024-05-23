@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.JsonData.ScoreFc;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -154,14 +155,14 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var rankList = new ArrayList<Integer>();
 
 
-        var scores = new ArrayList<Score>();
+        var scores = new ArrayList<ScoreFc>();
 
         for (int i = 0; i < BPList.size(); i++) {
             var s = BPList.get(i);
 
             if (Objects.requireNonNullElse(s.getStatistics().getCountMiss(), 0) > 0) {
                 rankList.add(i + 1);
-                scores.add(s);
+                scores.add(ScoreFc.copyOf(s));
             }
 
         }

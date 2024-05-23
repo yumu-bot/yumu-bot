@@ -9,9 +9,9 @@ import java.time.OffsetDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchEvent implements Comparable<MatchEvent> {
+    Long id;
     @JsonProperty("detail")
     Detail detail;
-    Long id;
     OffsetDateTime timestamp;
     @JsonProperty("user_id")
     Integer userId;
