@@ -69,7 +69,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
                 try {
                     day = Integer.parseInt(dayStr);
                 } catch (NumberFormatException e) {
-                    throw new BPException(BPException.Type.BP_Map_RankError);
+                    throw new BPException(BPException.Type.BP_Param_OutOfRange);
                 }
             }
         }

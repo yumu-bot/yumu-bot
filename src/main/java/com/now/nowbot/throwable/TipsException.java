@@ -10,11 +10,12 @@ public class TipsException extends Exception implements BotException {
         setMessage(message);
     }
 
+    public TipsException(String message, Object... args) {
+        setMessage(String.format(message, args));
+    }
+
     public TipsException(byte[] image) {
         this.image = image;
-    }
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public boolean hasImage() {
@@ -25,11 +26,19 @@ public class TipsException extends Exception implements BotException {
         return image;
     }
 
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
     @Override
     public String getMessage() {
         if (message != null) {
             return message;
         }
         return super.getMessage();
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }
