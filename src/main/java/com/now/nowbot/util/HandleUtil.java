@@ -163,7 +163,7 @@ public class HandleUtil {
                     throw new TipsException("HandleUtil：获取玩家信息失败！");
                 }
             }
-        } catch (IllegalArgumentException ignore) {
+        } catch (IllegalArgumentException | IllegalStateException ignore) {
             // 没名字
         }
 
