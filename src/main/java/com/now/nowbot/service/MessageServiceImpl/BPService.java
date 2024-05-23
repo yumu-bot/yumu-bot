@@ -1,33 +1,29 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPException;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service("BP")
@@ -46,11 +42,23 @@ public class BPService implements MessageService<BPService.BPParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws BPException {
-        var matcher = Instructions.BP.matcher(messageText);
+        var matcher = Instructions.BP1.matcher(messageText);
         if (!matcher.find()) {
             return false;
         }
 
+        var isSelf = false;
+        var mode = HandleUtil.getMode(matcher);
+        var user = HandleUtil.getOtherUser(event, matcher, mode);
+        if (Objects.isNull(user)) {
+            isSelf = true;
+            user = HandleUtil.getSelfUser(event, mode);
+        }
+
+        var scores = HandleUtil.getOsuBPList(user, matcher, mode);
+
+        data.setValue(new BPParam(user, mode, scores, isSelf));
+/*
         var name = matcher.group("name");
         var s = matcher.group("s");
         var nStr = matcher.group("n");
@@ -187,62 +195,43 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
 
         data.setValue(new BPParam(user, offset, limit, mode, isMultipleScore, isMyself));
+
+ */
         return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
-        int offset = param.offset();
-        int limit = param.limit();
+
 
         var from = event.getSubject();
 
-        List<Score> bpList;
+        var bpMap = param.scores();
 
         var mode = param.mode();
-        OsuUser osuUser;
-        try {
-            osuUser = userApiService.getPlayerInfo(param.user(), mode);
-            if (OsuMode.isDefault(mode)) {
-                mode = osuUser.getOsuMode();
-            }
-        } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-            if (param.isMyself()) {
-                throw new BPException(BPException.Type.BP_Me_TokenExpired);
-            } else {
-                throw new BPException(BPException.Type.BP_Player_TokenExpired);
-            }
-        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
-            if (param.isMyself()) {
-                throw new BPException(BPException.Type.BP_Me_Banned);
-            } else {
-                throw new BPException(BPException.Type.BP_Player_NotFound, param.user.getOsuName());
-            }
-        } catch (Exception e) {
-            log.error("最好成绩：玩家获取失败", e);
-            throw new BPException(BPException.Type.BP_Player_FetchFailed);
-        }
+        OsuUser osuUser = param.user();
 
-        try {
-            bpList = scoreApiService.getBestPerformance(param.user(), mode, offset, limit);
-        } catch (Exception e) {
-            log.error("最好成绩：列表获取失败", e);
-            throw new BPException(BPException.Type.BP_List_FetchFailed);
-        }
 
-        if (CollectionUtils.isEmpty(bpList)) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
+        if (CollectionUtils.isEmpty(bpMap)) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
 
         byte[] image;
 
         try {
-            if (param.isMultipleBP()) {
-                ArrayList<Integer> rankList = new ArrayList<>();
-                for (int i = offset; i <= (offset + limit); i++) {
-                    rankList.add(i + 1);
+            if (bpMap.size() > 1) {
+                var rankList = new ArrayList<Integer>();
+                var scoreList = new ArrayList<Score>();
+                for (var e : bpMap.entrySet()) {
+                    rankList.add(e.getKey());
+                    scoreList.add(e.getValue());
                 }
-                image = imageService.getPanelA4(osuUser, bpList, rankList);
+                log.info("{}'s score: {}", osuUser.getUsername(), JacksonUtil.toJson(rankList));
+                image = imageService.getPanelA4(osuUser, scoreList, rankList);
             } else {
-                var score = bpList.getFirst();
+                Score score = null;
+                for (var e : bpMap.entrySet()) {
+                    score = e.getValue();
+                }
+                log.info("{}'s score: {}", osuUser.getUsername(), score.getPP());
                 image = imageService.getPanelE(osuUser, score, beatmapApiService);
             }
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
@@ -264,6 +253,6 @@ public class BPService implements MessageService<BPService.BPParam> {
         }
     }
 
-    public record BPParam(BinUser user, int offset, int limit, OsuMode mode, boolean isMultipleBP, boolean isMyself) {
+    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> scores, boolean isMyself) {
     }
 }

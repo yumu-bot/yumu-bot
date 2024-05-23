@@ -39,6 +39,22 @@ public class Instructions {
 
     // b ymb ymbp :0-3 name 1-100
     public static final Pattern BP = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    public static final Pattern BP1 = HandleUtil.createPattern()
+            .addCommand("bestperformance", "best", "bp", "b")
+            .appendWithSpace("(?<s>s)?")
+            // mod
+            .appendMode(true)
+            .appendSpace()
+            // qq
+            .appendQQ(true)
+            .appendSpace()
+            // name
+            .appendName(true)
+            .appendSpace()
+            // 0-100？
+            .appendRange(true)
+            .end()
+            .build();
 
     public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|best(performance)?)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
     public static final Pattern BP_FIX = Pattern.compile("^[!！]\\s*(?i)(ym)?((bp|best(performance)?)\\s?(fix|fc)|(bp?f(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");

@@ -11,7 +11,6 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPFixException;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -107,10 +106,10 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         }
 
 
-        data.setValue(new BPFixParam(
-                HandleUtil.getOsuUserFromMessageText(event, name, matcher.group("qq"), matcher.group("mode"), bindDao, userApiService),
-                matcher.group("mode"), offset, limit)
-        );
+//        data.setValue(new BPFixParam(
+//                HandleUtil.getOsuUserFromMessageText(event, name, matcher.group("qq"), matcher.group("mode"), bindDao, userApiService),
+//                matcher.group("mode"), offset, limit)
+//        );
 
         return true;
 
@@ -121,8 +120,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
     public void HandleMessage(MessageEvent event, BPFixParam param) throws Throwable {
         var from = event.getSubject();
 
-        var BPList = HandleUtil.getOsuBPFromMessageText(param.user, param.mode, param.offset, param.limit, scoreApiService);
+//        var BPList = HandleUtil.getOsuBPFromMessageText(param.user, param.mode, param.offset, param.limit, scoreApiService);
 
+        var BPList = new ArrayList<Score>();
         if (CollectionUtils.isEmpty(BPList)) throw new BPFixException(BPFixException.Type.BF_BP_Empty);
         
         var fixes = getBPFixList(BPList);

@@ -2,6 +2,9 @@ package com.now.nowbot.util;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 public class ContextUtil {
     static ThreadLocal<Map<String, Object>> threadLocalService = new ThreadLocal<>();
@@ -43,5 +46,13 @@ public class ContextUtil {
 
     public static void remove(){
         threadLocalService.remove();
+    }
+
+    public static <T> Consumer<T> consumerWithIndex(ObjIntConsumer<T> consumer) {
+        AtomicInteger object = new AtomicInteger();
+        return item -> {
+            int index = object.getAndIncrement();
+            consumer.accept(item, index);
+        };
     }
 }
