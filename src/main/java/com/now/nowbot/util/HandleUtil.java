@@ -118,7 +118,7 @@ public class HandleUtil {
             } else if (StringUtils.hasText(qqStr)) {
                 qq = Long.parseLong(qqStr);
             }
-        } catch (NumberFormatException ignore) {
+        } catch (IllegalArgumentException | IllegalStateException ignore) {
             // 没 @ 也没 qq=
         }
 
