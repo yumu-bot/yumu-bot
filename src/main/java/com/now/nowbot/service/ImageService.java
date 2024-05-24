@@ -401,7 +401,7 @@ public class ImageService {
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
 
-        var times = BPs.stream().map(Score::createTimePretty).toList();
+        var times = BPs.stream().map(Score::getCreateTimePretty).toList();
         var now = LocalDate.now();
         var bpTimes = new int[90];
         times.forEach(time -> {

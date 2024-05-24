@@ -84,9 +84,9 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         var bpMap = param.scores();
         var mode = param.mode();
+        var user = param.user();
 
         if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
-        var osuUser = param.user();
 
         byte[] image;
 
@@ -98,20 +98,18 @@ public class BPService implements MessageService<BPService.BPParam> {
                     rankList.add(e.getKey());
                     scoreList.add(e.getValue());
                 }
-                //log.info("{}'s score: {}", osuUser.getUsername(), JacksonUtil.toJson(rankList));
-                image = imageService.getPanelA4(osuUser, scoreList, rankList);
+                image = imageService.getPanelA4(user, scoreList, rankList);
             } else {
                 Score score = null;
                 for (var e : bpMap.entrySet()) {
                     score = e.getValue();
                 }
-                //log.info("{}'s score: {}", osuUser.getUsername(), score.getPP());
-                image = imageService.getPanelE(osuUser, score, beatmapApiService);
+                image = imageService.getPanelE(user, score, beatmapApiService);
             }
             // 玩家信息获取已经移动至 HandleUtil，故删去不可能进入的 catch
         } catch (Exception e) {
             log.error("最好成绩：渲染失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderModule, "最好成绩");
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩");
         }
 
         try {

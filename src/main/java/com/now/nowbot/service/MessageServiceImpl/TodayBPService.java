@@ -1,53 +1,49 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.ServiceException.TodayBPException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service("TODAY_BP")
 public class TodayBPService implements MessageService<TodayBPService.TodayBPParam> {
     private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
-    @Resource
     ImageService imageService;
-    @Resource
-    BindDao bindDao;
 
-    public record TodayBPParam(BinUser user, OsuMode mode, int day, boolean isMyself) {}
+    public record TodayBPParam(OsuUser user, OsuMode mode, Map<Integer, Score> scores, boolean isMyself) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<TodayBPParam> data) throws Throwable {
         var matcher = Instructions.TODAY_BP.matcher(messageText);
         if (!matcher.find()) return false;
+
+        var isMyself = false;
+        var mode = HandleUtil.getMode(matcher);
+        var user = HandleUtil.getOtherUser(event, matcher, mode, 1000);
+
+        if (Objects.isNull(user)) {
+            isMyself = true;
+            user = HandleUtil.getMyselfUser(event, mode);
+        }
+
+        var scores = HandleUtil.getTodayBPList(user, matcher, mode, 1000);
+
+        /*
 
         var name = matcher.group("name");
         var dayStr = matcher.group("day");
@@ -150,13 +146,28 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             mode = user.getMode();
         }
 
-        data.setValue(new TodayBPParam(user, mode, day, isMyself));
+         */
+
+        data.setValue(new TodayBPParam(user, mode, scores, isMyself));
         return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, TodayBPParam param) throws Throwable {
         var from = event.getSubject();
+
+        var todayMap = param.scores();
+        var mode = param.mode();
+        var user = param.user();
+
+        if (CollectionUtils.isEmpty(todayMap)) {
+            if (! user.getActive()) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.getUsername());
+            }
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode);
+        }
+
+        /*
 
         List<Score> BPs;
         List<Score> todayBPs = new ArrayList<>();
@@ -197,7 +208,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         for (int i = 0; i < BPs.size(); i++) {
             var bp = BPs.get(i);
 
-            if (dayBefore.isBefore(bp.createTimePretty())){
+            if (dayBefore.isBefore(bp.getCreateTimePretty())){
                 todayBPs.add(bp);
                 BPRanks.add(i + 1);
             }
@@ -215,13 +226,22 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             }
         }
 
+         */
+
+            var rankList = new ArrayList<Integer>();
+            var todayList = new ArrayList<Score>();
+            for (var e : todayMap.entrySet()) {
+                rankList.add(e.getKey());
+                todayList.add(e.getValue());
+            }
+
         byte[] image;
 
         try {
-            image = imageService.getPanelA4(user, todayBPs, BPRanks);
+            image = imageService.getPanelA4(user, todayList, rankList);
         } catch (Exception e) {
             log.error("今日最好成绩：图片渲染失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderModule, "今日最好成绩");
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩");
         }
 
         try {

@@ -8,6 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +18,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +39,7 @@ public class HandleUtil {
     public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
     public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
     public static final  String             REG_RANGE        = "(?<range>\\d{1,2}([-－]\\d{1,3})?)";
+    public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([-－]\\d{1,3})?)";
     public static final  String             REG_ID           = "(?<id>\\d+)";
     public static final  String             REG_BID          = "(?<bid>\\d+)";
     public static final  String             REG_SID          = "(?<sid>\\d+)";
@@ -84,7 +85,7 @@ public class HandleUtil {
     /**
      * 获取一个 user, 优先获取别人, 没找到就自己
      */
-    public static OsuUser getUser(@NonNull MessageEvent event, @NonNull Matcher matcher) throws TipsException {
+    public static OsuUser getUser(@NonNull MessageEvent event, @NonNull Matcher matcher, @NonNull int maximum) throws TipsException {
         OsuMode mode = getMode(matcher);
 
         var u = getOtherUser(event, matcher, mode);
@@ -106,9 +107,13 @@ public class HandleUtil {
         }
         return mode;
     }
-
     @Nullable
     public static OsuUser getOtherUser(MessageEvent event, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
+        return getOtherUser(event, matcher, mode, 100);
+    }
+
+    @Nullable
+    public static OsuUser getOtherUser(MessageEvent event, Matcher matcher, @Nullable OsuMode mode, @NonNull int maximum) throws TipsException {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         long qq = 0;
@@ -133,15 +138,13 @@ public class HandleUtil {
                 if (OsuMode.isDefault(mode)) mode = user.getMode();
                 return userApiService.getPlayerInfo(user, mode);
             } catch (WebClientResponseException.Unauthorized e) {
-                // at 对象没绑定提示
-                throw new TipsException("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)。");
-                //throw new TipsException(BindException.Type.BIND_Player_NoBind.message);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
             } catch (WebClientResponseException.NotFound e) {
-                throw new TipsException("找不到玩家 %s，请检查。", user.getOsuName());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.getOsuName());
             } catch (WebClientResponseException.Forbidden e) {
-                throw new TipsException("%s 被办了。", user.getOsuName());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getOsuName());
             } catch (WebClientResponseException e) {
-                throw new TipsException("ppy API 状态异常！");
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
             } catch (Exception e) {
                 log.error("HandleUtil：获取玩家信息失败！", e);
                 throw new TipsException("HandleUtil：获取玩家信息失败！");
@@ -151,17 +154,17 @@ public class HandleUtil {
         String name;
         try {
             name = matcher.group("name");
-            // 对叫100的人直接取消处理
-            if (StringUtils.hasText(name) && name.length() > 2 && ! "100".equals(name.trim())) {
+            // 对叫100(或者1000，取自 maximum)的人直接取消处理
+            if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(name.trim())) {
 
                 try {
                     return userApiService.getPlayerInfo(name, mode);
                 } catch (WebClientResponseException.NotFound e) {
-                    throw new TipsException("找不到玩家 %s，请检查。", name);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name);
                 } catch (WebClientResponseException.Forbidden e) {
-                    throw new TipsException("%s 被办了。", name);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name);
                 } catch (WebClientResponseException e) {
-                    throw new TipsException("ppy API 状态异常！");
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
                 } catch (Exception e) {
                     log.error("HandleUtil：获取玩家信息失败！", e);
                     throw new TipsException("HandleUtil：获取玩家信息失败！");
@@ -184,27 +187,91 @@ public class HandleUtil {
             return userApiService.getPlayerInfo(user, mode);
 
         } catch (WebClientResponseException.Unauthorized e) {
-            throw new TipsException("您的令牌已过期，请重新授权。(!ymbind)。");
+            throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me);
         } catch (WebClientResponseException.NotFound e) {
-            throw new TipsException("找不到你的玩家信息，请检查。", user.getOsuName());
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.getOsuName());
         } catch (WebClientResponseException.Forbidden e) {
-            throw new TipsException("你被办了。", user.getOsuName());
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getOsuName());
         } catch (WebClientResponseException e) {
-            throw new TipsException("ppy API 状态异常！");
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         } catch (Exception e) {
             log.error("HandleUtil：获取自我信息失败！", e);
             throw new TipsException("HandleUtil：获取自我信息失败！");
         }
     }
 
-    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws WebClientResponseException {
+    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
         return getOsuBPList(user, matcher, mode, false);
     }
 
+    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
+        var range = parseRange(matcher, null);
+
+        int limit = range.limit();
+        int offset = range.offset();
+
+        List<Score> BPList;
+
+        try {
+            BPList = scoreApiService.getBestPerformance(user.getUID(), mode, 0, 100);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getUsername());
+        } catch (WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        }
+
+        //筛选
+        LocalDateTime laterDay = LocalDateTime.now().minusDays(offset);
+        LocalDateTime earlierDay = laterDay.minusDays(limit);
+
+        var dataMap = new TreeMap<Integer, Score>();
+
+        BPList.forEach(
+                ContextUtil.consumerWithIndex(
+                        (s, index) -> {
+
+                            if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
+                                dataMap.put(index + limit, s);
+                            }
+                        }
+                )
+        );
+
+        return dataMap;
+    }
+
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws WebClientResponseException {
+    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20)  throws TipsException {
+        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null);
+
+        int offset = range.offset();
+        int limit = range.limit();
+
+        List<Score> BPList;
+
+        try {
+            BPList = scoreApiService.getBestPerformance(user.getUID(), mode, offset, limit);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
+        }
+
+        var dataMap = new TreeMap<Integer, Score>();
+        BPList.forEach(
+                ContextUtil.consumerWithIndex(
+                        (s, index) -> dataMap.put(index + limit, s)
+                )
+        );
+        return dataMap;
+    }
+
+    private record Range(int offset, int limit) {}
+
+    private static Range parseRange(Matcher matcher, Integer defaultLimit) {
         int n;
         int m;
+
         try {
             var range = matcher.group("range");
             var rangeArray = range.split("-");
@@ -233,16 +300,13 @@ public class HandleUtil {
             // 没有 range 默认是 1？
             // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
             n = 0;
-            m = isMultipleDefault20 ? 20 : 1;
+            m = Objects.requireNonNullElse(defaultLimit, 1);
         }
 
-        var result = scoreApiService.getBestPerformance(user.getUID(), mode, n, m);
-        var dataMap = new TreeMap<Integer, Score>();
-        int finalN = n;
-        result.forEach(ContextUtil.consumerWithIndex((s, index) -> dataMap.put(index + finalN, s)));
-        return dataMap;
+        return new Range(n, m);
     }
 
+    // 指令样式生成
     public static class CommandPatternBuilder {
         StringBuilder patternStr = new StringBuilder();
 

@@ -110,8 +110,8 @@ public class Score {
         this.UID = UID;
     }
 
-    public LocalDateTime createTimePretty() {
-        if (createTime != null) return LocalDateTime.parse(createTime, formatter);
+    public LocalDateTime getCreateTimePretty() {
+        if (createTime != null) return LocalDateTime.parse(createTime, formatter).plusHours(8L);
         return LocalDateTime.now();
     }
 
