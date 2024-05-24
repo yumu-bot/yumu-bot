@@ -6,8 +6,8 @@ public class GeneralTipsException extends TipsException {
         G_TokenExpired_Me("您的令牌已过期，请重新授权。(!ymbind)"),
         G_TokenExpired_Player("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),
 
-        G_Banned_Me("号被办了。"),
-        G_Banned_Player("他号被办了。"),
+        G_Banned_Me("你被办了。"),
+        G_Banned_Player("%s 被办了。"),
 
         G_Exceed_Param("请输入正确的编号或范围！"),
         G_Exceed_Day("你输入的天数范围太久远了！"),

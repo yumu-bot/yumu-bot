@@ -44,7 +44,7 @@ public class Instructions {
      */
     public static final Pattern BP = HandleUtil.createPattern()
             .appendCommand("bestperformance", "best", "bp", "b")
-            .appendIgnore("\\w")
+            .appendIgnoreArea("A-Z", "a-z", "_")
             .appendSpace()
             // mod
             .appendMode(true)
@@ -62,7 +62,7 @@ public class Instructions {
 
     public static final Pattern BS = HandleUtil.createPattern()
             .appendCommand("bestperformances", "bests", "bps", "bs")
-            .appendIgnore("\\w")
+            .appendIgnoreArea("A-Z", "a-z", "_")
             .appendSpace()
             // mod
             .appendMode(true)

@@ -53,12 +53,12 @@ public class BPService implements MessageService<BPService.BPParam> {
             return false;
         }
 
-        var isMySelf = false;
+        var isMyself = false;
         var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode);
+        var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
 
         if (Objects.isNull(user)) {
-            isMySelf = true;
+            isMyself = true;
 
             try {
                 user = HandleUtil.getMyselfUser(event, mode);
@@ -74,7 +74,7 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         var scores = HandleUtil.getOsuBPList(user, matcher, mode, isMultiple);
 
-        data.setValue(new BPParam(user, mode, scores, isMySelf));
+        data.setValue(new BPParam(user, mode, scores, isMyself));
         return true;
     }
 
