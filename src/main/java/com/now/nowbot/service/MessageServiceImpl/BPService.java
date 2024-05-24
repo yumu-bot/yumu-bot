@@ -30,7 +30,7 @@ public class BPService implements MessageService<BPService.BPParam> {
     @Resource
     ImageService imageService;
 
-    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> scores, boolean isMyself) {}
+    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> BPMap, boolean isMyself) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
@@ -72,9 +72,9 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var scores = HandleUtil.getOsuBPList(user, matcher, mode, isMultiple);
+        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, isMultiple);
 
-        data.setValue(new BPParam(user, mode, scores, isMyself));
+        data.setValue(new BPParam(user, mode, BPMap, isMyself));
         return true;
     }
 
@@ -82,26 +82,26 @@ public class BPService implements MessageService<BPService.BPParam> {
     public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
         var from = event.getSubject();
 
-        var bpMap = param.scores();
+        var BPMap = param.BPMap();
         var mode = param.mode();
         var user = param.user();
 
-        if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
+        if (CollectionUtils.isEmpty(BPMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
 
         byte[] image;
 
         try {
-            if (bpMap.size() > 1) {
+            if (BPMap.size() > 1) {
                 var rankList = new ArrayList<Integer>();
                 var scoreList = new ArrayList<Score>();
-                for (var e : bpMap.entrySet()) {
+                for (var e : BPMap.entrySet()) {
                     rankList.add(e.getKey());
                     scoreList.add(e.getValue());
                 }
                 image = imageService.getPanelA4(user, scoreList, rankList);
             } else {
                 Score score = null;
-                for (var e : bpMap.entrySet()) {
+                for (var e : BPMap.entrySet()) {
                     score = e.getValue();
                 }
                 image = imageService.getPanelE(user, score, beatmapApiService);

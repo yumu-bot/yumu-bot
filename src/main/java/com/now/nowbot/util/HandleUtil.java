@@ -270,15 +270,15 @@ public class HandleUtil {
 
     }
 
-    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        return getOsuBPList(user, matcher, mode, false);
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
+        return getOsuBPMap(user, matcher, mode, false);
     }
 
     public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
         var range = parseRange(matcher, null);
 
-        int limit = range.limit();
         int offset = range.offset();
+        int limit = range.limit();
 
         List<Score> BPList;
 
@@ -306,7 +306,7 @@ public class HandleUtil {
                         (s, index) -> {
 
                             if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
-                                dataMap.put(index + limit, s);
+                                dataMap.put(index + offset, s);
                             }
                         }
                 )
@@ -316,29 +316,37 @@ public class HandleUtil {
     }
 
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
         var range = parseRange(matcher, isMultipleDefault20 ? 20 : null);
 
         int offset = range.offset();
         int limit = range.limit();
 
-        List<Score> BPList;
+        return getOsuBPMap(user, mode, offset, limit);
+    }
 
+    // 重载
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, @Nullable OsuMode mode, int offset, int limit) throws TipsException {
+        List<Score> BPList = getOsuBPList(user, mode, offset, limit);
+
+        var dataMap = new TreeMap<Integer, Score>();
+        BPList.forEach(
+                ContextUtil.consumerWithIndex(
+                        (s, index) -> dataMap.put(index + offset, s)
+                )
+        );
+        return dataMap;
+    }
+
+    // 单独的拿 bp 榜
+    public static List<Score> getOsuBPList(OsuUser user, @Nullable OsuMode mode, int offset, int limit) throws TipsException {
         try {
-            BPList = scoreApiService.getBestPerformance(user.getUID(), mode, offset, limit);
+            return scoreApiService.getBestPerformance(user.getUID(), mode, offset, limit);
         } catch (WebClientResponseException.NotFound e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
         } catch (WebClientResponseException e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         }
-
-        var dataMap = new TreeMap<Integer, Score>();
-        BPList.forEach(
-                ContextUtil.consumerWithIndex(
-                        (s, index) -> dataMap.put(index + limit, s)
-                )
-        );
-        return dataMap;
     }
 
     // 这个没有保底，有保底的请使用 getOsuBeatMapOrElse
