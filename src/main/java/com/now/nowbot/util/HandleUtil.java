@@ -26,20 +26,24 @@ import java.util.regex.Pattern;
 
 // 封装一些消息处理（Handle）的常用方法
 public class HandleUtil {
-    public static final  String             REG_START       = "[!！/](?i)(ym)?";
-    public static final  String             REG_SPACE       = "(\\s*)";
-    public static final  String             REG_SPACE_COLON = "([:：])";
-    public static final  String             REG_SPACE_HASH  = "([#＃])";
-    public static final  String             REG_SPACE_HYPEN = "(-)";
-    public static final  String             REG_NAME        = "(?<name>[0-9a-zA-Z\\[\\]-_][0-9a-zA-Z\\[\\]-_ ]{2,}?)";
-    public static final  String             REG_QQ          = "(qq=(?<qq>\\d{5,}))";
-    public static final  String             REG_MOD         = "(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+)";
-    public static final  String             REG_MODE        = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
-    public static final  String             REG_RANGE       = "(?<range>\\d{1,2}([-－]\\d{1,3})?)";
-    public static final  String             REG_ID          = "(?<id>\\d+)";
-    public static final  String             REG_BID         = "(?<bid>\\d+)";
-    public static final  String             REG_SID         = "(?<sid>\\d+)";
-    private static final Logger             log             = LoggerFactory.getLogger(HandleUtil.class);
+    public static final  String             REG_START        = "[!！/](?i)(ym)?";
+    public static final  String             REG_SPACE        = "\\s*";
+    public static final  String             REG_SPACE_1P     = "\\s+";
+    public static final  String             REG_SPACE_01     = "\\s?";
+    public static final  String             REG_COLUMN       = "[:：]";
+    public static final  String             REG_HASH         = "[#＃]";
+    public static final  String             REG_HYPHEN       = "[-－]";
+    public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]-_][0-9a-zA-Z\\[\\]-_ ]{2,}?))";
+    public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
+    public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
+    public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
+    public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
+    public static final  String             REG_RANGE        = "(?<range>\\d{1,2}([-－]\\d{1,3})?)";
+    public static final  String             REG_ID           = "(?<id>\\d+)";
+    public static final  String             REG_BID          = "(?<bid>\\d+)";
+    public static final  String             REG_SID          = "(?<sid>\\d+)";
+
+    private static final Logger             log              = LoggerFactory.getLogger(HandleUtil.class);
     private static       BindDao            bindDao;
     private static       OsuUserApiService  userApiService;
     private static       OsuScoreApiService scoreApiService;
@@ -319,8 +323,19 @@ public class HandleUtil {
             return this;
         }
 
+        // 默认匹配 0 或无穷个
         public CommandPatternBuilder appendSpace() {
             patternStr.append(REG_SPACE);
+            return this;
+        }
+
+        public CommandPatternBuilder appendSpace1P() {
+            patternStr.append(REG_SPACE_1P);
+            return this;
+        }
+
+        public CommandPatternBuilder appendSpace01() {
+            patternStr.append(REG_SPACE_01);
             return this;
         }
 
@@ -334,7 +349,7 @@ public class HandleUtil {
          */
         public CommandPatternBuilder appendMode(boolean nullable) {
             startGroup();
-            append(REG_SPACE_COLON);
+            append(REG_COLUMN);
             append(REG_MODE);
             endGroup();
             if (nullable) any();
@@ -395,7 +410,7 @@ public class HandleUtil {
         public CommandPatternBuilder appendRange(boolean nullable) {
             startGroup();
             append("\\s+");
-            append(REG_SPACE_HASH).any().appendSpace();
+            append(REG_HASH).any().appendSpace();
             append(REG_RANGE);
             endGroup();
             if (nullable) any();

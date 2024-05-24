@@ -35,19 +35,19 @@ public class BPService implements MessageService<BPService.BPParam> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
         Matcher matcher;
-        boolean isMultiple;
 
         var singleMatcher = Instructions.BP.matcher(messageText);
         var multipleMatcher = Instructions.BS.matcher(messageText);
 
+        boolean isSingle = singleMatcher.find();
+        boolean isMultiple = multipleMatcher.find();
+
         // 都没找到才 false
-        if (singleMatcher.find() || multipleMatcher.find()) {
-            if (singleMatcher.find()) {
+        if (isSingle || isMultiple) {
+            if (isSingle) {
                 matcher = singleMatcher;
-                isMultiple = false;
             } else {
                 matcher = multipleMatcher;
-                isMultiple = true;
             }
         } else {
             return false;

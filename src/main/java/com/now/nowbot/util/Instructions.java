@@ -61,9 +61,9 @@ public class Instructions {
             .build();
 
     public static final Pattern BS = HandleUtil.createPattern()
-            .appendCommand("bestperformance", "best", "bp", "b")
-            .appendKeyWord("s")
+            .appendCommand("bestperformances", "bests", "bps", "bs")
             .appendIgnore("\\w")
+            .appendSpace()
             // mod
             .appendMode(true)
             .appendSpace()
