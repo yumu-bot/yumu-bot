@@ -59,8 +59,6 @@ public class BotWebApi {
     @Resource
     DiceService diceService;
     @Resource
-    MapStatisticsService mapStatisticsService;
-    @Resource
     IMapperService iMapperService;
     @Resource
     NominationService nominationService;
@@ -671,16 +669,24 @@ public class BotWebApi {
             @OpenResource(name = "miss", desp = "失误数") @RequestParam("miss") @Nullable Integer miss,
             @OpenResource(name = "mods", desp = "模组，允许按成对的双字母输入") @RequestParam("mods") @Nullable String modStr
     ) throws RuntimeException {
-        var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
         if (Objects.isNull(accuracy)) accuracy = 1D;
         if (Objects.isNull(combo)) combo = 0;
         if (Objects.isNull(miss)) miss = 0;
         if (Objects.isNull(modStr)) modStr = "";
-        var param = new MapStatisticsService.MapParam(bid, mode, accuracy, combo, miss, modStr);
-        try {
-            var image = mapStatisticsService.getImage(param, Optional.empty());
 
-            return new ResponseEntity<>(image, getImageHeader(STR."\{param.bid()}-mapinfo.jpg", image.length), HttpStatus.OK);
+        try {
+            var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
+            var beatMap = beatmapApiService.getBeatMapInfo(bid);
+
+            var param = new MapStatisticsService.MapParam(null, beatMap,
+                    new MapStatisticsService.Expected(
+                            mode, accuracy, combo, miss, Mod.getModsList(modStr)
+                    )
+            );
+
+            var image = imageService.getPanelE2(param.user(), param.beatMap(), param.expected());
+
+            return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {
             log.error("谱面信息：API 异常", e);
             throw new RuntimeException("谱面信息：API 异常");

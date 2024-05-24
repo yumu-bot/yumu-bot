@@ -1,7 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.Mod;
@@ -9,86 +7,62 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service("MAP")
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
     private static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
     @Resource
-    OsuScoreApiService scoreApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    OsuUserApiService osuUserApiService;
-    @Resource
-    BindDao bindDao;
-    @Resource
     ImageService imageService;
 
+    public record MapParam(@Nullable OsuUser user, BeatMap beatMap, Expected expected) {}
+
+    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<Mod> mods) {}
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) throws Throwable {
         var matcher = Instructions.MAP.matcher(messageText);
         if (!matcher.find()) return false;
 
+        var beatMap = HandleUtil.getOsuBeatMap(matcher);
+
+        if (beatMap == null) {
+            if (HandleUtil.isAvoidance(event, "！m", "!m")) {
+                log.info(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.getSender().getName()));
+            }
+            return false;
+        }
+
+        OsuUser user;
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        long bid;
-        double accuracy;
-        int combo;
-        int miss;
-
         try {
-            bid = Long.parseLong(matcher.group("bid"));
-        } catch (NumberFormatException e) {
-            bid = 0L;
+            user = HandleUtil.getMyselfUser(event, mode);
+        } catch (BindException e) {
+            user = null;
         }
 
-        try {
-            accuracy = Double.parseDouble(matcher.group("accuracy"));
-        } catch (NumberFormatException | NullPointerException e) {
-            accuracy = 1d;
-        }
+        var expected = HandleUtil.getExpectedScore(matcher, beatMap, mode);
 
-        try {
-            combo = Integer.parseInt(matcher.group("combo"));
-        } catch (NumberFormatException e) {
-            combo = 0;
-        }
-
-        try {
-            miss = Integer.parseInt(matcher.group("miss"));
-        } catch (NumberFormatException e) {
-            miss = 0;
-        }
-
-        var modStr = matcher.group("mod");
-
-        data.setValue(new MapParam(bid, mode, accuracy, combo, miss, modStr));
+        data.setValue(new MapParam(user, beatMap, expected));
         return true;
-    }
-
-    public record Expected(OsuMode mode, Double accuracy, Integer combo, Integer miss, List<String> mods) {
-
     }
 
     @Override
     public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
         var from = event.getSubject();
+
+        /*
         BinUser binUser;
         Optional<OsuUser> osuUser;
 
@@ -108,18 +82,27 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
         }
 
-        try {
+         */
 
-            var image = getImage(param, osuUser);
+        byte[] image;
+
+        try {
+            image = imageService.getPanelE2(param.user(), param.beatMap(), param.expected());
+            //var image = getImage(param, osuUser);
+        } catch (Exception e) {
+            log.error("谱面信息：渲染失败", e);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "谱面信息");
+        }
+
+        try {
             from.sendImage(image);
-        } catch (MapStatisticsException e) {
-            throw e;
         } catch (Exception e) {
             log.error("谱面信息：发送失败", e);
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Send_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息");
         }
     }
 
+    /*
     public byte[] getImage(MapParam param, Optional<OsuUser> osuUser) throws Exception {
 
         BeatMap beatMap;
@@ -141,10 +124,8 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
             } catch (Exception ignored) {
                 try {
-                /*
-                var md = DataUtil.getMarkdownFile("Help/maps.md");
-                var image = imageService.getPanelA6(md, "help");
-                 */
+                // var md = DataUtil.getMarkdownFile("Help/maps.md");
+                // var image = imageService.getPanelA6(md, "help");
                     return imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
                 } catch (Exception e) {
                     throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
@@ -162,40 +143,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
             }
 
 
-            // 标准化 acc 和 combo
 
-            {
-                Integer maxCombo = beatMap.getMaxCombo();
-
-                if (Objects.isNull(maxCombo)) {
-                    combo = param.combo;
-                } else if (param.combo <= 0) {
-                    combo = maxCombo;
-                } else {
-                    combo = Math.min(param.combo, maxCombo);
-                }
-            }
-
-            {
-                if (param.accuracy > 0D && param.accuracy <= 1D) {
-                    acc = param.accuracy;
-                } else if (param.accuracy > 1D && param.accuracy <= 100D) {
-                    acc = param.accuracy / 100d;
-                } else if (param.accuracy > 100D && param.accuracy <= 10000D) {
-                    acc = param.accuracy / 10000d;
-                } else {
-                    throw new MapStatisticsException(MapStatisticsException.Type.M_Parameter_AccuracyError);
-                }
-            }
-
-            //只有转谱才能赋予游戏模式
-            {
-                if (! (param.osuMode.equals(OsuMode.DEFAULT)) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
-                    mode = param.osuMode;
-                } else {
-                    mode = OsuMode.getMode(beatMap.getMode());
-                }
-            }
 
             List<String> mods = null;
             if (Objects.nonNull(param.modStr)) {
@@ -206,9 +154,6 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         }
         return imageService.getPanelE2(osuUser, beatMap, expected);
     }
-
-    public record MapParam(Long bid, OsuMode osuMode, Double accuracy, Integer combo, Integer miss, String modStr) {
-
-    }
+    */
 }
 

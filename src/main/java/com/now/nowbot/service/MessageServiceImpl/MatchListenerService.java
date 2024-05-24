@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.MicroUser;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.*;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -255,7 +256,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         //看来这里的 failed 只能算 false，否则有问题
         var d = new MatchData(match, 0, 0, null, 1d, false, true);
 
-        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, 0, 0, round.getMods());
+        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, 0, 0, Mod.getModsList(Mod.getModsValueFromStr(round.getMods())));
 
         try {
             return imageService.getPanelE3(d, b, x);

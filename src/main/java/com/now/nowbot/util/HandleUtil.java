@@ -1,11 +1,15 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
+import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
@@ -48,11 +52,13 @@ public class HandleUtil {
     private static       BindDao            bindDao;
     private static       OsuUserApiService  userApiService;
     private static       OsuScoreApiService scoreApiService;
+    private static       OsuBeatmapApiService beatmapApiService;
 
     public static void init(ApplicationContext applicationContext) {
         bindDao = applicationContext.getBean(BindDao.class);
         userApiService = applicationContext.getBean(OsuUserApiService.class);
         scoreApiService = applicationContext.getBean(OsuScoreApiService.class);
+        beatmapApiService = applicationContext.getBean(OsuBeatmapApiService.class);
     }
 
     public static CommandPatternBuilder createPattern() {
@@ -127,7 +133,7 @@ public class HandleUtil {
             } else if (StringUtils.hasText(qqStr)) {
                 qq = Long.parseLong(qqStr);
             }
-        } catch (IllegalArgumentException | IllegalStateException ignore) {
+        } catch (RuntimeException ignore) {
             // 没 @ 也没 qq=
         }
 
@@ -170,7 +176,7 @@ public class HandleUtil {
                     throw new TipsException("HandleUtil：获取玩家信息失败！");
                 }
             }
-        } catch (IllegalArgumentException | IllegalStateException ignore) {
+        } catch (RuntimeException ignore) {
             // 没名字
         }
 
@@ -200,6 +206,70 @@ public class HandleUtil {
         }
     }
 
+    // MapStatisticsService 专属
+    public static MapStatisticsService.Expected getExpectedScore(Matcher matcher, @NonNull BeatMap beatMap, @Nullable OsuMode mode) throws TipsException {
+
+        double accuracy;
+        int combo;
+        int miss;
+
+        try {
+            accuracy = Double.parseDouble(matcher.group("accuracy"));
+        } catch (RuntimeException e) {
+            accuracy = 1d;
+        }
+
+        try {
+            combo = Integer.parseInt(matcher.group("combo"));
+        } catch (RuntimeException e) {
+            combo = 0;
+        }
+
+        try {
+            miss = Integer.parseInt(matcher.group("miss"));
+        } catch (RuntimeException e) {
+            miss = 0;
+        }
+
+        List<Mod> mods;
+
+        try {
+            mods = Mod.getModsList(matcher.group("mod"));
+        } catch (RuntimeException e) {
+            mods = new ArrayList<>();
+        }
+
+        // 标准化 acc 和 combo
+        Integer maxCombo = beatMap.getMaxCombo();
+
+        if (maxCombo != null) {
+            if (combo <= 0) {
+                combo = maxCombo;
+            } else {
+                combo = Math.min(combo, maxCombo);
+            }
+        }
+
+        if (combo < 0) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo);
+        }
+        if (accuracy > 1d && accuracy <= 100d) {
+            accuracy /= 100d;
+        } else if (accuracy > 100d && accuracy <= 10000d) {
+            accuracy /= 10000d;
+        } else if (accuracy <= 0d || accuracy > 10000d) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy);
+        }
+
+        //只有转谱才能赋予游戏模式
+        if (mode == null || mode.equals(OsuMode.DEFAULT) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
+            mode = OsuMode.getMode(beatMap.getMode());
+        }
+
+        return new MapStatisticsService.Expected(mode, accuracy, combo, miss, mods);
+
+    }
+
     public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
         return getOsuBPList(user, matcher, mode, false);
     }
@@ -220,6 +290,9 @@ public class HandleUtil {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
         } catch (WebClientResponseException e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        } catch (Exception e) {
+            log.error("HandleUtil：获取今日最好成绩失败！", e);
+            throw new TipsException("HandleUtil：获取今日最好成绩失败！");
         }
 
         //筛选
@@ -243,7 +316,7 @@ public class HandleUtil {
     }
 
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20)  throws TipsException {
+    public static Map<Integer, Score> getOsuBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
         var range = parseRange(matcher, isMultipleDefault20 ? 20 : null);
 
         int offset = range.offset();
@@ -253,8 +326,10 @@ public class HandleUtil {
 
         try {
             BPList = scoreApiService.getBestPerformance(user.getUID(), mode, offset, limit);
-        } catch (WebClientResponseException e) {
+        } catch (WebClientResponseException.NotFound e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         }
 
         var dataMap = new TreeMap<Integer, Score>();
@@ -264,6 +339,51 @@ public class HandleUtil {
                 )
         );
         return dataMap;
+    }
+
+    // 这个没有保底，有保底的请使用 getOsuBeatMapOrElse
+    @Nullable
+    public static BeatMap getOsuBeatMap(@NonNull Matcher matcher) throws TipsException {
+        long bid;
+        try {
+            bid = Long.parseLong(matcher.group("bid"));
+        } catch (RuntimeException e) {
+            return null;
+        }
+
+        return getOsuBeatMap(bid);
+    }
+
+    @NonNull
+    public static BeatMap getOsuBeatMap(long bid) throws TipsException {
+        try {
+            return beatmapApiService.getBeatMapInfo(bid);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Map);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        } catch (Exception e) {
+            log.error("HandleUtil：获取谱面信息失败！", e);
+            throw new TipsException("HandleUtil：获取谱面信息失败！");
+        }
+    }
+
+    // 这个有保底
+    public static BeatMap getOsuBeatMapOrElse(long bid) throws TipsException {
+        try {
+            return beatmapApiService.getBeatMapInfo(bid);
+        } catch (WebClientResponseException.NotFound e) {
+            try {
+                return beatmapApiService.getBeatMapSetInfo(bid).getTopDiff();
+            } catch (WebClientResponseException.NotFound e1) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Map);
+            } catch (WebClientResponseException e1) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+            }
+        } catch (Exception e) {
+            log.error("HandleUtil：获取谱面信息失败！", e);
+            throw new TipsException("HandleUtil：获取谱面信息失败！");
+        }
     }
 
     private record Range(int offset, int limit) {}
@@ -325,7 +445,7 @@ public class HandleUtil {
         /**
          * 加命令
          */
-        public CommandPatternBuilder appendCommand(Iterable<String> commands) {
+        public CommandPatternBuilder appendCommands(Iterable<String> commands) {
             patternStr.append('(');
             for (var command : commands) {
                 patternStr.append(command).append('|');
@@ -338,7 +458,7 @@ public class HandleUtil {
         /**
          * 加命令
          */
-        public CommandPatternBuilder appendCommand(String... commands) {
+        public CommandPatternBuilder appendCommands(String... commands) {
             patternStr.append('(');
             for (var command : commands) {
                 patternStr.append(command).append('|');
@@ -353,7 +473,7 @@ public class HandleUtil {
          * @param ignores 需要忽略的其后字符。
          * @return this
          */
-        public CommandPatternBuilder appendIgnore(@NonNull String... ignores) {
+        public CommandPatternBuilder appendIgnores(@NonNull String... ignores) {
             patternStr.append("(?!(");
             for (var ignore : ignores) {
                 patternStr.append(ignore).append('|');
@@ -363,9 +483,14 @@ public class HandleUtil {
             return this;
         }
 
+        // 等于忽略 A-Za-z_
+        public CommandPatternBuilder appendIgnoreAlphabets() {
+            return this.appendIgnoreArea("A-Z", "a-z", "_");
+        }
+
         /**
          * 避免不必要的命令重复，所带来的指令污染。比如：!ymb 和 !ymbind。如果前面并未加 (?!ind)，则后面的指令也会在前面被错误匹配（获取叫 ind 玩家的 bp）
-         * @param areas 注意，areas 可以是单个字符，也可以是连字符包含的区间。
+         * @param areas 注意，areas 可以是单个字符，也可以是包含连字符 - 的区间。
          * @return this
          */
         public CommandPatternBuilder appendIgnoreArea(@NonNull String... areas) {

@@ -446,14 +446,14 @@ public class ImageService {
         return doPost("panel_E", httpEntity);
     }
 
-    public byte[] getPanelE2(Optional<OsuUser> user, BeatMap beatMap, MapStatisticsService.Expected expected) {
+    public byte[] getPanelE2(@Nullable OsuUser user, BeatMap beatMap, MapStatisticsService.Expected expected) {
         HttpHeaders headers = getDefaultHeader();
         var body = new HashMap<>(Map.of(
                 "beatmap", beatMap,
                 "expected", expected
         ));
 
-        if (user.isPresent()) {
+        if (user != null) {
             body.put("user", user);
         }
 

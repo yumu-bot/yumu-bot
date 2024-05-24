@@ -43,8 +43,8 @@ public class Instructions {
 
      */
     public static final Pattern BP = HandleUtil.createPattern()
-            .appendCommand("bestperformance", "best", "bp", "b")
-            .appendIgnoreArea("A-Z", "a-z", "_")
+            .appendCommands("bestperformance", "best", "bp", "b")
+            .appendIgnoreAlphabets()
             .appendSpace()
             // mod
             .appendMode(true)
@@ -61,8 +61,8 @@ public class Instructions {
             .build();
 
     public static final Pattern BS = HandleUtil.createPattern()
-            .appendCommand("bestperformances", "bests", "bps", "bs")
-            .appendIgnoreArea("A-Z", "a-z", "_")
+            .appendCommands("bestperformances", "bests", "bps", "bs")
+            .appendIgnoreAlphabets()
             .appendSpace()
             // mod
             .appendMode(true)
@@ -78,8 +78,47 @@ public class Instructions {
             .end()
             .build();
 
+    public static final Pattern TODAY_BP = HandleUtil.createPattern()
+            .appendCommands("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
+            .appendIgnoreAlphabets()
+            .appendSpace()
+            // mod
+            .appendMode(true)
+            .appendSpace()
+            // qq
+            .appendQQ(true)
+            .appendSpace()
+            // name
+            .appendName(true)
+            .appendSpace()
+            // 0-1000？
+            .appendRange(true)
+            .end()
+            .build();
+
+    public static final Pattern BP_FIX = HandleUtil.createPattern()
+            .appendCommands("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
+            .appendIgnoreAlphabets()
+            .appendSpace()
+            // mod
+            .appendMode(true)
+            .appendSpace()
+            // qq
+            .appendQQ(true)
+            .appendSpace()
+            // name
+            .appendName(true)
+            .appendSpace()
+            // 0-1000？
+            .appendRange(true)
+            .end()
+            .build();
+
+    /*
     public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|best(performance)?)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
     public static final Pattern BP_FIX = Pattern.compile("^[!！]\\s*(?i)(ym)?((bp|best(performance)?)\\s?(fix|fc)|(bp?f(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+
+     */
 
     public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
 

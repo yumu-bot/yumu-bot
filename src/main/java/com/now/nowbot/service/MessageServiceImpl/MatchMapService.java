@@ -1,30 +1,24 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.throwable.ServiceException.MapStatisticsException;
+import com.now.nowbot.throwable.GeneralTipsException;
+import com.now.nowbot.util.HandleUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
 import java.util.Objects;
 
 @Service("MATCH_MAP")
 public class MatchMapService implements MessageService<MatchMapService.MatchMapParam> {
     private static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
 
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
     @Resource
     ImageService imageService;
 
@@ -42,17 +36,9 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     public void HandleMessage(MessageEvent event, MatchMapService.MatchMapParam param) throws Throwable {
         var from = event.getSubject();
 
-        if (param.bid == 0) from.sendMessage(MapStatisticsException.Type.M_Instructions.message);
+        if (param.bid == 0) return;
 
-        var beatMap = new BeatMap();
-
-        try {
-            beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
-            from.sendMessage(MapStatisticsException.Type.M_Map_NotFound.message);
-        } catch (Exception e) {
-            from.sendMessage(MapStatisticsException.Type.M_Fetch_Error.message);
-        }
+        var beatMap = HandleUtil.getOsuBeatMap(param.bid);
 
         // 标准化 combo
         int combo;
@@ -78,19 +64,14 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
             }
         }
 
-        List<String> mods = null;
-        if (Objects.nonNull(param.modStr)) {
-            mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
-        }
-
-        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, mods);
+        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, Mod.getModsList(param.modStr));
 
         try {
             var image = imageService.getPanelE3(param.matchData, beatMap, expected);
             from.sendImage(image);
         } catch (Exception e) {
             log.error("比赛谱面信息：发送失败: ", e);
-            from.sendMessage(MapStatisticsException.Type.M_Send_Error.message);
+            from.sendMessage(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "比赛谱面信息").getMessage());
         }
     }
 }
