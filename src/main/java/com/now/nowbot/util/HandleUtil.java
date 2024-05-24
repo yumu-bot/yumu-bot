@@ -225,7 +225,7 @@ public class HandleUtil {
             if (n < 0) n = 0;
             m = m - n;
             if (m < 1) m = 1;
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
             // 没有 range 默认是 1？
             // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
             n = 0;

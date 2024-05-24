@@ -7,7 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.throwable.ServiceException.BPException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
@@ -85,7 +85,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         var bpMap = param.scores();
         var mode = param.mode();
 
-        if (CollectionUtils.isEmpty(bpMap)) throw new BPException(BPException.Type.BP_Player_NoBP, mode);
+        if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
         var osuUser = param.user();
 
         byte[] image;
@@ -111,14 +111,14 @@ public class BPService implements MessageService<BPService.BPParam> {
             // 玩家信息获取已经移动至 HandleUtil，故删去不可能进入的 catch
         } catch (Exception e) {
             log.error("最好成绩：渲染失败", e);
-            throw new BPException(BPException.Type.BP_Render_Failed);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderModule, "最好成绩");
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
             log.error("最好成绩：发送失败", e);
-            throw new BPException(BPException.Type.BP_Send_Failed);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩");
         }
     }
 }

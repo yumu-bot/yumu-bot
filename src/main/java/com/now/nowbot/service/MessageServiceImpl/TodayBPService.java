@@ -11,7 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BPException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.TodayBPException;
 import com.now.nowbot.util.Instructions;
@@ -69,7 +69,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
                 try {
                     day = Integer.parseInt(dayStr);
                 } catch (NumberFormatException e) {
-                    throw new BPException(BPException.Type.BP_Param_OutOfRange);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param);
                 }
             }
         }
@@ -77,7 +77,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         //避免 !b 970 这样子被错误匹配
         if (day < 1 || day > 999) {
             if (hasHash) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_TooLongAgo);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Exceed_Day);
             }
 
             if (StringUtils.hasText(name)) {
@@ -173,12 +173,12 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             BPs = scoreApiService.getBestPerformance(param.user, param.mode, 0, 100);
         } catch (Exception e) {
             log.error("今日最好成绩：获取列表失败");
-            throw new TodayBPException(TodayBPException.Type.TBP_List_FetchError);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
         }
 
         if (CollectionUtils.isEmpty(BPs)) {
             if (param.day <= 1) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP, param.user.getOsuName());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.getOsuName());
             }
 
             // 补救机制 2
@@ -187,7 +187,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
                 user = userApiService.getPlayerInfo(id, param.mode);
                 BPs = scoreApiService.getBestPerformance(id, param.mode, 0, 100);
             } catch (Exception e) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoBP, param.user.getOsuName() + param.day);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.getOsuName() + param.day);
             }
         }
 
@@ -206,12 +206,12 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         //没有的话
         if (todayBPs.isEmpty()) {
             if (! user.getActive()) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_Inactive, user.getUsername());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.getUsername());
             }
             if (param.day <= 1) {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_No24H, user.getUsername());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_TodayBP, user.getUsername());
             } else {
-                throw new TodayBPException(TodayBPException.Type.TBP_BP_NoPeriod, user.getUsername());
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, user.getUsername());
             }
         }
 
@@ -221,14 +221,14 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             image = imageService.getPanelA4(user, todayBPs, BPRanks);
         } catch (Exception e) {
             log.error("今日最好成绩：图片渲染失败", e);
-            throw new TodayBPException(TodayBPException.Type.TBP_Fetch_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderModule, "今日最好成绩");
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
             log.error("今日最好成绩：发送失败", e);
-            throw new TodayBPException(TodayBPException.Type.TBP_Send_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "今日最好成绩");
         }
 
     }
