@@ -90,7 +90,8 @@ public class BPService implements MessageService<BPService.BPParam> {
         var mode = param.mode();
         var user = param.user();
 
-        if (CollectionUtils.isEmpty(BPMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
+        if (CollectionUtils.isEmpty(BPMap))
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
 
         byte[] image;
 
