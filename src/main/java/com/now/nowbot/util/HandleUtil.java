@@ -123,6 +123,7 @@ public class HandleUtil {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         long qq = 0;
+        long uid = 0;
 
         try {
             var qqStr = matcher.group("qq");
@@ -135,6 +136,15 @@ public class HandleUtil {
             }
         } catch (RuntimeException ignore) {
             // 没 @ 也没 qq=
+            try {
+                var uidStr = matcher.group("uid");
+
+                if (StringUtils.hasText(uidStr)) {
+                    uid = Long.parseLong(uidStr);
+                }
+            } catch (RuntimeException ignore2) {
+
+            }
         }
 
         if (qq != 0) {
@@ -157,9 +167,23 @@ public class HandleUtil {
             }
         }
 
-        String name;
+        if (uid != 0) {
+            try {
+                return userApiService.getPlayerInfo(uid, mode);
+            } catch (WebClientResponseException.NotFound e) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, uid);
+            } catch (WebClientResponseException.Forbidden e) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, uid);
+            } catch (WebClientResponseException e) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+            } catch (Exception e) {
+                log.error("HandleUtil：获取玩家信息失败！", e);
+                throw new TipsException("HandleUtil：获取玩家信息失败！");
+            }
+        }
+
         try {
-            name = matcher.group("name");
+            var name = matcher.group("name");
             // 对叫100(或者1000，取自 maximum)的人直接取消处理
             if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(name.trim())) {
 
@@ -180,7 +204,7 @@ public class HandleUtil {
             // 没名字
         }
 
-        // 没 at 没 qq= 也没名字 直接返回 null
+        // 没 at 没 qq= 没 uid= 也没名字 直接返回 null
         return null;
     }
 
@@ -600,6 +624,12 @@ public class HandleUtil {
 
         public CommandPatternBuilder appendName(boolean nullable) {
             append(REG_NAME);
+            if (nullable) any();
+            return this;
+        }
+
+        public CommandPatternBuilder appendUID(boolean nullable) {
+            append(REG_UID);
             if (nullable) any();
             return this;
         }

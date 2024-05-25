@@ -8,7 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.BPFixException;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -69,7 +69,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         var fixes = getBPFixList(bpMap);
 
-        if (CollectionUtils.isEmpty(fixes)) throw new BPFixException(BPFixException.Type.BF_Fix_Empty);
+        if (CollectionUtils.isEmpty(fixes)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
 
         byte[] image;
 
@@ -77,20 +77,20 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             image = imageService.getPanelA7(user, fixes);
         } catch (Exception e) {
             log.error("理论最好成绩：渲染失败", e);
-            throw new BPFixException(BPFixException.Type.BF_Render_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩");
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
             log.error("理论最好成绩：发送失败", e);
-            throw new BPFixException(BPFixException.Type.BF_Send_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "理论最好成绩");
         }
     }
 
     // 主计算
     @Nullable
-    public Map<String, Object> getBPFixList(@Nullable Map<Integer, Score> BPMap) throws BPFixException {
+    public Map<String, Object> getBPFixList(@Nullable Map<Integer, Score> BPMap) throws TipsException {
         if (CollectionUtils.isEmpty(BPMap)) return null;
 
         // 筛选需要 fix 的图，带 miss 的
@@ -111,9 +111,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         try {
             fixMap = imageService.getBPFix(scoreList);
         } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
-            throw new BPFixException(BPFixException.Type.BF_Exchange_TooMany);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Overtime_ExchangeTooMany, "理论最好成绩");
         } catch (WebClientResponseException e) {
-            throw new BPFixException(BPFixException.Type.BF_Render_ConnectFailed);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderDisconnected, "理论最好成绩");
         }
 
 

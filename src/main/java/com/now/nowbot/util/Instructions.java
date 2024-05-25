@@ -49,15 +49,17 @@ public class Instructions {
             // mod
             .appendMode(true)
             .appendSpace()
-            // qq
-            .appendQQ(true)
-            .appendSpace()
             // name
             .appendName(true)
             .appendSpace()
+            // qq
+            .appendQQ(true)
+            .appendSpace()
+            // uid
+            .appendUID(true)
+            .appendSpace()
             // 0-100？
             .appendRange(true)
-            .end()
             .build();
 
     public static final Pattern BS = HandleUtil.createPattern()
@@ -67,11 +69,14 @@ public class Instructions {
             // mod
             .appendMode(true)
             .appendSpace()
+            // name
+            .appendName(true)
+            .appendSpace()
             // qq
             .appendQQ(true)
             .appendSpace()
-            // name
-            .appendName(true)
+            // uid
+            .appendUID(true)
             .appendSpace()
             // 0-100？
             .appendRange(true)
@@ -85,11 +90,14 @@ public class Instructions {
             // mod
             .appendMode(true)
             .appendSpace()
+            // name
+            .appendName(true)
+            .appendSpace()
             // qq
             .appendQQ(true)
             .appendSpace()
-            // name
-            .appendName(true)
+            // uid
+            .appendUID(true)
             .appendSpace()
             // 0-1000？
             .appendRange(true)
@@ -103,13 +111,16 @@ public class Instructions {
             // mod
             .appendMode(true)
             .appendSpace()
-            // qq
-            .appendQQ(true)
-            .appendSpace()
             // name
             .appendName(true)
             .appendSpace()
-            // 0-1000？
+            // qq
+            .appendQQ(true)
+            .appendSpace()
+            // uid
+            .appendUID(true)
+            .appendSpace()
+            // 0-100？
             .appendRange(true)
             .end()
             .build();
