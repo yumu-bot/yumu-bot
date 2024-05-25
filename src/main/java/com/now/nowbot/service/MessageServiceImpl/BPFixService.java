@@ -65,7 +65,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var mode = param.mode();
         var user = param.user();
 
-        if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
+        if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
 
         var fixes = getBPFixList(bpMap);
 
