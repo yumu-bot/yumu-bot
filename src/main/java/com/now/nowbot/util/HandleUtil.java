@@ -301,8 +301,15 @@ public class HandleUtil {
     public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
         var range = parseRange(matcher, null);
 
-        int offset = range.offset();
-        int limit = range.limit();
+        final int offset;
+        int limit;
+        if (1 == range.limit()) {
+            limit = range.offset() + 1;
+            offset = 0;
+        } else {
+            limit = range.limit();
+            offset = range.offset();
+        }
 
         List<Score> BPList;
 
@@ -328,7 +335,6 @@ public class HandleUtil {
         BPList.forEach(
                 ContextUtil.consumerWithIndex(
                         (s, index) -> {
-
                             if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
                                 dataMap.put(index + offset, s);
                             }
@@ -478,12 +484,12 @@ public class HandleUtil {
          * 加命令
          */
         public CommandPatternBuilder appendCommands(Iterable<String> commands) {
-            patternStr.append('(');
+            startGroup();
             for (var command : commands) {
                 patternStr.append(command).append('|');
             }
             patternStr.deleteCharAt(patternStr.length() - 1);
-            patternStr.append(')');
+            endGroup();
             return this;
         }
 
@@ -491,12 +497,12 @@ public class HandleUtil {
          * 加命令
          */
         public CommandPatternBuilder appendCommands(String... commands) {
-            patternStr.append('(');
+            startGroup();
             for (var command : commands) {
                 patternStr.append(command).append('|');
             }
             patternStr.deleteCharAt(patternStr.length() - 1);
-            patternStr.append(')');
+            endGroup();
             return this;
         }
 
@@ -506,12 +512,12 @@ public class HandleUtil {
          * @return this
          */
         public CommandPatternBuilder appendIgnores(@NonNull String... ignores) {
-            patternStr.append("(?!(");
+            patternStr.append("(?!");
             for (var ignore : ignores) {
                 patternStr.append(ignore).append('|');
             }
             patternStr.deleteCharAt(patternStr.length() - 1);
-            patternStr.append("))");
+            patternStr.append(")");
             return this;
         }
 
