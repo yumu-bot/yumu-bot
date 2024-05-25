@@ -466,7 +466,7 @@ public class HandleUtil {
             var range = matcher.group("range");
             var rangeArray = range.split("-");
             if (rangeArray.length == 2) {
-                n = Integer.parseInt(rangeArray[0]) - 1;
+                n = Integer.parseInt(rangeArray[0]);
                 m = Integer.parseInt(rangeArray[1]);
             } else {
                 // 只有一个数字就是查询 tbp 0-n
@@ -480,7 +480,7 @@ public class HandleUtil {
                 m = n - m;
                 n = n - m;
             } else if (n == m) {
-                m = n + 1;
+                n = 0;
             }
 
             if (n < 0) n = 0;
