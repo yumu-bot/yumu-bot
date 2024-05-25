@@ -94,7 +94,7 @@ public class HandleUtil {
     public static OsuUser getUser(@NonNull MessageEvent event, @NonNull Matcher matcher, @NonNull int maximum) throws TipsException {
         OsuMode mode = getMode(matcher);
 
-        var u = getOtherUser(event, matcher, mode);
+        var u = getOtherUser(event, matcher, mode, maximum);
 
         if (Objects.nonNull(u)) return u;
 
@@ -294,12 +294,8 @@ public class HandleUtil {
 
     }
 
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        return getOsuBPMap(user, matcher, mode, false);
-    }
-
     public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
-        var range = parseRange(matcher, null);
+        var range = parseRange(matcher, maximum);
 
         final int offset;
         int limit;
@@ -343,6 +339,10 @@ public class HandleUtil {
         );
 
         return dataMap;
+    }
+
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
+        return getOsuBPMap(user, matcher, mode, false);
     }
 
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
@@ -550,24 +550,35 @@ public class HandleUtil {
             return this;
         }
 
-        // 默认匹配 0 或无穷个
+        // 默认就是 Any
         public CommandPatternBuilder appendSpace() {
+            return this.appendSpaceAny();
+        }
+
+        // 支持 0-1
+        public CommandPatternBuilder appendSpace(int num) {
+            return switch (num) {
+                case 0 -> this.appendSpaceOnce();
+                case 1 -> this.appendSpaceLeast();
+                default -> this.appendSpaceAny();
+            };
+        }
+
+        // 0-∞
+        private CommandPatternBuilder appendSpaceAny() {
             patternStr.append(REG_SPACE);
             return this;
         }
 
-        public CommandPatternBuilder appendSpace1P() {
+        // 1-∞
+        private CommandPatternBuilder appendSpaceLeast() {
             patternStr.append(REG_SPACE_1P);
             return this;
         }
 
-        public CommandPatternBuilder appendSpace01() {
+        // 0-1
+        private CommandPatternBuilder appendSpaceOnce() {
             patternStr.append(REG_SPACE_01);
-            return this;
-        }
-
-        public CommandPatternBuilder more() {
-            patternStr.append('+');
             return this;
         }
 
@@ -579,7 +590,7 @@ public class HandleUtil {
             append(REG_COLUMN);
             append(REG_MODE);
             endGroup();
-            if (nullable) any();
+            if (nullable) whatever();
             return this;
         }
 
@@ -602,9 +613,10 @@ public class HandleUtil {
         }
 
         // 构建类似于 (?<s>s)? 这样匹配特定字符的序列
-        public CommandPatternBuilder appendKeyWord(String str, boolean include0) {
-            patternStr.append("(?<").append(str).append('>').append(str).append(include0 ? ")?" : ")+");
-            return this;
+        public CommandPatternBuilder appendKeyWord(String str, boolean whatever) {
+            patternStr.append("(?<").append(str).append('>').append(str).append(")");
+
+            return whatever ? whatever() : more();
         }
 
         // 构建类似于 (?<s>s)? 这样匹配特定字符的序列，加空格
@@ -617,36 +629,59 @@ public class HandleUtil {
             return this;
         }
 
-        public CommandPatternBuilder any() {
-            patternStr.append('?');
-            return this;
-        }
-
         public CommandPatternBuilder appendQQ(boolean nullable) {
             append(REG_QQ);
-            if (nullable) any();
+            if (nullable) whatever();
             return this;
         }
 
         public CommandPatternBuilder appendName(boolean nullable) {
             append(REG_NAME);
-            if (nullable) any();
+            if (nullable) whatever();
             return this;
         }
 
         public CommandPatternBuilder appendUID(boolean nullable) {
             append(REG_UID);
-            if (nullable) any();
+            if (nullable) whatever();
             return this;
         }
 
         public CommandPatternBuilder appendRange(boolean nullable) {
             startGroup();
-            append("\\s+");
-            append(REG_HASH).any().appendSpace();
+            appendSpace();
+            append(REG_HASH).whatever();
+            appendSpace();
             append(REG_RANGE);
             endGroup();
-            if (nullable) any();
+            if (nullable) whatever();
+            return this;
+        }
+
+        /**
+         * 0-1，?，whatever 你可以理解成无所谓，随便的意思
+         * @return this
+         */
+        public CommandPatternBuilder whatever() {
+            patternStr.append('?');
+            return this;
+        }
+
+        /**
+         * 0-∞，*
+         * @return this
+         */
+        public CommandPatternBuilder any() {
+            patternStr.append('*');
+            return this;
+        }
+
+        /**
+         * 1-∞，+
+         * @return this
+         */
+        public CommandPatternBuilder more() {
+            patternStr.append('+');
             return this;
         }
 
