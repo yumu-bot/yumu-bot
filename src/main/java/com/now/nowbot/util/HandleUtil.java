@@ -37,7 +37,8 @@ public class HandleUtil {
     public static final  String             REG_COLUMN       = "[:：]";
     public static final  String             REG_HASH         = "[#＃]";
     public static final  String             REG_HYPHEN       = "[-－]";
-    public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]-_][0-9a-zA-Z\\[\\]-_ ]{2,}?))";
+    public static final String REG_NAME =
+            "(\\*?(?<name>[0-9a-zA-Z\\[\\]-_][0-9a-zA-Z\\[\\]-_ ]{2,}?))";
     public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
     public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
     public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
@@ -162,7 +163,6 @@ public class HandleUtil {
             name = matcher.group("name");
             // 对叫100(或者1000，取自 maximum)的人直接取消处理
             if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(name.trim())) {
-
                 try {
                     return userApiService.getPlayerInfo(name, mode);
                 } catch (WebClientResponseException.NotFound e) {
@@ -275,17 +275,10 @@ public class HandleUtil {
     }
 
     public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
-        var range = parseRange(matcher, null);
+        var range = parseRange(matcher, null, true);
 
-        final int offset;
-        int limit;
-        if (1 == range.limit()) {
-            limit = range.offset() + 1;
-            offset = 0;
-        } else {
-            limit = range.limit();
-            offset = range.offset();
-        }
+        final int offset = range.offset();
+        final int limit = range.limit();
 
         List<Score> BPList;
 
@@ -321,14 +314,49 @@ public class HandleUtil {
         return dataMap;
     }
 
-    //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
-        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null);
+    /**
+     * @param defaultLimit 第二个参数的默认值
+     * @param isForceRange 没有第二个参数的情况下强制从 0 到第一个参数
+     */
+    private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean isForceRange) {
+        int n;
+        int m;
 
-        int offset = range.offset();
-        int limit = range.limit();
+        try {
+            var range = matcher.group("range");
+            var rangeArray = range.split("-");
+            if (rangeArray.length == 2) {
+                n = Integer.parseInt(rangeArray[0]) - 1;
+                m = Integer.parseInt(rangeArray[1]);
+            } else if (isForceRange) {
+                n = 0;
+                m = Integer.parseInt(rangeArray[0]);
+            } else {
+                // 只有一个数字就是查询 bp n
+                n = Integer.parseInt(rangeArray[0]) - 1;
+                m = n + 1;
+            }
 
-        return getOsuBPMap(user, mode, offset, limit);
+            // 处理 m n 的极值
+            if (n > m) {
+                n = n + m;
+                m = n - m;
+                n = n - m;
+            } else if (n == m) {
+                m = n + 1;
+            }
+
+            if (n < 0) n = 0;
+            m = m - n;
+            if (m < 1) m = 1;
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
+            // 没有 range 默认是 1？
+            // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
+            n = 0;
+            m = Objects.requireNonNullElse(defaultLimit, 1);
+        }
+
+        return new Range(n, m);
     }
 
     // 重载
@@ -402,42 +430,28 @@ public class HandleUtil {
 
     private record Range(int offset, int limit) {}
 
-    private static Range parseRange(Matcher matcher, Integer defaultLimit) {
-        int n;
-        int m;
+    //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
+        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null, false);
 
-        try {
-            var range = matcher.group("range");
-            var rangeArray = range.split("-");
-            if (rangeArray.length == 2) {
-                n = Integer.parseInt(rangeArray[0]) - 1;
-                m = Integer.parseInt(rangeArray[1]);
+        int offset = range.offset();
+        int limit = range.limit();
+
+        return getOsuBPMap(user, mode, offset, limit);
+    }
+
+    public static void main(String[] args) {
+        var p = Pattern.compile("(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,15})?" + REG_RANGE + "?$");
+        var sc = new Scanner(System.in);
+        String s;
+        while (! (s = sc.nextLine()).equals("e")) {
+            var m = p.matcher(s);
+            if (m.find()) {
+                System.out.println(m.group("name"));
             } else {
-                // 只有一个数字就是查询 bp n
-                n = Integer.parseInt(rangeArray[0]) - 1;
-                m = n + 1;
+                System.out.println("no find");
             }
-
-            // 处理 m n 的极值
-            if (n > m) {
-                n = n + m;
-                m = n - m;
-                n = n - m;
-            } else if (n == m) {
-                m = n + 1;
-            }
-
-            if (n < 0) n = 0;
-            m = m - n;
-            if (m < 1) m = 1;
-        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
-            // 没有 range 默认是 1？
-            // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
-            n = 0;
-            m = Objects.requireNonNullElse(defaultLimit, 1);
         }
-
-        return new Range(n, m);
     }
 
     // 指令样式生成
