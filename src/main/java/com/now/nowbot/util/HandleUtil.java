@@ -36,7 +36,7 @@ public class HandleUtil {
     public static final  String             REG_SPACE_01     = "\\s?";
     public static final  String             REG_COLUMN       = "[:：]";
     public static final  String             REG_HASH         = "[#＃]";
-    public static final  String             REG_HYPHEN       = "[-－]";
+    public static final  String             REG_HYPHEN       = "[\\-－]";
     public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,}?))";
     public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
     public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
@@ -186,7 +186,6 @@ public class HandleUtil {
             var name = matcher.group("name");
             // 对叫100(或者1000，取自 maximum)的人直接取消处理
             if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(name.trim())) {
-
                 try {
                     return userApiService.getPlayerInfo(name, mode);
                 } catch (WebClientResponseException.NotFound e) {
@@ -294,11 +293,12 @@ public class HandleUtil {
 
     }
 
-    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        var range = parseDay(matcher);
 
-        int later = range.offset();
-        int earlier = range.limit();
+    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
+        var range = parseRange(matcher, null, true);
+
+        final int later = range.offset();
+        final int earlier = range.limit();
 
         List<Score> BPList;
 
@@ -340,7 +340,7 @@ public class HandleUtil {
 
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
     public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
-        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null);
+        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null, false);
 
         int offset = range.offset();
         int limit = range.limit();
@@ -419,7 +419,11 @@ public class HandleUtil {
 
     private record Range(int offset, int limit) {}
 
-    private static Range parseRange(Matcher matcher, Integer defaultLimit) {
+    /**
+     * @param defaultLimit 第二个参数的默认值
+     * @param isForceRange 没有第二个参数的情况下强制从 0 到第一个参数
+     */
+    private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean isForceRange) {
         int n;
         int m;
 
@@ -429,6 +433,9 @@ public class HandleUtil {
             if (rangeArray.length == 2) {
                 n = Integer.parseInt(rangeArray[0]) - 1;
                 m = Integer.parseInt(rangeArray[1]);
+            } else if (isForceRange) {
+                n = 0;
+                m = Integer.parseInt(rangeArray[0]);
             } else {
                 // 只有一个数字就是查询 bp n
                 n = Integer.parseInt(rangeArray[0]) - 1;
@@ -452,42 +459,6 @@ public class HandleUtil {
             // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
             n = 0;
             m = Objects.requireNonNullElse(defaultLimit, 1);
-        }
-
-        return new Range(n, m);
-    }
-
-    // offset 是小一点的天，limit 是大一点的天
-    private static Range parseDay(Matcher matcher) {
-        int n;
-        int m;
-
-        try {
-            var range = matcher.group("range");
-            var rangeArray = range.split("-");
-            if (rangeArray.length == 2) {
-                n = Integer.parseInt(rangeArray[0]);
-                m = Integer.parseInt(rangeArray[1]);
-            } else {
-                // 只有一个数字就是查询 tbp 0-n
-                n = 0;
-                m = Integer.parseInt(rangeArray[0]);
-            }
-
-            // 处理 m n 的极值
-            if (n > m) {
-                n = n + m;
-                m = n - m;
-                n = n - m;
-            } else if (n == m) {
-                n = 0;
-            }
-
-            if (n < 0) n = 0;
-            if (m < 1) m = 1;
-        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
-            n = 0;
-            m = 1;
         }
 
         return new Range(n, m);
@@ -678,9 +649,8 @@ public class HandleUtil {
 
         public CommandPatternBuilder appendRange(boolean nullable) {
             startGroup();
-            appendSpace();
-            append(REG_HASH).whatever();
-            appendSpace();
+            append("\\s+");
+            append(REG_HASH).whatever().appendSpace();
             append(REG_RANGE);
             endGroup();
             if (nullable) whatever();
@@ -697,6 +667,16 @@ public class HandleUtil {
             if (nullable) whatever();
             return this;
         }
+
+        public CommandPatternBuilder end() {
+            append("$");
+            return this;
+        }
+
+        public Pattern build() {
+            return Pattern.compile(patternStr.toString());
+        }
+
 
         /**
          * 0-1，?，whatever 你可以理解成无所谓，随便的意思
@@ -724,15 +704,5 @@ public class HandleUtil {
             patternStr.append('+');
             return this;
         }
-
-        public CommandPatternBuilder end() {
-            append("$");
-            return this;
-        }
-
-        public Pattern build() {
-            return Pattern.compile(patternStr.toString());
-        }
-
     }
 }
