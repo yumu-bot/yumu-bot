@@ -37,23 +37,27 @@ public class BPService implements MessageService<BPService.BPParam> {
         Matcher matcher;
 
         var singleMatcher = Instructions.BP.matcher(messageText);
-        var multipleMatcher = Instructions.BS.matcher(messageText);
+//        var multipleMatcher = Instructions.BS.matcher(messageText);
 
         boolean isSingle = singleMatcher.find();
-        boolean isMultiple = multipleMatcher.find();
+//        boolean isMultiple = multipleMatcher.find();
 
         // 都没找到才 false
-        if (isSingle || isMultiple) {
+        if (isSingle/* || isMultiple*/) {
+            matcher = singleMatcher;
+           /*
             if (isSingle) {
                 matcher = singleMatcher;
             } else {
                 matcher = multipleMatcher;
-            }
+            }*/
         } else {
             return false;
         }
 
         var isMyself = false;
+
+        // 处理 range
         var mode = HandleUtil.getMode(matcher);
         var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
 
@@ -72,7 +76,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, isMultiple);
+        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, false);
 
         data.setValue(new BPParam(user, mode, BPMap, isMyself));
         return true;

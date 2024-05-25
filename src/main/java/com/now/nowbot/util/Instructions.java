@@ -38,10 +38,11 @@ public class Instructions {
     public static final Pattern SCORE = Pattern.compile("^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![A-Za-z_])))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
     // b ymb ymbp :0-3 name 1-100
-    /*
-    public static final Pattern BP = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
-     */
+    public static final Pattern BP = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<range>(?<n>\\d+)([-－](?<m>\\d+))?))?$");
+
+
+    /*
     public static final Pattern BP = HandleUtil.createPattern()
             .appendCommands("bestperformance", "best", "bp", "b")
             .appendIgnoreAlphabets()
@@ -82,6 +83,7 @@ public class Instructions {
             .appendRange(true)
             .end()
             .build();
+     */
 
     public static final Pattern TODAY_BP = HandleUtil.createPattern()
             .appendCommands("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")

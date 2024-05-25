@@ -42,7 +42,7 @@ public class HandleUtil {
     public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
     public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
     public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
-    public static final  String             REG_RANGE        = "(?<range>\\d{1,2}([\\-－]\\d{1,3})?)";
+    public static final String REG_RANGE = "(?<range>(100|\\d{1,2})([\\-－]\\d{1,3})?)";
     public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
     public static final  String             REG_ID           = "(?<id>\\d+)";
     public static final  String             REG_BID          = "(?<bid>\\d+)";
@@ -184,14 +184,15 @@ public class HandleUtil {
 
         try {
             var name = matcher.group("name");
+            var nameWithoutSpace = name.trim();
             // 对叫100(或者1000，取自 maximum)的人直接取消处理
-            if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(name.trim())) {
+            if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(nameWithoutSpace)) {
                 try {
-                    return userApiService.getPlayerInfo(name, mode);
+                    return userApiService.getPlayerInfo(nameWithoutSpace, mode);
                 } catch (WebClientResponseException.NotFound e) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, nameWithoutSpace);
                 } catch (WebClientResponseException.Forbidden e) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, nameWithoutSpace);
                 } catch (WebClientResponseException e) {
                     throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
                 } catch (Exception e) {
@@ -294,7 +295,7 @@ public class HandleUtil {
     }
 
 
-    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
+    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
         var range = parseRange(matcher, null, true);
 
         final int later = range.offset();
