@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -27,7 +26,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
     public record MapParam(@Nullable OsuUser user, BeatMap beatMap, Expected expected) {}
 
-    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<Mod> mods) {}
+    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<String> mods) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) throws Throwable {

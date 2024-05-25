@@ -93,57 +93,103 @@ public enum Mod {
     }
 
     public static String getColor(String modStr) {
-        var m = fromStr(modStr);
+        var m = getModFromAbbreviation(modStr);
         return m.getColor();
     }
 
     public static List<Mod> getModsList(String modsStr) {
-        var modStrArray = getModsString(modsStr);
-        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
-        check(mList);
+        var modStrArray = getModsAbbrArray(modsStr);
+        var mList = Arrays.stream(modStrArray).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
+        checkMod(mList);
         return mList;
     }
 
-    public static List<Mod> getModsList(int mods) {
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
-        check(mList);
+    public static List<Mod> getModsList(int value) {
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
+        checkMod(mList);
         return mList;
     }
 
-    public static List<String> getModsStrList(Integer mods) {
-        if (Objects.isNull(mods)) return new ArrayList<>();
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
-        check(mList);
+    public static List<String> getModsAbbrList(Integer value) {
+        if (Objects.isNull(value)) return new ArrayList<>();
+        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
+        checkMod(mList);
         return mList.stream().map(Mod::getAbbreviation).toList();
+    }
+
+    public static List<String> getModsAbbrList(String abbr) {
+        var array = getModsAbbrArray(abbr);
+
+        if (array.length == 0) {
+            return new ArrayList<>();
+        } else {
+
+            var r = Arrays.stream(array).toList();
+            checkAbbrList(r);
+            return r;
+        }
     }
 
     public static String getModsStr(Integer mods) {
         if (Objects.isNull(mods)) return "";
         var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & mods)).distinct().toList();
-        check(mList);
+        checkMod(mList);
         return String.join("", mList.stream().map(Mod::getAbbreviation).toList());
     }
 
     public static int getModsValue(String modsStr) {
-        var modStrArray = getModsString(modsStr);
-        var mList = Arrays.stream(modStrArray).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
+        var modStrArray = getModsAbbrArray(modsStr);
+        var mList = Arrays.stream(modStrArray).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
     public static int getModsValue(String[] modsStr) {
-        var mList = Arrays.stream(modsStr).map(Mod::fromStr).filter(e -> e != Other).distinct().toList();
+        var mList = Arrays.stream(modsStr).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
 
-    private static String[] getModsString(String modsStr) {
-        if (! StringUtils.hasText(modsStr)) return new String[]{};
-        var newStr = modsStr.replaceAll("\\s+", "");
+    // 这个是没有检查的
+    private static String[] getModsAbbrArray(String abbr) {
+        if (! StringUtils.hasText(abbr)) return new String[]{};
+        var newStr = abbr.replaceAll("\\s+", "");
         if (newStr.length() % 2 != 0) {
             throw new ModsException(ModsException.Type.MOD_Receive_CharNotPaired);
         }
         return newStr.split("(?<=\\w)(?=(\\w{2})+$)");
     }
 
-    private static void check(List<Mod> modList) {
+    private static void checkAbbr(@Nullable String abbr) {
+        if (abbr == null || abbr.isEmpty()) return;
+
+        var array = getModsAbbrArray(abbr);
+        var modList = new ArrayList<Mod>(array.length);
+
+        for (var a : array) {
+            var mod = getModFromAbbreviation(a);
+            modList.add(mod);
+        }
+
+        checkMod(modList);
+    }
+
+    private static void checkAbbrList(List<String> abbrList) {
+        if (abbrList.contains(None.abbreviation) && abbrList.size() > 1) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
+        }
+        if (abbrList.contains(DoubleTime.abbreviation) && abbrList.contains(HalfTime.abbreviation)) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{HalfTime.abbreviation}");
+        }
+        if (abbrList.contains(HardRock.abbreviation) && abbrList.contains(Easy.abbreviation)) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{HardRock.abbreviation} \{Easy.abbreviation}");
+        }
+        if (abbrList.contains(NoFail.abbreviation) && (abbrList.contains(SuddenDeath.abbreviation) || abbrList.contains(Perfect.abbreviation))) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{NoFail.abbreviation} \{SuddenDeath.abbreviation} \{Perfect.abbreviation}");
+        }
+        if (abbrList.contains(DoubleTime.abbreviation) && abbrList.contains(Nightcore.abbreviation)) {
+            throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{Nightcore.abbreviation}");
+        }
+    }
+
+    private static void checkMod(List<Mod> modList) {
         if (modList.contains(None) && modList.size() > 1) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
@@ -161,9 +207,11 @@ public enum Mod {
         }
     }
 
-    public static double getModsClockRate(int modsValue) {
+    public static double getModsClockRate(int value) {
         // 这里不能用 getModsValue，会误报重复
-        return getModsClockRate(Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & modsValue)).distinct().toList());
+        var list = getModsList(value);
+
+        return getModsClockRate(Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList());
     }
 
     public static double getModsClockRate(List<Mod> mList) {
@@ -185,16 +233,17 @@ public enum Mod {
     public static int getModsValueFromStr(@Nullable List<String> mList) {
         if (CollectionUtils.isEmpty(mList)) return 0;
 
-        return getModsValue(mList.stream().map(Mod::fromStr).distinct().toList());
+        return getModsValue(mList.stream().map(Mod::getModFromAbbreviation).distinct().toList());
     }
 
     public static int getModsValue(List<Mod> mList) {
-        check(mList);
+        checkMod(mList);
         return mList.stream().map(m -> m.value).reduce(0, (i, s) -> s | i);
     }
 
-    public static Mod fromStr(String modStr) {
-        return switch (modStr.toUpperCase()) {
+    @NonNull
+    public static Mod getModFromAbbreviation(@NonNull String abbr) {
+        return switch (abbr.toUpperCase()) {
             case "", "NM" -> None;
             case "NF" -> NoFail;
             case "EZ" -> Easy;
@@ -221,35 +270,35 @@ public enum Mod {
         };
     }
 
-    public boolean check(int i) {
+    public boolean checkValue(int i) {
         return (value & i) != 0;
     }
 
     public static boolean hasDt(int i) {
-        return DoubleTime.check(i) || Nightcore.check(i);
+        return DoubleTime.checkValue(i) || Nightcore.checkValue(i);
     }
 
     public static boolean hasHt(int i) {
-        return HalfTime.check(i);
+        return HalfTime.checkValue(i);
     }
 
     public static boolean hasHr(int i) {
-        return HardRock.check(i);
+        return HardRock.checkValue(i);
     }
 
     public static boolean hasEz(int i) {
-        return Easy.check(i);
+        return Easy.checkValue(i);
     }
 
     public static boolean hasChangeRating(int i) {
-        return Easy.check(i) || HalfTime.check(i) ||
-                HardRock.check(i) || DoubleTime.check(i) || Nightcore.check(i) || Flashlight.check(i);
+        return Easy.checkValue(i) || HalfTime.checkValue(i) ||
+                HardRock.checkValue(i) || DoubleTime.checkValue(i) || Nightcore.checkValue(i) || Flashlight.checkValue(i);
     }
 
     public static boolean hasChangeRating(List<String> mods) {
         int i = getModsValueFromStr(mods);
-        return Easy.check(i) || HalfTime.check(i) ||
-                HardRock.check(i) || DoubleTime.check(i) || Nightcore.check(i) || Flashlight.check(i);
+        return Easy.checkValue(i) || HalfTime.checkValue(i) ||
+                HardRock.checkValue(i) || DoubleTime.checkValue(i) || Nightcore.checkValue(i) || Flashlight.checkValue(i);
     }
 
     public static int add(int old, Mod mod) {

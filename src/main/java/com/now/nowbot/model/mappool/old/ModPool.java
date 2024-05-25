@@ -23,7 +23,7 @@ public class ModPool {
     }
 
     public Mod getMod() {
-        return Mod.fromStr(mod);
+        return Mod.getModFromAbbreviation(mod);
     }
 
     public void setMod(Mod mod) {

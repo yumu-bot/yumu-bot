@@ -64,7 +64,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
             }
         }
 
-        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, Mod.getModsList(param.modStr));
+        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, Mod.getModsAbbrList(param.modStr));
 
         try {
             var image = imageService.getPanelE3(param.matchData, beatMap, expected);

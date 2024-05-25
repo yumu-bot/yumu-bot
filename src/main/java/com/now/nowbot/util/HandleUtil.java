@@ -255,10 +255,10 @@ public class HandleUtil {
             miss = 0;
         }
 
-        List<Mod> mods;
+        List<String> mods;
 
         try {
-            mods = Mod.getModsList(matcher.group("mod"));
+            mods = Mod.getModsAbbrList(matcher.group("mod"));
         } catch (RuntimeException e) {
             mods = new ArrayList<>();
         }

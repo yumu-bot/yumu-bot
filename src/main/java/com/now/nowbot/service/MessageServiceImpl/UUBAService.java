@@ -286,7 +286,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         bps.stream()
                 .peek(s -> {
                     if (s.getMods().isEmpty()) s.setScore(0);
-                    int f = s.getMods().stream().map(Mod::fromStr).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
+                    int f = s.getMods().stream().map(Mod::getModFromAbbreviation).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))

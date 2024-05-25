@@ -39,8 +39,8 @@ public class TestMapService implements MessageService<Matcher> {
         if (b.getBeatMapSet() != null) {
             sb.append(b.getBeatMapSet().getArtistUnicode()).append(' ').append('-').append(' ');
             sb.append(b.getBeatMapSet().getTitleUnicode()).append(' ');
+            sb.append('(').append(b.getBeatMapSet().getCreator()).append(')').append(' ');
         }
-        sb.append('(').append(b.getBeatMapSet().getCreator()).append(')').append(' ');
         sb.append('[').append(b.getDifficultyName()).append(']').append(',');
 
 
@@ -62,7 +62,7 @@ public class TestMapService implements MessageService<Matcher> {
         }
 
         var mods = mod.split("[\"\\s,，\\-|:]+");
-        int modInt = Stream.of(mods).map(Mod::fromStr).map(e -> e.value).reduce(0, (v, a)-> v|a);
+        int modInt = Stream.of(mods).map(Mod::getModFromAbbreviation).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
         float newTotalLength = getNewTotalLength (b.getTotalLength(), modInt);
 

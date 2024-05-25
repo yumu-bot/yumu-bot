@@ -680,7 +680,7 @@ public class BotWebApi {
 
             var param = new MapStatisticsService.MapParam(null, beatMap,
                     new MapStatisticsService.Expected(
-                            mode, accuracy, combo, miss, Mod.getModsList(modStr)
+                            mode, accuracy, combo, miss, Mod.getModsAbbrList(modStr)
                     )
             );
 
