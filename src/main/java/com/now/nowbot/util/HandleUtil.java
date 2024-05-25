@@ -37,13 +37,13 @@ public class HandleUtil {
     public static final  String             REG_COLUMN       = "[:：]";
     public static final  String             REG_HASH         = "[#＃]";
     public static final  String             REG_HYPHEN       = "[-－]";
-    public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]-_][0-9a-zA-Z\\[\\]-_ ]{2,}?))";
+    public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,}?))";
     public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
     public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
     public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
     public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
-    public static final  String             REG_RANGE        = "(?<range>\\d{1,2}([-－]\\d{1,3})?)";
-    public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([-－]\\d{1,3})?)";
+    public static final  String             REG_RANGE        = "(?<range>\\d{1,2}([\\-－]\\d{1,3})?)";
+    public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
     public static final  String             REG_ID           = "(?<id>\\d+)";
     public static final  String             REG_BID          = "(?<bid>\\d+)";
     public static final  String             REG_SID          = "(?<sid>\\d+)";
@@ -294,18 +294,11 @@ public class HandleUtil {
 
     }
 
-    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int maximum) throws TipsException {
-        var range = parseRange(matcher, maximum);
+    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
+        var range = parseDay(matcher);
 
-        final int offset;
-        int limit;
-        if (1 == range.limit()) {
-            limit = range.offset() + 1;
-            offset = 0;
-        } else {
-            limit = range.limit();
-            offset = range.offset();
-        }
+        int later = range.offset();
+        int earlier = range.limit();
 
         List<Score> BPList;
 
@@ -314,7 +307,7 @@ public class HandleUtil {
         } catch (WebClientResponseException.Forbidden e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getUsername());
         } catch (WebClientResponseException.NotFound e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.getUsername());
         } catch (WebClientResponseException e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         } catch (Exception e) {
@@ -323,8 +316,8 @@ public class HandleUtil {
         }
 
         //筛选
-        LocalDateTime laterDay = LocalDateTime.now().minusDays(offset);
-        LocalDateTime earlierDay = laterDay.minusDays(limit);
+        LocalDateTime laterDay = LocalDateTime.now().minusDays(later);
+        LocalDateTime earlierDay = LocalDateTime.now().minusDays(earlier);
 
         var dataMap = new TreeMap<Integer, Score>();
 
@@ -332,7 +325,7 @@ public class HandleUtil {
                 ContextUtil.consumerWithIndex(
                         (s, index) -> {
                             if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
-                                dataMap.put(index + offset, s);
+                                dataMap.put(index + later, s);
                             }
                         }
                 )
@@ -459,6 +452,42 @@ public class HandleUtil {
             // !bs = !BP 1 - 20，默认是 1 直接给我功能干废了！
             n = 0;
             m = Objects.requireNonNullElse(defaultLimit, 1);
+        }
+
+        return new Range(n, m);
+    }
+
+    // offset 是小一点的天，limit 是大一点的天
+    private static Range parseDay(Matcher matcher) {
+        int n;
+        int m;
+
+        try {
+            var range = matcher.group("range");
+            var rangeArray = range.split("-");
+            if (rangeArray.length == 2) {
+                n = Integer.parseInt(rangeArray[0]) - 1;
+                m = Integer.parseInt(rangeArray[1]);
+            } else {
+                // 只有一个数字就是查询 tbp 0-n
+                n = 0;
+                m = Integer.parseInt(rangeArray[0]);
+            }
+
+            // 处理 m n 的极值
+            if (n > m) {
+                n = n + m;
+                m = n - m;
+                n = n - m;
+            } else if (n == m) {
+                m = n + 1;
+            }
+
+            if (n < 0) n = 0;
+            if (m < 1) m = 1;
+        } catch (IllegalStateException | IllegalArgumentException | NullPointerException e) {
+            n = 0;
+            m = 1;
         }
 
         return new Range(n, m);
@@ -653,6 +682,17 @@ public class HandleUtil {
             append(REG_HASH).whatever();
             appendSpace();
             append(REG_RANGE);
+            endGroup();
+            if (nullable) whatever();
+            return this;
+        }
+
+        public CommandPatternBuilder appendRange1000(boolean nullable) {
+            startGroup();
+            appendSpace();
+            append(REG_HASH).whatever();
+            appendSpace();
+            append(REG_RANGE_DAY);
             endGroup();
             if (nullable) whatever();
             return this;

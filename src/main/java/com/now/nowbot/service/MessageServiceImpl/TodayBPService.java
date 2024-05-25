@@ -41,7 +41,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             user = HandleUtil.getMyselfUser(event, mode);
         }
 
-        var scores = HandleUtil.getTodayBPList(user, matcher, mode, 1000);
+        var scores = HandleUtil.getTodayBPList(user, matcher, mode);
 
         /*
 
@@ -164,7 +164,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             if (! user.getActive()) {
                 throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.getUsername());
             }
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode.getName());
         }
 
         /*
