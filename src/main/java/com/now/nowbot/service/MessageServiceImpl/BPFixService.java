@@ -98,7 +98,10 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var scoreList = new ArrayList<ScoreFc>();
 
         for (var e : BPMap.entrySet()) {
-            if (Objects.requireNonNullElse(e.getValue().getStatistics().getCountMiss(), 0) > 0) {
+            int miss = Objects.requireNonNullElse(e.getValue().getStatistics().getCountMiss(), 0);
+
+            // 1-10miss 是可以 fix 的
+            if (miss > 0 && miss <= 10) {
                 rankList.add(e.getKey());
                 scoreList.add(ScoreFc.copyOf(e.getValue()));
             }
