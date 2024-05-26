@@ -141,7 +141,7 @@ public class PerformancePlusService {
             }
             postDataId.add(score.getScoreID());
             checkFile(score.getBeatMap().getId());
-            var mods = Mod.getModsValueFromStr(score.getMods());
+            var mods = Mod.getModsValueFromAbbrList(score.getMods());
             var combo = score.getMaxCombo();
             var misses = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
             // 这俩我猜测是 50 和 100 的数量
@@ -169,7 +169,7 @@ public class PerformancePlusService {
         int i = 0;
         var data = new ArrayList<PerformancePlusLite>(postDataId.size());
         for (var scoreId : postDataId) {
-            data.add(new PerformancePlusLite(scoreId, result.get(i).getPerformance(), PerformancePlusLite.SCORE));
+            data.add(new PerformancePlusLite(scoreId, Objects.requireNonNull(result).get(i).getPerformance(), PerformancePlusLite.SCORE));
             i++;
         }
         performancePlusLiteRepository.saveAll(data);

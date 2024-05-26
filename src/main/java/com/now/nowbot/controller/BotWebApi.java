@@ -528,7 +528,7 @@ public class BotWebApi {
             try {
                 scoreList = scoreApiService.getScoreAll(bid, uid, mode);
                 for (var s : scoreList) {
-                    if (Mod.getModsValueFromStr(s.getMods()) == modInt) {
+                    if (Mod.getModsValueFromAbbrList(s.getMods()) == modInt) {
                         score = s;
                         break;
                     }

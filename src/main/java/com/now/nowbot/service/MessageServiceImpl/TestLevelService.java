@@ -113,7 +113,7 @@ public class TestLevelService implements MessageService<BinUser> {
         bp.stream()
                 .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
                 .map(s -> new ScoreLite(s.getMaxCombo(), s.getBeatMap().getMaxCombo() - s.getMaxCombo(),
-                        s.getAccuracy(), Mod.getModsValueFromStr(s.getMods()), s.getBeatMap().getId()))
+                        s.getAccuracy(), Mod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getId()))
                 .sorted(Comparator.comparingInt(ScoreLite::diff)
                         .thenComparingInt(ScoreLite::combo).reversed()
                         .thenComparingDouble(ScoreLite::acc).reversed()

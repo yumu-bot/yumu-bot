@@ -46,8 +46,8 @@ public class MapMinusService implements MessageService<Matcher> {
         String fileStr;
         BeatMap beatMap;
 
-        int modsValue = Mod.getModsValue(matcher.group("mod"));
-        boolean isChangedRating = Mod.hasChangeRating(modsValue);
+        var modsList = Mod.getModsList(matcher.group("mod"));
+        boolean isChangedRating = Mod.hasChangeRating(modsList);
 
 
         try {
@@ -72,7 +72,7 @@ public class MapMinusService implements MessageService<Matcher> {
             beatMap = beatmapApiService.getBeatMapInfo(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
 
-            MapAttr.applyModChangeForBeatMap(beatMap, modsValue, imageService);
+            MapAttr.applyModChangeForBeatMap(beatMap, Mod.getModsValue(modsList), imageService);
 
 
             fileStr = beatmapApiService.getBeatMapFile(bid);
@@ -97,7 +97,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
         PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = PPMinus3.getInstance(file, isChangedRating ? Mod.getModsClockRate(modsValue) : rate);
+            mapMinus = PPMinus3.getInstance(file, isChangedRating ? Mod.getModsClockRate(modsList) : rate);
         }
 
         byte[] image;

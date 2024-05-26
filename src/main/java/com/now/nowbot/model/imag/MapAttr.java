@@ -161,7 +161,7 @@ public class MapAttr {
     }
 
     public static void applyModChangeForScore(@NonNull Score score, @NonNull ImageService imageService) throws TipsException {
-        applyModChangeForBeatMap(score.getBeatMap(), Mod.getModsValueFromStr(score.getMods()), imageService);
+        applyModChangeForBeatMap(score.getBeatMap(), Mod.getModsValueFromAbbrList(score.getMods()), imageService);
     }
 
 
@@ -172,7 +172,7 @@ public class MapAttr {
 
         // 第一次遍历：收集星数变化的谱面
         for (var s : scoreList) {
-            var v = Mod.getModsValueFromStr(s.getMods());
+            var v = Mod.getModsValueFromAbbrList(s.getMods());
 
             if (Mod.hasChangeRating(v)) {
                 var b = s.getBeatMap();
@@ -194,7 +194,7 @@ public class MapAttr {
 
         // 第二次遍历：赋值星数变化的谱面
         for (var s : scoreList) {
-            var v = Mod.getModsValueFromStr(s.getMods());
+            var v = Mod.getModsValueFromAbbrList(s.getMods());
 
             if (Mod.hasChangeRating(v)) {
                 var b = s.getBeatMap();
