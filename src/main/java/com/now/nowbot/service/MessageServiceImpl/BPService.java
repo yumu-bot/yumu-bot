@@ -16,11 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
@@ -34,26 +34,10 @@ public class BPService implements MessageService<BPService.BPParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
-        Matcher matcher;
+        var matcher = Instructions.BP.matcher(messageText);
+        if (! matcher.find()) return false;
 
-        var singleMatcher = Instructions.BP.matcher(messageText);
-//        var multipleMatcher = Instructions.BS.matcher(messageText);
-
-        boolean isSingle = singleMatcher.find();
-//        boolean isMultiple = multipleMatcher.find();
-
-        // 都没找到才 false
-        if (isSingle/* || isMultiple*/) {
-            matcher = singleMatcher;
-           /*
-            if (isSingle) {
-                matcher = singleMatcher;
-            } else {
-                matcher = multipleMatcher;
-            }*/
-        } else {
-            return false;
-        }
+        boolean isMultiple = StringUtils.hasText(matcher.group("s"));
 
         var isMyself = false;
 
@@ -76,7 +60,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, false);
+        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, isMultiple);
 
         data.setValue(new BPParam(user, mode, BPMap, isMyself));
         return true;
