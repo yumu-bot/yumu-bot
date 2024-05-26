@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -104,12 +105,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
             day = 1;
         }
 
-        // 处理默认 mode
-        if (OsuMode.isDefault(mode)) {
-            mode = user.getMode();
-        }
-
-        data.setValue(new InfoParam(user, mode, day, isMyself));
+        data.setValue(new InfoParam(user, HandleUtil.getModeOrElse(mode, user), day, isMyself));
         return true;
     }
 

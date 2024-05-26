@@ -17,6 +17,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -213,11 +214,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         BinUser binUser = param.user();
         OsuUser osuUser;
 
-        //处理默认mode
-        var mode = param.mode();
-        if (mode == OsuMode.DEFAULT) {
-            mode = binUser.getMode();
-        }
+        var mode = HandleUtil.getModeOrElse(param.mode(), binUser);
 
         List<Score> scoreList;
 

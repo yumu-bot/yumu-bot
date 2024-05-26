@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -58,24 +59,17 @@ public class UUIService implements MessageService<Matcher> {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
             }
         }
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        //处理默认mode
-        if (mode == OsuMode.DEFAULT && user != null && user.getMode() != null) mode = user.getMode();
+
+        var mode = HandleUtil.getModeOrElse(matcher, user);
 
         @SuppressWarnings("unchecked")
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
 
-        byte[] image;
-        if (user != null) {
-            image = template.exchange(STR."https://a.ppy.sh/\{user.getOsuID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
-        } else {
-            image = null;
-        }
+        byte[] avatar = template.exchange(STR."https://a.ppy.sh/\{user.getOsuID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
 
         String message = getText(user, mode);
         try {
-            QQMsgUtil.sendImageAndText(from, image, message);
-            //event.getSubject().sendMessage(message);
+            QQMsgUtil.sendImageAndText(from, avatar, message);
         } catch (Exception e) {
             log.error("UUI 数据发送失败", e);
             from.sendMessage("UUI 请求超时。\n请重试。或使用增强的 !yminfo。");

@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -13,6 +12,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -134,11 +134,7 @@ public class UUPRService implements MessageService<Matcher> {
 
         if (Objects.isNull(binUser)) throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
 
-        //处理默认mode
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        if (mode == OsuMode.DEFAULT) {
-            mode = binUser.getMode();
-        }
+        var mode = HandleUtil.getModeOrElse(matcher, binUser);
 
         List<Score> scoreList;
 

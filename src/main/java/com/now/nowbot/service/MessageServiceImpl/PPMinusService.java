@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -117,18 +118,17 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
                 throw new PPMinusException(PPMinusException.Type.PM_Player_TokenExpired);
             }
         }
-        // 处理默认模式
-        var mode = OsuMode.getMode(matcher.group("mode"), me.getMode());
 
-        // 在新人群管理群里查询则主动认为是 osu 模式
+        var mode = HandleUtil.getModeOrElse(matcher, me);
+
+        // 在新人群管理群里查询，则主动认为是 osu 模式
         if (event.getSubject().getId() == 695600319L && OsuMode.DEFAULT.equals(mode)) {
             mode = OsuMode.OSU;
         }
 
         boolean isVs = (other.getOsuName() != null);
-        data.setValue(
-                new PPMinusParam(isVs, me, other, mode)
-        );
+
+        data.setValue(new PPMinusParam(isVs, me, other, mode));
 
         return true;
     }
