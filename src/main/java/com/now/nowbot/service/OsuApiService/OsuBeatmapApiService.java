@@ -7,6 +7,7 @@ import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import rosu.osu.JniResult;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -75,4 +76,5 @@ public interface OsuBeatmapApiService {
 
     Search searchBeatmap(Map<String, Object> query);
 
+    JniResult getMaxPP(long bid) throws Exception;
 }
