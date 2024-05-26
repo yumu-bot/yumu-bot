@@ -238,7 +238,8 @@ public class ImageService {
         var body = Map.of(
                 "user", user,
                 "scores", fixes.get("scores"),
-                "ranks", fixes.get("ranks")
+                "ranks", fixes.get("ranks"),
+                "pp", fixes.get("pp")
         );
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);

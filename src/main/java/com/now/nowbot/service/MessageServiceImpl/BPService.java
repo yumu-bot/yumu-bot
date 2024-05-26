@@ -84,7 +84,7 @@ public class BPService implements MessageService<BPService.BPParam> {
                 var rankList = new ArrayList<Integer>();
                 var scoreList = new ArrayList<Score>();
                 for (var e : BPMap.entrySet()) {
-                    rankList.add(e.getKey());
+                    rankList.add(e.getKey() + 1);
                     scoreList.add(e.getValue());
                 }
                 image = imageService.getPanelA4(user, scoreList, rankList);

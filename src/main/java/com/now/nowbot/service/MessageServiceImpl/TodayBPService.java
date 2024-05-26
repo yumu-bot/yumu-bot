@@ -231,7 +231,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             var rankList = new ArrayList<Integer>();
             var todayList = new ArrayList<Score>();
             for (var e : todayMap.entrySet()) {
-                rankList.add(e.getKey());
+                rankList.add(e.getKey() + 1);
                 todayList.add(e.getValue());
             }
 

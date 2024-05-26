@@ -67,14 +67,14 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
 
-        var fixes = getBPFixList(bpMap);
+        var fixData = fix(bpMap);
 
-        if (CollectionUtils.isEmpty(fixes)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
+        if (CollectionUtils.isEmpty(fixData)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
 
         byte[] image;
 
         try {
-            image = imageService.getPanelA7(user, fixes);
+            image = imageService.getPanelA7(user, fixData);
         } catch (Exception e) {
             log.error("理论最好成绩：渲染失败", e);
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩");
@@ -90,7 +90,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> getBPFixList(@Nullable Map<Integer, Score> BPMap) throws TipsException {
+    public Map<String, Object> fix(@Nullable Map<Integer, Score> BPMap) throws TipsException {
         if (CollectionUtils.isEmpty(BPMap)) return null;
 
         // 筛选需要 fix 的图，带 miss 的
@@ -102,12 +102,14 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
             // 1-10miss 是可以 fix 的
             if (miss > 0 && miss <= 10) {
-                rankList.add(e.getKey());
+                rankList.add(e.getKey() + 1);
                 scoreList.add(ScoreFc.copyOf(e.getValue()));
             }
         }
 
         if (CollectionUtils.isEmpty(scoreList)) return null;
+
+        // 获取需要 fix 的数据
 
         Map<Long, Float> fixMap;
 
@@ -119,15 +121,21 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderDisconnected, "理论最好成绩");
         }
 
+        float pp = 0;
 
         for (var s : scoreList) {
             var f = fixMap.get(s.getBeatMap().getId());
-            s.setFcPP(f);
+            if (f != null) {
+                s.setFcPP(f);
+            }
+
+            pp += Objects.requireNonNullElse(f, Objects.requireNonNullElse(s.getPP(), 0f));
         }
 
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
         result.put("ranks", rankList);
+        result.put("pp", pp);
 
         return result;
     }
