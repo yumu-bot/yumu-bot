@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -377,6 +378,18 @@ public class DataUtil {
         } else {
             return (int) Math.round(Math.log(v) / Math.log(0.9994));
         }
+    }
+
+    public static float getBonusPP(double playerPP, List<Double> fullPP) {
+        if (CollectionUtils.isEmpty(fullPP)) return 0f;
+
+        double[] array = new double[fullPP.size()];
+
+        for (int i = 0; i < fullPP.size(); i++) {
+            array[i] = Objects.requireNonNullElse(fullPP.get(i), 0d);
+        }
+
+        return getBonusPP(playerPP, array);
     }
 
     /**

@@ -9,11 +9,13 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -67,7 +69,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
 
-        var fixData = fix(bpMap);
+        var fixData = fix(Objects.requireNonNullElse(user.getPP(), 0d), bpMap);
 
         if (CollectionUtils.isEmpty(fixData)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
 
@@ -90,7 +92,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> fix(@Nullable Map<Integer, Score> BPMap) throws TipsException {
+    public Map<String, Object> fix(@NonNull double totalPP, @Nullable Map<Integer, Score> BPMap) throws TipsException {
         if (CollectionUtils.isEmpty(BPMap)) return null;
 
         // 筛选需要 fix 的图，带 miss 的
@@ -121,16 +123,33 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderDisconnected, "理论最好成绩");
         }
 
-        float pp = 0;
-
+        // 统计
         for (var s : scoreList) {
             var f = fixMap.get(s.getBeatMap().getId());
+            s.setFcPP(f);
+        }
+
+        // 计算总 PP
+        float pp = 0;
+        float weight = 1f / 0.95f;
+
+        var fullPP = new ArrayList<Double>();
+
+        for (var e : BPMap.entrySet()) {
+            var s = e.getValue();
+            weight *= 0.95f;
+
+            var f = fixMap.get(s.getBeatMap().getId());
             if (f != null) {
-                s.setFcPP(f);
+                pp += weight * f;
+            } else {
+                pp += Objects.requireNonNullElse(s.getWeight().weightedPP(), 0f);
             }
 
-            pp += Objects.requireNonNullElse(f, Objects.requireNonNullElse(s.getPP(), 0f));
+            fullPP.add(s.getPP().doubleValue());
         }
+
+        pp += DataUtil.getBonusPP(totalPP, fullPP);
 
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
