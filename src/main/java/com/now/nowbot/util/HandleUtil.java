@@ -1,6 +1,7 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -101,7 +102,8 @@ public class HandleUtil {
         return getMyselfUser(event, mode);
     }
 
-    public static OsuMode getMode(Matcher matcher) {
+    @NonNull
+    public static OsuMode getMode(@NonNull Matcher matcher) {
         OsuMode mode = OsuMode.DEFAULT;
         try {
             var modeStr = matcher.group("mode");
@@ -113,6 +115,61 @@ public class HandleUtil {
         }
         return mode;
     }
+
+    /**
+     * 处理默认模组。没有的话，获取传进来的玩家的模组
+     * @param matcher 匹配
+     * @param user 玩家
+     * @return 游戏模式
+     */
+    @NonNull
+    public static OsuMode getModeOrElse(@NonNull Matcher matcher, @NonNull OsuUser user) {
+        return getModeOrElse(getMode(matcher), user);
+    }
+
+    /**
+     * 处理默认模组。没有的话，获取传进来的玩家的模组
+     * @param matcher 匹配
+     * @param user 绑定玩家
+     * @return 游戏模式
+     */
+    @NonNull
+    public static OsuMode getModeOrElse(@NonNull Matcher matcher, @NonNull BinUser user) {
+        return getModeOrElse(getMode(matcher), user);
+    }
+
+    /**
+     * 处理默认模组。没有的话，获取传进来的玩家的模组
+     * @param mode 通过以上方法匹配得到的游戏模式
+     * @param user 玩家
+     * @return 游戏模式
+     */
+    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @NonNull OsuUser user) {
+        if (mode == null) {
+            return OsuMode.DEFAULT;
+        } else if (mode.equals(OsuMode.DEFAULT) && user.getOsuMode() != null) {
+            return user.getOsuMode();
+        } else {
+            return mode;
+        }
+    }
+
+    /**
+     * 处理默认模组。没有的话，获取传进来的玩家的模组
+     * @param mode 通过以上方法匹配得到的游戏模式
+     * @param user 绑定玩家
+     * @return 游戏模式
+     */
+    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @NonNull BinUser user) {
+        if (mode == null) {
+            return OsuMode.DEFAULT;
+        } else if (mode.equals(OsuMode.DEFAULT)) {
+            return user.getMode();
+        } else {
+            return mode;
+        }
+    }
+
     @Nullable
     public static OsuUser getOtherUser(MessageEvent event, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
         return getOtherUser(event, matcher, mode, 100);

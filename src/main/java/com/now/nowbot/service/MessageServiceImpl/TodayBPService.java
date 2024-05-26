@@ -148,7 +148,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
 
          */
 
-        data.setValue(new TodayBPParam(user, mode, scores, isMyself));
+        data.setValue(new TodayBPParam(user, HandleUtil.getModeOrElse(mode, user), scores, isMyself));
         return true;
     }
 
@@ -164,7 +164,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             if (! user.getActive()) {
                 throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.getUsername());
             }
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode.getName());
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode);
         }
 
         /*

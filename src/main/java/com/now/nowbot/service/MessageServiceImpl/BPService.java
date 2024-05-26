@@ -60,7 +60,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var BPMap = HandleUtil.getOsuBPMap(user, matcher, mode, isMultiple);
+        var BPMap = HandleUtil.getOsuBPMap(user, matcher, HandleUtil.getModeOrElse(mode, user), isMultiple);
 
         data.setValue(new BPParam(user, mode, BPMap, isMyself));
         return true;
@@ -75,7 +75,7 @@ public class BPService implements MessageService<BPService.BPParam> {
         var user = param.user();
 
         if (CollectionUtils.isEmpty(BPMap))
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
 
         byte[] image;
 
