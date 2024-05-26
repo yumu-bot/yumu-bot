@@ -92,7 +92,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> fix(@NonNull double totalPP, @Nullable Map<Integer, Score> BPMap) throws TipsException {
+    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> BPMap) throws TipsException {
         if (CollectionUtils.isEmpty(BPMap)) return null;
 
         // 筛选需要 fix 的图，带 miss 的
@@ -129,27 +129,35 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             s.setFcPP(f);
         }
 
-        // 计算总 PP
-        float pp = 0;
-        float weight = 1f / 0.95f;
-
-        var fullPP = new ArrayList<Double>();
+        // 计算总 PP，以及理论 PP
+        List<Double> fullPPList = new ArrayList<>(BPMap.size());
+        List<Float> theoreticalPPList = new ArrayList<>(BPMap.size());
 
         for (var e : BPMap.entrySet()) {
             var s = e.getValue();
-            weight *= 0.95f;
 
             var f = fixMap.get(s.getBeatMap().getId());
-            if (f != null) {
-                pp += weight * f;
-            } else {
-                pp += Objects.requireNonNullElse(s.getWeight().weightedPP(), 0f);
-            }
 
-            fullPP.add(s.getPP().doubleValue());
+            theoreticalPPList.add(Objects.requireNonNullElseGet(
+                    f, () -> Objects.requireNonNullElse(s.getPP(), 0f)));
+
+            fullPPList.add(s.getPP().doubleValue());
         }
 
-        pp += DataUtil.getBonusPP(totalPP, fullPP);
+        // 从大到小
+        theoreticalPPList = theoreticalPPList.stream().sorted(Comparator.reverseOrder()).toList();
+
+
+        // 给理论 PP 加权，第一个是 1
+        float pp = 0f;
+        float weight = 1f;
+
+        for (var t : theoreticalPPList) {
+            pp += t * weight;
+            weight *= 0.95f;
+        }
+
+        pp += DataUtil.getBonusPP(playerPP, fullPPList);
 
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
