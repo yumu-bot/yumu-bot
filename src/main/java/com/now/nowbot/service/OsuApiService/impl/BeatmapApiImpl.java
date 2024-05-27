@@ -17,8 +17,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import rosu.osu.JniResult;
+import rosu.osu.JniScore;
+import rosu.osu.Rosu;
+import rosu.osu.result.ManiaResult;
+import rosu.osu.result.OsuResult;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -193,5 +199,24 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 .retrieve()
                 .bodyToMono(Search.class)
                 .block();
+    }
+
+    public JniResult getMaxPP(long bid) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setAccuracy(100);
+        var r = Rosu.calculate(b, score);
+        switch (r) {
+            case OsuResult o -> {
+                System.out.println(o.getPpAcc());
+            }
+            case ManiaResult o -> {
+                System.out.println(o.getStar());
+            }
+            default -> {
+                System.out.println("other");
+            }
+        }
+        return r;
     }
 }

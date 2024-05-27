@@ -5,7 +5,6 @@ import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.mapper.BeatMapFileRepository;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.OsuMapDownloadUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -30,8 +29,6 @@ public class OsuGetServiceImpl {
     RestTemplate template;
 
     FileConfig fileConfig;
-
-    OsuMapDownloadUtil osuMapDownloadUtil;
 
     BeatMapFileRepository beatMapFileRepository;
 
@@ -59,10 +56,6 @@ public class OsuGetServiceImpl {
         }
         return c.getBody();
     }
-
-
-
-
 
     public JsonNode chatGetChannels(BinUser user) {
         HashMap body = new HashMap<>();
