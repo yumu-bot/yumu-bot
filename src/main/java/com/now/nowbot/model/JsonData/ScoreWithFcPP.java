@@ -3,26 +3,27 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.now.nowbot.entity.UserProfile;
 import org.springframework.beans.BeanUtils;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class ScorePlus extends Score {
-    UserProfile profile;
+public class ScoreWithFcPP extends Score {
+    // 专用的扩展属性用子类去继承, 不然父类会越来越大
+    Float fcPP;
 
-    public static ScorePlus copyOf(Score score) {
-        var result = new ScorePlus();
+    public static ScoreWithFcPP copyOf(Score score) {
+        var result = new ScoreWithFcPP();
         BeanUtils.copyProperties(score, result);
         return result;
     }
 
-    public UserProfile getProfile() {
-        return profile;
+    public Float getFcPP() {
+        return fcPP;
     }
 
-    public void setProfile(UserProfile profile) {
-        this.profile = profile;
+    public void setFcPP(Float fcPP) {
+        this.fcPP = fcPP;
     }
+
 }

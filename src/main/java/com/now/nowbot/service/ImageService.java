@@ -90,7 +90,7 @@ public class ImageService {
         return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
     }
 
-    public Map<Long, Float> getBPFix(@NonNull ArrayList<ScoreFc> BPList) {
+    public Map<Long, Float> getBPFix(@NonNull ArrayList<ScoreWithFcPP> BPList) {
         HttpHeaders headers = getDefaultHeader();
 
         Map<String, Object> map = new HashMap<>();

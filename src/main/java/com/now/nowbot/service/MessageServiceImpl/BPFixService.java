@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.JsonData.ScoreFc;
+import com.now.nowbot.model.JsonData.ScoreWithFcPP;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -97,7 +97,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         // 筛选需要 fix 的图，带 miss 的
         var rankList = new ArrayList<Integer>();
-        var scoreList = new ArrayList<ScoreFc>();
+        var scoreList = new ArrayList<ScoreWithFcPP>();
 
         for (var e : BPMap.entrySet()) {
             int miss = Objects.requireNonNullElse(e.getValue().getStatistics().getCountMiss(), 0);
@@ -105,7 +105,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             // 1-10miss 是可以 fix 的
             if (miss > 0 && miss <= 10) {
                 rankList.add(e.getKey() + 1);
-                scoreList.add(ScoreFc.copyOf(e.getValue()));
+                scoreList.add(ScoreWithFcPP.copyOf(e.getValue()));
             }
         }
 

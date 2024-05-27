@@ -34,13 +34,13 @@ public class OsuUserInfoDao {
     public void saveUsers(List<MicroUser> users) {
         var all = users.stream()
                 .flatMap(microUser -> {
-                    var osu = fromStatustucs(microUser.getRulesets().getOsu(), OsuMode.OSU);
+                    var osu = fromStatistics(microUser.getRulesets().getOsu(), OsuMode.OSU);
                     if (osu != null) osu.setOsuID(microUser.getId());
-                    var taiko = fromStatustucs(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
+                    var taiko = fromStatistics(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
                     if (taiko != null) taiko.setOsuID(microUser.getId());
-                    var fruits = fromStatustucs(microUser.getRulesets().getFruits(), OsuMode.CATCH);
+                    var fruits = fromStatistics(microUser.getRulesets().getFruits(), OsuMode.CATCH);
                     if (fruits != null) fruits.setOsuID(microUser.getId());
-                    var mania = fromStatustucs(microUser.getRulesets().getMania(), OsuMode.OSU);
+                    var mania = fromStatistics(microUser.getRulesets().getMania(), OsuMode.OSU);
                     if (mania != null) mania.setOsuID(microUser.getId());
 
                     return Stream.of(osu, taiko, fruits, mania);
@@ -135,7 +135,7 @@ public class OsuUserInfoDao {
         out.setTotal_hits(statistics.getTotalHits());
     }
 
-    private static OsuUserInfoArchiveLite fromStatustucs(Statistics s, OsuMode mode){
+    private static OsuUserInfoArchiveLite fromStatistics(Statistics s, OsuMode mode){
         if (s == null) return null;
         var out = new OsuUserInfoArchiveLite();
         out.setPlay_count(s.getPlayCount());

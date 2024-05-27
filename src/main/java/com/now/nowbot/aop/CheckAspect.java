@@ -7,7 +7,7 @@ import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.OsuUserPlus;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.JsonData.ScorePlus;
+import com.now.nowbot.model.JsonData.ScoreWithUserProfile;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -271,7 +271,7 @@ public class CheckAspect {
         var data = userProfileMapper.findTopByUserId(score.getUser().getId());
 
         return data.map(profile -> {
-            var result = ScorePlus.copyOf(score);
+            var result = ScoreWithUserProfile.copyOf(score);
             result.setProfile(profile);
             return (Score) result;
         }).orElse(score);
