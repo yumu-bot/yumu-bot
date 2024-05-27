@@ -96,8 +96,11 @@ public enum Mod {
         return mod.getColor();
     }
 
-    public static List<Mod> getModsList(String abbr) {
-        var abbrList = getModsAbbrList(abbr);
+    @NonNull
+    public static List<Mod> getModsList(@Nullable String abbr) {
+        if (! StringUtils.hasText(abbr)) return new ArrayList<>(0);
+
+        var abbrList = getModsAbbrList(abbr.toUpperCase());
         var modList = abbrList.stream().map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         checkModList(modList);
         return modList;
@@ -120,9 +123,9 @@ public enum Mod {
      * @return 缩写列表
      */
     public static List<String> getModsAbbrList(int value) {
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
-        checkModList(mList);
-        return mList.stream().map(Mod::getAbbreviation).toList();
+        var modList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
+        checkModList(modList);
+        return modList.stream().map(Mod::getAbbreviation).toList();
     }
 
     /**
@@ -131,14 +134,14 @@ public enum Mod {
      * @return 缩写组
      */
     public static String getModsAbbr(int value) {
-        var mList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
-        checkModList(mList);
-        return String.join("", mList.stream().map(Mod::getAbbreviation).toList());
+        var modList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
+        checkModList(modList);
+        return String.join("", modList.stream().map(Mod::getAbbreviation).toList());
     }
 
     public static int getModsValue(String abbr) {
         checkAbbr(abbr);
-        var abbrList = getModsAbbrList(abbr);
+        var abbrList = getModsAbbrList(abbr.toUpperCase());
         return getModsValueFromAbbrList(abbrList);
     }
 
@@ -147,12 +150,14 @@ public enum Mod {
      * @param abbrArray 模组数组
      * @return 值
      */
-    public static int getModsValue(String[] abbrArray) {
-        var mList = Arrays.stream(abbrArray).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
+    public static int getModsValue(@Nullable String[] abbrArray) {
+        if (abbrArray == null) return 0;
+
+        var mList = Arrays.stream(abbrArray).map(String::toUpperCase).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
 
-    public static int getModsValue(List<Mod> modList) {
+    public static int getModsValue(@Nullable List<Mod> modList) {
         if (CollectionUtils.isEmpty(modList)) return 0;
 
         checkModList(modList);
@@ -164,13 +169,14 @@ public enum Mod {
         if (CollectionUtils.isEmpty(abbrList)) return 0;
         checkAbbrList(abbrList);
 
-        return getModsValue(abbrList.stream().map(Mod::getModFromAbbreviation).distinct().toList());
+        return getModsValue(abbrList.stream().map(String::toUpperCase).map(Mod::getModFromAbbreviation).distinct().toList());
     }
 
     @NonNull
     public static List<String> getModsAbbrList(@Nullable String abbr) {
         if (! StringUtils.hasText(abbr)) return new ArrayList<>(0);
-        var newStr = abbr.replaceAll("\\s+", "");
+
+        var newStr = abbr.toUpperCase().replaceAll("\\s+", "");
         if (newStr.length() % 2 != 0) {
             throw new ModsException(ModsException.Type.MOD_Receive_CharNotPaired);
         }
@@ -183,7 +189,7 @@ public enum Mod {
     private static void checkAbbr(@Nullable String abbr) {
         if (abbr == null || abbr.isEmpty()) return;
 
-        var abbrList = getModsAbbrList(abbr);
+        var abbrList = getModsAbbrList(abbr.toUpperCase());
         var modList = new ArrayList<Mod>(abbrList.size());
 
         for (var a : abbrList) {
@@ -194,7 +200,9 @@ public enum Mod {
         checkModList(modList);
     }
 
-    private static void checkAbbrList(List<String> abbrList) {
+    private static void checkAbbrList(@Nullable List<String> abbrList) {
+        if (CollectionUtils.isEmpty(abbrList)) return;
+
         if (abbrList.contains(None.abbreviation) && abbrList.size() > 1) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
@@ -212,7 +220,9 @@ public enum Mod {
         }
     }
 
-    private static void checkModList(List<Mod> modList) {
+    private static void checkModList(@Nullable List<Mod> modList) {
+        if (CollectionUtils.isEmpty(modList)) return;
+
         if (modList.contains(None) && modList.size() > 1) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
@@ -235,15 +245,18 @@ public enum Mod {
      * @param value 值
      * @return 倍率
      */
+    @NonNull
     public static double getModsClockRate(int value) {
         return getModsClockRate(Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList());
     }
 
+    @NonNull
     public static double getModsClockRate(@Nullable String abbr) {
         var modList = getModsList(abbr);
         return getModsClockRate(modList);
     }
 
+    @NonNull
     public static double getModsClockRate(@Nullable List<Mod> modList) {
         if (CollectionUtils.isEmpty(modList)) return 1d;
 
