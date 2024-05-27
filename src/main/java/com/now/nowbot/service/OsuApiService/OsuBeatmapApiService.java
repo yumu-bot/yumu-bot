@@ -1,9 +1,13 @@
 package com.now.nowbot.service.OsuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.util.DataUtil;
+import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import rosu.osu.JniResult;
 import rosu.osu.JniScore;
 import rosu.osu.Rosu;
@@ -11,6 +15,7 @@ import rosu.osu.Rosu;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -118,5 +123,38 @@ public interface OsuBeatmapApiService {
         }
         var r = Rosu.calculate(b, score);
         return r;
+    }
+
+    default void applyModChangeForScores(List<Score> scoreList, @NonNull OsuMode mode) {
+        if (CollectionUtils.isEmpty(scoreList)) return;
+
+        // 一次搞定
+        for (var s : scoreList) {
+            var v = Mod.getModsValueFromAbbrList(s.getMods());
+
+            if (Mod.hasChangeRating(v)) {
+                var b = s.getBeatMap();
+                JniResult r;
+                try {
+                    r = getMaxPP(b.getId(), mode, v);
+                } catch (Exception e) {
+                    NowbotApplication.log.error("计算时出现异常", e);
+                    continue;
+                }
+
+                b.setStarRating((float) r.getStar());
+                b.setOD(DataUtil.OD(b.getOD(), v));
+                b.setAR(DataUtil.AR(b.getAR(), v));
+                b.setCS(DataUtil.CS(b.getCS(), v));
+                b.setHP(DataUtil.HP(b.getHP(), v));
+                if (Mod.hasDt(v)) {
+                    b.setBPM(b.getBPM() * 1.5f);
+                    b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
+                } else if (Mod.hasHt(v)) {
+                    b.setBPM(b.getBPM() * 0.75f);
+                    b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
+                }
+            }
+        }
     }
 }

@@ -5,11 +5,11 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
@@ -47,7 +47,9 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
     @Resource
     ImageService imageService;
     @Resource
-    UUBAService uubaService;
+    UUBAService          uubaService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
     public record BAParam(Long qq, String name, OsuMode mode, boolean at, boolean isMyself) {
     }
@@ -182,7 +184,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
-        MapAttr.applyModChangeForScores(bps, user.getOsuMode(), imageService);
+        beatmapApiService.applyModChangeForScores(bps, user.getOsuMode());
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                           String[] mods) {
