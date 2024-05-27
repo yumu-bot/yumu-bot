@@ -6,11 +6,11 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Service.UserParam;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
@@ -20,6 +20,8 @@ import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -30,12 +32,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service("UU_BA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
+    private static final Logger log = LoggerFactory.getLogger(UUBAService.class);
     @Resource
     OsuUserApiService userApiService;
     @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
-    BindDao bindDao;
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
+    BindDao              bindDao;
     @Resource
     ImageService imageService;
 
@@ -168,7 +173,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
     }
 
     public String[] getAllMsg(List<Score> bps, String name, String mode) {
-        var sb = new StringBuffer().append(name).append('：').append(' ').append(mode).append('\n');
+        var sb = new StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n');
         double allPP = 0;
         int sSum = 0;
         int xSum = 0;
@@ -214,7 +219,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             if (bp.isPerfect()) fcSum++;
         }
         sb.append("——————————").append('\n');
-        sb.append("模组数量：\n");
+        sb.append("模组数量: \n");
 
         AtomicInteger c = new AtomicInteger();
 
@@ -227,19 +232,19 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         });
 
-        sb.append("\nS+ 评级：").append(sSum);
-        if (xSum != 0) sb.append("\n     其中 SS：").append(xSum);
+        sb.append("\nS+ 评级: ").append(sSum);
+        if (xSum != 0) sb.append("\n     其中 SS: ").append(xSum);
 
-        sb.append('\n').append("完美 FC：").append(fcSum).append('\n')
-                .append("平均：").append(String.format("%.2f", allPP / bps.size())).append("PP").append('\n')
-                .append("差值：").append(String.format("%.2f", bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
+        sb.append('\n').append("完美 FC: ").append(fcSum).append('\n')
+                .append("平均: ").append(String.format("%.2f", allPP / bps.size())).append("PP").append('\n')
+                .append("差值: ").append(String.format("%.2f", bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
 
         return sb.toString().split("\n");
     }
 
     public String[] getAllMsgI(List<Score> bps, String name, OsuMode mode) {
         if (bps.isEmpty()) return new String[0];
-        var sb = new StringBuffer().append(name).append('：').append(' ').append(mode).append('\n');
+        var sb = new StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n');
 
         var BP1 = bps.getFirst();
         var BP1BPM = BP1.getBeatMap().getBPM();
@@ -281,7 +286,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         TreeMap<Long, mapperData> mapperSum = new TreeMap<>();
         DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
 
-        var mapAttrGet = new MapAttrGet(mode);
+
+        var mapChangeStar = new HashMap<Long, Double>();
         bps.stream()
                 .peek(s -> {
                     if (s.getMods().isEmpty()) s.setScore(0);
@@ -289,8 +295,15 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     s.setScore(f);
                 })
                 .filter(s -> Mod.hasChangeRating(s.getScore()))
-                .forEach(s -> mapAttrGet.addMap(s.getScoreID(), s.getBeatMap().getId(), s.getScore(), s.getBeatMap().getRanked()));
-        var changedStarMap = imageService.getMapAttr(mapAttrGet);
+                .forEach(s -> {
+                    try {
+                        var r = beatmapApiService.getMaxPP(s.getBeatMap().getId(), mode, s.getScore());
+                        mapChangeStar.put(s.getScoreID(), r.getStar());
+                    } catch (Exception e) {
+                        log.error("计算星级出错: ", e);
+                    }
+                });
+
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var b = bp.getBeatMap();
@@ -313,13 +326,12 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
             avgLength += length;
 
-            if (changedStarMap.containsKey(bp.getScoreID())) {
-                star = changedStarMap.get(bp.getScoreID()).getStars();
-                avgStar += star;
+            if (mapChangeStar.containsKey(bp.getScoreID())) {
+                star = mapChangeStar.get(bp.getScoreID()).floatValue();
             } else {
                 star =  bp.getBeatMap().getStarRating();
-                avgStar += star;
             }
+            avgStar += star;
 
             if (bpm < minBPM) {
                 minBPM = bpm;
@@ -369,28 +381,28 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         avgLength /= bps.size();
         avgStar /= bps.size();
 
-        sb.append("平均时间：").append(getTimeStr((int) avgLength)).append('\n');
-        sb.append("时间最长：BP").append(maxLengthBP + 1).append(' ').append(getTimeStr((int) maxLength)).append('\n');
-        sb.append("时间最短：BP").append(minLengthBP + 1).append(' ').append(getTimeStr((int) minLength)).append('\n');
+        sb.append("平均时间: ").append(getTimeStr((int) avgLength)).append('\n');
+        sb.append("时间最长: BP").append(maxLengthBP + 1).append(' ').append(getTimeStr((int) maxLength)).append('\n');
+        sb.append("时间最短: BP").append(minLengthBP + 1).append(' ').append(getTimeStr((int) minLength)).append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("平均连击：").append(avgCombo).append('x').append('\n');
-        sb.append("连击最大：BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n');
-        sb.append("连击最小：BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n');
+        sb.append("平均连击: ").append(avgCombo).append('x').append('\n');
+        sb.append("连击最大: BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n');
+        sb.append("连击最小: BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("平均星数：").append(String.format("%.2f", avgStar)).append('*').append('\n');
-        sb.append("星数最高：BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*').append('\n');
-        sb.append("星数最低：BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*').append('\n');
+        sb.append("平均星数: ").append(String.format("%.2f", avgStar)).append('*').append('\n');
+        sb.append("星数最高: BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*').append('\n');
+        sb.append("星数最低: BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*').append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("PP/TTH 比例最大：BP").append(maxTTHPPBP + 1)
+        sb.append("PP/TTH 比例最大: BP").append(maxTTHPPBP + 1)
                 .append("，为").append(decimalFormat.format(maxTTHPP)).append('倍').append('\n');
 
-        sb.append("BPM 区间：").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
+        sb.append("BPM 区间: ").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
         sb.append("——————————").append('\n');
 
-        sb.append("谱师：\n");
+        sb.append("谱师: \n");
         var mappers = mapperSum.values().stream()
                 .sorted((o1, o2) -> {
                     if (o1.size != o2.size) return 2 * (o2.size - o1.size);
@@ -405,17 +417,17 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         }
         mappers.forEach(mapper -> {
             try {
-                sb.append(mapperIdToInfo.get(mapper.uid)).append('：').append(mapper.size).append("x ")
+                sb.append(mapperIdToInfo.get(mapper.uid)).append(": ").append(mapper.size).append("x ")
                         .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
             } catch (Exception e) {
-                sb.append("UID：").append(mapper.uid).append('：').append(mapper.size).append("x ")
+                sb.append("UID: ").append(mapper.uid).append(": ").append(mapper.size).append("x ")
                         .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
             }
         });
         sb.append("——————————").append('\n');
-        sb.append("模组数量：\n");
+        sb.append("模组数量: \n");
         float finalAllPP = nowPP;
-        modSum.forEach((mod, sum) -> sb.append(mod).append('：').append(sum.size).append("x ")
+        modSum.forEach((mod, sum) -> sb.append(mod).append(": ").append(sum.size).append("x ")
                 .append(decimalFormat.format(sum.getAllPP())).append("PP ")
                 .append('(').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(')')
                 .append('\n'));

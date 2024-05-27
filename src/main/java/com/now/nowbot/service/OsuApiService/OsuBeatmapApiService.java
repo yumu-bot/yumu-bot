@@ -1,17 +1,18 @@
 package com.now.nowbot.service.OsuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.BeatMapSet;
-import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
-import com.now.nowbot.model.JsonData.Search;
+import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 import rosu.osu.JniResult;
+import rosu.osu.JniScore;
+import rosu.osu.Rosu;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 public interface OsuBeatmapApiService {
     /**
@@ -76,5 +77,46 @@ public interface OsuBeatmapApiService {
 
     Search searchBeatmap(Map<String, Object> query);
 
-    JniResult getMaxPP(long bid) throws Exception;
+    default JniResult getMaxPP(long bid, int modInt) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setAccuracy(100);
+        score.setMods(modInt);
+        return Rosu.calculate(b, score);
+    }
+
+    default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setMode(mode.toMode());
+        score.setAccuracy(100);
+        score.setMods(modInt);
+        return Rosu.calculate(b, score);
+    }
+
+    default JniResult getPP(long bid, int modInt, Statistics s) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setCombo(s.getMaxCombo());
+        score.setMods(modInt);
+        if (
+                Objects.nonNull(s.getCountGeki()) &&
+                        Objects.nonNull(s.getCountKatu()) &&
+                        Objects.nonNull(s.getCount300()) &&
+                        Objects.nonNull(s.getCount100()) &&
+                        Objects.nonNull(s.getCount50()) &&
+                        Objects.nonNull(s.getCountMiss())
+        ) {
+            score.setGeki(s.getCountGeki());
+            score.setKatu(s.getCountKatu());
+            score.setN300(s.getCount300());
+            score.setN100(s.getCount100());
+            score.setN50(s.getCount50());
+            score.setMisses(s.getCountMiss());
+        } else {
+            score.setAccuracy(s.getAccuracy());
+        }
+        var r = Rosu.calculate(b, score);
+        return r;
+    }
 }
