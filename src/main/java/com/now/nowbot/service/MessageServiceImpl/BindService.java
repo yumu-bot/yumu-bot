@@ -61,6 +61,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
                 OsuUser user;
+
                 try {
                     user = userApiService.getPlayerInfo(name);
                 } catch (WebClientResponseException e) {

@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface OsuUserApiService {
+    boolean isPlayerExist(String name) throws WebClientResponseException;
+
     /**
      * 拼合授权链接
      *
@@ -21,6 +23,7 @@ public interface OsuUserApiService {
     default String getOauthUrl(String state) throws WebClientResponseException {
         return getOauthUrl(state, false);
     }
+
     String getOauthUrl(String state, boolean full) throws WebClientResponseException;
 
     String refreshUserToken(BinUser user) throws WebClientResponseException;
