@@ -60,15 +60,13 @@ public class BindService implements MessageService<BindService.BindParam> {
 
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
-                OsuUser user;
-
-                try {
-                    user = userApiService.getPlayerInfo(name);
-                } catch (WebClientResponseException e) {
+                if (! userApiService.isPlayerExist(name)) {
+                    var user = userApiService.getPlayerInfo(name);
+                    name = user.getUsername();
+                } else {
                     log.info("绑定：退避成功：!bind osu <name>");
                     return false;
                 }
-                name = user.getUsername();
             }
 
             var from = event.getSubject();
