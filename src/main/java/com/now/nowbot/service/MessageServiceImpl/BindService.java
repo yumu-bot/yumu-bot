@@ -29,7 +29,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
@@ -60,7 +59,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         if (Objects.isNull(m.group("ym")) && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
 
             //!bind osu
-            if (StringUtils.hasText(name) && Pattern.matches("\\s*(?i)osu\\s*", name)) {
+            if (StringUtils.hasText(name) && name.contains("osu")) {
                 OsuUser user;
                 try {
                     user = userApiService.getPlayerInfo(name);
@@ -213,46 +212,6 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
     }
 
-    private static int find(int[][] map, int size, int start, int end) {
-        int[] toMin = new int[size];
-        int[] find = new int[size];
-        find[start] = 1;
-        Arrays.fill(toMin, Integer.MAX_VALUE);
-        int point = start;
-        int pointBef = start;
-        for (int n = 0; n < size - 1; n++) {
-
-            int minIndex = - 1;
-            int min = Integer.MAX_VALUE;
-            for (int i = 0; i < size; i++) {
-                if (find[i] == 1) continue;
-                if (map[pointBef][point] + map[point][i] >= toMin[i]) continue;
-                toMin[i] = map[pointBef][point] + map[point][i];
-                if (min > toMin[i]) {
-                    min = toMin[i];
-                    minIndex = i;
-                }
-            }
-            if (minIndex == end) return toMin[minIndex];
-            if (minIndex < 0) {
-                for (int i = 0; i < size; i++) {
-                    if (find[i] == 1) continue;
-                    if (min > toMin[i]) {
-                        min = toMin[i];
-                        minIndex = i;
-                    }
-                }
-            }
-            System.out.print((char) ('A' + minIndex));
-            System.out.println(STR."  \{Arrays.toString(toMin)}");
-            find[minIndex] = 1;
-            pointBef = point;
-            point = minIndex;
-
-        }
-        return - 1;
-    }
-
     public record BindData(Long key, MessageReceipt receipt, Long QQ) {
     }
 
@@ -397,7 +356,52 @@ public class BindService implements MessageService<BindService.BindParam> {
         bindDao.bindQQ(qq, new BinUser(UID, name));
     }
 
-    public static Set<String> getQuestion(@NonNull Contact contact) {
+    /*
+
+    private static int find(int[][] map, int size, int start, int end) {
+        int[] toMin = new int[size];
+        int[] find = new int[size];
+        find[start] = 1;
+        Arrays.fill(toMin, Integer.MAX_VALUE);
+        int point = start;
+        int pointBef = start;
+        for (int n = 0; n < size - 1; n++) {
+
+            int minIndex = - 1;
+            int min = Integer.MAX_VALUE;
+            for (int i = 0; i < size; i++) {
+                if (find[i] == 1) continue;
+                if (map[pointBef][point] + map[point][i] >= toMin[i]) continue;
+                toMin[i] = map[pointBef][point] + map[point][i];
+                if (min > toMin[i]) {
+                    min = toMin[i];
+                    minIndex = i;
+                }
+            }
+            if (minIndex == end) return toMin[minIndex];
+            if (minIndex < 0) {
+                for (int i = 0; i < size; i++) {
+                    if (find[i] == 1) continue;
+                    if (min > toMin[i]) {
+                        min = toMin[i];
+                        minIndex = i;
+                    }
+                }
+            }
+            System.out.print((char) ('A' + minIndex));
+            System.out.println(STR."  \{Arrays.toString(toMin)}");
+            find[minIndex] = 1;
+            pointBef = point;
+            point = minIndex;
+
+        }
+        return - 1;
+    }
+
+     */
+
+    public static Set<String> getQuestion(@NonNull Contact from) {
+        /*
         Random random = new Random();
         int start = random.nextInt(0, 5);
         int end = random.nextInt(5, 10);
@@ -413,6 +417,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             sb.append('\t').append(cost[i / 10][i % 10]);
             if (i % 10 == 9) sb.append('\n');
         }
+        // 10
         var question = STR."""
                 ### 请回答本问题:
 
@@ -427,9 +432,9 @@ public class BindService implements MessageService<BindService.BindParam> {
                 直接回复数字即可
                 """;
 
-//        System.out.println(question);
-//        System.out.println(find(cost, 10, start, end));
-        contact.sendMessage("√(0.25)是多少");
-        return new HashSet<>(List.of("0.5", "1/2"));
+         */
+
+        from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
+        return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
     }
 }
