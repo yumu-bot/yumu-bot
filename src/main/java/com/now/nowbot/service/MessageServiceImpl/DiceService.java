@@ -13,9 +13,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -209,8 +207,6 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var hasC3 = sp == BETTER || onlyC3;
             var matcher = sp.pattern.matcher(s);
 
-            if (Objects.nonNull(split)) break;
-
             if (isPerfectMatch(matcher, hasC3, onlyC3)) {
                 split = sp;
 
@@ -301,31 +297,16 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         is = matcher.group("c3");
                         not = matcher.group("m3");
 
-                        // 还是可能需要走多匹配模式，比如 1d 睡午觉 睡午觉 睡午觉 睡午觉 不睡
-                        if (StringUtils.hasText(left)) {
-                            if (left.trim().contains(" ")) {
-                                return chooseMultiple(s); //LR一样的
-                            }
-                        } else {
-                            left = "...";
-                        }
-
-                        if (StringUtils.hasText(right)) {
-                            if (right.trim().contains(" ")) {
-                                return chooseMultiple(s); //LR一样的
-                            }
-                        } else {
-                            right = "";
-                        }
-
                         try {
                             var is2 = matcher.group("c2");
                             //要不要，如果不是ABA那么不能匹配
                             if (! Objects.equals(is2, is)) {
+                                split = null;
                                 continue;
                             }
                             //找不到也不行
-                        } catch (IllegalArgumentException | IllegalStateException e) {
+                        } catch (RuntimeException e) {
+                            split = null;
                             continue;
                         }
                     }
@@ -439,6 +420,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         } else {
             try {
                 return chooseMultiple(s);
+            } catch (DiceException e) {
+                throw e;
             } catch (Exception e) {
                 log.info(STR."扔骰子：\{s} 匹配失败。");
                 throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
@@ -454,10 +437,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //如果还是有条件。那么进入多匹配模式。
         {
-            var leftHas = MULTIPLE.pattern.matcher(left);
-            var rightHas = MULTIPLE.pattern.matcher(right);
+            var lm = MULTIPLE.pattern.matcher(left);
+            var rm = MULTIPLE.pattern.matcher(right);
 
-            if (leftHas.find() && StringUtils.hasText(leftHas.group("m2")) || rightHas.find() && StringUtils.hasText(rightHas.group("m2"))) {
+            var leftHas = lm.find() && (StringUtils.hasText(lm.group("m1")) || StringUtils.hasText(lm.group("m2")));
+            var rightHas = rm.find() && (StringUtils.hasText(rm.group("m1")) || StringUtils.hasText(rm.group("m2")));
+
+            if (leftHas || rightHas) {
                 return chooseMultiple(s); //LR一样的
             }
         }
@@ -554,7 +540,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     enum Split {
         //用于匹配是否还有关联词
-        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(还是|或者?是?|与)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
+        MULTIPLE(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(还是|或者?是?|与|\\s+)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         NEST(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[!！1]d)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
@@ -637,7 +623,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         CONDITION(Pattern.compile("\\s*(?<c1>(只要|只有|无论|不管|忽略|忽视|不(去)?想|\\sif\\s))\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>(([你我他她它祂]们?|别人)?([就才都也还]能?|能)(够|是|可以)?|反正|依然))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         //我能
-        COULD(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)\\s*?(?<c2>不)?\\s*?(?<c3>([想要]|想要|能够?|可以))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)")),
+        COULD(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)\\s*?(?<c2>不)?\\s*?(?<c3>([想要]|想要|能够?|可以))\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
         LIKE(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>喜欢|爱|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
@@ -679,6 +665,21 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         if (stringList.isEmpty() || stringList.size() == 1) {
             throw new DiceException(DiceException.Type.DICE_Compare_NotMatch);
+        }
+
+        // 多选择模式的去重
+        Set<String> stringSet = new HashSet<>();
+        int same = 1;
+
+        for (var l : stringList) {
+            if (!stringSet.add(l)) {
+                same++;
+            }
+        }
+
+        if (same == stringList.size()) {
+            // 只有多个全部一样才抛错
+            throw new DiceException(DiceException.Type.DICE_Compare_NoDifference);
         }
 
         var r = Math.round(getRandom(stringList.size()) - 1);
