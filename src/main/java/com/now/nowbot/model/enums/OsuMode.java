@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums;
 
+import rosu.osu.Mode;
+
 import java.util.Optional;
 
 public enum OsuMode {
@@ -68,9 +70,21 @@ public enum OsuMode {
     public void setModeValue(short modeValue) {
         this.modeValue = modeValue;
     }
+
+    public Mode toMode() {
+        return switch (this) {
+            case OSU -> Mode.Osu;
+            case TAIKO -> Mode.Taiko;
+            case CATCH -> Mode.Catch;
+            case MANIA -> Mode.Mania;
+            default -> Mode.Default;
+        };
+    }
+
     public static boolean isDefault (OsuMode mode) {
         return mode == null || mode == DEFAULT;
     }
+
 
     public static Optional<String> getName(OsuMode mode) {
         if (DEFAULT.equals(mode)) {

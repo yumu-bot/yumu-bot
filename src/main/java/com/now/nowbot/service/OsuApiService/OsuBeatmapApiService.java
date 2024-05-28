@@ -1,17 +1,23 @@
 package com.now.nowbot.service.OsuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.BeatMapSet;
-import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
-import com.now.nowbot.model.JsonData.Search;
+import com.now.nowbot.NowbotApplication;
+import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.util.DataUtil;
+import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import rosu.osu.JniResult;
+import rosu.osu.JniScore;
+import rosu.osu.Rosu;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface OsuBeatmapApiService {
     /**
@@ -76,5 +82,79 @@ public interface OsuBeatmapApiService {
 
     Search searchBeatmap(Map<String, Object> query);
 
-    JniResult getMaxPP(long bid) throws Exception;
+    default JniResult getMaxPP(long bid, int modInt) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setAccuracy(100);
+        score.setMods(modInt);
+        return Rosu.calculate(b, score);
+    }
+
+    default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setMode(mode.toMode());
+        score.setAccuracy(100);
+        score.setMods(modInt);
+        return Rosu.calculate(b, score);
+    }
+
+    default JniResult getPP(long bid, int modInt, Statistics s) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setCombo(s.getMaxCombo());
+        score.setMods(modInt);
+        if (
+                Objects.nonNull(s.getCountGeki()) &&
+                        Objects.nonNull(s.getCountKatu()) &&
+                        Objects.nonNull(s.getCount300()) &&
+                        Objects.nonNull(s.getCount100()) &&
+                        Objects.nonNull(s.getCount50()) &&
+                        Objects.nonNull(s.getCountMiss())
+        ) {
+            score.setGeki(s.getCountGeki());
+            score.setKatu(s.getCountKatu());
+            score.setN300(s.getCount300());
+            score.setN100(s.getCount100());
+            score.setN50(s.getCount50());
+            score.setMisses(s.getCountMiss());
+        } else {
+            score.setAccuracy(s.getAccuracy());
+        }
+        var r = Rosu.calculate(b, score);
+        return r;
+    }
+
+    default void applyModChangeForScores(List<Score> scoreList, @NonNull OsuMode mode) {
+        if (CollectionUtils.isEmpty(scoreList)) return;
+
+        // 一次搞定
+        for (var s : scoreList) {
+            var v = Mod.getModsValueFromAbbrList(s.getMods());
+
+            if (Mod.hasChangeRating(v)) {
+                var b = s.getBeatMap();
+                JniResult r;
+                try {
+                    r = getMaxPP(b.getId(), mode, v);
+                } catch (Exception e) {
+                    NowbotApplication.log.error("计算时出现异常", e);
+                    continue;
+                }
+
+                b.setStarRating((float) r.getStar());
+                b.setOD(DataUtil.OD(b.getOD(), v));
+                b.setAR(DataUtil.AR(b.getAR(), v));
+                b.setCS(DataUtil.CS(b.getCS(), v));
+                b.setHP(DataUtil.HP(b.getHP(), v));
+                if (Mod.hasDt(v)) {
+                    b.setBPM(b.getBPM() * 1.5f);
+                    b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
+                } else if (Mod.hasHt(v)) {
+                    b.setBPM(b.getBPM() * 0.75f);
+                    b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
+                }
+            }
+        }
+    }
 }
