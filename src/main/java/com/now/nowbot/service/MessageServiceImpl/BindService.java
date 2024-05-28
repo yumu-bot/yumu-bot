@@ -60,7 +60,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
-                if (! userApiService.isPlayerExist(name)) {
+                if (userApiService.isPlayerExist(name)) {
                     var user = userApiService.getPlayerInfo(name);
                     name = user.getUsername();
                 } else {
