@@ -11,7 +11,7 @@ public class PPPlusException extends TipsException {
         PL_API_NotAccessible("ppy API 无法访问。"),
         PL_Map_BIDParseError("请输入正确的 BID！"),
         PL_Map_NotFound("找不到谱面，或是 ppy API 无法访问。"),
-        PL_Fetch_APIConnectFailed("PP+ 网站或者 PP+ 服务连不上！你（们俩）还是去床上解决吧！"),
+        PL_Fetch_APIConnectFailed("PP+ 计算失败, 正在火速解决中!"),
         PL_Render_Error("PP+ 渲染失败，请重试，或耐心等待问题修复。"),
         PL_Send_Error("PP+ 发送失败，请重试。"),
         ;
