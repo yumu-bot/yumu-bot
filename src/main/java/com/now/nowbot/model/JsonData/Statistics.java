@@ -9,10 +9,10 @@ import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.lang.Nullable;
 
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 
 /**
- * 注意,countxxx只有成绩相关的statustucs存在,而且不包含其他部分,别问为啥掺在一起,问就是ppysb
+ * 注意，成绩内的 Statistics 只有 count_xxx 的指标
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -173,21 +173,19 @@ public class Statistics {
     }
 
     public Integer getCountAll(OsuMode mode) {
-        int countAll = 0;
-        int s_300 = Optional.ofNullable(getCount300()).orElse(0);
-        int s_100 = Optional.ofNullable(getCount100()).orElse(0);
-        int s_50 = Optional.ofNullable(getCount50()).orElse(0);
-        int s_g = Optional.ofNullable(getCountGeki()).orElse(0);
-        int s_k = Optional.ofNullable(getCountKatu()).orElse(0);
-        int s_0 = Optional.ofNullable(getCountMiss()).orElse(0);
+        int s_300 = Objects.requireNonNullElse(getCount300(),0);
+        int s_100 = Objects.requireNonNullElse(getCount100(),0);
+        int s_50 = Objects.requireNonNullElse(getCount50(),0);
+        int s_g = Objects.requireNonNullElse(getCountGeki(),0);
+        int s_k = Objects.requireNonNullElse(getCountKatu(),0);
+        int s_0 = Objects.requireNonNullElse(getCountMiss(),0);
 
-        countAll = switch (mode) {
-            case OSU -> s_300 + s_100 + s_50 + s_0;
-            case TAIKO, CATCH -> s_300 + s_100 + s_0;
+        return switch (mode) {
+            case OSU, DEFAULT -> s_300 + s_100 + s_50 + s_0;
+            case TAIKO -> s_300 + s_100 + s_0;
+            case CATCH -> s_300 + s_100 + s_50 + s_0 + s_k;
             case MANIA -> s_g + s_300 + s_k + s_100 + s_50 + s_0;
-            default -> countAll;
         };
-        return countAll;
     }
 
     public void setCountAll(Integer countAll) {

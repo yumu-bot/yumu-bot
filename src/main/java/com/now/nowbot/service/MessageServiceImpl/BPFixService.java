@@ -100,10 +100,13 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var scoreList = new ArrayList<ScoreWithFcPP>();
 
         for (var e : BPMap.entrySet()) {
-            int miss = Objects.requireNonNullElse(e.getValue().getStatistics().getCountMiss(), 0);
+            var v = e.getValue();
 
-            // 1-10miss 是可以 fix 的
-            if (miss > 0 && miss <= 10) {
+            int miss = Objects.requireNonNullElse(v.getStatistics().getCountMiss(), 0);
+            float percent = 1f * miss / Objects.requireNonNullElse(v.getStatistics().getCountAll(v.getMode()), 1);
+
+            // miss 占比小于百分之一是可以 fix 的
+            if (miss > 0 && percent <= 0.01f) {
                 rankList.add(e.getKey() + 1);
                 scoreList.add(ScoreWithFcPP.copyOf(e.getValue()));
             }
