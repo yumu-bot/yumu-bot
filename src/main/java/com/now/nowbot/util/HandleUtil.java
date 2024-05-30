@@ -601,10 +601,18 @@ public class HandleUtil {
         }
 
         /**
-         * 加一段
+         * 加一个
          */
         public CommandPatternBuilder append(String str) {
             patternStr.append(str);
+            return this;
+        }
+
+        /**
+         * 加一段
+         */
+        public CommandPatternBuilder appendArea(String str) {
+            patternStr.append('[').append(str).append(']');
             return this;
         }
 

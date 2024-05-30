@@ -71,7 +71,7 @@ public enum OsuMode {
         this.modeValue = modeValue;
     }
 
-    public Mode toMode() {
+    public Mode toRosuMode() {
         return switch (this) {
             case OSU -> Mode.Osu;
             case TAIKO -> Mode.Taiko;

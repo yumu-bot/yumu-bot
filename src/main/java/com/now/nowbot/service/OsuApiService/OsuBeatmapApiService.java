@@ -93,9 +93,13 @@ public interface OsuBeatmapApiService {
     default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
         JniScore score = new JniScore();
-        score.setMode(mode.toMode());
-        score.setAccuracy(100);
+
+        score.setMode(mode.toRosuMode());
+        score.setAccuracy(100D);
+        score.setMisses(0);
         score.setMods(modInt);
+        score.setSpeed(Mod.getModsClockRate(modInt));
+
         return Rosu.calculate(b, score);
     }
 

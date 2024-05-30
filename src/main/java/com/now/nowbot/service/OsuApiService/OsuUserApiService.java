@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface OsuUserApiService {
-    boolean isPlayerExist(String name) throws WebClientResponseException;
+    boolean isPlayerExist(String name);
 
     /**
      * 拼合授权链接

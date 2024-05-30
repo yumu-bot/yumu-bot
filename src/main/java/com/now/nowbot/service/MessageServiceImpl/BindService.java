@@ -51,6 +51,8 @@ public class BindService implements MessageService<BindService.BindParam> {
         var m = Instructions.BIND.matcher(messageText);
         if (!m.find()) return false;
 
+        var from = event.getSubject();
+
         var qqStr = m.group("qq");
         var name = m.group("name");
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -69,7 +71,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                 }
             }
 
-            var from = event.getSubject();
+            // 提问
             var receipt = from.sendMessage(BindException.Type.BIND_Question_BindRetreat.message);
 
             var lock = ASyncMessageUtil.getLock(event, 30 * 1000);

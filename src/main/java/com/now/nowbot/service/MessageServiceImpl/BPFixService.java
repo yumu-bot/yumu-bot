@@ -48,6 +48,8 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             user = HandleUtil.getMyselfUser(event, mode);
         }
 
+        mode = HandleUtil.getModeOrElse(mode, user);
+
         var bpMap = HandleUtil.getOsuBPMap(user, mode, 0, 100);
 
         data.setValue(

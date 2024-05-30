@@ -14,7 +14,6 @@ import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collection;
@@ -39,7 +38,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public boolean isPlayerExist(String name) throws WebClientResponseException {
+    public boolean isPlayerExist(String name) {
         var uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/users").pathSegment(name).toUriString();
         var response = base.osuApiWebClient.get()
                 .uri(uri)
@@ -49,7 +48,6 @@ public class UserApiImpl implements OsuUserApiService {
 
         HttpStatusCode status = HttpStatusCode.valueOf(404);
 
-        // todo response 总是 404，是反爬虫？
         if (response != null) {
             status = response.statusCode();
         }

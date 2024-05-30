@@ -1,22 +1,18 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
 import java.util.function.Function;
@@ -41,120 +34,67 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
     @Resource
     OsuUserApiService userApiService;
     @Resource
-    OsuScoreApiService scoreApiService;
-    @Resource
-    BindDao bindDao;
-    @Resource
     ImageService imageService;
     @Resource
-    UUBAService          uubaService;
+    UUBAService uubaService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
-    public record BAParam(Long qq, String name, OsuMode mode, boolean at, boolean isMyself) {
+    public record BAParam(OsuUser user, List<Score> bpList, boolean isMyself) {
     }
 
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<BAParam> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<BAParam> data) throws Throwable {
         var matcher = Instructions.BP_ANALYSIS.matcher(messageText);
         if (!matcher.find()) return false;
 
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var mode = OsuMode.getMode(matcher.group("mode"));
-        var name = matcher.group("name");
-        var qqStr = matcher.group("qq");
+        boolean isMyself = false;
 
-        if (Objects.nonNull(at)) {
-            data.setValue(new BAParam(at.getTarget(), null, mode, true, false));
-            return true;
-        } else if (StringUtils.hasText(name)) {
-            data.setValue(new BAParam(null, name.trim(), mode, false, false));
-            return true;
-        } else if (StringUtils.hasText(qqStr)) {
-            data.setValue(new BAParam(Long.parseLong(qqStr), null, mode, false, false));
-            return true;
-        } else {
-            data.setValue(new BAParam(event.getSender().getId(), null, mode, false, true));
-            return true;
+        var mode = HandleUtil.getMode(matcher);
+        var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
+
+        if (Objects.isNull(user)) {
+            isMyself = true;
+            user = HandleUtil.getMyselfUser(event, mode);
         }
+
+        mode = HandleUtil.getModeOrElse(mode, user);
+
+        var bpList = HandleUtil.getOsuBPList(user, mode, 0, 100);
+
+        data.setValue(new BAParam(user, bpList, isMyself));
+        return true;
     }
 
     @Override
     public void HandleMessage(MessageEvent event, BAParam param) throws Throwable {
         var from = event.getSubject();
-        var mode = param.mode();
 
-        //bp列表
-        List<Score> bps;
-        OsuUser osuUser;
-        if (Objects.nonNull(param.qq)) {
-            BinUser binUser = bindDao.getUserFromQQ(param.qq);
-            try {
-                if (mode != OsuMode.DEFAULT) {
-                    osuUser = userApiService.getPlayerInfo(binUser, mode);
-                    osuUser.setPlayMode(mode.getName());
-                    bps = scoreApiService.getBestPerformance(binUser, mode, 0, 100);
-                } else {
-                    bps = scoreApiService.getBestPerformance(binUser, binUser.getMode(), 0, 100);
-                    osuUser = userApiService.getPlayerInfo(binUser, binUser.getMode());
-                }
-            } catch (HttpClientErrorException | WebClientResponseException e) {
-                if (param.isMyself) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
-                } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
-                }
-            } catch (Exception e) {
-                if (param.isMyself) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_FetchFailed);
-                } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_FetchFailed);
-                }
-            }
-        } else {
-            long id;
-            try {
-                id = userApiService.getOsuId(param.name);
-            } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound);
-            }
-            try {
-                if (mode != OsuMode.DEFAULT) {
-                    bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-                    osuUser = userApiService.getPlayerInfo(id, mode);
-                    osuUser.setPlayMode(mode.getName());
-                } else {
-                    osuUser = userApiService.getPlayerInfo(id);
-                    bps = scoreApiService.getBestPerformance(id, osuUser.getOsuMode(), 0, 100);
-                }
-            } catch (HttpClientErrorException | WebClientResponseException e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
-            } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_FetchFailed);
-            }
-        }
+        var bpList = param.bpList();
+        var user = param.user();
 
-        if (Objects.isNull(bps) || bps.size() <= 5) {
+        if (CollectionUtils.isEmpty(bpList) || bpList.size() <= 5) {
             if (param.isMyself) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, osuUser.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.getPlayMode());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, osuUser.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.getPlayMode());
             }
         }
 
-        byte[] image = new byte[0];
+        byte[] image;
 
-        var data = parseData(osuUser, bps, userApiService);
+        var data = parseData(user, bpList, userApiService);
 
         try {
             image = imageService.getPanelJ(data);
         } catch (HttpServerErrorException.InternalServerError e) {
             log.error("最好成绩分析：复杂面板生成失败", e);
             try {
-                var msg = uubaService.getAllMsg(bps, osuUser.getUsername(), osuUser.getPlayMode());
+                var msg = uubaService.getAllMsg(bpList, user.getUsername(), user.getPlayMode());
                 var image2 = imageService.getPanelAlpha(msg);
                 from.sendImage(image2);
+                return;
 
             } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e1) {
                 log.error("最好成绩分析：渲染失败", e1);
@@ -177,10 +117,15 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         }
     }
 
-    public Map<String, Object> parseData(OsuUser user, List<Score> bps, OsuUserApiService userApiService) throws TipsException {
+    public Map<String, Object> parseData(OsuUser user, List<Score> bpList, OsuUserApiService userApiService) {
+        if (bpList == null || bpList.size() <= 5) return HashMap.newHashMap(1);
+
+        var bps = new ArrayList<>(bpList);
+
         var bpSize = bps.size();
+
         // top
-        var t5 = bps.subList(0, Math.min(bpSize, 5));
+        var t5 = bps.subList(0, 5);
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
@@ -219,7 +164,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             }
 
             { // 统计 mods / rank
-                if (!CollectionUtils.isEmpty(s.getMods())) {
+                if (! CollectionUtils.isEmpty(s.getMods())) {
                     s.getMods().forEach(m -> modsPPMap.add(m, s.getWeight().weightedPP()));
                     modsSum += s.getMods().size();
                 } else {
@@ -232,32 +177,37 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
                 rankMap.add(s.getRank(), s.getWeight().weightedPP());
             }
         }
+
         // 0 length; 1 combo; 2 star; 3 bpm
-        @SuppressWarnings("unchecked")
-        ArrayList<BeatMap4BA>[] mapStatistics = new ArrayList[4];
-        var bpListSortedByLength = beatMapList.stream().sorted(Comparator.comparingInt(BeatMap4BA::length).reversed()).toList();
-        mapStatistics[0] = new ArrayList<>(3);
-        mapStatistics[0].add(bpListSortedByLength.getFirst());
-        mapStatistics[0].add(bpListSortedByLength.get(bpSize / 2));
-        mapStatistics[0].add(bpListSortedByLength.get(bpSize - 1));
+        var summary = new HashMap<String, List<BeatMap4BA>>(4);
 
-        var bpListSortedByCombo = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::combo).reversed()).toList();
-        mapStatistics[1] = new ArrayList<>(3);
-        mapStatistics[1].add(bpListSortedByCombo.getFirst());
-        mapStatistics[1].add(bpListSortedByCombo.get(bpSize / 2));
-        mapStatistics[1].add(bpListSortedByCombo.get(bpSize - 1));
+        var lengthSort = beatMapList.stream().sorted(Comparator.comparingInt(BeatMap4BA::length).reversed()).toList();
+        var lengthStat = new ArrayList<BeatMap4BA>(3);
+        lengthStat.add(lengthSort.getFirst());
+        lengthStat.add(lengthSort.get(bpSize / 2));
+        lengthStat.add(lengthSort.get(bpSize - 1));
+        summary.put("length", lengthStat);
 
-        var bpListSortedByStar = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::star).reversed()).toList();
-        mapStatistics[2] = new ArrayList<>(3);
-        mapStatistics[2].add(bpListSortedByStar.getFirst());
-        mapStatistics[2].add(bpListSortedByStar.get(bpSize / 2));
-        mapStatistics[2].add(bpListSortedByStar.get(bpSize - 1));
+        var comboSort = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::combo).reversed()).toList();
+        var comboStat = new ArrayList<BeatMap4BA>(3);
+        comboStat.add(comboSort.getFirst());
+        comboStat.add(comboSort.get(bpSize / 2));
+        comboStat.add(comboSort.get(bpSize - 1));
+        summary.put("combo", comboStat);
 
-        var bpListSortedByBpm = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::bpm).reversed()).toList();
-        mapStatistics[3] = new ArrayList<>(3);
-        mapStatistics[3].add(bpListSortedByBpm.getFirst());
-        mapStatistics[3].add(bpListSortedByBpm.get(bpSize / 2));
-        mapStatistics[3].add(bpListSortedByBpm.get(bpSize - 1));
+        var starSort = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::star).reversed()).toList();
+        var starStat = new ArrayList<BeatMap4BA>(3);
+        starStat.add(starSort.getFirst());
+        starStat.add(starSort.get(bpSize / 2));
+        starStat.add(starSort.get(bpSize - 1));
+        summary.put("star", starStat);
+
+        var bpmSort = beatMapList.stream().sorted(Comparator.comparing(BeatMap4BA::bpm).reversed()).toList();
+        var bpmStat = new ArrayList<BeatMap4BA>(3);
+        bpmStat.add(bpmSort.getFirst());
+        bpmStat.add(bpmSort.get(bpSize / 2));
+        bpmStat.add(bpmSort.get(bpSize - 1));
+        summary.put("bpm", bpmStat);
 
         //        var ppList = bps.stream().map(s -> s.getWeight().getPP());
         var ppRawList = bps.stream().map(Score::getPP).toList();
@@ -278,19 +228,15 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var mapperMap = bps.stream()
                 .collect(Collectors.groupingBy(s -> s.getBeatMap().getMapperID(), Collectors.counting()));
         int mapperSize = mapperMap.size();
-        var mapperCount = mapperMap
-                .entrySet()
-                .stream()
+        var mapperCount = mapperMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k, LinkedHashMap::new));
         var mapperInfo = userApiService.getUsers(mapperCount.keySet());
         var mapperList = bps.stream()
                 .filter(s -> mapperCount.containsKey(s.getBeatMap().getMapperID()))
-//                .collect(Collectors.groupingBy(s -> s.getBeatMap().getUserId(), Collectors.summingDouble(s -> s.getWeight().getPP())))
                 .collect(Collectors.groupingBy(s -> s.getBeatMap().getMapperID(), Collectors.summingDouble(Score::getPP)))
-                .entrySet()
-                .stream()
+                .entrySet().stream()
                 .sorted(Comparator.<Map.Entry<Long, Double>, Long>comparing(e -> mapperCount.get(e.getKey())).reversed().thenComparing(Map.Entry::getValue, Comparator.reverseOrder()))
                 .map(e -> {
                     String name = "";
@@ -357,34 +303,15 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             }
         }
 
-        /*
-        if (changedAttrsMap != null) {
-            Consumer<Score> f = (s) -> {
-                long id = s.getBeatMap().getId();
-                if (changedAttrsMap.containsKey(id)) {
-                    var attr = changedAttrsMap.get(id);
-                    s.getBeatMap().setStarRating(attr.getStars());
-                    s.getBeatMap().setBPM(attr.getBpm());
-                    if (Mod.hasDt(attr.getMods())) {
-                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 1.5f));
-                    } else if (Mod.hasHt(attr.getMods())) {
-                        s.getBeatMap().setTotalLength(Math.round(s.getBeatMap().getTotalLength() / 0.75f));
-                    }
-                }
-            };
-            b5.forEach(f);
-            t5.forEach(f);
-        }
+        var data = new HashMap<String, Object>(18);
 
-         */
-        Map<String, Object> data = new HashMap<>();
         data.put("card_A1", user);
         data.put("bpTop5", t5);
         data.put("bpLast5", b5);
-        data.put("bpLength", mapStatistics[0]);
-        data.put("bpCombo", mapStatistics[1]);
-        data.put("bpSR", mapStatistics[2]);
-        data.put("bpBpm", mapStatistics[3]);
+        data.put("bpLength", summary.get("length"));
+        data.put("bpCombo", summary.get("combo"));
+        data.put("bpSR", summary.get("star"));
+        data.put("bpBpm", summary.get("bpm"));
         data.put("favorite_mappers_count", mapperSize);
         data.put("favorite_mappers", mapperList);
         data.put("pp_raw_arr", ppRawList);
