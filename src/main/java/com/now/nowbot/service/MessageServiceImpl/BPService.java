@@ -60,7 +60,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             }
         }
 
-        var BPMap = HandleUtil.getOsuBPMap(user, matcher, HandleUtil.getModeOrElse(mode, user), isMultiple);
+        var BPMap = HandleUtil.getOsuBPMap(user, matcher, HandleUtil.getModeOrElse(mode, user), isMultiple ? 20 : 1, isMultiple);
 
         data.setValue(new BPParam(user, mode, BPMap, isMyself));
         return true;

@@ -43,7 +43,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
     @Resource
     ImageService imageService;
 
-    public record PPMinusParam(boolean isVs, BinUser me, BinUser other, OsuMode mode) {}
+    public record PPMinusParam(boolean isVs, OsuUser me, OsuUser other, OsuMode mode) {}
 
     public enum PPMinusStatus {
         USER,
@@ -68,8 +68,8 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        BinUser me = new BinUser();
-        BinUser other = new BinUser();
+        BinUser binMe = new BinUser();
+        BinUser binOther = new BinUser();
 
         boolean isMyself = false;
 
@@ -78,38 +78,38 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             if (at != null) {
                 switch (status) {
                     case USER -> //pm @
-                            me = bindDao.getUserFromQQ(at.getTarget());
+                            binMe = bindDao.getUserFromQQ(at.getTarget());
 
                     case USER_VS -> {
                         //pv 0v@
-                        me = bindDao.getUserFromQQ(event.getSender().getId());
-                        other = bindDao.getUserFromQQ(at.getTarget());
+                        binMe = bindDao.getUserFromQQ(event.getSender().getId());
+                        binOther = bindDao.getUserFromQQ(at.getTarget());
                     }
                 }
             } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
                 if (StringUtils.hasText(area1) && StringUtils.hasText(area2)) {
                     //pv 1v2
-                    me.setOsuName(area1);
-                    other.setOsuName(area2);
+                    binMe.setOsuName(area1);
+                    binOther.setOsuName(area2);
                 } else {
                     var area = StringUtils.hasText(area1) ? area1 : area2;
 
                     switch (status) {
                         case USER -> //pm 1 or 2
-                                me.setOsuName(area);
+                                binMe.setOsuName(area);
 
                         case USER_VS -> {
                             isMyself = true;
                             //pv 0v1 or 0v2
-                            me = bindDao.getUserFromQQ(event.getSender().getId());
-                            other.setOsuName(area);
+                            binMe = bindDao.getUserFromQQ(event.getSender().getId());
+                            binOther.setOsuName(area);
                         }
                     }
                 }
             } else {
                 // pm 0
                 isMyself = true;
-                me = bindDao.getUserFromQQ(event.getSender().getId());
+                binMe = bindDao.getUserFromQQ(event.getSender().getId());
             }
         } catch (WebClientResponseException e) {
             if (isMyself) {
@@ -119,14 +119,19 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             }
         }
 
-        var mode = HandleUtil.getModeOrElse(matcher, me);
+        var mode = HandleUtil.getMode(matcher);
 
         // 在新人群管理群里查询，则主动认为是 osu 模式
         if (event.getSubject().getId() == 695600319L && OsuMode.DEFAULT.equals(mode)) {
             mode = OsuMode.OSU;
         }
 
-        boolean isVs = (other.getOsuName() != null);
+        boolean isVs = (binOther.getOsuName() != null);
+
+        OsuUser me = getOsuUser(binMe, mode);
+        OsuUser other = isVs ? getOsuUser(binOther, mode) : null;
+
+        mode = HandleUtil.getModeOrElse(mode, me);
 
         data.setValue(new PPMinusParam(isVs, me, other, mode));
 
@@ -183,14 +188,14 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
     public void HandleMessage(MessageEvent event, PPMinusParam param) throws Throwable {
         var from = event.getSubject();
 
-        OsuUser me = getOsuUser(param.me, param.mode);
+        OsuUser me = param.me;
         PPMinus my = getPPMinus(me);
 
         OsuUser other = null;
         PPMinus others = null;
 
         if (param.isVs) {
-            other = getOsuUser(param.other, param.mode);
+            other = param.other;
             others = getPPMinus(other);
         }
 

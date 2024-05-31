@@ -144,8 +144,8 @@ public class HandleUtil {
      * @param user 玩家
      * @return 游戏模式
      */
-    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @NonNull OsuUser user) {
-        if (mode == null) {
+    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable OsuUser user) {
+        if (user == null || mode == null) {
             return OsuMode.DEFAULT;
         } else if (mode.equals(OsuMode.DEFAULT) && user.getOsuMode() != null) {
             return user.getOsuMode();
@@ -393,12 +393,12 @@ public class HandleUtil {
     }
 
     public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        return getOsuBPMap(user, matcher, mode, false);
+        return getOsuBPMap(user, matcher, mode, 1, false);
     }
 
     //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, boolean isMultipleDefault20) throws TipsException {
-        var range = parseRange(matcher, isMultipleDefault20 ? 20 : null, false);
+    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int defaultLimit, boolean parseLimitWhen1Param) throws TipsException {
+        var range = parseRange(matcher, defaultLimit, parseLimitWhen1Param);
 
         int offset = range.offset();
         int limit = range.limit();
@@ -479,9 +479,9 @@ public class HandleUtil {
 
     /**
      * @param defaultLimit 第二个参数的默认值
-     * @param isForceRange 没有第二个参数的情况下强制从 0 到第一个参数
+     * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      */
-    private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean isForceRange) {
+    private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
         int n;
         int m;
 
@@ -491,7 +491,7 @@ public class HandleUtil {
             if (rangeArray.length == 2) {
                 n = Integer.parseInt(rangeArray[0]) - 1;
                 m = Integer.parseInt(rangeArray[1]);
-            } else if (isForceRange) {
+            } else if (parseLimitWhen1Param) {
                 n = 0;
                 m = Integer.parseInt(rangeArray[0]);
             } else {
