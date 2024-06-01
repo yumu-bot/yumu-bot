@@ -18,6 +18,7 @@ job-build:
     - git fetch --all
     - git reset --hard origin/master
     - git pull
+    - git lfs pull
     - mvn package
 
 job-update:

@@ -8,9 +8,9 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.DataUtil;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
-import rosu.osu.JniResult;
-import rosu.osu.JniScore;
-import rosu.osu.Rosu;
+import rosu.Rosu;
+import rosu.parameter.JniScore;
+import rosu.result.JniResult;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
