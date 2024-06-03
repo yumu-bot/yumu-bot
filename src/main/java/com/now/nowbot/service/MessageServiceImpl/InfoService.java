@@ -151,7 +151,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         Optional<OsuUser> historyUser =
                 infoDao.getLastFrom(osuUser.getUID(),
-                                OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode,
+                                OsuMode.DEFAULT.equals(mode) ? osuUser.getMode() : mode,
                                 LocalDate.now().minusDays(param.day))
                         /*
                         .map(arch -> {

@@ -120,7 +120,7 @@ public class BotWebApi {
 
         var info1 = userApiService.getPlayerInfo(name.trim(), mode);
         var info2 = userApiService.getPlayerInfo(name2.trim(), mode);
-        if (OsuMode.isDefault(mode)) mode = info1.getOsuMode();
+        if (OsuMode.isDefaultOrNull(mode)) mode = info1.getMode();
 
         var bplist1 = scoreApiService.getBestPerformance(info1.getUID(), mode, 0, 100);
         var bplist2 = scoreApiService.getBestPerformance(info2.getUID(), mode, 0, 100);
@@ -571,7 +571,7 @@ public class BotWebApi {
             name = name.trim();
             long uid = userApiService.getOsuId(name);
             osuUser = userApiService.getPlayerInfo(uid, mode);
-            if (mode != OsuMode.DEFAULT) osuUser.setPlayMode(mode.getName());
+            if (mode != OsuMode.DEFAULT) osuUser.setModeString(mode.getName());
             scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
         } catch (Exception e) {
             throw new RuntimeException(BPAnalysisException.Type.BA_Fetch_Failed.message);
@@ -712,7 +712,7 @@ public class BotWebApi {
 
         var BPs = scoreApiService.getBestPerformance(osuUser);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);
-        var image = imageService.getPanelD(osuUser, Optional.empty(), day, BPs, osuUser.getOsuMode());
+        var image = imageService.getPanelD(osuUser, Optional.empty(), day, BPs, osuUser.getMode());
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-info.jpg", image.length), HttpStatus.OK);
     }

@@ -81,7 +81,7 @@ public enum OsuMode {
         };
     }
 
-    public static boolean isDefault (OsuMode mode) {
+    public static boolean isDefaultOrNull(OsuMode mode) {
         return mode == null || mode == DEFAULT;
     }
 

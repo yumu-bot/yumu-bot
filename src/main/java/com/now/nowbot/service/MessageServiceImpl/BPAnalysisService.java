@@ -1,13 +1,11 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.util.DataUtil;
@@ -76,9 +74,9 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
 
         if (CollectionUtils.isEmpty(bpList) || bpList.size() <= 5) {
             if (param.isMyself) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.getModeString());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.getPlayMode());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.getModeString());
             }
         }
 
@@ -91,7 +89,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         } catch (HttpServerErrorException.InternalServerError e) {
             log.error("最好成绩分析：复杂面板生成失败", e);
             try {
-                var msg = uubaService.getAllMsg(bpList, user.getUsername(), user.getPlayMode());
+                var msg = uubaService.getAllMsg(bpList, user.getUsername(), user.getModeString());
                 var image2 = imageService.getPanelAlpha(msg);
                 from.sendImage(image2);
                 return;
@@ -129,7 +127,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyModChangeForScores(bps, user.getOsuMode());
+        beatmapApiService.applyModChangeForScores(bps, user.getMode());
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                           String[] mods) {

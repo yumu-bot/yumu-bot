@@ -106,7 +106,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        if (OsuMode.isDefault(mode)) {
+        if (OsuMode.isDefaultOrNull(mode)) {
             isDefault = true;
             mode = user.getMode();
         }

@@ -96,7 +96,7 @@ public class UserApiImpl implements OsuUserApiService {
                     userInfoDao.saveUser(data, mode);
                     user.setOsuID(data.getUID());
                     user.setOsuName(data.getUsername());
-                    user.setMode(data.getOsuMode());
+                    user.setMode(data.getMode());
                     return data;
                 }).block();
     }

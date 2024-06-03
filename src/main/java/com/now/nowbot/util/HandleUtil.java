@@ -145,10 +145,12 @@ public class HandleUtil {
      * @return 游戏模式
      */
     public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable OsuUser user) {
-        if (user == null || mode == null) {
-            return OsuMode.DEFAULT;
-        } else if (mode.equals(OsuMode.DEFAULT) && user.getOsuMode() != null) {
-            return user.getOsuMode();
+        if (OsuMode.isDefaultOrNull(mode)) {
+            if (user == null) {
+                return OsuMode.DEFAULT;
+            } else {
+                return user.getMode();
+            }
         } else {
             return mode;
         }
@@ -160,11 +162,13 @@ public class HandleUtil {
      * @param user 绑定玩家
      * @return 游戏模式
      */
-    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @NonNull BinUser user) {
-        if (mode == null) {
-            return OsuMode.DEFAULT;
-        } else if (mode.equals(OsuMode.DEFAULT)) {
-            return user.getMode();
+    public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable BinUser user) {
+        if (OsuMode.isDefaultOrNull(mode)) {
+            if (user == null) {
+                return OsuMode.DEFAULT;
+            } else {
+                return user.getMode();
+            }
         } else {
             return mode;
         }
@@ -208,7 +212,7 @@ public class HandleUtil {
             var user = bindDao.getUserFromQQ(qq);
 
             try {
-                if (OsuMode.isDefault(mode)) mode = user.getMode();
+                if (OsuMode.isDefaultOrNull(mode)) mode = user.getMode();
                 return userApiService.getPlayerInfo(user, mode);
             } catch (WebClientResponseException.Unauthorized e) {
                 throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
@@ -270,7 +274,7 @@ public class HandleUtil {
         var user = bindDao.getUserFromQQ(qq);
 
         try {
-            if (OsuMode.isDefault(mode)) mode = user.getMode();
+            if (OsuMode.isDefaultOrNull(mode)) mode = user.getMode();
             return userApiService.getPlayerInfo(user, mode);
 
         } catch (WebClientResponseException.Unauthorized e) {

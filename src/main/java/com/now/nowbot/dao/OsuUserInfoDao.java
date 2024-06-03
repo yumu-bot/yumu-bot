@@ -53,7 +53,7 @@ public class OsuUserInfoDao {
 
     public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
         OsuUser user = new OsuUser();
-        user.setPlayMode(archive.getMode().getName());
+        user.setModeString(archive.getMode().getName());
         user.setUID(archive.getOsuID());
 
         Statistics statistics = new Statistics();
@@ -82,7 +82,7 @@ public class OsuUserInfoDao {
      * 取那一天最后的数据
      *
      * @param date 当天
-     * @return
+     * @return 那一天最后的数据
      */
     public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode, LocalDate date) {
         return osuUserInfoMapper.selectDayLast(uid, mode, date);
@@ -107,7 +107,7 @@ public class OsuUserInfoDao {
         out.setPlay_count(data.getPlayCount());
         out.setPlay_time(data.getPlayTime());
         if (mode.equals(OsuMode.DEFAULT)) {
-            out.setMode(data.getOsuMode());
+            out.setMode(data.getMode());
         } else {
             out.setMode(mode);
         }
