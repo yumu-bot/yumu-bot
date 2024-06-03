@@ -146,7 +146,7 @@ public class HandleUtil {
      */
     public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable OsuUser user) {
         if (OsuMode.isDefaultOrNull(mode)) {
-            if (user == null) {
+            if (user == null || OsuMode.isDefaultOrNull(user.getOsuMode())) {
                 return OsuMode.DEFAULT;
             } else {
                 return user.getOsuMode();
@@ -164,7 +164,7 @@ public class HandleUtil {
      */
     public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable BinUser user) {
         if (OsuMode.isDefaultOrNull(mode)) {
-            if (user == null) {
+            if (user == null || OsuMode.isDefaultOrNull(user.getOsuMode())) {
                 return OsuMode.DEFAULT;
             } else {
                 return user.getOsuMode();

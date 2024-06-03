@@ -10,6 +10,8 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -18,87 +20,89 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service("MUTUAL")
-public class MutualService implements MessageService<Matcher> {
-    //private static final Logger log = LoggerFactory.getLogger(MutualFriendService.class);
+public class MutualService implements MessageService<List<MutualService.MutualParam>> {
+    private static final Logger log = LoggerFactory.getLogger(MutualService.class);
+
     @Resource
     OsuUserApiService userApiService;
 
     @Resource
     BindDao bindDao;
 
-    static private final Pattern NumberPattern = Pattern.compile("^\\d{5,12}$");
-
-    MutualService(OsuUserApiService userApiService, BindDao bindDao) {
-        this.userApiService = userApiService;
-        this.bindDao = bindDao;
-    }
+    public record MutualParam(Long uid, Long qq, String name) {}
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<List<MutualParam>> data) throws Throwable {
         var m = Instructions.MUTUAL.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
-    }
+        if (!m.find()) return false;
 
-    record MutualData(Long uid, Long qq, String name) {}
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        List<MutualData> users;
+        var name = m.group("names");
+        var atList = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
 
-        var ats = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
-        if (!CollectionUtils.isEmpty(ats)){
-            users = ats.stream().map(this::at2Mutual).toList();
+        List<MutualParam> users;
 
-            event.getSubject().sendMessage(parseData(users)).recallIn(60 * 1000);
-            return;
-        }
-
-        var name = matcher.group("names");
-        if (StringUtils.hasText(name)){
+        if (! CollectionUtils.isEmpty(atList)){
+            users = atList.stream().map(this::at2Mutual).toList();
+        } else if (StringUtils.hasText(name)){
             users = Arrays.stream(name.split(",")).map(this::name2Mutual).toList();
         } else {
             users = List.of(qq2Mutual(event.getSender().getId()));
         }
 
-        //原来可以链式调用啊
-        event.getSubject().sendMessage(parseData(users)).recallIn(60 * 1000);
+        data.setValue(users);
+        return true;
     }
 
-    private MutualData at2Mutual(AtMessage at) {
+    @Override
+    public void HandleMessage(MessageEvent event, List<MutualParam> users) throws Throwable {
+        var from = event.getSubject();
+
+        try {
+            from.sendMessage(mutual2MessageChain(users)).recallIn(60 * 1000);
+        } catch (Exception e) {
+            log.error("添加好友：发送失败！", e);
+        }
+    }
+
+    private MutualParam at2Mutual(AtMessage at) {
         return qq2Mutual(at.getTarget());
     }
 
-    private MutualData qq2Mutual(long qq) {
+    private MutualParam qq2Mutual(long qq) {
         try {
             var u = bindDao.getUserFromQQ(qq);
-            return new MutualData(u.getOsuID(), qq, u.getOsuName());
+            return new MutualParam(u.getOsuID(), qq, u.getOsuName());
         } catch (BindException e) {
-            return new MutualData(null, qq, STR."\{qq} : 未绑定或已经掉绑");
+            return new MutualParam(null, qq, STR."\{qq} : 未绑定或绑定状态失效！");
         }
     }
 
-    private MutualData name2Mutual(String name) {
+    private MutualParam name2Mutual(String name) {
         try {
             Long id = userApiService.getOsuId(name);
-            return new MutualData(id, null, name);
+            return new MutualParam(id, null, name);
         } catch (Exception e) {
-            return new MutualData(null, null, STR."\{name} : 找不到玩家或网络错误！");
+            return new MutualParam(null, null, STR."\{name} : 找不到玩家或网络错误！");
         }
     }
 
-    private MessageChain parseData(Collection<MutualData> users) {
+    private MessageChain mutual2MessageChain(Collection<MutualParam> users) {
         var sb = new MessageChain.MessageChainBuilder();
         users.forEach(u -> {
             if (Objects.isNull(u.uid)) {
-                sb.addText(u.name + '\n');
+                sb.addText('\n' + u.name);
                 return;
             }
+
+            if (Objects.nonNull(u.qq)) {
+                sb.addAt(u.qq);
+            }
+
+            sb.addText(STR."\n\{u.name}：https://osu.ppy.sh/users/\{u.uid}");
+
+            /*
             var name4Url = u.name
                     .replaceAll("\\s", "%20")
                     .replaceAll("-", "%2D")
@@ -107,15 +111,15 @@ public class MutualService implements MessageService<Matcher> {
                     .replaceAll("_", "%5F");
 
             var m = NumberPattern.matcher(name4Url);
-            if (Objects.nonNull(u.qq)) {
-                sb.addAt(u.qq);
-            }
+
             if (m.find()) {
                 //有数字，只能 uid
                 sb.addText(STR." \{u.name} : : https://osu.ppy.sh/users/\{u.uid}\n");
             } else {
                 sb.addText(STR." \{u.name} : https://osu.ppy.sh/users/\{name4Url}\n");
             }
+
+             */
         });
         return sb.build();
     }
