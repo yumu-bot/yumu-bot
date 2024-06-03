@@ -44,10 +44,10 @@ public class TestLevelService implements MessageService<BinUser> {
         if (messageText.equals("测测我的")) {
             var qqId = event.getSender().getId();
             var user = bindDao.getUserFromQQ(qqId);
-            if (user.getMode() != OsuMode.OSU) {
+            if (user.getOsuMode() != OsuMode.OSU) {
                 event.getSubject().sendMessage("本功能仅支持osu!");
             }
-            user.setMode(OsuMode.OSU);
+            user.setOsuMode(OsuMode.OSU);
             data.setValue(user);
             return true;
         } else if (messageText.startsWith("测测他的")) {
@@ -63,7 +63,7 @@ public class TestLevelService implements MessageService<BinUser> {
                 user = new BinUser();
                 user.setOsuID(osuUserApiService.getOsuId(name));
             }
-            user.setMode(OsuMode.OSU);
+            user.setOsuMode(OsuMode.OSU);
             data.setValue(user);
             return true;
         }
@@ -73,7 +73,7 @@ public class TestLevelService implements MessageService<BinUser> {
 
     @Override
     public void HandleMessage(MessageEvent event, BinUser user) throws Throwable {
-        var bp = scoreApiService.getBestPerformance(user, user.getMode(), 0, 100);
+        var bp = scoreApiService.getBestPerformance(user, user.getOsuMode(), 0, 100);
         var lastBp = bp.getLast();
         if (lastBp.getPP() < 100 || bp.size() != 100) {
             throw new TipsException("没测出来, 要不你再刷一下pp?");
@@ -121,7 +121,7 @@ public class TestLevelService implements MessageService<BinUser> {
                 .limit(5).forEach(s -> mapIdSet.add(s.mapId));
 
         var suppliers = mapIdSet.stream().<AsyncMethodExecutor.Supplier<BeatmapUserScore>>map(bid -> () -> scoreApiService
-                .getScore(bid, user, user.getMode())).toList();
+                .getScore(bid, user, user.getOsuMode())).toList();
         var scores = AsyncMethodExecutor.AsyncSupplier(suppliers);
         double sum = 0;
 

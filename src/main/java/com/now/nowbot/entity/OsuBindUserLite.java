@@ -49,7 +49,7 @@ public class OsuBindUserLite {
         this.accessToken = data.getAccessToken();
         this.refreshToken = data.getRefreshToken();
         this.time = data.getTime();
-        this.mainMode = data.getMode();
+        this.mainMode = data.getOsuMode();
         if (data.getBaseId() != null) {
             this.id = data.getBaseId();
         }

@@ -149,7 +149,7 @@ public class HandleUtil {
             if (user == null) {
                 return OsuMode.DEFAULT;
             } else {
-                return user.getMode();
+                return user.getOsuMode();
             }
         } else {
             return mode;
@@ -167,7 +167,7 @@ public class HandleUtil {
             if (user == null) {
                 return OsuMode.DEFAULT;
             } else {
-                return user.getMode();
+                return user.getOsuMode();
             }
         } else {
             return mode;
@@ -212,7 +212,7 @@ public class HandleUtil {
             var user = bindDao.getUserFromQQ(qq);
 
             try {
-                if (OsuMode.isDefaultOrNull(mode)) mode = user.getMode();
+                if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
                 return userApiService.getPlayerInfo(user, mode);
             } catch (WebClientResponseException.Unauthorized e) {
                 throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
@@ -274,7 +274,7 @@ public class HandleUtil {
         var user = bindDao.getUserFromQQ(qq);
 
         try {
-            if (OsuMode.isDefaultOrNull(mode)) mode = user.getMode();
+            if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
             return userApiService.getPlayerInfo(user, mode);
 
         } catch (WebClientResponseException.Unauthorized e) {

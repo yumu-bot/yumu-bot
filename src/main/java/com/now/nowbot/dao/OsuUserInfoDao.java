@@ -53,7 +53,7 @@ public class OsuUserInfoDao {
 
     public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
         OsuUser user = new OsuUser();
-        user.setModeString(archive.getMode().getName());
+        user.setMode(archive.getMode().getName());
         user.setUID(archive.getOsuID());
 
         Statistics statistics = new Statistics();
@@ -107,7 +107,7 @@ public class OsuUserInfoDao {
         out.setPlay_count(data.getPlayCount());
         out.setPlay_time(data.getPlayTime());
         if (mode.equals(OsuMode.DEFAULT)) {
-            out.setMode(data.getMode());
+            out.setMode(data.getOsuMode());
         } else {
             out.setMode(mode);
         }

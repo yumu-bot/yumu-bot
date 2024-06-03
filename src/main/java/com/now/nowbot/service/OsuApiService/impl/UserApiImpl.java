@@ -81,7 +81,7 @@ public class UserApiImpl implements OsuUserApiService {
         var uid = osuInfo.getUID();
         user.setOsuID(uid);
         user.setOsuName(user.getOsuName());
-        user.setMode(user.getMode());
+        user.setOsuMode(user.getOsuMode());
     }
 
     @Override
@@ -96,7 +96,7 @@ public class UserApiImpl implements OsuUserApiService {
                     userInfoDao.saveUser(data, mode);
                     user.setOsuID(data.getUID());
                     user.setOsuName(data.getUsername());
-                    user.setMode(data.getMode());
+                    user.setOsuMode(data.getOsuMode());
                     return data;
                 }).block();
     }

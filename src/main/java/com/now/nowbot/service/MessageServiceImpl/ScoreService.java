@@ -108,7 +108,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
 
         if (OsuMode.isDefaultOrNull(mode)) {
             isDefault = true;
-            mode = user.getMode();
+            mode = user.getOsuMode();
         }
 
         data.setValue(

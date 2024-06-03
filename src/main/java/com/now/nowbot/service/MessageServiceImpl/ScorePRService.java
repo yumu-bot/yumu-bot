@@ -172,7 +172,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             }
 
             user.setOsuID(id);
-            user.setMode(mode);
+            user.setOsuMode(mode);
         } else if (StringUtils.hasText(qqStr)) {
             try {
                 long qq = Long.parseLong(qqStr);

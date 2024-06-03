@@ -77,7 +77,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                 }
                 user = new BinUser();
                 user.setOsuID(id);
-                user.setMode(mode);
+                user.setOsuMode(mode);
 
             } else {
                 user = bindDao.getUserFromQQ(event.getSender().getId());
@@ -151,7 +151,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         Optional<OsuUser> historyUser =
                 infoDao.getLastFrom(osuUser.getUID(),
-                                OsuMode.DEFAULT.equals(mode) ? osuUser.getMode() : mode,
+                                OsuMode.DEFAULT.equals(mode) ? osuUser.getOsuMode() : mode,
                                 LocalDate.now().minusDays(param.day))
                         /*
                         .map(arch -> {

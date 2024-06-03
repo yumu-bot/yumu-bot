@@ -196,7 +196,7 @@ public class BindDao {
         binUser.setAccessToken(buLite.getAccessToken());
         binUser.setRefreshToken(buLite.getRefreshToken());
         binUser.setTime(buLite.getTime());
-        binUser.setMode(buLite.getMainMode());
+        binUser.setOsuMode(buLite.getMainMode());
         return binUser;
     }
 

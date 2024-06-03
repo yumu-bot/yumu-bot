@@ -86,6 +86,7 @@ public class OsuUser {
 
     String occupation;
 
+    //不要动这个
     @JsonProperty("playmode")
     String mode;
 
@@ -411,7 +412,7 @@ public class OsuUser {
         this.setPage(o.getPage());
         this.setPP(o.getPP());
         this.setPendingCount(o.getPendingCount());
-        this.setModeString(o.getModeString());
+        this.setMode(o.getMode());
         this.setPmFriendsOnly(o.getPmFriendsOnly());
         this.setPlayStyle(o.getPlayStyle());
         this.setPreviousNames(o.getPreviousNames());
@@ -531,19 +532,19 @@ public class OsuUser {
         this.occupation = occupation;
     }
 
-    public String getModeString() {
+    public String getMode() {
         return mode;
     }
 
-    public void setModeString(String playMode) {
+    public void setMode(String playMode) {
         this.mode = playMode;
     }
 
-    public OsuMode getMode() {
+    public OsuMode getOsuMode() {
         return OsuMode.getMode(mode);
     }
 
-    public void setMode(OsuMode mode) {
+    public void setOsuMode(OsuMode mode) {
         this.mode = mode.getName();
     }
 

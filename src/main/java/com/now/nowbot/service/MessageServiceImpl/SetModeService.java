@@ -35,7 +35,7 @@ public class SetModeService implements MessageService<Matcher> {
             from.sendMessage("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)");
             return;
         }
-        user.setMode(mode);
+        user.setOsuMode(mode);
         bindDao.updateMod(user.getOsuID(), mode);
         from.sendMessage("已修改主模式为:"+mode.getName());
     }

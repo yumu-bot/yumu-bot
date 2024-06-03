@@ -46,7 +46,7 @@ public abstract class PPMinus {
 
     public static PPMinus getInstance(OsuMode mode, OsuUser user, List<Score> bps){
         PPMinus PPMinus = null;
-        if (OsuMode.isDefaultOrNull(mode)) mode = user.getMode();
+        if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
         switch (mode) {
             case OSU -> PPMinus = new PPMinusOsu(user, bps);
             case TAIKO -> PPMinus = new PPMinusTaiko(user, bps);

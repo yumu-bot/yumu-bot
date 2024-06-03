@@ -129,11 +129,11 @@ public class BinUser {
     }
 
     @NonNull
-    public OsuMode getMode() {
+    public OsuMode getOsuMode() {
         return mode != null ? mode : OsuMode.DEFAULT;
     }
 
-    public void setMode(OsuMode mode) {
+    public void setOsuMode(OsuMode mode) {
         this.mode = mode;
     }
 

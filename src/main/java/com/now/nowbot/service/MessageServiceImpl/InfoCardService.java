@@ -55,7 +55,7 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
             var user = new BinUser();
 
             user.setOsuName(name.trim());
-            user.setMode(mode);
+            user.setOsuMode(mode);
             data.setValue(new InfoService.InfoParam(
                     user, mode, 1, false
             ));

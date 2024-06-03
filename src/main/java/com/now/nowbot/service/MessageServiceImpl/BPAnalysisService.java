@@ -74,9 +74,9 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
 
         if (CollectionUtils.isEmpty(bpList) || bpList.size() <= 5) {
             if (param.isMyself) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.getModeString());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.getMode());
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.getModeString());
+                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.getMode());
             }
         }
 
@@ -89,7 +89,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         } catch (HttpServerErrorException.InternalServerError e) {
             log.error("最好成绩分析：复杂面板生成失败", e);
             try {
-                var msg = uubaService.getAllMsg(bpList, user.getUsername(), user.getModeString());
+                var msg = uubaService.getAllMsg(bpList, user.getUsername(), user.getMode());
                 var image2 = imageService.getPanelAlpha(msg);
                 from.sendImage(image2);
                 return;
@@ -127,7 +127,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyModChangeForScores(bps, user.getMode());
+        beatmapApiService.applyModChangeForScores(bps, user.getOsuMode());
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                           String[] mods) {
