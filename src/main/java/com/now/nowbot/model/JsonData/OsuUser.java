@@ -412,7 +412,7 @@ public class OsuUser {
         this.setPage(o.getPage());
         this.setPP(o.getPP());
         this.setPendingCount(o.getPendingCount());
-        this.setMode(o.getMode());
+        this.setOsuMode(o.getOsuMode());
         this.setPmFriendsOnly(o.getPmFriendsOnly());
         this.setPlayStyle(o.getPlayStyle());
         this.setPreviousNames(o.getPreviousNames());
@@ -424,6 +424,7 @@ public class OsuUser {
         this.setRankHistory(o.getRankHistory());
         this.setRankedCount(o.getRankedCount());
         this.setReplaysWatchedCounts(o.getReplaysWatchedCounts());
+        this.setRestricted(o.getRestricted());
         this.setStatistics(o.getStatistics());
         this.setSupporter(o.getSupporter());
         this.setSupportLevel(o.getSupportLevel());
@@ -536,8 +537,8 @@ public class OsuUser {
         return mode;
     }
 
-    public void setMode(String playMode) {
-        this.mode = playMode;
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 
     public OsuMode getOsuMode() {

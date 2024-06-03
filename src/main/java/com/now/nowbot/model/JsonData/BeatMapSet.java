@@ -91,9 +91,26 @@ public class BeatMapSet {
     @JsonProperty("nominations_summary")
     NominationsSummary nominationsSummary;
 
+    // https://osu.ppy.sh/home/changelog/web/2024.603.0 改了
     public record NominationsSummary (
             Integer current,
-            Integer required
+
+            // 只有一个元素的列表，存储模式信息
+            @JsonProperty("eligible_main_rulesets")
+            List<String> mode,
+
+            @JsonProperty("required_meta")
+            RequiredMeta required
+
+    ) {}
+
+    public record RequiredMeta(
+            @JsonProperty("main_ruleset")
+            Integer main,
+
+            @JsonProperty("non_main_ruleset")
+            Integer secondary
+
     ) {}
 
     Integer ranked;
