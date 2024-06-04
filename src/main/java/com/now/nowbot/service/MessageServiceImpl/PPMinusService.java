@@ -29,7 +29,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
-import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.*;
+import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.USER;
+import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.USER_VS;
 
 @Service("PP_MINUS")
 public class PPMinusService implements MessageService<PPMinusService.PPMinusParam> {
@@ -208,15 +209,6 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
                 customizePerformanceMinus(others, 0);
             }
         }
-
-        /*
-        笑点解析：《就不写一堆了》
-        if (param.group("vs") != null) {
-            // 就不写一堆了,整个方法把
-            doVs(event, param);
-            return;
-        }
-         */
 
         byte[] image;
 
