@@ -92,6 +92,7 @@ public class BeatMapSet {
     @JsonProperty("legacy_thread_url")
     String legacyThreadUrl;
 
+    @Nullable
     @JsonProperty("nominations_summary")
     NominationsSummary nominationsSummary;
 
@@ -423,8 +424,11 @@ public class BeatMapSet {
     }
 
     // 这个不准，需要重新计算并赋值。
+    @Nullable
     public NominationsSummary getNominationsSummary() {
         var s = nominationsSummary;
+        if (s == null) return null;
+
         var r = s.required;
 
         int secondary;
@@ -460,7 +464,7 @@ public class BeatMapSet {
         return this.nominationsSummary;
     }
 
-    public void setNominationsSummary(NominationsSummary nominationsSummary) {
+    public void setNominationsSummary(@Nullable NominationsSummary nominationsSummary) {
         this.nominationsSummary = nominationsSummary;
     }
 
