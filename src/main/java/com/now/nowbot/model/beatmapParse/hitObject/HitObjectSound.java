@@ -1,7 +1,6 @@
 package com.now.nowbot.model.beatmapParse.hitObject;
 
-
-import jakarta.annotation.Nullable;
+import javax.annotation.Nullable;
 
 public enum HitObjectSound {
     NORMAL("normal",0),

@@ -1,9 +1,10 @@
 package com.now.nowbot.entity;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.Generated;
-import org.hibernate.annotations.GenerationTime;
+import com.now.nowbot.util.MapPoolUtil;
+import org.hibernate.annotations.Type;
 
+import jakarta.persistence.*;
+import java.lang.reflect.InvocationTargetException;
 
 @Entity
 @Table(name = "beat_map_4_pool")
@@ -13,7 +14,7 @@ public class BeatMap4Pool {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Generated(GenerationTime.INSERT)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "order_number")
     Integer order;
 
@@ -77,4 +78,3 @@ public class BeatMap4Pool {
         this.data = data;
     }
 }
-
