@@ -7,8 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -108,6 +112,7 @@ public class BeatMapSet {
             @JsonProperty("main_ruleset")
             Integer main,
 
+            // 这个不准，需要重新计算并赋值。
             @JsonProperty("non_main_ruleset")
             Integer secondary
 
@@ -152,12 +157,13 @@ public class BeatMapSet {
             @JsonProperty("beatmapset_id")
             Long SID,
 
-            List<String> rulesets,
+            @JsonProperty("rulesets")
+            List<String> mode,
 
             Boolean reset,
 
             @JsonProperty("user_id")
-            Long nominatorID
+            Long UID
     ) {}
     Description description;
 
@@ -416,8 +422,42 @@ public class BeatMapSet {
         this.legacyThreadUrl = legacyThreadUrl;
     }
 
+    // 这个不准，需要重新计算并赋值。
     public NominationsSummary getNominationsSummary() {
-        return nominationsSummary;
+        var s = nominationsSummary;
+        var r = s.required;
+
+        int secondary;
+
+        if (CollectionUtils.isEmpty(beatMaps)) {
+            secondary = 0;
+        } else {
+
+            final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd")
+                    .appendLiteral("T")
+                    .appendPattern("HH:mm:ss")
+                    .appendZoneId().toFormatter();
+
+            final LocalDateTime changedTime = LocalDateTime.from(formatter.parse("2024-06-03T00:00:00Z"));
+
+            // 没榜，或者最后更新时间晚于这一天的谱面才应用这次更改
+            if (this.getLastUpdated().toLocalDateTime().isAfter(changedTime) || ! this.hasLeaderBoard()) {
+
+                secondary = Math.max(
+                        beatMaps.stream().map(BeatMap::getModeInt).collect(Collectors.toSet()).size() - 1
+                        , 0);
+            } else {
+                // 之前的，其他模式要 x2
+                secondary = Math.max(
+                        (beatMaps.stream().map(BeatMap::getModeInt).collect(Collectors.toSet()).size() - 1) * 2
+                        , 0);
+            }
+        }
+
+        this.nominationsSummary = new NominationsSummary(s.current, s.mode, new RequiredMeta(r.main, secondary));
+
+        return this.nominationsSummary;
     }
 
     public void setNominationsSummary(NominationsSummary nominationsSummary) {
@@ -605,7 +645,7 @@ public class BeatMapSet {
         if (nominators.isEmpty() && Objects.nonNull(currentNominations) && Objects.nonNull(relatedUsers)) {
             for (CurrentNominations c : currentNominations) {
                 for (OsuUser u : relatedUsers) {
-                    if (Objects.equals(u.getUID(), c.nominatorID())) {
+                    if (Objects.equals(u.getUID(), c.UID)) {
                         nominators.add(u);
                         break;
                     }
