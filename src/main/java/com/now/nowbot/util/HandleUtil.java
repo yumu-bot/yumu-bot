@@ -103,7 +103,15 @@ public class HandleUtil {
     }
 
     @NonNull
-    public static OsuMode getMode(@NonNull Matcher matcher) {
+    public static OsuMode getMode(@NonNull Matcher matcher) {// 没有 mode
+        return getMode(matcher, null);
+    }
+
+    @NonNull
+    public static OsuMode getMode(@NonNull Matcher matcher, OsuMode other) {
+        if (! OsuMode.isDefaultOrNull(other)) {
+            return other;
+        }
         OsuMode mode = OsuMode.DEFAULT;
         try {
             var modeStr = matcher.group("mode");
@@ -287,7 +295,7 @@ public class HandleUtil {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         } catch (Exception e) {
             log.error("HandleUtil：获取自我信息失败！", e);
-            throw new TipsException("HandleUtil：获取自我信息失败！");
+            throw new TipsException("获取用户信息失败！");
         }
     }
 
