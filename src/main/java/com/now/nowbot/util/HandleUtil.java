@@ -109,9 +109,6 @@ public class HandleUtil {
 
     @NonNull
     public static OsuMode getMode(@NonNull Matcher matcher, OsuMode other) {
-        if (! OsuMode.isDefaultOrNull(other)) {
-            return other;
-        }
         OsuMode mode = OsuMode.DEFAULT;
         try {
             var modeStr = matcher.group("mode");
@@ -120,6 +117,9 @@ public class HandleUtil {
             }
         } catch (Exception ignore) {
             // 没有 mode
+        }
+        if (OsuMode.isDefaultOrNull(mode) && ! OsuMode.isDefaultOrNull(other)) {
+            return other;
         }
         return mode;
     }
