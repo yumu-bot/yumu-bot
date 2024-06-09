@@ -246,7 +246,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus PPMinusMe) {
+    public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus my) {
         String STBPRE;
 
         if (mode == OsuMode.MANIA) {
@@ -255,17 +255,17 @@ public class ImageService {
             STBPRE = "STB";
         }
 
-        var Card_A = List.of(user);
+        var cardA1 = List.of(user);
 
         var cardB = Map.of(
-                "ACC", PPMinusMe.getValue1(),
-                "PTT", PPMinusMe.getValue2(),
-                "STA", PPMinusMe.getValue3(),
-                STBPRE, PPMinusMe.getValue4(),
-                "EFT", PPMinusMe.getValue5(),
-                "STH", PPMinusMe.getValue6(),
-                "OVA", PPMinusMe.getValue7(),
-                "SAN", PPMinusMe.getValue8()
+                "ACC", my.getValue1(),
+                "PTT", my.getValue2(),
+                "STA", my.getValue3(),
+                STBPRE, my.getValue4(),
+                "EFT", my.getValue5(),
+                "STH", my.getValue6(),
+                "OVA", my.getValue7(),
+                "SAN", my.getValue8()
         );
 
         var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
@@ -273,7 +273,7 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "card_A1", Card_A,
+                "card_A1", cardA1,
                 "card_b_1", cardB,
                 "statistics", statistics
         );
@@ -291,10 +291,10 @@ public class ImageService {
         }
         //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
 
-        var CardA1 = new ArrayList<OsuUser>(2);
-        CardA1.add(me);
+        var cardA1s = new ArrayList<OsuUser>(2);
+        cardA1s.add(me);
 
-        if (isVs) CardA1.add(other);
+        if (isVs) cardA1s.add(other);
 
         var cardB1 = Map.of(
                 "ACC", my.getValue1(),
@@ -322,7 +322,7 @@ public class ImageService {
 
         var body = new HashMap<String, Object>(4);
 
-        body.put("card_A1", CardA1);
+        body.put("card_A1", cardA1s);
         body.put("card_b_1", cardB1);
         body.putIfAbsent("card_b_2", cardB2);
         body.put("statistics", statistics);
@@ -552,6 +552,43 @@ public class ImageService {
         Map<String, Object> body = new HashMap<>();
         body.put("user", osuUser);
         body.put("panel", "info");
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_Gamma", httpEntity);
+    }
+
+    public byte[] getPanelGamma(@Nullable OsuUser user, OsuMode mode, @Nullable PPMinus my) {
+        String STBPRE;
+
+        if (mode == OsuMode.MANIA) {
+            STBPRE = "PRE";
+        } else {
+            STBPRE = "STB";
+        }
+
+        var cardA1 = user == null ? null : List.of(user);
+
+        var cardB = my == null ? null : Map.of(
+                "ACC", my.getValue1(),
+                "PTT", my.getValue2(),
+                "STA", my.getValue3(),
+                STBPRE, my.getValue4(),
+                "EFT", my.getValue5(),
+                "STH", my.getValue6(),
+                "OVA", my.getValue7(),
+                "SAN", my.getValue8()
+        );
+
+        var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
+
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = new HashMap<String, Object>(4);
+
+        body.putIfAbsent("card_A1", cardA1);
+        body.putIfAbsent("card_b_1", cardB);
+        body.put("statistics", statistics);
+        body.put("panel", "sanity");
+
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_Gamma", httpEntity);
     }

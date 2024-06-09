@@ -63,6 +63,37 @@ public class BotWebApi {
     @Resource
     NominationService nominationService;
 
+    /**
+     * SN 图片接口 (SAN)
+     * 私密，仅消防栓使用
+     * @param name 玩家名称
+     * @param playMode 模式，可为空
+     * @return image PPM 图片
+     */
+    @GetMapping(value = "san")
+    @OpenResource(name = "sn", desp = "查询玩家的 SAN")
+    public ResponseEntity<byte[]> getSan(
+            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(value = "name") String name,
+            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+
+        var mode = OsuMode.getMode(playMode);
+
+        OsuUser info;
+        List<Score> bplist;
+        PPMinus ppm;
+
+        try {
+            info = userApiService.getPlayerInfo(name.trim(), mode);
+            bplist = scoreApiService.getBestPerformance(info.getUID(), mode, 0, 100);
+            ppm = PPMinus.getInstance(mode, info, bplist);
+        } catch (Exception e) {
+            info = null;
+            ppm = null;
+        }
+
+        var data = imageService.getPanelGamma(info, mode, ppm);
+        return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()}-sn.jpg", data.length), HttpStatus.OK);
+    }
 
     /**
      * PM 图片接口 (PPM)
