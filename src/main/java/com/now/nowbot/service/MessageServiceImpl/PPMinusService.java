@@ -119,7 +119,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             }
         }
 
-        var mode = HandleUtil.getMode(matcher);
+        var mode = HandleUtil.getMode(matcher, binMe.getOsuMode());
 
         // 在新人群管理群里查询，则主动认为是 osu 模式
         if (event.getSubject().getId() == 695600319L && OsuMode.DEFAULT.equals(mode)) {

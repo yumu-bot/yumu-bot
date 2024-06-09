@@ -32,15 +32,13 @@ server:
   port: 8388
 
 shiro:
-  ws-config:
-    # 反向 Websocket 连接地址
-    ws-url: "/pub/onebotSocket"
+  ws:
+    server:
+      enable: true
+      url: "/pub/onebotSocket"
+      max-session-idle-timeout: 10
     timeout: 10
-    # 二进制消息的最大长度
     max-binary-message-buffer-size: 5120000
-    # 最大空闲时间，超过这个时间将关闭会话
-    max-session-idle-timeout: 3600000
-    # 最大文本消息缓冲区
     max-text-message-buffer-size: 512000
   # 关闭 shiro 默认构造的线程池, 本项目已启用虚拟线程
   task-pool:
