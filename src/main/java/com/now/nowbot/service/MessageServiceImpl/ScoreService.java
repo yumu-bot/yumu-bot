@@ -128,13 +128,10 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
 
         // 处理 mods
         var modsStr = param.modsStr();
-        List<Mod> modList = null;
-        if (Objects.nonNull(modsStr)) {
-            modList = Mod.getModsList(modsStr);
-        }
+        int modInt = Mod.getModsValue(modsStr);
 
         Score score = null;
-        if (!CollectionUtils.isEmpty(modList)) {
+        if (StringUtils.hasText(modsStr)) {
             List<Score> scoreall;
             try {
                 scoreall = scoreApiService.getScoreAll(bid, binUser, mode);
@@ -146,21 +143,15 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
                 if (Objects.isNull(s.getMods())) {
                     continue;
                 }
-                if (CollectionUtils.isEmpty(s.getMods()) && modList.size() == 1 && modList.getFirst() == Mod.None) {
-                    score = s;
-                    break;
-                }
-                if (modList.size() != s.getMods().size()) {
-                    continue;
-                }
-                if (new HashSet<>(s.getMods()).containsAll(modList.stream().map(Mod::getAbbreviation).toList())) {
+                int scoreMods = Mod.getModsValueFromAbbrList(s.getMods());
+                if (scoreMods == modInt) {
                     score = s;
                     break;
                 }
             }
 
             if (score == null) {
-                throw new ScoreException(ScoreException.Type.SCORE_ModList_NotFound, modList.toString());
+                throw new ScoreException(ScoreException.Type.SCORE_ModList_NotFound, modsStr);
             } else {
                 var beatMap = new BeatMap();
                 beatMap.setId(bid);
