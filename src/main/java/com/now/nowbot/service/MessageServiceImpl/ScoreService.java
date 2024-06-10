@@ -128,11 +128,11 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
 
         // 处理 mods
         var modsStr = param.modsStr();
-        int modInt = Mod.getModsValue(modsStr);
 
         Score score = null;
         if (StringUtils.hasText(modsStr)) {
             List<Score> scoreall;
+            int modInt = Mod.getModsValue(modsStr);
             try {
                 scoreall = scoreApiService.getScoreAll(bid, binUser, mode);
             } catch (WebClientResponseException e) {
