@@ -3,7 +3,7 @@ package com.now.nowbot.service.OsuApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.*;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.DataUtil;
 import org.springframework.lang.NonNull;
@@ -70,8 +70,8 @@ public interface OsuBeatmapApiService {
         return getAttributes(id, OsuMode.DEFAULT, modsValue);
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, Mod... mods) {
-        int value = Arrays.stream(mods).mapToInt(m -> m.value).reduce(0, Integer::sum);
+    default BeatmapDifficultyAttributes getAttributes(Long id, OsuMod... osuMods) {
+        int value = Arrays.stream(osuMods).mapToInt(m -> m.value).reduce(0, Integer::sum);
         return getAttributes(id, value);
     }
 
@@ -98,7 +98,7 @@ public interface OsuBeatmapApiService {
         score.setAccuracy(100D);
         score.setMisses(0);
         score.setMods(modInt);
-        score.setSpeed(Mod.getModsClockRate(modInt));
+        score.setSpeed(OsuMod.getModsClockRate(modInt));
 
         return Rosu.calculate(b, score);
     }
@@ -134,9 +134,9 @@ public interface OsuBeatmapApiService {
 
         // 一次搞定
         for (var s : scoreList) {
-            var v = Mod.getModsValueFromAbbrList(s.getMods());
+            var v = OsuMod.getModsValueFromAbbrList(s.getMods());
 
-            if (Mod.hasChangeRating(v)) {
+            if (OsuMod.hasChangeRating(v)) {
                 var b = s.getBeatMap();
                 JniResult r;
                 try {
@@ -151,10 +151,10 @@ public interface OsuBeatmapApiService {
                 b.setAR(DataUtil.AR(b.getAR(), v));
                 b.setCS(DataUtil.CS(b.getCS(), v));
                 b.setHP(DataUtil.HP(b.getHP(), v));
-                if (Mod.hasDt(v)) {
+                if (OsuMod.hasDt(v)) {
                     b.setBPM(b.getBPM() * 1.5f);
                     b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
-                } else if (Mod.hasHt(v)) {
+                } else if (OsuMod.hasHt(v)) {
                     b.setBPM(b.getBPM() * 0.75f);
                     b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
                 }

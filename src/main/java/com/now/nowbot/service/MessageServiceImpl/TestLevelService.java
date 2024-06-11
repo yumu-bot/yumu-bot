@@ -4,7 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -113,7 +113,7 @@ public class TestLevelService implements MessageService<BinUser> {
         bp.stream()
                 .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
                 .map(s -> new ScoreLite(s.getMaxCombo(), s.getBeatMap().getMaxCombo() - s.getMaxCombo(),
-                        s.getAccuracy(), Mod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getId()))
+                        s.getAccuracy(), OsuMod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getId()))
                 .sorted(Comparator.comparingInt(ScoreLite::diff)
                         .thenComparingInt(ScoreLite::combo).reversed()
                         .thenComparingDouble(ScoreLite::acc).reversed()

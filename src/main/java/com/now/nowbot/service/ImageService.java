@@ -3,8 +3,6 @@ package com.now.nowbot.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttr;
-import com.now.nowbot.model.imag.MapAttrGet;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.model.multiplayer.MatchRound;
 import com.now.nowbot.model.multiplayer.MatchStat;
@@ -70,24 +68,6 @@ public class ImageService {
         return doPost("md", httpEntity);
     }
 
-    public Map<Long, MapAttr> getMapAttr(MapAttrGet p) {
-        HttpHeaders headers = getDefaultHeader();
-
-        HttpEntity<MapAttrGet> httpEntity = new HttpEntity<>(p, headers);
-        ResponseEntity<List<MapAttr>> s = restTemplate.exchange(
-                URI.create(STR."\{IMAGE_PATH}attr")
-                , HttpMethod.POST, httpEntity
-                , new ParameterizedTypeReference<>() {
-                });
-
-        List<MapAttr> result = s.getBody();
-
-        if (CollectionUtils.isEmpty(result)) {
-            return new HashMap<>();
-        }
-
-        return result.stream().collect(Collectors.toMap(MapAttr::getId, attr -> attr));
-    }
 
     public Map<Long, Float> getBPFix(@NonNull ArrayList<ScoreWithFcPP> BPList) {
         HttpHeaders headers = getDefaultHeader();

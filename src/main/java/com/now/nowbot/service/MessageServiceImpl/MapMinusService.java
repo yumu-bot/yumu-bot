@@ -2,15 +2,15 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.beatmapParse.OsuFile;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttr;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -46,8 +46,8 @@ public class MapMinusService implements MessageService<Matcher> {
         String fileStr;
         BeatMap beatMap;
 
-        var modsList = Mod.getModsList(matcher.group("mod"));
-        boolean isChangedRating = Mod.hasChangeRating(modsList);
+        var modsList = OsuMod.getModsList(matcher.group("mod"));
+        boolean isChangedRating = OsuMod.hasChangeRating(modsList);
 
 
         try {
@@ -71,12 +71,11 @@ public class MapMinusService implements MessageService<Matcher> {
         try {
             beatMap = beatmapApiService.getBeatMapInfo(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
-
-            MapAttr.applyModChangeForBeatMap(beatMap, Mod.getModsValue(modsList), imageService);
-
-
+            int mods = OsuMod.getModsValue(modsList);
+            var s = beatmapApiService.getMaxPP(beatMap.getId(), mods);
+            beatMap.setStarRating((float) s.getStar());
+            DataUtil.setBeatMap(beatMap, mods);
             fileStr = beatmapApiService.getBeatMapFile(bid);
-            //fileStr = Files.readString(Path.of("/home/spring/DJ SHARPNEL - BLUE ARMY (Raytoly's Progressive Hardcore Sped Up Edit) (Critical_Star) [Insane].osu"));
         } catch (Exception e) {
             throw new MapMinusException(MapMinusException.Type.MM_Map_NotFound);
         }
@@ -97,7 +96,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
         PPMinus3 mapMinus = null;
         if (file != null) {
-            mapMinus = PPMinus3.getInstance(file, isChangedRating ? Mod.getModsClockRate(modsList) : rate);
+            mapMinus = PPMinus3.getInstance(file, isChangedRating ? OsuMod.getModsClockRate(modsList) : rate);
         }
 
         byte[] image;

@@ -1,7 +1,7 @@
 package com.now.nowbot.model.beatmapParse.stars;
 
 import com.now.nowbot.model.beatmapParse.parse.OsuBeatmapAttributes;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 
 import java.util.List;
 
@@ -13,15 +13,15 @@ public class OsuStars {
     Integer passedObjectsCount;
     double clockRate = 1f;
     boolean clockRateNoChange(){
-        if (Mod.hasDt(mods) || Mod.hasHt(mods)) {
+        if (OsuMod.hasDt(mods) || OsuMod.hasHt(mods)) {
             return false;
         } else {
             return Math.abs(clockRate - 1f) < 1e-6f;
         }
     }
 
-    public List<Mod> getModsList() {
-        return Mod.getModsList(mods);
+    public List<OsuMod> getModsList() {
+        return OsuMod.getModsList(mods);
     }
 
     public Integer getMods() {
@@ -32,14 +32,14 @@ public class OsuStars {
         this.mods = mods;
     }
 
-    public void addMod(Mod m) {
+    public void addMod(OsuMod m) {
         this.mods |= m.value;
     }
 
     public float getModClockRate() {
-        if (Mod.hasDt(mods)) {
+        if (OsuMod.hasDt(mods)) {
             return 1.5f;
-        } else if (Mod.hasHt(mods)){
+        } else if (OsuMod.hasHt(mods)){
             return 0.75f;
         } else {
             return 1f;

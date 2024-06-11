@@ -6,7 +6,7 @@ import com.now.nowbot.entity.PerformancePlusLite;
 import com.now.nowbot.mapper.PerformancePlusLiteRepository;
 import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.service.OsuApiService.impl.BeatmapApiImpl;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
@@ -141,7 +141,7 @@ public class PerformancePlusService {
             }
             postDataId.add(score.getScoreID());
             checkFile(score.getBeatMap().getId());
-            var mods = Mod.getModsValueFromAbbrList(score.getMods());
+            var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
             var combo = score.getMaxCombo();
             var misses = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
             // 这俩我猜测是 50 和 100 的数量

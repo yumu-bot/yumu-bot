@@ -5,7 +5,7 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -327,7 +327,7 @@ public class HandleUtil {
         List<String> mods;
 
         try {
-            mods = Mod.getModsAbbrList(matcher.group("mod"));
+            mods = OsuMod.getModsAbbrList(matcher.group("mod"));
         } catch (RuntimeException e) {
             mods = new ArrayList<>();
         }

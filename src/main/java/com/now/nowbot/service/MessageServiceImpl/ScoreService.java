@@ -6,7 +6,7 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -23,11 +23,9 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -133,9 +131,9 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         Score score = null;
         if (StringUtils.hasText(modsStr)) {
             BeatmapUserScore scoreall;
-            List<Mod> mods = Mod.getModsList(modsStr);
+            List<OsuMod> osuMods = OsuMod.getModsList(modsStr);
             try {
-                scoreall = scoreApiService.getScore(bid, binUser, mode, mods);
+                scoreall = scoreApiService.getScore(bid, binUser, mode, osuMods);
                 score = scoreall.getScore();
             } catch (WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));

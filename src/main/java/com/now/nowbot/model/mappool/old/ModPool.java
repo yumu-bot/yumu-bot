@@ -1,7 +1,6 @@
 package com.now.nowbot.model.mappool.old;
 
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.enums.Mod;
 
 import java.util.List;
 

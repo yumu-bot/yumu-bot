@@ -4,7 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Service.UserParam;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -291,10 +291,10 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         bps.stream()
                 .peek(s -> {
                     if (s.getMods().isEmpty()) s.setScore(0);
-                    int f = s.getMods().stream().map(Mod::getModFromAbbreviation).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
+                    int f = s.getMods().stream().map(OsuMod::getModFromAbbreviation).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
                     s.setScore(f);
                 })
-                .filter(s -> Mod.hasChangeRating(s.getScore()))
+                .filter(s -> OsuMod.hasChangeRating(s.getScore()))
                 .forEach(s -> {
                     try {
                         var r = beatmapApiService.getMaxPP(s.getBeatMap().getId(), mode, s.getScore());

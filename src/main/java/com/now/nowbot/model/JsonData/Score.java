@@ -43,7 +43,7 @@ public class Score {
     @JsonProperty("mode_int")
     Integer modeInt;
 
-    List<String> mods;
+    List<String> osuMods;
 
     Boolean passed;
 
@@ -149,11 +149,11 @@ public class Score {
     }
 
     public List<String> getMods() {
-        return mods;
+        return osuMods;
     }
 
-    public void setMods(List<String> mods) {
-        this.mods = mods;
+    public void setMods(List<String> osuMods) {
+        this.osuMods = osuMods;
     }
 
     public Boolean getPassed() {
@@ -285,6 +285,6 @@ public class Score {
 
     @Override
     public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, mods=\{mods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
+        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, osuMods=\{osuMods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
     }
 }

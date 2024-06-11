@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchData;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -64,7 +64,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
             }
         }
 
-        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, Mod.getModsAbbrList(param.modStr));
+        var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, OsuMod.getModsAbbrList(param.modStr));
 
         try {
             var image = imageService.getPanelE3(param.matchData, beatMap, expected);

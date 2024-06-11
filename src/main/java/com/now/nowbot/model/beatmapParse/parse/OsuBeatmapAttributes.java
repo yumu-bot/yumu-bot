@@ -6,7 +6,7 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
 import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.ContextUtil;
 import org.springframework.util.CollectionUtils;
@@ -289,9 +289,9 @@ public class OsuBeatmapAttributes {
 
     public double getArHitWindow(int mods, double clockRate) {
         double arValue = getAR();
-        if (Mod.hasHr(mods)) {
+        if (OsuMod.hasHr(mods)) {
             arValue = Math.min(arValue * 1.4, 10d);
-        } else if (Mod.hasEz(mods)) {
+        } else if (OsuMod.hasEz(mods)) {
             arValue *= 0.5;
         }
 
@@ -300,9 +300,9 @@ public class OsuBeatmapAttributes {
 
     public double getOdHitWindow(int mods, double clockRate) {
         double odValue = getOD();
-        if (Mod.hasHr(mods)) {
+        if (OsuMod.hasHr(mods)) {
             odValue = Math.min(odValue * 1.4, 10d);
-        } else if (Mod.hasEz(mods)) {
+        } else if (OsuMod.hasEz(mods)) {
             odValue *= 0.5;
         }
         double window = 0;
@@ -331,9 +331,9 @@ public class OsuBeatmapAttributes {
                 } else {
                     window = 47;
                 }
-                if (Mod.hasHr(mods)) {
+                if (OsuMod.hasHr(mods)) {
                     window /= 1.4;
-                } else if (Mod.hasEz(mods)) {
+                } else if (OsuMod.hasEz(mods)) {
                     window *= 1.4;
                 }
             }/*

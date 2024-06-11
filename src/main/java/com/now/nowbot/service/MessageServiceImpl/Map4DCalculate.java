@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
@@ -29,13 +28,12 @@ public class Map4DCalculate implements MessageService<Map4DCalculate.Map4DParam>
     }
 
     @Override
-    @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Map4DParam param) throws Throwable {
         int mod;
         if (param.mods() == null) {
             mod = 0;
         } else {
-            mod = Mod.getModsValue(param.mods());
+            mod = OsuMod.getModsValue(param.mods());
         }
         // 只针对 std 模式
         String message = switch (param.type()) {

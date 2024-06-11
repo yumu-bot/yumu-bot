@@ -3,8 +3,9 @@ package com.now.nowbot.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
 import org.slf4j.Logger;
@@ -301,16 +302,16 @@ public class DataUtil {
     public static float AR(float ar, int mod){
         float ms;
 //      1800  -  1200  -  450  -  300
-        if (Mod.hasHr(mod)){
+        if (OsuMod.hasHr(mod)){
             ar *= 1.4f;
-        } else if (Mod.hasEz(mod)) {
+        } else if (OsuMod.hasEz(mod)) {
             ar /= 2;
         }
         ar = Math.min(10f, ar);
         ms = AR2MS(ar);
-        if (Mod.hasDt(mod)){
+        if (OsuMod.hasDt(mod)){
             ms /= (3f / 2f);
-        } else if (Mod.hasHt(mod)) {
+        } else if (OsuMod.hasHt(mod)) {
             ms /= (3f / 4f);
         }
         ar = MS2AR((int) ms);
@@ -328,16 +329,16 @@ public class DataUtil {
 
     public static float OD(float od, int mod){
         float ms;
-        if (Mod.hasHr(mod)){
+        if (OsuMod.hasHr(mod)){
             od *= 1.4f;
-        } else if (Mod.hasEz(mod)) {
+        } else if (OsuMod.hasEz(mod)) {
             od /= 2f;
         }
         ms = OD2MS(od);
 
-        if (Mod.hasDt(mod)){
+        if (OsuMod.hasDt(mod)){
             ms /= (3f/2);
-        } else if (Mod.hasHt(mod)) {
+        } else if (OsuMod.hasHt(mod)) {
             ms /= (3f/4);
         }
         return (int) Math.ceil(MS2OD(ms) * 100) / 100f;
@@ -345,29 +346,49 @@ public class DataUtil {
 
 
     public static float CS(float cs, int mod){
-        if (Mod.hasHr(mod)){
+        if (OsuMod.hasHr(mod)){
             cs *= 1.3f;
-        } else if (Mod.hasEz(mod)) {
+        } else if (OsuMod.hasEz(mod)) {
             cs /= 2f;
         }
         return cs;
     }
 
+    public static float BPM(float bpm, int mod){
+        if (OsuMod.hasDt(mod)){
+            bpm *= 1.5f;
+        } else if (OsuMod.hasHt(mod)) {
+            bpm *= 0.75f;
+        }
+        return bpm;
+    }
+
     public static float HP(float hp, int mod){
-        if (Mod.hasHr(mod)){
+        if (OsuMod.hasHr(mod)){
             hp *= 1.3f;
-        } else if (Mod.hasEz(mod)) {
+        } else if (OsuMod.hasEz(mod)) {
             hp /= 1.3f;
         }
         return hp;
     }
+
+    public static void setBeatMap(BeatMap beatMap, int mods) {
+        if (OsuMod.hasChangeRating(mods)) {
+            beatMap.setBPM(DataUtil.BPM(beatMap.getBPM(), mods));
+            beatMap.setAR(DataUtil.AR(beatMap.getAR(), mods));
+            beatMap.setCS(DataUtil.CS(beatMap.getCS(), mods));
+            beatMap.setOD(DataUtil.OD(beatMap.getOD(), mods));
+            beatMap.setHP(DataUtil.HP(beatMap.getHP(), mods));
+        }
+    }
+
     public static void main(String[] args) {
-        System.out.println(OD(7, Mod.Easy.value));
-        System.out.println(OD(7, Mod.add(Mod.Easy.value, Mod.HalfTime)));
-        System.out.println(OD(7, Mod.add(Mod.HardRock.value, Mod.HalfTime)));
-        System.out.println(OD(7, Mod.HardRock.value));
-        System.out.println(OD(7, Mod.DoubleTime.value));
-        System.out.println(OD(7, Mod.add(Mod.HardRock.value, Mod.DoubleTime)));
+        System.out.println(OD(7, OsuMod.Easy.value));
+        System.out.println(OD(7, OsuMod.add(OsuMod.Easy.value, OsuMod.HalfTime)));
+        System.out.println(OD(7, OsuMod.add(OsuMod.HardRock.value, OsuMod.HalfTime)));
+        System.out.println(OD(7, OsuMod.HardRock.value));
+        System.out.println(OD(7, OsuMod.DoubleTime.value));
+        System.out.println(OD(7, OsuMod.add(OsuMod.HardRock.value, OsuMod.DoubleTime)));
     }
 
     public static int getPlayedRankedMapCount(double bonusPP) {

@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
@@ -62,7 +62,7 @@ public class TestMapService implements MessageService<Matcher> {
         }
 
         var mods = mod.split("[\"\\s,，\\-|:]+");
-        int modInt = Stream.of(mods).map(Mod::getModFromAbbreviation).map(e -> e.value).reduce(0, (v, a)-> v|a);
+        int modInt = Stream.of(mods).map(OsuMod::getModFromAbbreviation).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
         float newTotalLength = getNewTotalLength (b.getTotalLength(), modInt);
 
@@ -81,9 +81,9 @@ public class TestMapService implements MessageService<Matcher> {
     }
 
     private Float getNewTotalLength(Integer totalLength, int modInt) {
-        if (Mod.hasDt(modInt)) {
+        if (OsuMod.hasDt(modInt)) {
             return (totalLength / 1.5f);
-        } else if (Mod.hasHt(modInt)) {
+        } else if (OsuMod.hasHt(modInt)) {
             return (totalLength * 1.5f);
         } else {
             return totalLength * 1f;
@@ -91,9 +91,9 @@ public class TestMapService implements MessageService<Matcher> {
     }
 
     private Integer getNewBPM(Float bpm, int modInt) {
-        if (Mod.hasDt(modInt)) {
+        if (OsuMod.hasDt(modInt)) {
             return Math.round(bpm * 1.5f);
-        } else if (Mod.hasHt(modInt)) {
+        } else if (OsuMod.hasHt(modInt)) {
             return Math.round(bpm / 1.5f);
         } else {
             return Math.round(bpm);

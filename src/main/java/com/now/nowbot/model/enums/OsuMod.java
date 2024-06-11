@@ -6,102 +6,78 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.print.attribute.standard.MediaSize;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public enum Mod {
-    None(0, "", "#22AC38", 10),
-    NoFail(1, "NF", "#00A0E9", 10),
-    Easy(1 << 1, "EZ", None.color, 10),
+public enum OsuMod {
+    None(0, ""),
+    NoFail(1, "NF"),
+    Easy(1 << 1, "EZ"),
     //替换未使用的 No Video
-    TouchDevice(1 << 2, "TD", "#7ECEF4", 0),
-    Hidden(1 << 3, "HD", "#F8B551", 18),
-    HardRock(1 << 4, "HR", "#D32F2F", 17),
-    SuddenDeath(1 << 5, "SD", "#FF9800", 20),
-    DoubleTime(1 << 6, "DT", "#0068B7", 19),
-    Relax(1 << 7, "RL", "#8FC31F", 30),
-    HalfTime(1 << 8, "HT", "#BDBDBD", 20),
+    TouchDevice(1 << 2, "TD"),
+    Hidden(1 << 3, "HD"),
+    HardRock(1 << 4, "HR"),
+    SuddenDeath(1 << 5, "SD"),
+    DoubleTime(1 << 6, "DT"),
+    Relax(1 << 7, "RL"),
+    HalfTime(1 << 8, "HT"),
     //总是和 DT 一起使用 : 512 + 64 = 576
-    Nightcore((1 << 9) + (DoubleTime.value), "NC", "#601986", 20),
-    Flashlight(1 << 10, "FL", "#313131", 20),
-    Autoplay(1 << 11, "AT", "#00B7EE", 20),
-    SpunOut(1 << 12, "SO", "#B28850", 30),
-    //Autopilot
-    Autopilot(1 << 13, "AP", "#B3D465", 30),
-    Perfect(1 << 14, "PF", "#FFF100", 20),
-    Key4(1 << 15, "4K", "#616161", 30),
-    Key5(1 << 16, "5K", "#616161", 30),
-    Key6(1 << 17, "6K", "#616161", 30),
-    Key7(1 << 18, "7K", "#616161", 30),
-    Key8(1 << 19, "8K", "#616161", 30),
-    FadeIn(1 << 20, "FI", Hidden.color, 20),
+    Nightcore((1 << 9) + (DoubleTime.value), "NC"),
+    Flashlight(1 << 10, "FL"),
+    Autoplay(1 << 11, "AT"),
+    SpunOut(1 << 12, "SO"),
+    Autopilot(1 << 13, "AP"),
+    Perfect(1 << 14, "PF"),
+    Key4(1 << 15, "4K"),
+    Key5(1 << 16, "5K"),
+    Key6(1 << 17, "6K"),
+    Key7(1 << 18, "7K"),
+    Key8(1 << 19, "8K"),
+    FadeIn(1 << 20, "FI"),
     // mania rd
-    Random(1 << 21, "RD", "#009944", 30),
+    Random(1 << 21, "RD"),
     //Cinema
-    Cinema(1 << 22, "CM", Autoplay.color, 30),
+    Cinema(1 << 22, "CM"),
     //仅 osu!cuttingedge
-    TargetPractice(1 << 23, "TP", "#920783", 30),
-    Key9(1 << 24, "9K", "#616161", 30),
-    KeyCoop(1 << 25, "CP", "#EA68A2", 30),
-    Key1(1 << 26, "1K", "#616161", 30),
-    Key3(1 << 27, "3K", "#616161", 30),
-    Key2(1 << 28, "2K", "#616161", 30),
-    ScoreV2(1 << 29, "V2", "#2A2226", 30),
-    Mirror(1 << 30, "MR", "#007130", 30),
+    TargetPractice(1 << 23, "TP"),
+    Key9(1 << 24, "9K"),
+    KeyCoop(1 << 25, "CP"),
+    Key1(1 << 26, "1K"),
+    Key3(1 << 27, "3K"),
+    Key2(1 << 28, "2K"),
+    ScoreV2(1 << 29, "V2"),
+    Mirror(1 << 30, "MR"),
     //    keyMod(Key1.value | Key2.value | Key3.value | Key4.value | Key5.value | Key6.value | Key7.value | Key8.value | Key9.value | KeyCoop.value),
-    keyMod(521109504, "KEY", "#616161", 30),
+    keyMod(521109504, "KEY"),
     //    FreeModAllowed(NoFail.value | Easy.value | Hidden.value | HardRock.value | SuddenDeath.value | Flashlight.value | FadeIn.value | Relax.value | Autopilot.value | SpunOut.value | keyMod.value),
-    ScoreIncreaseMods(1049688, "IM", "#9922EE", 0),
-
-    //给谱面用的 Mod
-    FreeMod(522171579, "FM", ScoreIncreaseMods.color, 30),
+    FreeMod(522171579, "FM"),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
-    LongNote(-1, "LN", NoFail.color, 20),
-    NoMod(-1, "NM", Easy.color, 10),
-    Rice(-1, "RC", Easy.color, 10),
-    Hybrid(-1, "HB", Hidden.color, 30),
-    Extra(-1, "EX", SuddenDeath.color, 50),
-    TieBreaker(-1, "TB", Flashlight.color, 100),
-    SpeedVariation(-1, "SV", ScoreIncreaseMods.color, 40),
+    ScoreIncreaseMods(1049688, "IM"),
+    Other(-1,"OTHER");
 
-    // 其他未上传的mod (Fun Mods)
-    Other(-1, "OTHER", "#EA68A2", 90);
 
     public final int value;
     public final String abbreviation;
-    public final String color;
-    public final int priority;
 
-    Mod(int i, String name, String color, int priority) {
+    OsuMod(int i, String name) {
         value = i;
         abbreviation = name;
-        this.color = color;
-        this.priority = priority;
     }
 
     public String getAbbreviation() {
         return abbreviation;
     }
 
-    public String getColor() {
-        return color;
-    }
-    public int getPriority() {
-        return priority;
-    }
 
-    public static String getColor(String abbr) {
-        var mod = getModFromAbbreviation(abbr);
-        return mod.getColor();
-    }
 
     @NonNull
-    public static List<Mod> getModsList(@Nullable String abbr) {
+    public static List<OsuMod> getModsList(@Nullable String abbr) {
         if (! StringUtils.hasText(abbr)) return new ArrayList<>(0);
 
         var abbrList = getModsAbbrList(abbr.toUpperCase());
-        var modList = abbrList.stream().map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
+        var modList = abbrList.stream().map(OsuMod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         checkModList(modList);
         return modList;
     }
@@ -111,8 +87,8 @@ public enum Mod {
      * @param value 值
      * @return 模组类列表
      */
-    public static List<Mod> getModsList(int value) {
-        var modList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
+    public static List<OsuMod> getModsList(int value) {
+        var modList = Arrays.stream(OsuMod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
         checkModList(modList);
         return modList;
     }
@@ -123,9 +99,8 @@ public enum Mod {
      * @return 缩写列表
      */
     public static List<String> getModsAbbrList(int value) {
-        var modList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
-        checkModList(modList);
-        return modList.stream().map(Mod::getAbbreviation).toList();
+        var modList = getModsList(value);
+        return modList.stream().map(OsuMod::getAbbreviation).toList();
     }
 
     /**
@@ -134,9 +109,8 @@ public enum Mod {
      * @return 缩写组
      */
     public static String getModsAbbr(int value) {
-        var modList = Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList();
-        checkModList(modList);
-        return String.join("", modList.stream().map(Mod::getAbbreviation).toList());
+        var modList = getModsList(value);
+        return String.join("", modList.stream().map(OsuMod::getAbbreviation).toList());
     }
 
     public static int getModsValue(String abbr) {
@@ -153,15 +127,15 @@ public enum Mod {
     public static int getModsValue(@Nullable String[] abbrArray) {
         if (abbrArray == null) return 0;
 
-        var mList = Arrays.stream(abbrArray).map(String::toUpperCase).map(Mod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
+        var mList = Arrays.stream(abbrArray).map(String::toUpperCase).map(OsuMod::getModFromAbbreviation).filter(e -> e != Other).distinct().toList();
         return getModsValue(mList);
     }
 
-    public static int getModsValue(@Nullable List<Mod> modList) {
-        if (CollectionUtils.isEmpty(modList)) return 0;
+    public static int getModsValue(@Nullable List<OsuMod> osuModList) {
+        if (CollectionUtils.isEmpty(osuModList)) return 0;
 
-        checkModList(modList);
-        return modList.stream().map(m -> m.value).reduce(0, (i, s) -> s | i);
+        checkModList(osuModList);
+        return osuModList.stream().map(m -> m.value).reduce(0, (i, s) -> s | i);
     }
 
     @NonNull
@@ -169,7 +143,7 @@ public enum Mod {
         if (CollectionUtils.isEmpty(abbrList)) return 0;
         checkAbbrList(abbrList);
 
-        return getModsValue(abbrList.stream().map(String::toUpperCase).map(Mod::getModFromAbbreviation).distinct().toList());
+        return getModsValue(abbrList.stream().map(String::toUpperCase).map(OsuMod::getModFromAbbreviation).distinct().toList());
     }
 
     @NonNull
@@ -190,7 +164,7 @@ public enum Mod {
         if (abbr == null || abbr.isEmpty()) return;
 
         var abbrList = getModsAbbrList(abbr.toUpperCase());
-        var modList = new ArrayList<Mod>(abbrList.size());
+        var modList = new ArrayList<OsuMod>(abbrList.size());
 
         for (var a : abbrList) {
             var mod = getModFromAbbreviation(a);
@@ -220,22 +194,22 @@ public enum Mod {
         }
     }
 
-    private static void checkModList(@Nullable List<Mod> modList) {
-        if (CollectionUtils.isEmpty(modList)) return;
+    private static void checkModList(@Nullable List<OsuMod> osuModList) {
+        if (CollectionUtils.isEmpty(osuModList)) return;
 
-        if (modList.contains(None) && modList.size() > 1) {
+        if (osuModList.contains(None) && osuModList.size() > 1) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, None.abbreviation);
         }
-        if (modList.contains(DoubleTime) && modList.contains(HalfTime)) {
+        if (osuModList.contains(DoubleTime) && osuModList.contains(HalfTime)) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{HalfTime.abbreviation}");
         }
-        if (modList.contains(HardRock) && modList.contains(Easy)) {
+        if (osuModList.contains(HardRock) && osuModList.contains(Easy)) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{HardRock.abbreviation} \{Easy.abbreviation}");
         }
-        if (modList.contains(NoFail) && (modList.contains(SuddenDeath) || modList.contains(Perfect))) {
+        if (osuModList.contains(NoFail) && (osuModList.contains(SuddenDeath) || osuModList.contains(Perfect))) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{NoFail.abbreviation} \{SuddenDeath.abbreviation} \{Perfect.abbreviation}");
         }
-        if (modList.contains(DoubleTime) && modList.contains(Nightcore)) {
+        if (osuModList.contains(DoubleTime) && osuModList.contains(Nightcore)) {
             throw new ModsException(ModsException.Type.MOD_Receive_Conflict, STR."\{DoubleTime.abbreviation} \{Nightcore.abbreviation}");
         }
     }
@@ -247,7 +221,7 @@ public enum Mod {
      */
     @NonNull
     public static double getModsClockRate(int value) {
-        return getModsClockRate(Arrays.stream(Mod.values()).filter(e -> 0 != (e.value & value)).distinct().toList());
+        return getModsClockRate(Arrays.stream(OsuMod.values()).filter(e -> 0 != (e.value & value)).distinct().toList());
     }
 
     @NonNull
@@ -257,10 +231,10 @@ public enum Mod {
     }
 
     @NonNull
-    public static double getModsClockRate(@Nullable List<Mod> modList) {
-        if (CollectionUtils.isEmpty(modList)) return 1d;
+    public static double getModsClockRate(@Nullable List<OsuMod> osuModList) {
+        if (CollectionUtils.isEmpty(osuModList)) return 1d;
 
-        for (var m : modList) {
+        for (var m : osuModList) {
             switch (m) {
                 case HalfTime -> {
                     return 0.75d;
@@ -275,7 +249,7 @@ public enum Mod {
     }
 
     @NonNull
-    public static Mod getModFromAbbreviation(@NonNull String abbr) {
+    public static OsuMod getModFromAbbreviation(@NonNull String abbr) {
         return switch (abbr.toUpperCase()) {
             case "", "NM" -> None;
             case "NF" -> NoFail;
@@ -328,8 +302,8 @@ public enum Mod {
                 HardRock.checkValue(value) || DoubleTime.checkValue(value) || Nightcore.checkValue(value) || Flashlight.checkValue(value);
     }
 
-    public static boolean hasChangeRating(List<Mod> mods) {
-        int v = getModsValue(mods);
+    public static boolean hasChangeRating(List<OsuMod> osuMods) {
+        int v = getModsValue(osuMods);
         return hasChangeRating(v);
     }
 
@@ -338,12 +312,12 @@ public enum Mod {
         return hasChangeRating(v);
     }
 
-    public static int add(int old, Mod mod) {
-        return old | mod.value;
+    public static int add(int old, OsuMod osuMod) {
+        return old | osuMod.value;
     }
 
-    public static int sub(int old, Mod mod) {
-        return old & ~mod.value;
+    public static int sub(int old, OsuMod osuMod) {
+        return old & ~osuMod.value;
     }
 
     public int add(int old) {

@@ -4,11 +4,9 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public interface OsuScoreApiService {
@@ -85,9 +83,9 @@ public interface OsuScoreApiService {
 
     BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode);
 
-    BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Iterable<Mod> mods);
+    BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Iterable<OsuMod> mods);
 
-    BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, Iterable<Mod> mods);
+    BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, Iterable<OsuMod> mods);
 
     List<Score> getScoreAll(long bid, BinUser user, OsuMode mode);
 

@@ -1,11 +1,12 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.imag.MapAttr;
-import com.now.nowbot.model.imag.MapAttrGet;
-import com.now.nowbot.service.ImageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.util.DataUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -13,15 +14,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class MatchData {
+    private static final Logger log = LoggerFactory.getLogger(MatchData.class);
     MatchStat matchStat;
-    boolean isMatchEnd;
-    boolean hasCurrentGame;
+    boolean   isMatchEnd;
+    boolean   hasCurrentGame;
 
     Map<Long, PlayerData> playerData = new LinkedHashMap<>();
-    List<MicroUser> playerList;
-    List<MatchRound> roundList;
-    Map<String, Integer> teamPoint = new HashMap<>();
-    boolean isTeamVS = true;
+    List<MicroUser>       playerList;
+    List<MatchRound>      roundList;
+    Map<String, Integer>  teamPoint  = new HashMap<>();
+    boolean               isTeamVS   = true;
 
     float averageStar = 0f;
 
@@ -44,7 +46,7 @@ public class MatchData {
     double easyMultiplier;
 
     /**
-     * @param delete 是否保留低于 1w 的成绩，true 为删除，false 为保留
+     * @param delete  是否保留低于 1w 的成绩，true 为删除，false 为保留
      * @param rematch 是否去重赛, true 为包含; false 为去重, 去重操作为保留最后一个
      */
     public MatchData(Match match, int skip, int ignore, List<Integer> remove, double easy, boolean delete, boolean rematch) {
@@ -79,9 +81,10 @@ public class MatchData {
         this.roundList = rounds;
     }
 
-    public MatchData() {}
+    public MatchData() {
+    }
 
-    public void calculate(){
+    public void calculate() {
 
         //挨个成绩赋予RRA，计算scoreCount
         calculateRRA();
@@ -131,7 +134,7 @@ public class MatchData {
             if (roundScore == 0) continue;
 
             //每一个分数
-            for (MatchScore s: scoreList) {
+            for (MatchScore s : scoreList) {
                 var player = playerData.get(s.getUserId());
                 if (Objects.isNull(player) || s.getScore() == 0) continue;
 
@@ -157,7 +160,7 @@ public class MatchData {
             boolean isTeamVS = Objects.equals(round.getTeamType(), "team-vs");
 
             //每一个分数
-            for (MatchScore score: round.getScoreInfoList()) {
+            for (MatchScore score : round.getScoreInfoList()) {
                 var player = playerData.get(score.getUserId());
                 if (Objects.isNull(player)) continue;
 
@@ -269,38 +272,22 @@ public class MatchData {
      * 根据房间所选 mod 来修正谱面星级与四维, 注意, mode 不能是多个, 也就是所有的 MatchRound 都会仅计算一种 mode
      * 如果需要计算多种 mode 请自行拆分 rounds
      *
-     * @param mode         游戏模式
-     * @param rounds       轮次
-     * @param imageService 用于请求结果
+     * @param mode              游戏模式
+     * @param rounds            轮次
+     * @param beatmapApiService 用于计算结果
      */
-    public void updateBeatmapAttr(OsuMode mode, List<MatchRound> rounds, ImageService imageService) {
-        final var getParam = new MapAttrGet(mode);
+    public void updateBeatmapAttr(OsuMode mode, List<MatchRound> rounds, OsuBeatmapApiService beatmapApiService) {
         // 统计需要修改的轮次
         for (var r : rounds) {
-            if (Mod.hasChangeRating(r.getModInt())) {
-                int ranked;
-
-                if (Objects.nonNull(r.getBeatMap())) {
-                    ranked = r.getBeatMap().getRanked();
-                } else {
-                    ranked = 0;
+            if (OsuMod.hasChangeRating(r.getModInt()) && Objects.nonNull(r.getBeatMap())) {
+                try {
+                    // 修改星级, 四维
+                    var pp = beatmapApiService.getMaxPP(r.getBeatMap().getId(), mode, r.getModInt());
+                    r.getBeatMap().setStarRating((float) pp.getStar());
+                    DataUtil.setBeatMap(r.getBeatMap(), r.getModInt());
+                } catch (Exception e) {
+                    log.error("计算出错: ", e);
                 }
-
-                getParam.addMap(r.getId().longValue(), r.getBid(), r.getModInt(), ranked);
-            }
-        }
-
-        // 修改星级, 四维
-        var result = imageService.getMapAttr(getParam);
-        for (var m : rounds) {
-            MapAttr attr;
-            if (Objects.nonNull(attr = result.get(m.getId().longValue()))) {
-                var beatmap = Objects.requireNonNull(m.getBeatMap());
-                beatmap.setStarRating(attr.getStars());
-                beatmap.setAR(attr.getAr());
-                beatmap.setOD(attr.getOd());
-                beatmap.setCS(attr.getCs());
-                beatmap.setHP(attr.getHp());
             }
         }
     }

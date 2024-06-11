@@ -1,7 +1,7 @@
 package com.now.nowbot.model.multiplayer;
 
 import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -77,7 +77,7 @@ public class MatchCal {
             roundList = roundList.stream().peek(round -> round.setScoreInfoList(
                     round.getScoreInfoList().stream().peek(
                             s -> {
-                                if (Mod.hasEz(Mod.getModsValue(s.getMods()))) {
+                                if (OsuMod.hasEz(OsuMod.getModsValue(s.getMods()))) {
                                     s.setScore((int) (s.getScore() * easyMultiplier));
                                 }
                             }).toList())

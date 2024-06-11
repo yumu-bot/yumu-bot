@@ -7,7 +7,7 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.Mod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.ppminus.PPMinus;
@@ -541,7 +541,7 @@ public class BotWebApi {
         OsuMode mode = OsuMode.getMode(playMode);
         long uid;
         int modInt = 0;
-        if (Objects.nonNull(mods)) modInt = Mod.getModsValue(mods);
+        if (Objects.nonNull(mods)) modInt = OsuMod.getModsValue(mods);
 
         List<Score> scoreList;
         Score score = null;
@@ -559,7 +559,7 @@ public class BotWebApi {
             try {
                 scoreList = scoreApiService.getScoreAll(bid, uid, mode);
                 for (var s : scoreList) {
-                    if (Mod.getModsValueFromAbbrList(s.getMods()) == modInt) {
+                    if (OsuMod.getModsValueFromAbbrList(s.getMods()) == modInt) {
                         score = s;
                         break;
                     }
@@ -711,7 +711,7 @@ public class BotWebApi {
 
             var param = new MapStatisticsService.MapParam(null, beatMap,
                     new MapStatisticsService.Expected(
-                            mode, accuracy, combo, miss, Mod.getModsAbbrList(modStr)
+                            mode, accuracy, combo, miss, OsuMod.getModsAbbrList(modStr)
                     )
             );
 
@@ -863,7 +863,7 @@ public class BotWebApi {
             @RequestParam("mode") @Nullable String mode
     ) {
         if (Objects.nonNull(bid)) {
-            return beatmapApiService.getAttributes(bid, OsuMode.getMode(mode), Mod.getModsValue(mods));
+            return beatmapApiService.getAttributes(bid, OsuMode.getMode(mode), OsuMod.getModsValue(mods));
         } else {
             return new BeatmapDifficultyAttributes();
         }
