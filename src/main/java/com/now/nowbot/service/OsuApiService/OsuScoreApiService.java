@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.Mod;
 import com.now.nowbot.model.enums.OsuMode;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public interface OsuScoreApiService {
@@ -84,15 +85,9 @@ public interface OsuScoreApiService {
 
     BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode);
 
-    /**
-     * 此接口 ppy 还没实现, 如果带 mod,单个数据结果是错误的
-     */
-    BeatmapUserScore getScore(long bid, long uid, OsuMode mode, int modsValue);
+    BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Iterable<Mod> mods);
 
-    default BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Mod... mods) {
-        int value = Arrays.stream(mods).map(m -> m.value).reduce(0, ((a, b) -> a | b));
-        return getScore(bid, uid, mode, value);
-    }
+    BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, Iterable<Mod> mods);
 
     List<Score> getScoreAll(long bid, BinUser user, OsuMode mode);
 

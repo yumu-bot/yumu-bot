@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.Mod;
@@ -131,32 +132,19 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
 
         Score score = null;
         if (StringUtils.hasText(modsStr)) {
-            List<Score> scoreall;
-            int modInt = Mod.getModsValue(modsStr);
+            BeatmapUserScore scoreall;
+            List<Mod> mods = Mod.getModsList(modsStr);
             try {
-                scoreall = scoreApiService.getScoreAll(bid, binUser, mode);
+                scoreall = scoreApiService.getScore(bid, binUser, mode, mods);
+                score = scoreall.getScore();
             } catch (WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
             }
 
-            for (var s : scoreall) {
-                if (Objects.isNull(s.getMods())) {
-                    continue;
-                }
-                int scoreMods = Mod.getModsValueFromAbbrList(s.getMods());
-                if (scoreMods == modInt) {
-                    score = s;
-                    break;
-                }
-            }
+            var beatMap = new BeatMap();
+            beatMap.setId(bid);
+            score.setBeatMap(beatMap);
 
-            if (score == null) {
-                throw new ScoreException(ScoreException.Type.SCORE_ModList_NotFound, modsStr);
-            } else {
-                var beatMap = new BeatMap();
-                beatMap.setId(bid);
-                score.setBeatMap(beatMap);
-            }
         } else {
             try {
                 score = scoreApiService.getScore(bid, binUser, mode).getScore();
