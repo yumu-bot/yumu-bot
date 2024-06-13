@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -80,6 +81,9 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             }
         }
 
+        // 提取星级变化的谱面 DT/HT 等
+        beatmapApiService.applyModChangeForScores(bpList);
+
         byte[] image;
 
         var data = parseData(user, bpList, userApiService);
@@ -125,9 +129,6 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         // top
         var t5 = bps.subList(0, 5);
         var b5 = bps.subList(Math.max(bpSize - 5, 0), bpSize);
-
-        // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyModChangeForScores(bps, user.getOsuMode());
 
         record BeatMap4BA(int ranking, int length, int combo, float bpm, float star, String rank, String cover,
                           String[] mods) {

@@ -129,35 +129,23 @@ public interface OsuBeatmapApiService {
         return r;
     }
 
-    default void applyModChangeForScores(List<Score> scoreList, @NonNull OsuMode mode) {
+    default void applyModChangeForScores(List<Score> scoreList) {
         if (CollectionUtils.isEmpty(scoreList)) return;
 
-        // 一次搞定
-        for (var s : scoreList) {
-            var v = OsuMod.getModsValueFromAbbrList(s.getMods());
-
-            if (OsuMod.hasChangeRating(v)) {
-                var b = s.getBeatMap();
+        for (var score : scoreList) {
+            var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
+            if (OsuMod.hasChangeRating(modsInt)) {
+                var beatMap = score.getBeatMap();
                 JniResult r;
                 try {
-                    r = getMaxPP(b.getId(), mode, v);
+                    r = getMaxPP(beatMap.getId(), score.getMode(), modsInt);
                 } catch (Exception e) {
                     NowbotApplication.log.error("计算时出现异常", e);
                     continue;
                 }
 
-                b.setStarRating((float) r.getStar());
-                b.setOD(DataUtil.OD(b.getOD(), v));
-                b.setAR(DataUtil.AR(b.getAR(), v));
-                b.setCS(DataUtil.CS(b.getCS(), v));
-                b.setHP(DataUtil.HP(b.getHP(), v));
-                if (OsuMod.hasDt(v)) {
-                    b.setBPM(b.getBPM() * 1.5f);
-                    b.setTotalLength(Math.round(b.getTotalLength() / 1.5f));
-                } else if (OsuMod.hasHt(v)) {
-                    b.setBPM(b.getBPM() * 0.75f);
-                    b.setTotalLength(Math.round(b.getTotalLength() / 0.75f));
-                }
+                beatMap.setStarRating((float) r.getStar());
+                DataUtil.setBeatMap(beatMap, modsInt);
             }
         }
     }
