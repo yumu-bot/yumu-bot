@@ -107,19 +107,19 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             score.setBeatMap(beatmap);
 
             int max = beatmap.getMaxCombo();
-            int combo = max - score.getMaxCombo();
+            int combo = score.getMaxCombo();
 
             // 断连击，mania 模式不参与此项筛选
-            boolean isChoke = (combo > (int) (max * 0.01f) + 1) && (score.getMode() != OsuMode.MANIA);
+            boolean isChoke = (combo < Math.round(max * 0.98f)) && (score.getMode() != OsuMode.MANIA);
 
             // 含有失误
             int miss = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
             int all = Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1);
 
-            boolean isMissFixable = (1f * miss / all) <= 0.01f;
+            boolean has1pMiss = ((1f * miss / all) <= 0.01f) && (miss > 0);
 
-            // 并列关系，虽然 miss 一定 choke，但 choke 不一定 miss
-            if (isChoke || isMissFixable) {
+            // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+            if (isChoke || has1pMiss) {
                 bpList.add(
                         initFixScore(score, index + 1, miss)
                 );
