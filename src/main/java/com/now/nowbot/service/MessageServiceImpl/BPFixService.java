@@ -108,7 +108,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         bpMap.forEach((index, score) -> {
             beforeBpSumAtomic.updateAndGet(v -> v + score.getWeight().weightedPP());
-            int max = score.getBeatMap().getMaxCombo();
+            var beatmap = beatmapApiService.getMapInfoFromDB(score.getBeatMap().getId());
+            score.setBeatMap(beatmap);
+            int max = beatmap.getMaxCombo();
             int combo = max - score.getMaxCombo();
             // 断滑条的
             boolean isChock = combo > (int) (max * 0.005f) + 1;
@@ -165,6 +167,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var result = ScoreWithFcPP.copyOf(score);
         result.setIndex(index + 1);
         var statistics = score.getStatistics();
+        statistics.handleNull();
         if (countMiss > 0) {
             statistics.setCountMiss(0);
             int count300 = Objects.requireNonNullElse(statistics.getCount300(), 0);
@@ -173,6 +176,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
         var bid = score.getBeatMap().getId();
         var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
+
         try {
             var pp = beatmapApiService.getPP(bid, score.getMode(), mods, statistics);
             result.setFcPP((float) pp.getPp());

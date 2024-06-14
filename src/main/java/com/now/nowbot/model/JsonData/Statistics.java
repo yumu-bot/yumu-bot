@@ -115,6 +115,16 @@ public class Statistics {
             }
         }
     }
+
+    public void handleNull() {
+        if (Objects.isNull(count50)) count50 = 0;
+        if (Objects.isNull(count100)) count100 = 0;
+        if (Objects.isNull(count300)) count300 = 0;
+        if (Objects.isNull(countGeki)) countGeki = 0;
+        if (Objects.isNull(countKatu)) countKatu = 0;
+        if (Objects.isNull(countMiss)) countMiss = 0;
+    }
+
     @Nullable
     public Integer getCount50() {
         return count50;
