@@ -154,10 +154,8 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         float newPlayerPP = (float) (playerPP + afterBpSum - beforeBpSum);
 
         var scoreList = bpList.stream().filter(s -> s instanceof ScoreWithFcPP).map(s -> (ScoreWithFcPP)s).toList();
-        //var rankList = scoreList.stream().map(ScoreWithFcPP::getIndex).toList();
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
-        //result.put("ranks", rankList);
         result.put("pp", newPlayerPP);
 
         return result;
