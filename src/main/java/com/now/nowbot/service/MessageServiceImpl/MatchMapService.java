@@ -56,12 +56,12 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
 
         //只有转谱才能赋予游戏模式
         OsuMode mode;
-        {
-            if (! (param.osuMode.equals(OsuMode.DEFAULT)) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
-                mode = param.osuMode;
-            } else {
-                mode = OsuMode.getMode(beatMap.getMode());
-            }
+        var beatMapMode = OsuMode.getMode(beatMap.getMode());
+
+        if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(param.osuMode())) {
+            mode = beatMapMode;
+        } else {
+            mode = param.osuMode();
         }
 
         var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, OsuMod.getModsAbbrList(param.modStr));

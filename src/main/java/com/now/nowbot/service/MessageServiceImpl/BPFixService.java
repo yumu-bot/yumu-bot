@@ -10,9 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -22,9 +20,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -100,7 +95,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> bpMap) throws TipsException {
+    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> bpMap) {
         if (CollectionUtils.isEmpty(bpMap)) return null;
 
         var bpList = new ArrayList<Score>(bpMap.size());
@@ -110,19 +105,24 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             beforeBpSumAtomic.updateAndGet(v -> v + score.getWeight().weightedPP());
             var beatmap = beatmapApiService.getMapInfoFromDB(score.getBeatMap().getId());
             score.setBeatMap(beatmap);
+
             int max = beatmap.getMaxCombo();
             int combo = max - score.getMaxCombo();
-            // 断滑条的
-            boolean isChock = combo > (int) (max * 0.005f) + 1;
+
+            // 断连击，mania 模式不参与此项筛选
+            boolean isChoke = (combo > (int) (max * 0.01f) + 1) && (score.getMode() != OsuMode.MANIA);
+
+            // 含有失误
             int miss = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
-            // 带 miss 的
-            boolean missCanFix =
-                    1f *
-                    miss /
-                    Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1) <=
-                    0.01f;
-            if (isChock && missCanFix) {
-                bpList.add(initFixScore(score, index + 1, miss));
+            int all = Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1);
+
+            boolean isMissFixable = (1f * miss / all) <= 0.01f;
+
+            // 并列关系，虽然 miss 一定 choke，但 choke 不一定 miss
+            if (isChoke || isMissFixable) {
+                bpList.add(
+                        initFixScore(score, index + 1, miss)
+                );
             } else {
                 bpList.add(score);
             }
