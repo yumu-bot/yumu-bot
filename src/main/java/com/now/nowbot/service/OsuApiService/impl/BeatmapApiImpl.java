@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
@@ -80,10 +81,22 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         return null;
     }
 
+    /**
+     * 查一下文件是否跟 checksum 是否对起来
+     *
+     * @param beatMap 谱面
+     * @return 是否对得上
+     */
+    @Override
+    public boolean checkBeatMap(BeatMap beatMap) throws IOException {
+        if (beatMap == null) return false;
+        return checkBeatMap(beatMap.getId(), beatMap.getMd5());
+    }
+
     @Override
     public boolean checkBeatMap(long bid, String checkStr) throws IOException {
         var path = osuDir.resolve(bid + ".osu");
-        if (Files.isRegularFile(path)) {
+        if (Files.isRegularFile(path) && StringUtils.hasText(checkStr)) {
             return DigestUtils.md5DigestAsHex(Files.readAllBytes(path)).equals(checkStr);
         }
         return false;

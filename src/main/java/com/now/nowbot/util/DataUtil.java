@@ -363,6 +363,15 @@ public class DataUtil {
         return bpm;
     }
 
+    public static int Length(float bpm, int mod){
+        if (OsuMod.hasDt(mod)){
+            bpm /= 1.5f;
+        } else if (OsuMod.hasHt(mod)) {
+            bpm /= 0.75f;
+        }
+        return Math.round(bpm);
+    }
+
     public static float HP(float hp, int mod){
         if (OsuMod.hasHr(mod)){
             hp *= 1.3f;
@@ -379,6 +388,7 @@ public class DataUtil {
             beatMap.setCS(DataUtil.CS(beatMap.getCS(), mods));
             beatMap.setOD(DataUtil.OD(beatMap.getOD(), mods));
             beatMap.setHP(DataUtil.HP(beatMap.getHP(), mods));
+            beatMap.setTotalLength(DataUtil.Length(beatMap.getTotalLength(), mods));
         }
     }
 

@@ -9,8 +9,9 @@ import org.springframework.beans.BeanUtils;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ScoreWithFcPP extends Score {
-    // 专用的扩展属性用子类去继承, 不然父类会越来越大
-    Float fcPP;
+    Float   fcPP;
+    Integer index;
+    Integer indexAfter;
 
     public static ScoreWithFcPP copyOf(Score score) {
         var result = new ScoreWithFcPP();
@@ -26,4 +27,19 @@ public class ScoreWithFcPP extends Score {
         this.fcPP = fcPP;
     }
 
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
+
+    public Integer getIndexAfter() {
+        return indexAfter;
+    }
+
+    public void setIndexAfter(Integer indexAfter) {
+        this.indexAfter = indexAfter;
+    }
 }

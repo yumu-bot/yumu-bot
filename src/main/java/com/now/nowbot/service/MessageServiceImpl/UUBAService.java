@@ -15,6 +15,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -149,6 +150,8 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         }
 
+        beatmapApiService.applyModChangeForScores(bps);
+
         String[] Lines;
         if (param.info()) {
             if (mode == null || mode == OsuMode.DEFAULT) {
@@ -249,13 +252,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var BP1 = bps.getFirst();
         var BP1BPM = BP1.getBeatMap().getBPM();
         float BP1Length = BP1.getBeatMap().getTotalLength();
-        if (BP1.getMods().contains("DT") || BP1.getMods().contains("NC")) {
-            BP1Length /= 1.5f;
-            BP1BPM *= 1.5f;
-        } else if (BP1.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-            BP1Length /= 0.75f;
-            BP1BPM *= 0.75f;
-        }
+
         float star;
         float maxStar = BP1.getBeatMap().getStarRating();
         float minStar = maxStar;
@@ -286,24 +283,6 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         TreeMap<Long, mapperData> mapperSum = new TreeMap<>();
         DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
 
-
-        var mapChangeStar = new HashMap<Long, Double>();
-        bps.stream()
-                .peek(s -> {
-                    if (s.getMods().isEmpty()) s.setScore(0);
-                    int f = s.getMods().stream().map(OsuMod::getModFromAbbreviation).map(m1 -> m1.value).reduce(0, (id, s1) -> s1 | id);
-                    s.setScore(f);
-                })
-                .filter(s -> OsuMod.hasChangeRating(s.getScore()))
-                .forEach(s -> {
-                    try {
-                        var r = beatmapApiService.getMaxPP(s.getBeatMap().getId(), mode, s.getScore());
-                        mapChangeStar.put(s.getScoreID(), r.getStar());
-                    } catch (Exception e) {
-                        log.error("计算星级出错: ", e);
-                    }
-                });
-
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var b = bp.getBeatMap();
@@ -316,21 +295,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                     modSum.put(r, new modData(Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f)));
                 }
             });
-            if (bp.getMods().contains("DT") || bp.getMods().contains("NC")) {
-                length /= 1.5f;
-                bpm *= 1.5f;
-            } else if (bp.getMods().stream().anyMatch(r -> r.equals("HT"))) {
-                length /= 0.75f;
-                bpm *= 0.75f;
-            }
 
             avgLength += length;
-
-            if (mapChangeStar.containsKey(bp.getScoreID())) {
-                star = mapChangeStar.get(bp.getScoreID()).floatValue();
-            } else {
-                star =  bp.getBeatMap().getStarRating();
-            }
+            star =  bp.getBeatMap().getStarRating();
             avgStar += star;
 
             if (bpm < minBPM) {

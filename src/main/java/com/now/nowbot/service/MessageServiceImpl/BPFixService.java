@@ -3,12 +3,15 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.ScoreWithFcPP;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
@@ -24,12 +27,15 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service("BP_FIX")
 public class BPFixService implements MessageService<BPFixService.BPFixParam> {
     private static final Logger log = LoggerFactory.getLogger(BPFixService.class);
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
     public record BPFixParam(OsuUser user, Map<Integer, Score> bpMap, OsuMode mode) {}
 
@@ -94,81 +100,89 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> BPMap) throws TipsException {
-        if (CollectionUtils.isEmpty(BPMap)) return null;
+    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> bpMap) throws TipsException {
+        if (CollectionUtils.isEmpty(bpMap)) return null;
 
-        // 筛选需要 fix 的图，带 miss 的
-        var rankList = new ArrayList<Integer>();
-        var scoreList = new ArrayList<ScoreWithFcPP>();
+        var bpList = new ArrayList<Score>(bpMap.size());
+        AtomicReference<Float> beforeBpSumAtomic = new AtomicReference<>(0f);
 
-        for (var e : BPMap.entrySet()) {
-            var v = e.getValue();
-
-            int miss = Objects.requireNonNullElse(v.getStatistics().getCountMiss(), 0);
-            float percent = 1f * miss / Objects.requireNonNullElse(v.getStatistics().getCountAll(v.getMode()), 1);
-
-            // miss 占比小于百分之一是可以 fix 的
-            if (miss > 0 && percent <= 0.01f) {
-                rankList.add(e.getKey() + 1);
-                scoreList.add(ScoreWithFcPP.copyOf(e.getValue()));
+        bpMap.forEach((index, score) -> {
+            beforeBpSumAtomic.updateAndGet(v -> v + score.getWeight().weightedPP());
+            var beatmap = beatmapApiService.getMapInfoFromDB(score.getBeatMap().getId());
+            score.setBeatMap(beatmap);
+            int max = beatmap.getMaxCombo();
+            int combo = max - score.getMaxCombo();
+            // 断滑条的
+            boolean isChock = combo > (int) (max * 0.005f) + 1;
+            int miss = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
+            // 带 miss 的
+            boolean missCanFix =
+                    1f *
+                    miss /
+                    Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1) <=
+                    0.01f;
+            if (isChock && missCanFix) {
+                bpList.add(initFixScore(score, index + 1, miss));
+            } else {
+                bpList.add(score);
             }
-        }
+        });
 
-        if (CollectionUtils.isEmpty(scoreList)) return null;
+        bpList.sort((s1, s2) -> {
+            float pp1;
+            float pp2;
+            if (s1 instanceof ScoreWithFcPP s) pp1 = s.getFcPP(); else pp1 = s1.getPP();
+            if (s2 instanceof ScoreWithFcPP s) pp2 = s.getFcPP(); else pp2 = s2.getPP();
+            return Math.round(pp2 * 100 - pp1 * 100);
+        });
 
-        // 获取需要 fix 的数据
+        AtomicReference<Float> afterBpSumAtomic = new AtomicReference<>(0f);
+        bpList.forEach(ContextUtil.consumerWithIndex((score, index) -> {
+            double weight = Math.pow(0.95f, index);
+            float pp;
+            if (score instanceof ScoreWithFcPP fc) {
+                pp = fc.getFcPP();
+                fc.setIndexAfter(index + 1);
+            } else {
+                pp = score.getPP();
+            }
+            afterBpSumAtomic.updateAndGet(v -> v + (float) (weight * pp));
+        }));
 
-        Map<Long, Float> fixMap;
+        float beforeBpSum = beforeBpSumAtomic.get();
+        float afterBpSum = afterBpSumAtomic.get();
+        float newPlayerPP = (float) (playerPP + afterBpSum - beforeBpSum);
 
-        try {
-            fixMap = imageService.getBPFix(scoreList);
-        } catch (ResourceAccessException | HttpServerErrorException.InternalServerError e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Overtime_ExchangeTooMany, "理论最好成绩");
-        } catch (WebClientResponseException e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderDisconnected, "理论最好成绩");
-        }
-
-        // 统计
-        for (var s : scoreList) {
-            var f = fixMap.get(s.getBeatMap().getId());
-            s.setFcPP(f);
-        }
-
-        // 计算总 PP，以及理论 PP
-        List<Double> fullPPList = new ArrayList<>(BPMap.size());
-        List<Float> theoreticalPPList = new ArrayList<>(BPMap.size());
-
-        for (var e : BPMap.entrySet()) {
-            var s = e.getValue();
-
-            var f = fixMap.get(s.getBeatMap().getId());
-
-            theoreticalPPList.add(Objects.requireNonNullElseGet(
-                    f, () -> Objects.requireNonNullElse(s.getPP(), 0f)));
-
-            fullPPList.add(s.getPP().doubleValue());
-        }
-
-        // 从大到小
-        theoreticalPPList = theoreticalPPList.stream().sorted(Comparator.reverseOrder()).toList();
-
-
-        // 给理论 PP 加权，第一个是 1
-        float pp = 0f;
-        float weight = 1f;
-
-        for (var t : theoreticalPPList) {
-            pp += t * weight;
-            weight *= 0.95f;
-        }
-
-        pp += DataUtil.getBonusPP(playerPP, fullPPList);
-
+        var scoreList = bpList.stream().filter(s -> s instanceof ScoreWithFcPP).map(s -> (ScoreWithFcPP)s).toList();
+        var rankList = scoreList.stream().map(ScoreWithFcPP::getIndex).toList();
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
         result.put("ranks", rankList);
-        result.put("pp", pp);
+        result.put("pp", newPlayerPP);
 
+        return result;
+    }
+
+    private ScoreWithFcPP initFixScore(Score score, int index, int countMiss) {
+        var result = ScoreWithFcPP.copyOf(score);
+        result.setIndex(index + 1);
+        var statistics = score.getStatistics();
+        statistics.handleNull();
+        if (countMiss > 0) {
+            statistics.setCountMiss(0);
+            int count300 = Objects.requireNonNullElse(statistics.getCount300(), 0);
+            statistics.setCount300(count300 + countMiss);
+        }
+        statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
+        var bid = score.getBeatMap().getId();
+        var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
+
+        try {
+            var pp = beatmapApiService.getPP(bid, score.getMode(), mods, statistics);
+            result.setFcPP((float) pp.getPp());
+        } catch (Exception e) {
+            log.error("bp 计算 pp 出错:", e);
+        }
         return result;
     }
 }
