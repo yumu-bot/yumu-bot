@@ -6,7 +6,7 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.DataUtil;
-import org.springframework.lang.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.util.CollectionUtils;
 import rosu.Rosu;
 import rosu.parameter.JniScore;
@@ -37,10 +37,7 @@ public interface OsuBeatmapApiService {
      *
      * @return 是否对得上
      */
-    default boolean checkBeatMap(BeatMap beatMap) throws IOException {
-        if (beatMap == null) return false;
-        return checkBeatMap(beatMap.getId(), beatMap.getMd5());
-    }
+    boolean checkBeatMap(BeatMap beatMap) throws IOException ;
 
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
 
@@ -107,14 +104,27 @@ public interface OsuBeatmapApiService {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
         JniScore score = new JniScore();
         score.setCombo(s.getMaxCombo());
+        return getJniResult(modInt, s, b, score);
+    }
+
+    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s) throws Exception {
+        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        JniScore score = new JniScore();
+        score.setCombo(s.getMaxCombo());
+        score.setMode(mode.toRosuMode());
+        return getJniResult(modInt, s, b, score);
+    }
+
+    @NotNull
+    private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
         score.setMods(modInt);
         if (
                 Objects.nonNull(s.getCountGeki()) &&
-                        Objects.nonNull(s.getCountKatu()) &&
-                        Objects.nonNull(s.getCount300()) &&
-                        Objects.nonNull(s.getCount100()) &&
-                        Objects.nonNull(s.getCount50()) &&
-                        Objects.nonNull(s.getCountMiss())
+                Objects.nonNull(s.getCountKatu()) &&
+                Objects.nonNull(s.getCount300()) &&
+                Objects.nonNull(s.getCount100()) &&
+                Objects.nonNull(s.getCount50()) &&
+                Objects.nonNull(s.getCountMiss())
         ) {
             score.setGeki(s.getCountGeki());
             score.setKatu(s.getCountKatu());
@@ -125,8 +135,7 @@ public interface OsuBeatmapApiService {
         } else {
             score.setAccuracy(s.getAccuracy());
         }
-        var r = Rosu.calculate(b, score);
-        return r;
+        return Rosu.calculate(b, score);
     }
 
     default void applyModChangeForScores(List<Score> scoreList) {
