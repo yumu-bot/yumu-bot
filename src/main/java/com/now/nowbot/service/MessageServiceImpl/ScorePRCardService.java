@@ -18,6 +18,8 @@ import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -27,6 +29,7 @@ import java.util.Objects;
 @Service("PR_CARD")
 public class ScorePRCardService implements MessageService<ScorePRService.ScorePRParam> {
 
+    private static final Logger log = LoggerFactory.getLogger(ScorePRCardService.class);
     @Resource
     BindDao bindDao;
     @Resource
@@ -171,12 +174,14 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         try {
             image = imageService.getPanelGamma(score);
         } catch (Exception e) {
+            log.error("迷你成绩面板：渲染失败", e);
             throw new MiniCardException(MiniCardException.Type.MINI_Render_Error);
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
+            log.error("迷你成绩面板：发送失败", e);
             throw new MiniCardException(MiniCardException.Type.MINI_Send_Error);
         }
     }

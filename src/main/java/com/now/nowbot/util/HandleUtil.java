@@ -355,9 +355,13 @@ public class HandleUtil {
         }
 
         //只有转谱才能赋予游戏模式
-        if (mode == null || mode.equals(OsuMode.DEFAULT) && OsuMode.getMode(beatMap.getMode()).equals(OsuMode.OSU)) {
-            mode = OsuMode.getMode(beatMap.getMode());
+
+        var beatMapMode = OsuMode.getMode(beatMap.getMode());
+
+        if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
+            mode = beatMapMode;
         }
+
 
         return new MapStatisticsService.Expected(mode, accuracy, combo, miss, mods);
 

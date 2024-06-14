@@ -13,6 +13,8 @@ import com.now.nowbot.throwable.ServiceException.MiniCardException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -21,6 +23,7 @@ import java.util.Objects;
 @Service("INFO_CARD")
 public class InfoCardService implements MessageService<InfoService.InfoParam> {
 
+    private static final Logger log = LoggerFactory.getLogger(InfoCardService.class);
     @Resource
     OsuUserApiService userApiService;
     @Resource
@@ -83,12 +86,14 @@ public class InfoCardService implements MessageService<InfoService.InfoParam> {
         try {
             image = imageService.getPanelGamma(osuUser);
         } catch (Exception e) {
+            log.error("迷你信息面板：渲染失败", e);
             throw new MiniCardException(MiniCardException.Type.MINI_Render_Error);
         }
 
         try {
             from.sendImage(image);
         } catch (Exception e) {
+            log.error("迷你信息面板：发送失败", e);
             throw new MiniCardException(MiniCardException.Type.MINI_Send_Error);
         }
     }
