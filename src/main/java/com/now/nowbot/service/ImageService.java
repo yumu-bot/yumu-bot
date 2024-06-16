@@ -13,7 +13,6 @@ import com.now.nowbot.service.MessageServiceImpl.BPFixService;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -464,10 +463,16 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelH(Object mapPool) {
-        log.debug(JacksonUtil.objectToJsonPretty(mapPool));
+    public byte[] getPanelH(Object mapPool, OsuMode mode) {
+        // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
         HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Object> httpEntity = new HttpEntity<>(mapPool, headers);
+
+        var body = Map.of(
+                "pool", mapPool,
+                "mode", mode.getName()
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_H", httpEntity);
     }
 

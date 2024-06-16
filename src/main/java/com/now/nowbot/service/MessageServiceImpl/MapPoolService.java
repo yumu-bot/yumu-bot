@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.NowbotConfig;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.now.Pool;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -10,6 +11,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
@@ -36,22 +38,27 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
     @Resource
     WebClient            webClient;
 
+    public record PoolParam(int id, String name, OsuMode mode) {}
+
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PoolParam> data) throws TipsException {
         var m = Instructions.MAP_POOL.matcher(messageText);
-        if (! m.find()) {
-            return false;
+        if (!m.find()) return false;
+
+        String name = m.group("name");
+        OsuMode mode = HandleUtil.getMode(m);
+
+        if (! StringUtils.hasText(name)) {
+            throw new TipsException("id 解析错误, 请确保只有数字");
         }
 
-        if (StringUtils.hasText(m.group("id"))) {
-            try {
-                int id = Integer.parseInt(m.group("name"));
-                data.setValue(new PoolParam(id, null));
-            } catch (NumberFormatException e) {
-                throw new TipsException("id 解析错误, 请确保只有数字");
-            }
+        try {
+            int id = Integer.parseInt(name);
+            data.setValue(new PoolParam(id, null, mode));
+        } catch (NumberFormatException e) {
+            data.setValue(new PoolParam(0, name, mode));
         }
-        data.setValue(new PoolParam(0, m.group("name")));
+
         return true;
     }
 
@@ -64,7 +71,7 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
             if (result.isEmpty())
                 throw new TipsException(STR."未找到名称包含 \{param.name()} 的图池");
             if (result.size() == 1) {
-                image = imageService.getPanelH(new MapPoolDto(result.getFirst(), osuBeatmapApiService));
+                image = imageService.getPanelH(new MapPoolDto(result.getFirst(), osuBeatmapApiService), param.mode());
             } else {
                 StringBuilder sb = new StringBuilder("查到了多个图池, 请确认结果:\n");
                 for (int i = 0; i < result.size(); i++) {
@@ -85,17 +92,14 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
                 }
                 if (n < 1 || n > result.size()) throw new TipsException("输入错误");
 
-                image = imageService.getPanelH(new MapPoolDto(result.get(n - 1), osuBeatmapApiService));
+                image = imageService.getPanelH(new MapPoolDto(result.get(n - 1), osuBeatmapApiService), param.mode());
             }
         } else {
             var p = searchById(param.id());
-            image = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")));
+            image = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")), param.mode());
         }
 
         from.sendImage(image);
-    }
-
-    public record PoolParam(int id, String name) {
     }
 
     public List<Pool> searchByName(String name) {

@@ -160,12 +160,12 @@ public class Instructions {
 
     public static final Pattern MATCH_NOW = Pattern.compile("^[!！]\\s*(?i)(ym)?(monitornow|matchnow|mn(?![A-Za-z_]))+\\s*(?<matchid>\\d+)(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<skip>\\d+))?(\\s*(?<ignore>\\d+))?(\\s*(\\[(?<remove>[\\s,，\\-|:\\d]+)]))?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
-    public static final Pattern MAP_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*(id=\\s*(?<id>\\d+))?\\s*(?<name>\\w+)");
+    public static final Pattern MAP_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))\\s*(?<name>\\w+)");
     /*
     public static final Pattern ADD_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(addpool|ap(?![A-Za-z_]))\\s*(id=\\s*(?<id>\\d+))?\\s*(?<name>\\w+)");
 
      */
-    public static final Pattern GET_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(getpool|gp(?![A-Za-z_]))\\s*([＃#](?<name>.+)[＃#])?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
+    public static final Pattern GET_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(getpool|gp(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*([＃#](?<name>.+)[＃#])?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
 
     // #6 聊天指令
 

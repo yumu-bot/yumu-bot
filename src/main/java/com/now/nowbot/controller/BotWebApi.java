@@ -256,12 +256,15 @@ public class BotWebApi {
     @PostMapping(value = "match/getpool")
     public ResponseEntity<byte[]> getPool(
             @RequestParam("name") @Nullable String name,
+            @RequestParam("mode") @Nullable String modeStr,
             @RequestBody Map<String, List<Long>> dataMap
     ) throws RuntimeException {
         var mapPool = new MapPoolDto(name, dataMap, beatmapApiService);
         if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
 
-        var image = imageService.getPanelH(mapPool);
+        var mode = OsuMode.getMode(modeStr);
+
+        var image = imageService.getPanelH(mapPool, mode);
         return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
     }
 

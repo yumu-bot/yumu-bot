@@ -171,6 +171,15 @@ public class BeatMap {
         this.modeInt = (int) OsuMode.getMode(mode).getModeValue();
     }
 
+    public OsuMode getOsuMode() {
+        return OsuMode.getMode(getMode());
+    }
+
+    public void setOsuMode(OsuMode mode) {
+        this.mode = mode.getName();
+        this.modeInt = (int) mode.getModeValue();
+    }
+
     public String getStatus() {
         return status;
     }

@@ -356,7 +356,7 @@ public class HandleUtil {
 
         //只有转谱才能赋予游戏模式
 
-        var beatMapMode = OsuMode.getMode(beatMap.getMode());
+        var beatMapMode = beatMap.getOsuMode();
 
         if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
             mode = beatMapMode;

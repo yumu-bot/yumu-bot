@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -7,58 +8,78 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.regex.Matcher;
 
 @Service("GET_POOL")
-public class GetPoolService implements MessageService<Matcher> {
+public class GetPoolService implements MessageService<GetPoolService.GetPoolParam> {
     private static final Logger log = LoggerFactory.getLogger(MapPoolService.class);
     @Resource
-    ImageService         imageService;
+    ImageService imageService;
     @Resource
     OsuBeatmapApiService osuBeatmapApiService;
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.GET_POOL.matcher(messageText);
-        if (! m.find()) {
-            return false;
-        }
-        data.setValue(m);
-        return true;
-    }
+    public record GetPoolParam(Map<String, List<Long>> map, String name, OsuMode mode) {}
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<GetPoolParam> data) throws Throwable {
+        var matcher = Instructions.GET_POOL.matcher(messageText);
+        if (!matcher.find()) return false;
 
         var dataStr = matcher.group("data");
         var nameStr = matcher.group("name");
 
-        if (Objects.isNull(dataStr) || dataStr.isBlank()) {
+        if (! StringUtils.hasText(dataStr)) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/getpool.md");
                 var image = imageService.getPanelA6(md, "help");
-                from.sendImage(image);
-                return;
+                event.getSubject().sendImage(image);
+                return true;
             } catch (Exception e) {
                 throw new MapPoolException(MapPoolException.Type.GP_Instructions);
             }
         }
 
-        var data = parseDataString(dataStr);
-        var mapPool = new MapPoolDto(nameStr, data, osuBeatmapApiService);
+        var dataMap = parseDataString(dataStr);
+        var mode = getModeOrElse(HandleUtil.getMode(matcher), getFirstMapMode(dataStr));
+
+        data.setValue(new GetPoolParam(dataMap, nameStr, mode));
+        return true;
+    }
+
+    private OsuMode getModeOrElse(OsuMode setMode, OsuMode mapMode) {
+        if (mapMode == OsuMode.OSU) {
+            if (OsuMode.isDefaultOrNull(setMode)) {
+                return mapMode;
+            } else {
+                return setMode;
+            }
+        } else if (OsuMode.isDefaultOrNull(mapMode)) {
+            return setMode;
+        } else {
+            return mapMode;
+        }
+    }
+
+    @Override
+    public void HandleMessage(MessageEvent event, GetPoolParam param) throws Throwable {
+        var from = event.getSubject();
+
+        var mapPool = new MapPoolDto(param.name(), param.map(), osuBeatmapApiService);
 
         if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);
 
         try {
-            var image = imageService.getPanelH(mapPool);
+            var image = imageService.getPanelH(mapPool, param.mode());
             from.sendImage(image);
         } catch (Exception e) {
             log.error("GP 数据请求失败", e);
@@ -66,6 +87,38 @@ public class GetPoolService implements MessageService<Matcher> {
         }
     }
 
+    @NonNull
+    public OsuMode getFirstMapMode(String dataStr) {
+        String[] dataStrArray = dataStr.trim().split("[\"\\s,，\\-|:]+");
+        if (dataStr.isBlank() || dataStrArray.length == 0) return OsuMode.DEFAULT;
+
+        long bid = 0L;
+
+        for (var s : dataStrArray) {
+            if (s == null || s.isBlank()) continue;
+
+            try {
+                bid = Long.parseLong(s);
+                break;
+            } catch (NumberFormatException ignored) {
+
+            }
+        }
+
+        if (bid == 0L) {
+            return OsuMode.DEFAULT;
+        } else {
+            try {
+                var b = osuBeatmapApiService.getMapInfoFromDB(bid);
+                return b.getOsuMode();
+            } catch (Exception e) {
+                return OsuMode.DEFAULT;
+            }
+        }
+
+    }
+
+    @Nullable
     public Map<String, List<Long>> parseDataString(String dataStr) throws MapPoolException {
         String[] dataStrArray = dataStr.trim().split("[\"\\s,，\\-|:]+");
         if (dataStr.isBlank() || dataStrArray.length == 0) return null;
