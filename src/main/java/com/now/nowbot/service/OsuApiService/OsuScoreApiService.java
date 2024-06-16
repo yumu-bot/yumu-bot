@@ -22,11 +22,11 @@ public interface OsuScoreApiService {
     List<Score> getBestPerformance(Long id, OsuMode mode, int offset, int limit);
 
     default List<Score> getBestPerformance(OsuUser user) {
-        return getBestPerformance(user.getUID(), user.getOsuMode(), 0, 100);
+        return getBestPerformance(user.getUID(), user.getCurrentOsuMode(), 0, 100);
     }
 
     default List<Score> getBestPerformance(OsuUser user, int offset, int limit) {
-        return getBestPerformance(user.getUID(), user.getOsuMode(), offset, limit);
+        return getBestPerformance(user.getUID(), user.getCurrentOsuMode(), offset, limit);
     }
 
     default List<Score> getUserDefaultBestPerformance(BinUser user) {
@@ -62,7 +62,7 @@ public interface OsuScoreApiService {
     }
 
     default List<Score> getRecent(OsuUser user) {
-        return getRecent(user.getUID(), user.getOsuMode(), 0, 100);
+        return getRecent(user.getUID(), user.getCurrentOsuMode(), 0, 100);
     }
 
     /**
@@ -76,7 +76,7 @@ public interface OsuScoreApiService {
     List<Score> getRecentIncludingFail(long uid, OsuMode mode, int offset, int limit);
 
     default List<Score> getRecentIncludingFail(OsuUser user) {
-        return getRecentIncludingFail(user.getUID(), user.getOsuMode(), 0, 100);
+        return getRecentIncludingFail(user.getUID(), user.getCurrentOsuMode(), 0, 100);
     }
 
     BeatmapUserScore getScore(long bid, long uid, OsuMode mode);

@@ -412,7 +412,7 @@ public class OsuUser {
         this.setPage(o.getPage());
         this.setPP(o.getPP());
         this.setPendingCount(o.getPendingCount());
-        this.setOsuMode(o.getOsuMode());
+        this.setDefaultOsuMode(o.getDefaultOsuMode());
         this.setPmFriendsOnly(o.getPmFriendsOnly());
         this.setPlayStyle(o.getPlayStyle());
         this.setPreviousNames(o.getPreviousNames());
@@ -541,11 +541,24 @@ public class OsuUser {
         this.mode = mode;
     }
 
+    // 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
+    // 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
+    // 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
+    @Deprecated
     public OsuMode getOsuMode() {
         return OsuMode.getMode(mode);
     }
 
+    @Deprecated
     public void setOsuMode(OsuMode mode) {
+        this.mode = mode.getName();
+    }
+
+    public OsuMode getDefaultOsuMode() {
+        return OsuMode.getMode(mode);
+    }
+
+    public void setDefaultOsuMode(OsuMode mode) {
         this.mode = mode.getName();
     }
 
@@ -951,6 +964,21 @@ public class OsuUser {
 
     public void setPmFriendsOnly(Boolean pmFriendsOnly) {
         this.pmFriendsOnly = pmFriendsOnly;
+    }
+
+    // 在查询其他模式时，这里会给出其他模式，而不是玩家的默认模式
+    public OsuMode getCurrentOsuMode() {
+        if (this.rankHistory != null) {
+            return OsuMode.getMode(this.rankHistory.mode);
+        } else {
+            return this.getDefaultOsuMode();
+        }
+    }
+
+    public void setCurrentOsuMode(OsuMode mode) {
+        if (this.rankHistory == null) {
+            this.rankHistory = new RankHistory(mode.getName(), new ArrayList<>(0));
+        }
     }
 
     @Override

@@ -37,6 +37,7 @@ public class UserApiImpl implements OsuUserApiService {
         userInfoDao = info;
     }
 
+    // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     @Override
     public boolean isPlayerExist(String name) {
         var uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/users").pathSegment(name).toUriString();
@@ -46,10 +47,12 @@ public class UserApiImpl implements OsuUserApiService {
                 .exchange()
                 .block();
 
-        HttpStatusCode status = HttpStatusCode.valueOf(404);
+        HttpStatusCode status;
 
         if (response != null) {
             status = response.statusCode();
+        } else {
+            status = HttpStatusCode.valueOf(404);
         }
 
         return status.is2xxSuccessful();
@@ -96,7 +99,7 @@ public class UserApiImpl implements OsuUserApiService {
                     userInfoDao.saveUser(data, mode);
                     user.setOsuID(data.getUID());
                     user.setOsuName(data.getUsername());
-                    user.setOsuMode(data.getOsuMode());
+                    user.setOsuMode(data.getCurrentOsuMode());
                     return data;
                 }).block();
     }

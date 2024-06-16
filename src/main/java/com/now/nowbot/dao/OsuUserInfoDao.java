@@ -99,20 +99,22 @@ public class OsuUserInfoDao {
     }
 
     public static OsuUserInfoArchiveLite fromModel(OsuUser data, OsuMode mode) {
-        var out = new OsuUserInfoArchiveLite();
+        var archive = new OsuUserInfoArchiveLite();
         var statistics = data.getStatistics();
-        out.setOsuID(data.getUID());
-        setOut(out, statistics);
 
-        out.setPlay_count(data.getPlayCount());
-        out.setPlay_time(data.getPlayTime());
+        archive.setOsuID(data.getUID());
+        setOut(archive, statistics);
+
+        archive.setPlay_count(data.getPlayCount());
+        archive.setPlay_time(data.getPlayTime());
+
         if (mode.equals(OsuMode.DEFAULT)) {
-            out.setMode(data.getOsuMode());
+            archive.setMode(data.getCurrentOsuMode());
         } else {
-            out.setMode(mode);
+            archive.setMode(mode);
         }
-        out.setTime(LocalDateTime.now());
-        return out;
+        archive.setTime(LocalDateTime.now());
+        return archive;
     }
 
     private static void setOut(OsuUserInfoArchiveLite out, Statistics statistics) {

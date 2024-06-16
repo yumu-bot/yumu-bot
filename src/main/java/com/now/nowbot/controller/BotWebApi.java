@@ -18,6 +18,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -149,21 +150,23 @@ public class BotWebApi {
 
         var mode = OsuMode.getMode(playMode);
 
-        var info1 = userApiService.getPlayerInfo(name.trim(), mode);
-        var info2 = userApiService.getPlayerInfo(name2.trim(), mode);
-        if (OsuMode.isDefaultOrNull(mode)) mode = info1.getOsuMode();
+        var user1 = userApiService.getPlayerInfo(name.trim(), mode);
+        var user2 = userApiService.getPlayerInfo(name2.trim(), mode);
 
-        var bplist1 = scoreApiService.getBestPerformance(info1.getUID(), mode, 0, 100);
-        var bplist2 = scoreApiService.getBestPerformance(info2.getUID(), mode, 0, 100);
+        mode = HandleUtil.getModeOrElse(mode, user1);
 
-        var ppm1 = PPMinus.getInstance(mode, info1, bplist1);
-        var ppm2 = PPMinus.getInstance(mode, info2, bplist2);
+        var bplist1 = scoreApiService.getBestPerformance(user1.getUID(), mode, 0, 100);
+        var bplist2 = scoreApiService.getBestPerformance(user2.getUID(), mode, 0, 100);
+
+        var ppm1 = PPMinus.getInstance(mode, user1, bplist1);
+        var ppm2 = PPMinus.getInstance(mode, user2, bplist2);
+
         if (ppm1 == null) {
             throw new RuntimeException(PPMinusException.Type.PM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
         } else if (ppm2 == null) {
             throw new RuntimeException(PPMinusException.Type.PM_Player_FetchFailed.message);
         } else {
-            var data = imageService.getPanelB1(info1, info2, ppm1, ppm2, mode);
+            var data = imageService.getPanelB1(user1, user2, ppm1, ppm2, mode);
             return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()} vs \{name2.trim()}-pv.jpg", data.length), HttpStatus.OK);
         }
     }
@@ -739,13 +742,14 @@ public class BotWebApi {
             @OpenResource(name = "day", desp = "回溯天数") @RequestParam("day") @Nullable Integer day
     ) {
         if (Objects.isNull(day)) day = 1;
-        var osuUser = getPlayerInfoJson(uid, name, modeStr);
+        var user = getPlayerInfoJson(uid, name, modeStr);
 
-        var BPs = scoreApiService.getBestPerformance(osuUser);
+        var BPs = scoreApiService.getBestPerformance(user);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);
-        var image = imageService.getPanelD(osuUser, Optional.empty(), day, BPs, osuUser.getOsuMode());
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-info.jpg", image.length), HttpStatus.OK);
+        var image = imageService.getPanelD(user, Optional.empty(), day, BPs, user.getCurrentOsuMode());
+
+        return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUID()}-info.jpg", image.length), HttpStatus.OK);
     }
 
     /**
