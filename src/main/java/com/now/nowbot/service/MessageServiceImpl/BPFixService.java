@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service("BP_FIX")
 public class BPFixService implements MessageService<BPFixService.BPFixParam> {
     private static final Logger log = LoggerFactory.getLogger(BPFixService.class);
+
     @Resource
     ImageService         imageService;
     @Resource
@@ -34,13 +35,10 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     public record BPFixParam(OsuUser user, Map<Integer, Score> bpMap, OsuMode mode) {}
 
-    public record BPFix(Long id, Float fixPP) {}
-
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPFixParam> data) throws Throwable {
         var matcher = Instructions.BP_FIX.matcher(messageText);
         if (! matcher.find()) return false;
-
 
         var mode = HandleUtil.getMode(matcher);
         var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
@@ -53,13 +51,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         var bpMap = HandleUtil.getOsuBPMap(user, mode, 0, 100);
 
-        data.setValue(
-                new BPFixParam(user, bpMap, mode)
-        );
+        data.setValue(new BPFixParam(user, bpMap, mode));
 
         return true;
-
-
     }
 
     @Override
@@ -109,14 +103,14 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             int max = beatmap.getMaxCombo();
             int combo = score.getMaxCombo();
 
-            // 断连击，mania 模式不参与此项筛选
-            boolean isChoke = (combo < Math.round(max * 0.98f)) && (score.getMode() != OsuMode.MANIA);
-
-            // 含有失误
             int miss = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
             int all = Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1);
 
-            boolean has1pMiss = ((1f * miss / all) <= 0.01f) && (miss > 0);
+            // 断连击，mania 模式不参与此项筛选
+            boolean isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (score.getMode() != OsuMode.MANIA);
+
+            // 含有 <1% 的失误
+            boolean has1pMiss = (miss > 0) && ((1f * miss / all) <= 0.01f);
 
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
             if (isChoke || has1pMiss) {
