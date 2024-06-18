@@ -28,8 +28,6 @@ public interface OsuBeatmapApiService {
      */
     String getBeatMapFile(long bid) throws Exception;
 
-    boolean downloadBeatMapFile(long bid);
-
     String downloadBeatMapFileForce(long bid);
 
     /**
@@ -37,7 +35,7 @@ public interface OsuBeatmapApiService {
      *
      * @return 是否对得上
      */
-    boolean checkBeatMap(BeatMap beatMap) throws IOException ;
+    boolean checkBeatMap(BeatMap beatMap) throws IOException;
 
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
 

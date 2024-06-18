@@ -67,47 +67,6 @@ public class ImageService {
         return doPost("md", httpEntity);
     }
 
-
-    public Map<Long, Float> getBPFix(@NonNull ArrayList<ScoreWithFcPP> BPList) {
-        HttpHeaders headers = getDefaultHeader();
-
-        Map<String, Object> map = new HashMap<>();
-
-        map.put("scores", BPList);
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(map, headers);
-        ResponseEntity<List<BPFixService.BPFix>> s = restTemplate.exchange(
-                URI.create(STR."\{IMAGE_PATH}pp")
-                , HttpMethod.POST, httpEntity
-                , new ParameterizedTypeReference<>() {
-                });
-
-        List<BPFixService.BPFix> result = s.getBody();
-
-        if (CollectionUtils.isEmpty(result)) {
-            return new HashMap<>();
-        }
-
-        return result.stream().collect(Collectors.toMap(BPFixService.BPFix::id, BPFixService.BPFix::fixPP));
-    }
-
-    public void deleteLocalFile(long bid) {
-        HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(Map.of("bid", bid), headers);
-        var result = restTemplate.exchange(
-                URI.create(STR."\{IMAGE_PATH}del"),
-                HttpMethod.POST,
-                httpEntity,
-                JsonNode.class
-        );
-
-        if (! result.getStatusCode().is2xxSuccessful()) {
-            var body = result.getBody();
-            if (body != null)
-                throw new RuntimeException(body.get("status").asText());
-        }
-    }
-
     public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
