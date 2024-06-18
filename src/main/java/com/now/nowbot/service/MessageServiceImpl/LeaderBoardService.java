@@ -87,7 +87,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         try {
             // Mode 新增一个默认处理,以后用这个
             // if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
-            mode = OsuMode.getMode(matcher.group("mode"), beatMap.getMode());
+            mode = OsuMode.getMode(matcher.group("mode"), beatMap.getOsuMode());
             scores = scoreApiService.getBeatmapScores(BID, mode);
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed);

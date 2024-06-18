@@ -154,10 +154,10 @@ public class HandleUtil {
      */
     public static OsuMode getModeOrElse(@Nullable OsuMode mode, @Nullable OsuUser user) {
         if (OsuMode.isDefaultOrNull(mode)) {
-            if (user == null || OsuMode.isDefaultOrNull(user.getOsuMode())) {
+            if (user == null || OsuMode.isDefaultOrNull(user.getCurrentOsuMode())) {
                 return OsuMode.DEFAULT;
             } else {
-                return user.getOsuMode();
+                return user.getCurrentOsuMode();
             }
         } else {
             return mode;
@@ -356,7 +356,7 @@ public class HandleUtil {
 
         //只有转谱才能赋予游戏模式
 
-        var beatMapMode = OsuMode.getMode(beatMap.getMode());
+        var beatMapMode = beatMap.getOsuMode();
 
         if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
             mode = beatMapMode;

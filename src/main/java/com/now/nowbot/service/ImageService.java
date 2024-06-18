@@ -13,7 +13,6 @@ import com.now.nowbot.service.MessageServiceImpl.BPFixService;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,13 +231,6 @@ public class ImageService {
 
 
     public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus my) {
-        String STBPRE;
-
-        if (mode == OsuMode.MANIA) {
-            STBPRE = "PRE";
-        } else {
-            STBPRE = "STB";
-        }
 
         var cardA1 = List.of(user);
 
@@ -246,7 +238,7 @@ public class ImageService {
                 "ACC", my.getValue1(),
                 "PTT", my.getValue2(),
                 "STA", my.getValue3(),
-                STBPRE, my.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
                 "EFT", my.getValue5(),
                 "STH", my.getValue6(),
                 "OVA", my.getValue7(),
@@ -266,14 +258,8 @@ public class ImageService {
         return doPost("panel_B1", httpEntity);
     }
     public byte[] getPanelB1(OsuUser me, @Nullable OsuUser other, PPMinus my, @Nullable PPMinus others, OsuMode mode) {
-        String value4;
         boolean isVs = other != null && others != null;
 
-        if (mode == OsuMode.MANIA) {
-            value4 = "PRE";
-        } else {
-            value4 = "STB";
-        }
         //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
 
         var cardA1s = new ArrayList<OsuUser>(2);
@@ -285,7 +271,7 @@ public class ImageService {
                 "ACC", my.getValue1(),
                 "PTT", my.getValue2(),
                 "STA", my.getValue3(),
-                value4, my.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
                 "EFT", my.getValue5(),
                 "STH", my.getValue6(),
                 "OVA", my.getValue7(),
@@ -295,7 +281,7 @@ public class ImageService {
                 "ACC", others.getValue1(),
                 "PTT", others.getValue2(),
                 "STA", others.getValue3(),
-                value4, others.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
                 "EFT", others.getValue5(),
                 "STH", others.getValue6(),
                 "OVA", others.getValue7(),
@@ -482,10 +468,16 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelH(Object mapPool) {
-        log.debug(JacksonUtil.objectToJsonPretty(mapPool));
+    public byte[] getPanelH(Object mapPool, OsuMode mode) {
+        // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
         HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Object> httpEntity = new HttpEntity<>(mapPool, headers);
+
+        var body = Map.of(
+                "pool", mapPool,
+                "mode", mode.getName()
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_H", httpEntity);
     }
 

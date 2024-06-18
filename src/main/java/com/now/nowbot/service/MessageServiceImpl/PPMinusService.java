@@ -157,11 +157,11 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
 
         if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-            throw new PPMinusException(PPMinusException.Type.PM_Player_PlayTimeTooShort,  OsuMode.getName(user.getOsuMode()).orElse("Default"));
+            throw new PPMinusException(PPMinusException.Type.PM_Player_PlayTimeTooShort,  OsuMode.getName(user.getCurrentOsuMode()).orElse("Default"));
         }
 
         try {
-            return PPMinus.getInstance(user.getOsuMode(), user, BPList);
+            return PPMinus.getInstance(user.getCurrentOsuMode(), user, BPList);
         } catch (Exception e) {
             log.error("PP-：数据计算失败", e);
             throw new PPMinusException(PPMinusException.Type.PM_Calculate_Error);
