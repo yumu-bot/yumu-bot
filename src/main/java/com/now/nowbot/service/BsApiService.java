@@ -17,7 +17,7 @@ public class BsApiService {
     public String getOsuFile(long bid) {
         if (TOKEN.isEmpty()) throw new RuntimeException("无法权限访问");
         return webClient.get()
-                .uri(URL, b -> b.path("/api/file/map/bg/{bid}").build(bid))
+                .uri(URL, b -> b.path("/api/file/map/osufile/{bid}").build(bid))
                 .header("AuthorizationX", TOKEN.get())
                 .retrieve()
                 .bodyToMono(String.class)
