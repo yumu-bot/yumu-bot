@@ -9,26 +9,21 @@ import com.now.nowbot.model.multiplayer.MatchStat;
 import com.now.nowbot.model.multiplayer.SeriesData;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
-import com.now.nowbot.service.MessageServiceImpl.BPFixService;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("NOWBOT_IMAGE")
 public class ImageService {
@@ -65,6 +60,24 @@ public class ImageService {
         var body = Map.of("md", markdown, "width", width);
         HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
+    }
+
+
+    public void deleteLocalFile(long bid) {
+        HttpHeaders headers = getDefaultHeader();
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(Map.of("bid", bid), headers);
+        var result = restTemplate.exchange(
+                URI.create(STR."\{IMAGE_PATH}del"),
+                HttpMethod.POST,
+                httpEntity,
+                JsonNode.class
+        );
+
+        if (! result.getStatusCode().is2xxSuccessful()) {
+            var body = result.getBody();
+            if (body != null)
+                throw new RuntimeException(body.get("status").asText());
+        }
     }
 
     public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
