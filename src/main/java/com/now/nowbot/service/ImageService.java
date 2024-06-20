@@ -506,21 +506,13 @@ public class ImageService {
     }
 
     public byte[] getPanelGamma(@Nullable OsuUser user, OsuMode mode, @Nullable PPMinus my) {
-        String STBPRE;
-
-        if (mode == OsuMode.MANIA) {
-            STBPRE = "PRE";
-        } else {
-            STBPRE = "STB";
-        }
-
         var cardA1 = user == null ? null : List.of(user);
 
         var cardB = my == null ? null : Map.of(
                 "ACC", my.getValue1(),
                 "PTT", my.getValue2(),
                 "STA", my.getValue3(),
-                STBPRE, my.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE": "STB", my.getValue4(),
                 "EFT", my.getValue5(),
                 "STH", my.getValue6(),
                 "OVA", my.getValue7(),

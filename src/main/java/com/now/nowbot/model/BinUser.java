@@ -150,4 +150,12 @@ public class BinUser {
     public String toString() {
         return STR."BinUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BinUser binUser)) return false;
+
+        return osuName.equalsIgnoreCase(binUser.osuName) || osuID.equals(binUser.osuID);
+    }
 }

@@ -126,7 +126,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             mode = OsuMode.OSU;
         }
 
-        boolean isVs = (binOther.getOsuName() != null);
+        boolean isVs = (binOther.getOsuName() != null) && (! binMe.equals(binOther));
 
         OsuUser me = getOsuUser(binMe, mode);
         OsuUser other = isVs ? getOsuUser(binOther, mode) : null;
@@ -155,7 +155,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
 
         if (user.getStatistics().getPlayTime() < 60 || user.getStatistics().getPlayCount() < 30) {
-            throw new PPMinusException(PPMinusException.Type.PM_Player_PlayTimeTooShort,  OsuMode.getName(user.getCurrentOsuMode()).orElse("Default"));
+            throw new PPMinusException(PPMinusException.Type.PM_Player_PlayTimeTooShort, user.getCurrentOsuMode().getName());
         }
 
         try {
@@ -226,7 +226,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             } else {
                 image = imageService.getPanelB1(me, other, my, others, param.mode);
             }
-        } catch (WebClientResponseException e) {
+        } catch (Exception e) {
             log.error("PP-：渲染失败：", e);
             throw new PPMinusException(PPMinusException.Type.PM_Render_Error);
         }
