@@ -185,12 +185,17 @@ public class ImageService {
 
     public byte[] getPanelA7(OsuUser user, Map<String, Object> fixes) {
         HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "user", user,
-                "scores", fixes.get("scores"),
-                //"ranks", fixes.get("ranks"),
-                "pp", fixes.get("pp")
-        );
+        Map<String, Object> body;
+        try {
+            fixes.put("user", user);
+            body = fixes;
+        } catch (UnsupportedOperationException ignore) {
+            body = Map.of(
+                    "user", user,
+                    "scores", fixes.get("scores"),
+                    "pp", fixes.get("pp")
+            );
+        }
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A7", httpEntity);

@@ -2,12 +2,14 @@ package com.now.nowbot.service.OsuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.FileConfig;
+import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.Search;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.BsApiService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
@@ -29,18 +32,22 @@ import java.util.Optional;
 @Service
 public class BeatmapApiImpl implements OsuBeatmapApiService {
     private static final Logger log = LoggerFactory.getLogger(BeatmapApiImpl.class);
-    OsuApiBaseService base;
-    BeatMapDao beatMapDao;
-    private final Path osuDir;
+
+    private final OsuApiBaseService base;
+    private final BeatMapDao        beatMapDao;
+    private final Path              osuDir;
+    private final BsApiService      bsApiService;
 
     public BeatmapApiImpl(
             OsuApiBaseService baseService,
             FileConfig config,
-            BeatMapDao mapDao
+            BeatMapDao mapDao,
+            BsApiService bs
     ) {
         base = baseService;
         osuDir = Path.of(config.getOsuFilePath());
         beatMapDao = mapDao;
+        bsApiService = bs;
     }
 
     @Override
@@ -53,17 +60,11 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public boolean downloadBeatMapFile(long bid) {
-        Path f = osuDir.resolve(bid + ".osu");
-        if (Files.isRegularFile(f)) {
-            return false;
-        }
-        downloadBeatMapFileForce(bid);
-        return true;
-    }
-
-    @Override
     public String downloadBeatMapFileForce(long bid) {
+        try {
+            return bsApiService.getOsuFile(bid);
+        } catch (Exception ignore) {}
+
         try {
             String osuStr = base.osuApiWebClient.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
@@ -105,7 +106,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     @Override
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode) {
         Map<String, Object> body = new HashMap<>();
-        if (! OsuMode.isDefaultOrNull(mode)) {
+        if (!OsuMode.isDefaultOrNull(mode)) {
             body.put("ruleset_id", mode.getModeValue());
         }
         return base.osuApiWebClient.post()
@@ -159,7 +160,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     @Override
     public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue) {
         Map<String, Object> body = new HashMap<>();
-        if (! OsuMode.isDefaultOrNull(mode)) {
+        if (!OsuMode.isDefaultOrNull(mode)) {
             body.put("ruleset_id", mode.getModeValue());
         }
         if (modsValue != 0) {
