@@ -198,7 +198,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        data.setValue(new ScorePRParam(user, offset, limit, isRecent, isMultipleScore, mode));
+        data.setValue(new ScorePRParam(user, offset, limit, isRecent, isMultipleScore, HandleUtil.getModeOrElse(mode, user)));
         return true;
     }
 
@@ -214,12 +214,10 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         BinUser binUser = param.user();
         OsuUser osuUser;
 
-        var mode = HandleUtil.getModeOrElse(param.mode(), binUser);
-
         List<Score> scoreList;
 
         try {
-            scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, !isRecent);
+            scoreList = scoreApiService.getRecent(binUser.getOsuID(), param.mode(), offset, limit, !isRecent);
         } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
@@ -242,7 +240,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         try {
-            osuUser = userApiService.getPlayerInfo(binUser, mode);
+            osuUser = userApiService.getPlayerInfo(binUser, param.mode());
         } catch (WebClientResponseException.Forbidden e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
         } catch (Exception e) {
