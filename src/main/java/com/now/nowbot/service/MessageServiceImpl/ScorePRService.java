@@ -16,10 +16,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,11 +261,12 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         } else {
             //单成绩发送
+            var score = scoreList.getFirst();
             try {
-                var image = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                var image = imageService.getPanelE(osuUser, score, beatmapApiService);
                 from.sendImage(image);
             } catch (Exception e) {
-                log.error("成绩：绘图出错", e);
+                log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(score), e);
                 getTextOutput(scoreList.getFirst(), from);
             }
         }

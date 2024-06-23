@@ -128,6 +128,7 @@ public class NowbotConfig {
         return mapper;
     }
 
+
     @Bean
     public NoProxyRestTemplate noProxyRestTemplate() {
         var tempFactory = new OkHttp3ClientHttpRequestFactory();
@@ -179,7 +180,7 @@ public class NowbotConfig {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
-                log.error(STR."\{path}创建失败", e);
+                log.error("{}创建失败", path, e);
             }
         }
         return path;

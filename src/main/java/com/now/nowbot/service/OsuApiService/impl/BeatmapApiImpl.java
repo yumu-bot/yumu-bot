@@ -2,7 +2,6 @@ package com.now.nowbot.service.OsuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.dao.BeatMapDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatMapSet;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;

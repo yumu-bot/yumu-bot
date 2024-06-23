@@ -151,11 +151,19 @@ public class BinUser {
         return STR."BinUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
     }
 
+    // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof BinUser binUser)) return false;
 
         return osuName.equalsIgnoreCase(binUser.osuName) || osuID.equals(binUser.osuID);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(osuName);
+        result = 31 * result + Objects.hashCode(osuID);
+        return result;
     }
 }
