@@ -1,5 +1,6 @@
 package com.now.nowbot.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.LocalCommandListener;
@@ -7,8 +8,10 @@ import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
+import com.now.nowbot.service.MessageServiceImpl.SystemInfoService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.MoliUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -20,10 +23,15 @@ import org.springframework.boot.system.ApplicationHome;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 @Component
@@ -74,8 +82,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
             MatchListenerService.stopAllListener();
         }, "endThread"));
 
-        var rsource = applicationContext.getResource("classpath:/model/nsfw.onnx");
-
         DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
         log.info("dc conf: [{}]", discordConfig.getToken());
 
@@ -88,8 +94,21 @@ public class IocAllReadyRunner implements CommandLineRunner {
         } catch (Exception e) {
             log.info("非 debug 环境, 停止加载命令行输入");
         }
+
+        var resource = new DefaultResourceLoader().getResource("classpath:build-info.json");
+        if (resource.exists()) try {
+            var b = resource.getInputStream().readAllBytes();
+            var node = JacksonUtil.parseObject(b, JsonNode.class);
+            if (Objects.isNull(node)) throw new IOException();
+            var map = SystemInfoService.INFO_MAP;
+            map.put("构建时间", node.get("git.build.time").asText("未知"));
+            map.put("代码版本", node.get("git.commit.id.abbrev").asText("未知"));
+        } catch (Exception e) {
+            log.error("解析 git json 出错", e);
+        }
         log.info("启动成功");
     }
+    
 
     private void startCommandListener() {
         LocalCommandListener.startListener();
