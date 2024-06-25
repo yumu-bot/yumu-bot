@@ -70,6 +70,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 throw new DiceException(DiceException.Type.DICE_Number_ParseFailed);
             }
 
+            // 如果 dice 有符合，但是是 0，选择主动忽视（0d2）
+            if (Long.parseLong(dice) < 1) {
+                throw new DiceException(DiceException.Type.DICE_Number_TooSmall);
+            }
+
             if (StringUtils.hasText(number)) {
 
                 if (number.contains("-")) {
@@ -182,7 +187,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 返回随机一个子项
      * @throws DiceException 错
      */
-    public String Compare(String s) throws DiceException {
+    public static String Compare(String s) throws DiceException {
         s = transferApostrophe(s);
 
         float result = getRandom(0);
@@ -196,7 +201,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         String rightFormat;
         Split split = null;
 
-        //记得这里才是需要查询的
+        // 记得这里才是需要查询的顺序
         final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, AMOUNT, BETTER, COMPARE, OR, WHETHER, AM, WHAT, WHY, WHO, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST, QUESTION);
 
         for (var sp : splits) {
@@ -650,7 +655,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 随机分配的结果
      * @throws DiceException 不知道该选什么
      */
-    private String chooseMultiple(String s) throws DiceException {
+    private static String chooseMultiple(String s) throws DiceException {
         // A是B1还是B2还是B3？
         // 这个时候 A 是主语，不能加入匹配
         var m = Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)(?<c3>((?<![要还哪那就])是|喜欢|属于))(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")
@@ -693,7 +698,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @param onlyC3 只有C3
      * @return 结果
      */
-    private boolean isPerfectMatch(Matcher m, boolean hasC3, boolean onlyC3) {
+    private static boolean isPerfectMatch(Matcher m, boolean hasC3, boolean onlyC3) {
 
         if (! m.find()) {
             return false;
@@ -746,7 +751,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
      * @param <T> 数字的子类
      */
-    public <T extends Number> float getRandom(@Nullable T range) {
+    public static <T extends Number> float getRandom(@Nullable T range) {
         long millis = System.currentTimeMillis() % 1000;
         int r;
 
@@ -776,7 +781,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
      * @param s 未和谐
      * @return 和谐
      */
-    private String ChangeCase(@NonNull String s) {
+    private static String ChangeCase(@NonNull String s) {
         s = recoveryApostrophe(s);
 
         return s.trim()
@@ -797,13 +802,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     // 避免撇号影响结果，比如 It's time to go bed
     @SuppressWarnings("all")
-    private String transferApostrophe(@NonNull String s) {
+    private static String transferApostrophe(@NonNull String s) {
         return s.trim().replaceAll("'", "\\" + "'").replaceAll("\"", "\\" + "\"");
     }
 
     // 把撇号影响的结果转换回去，比如 It's time to go bed
     @SuppressWarnings("all")
-    private String recoveryApostrophe(@NonNull String s) {
+    private static String recoveryApostrophe(@NonNull String s) {
         return s.trim().replaceAll("\\" + "'", "'").replaceAll("\\" + "\"", "\"");
     }
 }
