@@ -81,6 +81,7 @@ public class TestLevelService implements MessageService<BinUser> {
         double level = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
         double s = level / 3;
+        String out;
         b.addAt(event.getSender().getId()).addText(String.format(" 你的评分 %s, 击败%.2f%%的人", getLevelStr(level), s));
         event.getSubject().sendMessage(b.build());
     }
@@ -158,7 +159,7 @@ public class TestLevelService implements MessageService<BinUser> {
         } else if (score > 5) {
             return "D";
         } else {
-            return "X+";
+            return "F";
         }
     }
 
