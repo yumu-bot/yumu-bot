@@ -80,7 +80,7 @@ public class TestLevelService implements MessageService<BinUser> {
         }
         double level = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
-        double s = level > 5 ? (level / 3) : 99;
+        double s = level / 3;
         b.addAt(event.getSender().getId()).addText(String.format(" 你的评分 %s, 击败%.2f%%的人", getLevelStr(level), s));
         event.getSubject().sendMessage(b.build());
     }
