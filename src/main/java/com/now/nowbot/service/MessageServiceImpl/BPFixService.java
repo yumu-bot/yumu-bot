@@ -103,7 +103,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             int max = beatmap.getMaxCombo();
             int combo = score.getMaxCombo();
 
-            int miss = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
+            int miss = score.getStatistics().getCountMiss();
             int all = Objects.requireNonNullElse(score.getStatistics().getCountAll(score.getMode()), 1);
 
             // 断连击，mania 模式不参与此项筛选
@@ -159,11 +159,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var result = ScoreWithFcPP.copyOf(score);
         result.setIndex(index + 1);
         var statistics = score.getStatistics();
-        statistics.handleNull();
         if (countMiss > 0) {
             statistics.setCountMiss(0);
-            int count300 = Objects.requireNonNullElse(statistics.getCount300(), 0);
-            statistics.setCount300(count300 + countMiss);
+            statistics.setCount300(statistics.getCount300() + countMiss);
         }
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
         var bid = score.getBeatMap().getId();

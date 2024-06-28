@@ -72,7 +72,7 @@ public class OsuUserInfoDao {
         statistics.setLevelCurrent(archive.getLevel_current());
         statistics.setLevelProgress(archive.getLevel_progress());
         statistics.setMaxCombo(archive.getMaximum_combo());
-        statistics.setPp(archive.getPP());
+        statistics.setPP(archive.getPP());
 
         user.setStatistics(statistics);
         return user;

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.Map;
@@ -99,6 +100,7 @@ public class Statistics {
     Double PP7K;
     @JsonIgnore
     Double PP4K;
+
     @JsonProperty("variants")
     void setVariants(JsonNode data){
         if (data != null && !data.isEmpty()){
@@ -116,62 +118,54 @@ public class Statistics {
         }
     }
 
-    public void handleNull() {
-        if (Objects.isNull(count50)) count50 = 0;
-        if (Objects.isNull(count100)) count100 = 0;
-        if (Objects.isNull(count300)) count300 = 0;
-        if (Objects.isNull(countGeki)) countGeki = 0;
-        if (Objects.isNull(countKatu)) countKatu = 0;
-        if (Objects.isNull(countMiss)) countMiss = 0;
-    }
-
-    @Nullable
+    @NonNull
     public Integer getCount50() {
-        return count50;
+        return Objects.requireNonNullElse(count50, 0);
     }
 
     public void setCount50(@Nullable Integer count50) {
         this.count50 = count50;
     }
-    @Nullable
+
+    @NonNull
     public Integer getCount100() {
-        return count100;
+        return Objects.requireNonNullElse(count100, 0);
     }
 
     public void setCount100(@Nullable Integer count100) {
         this.count100 = count100;
     }
 
-    @Nullable
+    @NonNull
     public Integer getCount300() {
-        return count300;
+        return Objects.requireNonNullElse(count300, 0);
     }
 
     public void setCount300(@Nullable Integer count300) {
         this.count300 = count300;
     }
 
-    @Nullable
+    @NonNull
     public Integer getCountGeki() {
-        return countGeki;
+        return Objects.requireNonNullElse(countGeki, 0);
     }
 
     public void setCountGeki(@Nullable Integer countGeki) {
         this.countGeki = countGeki;
     }
 
-    @Nullable
+    @NonNull
     public Integer getCountKatu() {
-        return countKatu;
+        return Objects.requireNonNullElse(countKatu, 0);
     }
 
     public void setCountKatu(@Nullable Integer countKatu) {
         this.countKatu = countKatu;
     }
 
-    @Nullable
+    @NonNull
     public Integer getCountMiss() {
-        return countMiss;
+        return Objects.requireNonNullElse(countMiss, 0);
     }
 
     public void setCountMiss(@Nullable Integer countMiss) {
@@ -182,19 +176,25 @@ public class Statistics {
         return rankedScore;
     }
 
+    public Integer getCountAll() {
+        return getCountAll(OsuMode.MANIA);
+    }
+
+    @NonNull
     public Integer getCountAll(OsuMode mode) {
-        int s_300 = Objects.requireNonNullElse(getCount300(),0);
-        int s_100 = Objects.requireNonNullElse(getCount100(),0);
-        int s_50 = Objects.requireNonNullElse(getCount50(),0);
-        int s_g = Objects.requireNonNullElse(getCountGeki(),0);
-        int s_k = Objects.requireNonNullElse(getCountKatu(),0);
-        int s_0 = Objects.requireNonNullElse(getCountMiss(),0);
+        int s_300 = getCount300();
+        int s_100 = getCount100();
+        int s_50 = getCount50();
+        int s_g = getCountGeki();
+        int s_k = getCountKatu();
+        int s_0 = getCountMiss();
 
         return switch (mode) {
             case OSU, DEFAULT -> s_300 + s_100 + s_50 + s_0;
             case TAIKO -> s_300 + s_100 + s_0;
             case CATCH -> s_300 + s_100 + s_50 + s_0 + s_k;
             case MANIA -> s_g + s_300 + s_k + s_100 + s_50 + s_0;
+            case null -> s_g + s_300 + s_k + s_100 + s_50 + s_0;
         };
     }
 
@@ -216,6 +216,27 @@ public class Statistics {
 
     public Double getAccuracy() {
         return accuracy;
+    }
+
+    @NonNull
+    public Double getAccuracy(OsuMode mode) {
+        switch (mode) {
+            case OSU, DEFAULT -> {
+                return (getCount50() / 6d + getCount100() / 3d + getCount300()) / getCountAll(OsuMode.OSU);
+            }
+            case TAIKO -> {
+                return (getCount100() / 2d + getCount300()) / getCountAll(OsuMode.TAIKO);
+            }
+            case CATCH -> {
+                return (getCount50() + getCount100() + getCount300()) * 1d / getCountAll(OsuMode.CATCH);
+            }
+            case MANIA -> {
+                return (getCount50() / 6d + getCount100() / 3d + getCount300() + getCountKatu() * 2d / 3d + getCountGeki()) / getCountAll(OsuMode.MANIA);
+            }
+            case null, default -> {
+                return (getCount50() / 6d + getCount100() / 3d + getCount300()) / getCountAll(OsuMode.DEFAULT);
+            }
+        }
     }
 
     /**
@@ -372,7 +393,7 @@ public class Statistics {
         return out;
     }
 
-    public void setPp(Double pp) {
+    public void setPP(Double pp) {
         this.pp = pp;
     }
 
@@ -408,6 +429,14 @@ public class Statistics {
     @JsonProperty("pp_4k")
     public Double getPP4K() {
         return PP4K;
+    }
+
+    public boolean nonNull() {
+        return countGeki != null && count300 != null && countKatu != null && count100 != null && count50 != null && countMiss != null;
+    }
+
+    public boolean isNull() {
+        return !this.nonNull();
     }
 
     @Override

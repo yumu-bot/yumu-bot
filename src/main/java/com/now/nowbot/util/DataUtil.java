@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.JsonData.Statistics;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
@@ -26,7 +27,7 @@ public class DataUtil {
     private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
 
     private static final ObjectMapper mapper = JsonMapper.builder().build();
-    
+
     static Typeface TORUS_REGULAR;
 
     static Typeface TORUS_SEMIBOLD;
@@ -92,6 +93,105 @@ public class DataUtil {
         }
 
         return new Range(offset, limit);
+    }
+
+    /**
+     * 根据准确率，通过获取原成绩的判定结果的彩率，来构建一个达到目标准确率的判定结果
+     * @param aiming 准确率，0-10000
+     * @param stat 当前的判定结果
+     * @return 达到目标准确率时的判定结果
+     */
+    @NonNull
+    public static Statistics maniaAimingAccuracy2Statistics(Double aiming, @NonNull Statistics stat) {
+        if (stat.isNull()) {
+            return new Statistics();
+        }
+
+        if (aiming == null) {
+            return stat;
+        }
+
+        int total = stat.getCountAll(OsuMode.MANIA);
+
+        // geki, 300, katu, 100, 50, 0
+        var list = Arrays.asList(stat.getCountGeki(), stat.getCount300(), stat.getCountKatu(), stat.getCount100(), stat.getCount50(), stat.getCountMiss());
+
+        //一个物件所占的 Acc 权重
+        if (total <= 0) return stat;
+        double weight = 1d / total;
+
+        //彩黄比
+        double ratio = (stat.getCount300() + stat.getCountGeki() > 0) ? stat.getCountGeki() * 1d / (stat.getCount300() + stat.getCountGeki()) : 0;
+
+        double current = stat.getAccuracy(OsuMode.MANIA);
+
+        if (current >= aiming) return stat;
+
+        //交换评级
+        if (current < aiming && stat.getCountMiss() > 0) {
+            var ex = exchangeJudge(list.getFirst(), list.getLast(), 1d, 0d, current, aiming, weight);
+            list.set(0, ex.great);
+            list.set(5, ex.bad);
+            current = ex.accuracy;
+        }
+
+        if (current < aiming && stat.getCount50() > 0) {
+            var ex = exchangeJudge(list.getFirst(), list.get(4), 1d, 1d / 6d, current, aiming, weight);
+            list.set(0, ex.great);
+            list.set(4, ex.bad);
+            current = ex.accuracy;
+        }
+
+        if (current < aiming && stat.getCount100() > 0) {
+            var ex = exchangeJudge(list.getFirst(), list.get(3), 1d, 1d / 3d, current, aiming, weight);
+            list.set(0, ex.great);
+            list.set(3, ex.bad);
+            current = ex.accuracy;
+        }
+
+        if (current < aiming && stat.getCountKatu() > 0) {
+            var ex = exchangeJudge(list.getFirst(), list.get(2), 1d, 2d / 3d, current, aiming, weight);
+            list.set(0, ex.great);
+            list.set(2, ex.bad);
+            // current = ex.accuracy;
+        }
+
+        var nGreat = list.getFirst() + list.get(1);
+
+        list.set(0, (int) Math.floor(nGreat * ratio));
+        list.set(1, Math.max((nGreat - list.getFirst()), 0));
+
+        stat.setCountGeki(list.getFirst());
+        stat.setCount300(list.get(1));
+        stat.setCountKatu(list.get(2));
+        stat.setCount100(list.get(3));
+        stat.setCount50(list.get(4));
+        stat.setCountMiss(list.getLast());
+
+        return stat;
+    }
+
+    public record Exchange(int great, int bad, double accuracy) {}
+
+    // 交换评级
+    @NonNull
+    public static Exchange exchangeJudge(int nGreat, int nBad, double wGreat, double wBad, double currentAcc, double aimingAcc, double weight) {
+        var g = nGreat;
+        var b = nBad;
+        var c = currentAcc;
+
+        double gainAcc = weight * (wGreat - wBad);
+
+        for (int i = 0; i < nBad; i++) {
+
+            g ++;
+            b --;
+            c += gainAcc;
+
+            if (c >= aimingAcc) break;
+        }
+
+        return new Exchange(g, b, currentAcc);
     }
 
 
