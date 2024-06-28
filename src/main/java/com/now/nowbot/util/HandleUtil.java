@@ -15,6 +15,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
+import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -31,22 +32,39 @@ import java.util.regex.Pattern;
 
 // 封装一些消息处理（Handle）的常用方法
 public class HandleUtil {
-    public static final  String             REG_START        = "[!！/](?i)(ym)?";
-    public static final  String             REG_SPACE        = "\\s*";
-    public static final  String             REG_SPACE_1P     = "\\s+";
+    @Language("RegExp")
+    public static final String REG_START    = "[!！/](?i)(ym)?";
+    @Language("RegExp")
+    public static final String REG_SPACE    = "\\s*";
+    @Language("RegExp")
+    public static final String REG_SPACE_1P = "\\s+";
+    @Language("RegExp")
     public static final  String             REG_SPACE_01     = "\\s?";
+    @Language("RegExp")
     public static final  String             REG_COLUMN       = "[:：]";
+    @Language("RegExp")
     public static final  String             REG_HASH         = "[#＃]";
+    @Language("RegExp")
     public static final  String             REG_HYPHEN       = "[\\-－]";
+    @Language("RegExp")
     public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,}?))";
+    @Language("RegExp")
     public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
+    @Language("RegExp")
     public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
+    @Language("RegExp")
     public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
+    @Language("RegExp")
     public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
+    @Language("RegExp")
     public static final String REG_RANGE = "(?<range>(100|\\d{1,2})([\\-－]\\d{1,3})?)";
+    @Language("RegExp")
     public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
+    @Language("RegExp")
     public static final  String             REG_ID           = "(?<id>\\d+)";
+    @Language("RegExp")
     public static final  String             REG_BID          = "(?<bid>\\d+)";
+    @Language("RegExp")
     public static final  String             REG_SID          = "(?<sid>\\d+)";
 
     private static final Logger             log              = LoggerFactory.getLogger(HandleUtil.class);

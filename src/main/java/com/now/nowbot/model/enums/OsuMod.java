@@ -297,9 +297,11 @@ public enum OsuMod {
         return Easy.checkValue(i);
     }
 
+    private static final int changeRatingValue = Easy.value | HalfTime.value | TouchDevice.value |
+                    HardRock.value | DoubleTime.value | Nightcore.value | Flashlight.value;
+
     public static boolean hasChangeRating(int value) {
-        return Easy.checkValue(value) || HalfTime.checkValue(value) ||
-                HardRock.checkValue(value) || DoubleTime.checkValue(value) || Nightcore.checkValue(value) || Flashlight.checkValue(value);
+        return (changeRatingValue & value) != 0;
     }
 
     public static boolean hasChangeRating(List<OsuMod> osuMods) {

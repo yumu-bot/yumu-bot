@@ -27,10 +27,7 @@ public class SystemInfoService implements MessageService<Boolean> {
         var m = ManagementFactory.getMemoryMXBean();
         var t = ManagementFactory.getThreadMXBean();
 
-        sb.append("HeapMemory: ")
-                .append(m.getHeapMemoryUsage().getMax() / 1024 / 1024)
-                .append("M, 当前使用: ").append(m.getHeapMemoryUsage().getCommitted() / 1024 / 1024)
-                .append("M, 已使用: ").append(m.getHeapMemoryUsage().getUsed() / 1024 / 1024)
+        sb.append("HeapMemory 已使用: ").append(m.getHeapMemoryUsage().getUsed() / 1024 / 1024)
                 .append("M\n");
         sb.append("当前线程数: ").append(t.getThreadCount());
 
