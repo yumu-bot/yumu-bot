@@ -202,13 +202,13 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split split = null;
 
         // 记得这里才是需要查询的顺序
-        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, AMOUNT, BETTER, COMPARE, OR, WHETHER, AM, WHAT, WHY, WHO, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST, QUESTION);
+        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, ACCURACY, AMOUNT, BETTER, COMPARE, OR, WHETHER, AM, WHAT, WHY, WHO, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST, QUESTION);
 
         for (var sp : splits) {
             var onlyC3 =
                     sp == TIME || sp == AMOUNT || sp == WHY || sp == WHO ||
                             sp == AM || sp == COULD || sp == WHETHER || sp == IS || sp == REAL ||
-                            sp == LIKE || sp == POSSIBILITY || sp == THINK || sp == NEST || sp == WHAT || sp == QUESTION;
+                            sp == LIKE || sp == POSSIBILITY || sp == ACCURACY || sp == THINK || sp == NEST || sp == WHAT || sp == QUESTION;
             var hasC3 = sp == BETTER || onlyC3;
             var matcher = sp.pattern.matcher(s);
 
@@ -327,6 +327,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                         // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
                         // 7.07% 触发彩蛋。
                         num = (Math.round(getRandom(1) * 10800f) / 100f) - 4f;
+
                         is = "";
 
                         // 钳位
@@ -335,6 +336,21 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                             num = 101.00f;
                             is = "00";
                         }
+                        if (num >= 100f) num = 100f;
+                        if (num <= 0f) num = 0f;
+                    }
+
+                    case ACCURACY -> {
+                        // 做点手脚，让 90%-100% 和 100% 更容易出现 90 ~ 104
+                        if (getRandomInstantly() < 0.9d) {
+                            num = (Math.round(getRandom(1) * 1400f) / 100f) + 90f;
+                        } else {
+                            num = (float) (Math.sqrt(getRandom(1)) * 9000f / 100f);
+                        }
+
+                        is = "";
+
+                        // 钳位
                         if (num >= 100f) num = 100f;
                         if (num <= 0f) num = 0f;
                     }
@@ -379,10 +395,11 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 case AM -> "我是 Yumu 机器人。";
                 case POSSIBILITY -> "概率是：%.2f%s%%";
+                case ACCURACY -> "准确率是：%.2f%s%%";
                 case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
                 case TIME -> "您许愿的结果是：%.0f %s。";
 
-                case WHAT, WHY, WHO -> "我怎么知道。";
+                case WHAT, WHY, WHO -> "我怎么知道。我又不是 GPT。";
                 case REAL -> "我觉得，是真的。";
                 case BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！";
                 case ASSUME, LIKE, IS, QUESTION -> "%s。";
@@ -397,6 +414,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
                 case AM -> "别问了，我也想知道自己是谁。";
                 case POSSIBILITY -> "概率是：%.2f%s%%";
+                case ACCURACY -> "准确率是：%.2f%s%%";
                 case RANGE, AMOUNT -> "您许愿的结果是：%.0f。";
                 case TIME -> "您许愿的结果是：%.0f %s。";
 
@@ -479,7 +497,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case RANGE, AMOUNT -> {
                     return String.format(leftFormat, num);
                 }
-                case TIME, POSSIBILITY -> {
+                case TIME, POSSIBILITY, ACCURACY -> {
                     return String.format(leftFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, QUESTION-> {
@@ -511,7 +529,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
                 case RANGE, AMOUNT -> {
                     return String.format(rightFormat, num);
                 }
-                case TIME, POSSIBILITY -> {
+                case TIME, POSSIBILITY, ACCURACY -> {
                     return String.format(rightFormat, num, is);
                 }
                 case BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> {
@@ -555,7 +573,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         POSSIBILITY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?([概几]率是?|可能[是性]?))|\\s(chance|possib(l[ey]|ility)(\\sis)?)\\s)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
-        AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[是有]?多少[人个件位条只匹头颗根辆]?|数量(?!级)|[人个件位条只匹头颗根辆]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        ACCURACY(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>((有多[少大])?的?(准确率是?|[准精]度)|\\s?(acc(uracy)?)(\\sis)?)\\s?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+
+        AMOUNT(Pattern.compile("(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?(?<c3>[是有]?多少[人个件位条匹颗根辆]?|数量(?!级)|[人个件位条匹颗根辆]数)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //A和B比谁更C？
         //正常选择
@@ -572,9 +592,9 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         //当然选 X 啦！
         OR(Pattern.compile("\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|or|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)")),
 
-        //是不是
+        //是不是   排除 爱A不A
         //A是。A不是。
-        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[人个件位条只匹头颗根辆]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        WHETHER(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*(?<!爱))?\\s*(?<c2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])(?<m3>[不没])(?<c3>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_])[人个件位条匹颗根辆]?\\s*(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //你谁？
         //我是 YumuBot
@@ -594,7 +614,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
         //是，会，要吗？
         //是。不是。
-        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])([是会要]|可以)吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
+        IS(Pattern.compile("\\s*(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*?)?\\s*?(?<c3>(?<![要还哪那就])((?<!一)会|[是要]|可以)吗?|\\sis\\s)\\s*?(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-_]*)?")),
 
         //真的吗？
         //我怎么知道。是真的。是假的。
@@ -713,13 +733,18 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         return m1 && m2;
     }
 
+
+    public static double getRandomInstantly() {
+        return getRandomInstantly(0);
+    }
+
     /**
      * 获取短时间内的多个随机数
      * @param range 范围
      * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
      * @param <T> 数字的子类
      */
-    public <T extends Number> double getRandomInstantly(@Nullable T range) {
+    public static <T extends Number> double getRandomInstantly(@Nullable T range) {
         double random = Math.random();
 
         int r;
