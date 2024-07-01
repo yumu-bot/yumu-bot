@@ -202,7 +202,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
         Split split = null;
 
         // 记得这里才是需要查询的顺序
-        final List<Split> splits = Arrays.asList(RANGE, TIME, POSSIBILITY, ACCURACY, AMOUNT, BETTER, COMPARE, OR, WHETHER, AM, WHAT, WHY, WHO, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, ASSUME, CONDITION, LIKE, THINK, COULD, NEST, QUESTION);
+        final List<Split> splits = Arrays.asList(TIME, POSSIBILITY, ACCURACY, AMOUNT, BETTER, COMPARE, OR, WHETHER, AM, WHAT, WHY, WHO, IS, REAL, JUXTAPOSITION, PREFER, HESITATE, EVEN, COULD, RANGE, ASSUME, CONDITION, LIKE, THINK, NEST, QUESTION);
 
         for (var sp : splits) {
             var onlyC3 =
