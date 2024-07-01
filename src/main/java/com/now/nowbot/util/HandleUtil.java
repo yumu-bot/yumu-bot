@@ -225,7 +225,6 @@ public class HandleUtil {
             // 没 @ 也没 qq=
             try {
                 var uidStr = matcher.group("uid");
-
                 if (StringUtils.hasText(uidStr)) {
                     uid = Long.parseLong(uidStr);
                 }
@@ -236,59 +235,57 @@ public class HandleUtil {
 
         if (qq != 0) {
             var user = bindDao.getUserFromQQ(qq);
+            if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
-            try {
-                if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
-                return userApiService.getPlayerInfo(user, mode);
-            } catch (WebClientResponseException.Unauthorized e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
-            } catch (WebClientResponseException.NotFound e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.getOsuName());
-            } catch (WebClientResponseException.Forbidden e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getOsuName());
-            } catch (WebClientResponseException e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
-            } catch (Exception e) {
-                log.error("HandleUtil：获取玩家信息失败！", e);
-                throw new TipsException("HandleUtil：获取玩家信息失败！");
-            }
+            return getPlayerInfo(user.getOsuName(), mode);
         }
 
         if (uid != 0) {
-            try {
-                return userApiService.getPlayerInfo(uid, mode);
-            } catch (WebClientResponseException.NotFound e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, uid);
-            } catch (WebClientResponseException.Forbidden e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, uid);
-            } catch (WebClientResponseException e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
-            } catch (Exception e) {
-                log.error("HandleUtil：获取玩家信息失败！", e);
-                throw new TipsException("HandleUtil：获取玩家信息失败！");
-            }
+            return getPlayerInfo(uid, mode);
         }
 
         try {
             var name = matcher.group("name");
-            var nameWithoutSpace = name.trim();
-            // 对叫100(或者1000，取自 maximum)的人直接取消处理
-            if (StringUtils.hasText(name) && name.length() > (String.valueOf(maximum).length() - 1) && ! String.valueOf(maximum).equals(nameWithoutSpace)) {
-                try {
-                    return userApiService.getPlayerInfo(nameWithoutSpace, mode);
-                } catch (WebClientResponseException.NotFound e) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, nameWithoutSpace);
-                } catch (WebClientResponseException.Forbidden e) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, nameWithoutSpace);
-                } catch (WebClientResponseException e) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
-                } catch (Exception e) {
-                    log.error("HandleUtil：获取玩家信息失败！", e);
-                    throw new TipsException("HandleUtil：获取玩家信息失败！");
-                }
+            if (! StringUtils.hasText(name)) return null;
+
+            String param1;
+            boolean nameExceed;
+            boolean param1Exceed;
+
+            try {
+                var range = matcher.group("range");
+                var rangeArray = range.split("-");
+
+                param1 = rangeArray[0];
+            } catch (Exception ignored) {
+                param1 = "";
             }
-        } catch (RuntimeException ignore) {
-            // 没名字
+
+            try {
+                nameExceed = (Integer.parseInt(name.trim()) > maximum);
+            } catch (NumberFormatException ignored) {
+                nameExceed = true;
+            }
+
+            try {
+                param1Exceed = (Integer.parseInt(param1.trim()) > maximum);
+            } catch (NumberFormatException ignored) {
+                param1Exceed = false;
+            }
+
+            // 有空格
+            if (! Objects.equals(name.trim(), name) || nameExceed) {
+                // 对叫100(或者1000，取自 maximum)的人直接取消处理，
+
+                return getPlayerInfo(name.trim(), mode);
+            } else if (param1Exceed) {
+                // 对超出位数的玩家进行字符串填补
+
+                return getPlayerInfo(name + param1, mode);
+            }
+
+        } catch (IllegalStateException | IllegalArgumentException ignore) {
+            // 没名字，就别管了
         }
 
         // 没 at 没 qq= 没 uid= 也没名字 直接返回 null
@@ -299,22 +296,9 @@ public class HandleUtil {
         var qq = event.getSender().getId();
         var user = bindDao.getUserFromQQ(qq);
 
-        try {
-            if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
-            return userApiService.getPlayerInfo(user, mode);
+        if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
-        } catch (WebClientResponseException.Unauthorized e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me);
-        } catch (WebClientResponseException.NotFound e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.getOsuName());
-        } catch (WebClientResponseException.Forbidden e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getOsuName());
-        } catch (WebClientResponseException e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
-        } catch (Exception e) {
-            log.error("HandleUtil：获取自我信息失败！", e);
-            throw new TipsException("获取用户信息失败！");
-        }
+        return getPlayerInfo(user.getOsuName(), mode);
     }
 
     // MapStatisticsService 专属
@@ -554,6 +538,36 @@ public class HandleUtil {
         }
 
         return new Range(n, m);
+    }
+
+    private static OsuUser getPlayerInfo(String name, OsuMode mode) throws TipsException {
+        try {
+            return userApiService.getPlayerInfo(name, mode);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        } catch (Exception e) {
+            log.error("HandleUtil：获取玩家信息失败！", e);
+            throw new TipsException("HandleUtil：获取玩家信息失败！");
+        }
+    }
+
+    private static OsuUser getPlayerInfo(long uid, OsuMode mode) throws TipsException {
+        try {
+            return userApiService.getPlayerInfo(uid, mode);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, uid);
+        } catch (WebClientResponseException.Forbidden e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, uid);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        } catch (Exception e) {
+            log.error("HandleUtil：获取玩家信息失败！", e);
+            throw new TipsException("HandleUtil：获取玩家信息失败！");
+        }
     }
 
     // 指令样式生成
