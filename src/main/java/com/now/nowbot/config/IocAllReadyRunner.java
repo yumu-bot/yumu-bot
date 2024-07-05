@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.LocalCommandListener;
-import com.now.nowbot.listener.OneBotListener;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
@@ -29,8 +28,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
@@ -47,7 +44,11 @@ public class IocAllReadyRunner implements CommandLineRunner {
     Executor executor;
 
     @Autowired
-    public IocAllReadyRunner(OneBotListener oneBotListener, ApplicationContext applicationContext, CheckAspect check, Permission permission, PermissionImplement permissionImplement) {
+    public IocAllReadyRunner(
+            ApplicationContext applicationContext,
+            CheckAspect check,
+            Permission permission,
+            PermissionImplement permissionImplement) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
         LocalCommandListener.setHandler(services);

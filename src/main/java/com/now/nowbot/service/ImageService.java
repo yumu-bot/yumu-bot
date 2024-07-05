@@ -253,7 +253,7 @@ public class ImageService {
                 "ACC", others.getValue1(),
                 "PTT", others.getValue2(),
                 "STA", others.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE" : "STB", others.getValue4(),
                 "EFT", others.getValue5(),
                 "STH", others.getValue6(),
                 "OVA", others.getValue7(),
