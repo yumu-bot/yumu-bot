@@ -51,7 +51,7 @@ public class BPService implements MessageService<BPService.BPParam> {
             try {
                 user = HandleUtil.getMyselfUser(event, mode);
             } catch (BindException e) {
-                if (HandleUtil.isAvoidance(event, "bp")) {
+                if (HandleUtil.isAvoidance(messageText, "bp")) {
                     log.info(String.format("指令退避：BP 退避成功，被退避的玩家：%s", event.getSender().getName()));
                     return false;
                 } else {

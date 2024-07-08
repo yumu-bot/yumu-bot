@@ -36,7 +36,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         var beatMap = HandleUtil.getOsuBeatMap(matcher);
 
         if (beatMap == null) {
-            if (HandleUtil.isAvoidance(event, "！m", "!m")) {
+            if (HandleUtil.isAvoidance(messageText, "！m", "!m")) {
                 log.info(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.getSender().getName()));
             }
             return false;
