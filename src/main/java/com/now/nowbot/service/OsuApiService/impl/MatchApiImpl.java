@@ -1,6 +1,6 @@
 package com.now.nowbot.service.OsuApiService.impl;
 
-import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.JsonData.Match;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -54,12 +54,12 @@ public class MatchApiImpl implements OsuMatchApiService {
             } else {
                 match.parseNextData(getMatchInfoBefore(
                         mid,
-                        match.getEvents().getFirst().getId()
+                        match.getEvents().getFirst().getEventID()
                 ));
             }
-            eventId = match.getEvents().getFirst().getId();
+            eventId = match.getEvents().getFirst().getEventID();
         }
-        while (!match.getFirstEventId().equals(eventId) && --limit >= 0);
+        while (!match.getFirstEventID().equals(eventId) && --limit >= 0);
         return match;
     }
 

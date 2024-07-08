@@ -89,8 +89,8 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
 
     @Transactional
     default <S extends OsuBindUserLite> S checkSave(S entity) {
-        if (entity.getId() == null && countAllByOsuId(entity.getOsuId()) > 0) {
-            deleteOldByOsuId(entity.getOsuId());
+        if (entity.getID() == null && countAllByOsuId(entity.getOsuID()) > 0) {
+            deleteOldByOsuId(entity.getOsuID());
         }
 
         return save(entity);

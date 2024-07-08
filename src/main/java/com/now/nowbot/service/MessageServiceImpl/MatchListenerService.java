@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.Match;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.*;
@@ -9,6 +10,7 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchListenerException;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
@@ -37,9 +39,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 
     @Resource
-    OsuMatchApiService osuMatchApiService;
+    OsuMatchApiService matchApiService;
     @Resource
-    ImageService    imageService;
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
+    ImageService imageService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
@@ -116,12 +120,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
             }
             case START -> {
                 try {
-                    match = osuMatchApiService.getMatchInfo(param.id, 10);
+                    match = matchApiService.getMatchInfo(param.id, 10);
                 } catch (WebClientResponseException.NotFound e) {
                     throw new MatchListenerException(MatchListenerException.Type.ML_MatchID_NotFound);
                 }
 
-                if (match.isMatchEnd()) {
+                if (match.getMatchStat().getEndTime() != null) {
                     throw new MatchListenerException(MatchListenerException.Type.ML_Match_End);
                 }
 
@@ -143,23 +147,23 @@ public class MatchListenerService implements MessageService<MatchListenerService
         BiConsumer<Match, MatchListener.StopType> handleStop = (m, type) -> from.sendMessage(
                 String.format(
                         MatchListenerException.Type.ML_Listen_Stop.message,
-                        m.getMatchStat().getId(),
+                        m.getMatchStat().getMatchID(),
                         type.getTips()
                 )
         );
 
         @SuppressWarnings("all")
-        BiConsumer<List<MatchEvent>, Match> handleEvent = (eventList, newMatch) -> {
+        BiConsumer<List<Match.MatchEvent>, Match> handleEvent = (eventList, newMatch) -> {
 
-            Optional<MatchEvent> opt = eventList.stream()
-                    .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getId()))
+            Optional<Match.MatchEvent> opt = eventList.stream()
+                    .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getRoundID()))
                     .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
 
             // 当前没有 game 变动
             if (opt.isEmpty()) return;
 
-            MatchEvent matchEvent = opt.get();
-            List<MatchScore> scores = Objects.requireNonNull(matchEvent.getRound()).getScoreInfoList(); //基本上不可能为 null，除非 ppy 作妖
+            Match.MatchEvent matchEvent = opt.get();
+            List<Match.MatchScore> scores = Objects.requireNonNull(matchEvent.getRound()).getScores(); //基本上不可能为 null，除非 ppy 作妖
 
             //有点脱裤子放屁的感觉，但是先这么写着，至少思路清晰一点
             if (! CollectionUtils.isEmpty(scores))  {
@@ -197,20 +201,19 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 handleEvent,
                 handleStop,
                 match,
-                osuMatchApiService
+                matchApiService
         );
 
     }
 
     @SuppressWarnings("all")
-    private static MatchRound insertUser(MatchEvent matchEvent, Match match) {
+    private static Match.MatchRound insertUser(Match.MatchEvent matchEvent, Match match) {
         var round = matchEvent.getRound();
         //要自己加MicroUser
-        for (MatchScore s : round.getScoreInfoList()) {
+        for (Match.MatchScore s : round.getScores()) {
             for (MicroUser p : match.getPlayers()) {
-                if (Objects.equals(p.getId(), s.getUserId()) && s.getUser() == null) {
+                if (Objects.equals(p.getUserID(), s.getUserID()) && s.getUser() == null) {
                     s.setUser(p);
-                    s.setUserName(p.getUserName());
                     break;
                 }
             }
@@ -218,7 +221,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         return round;
     }
 
-    public byte[] getDataImage(MatchRound round, MatchStat stat, int index, ImageService imageService) throws MatchRoundException {
+    public byte[] getDataImage(Match.MatchRound round, Match.MatchStat stat, int index, ImageService imageService) throws MatchRoundException {
 
         byte[] img;
         try {
@@ -230,29 +233,45 @@ public class MatchListenerService implements MessageService<MatchListenerService
         return img;
     }
 
-    private byte[] getRoundResultsImage(MatchEvent matchEvent, Match match) {
+    private byte[] getRoundResultsImage(Match.MatchEvent matchEvent, Match match) {
         //比赛结束，发送成绩
         try {
             var round = insertUser(matchEvent, match);
 
             //剔除 5k 分以下
-            round.setScoreInfoList(round.getScoreInfoList().stream()
+            round.setScores(round.getScores().stream()
                     .filter(s -> s.getScore() >= 5000).toList());
 
-            int indexP1 = match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScoreInfoList() != null).toList().size();
+            int index = Math.toIntExact(
+                    match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
+            );
 
-            return getDataImage(round, match.getMatchStat(), indexP1 - 1, imageService);
+            // apply sr change
+            var b = round.getBeatMap();
+
+            if (b != null) {
+                // extend beatmap
+                b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
+                
+                // apply changes
+                beatmapApiService.applyStarRatingChange(b, OsuMode.getMode(round.getMode()), round.getModInt());
+            }
+
+            round.setBeatMap(b);
+
+            return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
             log.error("获取对局结果图片失败：", e);
             throw new RuntimeException("获取对局结果图片失败！");
         }
     }
 
-    private byte[] getRoundStartImage(@NonNull MatchRound round, Match match) {
+    private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
         var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
 
-        //看来这里的 failed 只能算 false，否则有问题
-        var d = new MatchData(match, 0, 0, null, 1d, false, true);
+        var d = new MatchCalculate(match,
+                new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
+                beatmapApiService);
 
         var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, 0, 0, round.getMods());
 
@@ -261,13 +280,13 @@ public class MatchListenerService implements MessageService<MatchListenerService
         } catch (WebClientResponseException ignored) {
             String moreInfo;
             if (Objects.nonNull(b.getBeatMapSet())) {
-                moreInfo = STR."(\{b.getId()}) \{b.getBeatMapSet().getArtistUnicode()} - (\{b.getBeatMapSet().getTitleUnicode()}) [\{b.getDifficultyName()}]";
+                moreInfo = STR."(\{b.getBeatMapID()}) \{b.getBeatMapSet().getArtistUnicode()} - (\{b.getBeatMapSet().getTitleUnicode()}) [\{b.getDifficultyName()}]";
             } else {
-                moreInfo = STR."(\{b.getId()}) [\{b.getDifficultyName()}]";
+                moreInfo = STR."(\{b.getBeatMapID()}) [\{b.getDifficultyName()}]";
             }
             try {
                 return imageService.getPanelA6(
-                        String.format(MatchListenerException.Type.ML_Match_Start.message, match.getMatchStat().getId(), moreInfo));
+                        String.format(MatchListenerException.Type.ML_Match_Start.message, match.getMatchStat().getMatchID(), moreInfo));
             } catch (WebClientResponseException e) {
                 log.error("获取对局开始信息失败：", e);
                 throw new RuntimeException("获取对局开始信息失败！");
@@ -276,7 +295,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    record QQ_GroupRecord(long qq, long group, long mid) {
+    record QQ_GroupRecord(long qq, long group, long messageID) {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -284,20 +303,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             if (qq != that.qq) return false;
             if (group != that.group) return false;
-            return mid == that.mid;
+            return messageID == that.messageID;
         }
 
         @Override
         public int hashCode() {
             int result = (int) (qq ^ (qq >>> 32));
             result = 31 * result + (int) (group ^ (group >>> 32));
-            result = 31 * result + (int) (mid ^ (mid >>> 32));
+            result = 31 * result + (int) (messageID ^ (messageID >>> 32));
             return result;
         }
     }
 
     record Handlers(Consumer<Match> start,
-                    BiConsumer<List<MatchEvent>, Match> event,
+                    BiConsumer<List<Match.MatchEvent>, Match> event,
                     BiConsumer<Match, MatchListener.StopType> stop) {
     }
 
@@ -313,7 +332,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 long mid,
                 boolean isSuper,
                 Consumer<Match> start,
-                BiConsumer<List<MatchEvent>, Match> event,
+                BiConsumer<List<Match.MatchEvent>, Match> event,
                 BiConsumer<Match, MatchListener.StopType> stop,
                 Match match,
                 OsuMatchApiService matchApiService
@@ -328,7 +347,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             AtomicInteger qqSum = new AtomicInteger();
             AtomicInteger groupSum = new AtomicInteger();
             listeners.keySet().forEach(k -> {
-                if (k.mid == mid) {
+                if (k.messageID == mid) {
                     if (k.qq == qq) qqSum.getAndIncrement();
                     if (k.group == group) groupSum.getAndIncrement();
                 }
@@ -371,7 +390,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 // 如果没有其他群在监听则停止监听
                 int lCount = 0;
                 for (var nk : listeners.keySet()) {
-                    if (nk.mid == matchID) {
+                    if (nk.messageID == matchID) {
                         lCount++;
                     }
                 }
@@ -389,7 +408,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
     static List<Long> getGroupListenerList(long group) {
         return ListenerCheck.listeners.keySet().stream()
                 .filter(handlers -> handlers.group == group)
-                .map(handlers -> handlers.mid)
+                .map(handlers -> handlers.messageID)
                 .toList();
     }
 }

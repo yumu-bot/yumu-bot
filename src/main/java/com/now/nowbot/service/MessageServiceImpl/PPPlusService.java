@@ -110,23 +110,23 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             dataMap.put("isUser", true);
             OsuUser u1 = (OsuUser) param.me;
             dataMap.put("me", u1);
-            dataMap.put("my", getUserPerformancePlus(u1.getUID()));
+            dataMap.put("my", getUserPerformancePlus(u1.getUserID()));
 
             if (Objects.nonNull(param.other)) {
                 // 包含另一个就是 vs, 直接判断了
                 OsuUser u2 = (OsuUser) param.other;
                 dataMap.put("other", u2);
-                dataMap.put("others", getUserPerformancePlus(u2.getUID()));
+                dataMap.put("others", getUserPerformancePlus(u2.getUserID()));
             }
         } else {
             dataMap.put("isUser", false);
             BeatMap m1 = (BeatMap) param.me;
             dataMap.put("me", m1);
-            dataMap.put("my", getBeatMapPerformancePlus(m1.getId()));
+            dataMap.put("my", getBeatMapPerformancePlus(m1.getBeatMapID()));
             if (Objects.nonNull(param.other)) {
                 BeatMap m2 = (BeatMap) param.other;
                 dataMap.put("other", m2);
-                dataMap.put("others", getBeatMapPerformancePlus(m2.getId()));
+                dataMap.put("others", getBeatMapPerformancePlus(m2.getBeatMapID()));
             }
         }
 
@@ -220,7 +220,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         }
 
         try {
-            beatMap = beatmapApiService.getMapInfoFromDB(id);
+            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(id);
         } catch (WebClientResponseException ignored) {
             try {
                 beatMap = beatmapApiService.getBeatMapSetInfo(id).getTopDiff();

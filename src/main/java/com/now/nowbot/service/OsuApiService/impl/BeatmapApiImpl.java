@@ -89,7 +89,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     @Override
     public boolean checkBeatMap(BeatMap beatMap) throws IOException {
         if (beatMap == null) return false;
-        return checkBeatMap(beatMap.getId(), beatMap.getMd5());
+        return checkBeatMap(beatMap.getBeatMapID(), beatMap.getMd5());
     }
 
     @Override
@@ -146,7 +146,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public BeatMap getMapInfoFromDB(long bid) {
+    public BeatMap getBeatMapInfoFromDataBase(long bid) {
         try {
             var lite = beatMapDao.getBeatMapLite(bid);
             return BeatMapDao.fromBeatmapLite(lite);

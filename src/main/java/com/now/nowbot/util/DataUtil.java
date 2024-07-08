@@ -481,13 +481,14 @@ public class DataUtil {
         return hp;
     }
 
-    public static void setBeatMap(BeatMap beatMap, int mods) {
+    // 应用四维的变化 4 dimensions
+    public static void applyBeatMapChanges(BeatMap beatMap, int mods) {
         if (OsuMod.hasChangeRating(mods)) {
-            beatMap.setBPM(DataUtil.BPM(beatMap.getBPM(), mods));
-            beatMap.setAR(DataUtil.AR(beatMap.getAR(), mods));
-            beatMap.setCS(DataUtil.CS(beatMap.getCS(), mods));
-            beatMap.setOD(DataUtil.OD(beatMap.getOD(), mods));
-            beatMap.setHP(DataUtil.HP(beatMap.getHP(), mods));
+            beatMap.setBPM(DataUtil.BPM(Optional.ofNullable(beatMap.getBPM()).orElse(0f), mods));
+            beatMap.setAR(DataUtil.AR(Optional.ofNullable(beatMap.getAR()).orElse(0f), mods));
+            beatMap.setCS(DataUtil.CS(Optional.ofNullable(beatMap.getCS()).orElse(0f), mods));
+            beatMap.setOD(DataUtil.OD(Optional.ofNullable(beatMap.getOD()).orElse(0f), mods));
+            beatMap.setHP(DataUtil.HP(Optional.ofNullable(beatMap.getHP()).orElse(0f), mods));
             beatMap.setTotalLength(DataUtil.Length(beatMap.getTotalLength(), mods));
         }
     }

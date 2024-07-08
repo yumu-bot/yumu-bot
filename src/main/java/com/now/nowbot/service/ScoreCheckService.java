@@ -29,11 +29,11 @@ public class ScoreCheckService {
         } else if (dlist.size() > 1) {
             dlist = dlist.stream().sorted((r1, r2) -> {
                 if (score.getBeatMap() == null) return 0;
-                var bid = score.getBeatMap().getId();
+                var bid = score.getBeatMap().getBeatMapID();
                 return r1.getWeight(bid) - r2.getWeight(bid);
             }).toList();
         }
-        return dlist.get(0);
+        return dlist.getFirst();
     }
     ScoreChecker getCalculator(String name) {
         var res = scoreCheckers.stream().filter(s -> s.getName().equals(name)).findFirst();

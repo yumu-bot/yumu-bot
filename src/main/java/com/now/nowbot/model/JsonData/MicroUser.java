@@ -90,6 +90,14 @@ public class MicroUser {
         this.id = id;
     }
 
+    public Long getUserID() {
+        return id;
+    }
+
+    public void setUserID(Long id) {
+        this.id = id;
+    }
+
     public Boolean getActive() {
         return active;
     }
@@ -189,7 +197,7 @@ public class MicroUser {
 
     @Override
     public int hashCode() {
-        return getId().hashCode();
+        return getUserID().hashCode();
     }
 
     @Override
@@ -197,7 +205,7 @@ public class MicroUser {
         if (this == o) return true;
         if (! (o instanceof MicroUser microUser)) return false;
 
-        return getId().equals(microUser.getId());
+        return getUserID().equals(microUser.getUserID());
     }
 
     @Override

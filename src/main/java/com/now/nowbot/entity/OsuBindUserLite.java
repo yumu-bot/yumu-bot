@@ -66,11 +66,19 @@ public class OsuBindUserLite {
         this.id = id;
     }
 
-    public Long getOsuId() {
+    public Long getID() {
+        return id;
+    }
+
+    public void setID(Long id) {
+        this.id = id;
+    }
+
+    public Long getOsuID() {
         return osuId;
     }
 
-    public void setOsuId(Long osuId) {
+    public void setOsuID(Long osuId) {
         this.osuId = osuId;
     }
 

@@ -81,7 +81,7 @@ public class UserApiImpl implements OsuUserApiService {
     public void refreshUserTokenFirst(BinUser user) {
         base.refreshUserToken(user, true);
         var osuInfo = getPlayerInfo(user);
-        var uid = osuInfo.getUID();
+        var uid = osuInfo.getUserID();
         user.setOsuID(uid);
         user.setOsuName(user.getOsuName());
         user.setOsuMode(user.getOsuMode());
@@ -97,7 +97,7 @@ public class UserApiImpl implements OsuUserApiService {
                 .bodyToMono(OsuUser.class)
                 .map((data) -> {
                     userInfoDao.saveUser(data, mode);
-                    user.setOsuID(data.getUID());
+                    user.setOsuID(data.getUserID());
                     user.setOsuName(data.getUsername());
                     user.setOsuMode(data.getCurrentOsuMode());
                     return data;
@@ -145,15 +145,15 @@ public class UserApiImpl implements OsuUserApiService {
 
         }
         var osuUser = getPlayerInfo(name);
-        bindDao.removeOsuNameToId(osuUser.getUID());
+        bindDao.removeOsuNameToId(osuUser.getUserID());
         String[] nameStrs = new String[osuUser.getPreviousNames().size() + 1];
         int i = 0;
         nameStrs[i++] = osuUser.getUsername().toUpperCase();
         for (var n : osuUser.getPreviousNames()) {
             nameStrs[i++] = n.toUpperCase();
         }
-        bindDao.saveOsuNameToId(osuUser.getUID(), nameStrs);
-        return osuUser.getUID();
+        bindDao.saveOsuNameToId(osuUser.getUserID(), nameStrs);
+        return osuUser.getUserID();
     }
 
     /**

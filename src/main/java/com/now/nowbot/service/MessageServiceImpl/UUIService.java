@@ -127,7 +127,7 @@ public class UUIService implements MessageService<Matcher> {
                 .append(" A: ").append(u.getStatistics().getA()).append('\n');
         // uid:7003013
         sb.append('\n');
-        sb.append("uid: ").append(u.getUID()).append('\n');
+        sb.append("uid: ").append(u.getUserID()).append('\n');
 
         String occupation = u.getOccupation();
         String discord = u.getDiscord();

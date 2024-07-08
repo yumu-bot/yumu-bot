@@ -150,7 +150,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         //recents = scoreApiService.getRecent(user, mode, 0, 3);
 
         Optional<OsuUser> historyUser =
-                infoDao.getLastFrom(osuUser.getUID(),
+                infoDao.getLastFrom(osuUser.getUserID(),
                                 mode == OsuMode.DEFAULT ? osuUser.getCurrentOsuMode() : mode,
                                 LocalDate.now().minusDays(param.day))
                         /*

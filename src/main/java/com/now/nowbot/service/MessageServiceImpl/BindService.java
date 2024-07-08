@@ -241,7 +241,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                     );
                 }
 
-                if (Objects.nonNull(osuUser) && ! osuUser.getUID().equals(binUser.getOsuID())) {
+                if (Objects.nonNull(osuUser) && ! osuUser.getUserID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
 

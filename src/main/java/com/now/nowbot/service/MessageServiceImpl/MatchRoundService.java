@@ -1,13 +1,12 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchCal;
-import com.now.nowbot.model.multiplayer.MatchEvent;
-import com.now.nowbot.model.multiplayer.MatchRound;
+import com.now.nowbot.model.JsonData.Match;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
@@ -28,7 +27,9 @@ public class MatchRoundService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MatchRoundService.class);
 
     @Resource
-    OsuMatchApiService osuMatchApiService;
+    OsuMatchApiService matchApiService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
     @Resource
     ImageService imageService;
 
@@ -118,21 +119,21 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         Match match;
         try {
-            match = osuMatchApiService.getMatchInfo(matchID, 10);
+            match = matchApiService.getMatchInfo(matchID, 10);
         } catch (WebClientResponseException e) {
             throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().getFirst().getId())) {
-            List<MatchEvent> events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
+        while (!match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
+            List<Match.MatchEvent> events = matchApiService.getMatchInfo(matchID, 10).getEvents();
             if (events.isEmpty()) throw new MatchRoundException(MatchRoundException.Type.MR_Round_Empty);
             match.getEvents().addAll(0, events);
         }
 
         //获取所有轮的游戏
-        var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
+        var result = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
 
-        List<MatchRound> rounds = cal.getRoundList();
+        List<Match.MatchRound> rounds = result.getRounds();
 
         if (index < 0 || index > match.getEvents().size()) {
             if (hasKeyword) {
@@ -152,7 +153,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         byte[] img;
         try {
-            img = imageService.getPanelF2(match.getMatchStat(), cal.getRoundList().get(index), index);
+            img = imageService.getPanelF2(match.getMatchStat(), result.getRounds().get(index), index);
         } catch (Exception e) {
             log.error("对局信息图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
@@ -161,7 +162,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         return img;
     }
 
-    private static int getRoundIndexFromKeyWord (List<MatchRound> infoList, @Nullable String keyword) {
+    private static int getRoundIndexFromKeyWord (List<Match.MatchRound> infoList, @Nullable String keyword) {
         int size = infoList.size();
         String word;
 

@@ -12,7 +12,7 @@ public class JumpFarCheck implements ScoreChecker{
     @Override
     public boolean canHandle(OsuUser user, Score score) {
         double pp = user.getPP();
-        if (pp < 3000 || pp > 4500 || score.getBeatMap().getId() != 2459394) return false;
+        if (pp < 3000 || pp > 4500 || score.getBeatMap().getBeatMapID() != 2459394) return false;
         return true;
     }
 

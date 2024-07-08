@@ -83,7 +83,7 @@ public class CheckAspect {
         Object[] args = point.getArgs();
         if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
             var dobj = point.getSignature();
-            log.info("--*-**- 保存用户[{}] ({}), 调用者: {}", u.getOsuId(), u.getOsuName(), dobj.toString());
+            log.info("--*-**- 保存用户[{}] ({}), 调用者: {}", u.getOsuID(), u.getOsuName(), dobj.toString());
         }
         return args;
     }
@@ -256,8 +256,8 @@ public class CheckAspect {
         return null;
     }
     private OsuUser getUser(OsuUser user) {
-        if (Objects.isNull(user.getUID())) return user;
-        var data = userProfileMapper.findTopByUserId(user.getUID());
+        if (Objects.isNull(user.getUserID())) return user;
+        var data = userProfileMapper.findTopByUserId(user.getUserID());
 
         return data.map(profile -> {
             var result = OsuUserPlus.copyOf(user);
@@ -267,8 +267,8 @@ public class CheckAspect {
     }
 
     private Score getScore(Score score) {
-        if (score == null || score.getUser() == null || score.getUser().getId() == null) return score;
-        var data = userProfileMapper.findTopByUserId(score.getUser().getId());
+        if (score == null || score.getUser() == null || score.getUser().getUserID() == null) return score;
+        var data = userProfileMapper.findTopByUserId(score.getUser().getUserID());
 
         return data.map(profile -> {
             var result = ScoreWithUserProfile.copyOf(score);

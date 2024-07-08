@@ -72,9 +72,9 @@ public class MapMinusService implements MessageService<Matcher> {
             beatMap = beatmapApiService.getBeatMapInfo(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
             int mods = OsuMod.getModsValue(modsList);
-            var s = beatmapApiService.getMaxPP(beatMap.getId(), mods);
+            var s = beatmapApiService.getMaxPP(beatMap.getBeatMapID(), mods);
             beatMap.setStarRating((float) s.getStar());
-            DataUtil.setBeatMap(beatMap, mods);
+            DataUtil.applyBeatMapChanges(beatMap, mods);
             fileStr = beatmapApiService.getBeatMapFile(bid);
         } catch (Exception e) {
             throw new MapMinusException(MapMinusException.Type.MM_Map_NotFound);

@@ -26,7 +26,7 @@ public class RecommendedMap {
 
     public static RecommendedMap getMap(BeatMap b){
         var data = new RecommendedMap();
-        data.bid = b.getId();
+        data.bid = b.getBeatMapID();
         if (b.getBeatMapSet() != null) {
             data.bgUrl = b.getBeatMapSet().getCovers().getCover2x();
         }

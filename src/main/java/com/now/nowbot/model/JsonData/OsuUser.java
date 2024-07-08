@@ -309,11 +309,11 @@ public class OsuUser {
         this.id = id;
     }
 
-    public Long getUID() {
+    public Long getUserID() {
         return id;
     }
 
-    public void setUID(Long id) {
+    public void setUserID(Long id) {
         this.id = id;
     }
 
@@ -369,7 +369,7 @@ public class OsuUser {
     public void parseFull(OsuUserApiService osuUserApiService) {
         OsuUser o;
         try {
-            o = osuUserApiService.getPlayerInfo(this.getUID());
+            o = osuUserApiService.getPlayerInfo(this.getUserID());
         } catch (Exception e) {
             return;
         }

@@ -162,7 +162,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         }
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+            beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
             score.setBeatMap(beatMap);
             score.setBeatMapSet(beatMap.getBeatMapSet());
         } catch (Exception e) {

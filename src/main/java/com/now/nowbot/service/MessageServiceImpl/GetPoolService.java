@@ -109,7 +109,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
             return OsuMode.DEFAULT;
         } else {
             try {
-                var b = osuBeatmapApiService.getMapInfoFromDB(bid);
+                var b = osuBeatmapApiService.getBeatMapInfoFromDataBase(bid);
                 return b.getOsuMode();
             } catch (Exception e) {
                 return OsuMode.DEFAULT;

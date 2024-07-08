@@ -1,6 +1,6 @@
 package com.now.nowbot.service.OsuApiService;
 
-import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.JsonData.Match;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 public interface OsuMatchApiService {

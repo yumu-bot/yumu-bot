@@ -1,11 +1,11 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchData;
-import com.now.nowbot.model.multiplayer.PlayerData;
+import com.now.nowbot.model.JsonData.Match;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.DataUtil;
@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ public class MuRatingService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
 
     @Resource
-    OsuMatchApiService osuMatchApiService;
+    OsuMatchApiService matchApiService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
     @Resource
     ImageService imageService;
 
@@ -40,7 +43,7 @@ public class MuRatingService implements MessageService<Matcher> {
         } else return false;
     }
 
-    public record MRAParam(Integer matchID, Integer skip, Integer ignore, List<Integer> remove, Double easy, Boolean failed, Boolean rematch) {}
+    public record MRAParam(Integer matchID, MatchCalculate.CalculateParam calParam) {}
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
@@ -59,10 +62,10 @@ public class MuRatingService implements MessageService<Matcher> {
         }
 
         var param = parseParam(matcher);
-        MatchData data;
+        MatchCalculate mc;
 
         try {
-            data = calculate(param);
+            mc = calculate(param, matchApiService, beatmapApiService);
         } catch (MRAException e) {
             throw e;
         } catch (Exception e) {
@@ -73,14 +76,14 @@ public class MuRatingService implements MessageService<Matcher> {
         if (matcher.group("main") != null) {
             byte[] image;
             try {
-                image = imageService.getPanelC(data);
+                image = imageService.getPanelC(mc);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("MRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
             }
         } else if (matcher.group("uu") != null) {
-            String str = parseCSA(data);
+            String str = parseCSA(mc);
             try {
                 from.sendMessage(str).recallIn(60000);
             } catch (Exception e) {
@@ -111,11 +114,17 @@ public class MuRatingService implements MessageService<Matcher> {
         boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
 
         List<Integer> remove = getIntegers(matcher);
+        double easy = getEasyMultiplier(matcher);
 
+        return new MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
+    }
+
+    @NonNull
+    private static double getEasyMultiplier(Matcher matcher) throws MRAException {
         var easyStr = matcher.group("easy");
         double easy = 1d;
 
-        if (Objects.nonNull(easyStr) && ! easyStr.isBlank()) {
+        if (StringUtils.hasText(easyStr)) {
             try {
                 easy = Double.parseDouble(easyStr);
             } catch (NullPointerException | NumberFormatException e) {
@@ -125,8 +134,7 @@ public class MuRatingService implements MessageService<Matcher> {
 
         if (easy > 10d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge);
         if (easy < 0d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall);
-
-        return new MRAParam(matchID, skip, ignore, remove, easy, failed, rematch);
+        return easy;
     }
 
 
@@ -150,52 +158,51 @@ public class MuRatingService implements MessageService<Matcher> {
         return remove;
     }
 
-    private String parseCSA(MatchData data) {
+    private String parseCSA(MatchCalculate c) {
+        var data = c.getMatchData();
+
         //结果数据
         StringBuilder sb = new StringBuilder();
-        sb.append(data.getMatchStat().getName()).append("\n")
-                .append(data.getTeamPoint().get("red")).append(" : ")
-                .append(data.getTeamPoint().get("blue")).append("\n")
-                .append("mp").append(data.getMatchStat().getId()).append(" ")
-                .append(data.getRoundList().getFirst().getTeamType()).append("\n");
+        sb.append(c.getMatch().getMatchStat().getName()).append("\n")
+                .append(data.getTeamPointMap().get("red")).append(" : ")
+                .append(data.getTeamPointMap().get("blue")).append("\n")
+                .append("mp").append(c.getMatch().getMatchStat().getMatchID()).append(" ")
+                .append(data.isTeamVs()).append("\n");
 
-        for (PlayerData p : data.getPlayerDataList()) {
+        for (MatchCalculate.PlayerData p : data.getPlayerDataMap().values().stream().toList()) {
             sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
                     .append(" ")
                     .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]", p.getWin(), p.getLose(),
-                            Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTTS() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
+                            Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTotal() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
                     .append("\n\n");
         }
         return sb.toString();
     }
 
-    public MatchData calculate(MRAParam data) throws MRAException {
-        return calculate(data.matchID, data.skip, data.ignore, data.remove, data.easy, data.failed, data.rematch);
+    public static MatchCalculate calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MRAException {
+        var param = new MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
+
+        return calculate(param, matchApiService, beatmapApiService);
     }
 
-    public MatchData calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch) throws MRAException {
-
-        if (skip < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
-        if (ignore < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
+    public static MatchCalculate calculate(MRAParam param, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MRAException {
+        if (param.calParam().skip() < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
+        if (param.calParam().ignore() < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
 
         Match match;
         try {
-            match = osuMatchApiService.getMatchInfo(matchID, 10);
+            match = matchApiService.getMatchInfo(param.matchID(), 10);
         } catch (Exception e) {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().getFirst().getId())) {
-            var events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
+        while (! match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
+            var events = matchApiService.getMatchInfo(param.matchID(), 10).getEvents();
             if (events.isEmpty()) throw new MRAException(MRAException.Type.RATING_Round_Empty);
             match.getEvents().addAll(0, events);
         }
 
-        //真正的计算封装，就两行
-        MatchData matchData = new MatchData(match, skip, ignore, remove, easy, failed, rematch); //!keep = remove
-        matchData.calculate();
-
-        return matchData;
+        return new MatchCalculate(match, param.calParam(), beatmapApiService);
     }
 }
 

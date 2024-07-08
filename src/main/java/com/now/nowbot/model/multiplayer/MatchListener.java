@@ -1,5 +1,6 @@
 package com.now.nowbot.model.multiplayer;
 
+import com.now.nowbot.model.JsonData.Match;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class MatchListener {
-    private static final Logger                   log = LoggerFactory.getLogger(MatchListener.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchListener.class);
     private static final ScheduledExecutorService executorService;
 
     static {
@@ -24,36 +25,36 @@ public class MatchListener {
         executorService = Executors.newScheduledThreadPool(Integer.MAX_VALUE, threadFactory);
     }
 
-    Match                                     match;
-    OsuMatchApiService                        matchApiService;
+    Match match;
+    OsuMatchApiService matchApiService;
 
     public void addStopListener(BiConsumer<Match, StopType> listener) {
-        endListner.add(listener);
+        endListener.add(listener);
     }
 
-    List<BiConsumer<List<MatchEvent>, Match>> consumerList = new ArrayList<>();
-    List<Consumer<Match>>             startListner = new ArrayList<>();
-    List<BiConsumer<Match, StopType>> endListner   = new ArrayList<>();
+    List<BiConsumer<List<Match.MatchEvent>, Match>> consumerList = new ArrayList<>();
+    List<Consumer<Match>> startListener = new ArrayList<>();
+    List<BiConsumer<Match, StopType>> endListener = new ArrayList<>();
     long                              matchID;
-    volatile long recordID;
+    volatile long eventID;
     private ScheduledFuture<?> future;
     private ScheduledFuture<?> kill;
 
     public MatchListener(Match match, OsuMatchApiService service) {
         this.match = match;
         this.matchApiService = service;
-        matchID = match.getMatchStat().getId();
+        matchID = match.getMatchStat().getMatchID();
     }
 
-    public void addEventListener(BiConsumer<List<MatchEvent>, Match> doListener) {
+    public void addEventListener(BiConsumer<List<Match.MatchEvent>, Match> doListener) {
         consumerList.add(doListener);
-        if (isStart() && Objects.nonNull(match.getCurrentGameId())) {
+        if (isStart() && Objects.nonNull(match.getCurrentGameID())) {
             doListener.accept(getLastRound(match.getEvents()), match);
         }
     }
 
-    private List<MatchEvent> getLastRound(List<MatchEvent> events) {
-        MatchEvent e = null;
+    private List<Match.MatchEvent> getLastRound(List<Match.MatchEvent> events) {
+        Match.MatchEvent e = null;
         var iter = events.listIterator(events.size());
         while (iter.hasPrevious()) {
             var event = iter.previous();
@@ -65,14 +66,14 @@ public class MatchListener {
         if (Objects.isNull(e)) {
             throw new TipsRuntimeException("查询状态异常");
         }
-        if (recordID == e.getId()) {
-            recordID = e.getId() - 1;
+        if (eventID == e.getEventID()) {
+            eventID = e.getEventID() - 1;
         }
         return List.of(e);
     }
 
     public void addStartListener(Consumer<Match> listener) {
-        startListner.add(listener);
+        startListener.add(listener);
         if (isStart()) {
             listener.accept(match);
         }
@@ -83,20 +84,20 @@ public class MatchListener {
             if (match.isMatchEnd()) {
                 this.stopListener(StopType.MATCH_END);
             }
-            var newMatch = matchApiService.getMatchInfoAfter(matchID, recordID);
+            var newMatch = matchApiService.getMatchInfoAfter(matchID, eventID);
 
-            if (newMatch.getLatestEventId() == recordID) return;
+            if (newMatch.getLatestEventID() == eventID) return;
 
-            if (Objects.nonNull(newMatch.getCurrentGameId())) {
+            if (Objects.nonNull(newMatch.getCurrentGameID())) {
                 // 如果正在进行, newMatch.getEvents().getFirst() 一定是当前开始的对局
                 var m = newMatch.getEvents().getFirst();
-                if (m.getId() - 1 != recordID) {
-                    recordID = m.getId() - 1;
+                if (m.getEventID() - 1 != eventID) {
+                    eventID = m.getEventID() - 1;
                     onEvents(newMatch.getEvents(), match);
                 }
                 return;
             } else {
-                recordID = newMatch.getLatestEventId();
+                eventID = newMatch.getLatestEventID();
             }
 
             match.parseNextData(newMatch);
@@ -117,10 +118,10 @@ public class MatchListener {
             return;
         }
 
-        recordID = match.getLatestEventId();
+        eventID = match.getLatestEventID();
 
-        if (Objects.nonNull(match.getCurrentGameId())) {
-            List<MatchEvent> gameOpt = getLastRound(match.getEvents());
+        if (Objects.nonNull(match.getCurrentGameID())) {
+            List<Match.MatchEvent> gameOpt = getLastRound(match.getEvents());
             onEvents(gameOpt, match);
         }
 
@@ -135,18 +136,18 @@ public class MatchListener {
     }
 
     private void onStart() {
-        startListner.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match)));
+        startListener.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match)));
     }
 
     private void onStop(StopType type) {
-        endListner.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match, type)));
+        endListener.forEach(c -> Thread.startVirtualThread(() -> c.accept(this.match, type)));
     }
 
     public boolean isStart() {
         return Objects.nonNull(future) && !future.isDone();
     }
 
-    private void onEvents(List<MatchEvent> events, Match match) {
+    private void onEvents(List<Match.MatchEvent> events, Match match) {
         consumerList.forEach(c -> Thread.startVirtualThread(() -> c.accept(events, match)));
     }
 
@@ -160,18 +161,18 @@ public class MatchListener {
         }
     }
 
-    public void removeListener(BiConsumer<List<MatchEvent>, Match> consumer) {
+    public void removeListener(BiConsumer<List<Match.MatchEvent>, Match> consumer) {
         consumerList.remove(consumer);
     }
 
     public void removeListener(Consumer<Match> start) {
 
-        startListner.remove(start);
+        startListener.remove(start);
     }
 
     public void removeListener(BiConsumer<Match, StopType> consumer, StopType type) {
         consumer.accept(match, type);
-        endListner.remove(consumer);
+        endListener.remove(consumer);
     }
 
     public enum StopType {

@@ -97,7 +97,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         bpMap.forEach((index, score) -> {
             beforeBpSumAtomic.updateAndGet(v -> v + score.getWeight().weightedPP());
-            var beatmap = beatmapApiService.getMapInfoFromDB(score.getBeatMap().getId());
+            var beatmap = beatmapApiService.getBeatMapInfoFromDataBase(score.getBeatMap().getBeatMapID());
             score.setBeatMap(beatmap);
 
             int max = beatmap.getMaxCombo();
@@ -164,7 +164,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             statistics.setCount300(statistics.getCount300() + countMiss);
         }
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
-        var bid = score.getBeatMap().getId();
+        var bid = score.getBeatMap().getBeatMapID();
         var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
 
         try {

@@ -632,7 +632,7 @@ public class BeatMapSet {
 
         if (mappers.isEmpty() && Objects.nonNull(relatedUsers) && Objects.nonNull(nominators)) {
             for (OsuUser u : relatedUsers) {
-                if (!(nominators.contains(u) || Objects.equals(u.getUID(), creatorID))) {
+                if (!(nominators.contains(u) || Objects.equals(u.getUserID(), creatorID))) {
                     mappers.add(u);
                 }
             }
@@ -649,7 +649,7 @@ public class BeatMapSet {
         if (nominators.isEmpty() && Objects.nonNull(currentNominations) && Objects.nonNull(relatedUsers)) {
             for (CurrentNominations c : currentNominations) {
                 for (OsuUser u : relatedUsers) {
-                    if (Objects.equals(u.getUID(), c.UID)) {
+                    if (Objects.equals(u.getUserID(), c.UID)) {
                         nominators.add(u);
                         break;
                     }

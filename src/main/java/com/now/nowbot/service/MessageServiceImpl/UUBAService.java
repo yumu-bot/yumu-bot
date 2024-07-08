@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.Service.UserParam;
-import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
@@ -15,7 +14,6 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -150,7 +148,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         }
 
-        beatmapApiService.applyModChangeForScores(bps);
+        beatmapApiService.applyStarRatingChange(bps);
 
         String[] Lines;
         if (param.info()) {
@@ -380,7 +378,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var mappersInfo = userApiService.getUsers(mappersId);
         var mapperIdToInfo = new HashMap<Long, String>();
         for (var node : mappersInfo) {
-            mapperIdToInfo.put(node.getId(), node.getUserName());
+            mapperIdToInfo.put(node.getUserID(), node.getUserName());
         }
         mappers.forEach(mapper -> {
             try {

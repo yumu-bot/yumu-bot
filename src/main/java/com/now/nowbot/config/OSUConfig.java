@@ -11,18 +11,18 @@ public class OSUConfig {
     /**
      * 接口路径, 一般不用改
      */
-    String  url          = "https://osu.ppy.sh/api/v2/";
+    String url = "https://osu.ppy.sh/api/v2/";
     /**
      * 回调链接, 需要与 osu oauth 应用的callback url 完全一致
      * 默认不需要配置, 自动构造 publicDomain+callBackUrl
      * 也可以自行配置, 强制覆盖
      */
-    String  callbackUrl  = "";
+    String callbackUrl = "";
     /**
      * 回调的api端口
      */
-    String  callbackPath = "/bind";
-    Integer id           = 0;
+    String callbackPath = "/bind";
+    Integer id = 0;
     String token = "*";
 
     public String getUrl() {

@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -82,7 +81,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         }
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyModChangeForScores(bpList);
+        beatmapApiService.applyStarRatingChange(bpList);
 
         byte[] image;
 
@@ -119,7 +118,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         }
     }
 
-    public Map<String, Object> parseData(OsuUser user, List<Score> bpList, OsuUserApiService userApiService) {
+    public static Map<String, Object> parseData(OsuUser user, List<Score> bpList, OsuUserApiService userApiService) {
         if (bpList == null || bpList.size() <= 5) return HashMap.newHashMap(1);
 
         var bps = new ArrayList<>(bpList);
@@ -241,7 +240,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
                     String name = "";
                     String avatar = "";
                     for (var node : mapperInfo) {
-                        if (e.getKey().equals(node.getId())) {
+                        if (e.getKey().equals(node.getUserID())) {
                             name = node.getUserName();
                             avatar = node.getAvatarUrl();
                             break;

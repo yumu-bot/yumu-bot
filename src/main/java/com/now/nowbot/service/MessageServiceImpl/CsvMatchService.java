@@ -2,13 +2,12 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchCal;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.multiplayer.MatchScore;
+import com.now.nowbot.model.JsonData.Match;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
 import com.now.nowbot.util.Instructions;
@@ -31,7 +30,9 @@ public class CsvMatchService implements MessageService<Matcher> {
     static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Resource
-    OsuMatchApiService osuMatchApiService;
+    OsuMatchApiService matchApiService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
@@ -106,17 +107,17 @@ public class CsvMatchService implements MessageService<Matcher> {
         Match match;
 
         try {
-            match = osuMatchApiService.getMatchInfo(matchID, 10);
+            match = matchApiService.getMatchInfo(matchID, 10);
         } catch (Exception e) {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
-        var rounds = cal.getRoundList();
+        var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
+        var rounds = cal.getRounds();
 
         for (var r : rounds) {
-            var scores = r.getScoreInfoList();
-            getRoundStrings(sb, r);
+            var scores = r.getScores();
+            appendRoundStrings(sb, r);
             for (var s : scores) {
                 getScoreStrings(sb, s);
             }
@@ -130,21 +131,21 @@ public class CsvMatchService implements MessageService<Matcher> {
             Match match;
 
             try {
-                match = osuMatchApiService.getMatchInfo(matchID, 10);
+                match = matchApiService.getMatchInfo(matchID, 10);
             } catch (Exception e) {
                 throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
             }
 
-            var cal = new MatchCal(match, 0, 0, null, 1d, true, true);
-            var rounds = cal.getRoundList();
+            var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
+            var rounds = cal.getRounds();
 
             //多比赛
-            getMatchStrings(sb, match);
+            appendMatchStrings(sb, match);
             for (var r : rounds) {
-                var scores = r.getScoreInfoList();
-                getRoundStrings(sb, r);
+                var scores = r.getScores();
+                appendRoundStrings(sb, r);
                 for (var s : scores) {
-                    getScoreStringsLite(sb, s);
+                    appendScoreStringsLite(sb, s);
                 }
             }
 
@@ -153,11 +154,11 @@ public class CsvMatchService implements MessageService<Matcher> {
         }
     }
 
-    private void getMatchStrings(StringBuilder sb, Match match){
+    private void appendMatchStrings(StringBuilder sb, Match match){
         try {
             sb.append(match.getMatchStat().getStartTime().format(Date1)).append(',')
                     .append(match.getMatchStat().getStartTime().format(Date2)).append(',')
-                    .append(match.getMatchStat().getId()).append(',')
+                    .append(match.getMatchStat().getMatchID()).append(',')
                     .append(match.getMatchStat().getName()).append(',')
                     .append('\n');
         } catch (Exception e) {
@@ -166,7 +167,7 @@ public class CsvMatchService implements MessageService<Matcher> {
     }
 
 
-    private void getRoundStrings(StringBuilder sb, MatchRound round){
+    private void appendRoundStrings(StringBuilder sb, Match.MatchRound round){
         try {
             BeatMap b;
 
@@ -176,7 +177,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                 b = new BeatMap();
                 b.setStarRating(0f);
                 b.setTotalLength(0);
-                b.setId(-1L);
+                b.setBeatMapID(-1L);
                 b.setMaxCombo(0);
             }
 
@@ -188,7 +189,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                     .append(b.getStarRating()).append(',')
                     .append(b.getTotalLength()).append(',')
                     .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
-                    .append(b.getId()).append(',')
+                    .append(b.getBeatMapID()).append(',')
                     .append(b.getMaxCombo())
                     .append('\n');
         } catch (Exception e) {
@@ -196,30 +197,30 @@ public class CsvMatchService implements MessageService<Matcher> {
         }
     }
 
-    private void getScoreStrings(StringBuilder sb, MatchScore score){
+    private void getScoreStrings(StringBuilder sb, Match.MatchScore score){
         try {
-            sb.append(score.getUserId()).append(',')
+            sb.append(score.getUserID()).append(',')
                     .append(String.format("%4.4f", score.getAccuracy())).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
                     .append(score.getScore()).append(',')
                     .append(score.getMaxCombo()).append(',')
-                    .append(score.isPassed()).append(',')
-                    .append(score.isPerfect()).append(',')
-                    .append(score.getSlot()).append(',')
-                    .append(score.getTeam()).append(',')
-                    .append(score.isPass())
+                    .append(score.getPassed()).append(',')
+                    .append(score.getPerfect()).append(',')
+                    .append(score.getPlayerStat().slot()).append(',')
+                    .append(score.getPlayerStat().team()).append(',')
+                    .append(score.getPlayerStat().pass())
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
         }
     }
 
-    private void getScoreStringsLite(StringBuilder sb, MatchScore score){
+    private void appendScoreStringsLite(StringBuilder sb, Match.MatchScore score){
 
         try {
-            sb.append(score.getTeam()).append(',')
-                    .append(score.getUserId()).append(',')
-                    .append(score.getUserName()).append(',')
+            sb.append(score.getPlayerStat().team()).append(',')
+                    .append(score.getUserID()).append(',')
+                    .append(score.getUser().getUserName()).append(',')
                     .append(score.getScore()).append(',')
                     .append('[').append(String.join("|", score.getMods())).append("],")
                     .append(score.getMaxCombo()).append(',')

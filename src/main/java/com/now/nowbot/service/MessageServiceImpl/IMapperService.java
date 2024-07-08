@@ -110,10 +110,10 @@ public class IMapperService implements MessageService<Matcher> {
         }
     }
 
-    public Map<String, Object> parseData(OsuUser user, OsuUserApiService userApiService, OsuBeatmapApiService beatmapApiService) {
+    public static Map<String, Object> parseData(OsuUser user, OsuUserApiService userApiService, OsuBeatmapApiService beatmapApiService) {
         var page = 1;
         var query = new HashMap<String, Object>();
-        query.put("q", "creator=" + user.getUID());
+        query.put("q", "creator=" + user.getUserID());
         query.put("sort", "ranked_desc");
         query.put("s", "any");
         query.put("page", page);
@@ -143,7 +143,7 @@ public class IMapperService implements MessageService<Matcher> {
         final List<ActivityEvent> mappingActivity = new ArrayList<>();
 
         try {
-            activity = userApiService.getUserRecentActivity(user.getUID(), 0, 100);
+            activity = userApiService.getUserRecentActivity(user.getUserID(), 0, 100);
 
             activity.stream()
                     .filter(ActivityEvent::isMapping)
@@ -165,21 +165,21 @@ public class IMapperService implements MessageService<Matcher> {
 
         var mostPopularBeatmap = result
                 .stream()
-                .filter(s -> (Objects.equals(s.getCreatorID(), user.getUID())))
+                .filter(s -> (Objects.equals(s.getCreatorID(), user.getUserID())))
                 .sorted(Comparator.comparing(BeatMapSet::getPlayCount).reversed())
                 .limit(6)
                 .toList();
 
         var mostRecentRankedBeatmap = result
                 .stream()
-                .filter(s -> (s.hasLeaderBoard() && Objects.equals(user.getUID(), s.getCreatorID())))
+                .filter(s -> (s.hasLeaderBoard() && Objects.equals(user.getUserID(), s.getCreatorID())))
                 .findFirst()
                 .orElse(null);
 
         if (Objects.isNull(mostRecentRankedBeatmap) && user.getRankedCount() > 0) {
             try {
                 var newQuery = new HashMap<String, Object>();
-                newQuery.put("q", user.getUID().toString());
+                newQuery.put("q", user.getUserID().toString());
                 newQuery.put("sort", "ranked_desc");
                 newQuery.put("s", "any");
                 newQuery.put("page", 1);
@@ -193,7 +193,7 @@ public class IMapperService implements MessageService<Matcher> {
 
         var mostRecentRankedGuestDiff = result
                 .stream()
-                .filter(s -> (s.hasLeaderBoard()) && !Objects.equals(user.getUID(), s.getCreatorID()))
+                .filter(s -> (s.hasLeaderBoard()) && !Objects.equals(user.getUserID(), s.getCreatorID()))
                 .findFirst()
                 .orElse(null);
 
@@ -201,7 +201,7 @@ public class IMapperService implements MessageService<Matcher> {
 
         var diffArr = new int[8];
         {
-            var diffStar = beatMapSum.stream().filter(b -> Objects.equals(b.getMapperID(), user.getUID())).mapToDouble(BeatMap::getStarRating).toArray();
+            var diffStar = beatMapSum.stream().filter(b -> Objects.equals(b.getMapperID(), user.getUserID())).mapToDouble(BeatMap::getStarRating).toArray();
             var starMaxBoundary = new double[]{2f, 2.8f, 4f, 5.3f, 6.5f, 8f, 10f, Double.MAX_VALUE};
             for (var d : diffStar) {
                 for (int i = 0; i < 8; i++) {
@@ -248,7 +248,7 @@ public class IMapperService implements MessageService<Matcher> {
             for (int i = 0; i < search.getBeatmapSets().size(); i++) {
                 var v = search.getBeatmapSets().get(i);
 
-                if (v.getCreatorID() == user.getUID().intValue()) {
+                if (v.getCreatorID() == user.getUserID().intValue()) {
                     favorite += v.getFavouriteCount();
                     playcount += v.getPlayCount();
                 }
@@ -257,7 +257,7 @@ public class IMapperService implements MessageService<Matcher> {
 
         var lengthArr = new int[8];
         {
-            var lengthAll = beatMapSum.stream().filter(b -> b.getMapperID().longValue() == user.getUID()).mapToDouble(BeatMap::getTotalLength).toArray();
+            var lengthAll = beatMapSum.stream().filter(b -> b.getMapperID().longValue() == user.getUserID()).mapToDouble(BeatMap::getTotalLength).toArray();
             var lengthMaxBoundary = new double[]{60, 100, 140, 180, 220, 260, 300, Double.MAX_VALUE};
             for (var f : lengthAll) {
                 for (int i = 0; i < 8; i++) {

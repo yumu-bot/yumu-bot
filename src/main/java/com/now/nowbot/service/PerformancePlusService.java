@@ -140,14 +140,14 @@ public class PerformancePlusService {
                 continue;
             }
             postDataId.add(score.getScoreID());
-            checkFile(score.getBeatMap().getId());
+            checkFile(score.getBeatMap().getBeatMapID());
             var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
             var combo = score.getMaxCombo();
-            var misses = Objects.requireNonNullElse(score.getStatistics().getCountMiss(), 0);
+            var misses = score.getStatistics().getCountMiss();
             // 这俩我猜测是 50 和 100 的数量
-            var mehs = Objects.requireNonNullElse(score.getStatistics().getCount50(), 0);
-            var oks = Objects.requireNonNullElse(score.getStatistics().getCount100(), 0);
-            body.add(new ScorePerformancePlus(score.getBeatMap().getId().toString(), mods, combo, misses, mehs, oks));
+            var mehs = score.getStatistics().getCount50();
+            var oks = score.getStatistics().getCount100();
+            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID().toString(), mods, combo, misses, mehs, oks));
         }
 
         if (body.isEmpty()) {

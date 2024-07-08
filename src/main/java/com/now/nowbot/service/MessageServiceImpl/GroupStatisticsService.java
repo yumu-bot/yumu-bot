@@ -211,7 +211,7 @@ public class GroupStatisticsService implements MessageService<Long> {
             if (nowOsuId.size() >= 50) {
                 var result = userApiService.getUsers(nowOsuId.keySet());
                 for (var uInfo : result) {
-                    users.put(nowOsuId.get(uInfo.getId()), uInfo);
+                    users.put(nowOsuId.get(uInfo.getUserID()), uInfo);
                 }
                 nowOsuId.clear();
             }
@@ -231,7 +231,7 @@ public class GroupStatisticsService implements MessageService<Long> {
                         sb.append("加载失败").append(s).append('\n');
                         return;
                     }
-                    sb.append(entry.getValue().getId()).append(',');
+                    sb.append(entry.getValue().getUserID()).append(',');
                     sb.append(entry.getValue().getUserName()).append(',');
                     sb.append(entry.getValue().getRulesets().getOsu().getPP()).append(',');
                     sb.append(usersBP1.get(entry.getKey())).append('\n');

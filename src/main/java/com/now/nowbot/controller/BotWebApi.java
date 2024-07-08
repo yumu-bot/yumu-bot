@@ -10,12 +10,11 @@ import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.*;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.service.OsuApiService.*;
 import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
@@ -46,23 +45,15 @@ public class BotWebApi {
     @Resource
     OsuUserApiService userApiService;
     @Resource
+    OsuMatchApiService matchApiService;
+    @Resource
     OsuScoreApiService scoreApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    MuRatingService muRatingService;
-    @Resource
-    MatchNowService monitorNowService;
-    @Resource
     ImageService imageService;
     @Resource
-    BPAnalysisService bpAnalysisService;
-    @Resource
-    DiceService diceService;
-    @Resource
-    IMapperService iMapperService;
-    @Resource
-    NominationService nominationService;
+    OsuDiscussionApiService discussionApiService;
 
     /**
      * SN 图片接口 (SAN)
@@ -85,7 +76,7 @@ public class BotWebApi {
 
         try {
             info = userApiService.getPlayerInfo(name.trim(), mode);
-            bplist = scoreApiService.getBestPerformance(info.getUID(), mode, 0, 100);
+            bplist = scoreApiService.getBestPerformance(info.getUserID(), mode, 0, 100);
             ppm = PPMinus.getInstance(mode, info, bplist);
         } catch (Exception e) {
             info = null;
@@ -123,7 +114,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
 
         var info = userApiService.getPlayerInfo(name.trim(), mode);
-        var bplist = scoreApiService.getBestPerformance(info.getUID(), mode, 0, 100);
+        var bplist = scoreApiService.getBestPerformance(info.getUserID(), mode, 0, 100);
         var ppm = PPMinus.getInstance(mode, info, bplist);
         if (ppm == null) {
             throw new RuntimeException("PPM：API 异常");
@@ -155,8 +146,8 @@ public class BotWebApi {
 
         mode = HandleUtil.getModeOrElse(mode, user1);
 
-        var bplist1 = scoreApiService.getBestPerformance(user1.getUID(), mode, 0, 100);
-        var bplist2 = scoreApiService.getBestPerformance(user2.getUID(), mode, 0, 100);
+        var bplist1 = scoreApiService.getBestPerformance(user1.getUserID(), mode, 0, 100);
+        var bplist2 = scoreApiService.getBestPerformance(user2.getUserID(), mode, 0, 100);
 
         var ppm1 = PPMinus.getInstance(mode, user1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, user2, bplist2);
@@ -198,7 +189,9 @@ public class BotWebApi {
         byte[] image;
 
         try {
-            var data = monitorNowService.parseData(matchID, k, d, null, e, f, r);
+            var data = MatchNowService.calculate(
+                    new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r)),
+                    matchApiService, beatmapApiService);
             image = imageService.getPanelF(data);
         } catch (Exception err) {
             log.error("比赛结果：API 异常", err);
@@ -236,7 +229,9 @@ public class BotWebApi {
         byte[] image;
 
         try {
-            var data = muRatingService.calculate(matchID, k, d, null, e, f, r);
+            var data = MuRatingService.calculate(
+                    new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r)),
+                    matchApiService, beatmapApiService);
             image = imageService.getPanelC(data);
         } catch (Exception err) {
             log.error("比赛评分：API 异常", err);
@@ -312,7 +307,7 @@ public class BotWebApi {
         switch (type) {
             // bp
             case BP -> {
-                scoreList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, offset, limit);
 
                 ArrayList<Integer> rankList = new ArrayList<>();
                 for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
@@ -327,7 +322,7 @@ public class BotWebApi {
             }
             // pass
             case Pass -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scoreList);
@@ -340,7 +335,7 @@ public class BotWebApi {
 
             //recent
             case Recent -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, limit);
+                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scoreList);
@@ -353,9 +348,9 @@ public class BotWebApi {
 
             //passCard
             case PassCard -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, 1, true);
+                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, true);
                 var score = scoreList.getFirst();
-                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
                 score.setBeatMap(beatMap);
                 score.setBeatMapSet(beatMap.getBeatMapSet());
 
@@ -365,9 +360,9 @@ public class BotWebApi {
 
             //recentCard
             case RecentCard -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUID(), mode, offset, 1, false);
+                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, false);
                 var score = scoreList.getFirst();
-                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
                 score.setBeatMap(beatMap);
                 score.setBeatMapSet(beatMap.getBeatMapSet());
 
@@ -379,7 +374,7 @@ public class BotWebApi {
             case null, default -> {
                 // 时间计算
                 var day = Objects.nonNull(start) ? Math.max(Math.min(start, 999), 1) : 1;
-                var BPList = scoreApiService.getBestPerformance(osuUser.getUID(), mode, 0, 100);
+                var BPList = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, 0, 100);
                 ArrayList<Integer> rankList = new ArrayList<>();
 
                 LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
@@ -554,7 +549,7 @@ public class BotWebApi {
 
         try {
             osuUser = userApiService.getPlayerInfo(name);
-            uid = osuUser.getUID();
+            uid = osuUser.getUserID();
         } catch (WebClientResponseException.NotFound e) {
             throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
         }
@@ -579,7 +574,7 @@ public class BotWebApi {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
         } else {
             var beatMap = new BeatMap();
-            beatMap.setId(bid);
+            beatMap.setBeatMapID(bid);
             score.setBeatMap(beatMap);
         }
 
@@ -616,7 +611,7 @@ public class BotWebApi {
 
         Map<String, Object> data;
         try {
-            data = bpAnalysisService.parseData(osuUser, scores, userApiService);
+            data = BPAnalysisService.parseData(osuUser, scores, userApiService);
         } catch (Exception e) {
             throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
         }
@@ -643,13 +638,13 @@ public class BotWebApi {
         try {
             if (Objects.isNull(range)) {
                 if (Objects.isNull(compare)) {
-                    message = String.format("%.0f", diceService.getRandom(100));
+                    message = String.format("%.0f", DiceService.getRandom(100));
                 } else {
                     var isOnlyNumbers = Pattern.matches("^[0-9.]+$", compare);
 
                     if (isOnlyNumbers) {
                         try {
-                            var r = diceService.getRandom(Integer.parseInt(compare));
+                            var r = DiceService.getRandom(Integer.parseInt(compare));
 
                             if (r <= 1) {
                                 message = String.format("%.2f", r);
@@ -657,14 +652,14 @@ public class BotWebApi {
                                 message = String.format("%.0f", r);
                             }
                         } catch (NumberFormatException e) {
-                            message = diceService.Compare(compare);
+                            message = DiceService.Compare(compare);
                         }
                     } else {
-                        message = diceService.Compare(compare);
+                        message = DiceService.Compare(compare);
                     }
                 }
             } else {
-                var r = diceService.getRandom(range);
+                var r = DiceService.getRandom(range);
 
                 if (r <= 1) {
                     message = String.format("%.2f", r);
@@ -677,7 +672,7 @@ public class BotWebApi {
 
         } catch (DiceException e) {
             return new ResponseEntity<>(
-                    String.format("%.0f", diceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
+                    String.format("%.0f", DiceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
                     , HttpStatus.OK);
         } catch (Exception e) {
             log.error("扔骰子：API 异常", e);
@@ -752,7 +747,7 @@ public class BotWebApi {
 
         var image = imageService.getPanelD(user, Optional.empty(), day, BPs, user.getCurrentOsuMode());
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUID()}-info.jpg", image.length), HttpStatus.OK);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUserID()}-info.jpg", image.length), HttpStatus.OK);
     }
 
     /**
@@ -768,10 +763,10 @@ public class BotWebApi {
             @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name
     ) {
         var osuUser = getPlayerInfoJson(uid, name, null);
-        var data = iMapperService.parseData(osuUser, userApiService, beatmapApiService);
+        var data = IMapperService.parseData(osuUser, userApiService, beatmapApiService);
         var image = imageService.getPanelM(data);
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUID()}-mapper.jpg", image.length), HttpStatus.OK);
+        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUserID()}-mapper.jpg", image.length), HttpStatus.OK);
     }
 
     /**
@@ -794,10 +789,10 @@ public class BotWebApi {
                 if (Objects.isNull(bid)) {
                     throw new NominationException(NominationException.Type.N_Map_NotFound);
                 } else {
-                    data = nominationService.parseData(bid, false);
+                    data = NominationService.parseData(bid, false, beatmapApiService, discussionApiService, userApiService);
                 }
             } else {
-                data = nominationService.parseData(sid, true);
+                data = NominationService.parseData(sid, true, beatmapApiService, discussionApiService, userApiService);
             }
         } catch (NominationException e) {
             throw new RuntimeException(NominationException.Type.N_Map_NotFound.message);
@@ -937,7 +932,7 @@ public class BotWebApi {
             return scoreApiService.getRecent(uid, mode, offset, limit, isPassed);
         } else if (Objects.nonNull(name)) {
             var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getRecent(user.getUID(), mode, offset, limit, isPassed);
+            return scoreApiService.getRecent(user.getUserID(), mode, offset, limit, isPassed);
         } else {
             return scoreApiService.getRecent(7003013L, OsuMode.DEFAULT, offset, limit, isPassed);
         }

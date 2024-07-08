@@ -23,7 +23,7 @@ public class BeatMap {
     // 原有属性
 
     @JsonProperty("beatmapset_id")
-    Integer SID;
+    Integer setID;
 
     @JsonProperty("difficulty_rating")
     Float starRating;
@@ -134,21 +134,30 @@ public class BeatMap {
     //自己算
     Boolean hasLeaderBoard;
 
+    //不能动（因为有数据库存储
     public Long getId() {
         return id;
     }
 
-    //不能动（因为有数据库存储
     public void setId(Long id) {
         this.id = id;
     }
 
-    public Integer getSID() {
-        return SID;
+    public Long getBeatMapID() {
+        return id;
     }
 
-    public void setSID(Integer SID) {
-        this.SID = SID;
+    //不能动（因为有数据库存储
+    public void setBeatMapID(Long id) {
+        this.id = id;
+    }
+
+    public Integer getSetID() {
+        return setID;
+    }
+
+    public void setSetID(Integer setID) {
+        this.setID = setID;
     }
 
     public Float getStarRating() {
@@ -442,6 +451,6 @@ public class BeatMap {
 
     @Override
     public String toString() {
-        return STR."BeatMap{SID=\{SID}, StarRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
+        return STR."BeatMap{SID=\{setID}, StarRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
     }
 }

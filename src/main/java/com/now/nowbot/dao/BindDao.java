@@ -51,7 +51,7 @@ public class BindDao {
         }
         var u = liteData.get().getOsuUser();
         // 此处防止全局更新中再次被更新
-        WAIT_UPDATE_USERS.remove(u.getId());
+        WAIT_UPDATE_USERS.remove(u.getID());
         return fromLite(u);
     }
 
@@ -73,7 +73,7 @@ public class BindDao {
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
         var u = liteData.get();
         // 此处防止全局更新中再次被更新
-        WAIT_UPDATE_USERS.remove(u.getId());
+        WAIT_UPDATE_USERS.remove(u.getID());
         return fromLite(u);
     }
 
@@ -90,17 +90,17 @@ public class BindDao {
     }
 
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
-        bindQQMapper.deleteOtherBind(user.getOsuId(), qq);
+        bindQQMapper.deleteOtherBind(user.getOsuID(), qq);
         var qqBind = new QQBindLite();
         qqBind.setQq(qq);
         if (user.getRefreshToken() == null) {
             Optional<OsuBindUserLite> buLiteOpt;
             try {
-                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
             } catch (NonUniqueResultException e) {
                 // 查出多个
-                bindUserMapper.deleteOldByOsuId(user.getOsuId());
-                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuId());
+                bindUserMapper.deleteOldByOsuId(user.getOsuID());
+                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
             }
             if (buLiteOpt.isPresent()) {
                 var uLite = buLiteOpt.get();
@@ -191,7 +191,7 @@ public class BindDao {
     public static BinUser fromLite(OsuBindUserLite buLite) {
         if (buLite == null) return null;
         var binUser = new BinUser();
-        binUser.setOsuID(buLite.getOsuId());
+        binUser.setOsuID(buLite.getOsuID());
         binUser.setOsuName(buLite.getOsuName());
         binUser.setAccessToken(buLite.getAccessToken());
         binUser.setRefreshToken(buLite.getRefreshToken());
@@ -214,12 +214,12 @@ public class BindDao {
         // 更新暂时没失败过的
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
             OsuBindUserLite u;
-            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet()));
+            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getID).collect(Collectors.toSet()));
             while (!users.isEmpty()) {
                 u = users.removeLast();
-                if (!WAIT_UPDATE_USERS.remove(u.getId())) continue;
+                if (!WAIT_UPDATE_USERS.remove(u.getID())) continue;
                 if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                    bindUserMapper.backupBindByOsuId(u.getOsuId());
+                    bindUserMapper.backupBindByOsuId(u.getOsuID());
                     continue;
                 }
                 log.info("更新用户 [{}]", u.getOsuName());
@@ -227,7 +227,7 @@ public class BindDao {
                     refreshOldUserToken(u, osuGetService);
                     errCount = 0;
                 } catch (Exception e) {
-                    bindUserMapper.addUpdateCount(u.getId());
+                    bindUserMapper.addUpdateCount(u.getID());
                     errCount++;
                     sleepNoException(Duration.ofSeconds(errCount * 5L));
                 }
@@ -246,26 +246,26 @@ public class BindDao {
         // 重新尝试失败的
         while (! (users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
             OsuBindUserLite u;
-            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getId).collect(Collectors.toSet()));
+            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getID).collect(Collectors.toSet()));
             while (! users.isEmpty()) {
                 u = users.removeLast();
-                if (! WAIT_UPDATE_USERS.remove(u.getId())) continue;
+                if (! WAIT_UPDATE_USERS.remove(u.getID())) continue;
                 if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                    bindUserMapper.backupBindByOsuId(u.getOsuId());
+                    bindUserMapper.backupBindByOsuId(u.getOsuID());
                     continue;
                 }
                 // 出错超15次默认无法再次更新了
                 if (u.getUpdateCount() > 15) {
                     // 回退到用户名绑定
-                    bindUserMapper.backupBindByOsuId(u.getId());
+                    bindUserMapper.backupBindByOsuId(u.getID());
                 }
                 log.info("更新历史失败用户 [{}]", u.getOsuName());
                 try {
                     refreshOldUserToken(u, osuGetService);
-                    bindUserMapper.clearUpdateCount(u.getId());
+                    bindUserMapper.clearUpdateCount(u.getID());
                     errCount = 0;
                 } catch (Exception e) {
-                    bindUserMapper.addUpdateCount(u.getId());
+                    bindUserMapper.addUpdateCount(u.getID());
                     errCount++;
                     sleepNoException(Duration.ofSeconds(errCount * 10L));
                 }

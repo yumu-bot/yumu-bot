@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public interface OsuBeatmapApiService {
     /**
@@ -51,7 +50,11 @@ public interface OsuBeatmapApiService {
         return getBeatMapSetInfo((long) sid);
     }
 
-    BeatMap getMapInfoFromDB(long bid);
+    default BeatMap getBeatMapInfoFromDataBase(int bid) {
+        return getBeatMapInfoFromDataBase((long) bid);
+    }
+
+    BeatMap getBeatMapInfoFromDataBase(long bid);
 
     BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
 
@@ -116,44 +119,47 @@ public interface OsuBeatmapApiService {
     @NotNull
     private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
         score.setMods(modInt);
-        if (
-                Objects.nonNull(s.getCountGeki()) &&
-                Objects.nonNull(s.getCountKatu()) &&
-                Objects.nonNull(s.getCount300()) &&
-                Objects.nonNull(s.getCount100()) &&
-                Objects.nonNull(s.getCount50()) &&
-                Objects.nonNull(s.getCountMiss())
-        ) {
-            score.setGeki(s.getCountGeki());
-            score.setKatu(s.getCountKatu());
-            score.setN300(s.getCount300());
-            score.setN100(s.getCount100());
-            score.setN50(s.getCount50());
-            score.setMisses(s.getCountMiss());
-        } else {
-            score.setAccuracy(s.getAccuracy());
-        }
+        score.setGeki(s.getCountGeki());
+        score.setKatu(s.getCountKatu());
+        score.setN300(s.getCount300());
+        score.setN100(s.getCount100());
+        score.setN50(s.getCount50());
+        score.setMisses(s.getCountMiss());
         return Rosu.calculate(b, score);
     }
 
-    default void applyModChangeForScores(List<Score> scoreList) {
+    default void applyStarRatingChange(List<Score> scoreList) {
         if (CollectionUtils.isEmpty(scoreList)) return;
 
         for (var score : scoreList) {
             var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
-            if (OsuMod.hasChangeRating(modsInt)) {
-                var beatMap = score.getBeatMap();
-                JniResult r;
-                try {
-                    r = getMaxPP(beatMap.getId(), score.getMode(), modsInt);
-                } catch (Exception e) {
-                    NowbotApplication.log.error("计算时出现异常", e);
-                    continue;
-                }
+            if (! OsuMod.hasChangeRating(modsInt) && score.getPP() != null) return;
 
-                beatMap.setStarRating((float) r.getStar());
-                DataUtil.setBeatMap(beatMap, modsInt);
+            var beatMap = score.getBeatMap();
+            JniResult r;
+            try {
+                r = getMaxPP(beatMap.getBeatMapID(), score.getMode(), modsInt);
+            } catch (Exception e) {
+                NowbotApplication.log.error("计算时出现异常", e);
+                continue;
             }
+
+            beatMap.setStarRating((float) r.getStar());
         }
+    }
+
+    default void applyStarRatingChange(BeatMap beatMap, OsuMode mode, int modsInt) {
+        if (beatMap == null) return; // 谱面没有 PP，所以必须查
+        JniResult r;
+
+        try {
+            r = getMaxPP(beatMap.getBeatMapID(), mode, modsInt);
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        beatMap.setStarRating((float) r.getStar());
+        DataUtil.applyBeatMapChanges(beatMap, modsInt);
     }
 }

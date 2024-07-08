@@ -2,7 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.multiplayer.MatchData;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -22,7 +22,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     @Resource
     ImageService imageService;
 
-    public record MatchMapParam (Long bid, OsuMode osuMode, MatchData matchData, String modStr) {
+    public record MatchMapParam(Long bid, OsuMode osuMode, MatchCalculate mc, String modStr) {
 
     }
 
@@ -67,7 +67,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
         var expected = new MapStatisticsService.Expected(mode, 1d, combo, 0, OsuMod.getModsAbbrList(param.modStr));
 
         try {
-            var image = imageService.getPanelE3(param.matchData, beatMap, expected);
+            var image = imageService.getPanelE3(param.mc, beatMap, expected);
             from.sendImage(image);
         } catch (Exception e) {
             log.error("比赛谱面信息：发送失败: ", e);

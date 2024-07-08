@@ -98,23 +98,23 @@ public class TestLevelService implements MessageService<BinUser> {
 
     public double getLevel(List<Score> bp, BinUser user) throws TipsException {
         var mapIdSet = new HashSet<Long>();
-        bp.forEach(s -> s.setBeatMap(beatmapApiService.getMapInfoFromDB(s.getBeatMap().getId())));
+        bp.forEach(s -> s.setBeatMap(beatmapApiService.getBeatMapInfoFromDataBase(s.getBeatMap().getBeatMapID())));
         // 随机取数
         for (var index : getRandomIndex(user.getOsuID())) {
-            mapIdSet.add(bp.get(index).getBeatMap().getId());
+            mapIdSet.add(bp.get(index).getBeatMap().getBeatMapID());
         }
 
 
         bp.stream()
-                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
+                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getBeatMapID()))
                 .sorted(Comparator.comparingInt(Score::getMaxCombo).reversed())
                 .limit(5)
-                .forEach(s -> mapIdSet.add(s.getBeatMap().getId()));
+                .forEach(s -> mapIdSet.add(s.getBeatMap().getBeatMapID()));
 
         bp.stream()
-                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getId()))
+                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getBeatMapID()))
                 .map(s -> new ScoreLite(s.getMaxCombo(), s.getBeatMap().getMaxCombo() - s.getMaxCombo(),
-                        s.getAccuracy(), OsuMod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getId()))
+                        s.getAccuracy(), OsuMod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getBeatMapID()))
                 .sorted(Comparator.comparingInt(ScoreLite::diff)
                         .thenComparingInt(ScoreLite::combo).reversed()
                         .thenComparingDouble(ScoreLite::acc).reversed()

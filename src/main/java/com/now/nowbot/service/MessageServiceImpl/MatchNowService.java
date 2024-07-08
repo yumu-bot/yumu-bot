@@ -1,12 +1,11 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchData;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.multiplayer.MatchScore;
+import com.now.nowbot.model.JsonData.Match;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchNowException;
 import com.now.nowbot.util.Instructions;
@@ -23,7 +22,9 @@ import java.util.regex.Matcher;
 public class MatchNowService implements MessageService<Matcher> {
     private static final Logger log = LoggerFactory.getLogger(MatchNowService.class);
     @Resource
-    OsuMatchApiService osuMatchApiService;
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
+    OsuMatchApiService matchApiService;
     @Resource
     ImageService imageService;
     @Resource
@@ -42,7 +43,7 @@ public class MatchNowService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
         var param = muRatingService.parseParam(matcher);
-        var data = parseData(param);
+        var data = calculate(param, matchApiService, beatmapApiService);
 
         byte[] image;
         try {
@@ -59,45 +60,48 @@ public class MatchNowService implements MessageService<Matcher> {
             throw new MatchNowException(MatchNowException.Type.MN_Send_Error);
         }
     }
-    public MatchData parseData(MuRatingService.MRAParam param) throws MatchNowException {
-        return parseData(param.matchID(), param.skip(), param.ignore(), param.remove(), param.easy(), param.failed(), param.rematch());
+
+    public static MatchCalculate calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MatchNowException {
+        var param = new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
+
+        return calculate(param, matchApiService, beatmapApiService);
     }
 
-    public MatchData parseData(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch) throws MatchNowException {
+    public static MatchCalculate calculate(MuRatingService.MRAParam param, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MatchNowException {
+
         Match match;
         try {
-            match = osuMatchApiService.getMatchInfo(matchID, 10);
+            match = matchApiService.getMatchInfo(param.matchID(), 10);
         } catch (Exception e) {
             throw new MatchNowException(MatchNowException.Type.MN_Match_NotFound);
         }
 
-        while (!match.getFirstEventId().equals(match.getEvents().getFirst().getId())) {
-            var events = osuMatchApiService.getMatchInfo(matchID, 10).getEvents();
+        while (!match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
+            var events = matchApiService.getMatchInfo(param.matchID(), 10).getEvents();
             if (events.isEmpty()) throw new MatchNowException(MatchNowException.Type.MN_Match_Empty);
             match.getEvents().addAll(0, events);
         }
 
-        if (match.getEvents().size() - ignore - skip <= 0) {
+        if (match.getEvents().size() - param.calParam().ignore() - param.calParam().skip() <= 0) {
             throw new MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError);
         }
 
-        MatchData matchData;
+        MatchCalculate c;
         try {
-            matchData = new MatchData(match, skip, ignore, remove, easy, failed, rematch);
-            matchData.calculate();
+            c = new MatchCalculate(match, param.calParam(), beatmapApiService);
 
             //如果只有一两个人，则不排序（slot 从小到大）
-            boolean isSize2p = !matchData.getRoundList().stream().filter(s -> s.getScoreInfoList().size() > 2).toList().isEmpty();
+            boolean isSize2p = ! c.getRounds().stream().filter(s -> s.getScores().size() > 2).toList().isEmpty();
 
-            for (MatchRound r : matchData.getRoundList()) {
-                var scoreList = r.getScoreInfoList();
+            for (Match.MatchRound r : c.getRounds()) {
+                var scoreList = r.getScores();
 
                 if (isSize2p) {
-                    r.setScoreInfoList(scoreList.stream().sorted(
-                                    Comparator.comparingInt(MatchScore::getScore).reversed()).toList());
+                    r.setScores(scoreList.stream().sorted(
+                                    Comparator.comparingInt(Match.MatchScore::getScore).reversed()).toList());
                 } else {
-                    r.setScoreInfoList(scoreList.stream().sorted(
-                            Comparator.comparingInt(MatchScore::getSlot)).toList());
+                    r.setScores(scoreList.stream().sorted(
+                            Comparator.comparingInt(s -> s.getPlayerStat().slot())).toList());
                 }
             }
 
@@ -105,6 +109,6 @@ public class MatchNowService implements MessageService<Matcher> {
             log.error("比赛结果：获取失败", e);
             throw new MatchNowException(MatchNowException.Type.MN_Match_ParseError);
         }
-        return matchData;
+        return c;
     }
 }

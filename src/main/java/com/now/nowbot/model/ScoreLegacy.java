@@ -10,7 +10,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.Optional;
 
 public class ScoreLegacy {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -51,7 +50,7 @@ public class ScoreLegacy {
 
     public ScoreLegacy(Score score, OsuBeatmapApiService osuBeatmapApiService) throws ScoreException {
         var user = score.getUser();
-        bid = Math.toIntExact(score.getBeatMap().getId());
+        bid = Math.toIntExact(score.getBeatMap().getBeatMapID());
 
         BeatMap b;
 
@@ -104,12 +103,12 @@ public class ScoreLegacy {
         play_time = score.getCreateTimePretty().toString();
 
         var stat = score.getStatistics();
-        n_300 = Optional.ofNullable(stat.getCount300()).orElse(0);
-        n_100 = Optional.ofNullable(stat.getCount100()).orElse(0);
-        n_50 = Optional.ofNullable(stat.getCount50()).orElse(0);
-        n_geki = Optional.ofNullable(stat.getCountGeki()).orElse(0);
-        n_katu = Optional.ofNullable(stat.getCountKatu()).orElse(0);
-        n_0 = Optional.ofNullable(stat.getCountMiss()).orElse(0);
+        n_300 = stat.getCount300();
+        n_100 = stat.getCount100();
+        n_50 = stat.getCount50();
+        n_geki = stat.getCountGeki();
+        n_katu = stat.getCountKatu();
+        n_0 = stat.getCountMiss();
 
         if (!passed) rank = "F";
     }

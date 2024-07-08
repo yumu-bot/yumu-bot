@@ -65,7 +65,7 @@ public class NominationService implements MessageService<Matcher> {
             throw new NominationException(NominationException.Type.N_Instructions);
         }
 
-        var data = parseData(sid, isSID);
+        var data = parseData(sid, isSID, osuBeatmapApiService, osuDiscussionApiService, osuUserApiService);
 
         byte[] image;
 
@@ -84,7 +84,8 @@ public class NominationService implements MessageService<Matcher> {
         }
     }
 
-    public Map<String, Object> parseData(long sid, boolean isSID) throws NominationException {
+    public static Map<String, Object> parseData(long sid, boolean isSID, OsuBeatmapApiService beatmapApiService, OsuDiscussionApiService discussionApiService, OsuUserApiService userApiService
+    ) throws NominationException {
         BeatMapSet s;
         Discussion d;
         final List<DiscussionDetails> details;
@@ -94,12 +95,12 @@ public class NominationService implements MessageService<Matcher> {
 
         if (isSID) {
             try {
-                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+                s = beatmapApiService.getBeatMapSetInfo(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 try {
-                    var b = osuBeatmapApiService.getBeatMapInfo(sid);
-                    sid = b.getSID();
-                    s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+                    var b = beatmapApiService.getBeatMapInfo(sid);
+                    sid = b.getSetID();
+                    s = beatmapApiService.getBeatMapSetInfo(sid);
                 } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
                     throw new NominationException(NominationException.Type.N_Map_NotFound);
                 } catch (Exception e1) {
@@ -114,9 +115,9 @@ public class NominationService implements MessageService<Matcher> {
             }
         } else {
             try {
-                var b = osuBeatmapApiService.getBeatMapInfo(sid);
-                sid = b.getSID();
-                s = osuBeatmapApiService.getBeatMapSetInfo(sid);
+                var b = beatmapApiService.getBeatMapInfo(sid);
+                sid = b.getSetID();
+                s = beatmapApiService.getBeatMapSetInfo(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 throw new NominationException(NominationException.Type.N_Map_NotFound);
             } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
@@ -128,13 +129,13 @@ public class NominationService implements MessageService<Matcher> {
         }
 
         if (Objects.nonNull(s.getCreatorData())) {
-            s.getCreatorData().parseFull(osuUserApiService);
+            s.getCreatorData().parseFull(userApiService);
         }
 
 
 
         try {
-            d = osuDiscussionApiService.getBeatMapSetDiscussion(sid);
+            d = discussionApiService.getBeatMapSetDiscussion(sid);
         } catch (Exception e) {
             log.error("提名信息：讨论区获取失败", e);
             throw new NominationException(NominationException.Type.N_Discussion_FetchFailed);
@@ -143,7 +144,7 @@ public class NominationService implements MessageService<Matcher> {
         //插入难度名
         if (Objects.nonNull(s.getBeatMaps())) {
             Map<Long, String> diffs = s.getBeatMaps().stream().collect(
-                    Collectors.toMap(BeatMap::getId, BeatMap::getDifficultyName)
+                    Collectors.toMap(BeatMap::getBeatMapID, BeatMap::getDifficultyName)
             );
 
             d.addDifficulty4DiscussionDetails(diffs);

@@ -379,7 +379,7 @@ public class HandleUtil {
         List<Score> BPList;
 
         try {
-            BPList = scoreApiService.getBestPerformance(user.getUID(), mode, 0, 100);
+            BPList = scoreApiService.getBestPerformance(user.getUserID(), mode, 0, 100);
         } catch (WebClientResponseException.Forbidden e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getUsername());
         } catch (WebClientResponseException.NotFound e) {
@@ -440,7 +440,7 @@ public class HandleUtil {
     // 单独的拿 bp 榜
     public static List<Score> getOsuBPList(OsuUser user, @Nullable OsuMode mode, int offset, int limit) throws TipsException {
         try {
-            return scoreApiService.getBestPerformance(user.getUID(), mode, offset, limit);
+            return scoreApiService.getBestPerformance(user.getUserID(), mode, offset, limit);
         } catch (WebClientResponseException.NotFound e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
         } catch (WebClientResponseException e) {

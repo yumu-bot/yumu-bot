@@ -3,10 +3,8 @@ package com.now.nowbot.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.multiplayer.MatchData;
-import com.now.nowbot.model.multiplayer.MatchRound;
-import com.now.nowbot.model.multiplayer.MatchStat;
-import com.now.nowbot.model.multiplayer.SeriesData;
+import com.now.nowbot.model.multiplayer.MatchCalculate;
+import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
@@ -320,17 +318,17 @@ public class ImageService {
         return doPost("panel_B3", httpEntity);
     }
 
-    public byte[] getPanelC(MatchData matchData) {
+    public byte[] getPanelC(MatchCalculate mc) {
         HttpHeaders headers = getDefaultHeader();
 
-        HttpEntity<MatchData> httpEntity = new HttpEntity<>(matchData, headers);
+        HttpEntity<MatchCalculate> httpEntity = new HttpEntity<>(mc, headers);
         return doPost("panel_C", httpEntity);
     }
 
-    public byte[] getPanelC2(SeriesData seriesData) {
+    public byte[] getPanelC2(SeriesCalculate sc) {
         HttpHeaders headers = getDefaultHeader();
 
-        HttpEntity<SeriesData> httpEntity = new HttpEntity<>(seriesData, headers);
+        HttpEntity<SeriesCalculate> httpEntity = new HttpEntity<>(sc, headers);
         return doPost("panel_C2", httpEntity);
     }
 
@@ -374,7 +372,7 @@ public class ImageService {
     }
 
     public byte[] getPanelE(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) throws WebClientResponseException {
-        var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
+        var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
         score.setBeatMap(map);
         score.setBeatMapSet(map.getBeatMapSet());
 
@@ -407,11 +405,11 @@ public class ImageService {
         return doPost("panel_E2", httpEntity);
     }
 
-    public byte[] getPanelE3(MatchData matchData, BeatMap beatMap, MapStatisticsService.Expected expected) {
+    public byte[] getPanelE3(MatchCalculate matchCalculate, BeatMap beatMap, MapStatisticsService.Expected expected) {
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of(
                 "beatmap", beatMap,
-                "matchData", matchData,
+                "match", matchCalculate,
                 "expected", expected
         );
 
@@ -419,14 +417,14 @@ public class ImageService {
         return doPost("panel_E3", httpEntity);
     }
 
-    public byte[] getPanelF(MatchData matchData) {
+    public byte[] getPanelF(MatchCalculate matchData) {
         HttpHeaders headers = getDefaultHeader();
 
-        HttpEntity<MatchData> httpEntity = new HttpEntity<>(matchData, headers);
+        HttpEntity<MatchCalculate> httpEntity = new HttpEntity<>(matchData, headers);
         return doPost("panel_F", httpEntity);
     }
 
-    public byte[] getPanelF2(MatchStat matchStat, MatchRound matchRound, int index) {
+    public byte[] getPanelF2(Match.MatchStat matchStat, Match.MatchRound matchRound, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(

@@ -128,7 +128,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         // 处理 mods
         var modsStr = param.modsStr();
 
-        Score score = null;
+        Score score;
         if (StringUtils.hasText(modsStr)) {
             BeatmapUserScore scoreall;
             List<OsuMod> osuMods = OsuMod.getModsList(modsStr);
@@ -140,7 +140,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             }
 
             var beatMap = new BeatMap();
-            beatMap.setId(bid);
+            beatMap.setBeatMapID(bid);
             score.setBeatMap(beatMap);
 
         } else {
