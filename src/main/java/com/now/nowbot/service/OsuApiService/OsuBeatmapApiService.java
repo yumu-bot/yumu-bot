@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface OsuBeatmapApiService {
     /**
@@ -119,12 +120,25 @@ public interface OsuBeatmapApiService {
     @NotNull
     private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
         score.setMods(modInt);
-        score.setGeki(s.getCountGeki());
-        score.setKatu(s.getCountKatu());
-        score.setN300(s.getCount300());
-        score.setN100(s.getCount100());
-        score.setN50(s.getCount50());
-        score.setMisses(s.getCountMiss());
+        // 这个要留着, 因为是调用了 native 方法
+        // 那边如果有 null 会直接导致虚拟机炸掉退出, 注解不会在运行时检查是不是 null
+        if (
+                Objects.nonNull(s.getCountGeki()) &&
+                        Objects.nonNull(s.getCountKatu()) &&
+                        Objects.nonNull(s.getCount300()) &&
+                        Objects.nonNull(s.getCount100()) &&
+                        Objects.nonNull(s.getCount50()) &&
+                        Objects.nonNull(s.getCountMiss())
+        ) {
+            score.setGeki(s.getCountGeki());
+            score.setKatu(s.getCountKatu());
+            score.setN300(s.getCount300());
+            score.setN100(s.getCount100());
+            score.setN50(s.getCount50());
+            score.setMisses(s.getCountMiss());
+        } else {
+            score.setAccuracy(s.getAccuracy());
+        }
         return Rosu.calculate(b, score);
     }
 
@@ -133,10 +147,8 @@ public interface OsuBeatmapApiService {
 
         for (var score : scoreList) {
             var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
-
-            if (! (score.getPP() == 0f) && ! (OsuMod.hasChangeRating(modsInt))) {
-                continue;
-            }
+            // score.getPP() 实际上永远不会为 null, 因为里面判断了 null 返回 0
+            if (!OsuMod.hasChangeRating(modsInt)) continue;
 
             var beatMap = score.getBeatMap();
             JniResult r;

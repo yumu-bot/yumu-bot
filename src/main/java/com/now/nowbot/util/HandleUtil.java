@@ -139,7 +139,7 @@ public class HandleUtil {
         if (OsuMode.isDefaultOrNull(mode) && !OsuMode.isDefaultOrNull(other)) {
             return other;
         }
-        return mode;
+            return mode;
     }
 
     /**
