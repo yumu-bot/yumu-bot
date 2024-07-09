@@ -133,7 +133,7 @@ public interface OsuBeatmapApiService {
 
         for (var score : scoreList) {
             var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
-            if (! OsuMod.hasChangeRating(modsInt) && score.getPP() != null) return;
+            if (!OsuMod.hasChangeRating(modsInt)) return;
 
             var beatMap = score.getBeatMap();
             JniResult r;
