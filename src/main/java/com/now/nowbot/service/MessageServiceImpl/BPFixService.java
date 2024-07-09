@@ -66,9 +66,12 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
         if (CollectionUtils.isEmpty(bpMap)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode.getName());
 
-        var fixData = fix(Objects.requireNonNullElse(user.getPP(), 0d), bpMap);
+        var pp = Objects.requireNonNullElse(user.getPP(), 0d);
 
-        if (CollectionUtils.isEmpty(fixData)) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
+        var fixData = fix(pp, bpMap);
+
+        if (fixData == null) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
+        System.out.println(fixData);
 
         byte[] image;
 
@@ -89,9 +92,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
 
     // 主计算
     @Nullable
-    public Map<String, Object> fix(@NonNull double playerPP, @Nullable Map<Integer, Score> bpMap) {
-        if (CollectionUtils.isEmpty(bpMap)) return null;
-
+    public Map<String, Object> fix(@NonNull double playerPP, @NonNull Map<Integer, Score> bpMap) {
         var bpList = new ArrayList<Score>(bpMap.size());
         AtomicReference<Float> beforeBpSumAtomic = new AtomicReference<>(0f);
 
@@ -148,6 +149,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         float newPlayerPP = (float) (playerPP + afterBpSum - beforeBpSum);
 
         var scoreList = bpList.stream().filter(s -> s instanceof ScoreWithFcPP).map(s -> (ScoreWithFcPP)s).toList();
+
+        if (CollectionUtils.isEmpty(scoreList)) return null;
+
         var result = new HashMap<String, Object>(2);
         result.put("scores", scoreList);
         result.put("pp", newPlayerPP);

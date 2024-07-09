@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Matcher;
 
 @Service("MATCH_NOW")
@@ -59,12 +58,6 @@ public class MatchNowService implements MessageService<Matcher> {
             log.error("比赛结果：发送失败", e);
             throw new MatchNowException(MatchNowException.Type.MN_Send_Error);
         }
-    }
-
-    public static MatchCalculate calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MatchNowException {
-        var param = new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
-
-        return calculate(param, matchApiService, beatmapApiService);
     }
 
     public static MatchCalculate calculate(MuRatingService.MRAParam param, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MatchNowException {
