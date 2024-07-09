@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
+import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsException;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,44 +36,46 @@ import java.util.regex.Pattern;
 // 封装一些消息处理（Handle）的常用方法
 public class HandleUtil {
     @Language("RegExp")
-    public static final String REG_START    = "[!！/](?i)(ym)?";
+    private static final String REG_USER_AND_RANGE = "(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?";
     @Language("RegExp")
-    public static final String REG_SPACE    = "\\s*";
+    public static final  String REG_START          = "[!！/](?i)(ym)?";
     @Language("RegExp")
-    public static final String REG_SPACE_1P = "\\s+";
+    public static final  String REG_SPACE          = "\\s*";
     @Language("RegExp")
-    public static final  String             REG_SPACE_01     = "\\s?";
+    public static final  String REG_SPACE_1P       = "\\s+";
     @Language("RegExp")
-    public static final  String             REG_COLUMN       = "[:：]";
+    public static final  String REG_SPACE_01       = "\\s?";
     @Language("RegExp")
-    public static final  String             REG_HASH         = "[#＃]";
+    public static final  String REG_COLUMN         = "[:：]";
     @Language("RegExp")
-    public static final  String             REG_HYPHEN       = "[\\-－]";
+    public static final  String REG_HASH           = "[#＃]";
     @Language("RegExp")
-    public static final  String             REG_NAME         = "(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,}?))";
+    public static final  String REG_HYPHEN         = "[\\-－]";
     @Language("RegExp")
-    public static final  String             REG_QQ           = "(qq=(?<qq>\\d{5,}))";
+    public static final  String REG_NAME           = "(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]{2,}?))";
     @Language("RegExp")
-    public static final  String             REG_UID          = "(uid=(?<uid>\\d+))";
+    public static final  String REG_QQ             = "(qq=(?<qq>\\d{5,}))";
     @Language("RegExp")
-    public static final  String             REG_MOD          = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
+    public static final  String REG_UID            = "(uid=(?<uid>\\d+))";
     @Language("RegExp")
-    public static final  String             REG_MODE         = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
+    public static final  String REG_MOD            = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
     @Language("RegExp")
-    public static final String REG_RANGE = "(?<range>(100|\\d{1,2})([\\-－]\\d{1,3})?)";
+    public static final  String REG_MODE           = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
     @Language("RegExp")
-    public static final  String             REG_RANGE_DAY    = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
+    public static final  String REG_RANGE          = "(?<range>(100|\\d{1,2})([\\-－]\\d{1,3})?)";
     @Language("RegExp")
-    public static final  String             REG_ID           = "(?<id>\\d+)";
+    public static final  String REG_RANGE_DAY      = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
     @Language("RegExp")
-    public static final  String             REG_BID          = "(?<bid>\\d+)";
+    public static final  String REG_ID             = "(?<id>\\d+)";
     @Language("RegExp")
-    public static final  String             REG_SID          = "(?<sid>\\d+)";
+    public static final  String REG_BID            = "(?<bid>\\d+)";
+    @Language("RegExp")
+    public static final  String REG_SID            = "(?<sid>\\d+)";
 
-    private static final Logger             log              = LoggerFactory.getLogger(HandleUtil.class);
-    private static       BindDao            bindDao;
-    private static       OsuUserApiService  userApiService;
-    private static       OsuScoreApiService scoreApiService;
+    private static final Logger               log = LoggerFactory.getLogger(HandleUtil.class);
+    private static       BindDao              bindDao;
+    private static       OsuUserApiService    userApiService;
+    private static       OsuScoreApiService   scoreApiService;
     private static       OsuBeatmapApiService beatmapApiService;
 
     public static void init(ApplicationContext applicationContext) {
@@ -84,21 +89,16 @@ public class HandleUtil {
         return new CommandPatternBuilder();
     }
 
-    // 判定用于匹配的类型内是否含有此文本
-    public static boolean messageMatchesPattern(@NonNull MessageEvent event, @NonNull String regex) {
-        var m = Pattern.compile(regex).matcher(event.getRawMessage());
-        return m.find();
-    }
-
     /**
      * 退避机制，为真则需要退避
-     * @param event 消息事件
+     *
+     * @param text     消息
      * @param keyWords 关键词，可以输入多个，忽略大小写
      * @return 为真，则需要退避
      */
-    public static boolean isAvoidance(@NonNull MessageEvent event, @NonNull String... keyWords) {
+    public static boolean isAvoidance(@NonNull String text, @NonNull String... keyWords) {
         for (var key : keyWords) {
-            if (event.getRawMessage().toLowerCase()
+            if (text.toLowerCase()
                     .contains(key.toLowerCase())) {
                 return true;
             }
@@ -136,7 +136,7 @@ public class HandleUtil {
         } catch (Exception ignore) {
             // 没有 mode
         }
-        if (OsuMode.isDefaultOrNull(mode) && ! OsuMode.isDefaultOrNull(other)) {
+        if (OsuMode.isDefaultOrNull(mode) && !OsuMode.isDefaultOrNull(other)) {
             return other;
         }
         return mode;
@@ -144,8 +144,9 @@ public class HandleUtil {
 
     /**
      * 处理默认模组。没有的话，获取传进来的玩家的模组
+     *
      * @param matcher 匹配
-     * @param user 玩家
+     * @param user    玩家
      * @return 游戏模式
      */
     @NonNull
@@ -155,8 +156,9 @@ public class HandleUtil {
 
     /**
      * 处理默认模组。没有的话，获取传进来的玩家的模组
+     *
      * @param matcher 匹配
-     * @param user 绑定玩家
+     * @param user    绑定玩家
      * @return 游戏模式
      */
     @NonNull
@@ -166,6 +168,7 @@ public class HandleUtil {
 
     /**
      * 处理默认模组。没有的话，获取传进来的玩家的模组
+     *
      * @param mode 通过以上方法匹配得到的游戏模式
      * @param user 玩家
      * @return 游戏模式
@@ -184,6 +187,7 @@ public class HandleUtil {
 
     /**
      * 处理默认模组。没有的话，获取传进来的玩家的模组
+     *
      * @param mode 通过以上方法匹配得到的游戏模式
      * @param user 绑定玩家
      * @return 游戏模式
@@ -246,7 +250,7 @@ public class HandleUtil {
 
         try {
             var name = matcher.group("name");
-            if (! StringUtils.hasText(name)) return null;
+            if (!StringUtils.hasText(name)) return null;
 
             String param1;
             boolean nameExceed;
@@ -274,7 +278,7 @@ public class HandleUtil {
             }
 
             // 有空格
-            if (! Objects.equals(name.trim(), name) || nameExceed) {
+            if (!Objects.equals(name.trim(), name) || nameExceed) {
                 // 对叫100(或者1000，取自 maximum)的人直接取消处理，
 
                 return getPlayerInfo(name.trim(), mode);
@@ -493,10 +497,11 @@ public class HandleUtil {
         }
     }
 
-    private record Range(int offset, int limit) {}
+    private record Range(int offset, int limit) {
+    }
 
     /**
-     * @param defaultLimit 第二个参数的默认值
+     * @param defaultLimit         第二个参数的默认值
      * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      */
     private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
@@ -540,6 +545,158 @@ public class HandleUtil {
         return new Range(n, m);
     }
 
+    record UserAndRange(@Nullable BinUser user, Range range) {
+    }
+
+    /**
+     * @param message 消息
+     * @param matcher 正则
+     * @return 用户和范围
+     */
+    private static UserAndRange getUserAndRange(String message, Matcher matcher, Range defaultRange) {
+        if (matcher.namedGroups().containsKey("ur")) throw new RuntimeException("No match found");
+
+        var text = matcher.group("ur");
+        if (text.matches("^\\d{1,3}([\\-－]\\d{1,3})?$")) {
+            // 只有数字
+            int n, m;
+            if (text.contains("-") || text.contains("－")) {
+                var range = text.split("[\\-－]");
+                n = Integer.parseInt(range[0]);
+                m = Integer.parseInt(range[1]);
+            } else {
+                n = Integer.parseInt(text);
+                m = -1;
+            }
+            return new UserAndRange(null, new Range(m, n));
+        }
+        // 包含名字
+        int data[];
+        if (text.contains("#")) {
+            data = getNameAndRangeHasHash(text);
+        } else {
+            data = getNameAndRangeWithoutHash(text);
+        }
+
+        int m = data[3];
+        int n = data[4];
+
+        // 优先级: 双参数 > 单参数 > 无参数
+        // yhc 22 33 优先级: yhc#22-33 > yhc 22#23 > yhc 22 23
+        if (data[2] > 0) {
+            // 双参数
+            try {
+                var name = text.substring(0, data[2]);
+                var id = userApiService.getOsuId(name);
+                BinUser user = new BinUser(id, name);
+                return new UserAndRange(user, new Range(m, n));
+            } catch (Exception ignore) {
+            }
+        }
+
+        if (data[1] > 0) {
+            // 单参数
+            try {
+                var name = text.substring(0, data[1]);
+                var id = userApiService.getOsuId(name);
+                BinUser user = new BinUser(id, name);
+                return new UserAndRange(user, new Range(m, -1));
+            } catch (Exception ignore) {
+            }
+        }
+
+        // 无参数
+        try {
+            var name = text.substring(0, data[0]);
+            var id = userApiService.getOsuId(name);
+            BinUser user = new BinUser(id, name);
+            return new UserAndRange(user, new Range(-1, -1));
+        } catch (Exception ignore) {
+            throw new BindException(BindException.Type.BIND_Player_NotFound);
+        }
+    }
+
+    private static int[] getNameAndRangeHasHash(String text) {
+        final int hashIndex = text.indexOf('#');
+        final var result = new int[]{hashIndex, -1, -1, -1, -1};
+        final String rangeStr = text.substring(hashIndex + 1);
+
+        try {
+            final String[] range = rangeStr.split("[\\-－ ]");
+            result[3] = Integer.parseInt(range[0]);
+            if (range.length == 2) {
+                result[4] = Integer.parseInt(range[1]);
+            }
+        } catch (Exception e) {
+            log.debug("range 解析参数有误: {}", rangeStr, e);
+            return result;
+        }
+        return result;
+    }
+
+    private static int[] getNameAndRangeWithoutHash(String text) {
+        int[] nameSet = new int[]{-1, -1};
+        Consumer<Integer> setNameSet = value -> {
+            if (nameSet[0] < 0) nameSet[0] = value;
+            else if (nameSet[1] < 0) nameSet[1] = value;
+        };
+        // 这是 osu_name 最小长度的 index 值
+        final int minIndex = 2;
+        // 记录完整的名字
+        int nameAll = text.length();
+
+        int m = -1, n = -1;
+
+        // 倒序解析
+        int index = nameAll - 1;
+        int i = 0;
+        int tempChar;
+        while ((tempChar = text.charAt(index)) >= '0' && tempChar <= '9') {
+            index--;
+            i++;
+        }
+
+        numAll:
+        {
+            if (i <= 0 || i > 3 || index < minIndex) {
+                // 对应末尾不是数字, 直接忽略 range
+                // 对应着末尾的数字大于1000, 直接认为是名字的一部分不进行处理, la2333 这种
+                break numAll;
+            }
+
+            m = Integer.parseInt(text.substring(index + 1));
+            // 记录名字减去末尾1-3位数字
+            setNameSet.accept(index + 1);
+
+            if (tempChar != '-' && tempChar != '－' && tempChar != ' ') {
+                // 对应末尾不是 - 或者 空格, 直接忽略剩余 range
+                break numAll;
+            }
+
+            index--;
+            i = 0;
+            while ((tempChar = text.charAt(index)) >= '0' && tempChar <= '9') {
+                index--;
+                i++;
+            }
+
+            if (i <= 0 || i > 3 || index < minIndex) {
+                // 与上面同理
+                break numAll;
+            }
+            n = Integer.parseInt(text.substring(index + 1, nameSet[1] - 1));
+            setNameSet.accept(index + 1);
+        }
+
+        for (var x : nameSet) {
+            if (x > 0) System.out.println(text.substring(0, x));
+        }
+        if (m > 0) System.out.println("m: " + m);
+        if (n > 0) System.out.println("n: " + n);
+
+        return new int[]{nameAll, nameSet[1], nameSet[2], m, n};
+    }
+
     private static OsuUser getPlayerInfo(String name, OsuMode mode) throws TipsException {
         try {
             return userApiService.getPlayerInfo(name, mode);
@@ -580,7 +737,6 @@ public class HandleUtil {
 
         /**
          * 一些特殊的指令开始 比如 #calc 等
-         *
          */
         public CommandPatternBuilder(String start) {
             patternStr.append('^').append(start).append(REG_SPACE);
@@ -614,6 +770,7 @@ public class HandleUtil {
 
         /**
          * 避免不必要的命令重复，所带来的指令污染。比如：!ymb 和 !ymbind。如果前面并未加 (?!ind)，则后面的指令也会在前面被错误匹配（获取叫 ind 玩家的 bp）
+         *
          * @param ignores 需要忽略的其后字符。
          * @return this
          */
@@ -634,6 +791,7 @@ public class HandleUtil {
 
         /**
          * 避免不必要的命令重复，所带来的指令污染。比如：!ymb 和 !ymbind。如果前面并未加 (?!ind)，则后面的指令也会在前面被错误匹配（获取叫 ind 玩家的 bp）
+         *
          * @param areas 注意，areas 可以是单个字符，也可以是包含连字符 - 的区间。
          * @return this
          */
@@ -794,6 +952,7 @@ public class HandleUtil {
 
         /**
          * 0-1，?，whatever 你可以理解成无所谓，随便的意思
+         *
          * @return this
          */
         public CommandPatternBuilder whatever() {
@@ -803,6 +962,7 @@ public class HandleUtil {
 
         /**
          * 0-∞，*
+         *
          * @return this
          */
         public CommandPatternBuilder any() {
@@ -812,6 +972,7 @@ public class HandleUtil {
 
         /**
          * 1-∞，+
+         *
          * @return this
          */
         public CommandPatternBuilder more() {
