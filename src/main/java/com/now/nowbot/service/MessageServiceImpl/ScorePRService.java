@@ -257,8 +257,11 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             if (scoreSize < offset + limit) limit = scoreSize - offset;
             if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
 
+            var scores = scoreList.subList(offset, offset + limit);
+            beatmapApiService.applySRAndPP(scoreList);
+
             try {
-                var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                var image = imageService.getPanelA5(osuUser, scores);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩发送失败：", e);
