@@ -168,11 +168,9 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             statistics.setCount300(statistics.getCount300() + countMiss);
         }
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
-        var bid = score.getBeatMap().getBeatMapID();
-        var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
 
         try {
-            var pp = beatmapApiService.getPP(bid, score.getMode(), mods, statistics);
+            var pp = beatmapApiService.getPP(score);
             result.setFcPP((float) pp.getPp());
         } catch (Exception e) {
             log.error("bp 计算 pp 出错:", e);

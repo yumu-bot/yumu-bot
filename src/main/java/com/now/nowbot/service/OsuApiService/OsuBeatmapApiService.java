@@ -84,38 +84,49 @@ public interface OsuBeatmapApiService {
 
     default JniResult getMaxPP(long bid, int modInt) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
-        JniScore score = new JniScore();
-        score.setAccuracy(100);
-        score.setMods(modInt);
-        return Rosu.calculate(b, score);
+        JniScore js = new JniScore();
+        js.setAccuracy(100);
+        js.setMods(modInt);
+        return Rosu.calculate(b, js);
     }
 
     default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
-        JniScore score = new JniScore();
+        JniScore js = new JniScore();
 
-        score.setMode(mode.toRosuMode());
-        score.setAccuracy(100D);
-        score.setMisses(0);
-        score.setMods(modInt);
-        score.setSpeed(OsuMod.getModsClockRate(modInt));
+        js.setMode(mode.toRosuMode());
+        js.setAccuracy(100D);
+        js.setMisses(0);
+        js.setMods(modInt);
+        js.setSpeed(OsuMod.getModsClockRate(modInt));
 
-        return Rosu.calculate(b, score);
+        return Rosu.calculate(b, js);
     }
 
-    default JniResult getPP(long bid, int modInt, Statistics s) throws Exception {
+    default JniResult getPP(long bid, int modInt, Statistics s, int combo) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
-        JniScore score = new JniScore();
-        score.setCombo(s.getMaxCombo());
-        return getJniResult(modInt, s, b, score);
+        JniScore js = new JniScore();
+        js.setCombo(combo);
+        return getJniResult(modInt, s, b, js);
     }
 
-    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s) throws Exception {
+    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s, int combo) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
-        JniScore score = new JniScore();
-        score.setCombo(s.getMaxCombo());
-        score.setMode(mode.toRosuMode());
-        return getJniResult(modInt, s, b, score);
+        JniScore js = new JniScore();
+        js.setCombo(combo);
+        js.setMode(mode.toRosuMode());
+        return getJniResult(modInt, s, b, js);
+    }
+
+    default JniResult getPP(Score s) throws Exception {
+        var b = getBeatMapFile(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var m = OsuMod.getModsValueFromAbbrList(s.getMods());
+        var t = s.getStatistics();
+
+        JniScore js = new JniScore();
+        js.setCombo(s.getMaxCombo());
+        js.setMode(s.getMode().toRosuMode());
+        return getJniResult(m, t, b, js);
     }
 
     @NotNull
@@ -169,7 +180,7 @@ public interface OsuBeatmapApiService {
         var beatMap = score.getBeatMap();
         JniResult r;
         try {
-            r = getMaxPP(beatMap.getBeatMapID(), score.getMode(), modsInt);
+            r = getPP(score);
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
             return;
