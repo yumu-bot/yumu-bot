@@ -151,7 +151,6 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         var from = event.getSubject();
 
         Score score;
-        BeatMap beatMap;
 
         try {
             score = scoreApiService.getRecent(
@@ -162,9 +161,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         }
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
-            score.setBeatMap(beatMap);
-            score.setBeatMapSet(beatMap.getBeatMapSet());
+            beatmapApiService.applyBeatMapExtend(score);
         } catch (Exception e) {
             throw new MiniCardException(MiniCardException.Type.MINI_Map_FetchError);
         }

@@ -6,6 +6,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.Statistics;
+import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
@@ -37,6 +38,36 @@ public class DataUtil {
     static Typeface PUHUITI_MEDIUM;
 
     static Typeface EXTRA;
+
+    /**
+     * 判定优秀成绩。用于临时区分 panel E 和 panel E5
+     * @param score 成绩，需要先算好 pp，并使用完全体
+     * @return 是否为优秀成绩
+     */
+    @NonNull
+    public static boolean isExcellentScore(@NonNull Score score, Double playerPP) {
+        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 400，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 0.5%。
+        int r = 0;
+        double p = Objects.requireNonNullElse(playerPP, 0d);
+
+        boolean ultra = score.getBeatMap().getStarRating() >= 8f;
+        boolean extreme = score.getBeatMap().getStarRating() >= 6.5f;
+        boolean acc = score.getAccuracy() >= 0.9f;
+        boolean combo = 1f * score.getMaxCombo() / Objects.requireNonNullElse(score.getBeatMap().getMaxCombo(), Integer.MAX_VALUE) >= 0.98f;
+        boolean pp = score.getPP() >= 400f;
+        boolean bp = p >= 400f && score.getPP() >= (p - 400f) / 25f;
+
+        boolean fail = score.getRank() == null || Objects.equals(score.getRank(), "F");
+
+        if (ultra) r++;
+        if (extreme) r++;
+        if (acc) r++;
+        if (combo) r++;
+        if (pp) r++;
+        if (bp) r += 2;
+
+        return r >= 3 && !fail;
+    }
 
     private record Range(Integer offset, Integer limit) {}
 
@@ -339,6 +370,41 @@ public class DataUtil {
         }
     }
 
+    public static double getProgress(Score score, String mapStr) throws IOException {
+        if (!Objects.equals(score.getRank(), "F") && score.getRank() != null) return 1d;
+
+        var hitObjects = OsuFile.getInstance(mapStr).getOsu().getHitObjects();
+        var count = getScoreJudgeCount(score);
+
+        if (count >= hitObjects.size()) return 1d;
+
+        return 1d * hitObjects.get(Math.max(count - 1, 0)).getStartTime() / hitObjects.getLast().getEndTime();
+    }
+
+    private static int getScoreJudgeCount(@NonNull Score score) {
+        var mode = score.getMode();
+
+        var s = score.getStatistics();
+        var n320 = s.getCountGeki();
+        var n300 = s.getCount300();
+        var n200 = s.getCountKatu();
+        var n100 = s.getCount100();
+        var n50 = s.getCount50();
+        var n0 = s.getCountMiss();
+
+        return switch (mode) {
+            case OSU -> n300 + n100 + n50 + n0;
+            case TAIKO -> n300 + n100 + n0;
+            case CATCH -> n300 + n0; //目前问题是，这个玩意没去掉miss中果，会偏大
+            //const attr = await getMapAttributes(bid, 0, 2, reload);
+            //return attr.nFruits || n300 + n0;
+
+            default -> n320 + n300 + n200 + n100 + n50 + n0;
+        };
+
+
+    }
+
     public static List<Integer> getMapObjectList(String mapStr) {
         var bucket = mapStr.split("\\[\\w+]");
         var hitObjects = bucket[bucket.length - 1].split("\\s+");
@@ -362,6 +428,7 @@ public class DataUtil {
                 }).toList();
     }
 
+    // 获取谱面密度，分割成 26 长度的数组
     public static List<Integer> getGrouping26(List<Integer> x) {
         var steps = (x.getLast() - x.getFirst()) / 26 + 1;
         var out = new LinkedList<Integer>();
@@ -371,7 +438,7 @@ public class DataUtil {
             if (i < m) {
                 sum++;
             } else {
-                out.push((int) sum);
+                out.add((int) sum);
                 sum = 0;
                 m += steps;
             }

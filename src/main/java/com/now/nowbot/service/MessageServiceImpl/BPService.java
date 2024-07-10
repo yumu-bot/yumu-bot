@@ -93,7 +93,7 @@ public class BPService implements MessageService<BPService.BPParam> {
                 for (var e : BPMap.entrySet()) {
                     score = e.getValue();
                 }
-                image = imageService.getPanelE(user, score, beatmapApiService);
+                image = imageService.getPanelE(user, score);
             }
             // 玩家信息获取已经移动至 HandleUtil，故删去不可能进入的 catch
         } catch (Exception e) {

@@ -316,7 +316,7 @@ public class BotWebApi {
                     data = imageService.getPanelA4(osuUser, scoreList, rankList);
                     suffix = "-bps.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
                     suffix = "-bp.jpg";
                 }
             }
@@ -328,7 +328,7 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-passes.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
                     suffix = "-pass.jpg";
                 }
             }
@@ -341,7 +341,7 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scoreList);
                     suffix = "-recents.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst(), beatmapApiService);
+                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
                     suffix = "-recent.jpg";
                 }
             }
@@ -578,7 +578,7 @@ public class BotWebApi {
             score.setBeatMap(beatMap);
         }
 
-        var image = imageService.getPanelE(osuUser, score, beatmapApiService);
+        var image = imageService.getPanelE(osuUser, score);
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
     }
 

@@ -32,7 +32,7 @@ public class TestMapService implements MessageService<Matcher> {
         String mod = matcher.group("mod");
 
 
-        var b = beatmapApiService.getBeatMapInfo(bid);
+        var b = beatmapApiService.getBeatMapInfoFromDataBase(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');

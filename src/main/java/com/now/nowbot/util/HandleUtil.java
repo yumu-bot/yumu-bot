@@ -28,7 +28,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -468,7 +467,7 @@ public class HandleUtil {
     @NonNull
     public static BeatMap getOsuBeatMap(long bid) throws TipsException {
         try {
-            return beatmapApiService.getBeatMapInfo(bid);
+            return beatmapApiService.getBeatMapInfoFromDataBase(bid);
         } catch (WebClientResponseException.NotFound e) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Map);
         } catch (WebClientResponseException e) {
@@ -482,7 +481,7 @@ public class HandleUtil {
     // 这个有保底
     public static BeatMap getOsuBeatMapOrElse(long bid) throws TipsException {
         try {
-            return beatmapApiService.getBeatMapInfo(bid);
+            return beatmapApiService.getBeatMapInfoFromDataBase(bid);
         } catch (WebClientResponseException.NotFound e) {
             try {
                 return beatmapApiService.getBeatMapSetInfo(bid).getTopDiff();

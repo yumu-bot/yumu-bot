@@ -81,7 +81,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         }
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyStarRatingChange(bpList);
+        beatmapApiService.applySRAndPP(bpList);
 
         byte[] image;
 

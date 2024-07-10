@@ -148,7 +148,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             }
         }
 
-        beatmapApiService.applyStarRatingChange(bps);
+        beatmapApiService.applySRAndPP(bps);
 
         String[] Lines;
         if (param.info()) {

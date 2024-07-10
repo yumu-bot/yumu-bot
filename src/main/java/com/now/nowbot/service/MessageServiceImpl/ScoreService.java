@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -139,9 +138,13 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
             }
 
+            /*
             var beatMap = new BeatMap();
             beatMap.setBeatMapID(bid);
             score.setBeatMap(beatMap);
+
+             */
+            beatmapApiService.applyBeatMapExtend(score);
 
         } else {
             try {
@@ -178,7 +181,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         byte[] image;
 
         try {
-            image = imageService.getPanelE(osuUser, score, beatmapApiService);
+            image = imageService.getPanelE(osuUser, score);
         } catch (Exception e) {
             log.error("成绩：渲染失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Render_Error);

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 
 import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
@@ -18,7 +19,7 @@ import java.util.stream.StreamSupport;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class BeatMap {
+public class BeatMap implements Cloneable {
     // 等同于 BeatMapExtended
     // 原有属性
 
@@ -451,6 +452,36 @@ public class BeatMap {
 
     @Override
     public String toString() {
-        return STR."BeatMap{SID=\{setID}, StarRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, MapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated=\{lastUpdated}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
+        return STR."BeatMap{setID=\{setID}, starRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, mapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated='\{lastUpdated}\{'\''}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
+    }
+
+    @Override
+    public BeatMap clone() {
+        try {
+            return (BeatMap) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    // 如果当前实例是 beatMapLite，返回以这个实例为主，以 b 为辅的新 beatMap
+    @NonNull
+    public static BeatMap extend(BeatMap lite, BeatMap extended) {
+        if (extended == null) {
+            return Objects.requireNonNullElseGet(lite, BeatMap::new);
+        } else if (lite == null){
+            return extended;
+        }
+
+        extended.setStarRating(lite.getStarRating());
+        extended.setCS(lite.getCS());
+        extended.setAR(lite.getAR());
+        extended.setOD(lite.getOD());
+        extended.setHP(lite.getHP());
+        extended.setTotalLength(lite.getTotalLength());
+        extended.setHitLength(lite.getHitLength());
+        extended.setBPM(lite.getBPM());
+
+        return extended;
     }
 }

@@ -254,7 +254,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
                 
                 // apply changes
-                beatmapApiService.applyStarRatingChange(b, OsuMode.getMode(round.getMode()), round.getModInt());
+                beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
             }
 
             round.setBeatMap(b);

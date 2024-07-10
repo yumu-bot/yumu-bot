@@ -39,6 +39,7 @@ public interface OsuBeatmapApiService {
 
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
 
+    // 尽量用 FromDataBase，这样可以节省 API 开支
     BeatMap getBeatMapInfo(long bid);
 
     default BeatMap getBeatMapInfo(int bid) {
@@ -118,6 +119,7 @@ public interface OsuBeatmapApiService {
     }
 
     @NotNull
+    @SuppressWarnings("all")
     private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
         score.setMods(modInt);
         // 这个要留着, 因为是调用了 native 方法
@@ -142,28 +144,51 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, score);
     }
 
-    default void applyStarRatingChange(List<Score> scoreList) {
-        if (CollectionUtils.isEmpty(scoreList)) return;
-
+    // 给成绩添加完整的谱面
+    default void applyBeatMapExtend(List<Score> scoreList) {
         for (var score : scoreList) {
-            var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
-            // score.getPP() 实际上永远不会为 null, 因为里面判断了 null 返回 0
-            if (!OsuMod.hasChangeRating(modsInt)) continue;
-
-            var beatMap = score.getBeatMap();
-            JniResult r;
-            try {
-                r = getMaxPP(beatMap.getBeatMapID(), score.getMode(), modsInt);
-            } catch (Exception e) {
-                NowbotApplication.log.error("计算时出现异常", e);
-                continue;
-            }
-
-            beatMap.setStarRating((float) r.getStar());
+            applyBeatMapExtend(score);
         }
     }
 
-    default void applyStarRatingChange(BeatMap beatMap, OsuMode mode, int modsInt) {
+    // 给成绩添加完整的谱面
+    default void applyBeatMapExtend(Score score) {
+        var extended = getBeatMapInfo(score.getBeatMap().getBeatMapID());
+        var lite = score.getBeatMap();
+
+        score.setBeatMap(BeatMap.extend(lite, extended));
+        score.setBeatMapSet(extended.getBeatMapSet());
+    }
+
+    default void applySRAndPP(Score score) {
+        var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
+
+        // 没有变星数，并且有 PP，略过
+        if (!OsuMod.hasChangeRating(modsInt) && score.getPP() > 0f) return;
+
+        var beatMap = score.getBeatMap();
+        JniResult r;
+        try {
+            r = getMaxPP(beatMap.getBeatMapID(), score.getMode(), modsInt);
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        score.setPP((float) r.getPp());
+        beatMap.setStarRating((float) r.getStar());
+        DataUtil.applyBeatMapChanges(beatMap, modsInt);
+    }
+
+    default void applySRAndPP(List<Score> scoreList) {
+        if (CollectionUtils.isEmpty(scoreList)) return;
+
+        for (var score : scoreList) {
+            applySRAndPP(score);
+        }
+    }
+
+    default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
         JniResult r;
 

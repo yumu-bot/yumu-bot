@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -135,6 +136,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } else if (matcher.group("pass") != null) {
             isRecent = false;
         } else {
+            log.error("成绩分类失败：");
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
@@ -236,6 +238,9 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
+        // beatmapApiService.applySRAndPP(scoreList);
+        // 等 E 面板重构后使用这个
+
         try {
             osuUser = userApiService.getPlayerInfo(binUser, param.mode());
         } catch (WebClientResponseException.Forbidden e) {
@@ -256,18 +261,49 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
                 var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
                 from.sendImage(image);
             } catch (Exception e) {
+                log.error("成绩发送失败：", e);
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
 
         } else {
             //单成绩发送
             var score = scoreList.getFirst();
+
+            beatmapApiService.applyBeatMapExtend(score);
+
+            var b = score.getBeatMap();
+            var original = new HashMap<String, Object>(6);
+            original.put("cs", b.getCS());
+            original.put("ar", b.getAR());
+            original.put("od", b.getOD());
+            original.put("hp", b.getHP());
+            original.put("bpm", b.getBPM());
+            original.put("drain", b.getHitLength());
+            original.put("total", b.getTotalLength());
+
+            beatmapApiService.applySRAndPP(score);
+
             try {
-                var image = imageService.getPanelE(osuUser, score, beatmapApiService);
+                var excellent = DataUtil.isExcellentScore(score, osuUser.getPP());
+
+                byte[] image;
+
+                if (false) {
+
+                    // 这些本来都是绘图模块算的，任务太重！
+                    var fileStr = beatmapApiService.getBeatMapFile(score.getBeatMap().getBeatMapID());
+                    var density = DataUtil.getGrouping26(DataUtil.getMapObjectList(fileStr));
+                    var progress = DataUtil.getProgress(score, fileStr);
+
+                    image = imageService.getPanelE5(osuUser, score, density, progress, original);
+                } else {
+                    image = imageService.getPanelE(osuUser, score);
+                }
+
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(score), e);
-                getTextOutput(scoreList.getFirst(), from);
+                getTextOutput(score, from);
             }
         }
     }

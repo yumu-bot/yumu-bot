@@ -181,7 +181,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
     }
 
     @Override
-    public List<Score> getBeatmapScores(long bid, OsuMode mode) {
+    public List<Score> getBeatMapScores(long bid, OsuMode mode) {
         return base.osuApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("beatmaps/{bid}/scores")

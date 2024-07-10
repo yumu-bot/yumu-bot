@@ -8,7 +8,6 @@ import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -371,11 +370,7 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
-    public byte[] getPanelE(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) throws WebClientResponseException {
-        var map = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
-        score.setBeatMap(map);
-        score.setBeatMapSet(map.getBeatMapSet());
-
+    public byte[] getPanelE(OsuUser user, Score score) throws WebClientResponseException {
         /*
         if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
             log.info("score.created_at_str: {}", score.getCreateTime());
@@ -415,6 +410,20 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E3", httpEntity);
+    }
+
+    public byte[] getPanelE5(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "user", user,
+                "score", score,
+                "density", density,
+                "progress", progress,
+                "original", original
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E5", httpEntity);
     }
 
     public byte[] getPanelF(MatchCalculate matchData) {
