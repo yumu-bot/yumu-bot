@@ -38,8 +38,6 @@ public class DataUtil {
 
     static Typeface EXTRA;
 
-    private record Range(Integer offset, Integer limit) {}
-
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
      * @param start 开始
@@ -48,7 +46,7 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Offset(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).offset;
+        return parseRange(start, end).offset();
     }
 
     /**
@@ -59,7 +57,7 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Limit(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).limit;
+        return parseRange(start, end).limit();
     }
 
     /**
@@ -69,7 +67,7 @@ public class DataUtil {
      * @return offset-limit 对
      */
     @NonNull
-    private static Range parseRange(@Nullable Integer start, @Nullable Integer end) {
+    private static HandleUtil.Range parseRange(@Nullable Integer start, @Nullable Integer end) {
         int offset;
         int limit;
 
@@ -92,7 +90,7 @@ public class DataUtil {
             }
         }
 
-        return new Range(offset, limit);
+        return new HandleUtil.Range(offset, limit);
     }
 
     /**

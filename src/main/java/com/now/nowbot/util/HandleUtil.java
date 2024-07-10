@@ -28,7 +28,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -110,7 +109,7 @@ public class HandleUtil {
     /**
      * 获取一个 user, 优先获取别人, 没找到就自己
      */
-    public static OsuUser getUser(@NonNull MessageEvent event, @NonNull Matcher matcher, @NonNull int maximum) throws TipsException {
+    public static OsuUser getOsuUser(@NonNull MessageEvent event, @NonNull Matcher matcher, @NonNull int maximum) throws TipsException {
         OsuMode mode = getMode(matcher);
 
         var u = getOtherUser(event, matcher, mode, maximum);
@@ -241,11 +240,11 @@ public class HandleUtil {
             var user = bindDao.getUserFromQQ(qq);
             if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
-            return getPlayerInfo(user.getOsuName(), mode);
+            return getOsuUser(user.getOsuName(), mode);
         }
 
         if (uid != 0) {
-            return getPlayerInfo(uid, mode);
+            return getOsuUser(uid, mode);
         }
 
         try {
@@ -281,11 +280,11 @@ public class HandleUtil {
             if (!Objects.equals(name.trim(), name) || nameExceed) {
                 // 对叫100(或者1000，取自 maximum)的人直接取消处理，
 
-                return getPlayerInfo(name.trim(), mode);
+                return getOsuUser(name.trim(), mode);
             } else if (param1Exceed) {
                 // 对超出位数的玩家进行字符串填补
 
-                return getPlayerInfo(name + param1, mode);
+                return getOsuUser(name + param1, mode);
             }
 
         } catch (IllegalStateException | IllegalArgumentException ignore) {
@@ -302,7 +301,7 @@ public class HandleUtil {
 
         if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
-        return getPlayerInfo(user.getOsuName(), mode);
+        return getOsuUser(user.getOsuName(), mode);
     }
 
     // MapStatisticsService 专属
@@ -452,6 +451,21 @@ public class HandleUtil {
         }
     }
 
+    // 单独拿成绩
+    public static List<Score> getOsuScoreList(OsuUser user, @Nullable OsuMode mode, int offset, int limit, boolean isPass) throws TipsException {
+        try {
+            return scoreApiService.getRecent(user.getUserID(), mode, offset, limit, isPass);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP);
+        } catch (WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        }
+    }
+
+    public static List<Score> getOsuScoreList(OsuUser user, @Nullable OsuMode mode, Range range, boolean isPass) throws TipsException {
+        return getOsuScoreList(user, mode, range.offset(), range.limit(), isPass);
+    }
+
     // 这个没有保底，有保底的请使用 getOsuBeatMapOrElse
     @Nullable
     public static BeatMap getOsuBeatMap(@NonNull Matcher matcher) throws TipsException {
@@ -497,20 +511,28 @@ public class HandleUtil {
         }
     }
 
-    private record Range(int offset, int limit) {
+    public record Range(int offset, int limit) {}
+
+    /**
+     * 用 getUserAndRange
+     * @param defaultLimit         第二个参数的默认值
+     * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
+     */
+    @Deprecated
+    public static Range parseRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
+        return parseRange(matcher.group("range"), defaultLimit, parseLimitWhen1Param);
     }
 
     /**
      * @param defaultLimit         第二个参数的默认值
      * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      */
-    private static Range parseRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
+    public static Range parseRange(String str, Integer defaultLimit, boolean parseLimitWhen1Param) {
         int n;
         int m;
 
         try {
-            var range = matcher.group("range");
-            var rangeArray = range.split("-");
+            var rangeArray = str.split("-");
             if (rangeArray.length == 2) {
                 n = Integer.parseInt(rangeArray[0]) - 1;
                 m = Integer.parseInt(rangeArray[1]);
@@ -545,41 +567,46 @@ public class HandleUtil {
         return new Range(n, m);
     }
 
-    record UserAndRange(@Nullable BinUser user, Range range) {
+    public record UserAndRange(@Nullable BinUser user, Range range) {
     }
 
     /**
-     * @param message 消息
      * @param matcher 正则
+     * @param defaultLimit 第二个参数的默认值
+     * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      * @return 用户和范围
      */
-    private static UserAndRange getUserAndRange(String message, Matcher matcher, Range defaultRange) {
-        if (matcher.namedGroups().containsKey("ur")) throw new RuntimeException("No match found");
+    public static UserAndRange getUserAndRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
+        if (! matcher.namedGroups().containsKey("ur")) throw new RuntimeException("No match found");
+        if (defaultLimit == null) defaultLimit = 1;
 
         var text = matcher.group("ur");
         if (text.matches("^\\d{1,3}([\\-－]\\d{1,3})?$")) {
             // 只有数字
-            int n, m;
+            int o, l;
             if (text.contains("-") || text.contains("－")) {
                 var range = text.split("[\\-－]");
-                n = Integer.parseInt(range[0]);
-                m = Integer.parseInt(range[1]);
+                o = Math.max(Integer.parseInt(range[0]) - 1, 0);
+                l = Integer.parseInt(range[1]);
+            } else if (parseLimitWhen1Param) {
+                o = 0;
+                l = Integer.parseInt(text);
             } else {
-                n = Integer.parseInt(text);
-                m = -1;
+                o = Math.max(Integer.parseInt(text) - 1, 0);
+                l = defaultLimit;
             }
-            return new UserAndRange(null, new Range(m, n));
+            return new UserAndRange(null, new Range(o, l));
         }
         // 包含名字
-        int data[];
+        int[] data;
         if (text.contains("#")) {
             data = getNameAndRangeHasHash(text);
         } else {
-            data = getNameAndRangeWithoutHash(text);
+            data = getNameAndRangeWithoutHash(text, defaultLimit, parseLimitWhen1Param);
         }
 
-        int m = data[3];
-        int n = data[4];
+        int o = data[3];
+        int l = data[4];
 
         // 优先级: 双参数 > 单参数 > 无参数
         // yhc 22 33 优先级: yhc#22-33 > yhc 22#23 > yhc 22 23
@@ -589,7 +616,7 @@ public class HandleUtil {
                 var name = text.substring(0, data[2]);
                 var id = userApiService.getOsuId(name);
                 BinUser user = new BinUser(id, name);
-                return new UserAndRange(user, new Range(m, n));
+                return new UserAndRange(user, new Range(o, l));
             } catch (Exception ignore) {
             }
         }
@@ -600,7 +627,7 @@ public class HandleUtil {
                 var name = text.substring(0, data[1]);
                 var id = userApiService.getOsuId(name);
                 BinUser user = new BinUser(id, name);
-                return new UserAndRange(user, new Range(m, -1));
+                return new UserAndRange(user, new Range(o, defaultLimit));
             } catch (Exception ignore) {
             }
         }
@@ -610,7 +637,7 @@ public class HandleUtil {
             var name = text.substring(0, data[0]);
             var id = userApiService.getOsuId(name);
             BinUser user = new BinUser(id, name);
-            return new UserAndRange(user, new Range(-1, -1));
+            return new UserAndRange(user, new Range(0, defaultLimit));
         } catch (Exception ignore) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
@@ -634,7 +661,7 @@ public class HandleUtil {
         return result;
     }
 
-    private static int[] getNameAndRangeWithoutHash(String text) {
+    private static int[] getNameAndRangeWithoutHash(String text, Integer defaultLimit, boolean parseLimitWhen1Param) {
         int[] nameSet = new int[]{-1, -1};
         Consumer<Integer> setNameSet = value -> {
             if (nameSet[0] < 0) nameSet[0] = value;
@@ -644,6 +671,11 @@ public class HandleUtil {
         final int minIndex = 2;
         // 记录完整的名字
         int nameAll = text.length();
+
+        if (! StringUtils.hasText(text)) {
+            var r = parseRange(text, defaultLimit, parseLimitWhen1Param);
+            return new int[]{0, nameSet[0], nameSet[1], r.limit(), r.offset()};
+        }
 
         int m = -1, n = -1;
 
@@ -694,10 +726,14 @@ public class HandleUtil {
         if (m > 0) System.out.println("m: " + m);
         if (n > 0) System.out.println("n: " + n);
 
-        return new int[]{nameAll, nameSet[1], nameSet[2], m, n};
+        return new int[]{nameAll, nameSet[0], nameSet[1], m, n};
     }
 
-    private static OsuUser getPlayerInfo(String name, OsuMode mode) throws TipsException {
+    public static OsuUser getOsuUser(BinUser user, OsuMode mode) throws TipsException {
+        return getOsuUser(user.getOsuName(), mode);
+    }
+
+    public static OsuUser getOsuUser(String name, OsuMode mode) throws TipsException {
         try {
             return userApiService.getPlayerInfo(name, mode);
         } catch (WebClientResponseException.NotFound e) {
@@ -712,7 +748,7 @@ public class HandleUtil {
         }
     }
 
-    private static OsuUser getPlayerInfo(long uid, OsuMode mode) throws TipsException {
+    public static OsuUser getOsuUser(long uid, OsuMode mode) throws TipsException {
         try {
             return userApiService.getPlayerInfo(uid, mode);
         } catch (WebClientResponseException.NotFound e) {

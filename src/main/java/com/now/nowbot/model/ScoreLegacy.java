@@ -113,8 +113,8 @@ public class ScoreLegacy {
         if (!passed) rank = "F";
     }
 
-    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService osuGetService) throws ScoreException {
-        return new ScoreLegacy(score, osuGetService);
+    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws ScoreException {
+        return new ScoreLegacy(score, beatmapApiService);
     }
 
     public String getScoreLegacyOutput() {

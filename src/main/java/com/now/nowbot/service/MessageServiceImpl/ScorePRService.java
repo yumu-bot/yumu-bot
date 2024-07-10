@@ -1,20 +1,17 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
@@ -27,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.Objects;
@@ -50,8 +46,38 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
     @Resource
     ImageService imageService;
 
-    public record ScorePRParam(@NonNull BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {}
+    public record ScorePRParam(@NonNull OsuUser user, List<Score> scores, OsuMode mode) {}
 
+
+    @Override
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
+        var matcher = Instructions.SCORE_PR.matcher(messageText);
+        if (! matcher.find()) return false;
+
+        var mode = HandleUtil.getMode(matcher);
+
+        boolean isMultiple = StringUtils.hasText(matcher.group("s")) || StringUtils.hasText(matcher.group("es"));
+        boolean isPass = ! StringUtils.hasText(matcher.group("recent"));
+
+        var ur = HandleUtil.getUserAndRange(matcher, isMultiple ? 20 : 1, isMultiple);
+        OsuUser user;
+
+        if (Objects.isNull(ur.user())) {
+            user = HandleUtil.getMyselfUser(event, mode);
+        } else {
+            user = HandleUtil.getOsuUser(ur.user(), mode);
+        }
+
+        mode = HandleUtil.getModeOrElse(mode, user);
+
+        var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
+
+        data.setValue(new ScorePRParam(user, scores, mode));
+
+        return true;
+    }
+
+    /*
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
         var matcher = Instructions.SCORE_PR.matcher(messageText);
@@ -199,75 +225,40 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         return true;
     }
 
+     */
+
     @Override
     public void HandleMessage(MessageEvent event, ScorePRParam param) throws Throwable {
         var from = event.getSubject();
 
-        int offset = param.offset();
-        int limit = param.limit();
-        boolean isRecent = param.isRecent();
-        boolean isMultipleScore = param.isMultipleScore();
+        var user = param.user();
+        var scores = param.scores();
 
-        BinUser binUser = param.user();
-        OsuUser osuUser;
-
-        List<Score> scoreList;
-
-        try {
-            scoreList = scoreApiService.getRecent(binUser.getOsuID(), param.mode(), offset, limit, !isRecent);
-        } catch (WebClientResponseException e) {
-            //退避 !recent
-            if (event.getRawMessage().toLowerCase().contains("recent")) {
-                log.info("recent 退避成功");
-                return;
-            } else if (e instanceof WebClientResponseException.Unauthorized) {
-                throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-            } else if (e instanceof WebClientResponseException.Forbidden) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
-            } else {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
-            }
-        } catch (Exception e) {
-            log.error("成绩：列表获取失败", e);
-            throw new ScoreException(ScoreException.Type.SCORE_Score_FetchFailed);
+        if (CollectionUtils.isEmpty(scores)) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
         }
 
-        if (CollectionUtils.isEmpty(scoreList)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
-        }
+        beatmapApiService.applyStarRatingChange(scores);
 
-        try {
-            osuUser = userApiService.getPlayerInfo(binUser, param.mode());
-        } catch (WebClientResponseException.Forbidden e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
-        } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
-        }
-
-        //成绩发送
-        if (isMultipleScore) {
-            int scoreSize = scoreList.size();
-
-            //M太大
-            if (scoreSize < offset + limit) limit = scoreSize - offset;
-            if (limit <= 0) throw new ScoreException(ScoreException.Type.SCORE_Score_OutOfRange);
-
+        if (param.scores().size() > 1) {
+            // 多成绩发送
             try {
-                var image = imageService.getPanelA5(osuUser, scoreList.subList(offset, offset + limit));
+                var image = imageService.getPanelA5(user, scores);
                 from.sendImage(image);
             } catch (Exception e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
             }
 
         } else {
-            //单成绩发送
-            var score = scoreList.getFirst();
+            // 单成绩发送
+            var score = scores.getFirst();
+
             try {
-                var image = imageService.getPanelE(osuUser, score, beatmapApiService);
+                var image = imageService.getPanelE(user, score, beatmapApiService);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(score), e);
-                getTextOutput(scoreList.getFirst(), from);
+                getTextOutput(score, from);
             }
         }
     }
@@ -279,7 +270,6 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
 
-        //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
         QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
     }
 }

@@ -1,28 +1,25 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.MiniCardException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
 
@@ -41,6 +38,46 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
+
+    @Override
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRService.ScorePRParam> data) throws Throwable {
+        var matcher2 = Instructions.DEPRECATED_YMX.matcher(messageText);
+        if (matcher2.find()) throw new MiniCardException(MiniCardException.Type.MINI_Deprecated_X);
+
+        var matcher = Instructions.PR_CARD.matcher(messageText);
+        if (! matcher.find()) return false;
+
+        var mode = HandleUtil.getMode(matcher);
+
+        boolean isPass;
+
+        if (StringUtils.hasText(matcher.group("recent"))) {
+            isPass = false;
+        } else if (StringUtils.hasText(matcher.group("pass"))) {
+            isPass = true;
+        } else {
+            throw new MiniCardException(MiniCardException.Type.MINI_Classification_Error);
+        }
+
+        var ur = HandleUtil.getUserAndRange(matcher, 1, false);
+        OsuUser user;
+
+        if (Objects.isNull(ur.user())) {
+            user = HandleUtil.getMyselfUser(event, mode);
+        } else {
+            user = HandleUtil.getOsuUser(ur.user(), mode);
+        }
+
+        mode = HandleUtil.getModeOrElse(mode, user);
+
+        var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
+
+        data.setValue(new ScorePRService.ScorePRParam(user, scores, mode));
+
+        return true;
+    }
+
+    /*
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRService.ScorePRParam> data) throws Throwable {
         var matcher2 = Instructions.DEPRECATED_YMX.matcher(messageText);
@@ -146,20 +183,19 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         return true;
     }
 
+     */
+
     @Override
     public void HandleMessage(MessageEvent event, ScorePRService.ScorePRParam param) throws Throwable {
         var from = event.getSubject();
+        var user = param.user();
 
-        Score score;
-        BeatMap beatMap;
-
-        try {
-            score = scoreApiService.getRecent(
-                    param.user().getOsuID(), param.mode(), param.offset(), param.limit(), ! param.isRecent()
-            ).getFirst();
-        } catch (Exception e) {
-            throw new MiniCardException(MiniCardException.Type.MINI_Recent_NotFound, param.user().getOsuName());
+        if (CollectionUtils.isEmpty(param.scores())) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
         }
+
+        Score score = param.scores().getFirst();
+        BeatMap beatMap;
 
         try {
             beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());

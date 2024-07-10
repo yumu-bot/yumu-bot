@@ -1,12 +1,11 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
@@ -23,16 +22,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
 
 @Service("UU_PR")
-public class UUPRService implements MessageService<Matcher> {
+public class UUPRService implements MessageService<ScorePRService.ScorePRParam> {
     private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
     @Resource
@@ -47,110 +42,47 @@ public class UUPRService implements MessageService<Matcher> {
     BindDao bindDao;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.UU_PR.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRService.ScorePRParam> data) throws Throwable {
+        var matcher = Instructions.UU_PR.matcher(messageText);
+
+        if (! matcher.find()) return false;
+
+        var mode = HandleUtil.getMode(matcher);
+
+        boolean isPass = ! StringUtils.hasText(matcher.group("recent"));
+
+        var ur = HandleUtil.getUserAndRange(matcher, 1, false);
+        OsuUser user;
+
+        if (Objects.isNull(ur.user())) {
+            user = HandleUtil.getMyselfUser(event, mode);
+        } else {
+            user = HandleUtil.getOsuUser(ur.user(), mode);
+        }
+
+        mode = HandleUtil.getModeOrElse(mode, user);
+
+        var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
+
+        data.setValue(new ScorePRService.ScorePRParam(user, scores, mode));
+
+        return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, ScorePRService.ScorePRParam param) throws Throwable {
         var from = event.getSubject();
-        var name = matcher.group("name");
-        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
-        int offset;
-        int limit;
-        boolean isRecent;
+        var user = param.user();
+        var scores = param.scores();
 
-        if (StringUtils.hasText(matcher.group("recent"))) {
-            isRecent = true;
-        } else if (StringUtils.hasText(matcher.group("pass"))) {
-            isRecent = false;
-        } else {
-            throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
-        }
-
-        //处理 n
-        {
-            long n = 1L;
-            var nStr = matcher.group("n");
-
-            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
-
-            if (StringUtils.hasText(nStr)) {
-                if (noSpaceAtEnd) {
-                    // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
-                    name += nStr;
-                    nStr = "";
-                } else {
-                    // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
-                    // 没有名字，但有 n 匹配的也走这边 parse
-                    try {
-                        n = Long.parseLong(nStr);
-                    } catch (NumberFormatException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
-                    }
-                }
-            }
-
-            //避免 !b 970 这样子被错误匹配
-            var isIllegalN = n < 1L || n > 100L;
-            if (isIllegalN) {
-                if (StringUtils.hasText(name)) {
-                    name += nStr;
-                } else {
-                    name = nStr;
-                }
-
-                // nStr = "";
-                n = 1L;
-            }
-
-            offset = Math.toIntExact(n - 1);
-            limit = 1;
-        }
-
-        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        BinUser binUser;
-
-        if (Objects.nonNull(at)) {
-            binUser = bindDao.getUserFromQQ(at.getTarget());
-        } else if (StringUtils.hasText(name)) {
-            binUser = new BinUser();
-            Long id;
-            try {
-                id = userApiService.getOsuId(name.trim());
-                binUser.setOsuID(id);
-                binUser.setOsuName(name.trim());
-            } catch (HttpClientErrorException | WebClientResponseException e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
-            }
-        } else {
-            binUser = bindDao.getUserFromQQ(event.getSender().getId());
-        }
-
-        if (Objects.isNull(binUser)) throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-
-        var mode = HandleUtil.getModeOrElse(matcher, binUser);
-
-        List<Score> scoreList;
-
-        try {
-            scoreList = scoreApiService.getRecent(binUser.getOsuID(), mode, offset, limit, ! isRecent);
-        } catch (HttpClientErrorException | WebClientResponseException e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-        }
-
-        if (CollectionUtils.isEmpty(scoreList)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
+        if (CollectionUtils.isEmpty(scores)) {
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
         }
 
         //单成绩发送
         try {
-            getTextOutput(scoreList.getFirst(), from);
+            getTextOutput(scores.getFirst(), from);
         } catch (ScoreException e) {
             throw e;
         } catch (Exception e) {

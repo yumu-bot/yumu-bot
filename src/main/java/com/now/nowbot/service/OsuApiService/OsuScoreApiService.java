@@ -53,8 +53,8 @@ public interface OsuScoreApiService {
      */
     List<Score> getRecent(long uid, OsuMode mode, int offset, int limit);
 
-    default List<Score> getRecent(long uid, OsuMode mode, int offset, int limit, boolean isPassed) {
-        if (isPassed) {
+    default List<Score> getRecent(long uid, OsuMode mode, int offset, int limit, boolean isPass) {
+        if (isPass) {
             return getRecent(uid, mode, offset, limit);
         } else {
             return getRecentIncludingFail(uid, mode, offset, limit);

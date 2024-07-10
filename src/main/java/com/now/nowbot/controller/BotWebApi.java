@@ -910,7 +910,7 @@ public class BotWebApi {
      * @param modeStr 游戏模式
      * @param start !bp 45-55 或 !bp 45 里的 45
      * @param end !bp 45-55 里的 55
-     * @param isPassed 是否通过，默认通过（真）
+     * @param isPass 是否通过，默认通过（真）
      * @return List<Score> JSON
      */
     @GetMapping(value = "score/json")
@@ -920,21 +920,23 @@ public class BotWebApi {
             @RequestParam("mode") @Nullable String modeStr,
             @RequestParam("start") @Nullable Integer start,
             @RequestParam("end") @Nullable Integer end,
-            @RequestParam("isPassed") @Nullable Boolean isPassed
+            @RequestParam("isPassed") @Nullable Boolean isPass
     ){
         var mode = OsuMode.getMode(modeStr);
-        if (Objects.isNull(isPassed)) isPassed = true;
+        if (Objects.isNull(isPass)) {
+            isPass = true;
+        }
 
         int offset = DataUtil.parseRange2Offset(start, end);
         int limit = DataUtil.parseRange2Limit(start, end);
 
         if (Objects.nonNull(uid)) {
-            return scoreApiService.getRecent(uid, mode, offset, limit, isPassed);
+            return scoreApiService.getRecent(uid, mode, offset, limit, isPass);
         } else if (Objects.nonNull(name)) {
             var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getRecent(user.getUserID(), mode, offset, limit, isPassed);
+            return scoreApiService.getRecent(user.getUserID(), mode, offset, limit, isPass);
         } else {
-            return scoreApiService.getRecent(7003013L, OsuMode.DEFAULT, offset, limit, isPassed);
+            return scoreApiService.getRecent(7003013L, OsuMode.DEFAULT, offset, limit, isPass);
         }
     }
 
