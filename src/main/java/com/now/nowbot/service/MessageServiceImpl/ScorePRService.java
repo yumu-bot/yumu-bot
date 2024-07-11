@@ -281,7 +281,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
                 if (excellent) {
                     image = imageService.getPanelE5(e5Param);
                 } else {
-                    image = imageService.getPanelE(osuUser, score);
+                    image = imageService.getPanelE(osuUser, e5Param.score());
                 }
 
                 from.sendImage(image);

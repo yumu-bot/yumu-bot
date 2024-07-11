@@ -16,6 +16,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -27,6 +28,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.Objects;
+
+import static com.now.nowbot.service.MessageServiceImpl.ScorePRService.getScore4PanelE5;
 
 @Service("SCORE")
 public class ScoreService implements MessageService<ScoreService.ScoreParam> {
@@ -144,7 +147,6 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             score.setBeatMap(beatMap);
 
              */
-            beatmapApiService.applyBeatMapExtend(score);
 
         } else {
             try {
@@ -181,7 +183,16 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         byte[] image;
 
         try {
-            image = imageService.getPanelE(osuUser, score);
+            var e5Param = getScore4PanelE5(osuUser, score, beatmapApiService);
+            var excellent = DataUtil.isExcellentScore(e5Param.score(), osuUser.getPP());
+
+
+            if (excellent) {
+                image = imageService.getPanelE5(e5Param);
+            } else {
+                image = imageService.getPanelE(osuUser, e5Param.score());
+            }
+
         } catch (Exception e) {
             log.error("成绩：渲染失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Render_Error);
