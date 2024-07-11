@@ -6,18 +6,15 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.util.DataUtil;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import rosu.Rosu;
 import rosu.parameter.JniScore;
-import rosu.result.JniResult;
+import rosu.result.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public interface OsuBeatmapApiService {
     /**
@@ -90,6 +87,10 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, js);
     }
 
+    default JniResult getMaxPP(Score s) throws Exception {
+        return getMaxPP(s.getBeatMap().getBeatMapID(), s.getMode(), OsuMod.getModsValueFromAbbrList(s.getMods()));
+    }
+
     default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
         JniScore js = new JniScore();
@@ -129,7 +130,41 @@ public interface OsuBeatmapApiService {
         return getJniResult(m, t, b, js);
     }
 
-    @NotNull
+    default Map<String, Object> getFullStatistics(Score s) throws Exception {
+        var jniResult = getMaxPP(s);
+
+        return getStats(jniResult);
+    }
+
+    default Map<String, Object> getStatistics(Score s) throws Exception {
+        var jniResult = getPP(s);
+
+        return getStats(jniResult);
+    }
+
+    @NonNull
+    private Map<String, Object> getStats(@NonNull JniResult jniResult) {var result = new HashMap<String, Object>(6);
+        switch (jniResult) {
+            case OsuResult o -> {
+                result.put("aim_pp", o.getPpAim());
+                result.put("spd_pp", o.getPpSpeed());
+                result.put("acc_pp", o.getPpAcc());
+                result.put("fl_pp", o.getPpFlashlight());
+            }
+            case TaikoResult t -> {
+                result.put("acc_pp", t.getPpAcc());
+                result.put("diff_pp", t.getPpDifficulty());
+            }
+            case ManiaResult m -> result.put("diff_pp", m.getPpDifficulty());
+            default -> {
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    @NonNull
     @SuppressWarnings("all")
     private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
         score.setMods(modInt);

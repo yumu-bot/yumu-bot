@@ -8,6 +8,7 @@ import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.MessageServiceImpl.ScorePRService;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -412,15 +413,16 @@ public class ImageService {
         return doPost("panel_E3", httpEntity);
     }
 
-    public byte[] getPanelE5(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original) {
+    public byte[] getPanelE5(ScorePRService.SingleScoreParam param) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "user", user,
-                "score", score,
-                "density", density,
-                "progress", progress,
-                "original", original
+                "user", param.user(),
+                "score", param.score(),
+                "density", param.density(),
+                "progress", param.progress(),
+                "original", param.original(),
+                "attributes", param.attributes()
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E5", httpEntity);

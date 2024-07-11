@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -21,6 +22,8 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.now.nowbot.service.MessageServiceImpl.ScorePRService.getScore4PanelE5;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
@@ -90,12 +93,20 @@ public class BPService implements MessageService<BPService.BPParam> {
                 image = imageService.getPanelA4(user, scoreList, rankList);
             } else {
                 Score score = null;
+
                 for (var e : BPMap.entrySet()) {
                     score = e.getValue();
                 }
-                image = imageService.getPanelE(user, score);
+
+                var e5Param = getScore4PanelE5(user, score, beatmapApiService);
+                var excellent = DataUtil.isExcellentScore(e5Param.score(), user.getPP());
+
+                if (excellent) {
+                    image = imageService.getPanelE5(e5Param);
+                } else {
+                    image = imageService.getPanelE(user, score);
+                }
             }
-            // 玩家信息获取已经移动至 HandleUtil，故删去不可能进入的 catch
         } catch (Exception e) {
             log.error("最好成绩：渲染失败", e);
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩");

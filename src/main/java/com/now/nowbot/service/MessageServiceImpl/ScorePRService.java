@@ -31,6 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 //Multiple Score也合并进来了
@@ -52,6 +53,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
     ImageService imageService;
 
     public record ScorePRParam(@NonNull BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {}
+
+    public record SingleScoreParam(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original, Map<String, Object> attributes) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
@@ -238,9 +241,6 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
         }
 
-        // beatmapApiService.applySRAndPP(scoreList);
-        // 等 E 面板重构后使用这个
-
         try {
             osuUser = userApiService.getPlayerInfo(binUser, param.mode());
         } catch (WebClientResponseException.Forbidden e) {
@@ -272,33 +272,14 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             //单成绩发送
             var score = scoreList.getFirst();
 
-            beatmapApiService.applyBeatMapExtend(score);
-
-            var b = score.getBeatMap();
-            var original = new HashMap<String, Object>(6);
-            original.put("cs", b.getCS());
-            original.put("ar", b.getAR());
-            original.put("od", b.getOD());
-            original.put("hp", b.getHP());
-            original.put("bpm", b.getBPM());
-            original.put("drain", b.getHitLength());
-            original.put("total", b.getTotalLength());
-
-            beatmapApiService.applySRAndPP(score);
-
             try {
-                var excellent = DataUtil.isExcellentScore(score, osuUser.getPP());
+                var e5Param = getScore4PanelE5(osuUser, score, beatmapApiService);
+                var excellent = DataUtil.isExcellentScore(e5Param.score(), osuUser.getPP());
 
                 byte[] image;
 
-                if (false) {
-
-                    // 这些本来都是绘图模块算的，任务太重！
-                    var fileStr = beatmapApiService.getBeatMapFile(score.getBeatMap().getBeatMapID());
-                    var density = DataUtil.getGrouping26(DataUtil.getMapObjectList(fileStr));
-                    var progress = DataUtil.getProgress(score, fileStr);
-
-                    image = imageService.getPanelE5(osuUser, score, density, progress, original);
+                if (excellent) {
+                    image = imageService.getPanelE5(e5Param);
                 } else {
                     image = imageService.getPanelE(osuUser, score);
                 }
@@ -320,5 +301,32 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         //from.sendMessage(new MessageChain.MessageChainBuilder().addImage(imgBytes).addText(d.getScoreLegacyOutput()).build());
         QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
+    }
+
+    // 这些本来都是绘图模块算的，任务太重！
+    public static SingleScoreParam getScore4PanelE5(OsuUser user, Score score, OsuBeatmapApiService beatmapApiService) throws Exception {
+        var b = score.getBeatMap();
+
+        beatmapApiService.applyBeatMapExtend(score);
+
+        var original = new HashMap<String, Object>(6);
+        original.put("cs", b.getCS());
+        original.put("ar", b.getAR());
+        original.put("od", b.getOD());
+        original.put("hp", b.getHP());
+        original.put("bpm", b.getBPM());
+        original.put("drain", b.getHitLength());
+        original.put("total", b.getTotalLength());
+
+        beatmapApiService.applySRAndPP(score);
+
+        var attributes = beatmapApiService.getStatistics(score);
+        attributes.put("full_pp", beatmapApiService.getMaxPP(score).getPp());
+
+        var fileStr = beatmapApiService.getBeatMapFile(b.getBeatMapID());
+        var density = DataUtil.getGrouping26(DataUtil.getMapObjectList(fileStr));
+        var progress = DataUtil.getProgress(score, fileStr);
+
+        return new SingleScoreParam(user, score, density, progress, original, attributes);
     }
 }
