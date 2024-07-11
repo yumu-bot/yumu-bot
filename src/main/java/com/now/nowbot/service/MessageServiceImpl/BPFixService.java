@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.ScoreWithFcPP;
-import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -170,7 +169,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
 
         try {
-            var pp = beatmapApiService.getPP(score);
+            var pp = beatmapApiService.getFcPP(score);
             result.setFcPP((float) pp.getPp());
         } catch (Exception e) {
             log.error("bp 计算 pp 出错:", e);

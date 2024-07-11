@@ -130,6 +130,16 @@ public interface OsuBeatmapApiService {
         return getJniResult(m, t, b, js);
     }
 
+    default JniResult getFcPP(Score s) throws Exception {
+        var b = getBeatMapFile(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var m = OsuMod.getModsValueFromAbbrList(s.getMods());
+        var t = s.getStatistics();
+
+        JniScore js = new JniScore();
+        js.setMode(s.getMode().toRosuMode());
+        return getJniResult(m, t, b, js);
+    }
+
     default Map<String, Object> getFullStatistics(Score s) throws Exception {
         var jniResult = getMaxPP(s);
 
