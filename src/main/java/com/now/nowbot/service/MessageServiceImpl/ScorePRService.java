@@ -270,23 +270,24 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         } else {
             //单成绩发送
-            var score = scoreList.getFirst();
+            var scoreRaw = scoreList.getFirst();
+            var e5Param = getScore4PanelE5(osuUser, scoreRaw, beatmapApiService);
+            var score = e5Param.score();
 
             try {
-                var e5Param = getScore4PanelE5(osuUser, score, beatmapApiService);
-                var excellent = DataUtil.isExcellentScore(e5Param.score(), osuUser.getPP());
+                var excellent = DataUtil.isExcellentScore(score, osuUser.getPP());
 
                 byte[] image;
 
                 if (excellent) {
                     image = imageService.getPanelE5(e5Param);
                 } else {
-                    image = imageService.getPanelE(osuUser, e5Param.score());
+                    image = imageService.getPanelE(osuUser, score);
                 }
 
                 from.sendImage(image);
             } catch (Exception e) {
-                log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(score), e);
+                log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(scoreRaw), e);
                 getTextOutput(score, from);
             }
         }

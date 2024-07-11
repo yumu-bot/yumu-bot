@@ -6,7 +6,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.print.attribute.standard.MediaSize;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +20,7 @@ public enum OsuMod {
     HardRock(1 << 4, "HR"),
     SuddenDeath(1 << 5, "SD"),
     DoubleTime(1 << 6, "DT"),
-    Relax(1 << 7, "RL"),
+    Relax(1 << 7, "RX"),
     HalfTime(1 << 8, "HT"),
     //总是和 DT 一起使用 : 512 + 64 = 576
     Nightcore((1 << 9) + (DoubleTime.value), "NC"),
@@ -264,7 +263,7 @@ public enum OsuMod {
             case "DT" -> DoubleTime;
             case "NC" -> Nightcore;
             case "FL" -> Flashlight;
-            case "RL" -> Relax;
+            case "RX" -> Relax;
             case "AP" -> Autopilot;
             case "AT" -> Autoplay;
             case "CM" -> Cinema;

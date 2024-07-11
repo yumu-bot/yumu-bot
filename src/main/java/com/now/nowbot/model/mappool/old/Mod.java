@@ -20,7 +20,7 @@ public enum Mod {
     HardRock(1 << 4, "HR", "#D32F2F", 17),
     SuddenDeath(1 << 5, "SD", "#FF9800", 20),
     DoubleTime(1 << 6, "DT", "#0068B7", 19),
-    Relax(1 << 7, "RL", "#8FC31F", 30),
+    Relax(1 << 7, "RX", "#8FC31F", 30),
     HalfTime(1 << 8, "HT", "#BDBDBD", 20),
     //总是和 DT 一起使用 : 512 + 64 = 576
     Nightcore((1 << 9) + (DoubleTime.value), "NC", "#601986", 20),
@@ -290,7 +290,7 @@ public enum Mod {
             case "DT" -> DoubleTime;
             case "NC" -> Nightcore;
             case "FL" -> Flashlight;
-            case "RL" -> Relax;
+            case "RX" -> Relax;
             case "AP" -> Autopilot;
             case "AT" -> Autoplay;
             case "CM" -> Cinema;
