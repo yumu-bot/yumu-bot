@@ -46,7 +46,7 @@ public class DataUtil {
      */
     @NonNull
     public static boolean isExcellentScore(@NonNull Score score, Double playerPP) {
-        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 400，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 0.5%。
+        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 1%。
         int r = 0;
         double p = Objects.requireNonNullElse(playerPP, 0d);
 
@@ -54,7 +54,7 @@ public class DataUtil {
         boolean extreme = score.getBeatMap().getStarRating() >= 6.5f;
         boolean acc = score.getAccuracy() >= 0.9f;
         boolean combo = 1f * score.getMaxCombo() / Objects.requireNonNullElse(score.getBeatMap().getMaxCombo(), Integer.MAX_VALUE) >= 0.98f;
-        boolean pp = score.getPP() >= 400f;
+        boolean pp = score.getPP() >= 300f;
         boolean bp = p >= 400f && score.getPP() >= (p - 400f) / 25f;
         boolean miss = score.getStatistics().getCountAll(score.getMode()) > 0 && score.getStatistics().getCountMiss() <= score.getStatistics().getCountAll(score.getMode()) * 0.01f;
 
@@ -284,7 +284,6 @@ public class DataUtil {
 
     public static Double getRoundedNumber(double number, int level) {
 
-        boolean s = true; //正负符号
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
         //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
 
