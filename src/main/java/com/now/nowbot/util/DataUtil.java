@@ -56,6 +56,7 @@ public class DataUtil {
         boolean combo = 1f * score.getMaxCombo() / Objects.requireNonNullElse(score.getBeatMap().getMaxCombo(), Integer.MAX_VALUE) >= 0.98f;
         boolean pp = score.getPP() >= 400f;
         boolean bp = p >= 400f && score.getPP() >= (p - 400f) / 25f;
+        boolean miss = score.getStatistics().getCountAll(score.getMode()) > 0 && score.getStatistics().getCountMiss() <= score.getStatistics().getCountAll(score.getMode()) * 0.01f;
 
         boolean fail = score.getRank() == null || Objects.equals(score.getRank(), "F");
 
@@ -65,6 +66,7 @@ public class DataUtil {
         if (combo) r++;
         if (pp) r++;
         if (bp) r += 2;
+        if (miss) r++;
 
         return r >= 3 && !fail;
     }
