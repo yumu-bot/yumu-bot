@@ -104,7 +104,7 @@ public class BPService implements MessageService<BPService.BPParam> {
                 if (excellent) {
                     image = imageService.getPanelE5(e5Param);
                 } else {
-                    image = imageService.getPanelE(user, score);
+                    image = imageService.getPanelE(user, e5Param.score());
                 }
             }
         } catch (Exception e) {
