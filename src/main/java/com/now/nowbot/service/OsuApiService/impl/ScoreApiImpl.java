@@ -124,9 +124,7 @@ public class ScoreApiImpl implements OsuScoreApiService {
             uriBuilder.path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", n)
                     .queryParamIfPresent("mode", OsuMode.getName(mode));
-            for (var mod : mods) {
-                uriBuilder.queryParam("mods[]", mod.abbreviation);
-            }
+            setMods(uriBuilder, mods);
             return uriBuilder.build(bid, uid);
         };
         return do404Retry(uri.apply(0), base::insertHeader, BeatmapUserScore.class, uri.apply(1)).block();
@@ -141,12 +139,20 @@ public class ScoreApiImpl implements OsuScoreApiService {
             uriBuilder.path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", n)
                     .queryParamIfPresent("mode", OsuMode.getName(mode));
-            for (var mod : mods) {
-                uriBuilder.queryParam("mods[]", mod.abbreviation);
-            }
+            setMods(uriBuilder, mods);
             return uriBuilder.build(bid, user.getOsuID());
         };
         return do404Retry(uri.apply(0), base.insertHeader(user), BeatmapUserScore.class, uri.apply(1)).block();
+    }
+
+    private void setMods(UriBuilder builder, Iterable<OsuMod> mods) {
+        for (var mod : mods) {
+            if (mod == OsuMod.None) {
+                builder.queryParam("mods[]", "NM");
+                return;
+            }
+        }
+        mods.forEach(mod -> builder.queryParam("mods[]", mod.abbreviation));
     }
 
     @Override
