@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
@@ -178,8 +179,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
             var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
-
-            if (excellent) {
+            if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
                 image = imageService.getPanelE5(e5Param);
             } else {
                 image = imageService.getPanelE(user, e5Param.score());

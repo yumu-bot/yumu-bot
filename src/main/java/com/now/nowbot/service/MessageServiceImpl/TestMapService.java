@@ -66,7 +66,7 @@ public class TestMapService implements MessageService<Matcher> {
         float newTotalLength = DataUtil.Length(b.getTotalLength(), modInt);
 
         sb.append(String.format("%.2f", a.getStarRating())).append(',')
-                .append(String.format("%f", DataUtil.BPM(b.getBPM(), modInt))).append(',')
+                .append(String.format("%d", Math.round(DataUtil.BPM(b.getBPM(), modInt)))).append(',')
                 .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
                 .append(':')
                 .append(String.format("%02d", Math.round(newTotalLength % 60f)))

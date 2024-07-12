@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -278,7 +279,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
                 byte[] image;
 
-                if (excellent) {
+                if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
                     image = imageService.getPanelE5(e5Param);
                 } else {
                     image = imageService.getPanelE(user, e5Param.score());
