@@ -31,8 +31,7 @@ public class TestMapService implements MessageService<Matcher> {
         int bid = Integer.parseInt(matcher.group("id"));
         String mod = matcher.group("mod");
 
-
-        var b = beatmapApiService.getBeatMapInfoFromDataBase(bid);
+        var b = beatmapApiService.getBeatMapInfo(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');
@@ -64,10 +63,10 @@ public class TestMapService implements MessageService<Matcher> {
         var mods = mod.split("[\"\\s,，\\-|:]+");
         int modInt = Stream.of(mods).map(OsuMod::getModFromAbbreviation).map(e -> e.value).reduce(0, (v, a)-> v|a);
         var a = beatmapApiService.getAttributes((long) bid, modInt);
-        float newTotalLength = getNewTotalLength (b.getTotalLength(), modInt);
+        float newTotalLength = DataUtil.Length(b.getTotalLength(), modInt);
 
         sb.append(String.format("%.2f", a.getStarRating())).append(',')
-                .append(String.format("%d", getNewBPM(b.getBPM(), modInt))).append(',')
+                .append(String.format("%f", DataUtil.BPM(b.getBPM(), modInt))).append(',')
                 .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
                 .append(':')
                 .append(String.format("%02d", Math.round(newTotalLength % 60f)))
@@ -78,25 +77,5 @@ public class TestMapService implements MessageService<Matcher> {
                 .append(String.format("%.2f", Math.round(DataUtil.OD(b.getOD(), modInt) * 100f) / 100f));
 
         event.getSubject().sendMessage(sb.toString());
-    }
-
-    private Float getNewTotalLength(Integer totalLength, int modInt) {
-        if (OsuMod.hasDt(modInt)) {
-            return (totalLength / 1.5f);
-        } else if (OsuMod.hasHt(modInt)) {
-            return (totalLength * 1.5f);
-        } else {
-            return totalLength * 1f;
-        }
-    }
-
-    private Integer getNewBPM(Float bpm, int modInt) {
-        if (OsuMod.hasDt(modInt)) {
-            return Math.round(bpm * 1.5f);
-        } else if (OsuMod.hasHt(modInt)) {
-            return Math.round(bpm / 1.5f);
-        } else {
-            return Math.round(bpm);
-        }
     }
 }

@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.now.nowbot.service.MessageServiceImpl.ScorePRService.getScore4PanelE5;
-
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
     private static final Logger log = LoggerFactory.getLogger(BPService.class);
@@ -101,8 +99,8 @@ public class BPService implements MessageService<BPService.BPParam> {
                     score = e.getValue();
                 }
 
-                var e5Param = getScore4PanelE5(user, score, beatmapApiService);
-                var excellent = DataUtil.isExcellentScore(e5Param.score(), user.getPP());
+                var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+                var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
                 if (excellent) {
                     image = imageService.getPanelE5(e5Param);

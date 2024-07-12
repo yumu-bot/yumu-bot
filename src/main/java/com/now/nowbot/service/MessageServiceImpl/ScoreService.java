@@ -29,8 +29,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.Objects;
 
-import static com.now.nowbot.service.MessageServiceImpl.ScorePRService.getScore4PanelE5;
-
 @Service("SCORE")
 public class ScoreService implements MessageService<ScoreService.ScoreParam> {
     private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
@@ -172,9 +170,9 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         }
 
         //这里的mode必须用谱面传过来的
-        OsuUser osuUser;
+        OsuUser user;
         try {
-            osuUser = userApiService.getPlayerInfo(binUser, score.getMode());
+            user = userApiService.getPlayerInfo(binUser, score.getMode());
         } catch (Exception e) {
             log.error("成绩：获取失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
@@ -183,14 +181,14 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         byte[] image;
 
         try {
-            var e5Param = getScore4PanelE5(osuUser, score, beatmapApiService);
-            var excellent = DataUtil.isExcellentScore(e5Param.score(), osuUser.getPP());
+            var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+            var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
 
             if (excellent) {
                 image = imageService.getPanelE5(e5Param);
             } else {
-                image = imageService.getPanelE(osuUser, e5Param.score());
+                image = imageService.getPanelE(user, e5Param.score());
             }
 
         } catch (Exception e) {

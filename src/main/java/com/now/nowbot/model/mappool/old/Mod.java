@@ -12,6 +12,7 @@ import java.util.List;
 
 public enum Mod {
     None(0, "", "#22AC38", 10),
+    NoMod(-1, "NM", None.color, 10),
     NoFail(1, "NF", "#00A0E9", 10),
     Easy(1 << 1, "EZ", None.color, 10),
     //替换未使用的 No Video
@@ -58,7 +59,6 @@ public enum Mod {
     FreeMod(522171579, "FM", ScoreIncreaseMods.color, 30),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
     LongNote(-1, "LN", NoFail.color, 20),
-    NoMod(-1, "NM", Easy.color, 10),
     Rice(-1, "RC", Easy.color, 10),
     Hybrid(-1, "HB", Hidden.color, 30),
     Extra(-1, "EX", SuddenDeath.color, 50),

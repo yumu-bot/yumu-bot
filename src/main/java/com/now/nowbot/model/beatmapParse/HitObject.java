@@ -4,14 +4,17 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectSound;
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
 import com.now.nowbot.model.beatmapParse.hitObject.SliderAttr;
+import org.springframework.lang.Nullable;
+
+import java.util.Objects;
 
 public class HitObject {
     HitObjectPosition position;
-    HitObjectType  type;
+    HitObjectType type;
     HitObjectSound sound;
-    Integer        startTime;
-    Integer        endTime;
-
+    Integer startTime;
+    @Nullable
+    Integer endTime;
     Integer column;
 
     /**
@@ -61,7 +64,7 @@ public class HitObject {
     }
 
     public int getEndTime() {
-        return endTime;
+        return Objects.requireNonNullElse(endTime, startTime);
     }
 
     public void setEndTime(int time) {

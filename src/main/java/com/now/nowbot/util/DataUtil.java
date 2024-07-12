@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.Statistics;
 import com.now.nowbot.model.beatmapParse.OsuFile;
@@ -45,10 +46,10 @@ public class DataUtil {
      * @return 是否为优秀成绩
      */
     @NonNull
-    public static boolean isExcellentScore(@NonNull Score score, Double playerPP) {
+    public static boolean isExcellentScore(@NonNull Score score, OsuUser user) {
         // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 1%。
         int r = 0;
-        double p = Objects.requireNonNullElse(playerPP, 0d);
+        double p = getPP(score, user);
 
         boolean ultra = score.getBeatMap().getStarRating() >= 8f;
         boolean extreme = score.getBeatMap().getStarRating() >= 6.5f;
@@ -69,6 +70,24 @@ public class DataUtil {
         if (miss) r++;
 
         return r >= 3 && !fail;
+    }
+
+    // 获取优秀成绩的私有方法
+    private static double getPP(Score score, OsuUser user) {
+        double pp = Objects.requireNonNullElse(user.getPP(), 0d);
+
+        boolean is4K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 4f;
+        boolean is7K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 7f;
+
+        if (is4K) {
+            pp = Objects.requireNonNullElse(user.getStatistics().getPP4K(), pp);
+        }
+
+        if (is7K) {
+            pp = Objects.requireNonNullElse(user.getStatistics().getPP7K(), pp);
+        }
+
+        return pp;
     }
 
     private record Range(Integer offset, Integer limit) {}
@@ -531,13 +550,13 @@ public class DataUtil {
         return bpm;
     }
 
-    public static int Length(float bpm, int mod){
+    public static int Length(float length, int mod){
         if (OsuMod.hasDt(mod)){
-            bpm /= 1.5f;
+            length /= 1.5f;
         } else if (OsuMod.hasHt(mod)) {
-            bpm /= 0.75f;
+            length /= 0.75f;
         }
-        return Math.round(bpm);
+        return Math.round(length);
     }
 
     public static float HP(float hp, int mod){

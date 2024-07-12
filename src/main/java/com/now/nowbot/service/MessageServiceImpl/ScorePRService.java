@@ -214,7 +214,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         boolean isMultipleScore = param.isMultipleScore();
 
         BinUser binUser = param.user();
-        OsuUser osuUser;
+        OsuUser user;
 
         List<Score> scoreList;
 
@@ -242,7 +242,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         try {
-            osuUser = userApiService.getPlayerInfo(binUser, param.mode());
+            user = userApiService.getPlayerInfo(binUser, param.mode());
         } catch (WebClientResponseException.Forbidden e) {
             throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
         } catch (Exception e) {
@@ -261,7 +261,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             beatmapApiService.applySRAndPP(scoreList);
 
             try {
-                var image = imageService.getPanelA5(osuUser, scores);
+                var image = imageService.getPanelA5(user, scores);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩发送失败：", e);
@@ -271,17 +271,17 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } else {
             //单成绩发送
             var score = scoreList.getFirst();
-            var e5Param = getScore4PanelE5(osuUser, score, beatmapApiService);
+            var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
 
             try {
-                var excellent = DataUtil.isExcellentScore(e5Param.score(), osuUser.getPP());
+                var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
                 byte[] image;
 
                 if (excellent) {
                     image = imageService.getPanelE5(e5Param);
                 } else {
-                    image = imageService.getPanelE(osuUser, e5Param.score());
+                    image = imageService.getPanelE(user, e5Param.score());
                 }
 
                 from.sendImage(image);

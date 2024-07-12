@@ -12,6 +12,7 @@ import java.util.List;
 
 public enum OsuMod {
     None(0, ""),
+    NoMod(0, "NM"),
     NoFail(1, "NF"),
     Easy(1 << 1, "EZ"),
     //替换未使用的 No Video
