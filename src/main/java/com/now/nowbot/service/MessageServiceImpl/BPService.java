@@ -84,13 +84,16 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         try {
             if (BPMap.size() > 1) {
-                var rankList = new ArrayList<Integer>();
-                var scoreList = new ArrayList<Score>();
+                var ranks = new ArrayList<Integer>();
+                var scores = new ArrayList<Score>();
                 for (var e : BPMap.entrySet()) {
-                    rankList.add(e.getKey() + 1);
-                    scoreList.add(e.getValue());
+                    ranks.add(e.getKey() + 1);
+                    scores.add(e.getValue());
                 }
-                image = imageService.getPanelA4(user, scoreList, rankList);
+
+                beatmapApiService.applySRAndPP(scores);
+
+                image = imageService.getPanelA4(user, scores, ranks);
             } else {
                 Score score = null;
 

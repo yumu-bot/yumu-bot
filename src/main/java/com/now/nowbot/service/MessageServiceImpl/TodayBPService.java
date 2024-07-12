@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
@@ -24,6 +25,8 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
     private static final Logger log = LoggerFactory.getLogger(TodayBPService.class);
     @Resource
     ImageService imageService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
     public record TodayBPParam(OsuUser user, OsuMode mode, Map<Integer, Score> scores, boolean isMyself) {}
 
@@ -228,17 +231,19 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
 
          */
 
-            var rankList = new ArrayList<Integer>();
-            var todayList = new ArrayList<Score>();
-            for (var e : todayMap.entrySet()) {
-                rankList.add(e.getKey() + 1);
-                todayList.add(e.getValue());
-            }
+        var ranks = new ArrayList<Integer>();
+        var scores = new ArrayList<Score>();
+        for (var e : todayMap.entrySet()) {
+            ranks.add(e.getKey() + 1);
+            scores.add(e.getValue());
+        }
+
+        beatmapApiService.applySRAndPP(scores);
 
         byte[] image;
 
         try {
-            image = imageService.getPanelA4(user, todayList, rankList);
+            image = imageService.getPanelA4(user, scores, ranks);
         } catch (Exception e) {
             log.error("今日最好成绩：图片渲染失败", e);
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩");

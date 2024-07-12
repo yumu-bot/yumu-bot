@@ -293,7 +293,7 @@ public class BotWebApi {
         name = name.trim();
 
         var osuUser = userApiService.getPlayerInfo(name, mode);
-        List<Score> scoreList;
+        List<Score> scores;
 
         int offset = DataUtil.parseRange2Offset(start, end);
         int limit = DataUtil.parseRange2Limit(start, end);
@@ -307,52 +307,57 @@ public class BotWebApi {
         switch (type) {
             // bp
             case BP -> {
-                scoreList = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, offset, limit);
 
-                ArrayList<Integer> rankList = new ArrayList<>();
-                for (int i = offset; i <= (offset + limit); i++) rankList.add(i + 1);
+                ArrayList<Integer> ranks = new ArrayList<>();
+                for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
+
+                beatmapApiService.applySRAndPP(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA4(osuUser, scoreList, rankList);
+                    data = imageService.getPanelA4(osuUser, scores, ranks);
                     suffix = "-bps.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
+                    data = imageService.getPanelE(osuUser, scores.getFirst());
                     suffix = "-bp.jpg";
                 }
             }
             // pass
             case Pass -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+
+                beatmapApiService.applySRAndPP(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scoreList);
+                    data = imageService.getPanelA5(osuUser, scores);
                     suffix = "-passes.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
+                    data = imageService.getPanelE(osuUser, scores.getFirst());
                     suffix = "-pass.jpg";
                 }
             }
 
             //recent
             case Recent -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+
+                beatmapApiService.applySRAndPP(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scoreList);
+                    data = imageService.getPanelA5(osuUser, scores);
                     suffix = "-recents.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scoreList.getFirst());
+                    data = imageService.getPanelE(osuUser, scores.getFirst());
                     suffix = "-recent.jpg";
                 }
             }
 
             //passCard
             case PassCard -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, true);
-                var score = scoreList.getFirst();
-                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
-                score.setBeatMap(beatMap);
-                score.setBeatMapSet(beatMap.getBeatMapSet());
+                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, true);
+                var score = scores.getFirst();
+
+                beatmapApiService.applySRAndPP(scores);
 
                 data = imageService.getPanelGamma(score);
                 suffix = "-pass_card.jpg";
@@ -360,11 +365,10 @@ public class BotWebApi {
 
             //recentCard
             case RecentCard -> {
-                scoreList = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, false);
-                var score = scoreList.getFirst();
-                var beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
-                score.setBeatMap(beatMap);
-                score.setBeatMapSet(beatMap.getBeatMapSet());
+                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, false);
+                var score = scores.getFirst();
+
+                beatmapApiService.applySRAndPP(scores);
 
                 data = imageService.getPanelGamma(score);
                 suffix = "-recent_card.jpg";
@@ -374,22 +378,24 @@ public class BotWebApi {
             case null, default -> {
                 // 时间计算
                 var day = Objects.nonNull(start) ? Math.max(Math.min(start, 999), 1) : 1;
-                var BPList = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, 0, 100);
-                ArrayList<Integer> rankList = new ArrayList<>();
+                var bps = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, 0, 100);
+                ArrayList<Integer> ranks = new ArrayList<>();
 
                 LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
-                scoreList = new ArrayList<>();
-                for (int i = 0; i < BPList.size(); i++) {
-                    var s = BPList.get(i);
+                scores = new ArrayList<>();
+                for (int i = 0; i < bps.size(); i++) {
+                    var s = bps.get(i);
                     if (dayBefore.isBefore(s.getCreateTimePretty())) {
-                        scoreList.add(s);
-                        rankList.add(i + 1);
+                        scores.add(s);
+                        ranks.add(i + 1);
                     }
                 }
 
-                data = imageService.getPanelA4(osuUser, scoreList, rankList);
+                beatmapApiService.applySRAndPP(scores);
+
+                data = imageService.getPanelA4(osuUser, scores, ranks);
                 suffix = "-todaybp.jpg";
             }
         }
