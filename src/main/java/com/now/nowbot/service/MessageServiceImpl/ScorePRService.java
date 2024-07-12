@@ -322,7 +322,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         beatmapApiService.applySRAndPP(score);
 
         var attributes = beatmapApiService.getStatistics(score);
-        attributes.put("full_pp", beatmapApiService.getMaxPP(score).getPp());
+        attributes.put("full_pp", beatmapApiService.getFcPP(score).getPp());
+        attributes.put("perfect_pp", beatmapApiService.getMaxPP(score).getPp());
 
         var fileStr = beatmapApiService.getBeatMapFile(b.getBeatMapID());
         var density = DataUtil.getGrouping26(DataUtil.getMapObjectList(fileStr));
