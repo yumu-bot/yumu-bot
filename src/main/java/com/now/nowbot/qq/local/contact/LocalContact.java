@@ -10,10 +10,6 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 public class LocalContact implements com.now.nowbot.qq.contact.Contact {
-    public static void main(String[] args) throws IOException {
-        Files.copy(Path.of(URI.create("file:///C:\\Users\\Administrator\\Downloads\\Illumi.mp3".replaceAll("\\\\", "/"))), Path.of("C:\\Users\\Administrator\\Pictures\\Camera Roll", "x.mp3"));
-    }
-
     @Override
     public long getId() {
         return - 10086;

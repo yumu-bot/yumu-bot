@@ -140,13 +140,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             } catch (WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
             }
-
-            /*
-            var beatMap = new BeatMap();
-            beatMap.setBeatMapID(bid);
-            score.setBeatMap(beatMap);
-
-             */
+            beatmapApiService.applyBeatMapExtend(score);
 
         } else {
             try {
