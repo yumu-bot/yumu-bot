@@ -43,26 +43,11 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         // 处理 range
         var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
 
-        if (Objects.isNull(user)) {
-            isMyself = true;
+        var bpMap = HandleUtil.getBPList(event, matcher, messageText, mode, 20);
 
-            try {
-                user = HandleUtil.getMyselfUser(event, mode);
-            } catch (BindException e) {
-                if (HandleUtil.isAvoidance(messageText, "bp")) {
-                    log.info(String.format("指令退避：BP 退避成功，被退避的玩家：%s", event.getSender().getName()));
-                    return false;
-                } else {
-                    throw e;
-                }
-            }
-        }
-
-        var BPMap = HandleUtil.getOsuBPMap(user, matcher, HandleUtil.getModeOrElse(mode, user), isMultiple ? 20 : 1, isMultiple);
-
-        data.setValue(new BPParam(user, mode, BPMap, isMyself));
+        if (Objects.isNull(bpMap)) return false;
+        data.setValue(new BPParam(user, mode, bpMap, isMyself));
         return true;
     }
 

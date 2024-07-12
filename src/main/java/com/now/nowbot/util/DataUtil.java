@@ -46,7 +46,8 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Offset(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).offset();
+//        return parseRange(start, end).offset();
+        return 0;
     }
 
     /**
@@ -57,7 +58,8 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Limit(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).limit();
+//        return parseRange(start, end).limit();
+        return 0;
     }
 
     /**

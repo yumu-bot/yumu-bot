@@ -41,15 +41,15 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         if (! matcher.find()) return false;
 
         var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
+        var user = HandleUtil.getOtherUser(event, matcher, mode);
 
         if (Objects.isNull(user)) {
-            user = HandleUtil.getMyselfUser(event, mode);
+            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
         }
 
         mode = HandleUtil.getModeOrElse(mode, user);
 
-        var bpMap = HandleUtil.getOsuBPMap(user, mode, 0, 100);
+        var bpMap = HandleUtil.getBPList(user, mode, 0, 100);
 
         data.setValue(new BPFixParam(user, bpMap, mode));
 

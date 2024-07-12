@@ -50,7 +50,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         var mode = HandleUtil.getMode(matcher);
 
         boolean isPass;
-
+/*
         if (StringUtils.hasText(matcher.group("recent"))) {
             isPass = false;
         } else if (StringUtils.hasText(matcher.group("pass"))) {
@@ -73,7 +73,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
 
         data.setValue(new ScorePRService.ScorePRParam(user, scores, mode));
-
+*/
         return true;
     }
 

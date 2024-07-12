@@ -58,7 +58,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         boolean isMultiple = StringUtils.hasText(matcher.group("s")) || StringUtils.hasText(matcher.group("es"));
         boolean isPass = ! StringUtils.hasText(matcher.group("recent"));
-
+/*
         var ur = HandleUtil.getUserAndRange(matcher, isMultiple ? 20 : 1, isMultiple);
         OsuUser user;
 
@@ -73,7 +73,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
 
         data.setValue(new ScorePRParam(user, scores, mode));
-
+*/
         return true;
     }
 

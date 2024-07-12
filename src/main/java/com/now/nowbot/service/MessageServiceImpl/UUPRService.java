@@ -50,7 +50,7 @@ public class UUPRService implements MessageService<ScorePRService.ScorePRParam> 
         var mode = HandleUtil.getMode(matcher);
 
         boolean isPass = ! StringUtils.hasText(matcher.group("recent"));
-
+/*
         var ur = HandleUtil.getUserAndRange(matcher, 1, false);
         OsuUser user;
 
@@ -65,7 +65,7 @@ public class UUPRService implements MessageService<ScorePRService.ScorePRParam> 
         var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
 
         data.setValue(new ScorePRService.ScorePRParam(user, scores, mode));
-
+*/
         return true;
     }
 

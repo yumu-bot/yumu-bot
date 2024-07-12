@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.MessageServiceImpl.TodayBPService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,19 +106,6 @@ public class HandleUtil {
         }
 
         return false;
-    }
-
-    /**
-     * 获取一个 user, 优先获取别人, 没找到就自己
-     */
-    public static OsuUser getOsuUser(@NonNull MessageEvent event, @NonNull Matcher matcher, @NonNull int maximum) throws TipsException {
-        OsuMode mode = getMode(matcher);
-
-        var u = getOtherUser(event, matcher, mode, maximum);
-
-        if (Objects.nonNull(u)) return u;
-
-        return getMyselfUser(event, mode);
     }
 
     @NonNull
@@ -203,13 +192,17 @@ public class HandleUtil {
         }
     }
 
+    /**
+     * 获取其他玩家, 支持 @ / qq= / uid= / name= , 注意不再处理 range
+     *
+     * @param event   必须
+     * @param matcher 必须
+     * @param mode    可选
+     * @return user
+     * @throws TipsException 提示
+     */
     @Nullable
     public static OsuUser getOtherUser(MessageEvent event, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        return getOtherUser(event, matcher, mode, 100);
-    }
-
-    @Nullable
-    public static OsuUser getOtherUser(MessageEvent event, Matcher matcher, @Nullable OsuMode mode, @NonNull int maximum) throws TipsException {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         long qq = 0;
@@ -226,14 +219,6 @@ public class HandleUtil {
             }
         } catch (RuntimeException ignore) {
             // 没 @ 也没 qq=
-            try {
-                var uidStr = matcher.group("uid");
-                if (StringUtils.hasText(uidStr)) {
-                    uid = Long.parseLong(uidStr);
-                }
-            } catch (RuntimeException ignore2) {
-
-            }
         }
 
         if (qq != 0) {
@@ -243,50 +228,25 @@ public class HandleUtil {
             return getOsuUser(user.getOsuName(), mode);
         }
 
+        try {
+            var uidStr = matcher.group("uid");
+            if (StringUtils.hasText(uidStr)) {
+                uid = Long.parseLong(uidStr);
+            }
+        } catch (RuntimeException ignore) {
+            // 没 uid=
+        }
+
         if (uid != 0) {
             return getOsuUser(uid, mode);
         }
 
         try {
+            // 这里不再处理包含range的情况
             var name = matcher.group("name");
             if (!StringUtils.hasText(name)) return null;
-
-            String param1;
-            boolean nameExceed;
-            boolean param1Exceed;
-
-            try {
-                var range = matcher.group("range");
-                var rangeArray = range.split("-");
-
-                param1 = rangeArray[0];
-            } catch (Exception ignored) {
-                param1 = "";
-            }
-
-            try {
-                nameExceed = (Integer.parseInt(name.trim()) > maximum);
-            } catch (NumberFormatException ignored) {
-                nameExceed = true;
-            }
-
-            try {
-                param1Exceed = (Integer.parseInt(param1.trim()) > maximum);
-            } catch (NumberFormatException ignored) {
-                param1Exceed = false;
-            }
-
-            // 有空格
-            if (!Objects.equals(name.trim(), name) || nameExceed) {
-                // 对叫100(或者1000，取自 maximum)的人直接取消处理，
-
-                return getOsuUser(name.trim(), mode);
-            } else if (param1Exceed) {
-                // 对超出位数的玩家进行字符串填补
-
-                return getOsuUser(name + param1, mode);
-            }
-
+            var id = userApiService.getOsuId(name);
+            return getOsuUser(id, mode);
         } catch (IllegalStateException | IllegalArgumentException ignore) {
             // 没名字，就别管了
         }
@@ -295,13 +255,27 @@ public class HandleUtil {
         return null;
     }
 
-    public static OsuUser getMyselfUser(@NonNull MessageEvent event, @Nullable OsuMode mode) throws TipsException {
-        var qq = event.getSender().getId();
+    private static OsuUser getUserWithSelfOrOtherAndRange(MessageEvent event, Matcher matcher, UserAndRange range, @Nullable OsuMode mode, AtomicBoolean isMyself) throws TipsException {
+        isMyself.set(false);
+        OsuUser user = getOtherUser(event, matcher, mode);
+        if (user == null && range.user == null) {
+            isMyself.set(true);
+        } else if (range.user != null) {
+            user = range.user;
+        }
+
+        if (user == null) {
+            user = getMyselfUser(event.getSender().getId(), mode);
+        }
+        return user;
+    }
+
+    public static OsuUser getMyselfUser(Long qq, @Nullable OsuMode mode) throws BindException {
         var user = bindDao.getUserFromQQ(qq);
 
         if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
-        return getOsuUser(user.getOsuName(), mode);
+        return userApiService.getPlayerInfo(user, mode);
     }
 
     // MapStatisticsService 专属
@@ -373,11 +347,29 @@ public class HandleUtil {
     }
 
 
-    public static Map<Integer, Score> getTodayBPList(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        var range = parseRange(matcher, null, true);
+    public static TodayBPService.TodayBPParam getTodayBPList(MessageEvent event, Matcher matcher) throws TipsException {
+        var mode = getMode(matcher);
+        var range = getUserAndRange(matcher, mode);
+        var isMyself = new AtomicBoolean(false);
+        OsuUser user = getUserWithSelfOrOtherAndRange(event, matcher, range, mode, isMyself);
 
-        final int later = range.offset();
-        final int earlier = range.limit();
+        int dayStart = 0;
+        int dayEnd = 1;
+
+        if (0 > range.range.range2) {
+            // range2 存在, range1一定存在
+            dayStart = range.range.range1;
+            dayEnd = range.range.range2;
+            if (dayStart > dayEnd) {
+                // 确保 start < end
+                int temp = dayStart;
+                dayStart = dayEnd;
+                dayEnd = temp;
+            }
+        } else if (0 > range.range.range1) {
+            dayStart = range.range.range1;
+        }
+
 
         List<Score> BPList;
 
@@ -395,8 +387,8 @@ public class HandleUtil {
         }
 
         //筛选
-        LocalDateTime laterDay = LocalDateTime.now().minusDays(later);
-        LocalDateTime earlierDay = LocalDateTime.now().minusDays(earlier);
+        LocalDateTime laterDay = LocalDateTime.now().minusDays(dayStart);
+        LocalDateTime earlierDay = LocalDateTime.now().minusDays(dayEnd);
 
         var dataMap = new TreeMap<Integer, Score>();
 
@@ -404,31 +396,52 @@ public class HandleUtil {
                 ContextUtil.consumerWithIndex(
                         (s, index) -> {
                             if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
-                                dataMap.put(index + later, s);
+                                dataMap.put(index + 1, s);
                             }
                         }
                 )
         );
 
-        return dataMap;
+        return new TodayBPService.TodayBPParam(user, HandleUtil.getModeOrElse(mode, user), dataMap, isMyself.get());
     }
 
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode) throws TipsException {
-        return getOsuBPMap(user, matcher, mode, 1, false);
-    }
+    /**
+     *
+     * @param defaultLimit 默认20
+     * @return 如果是 null 则说明要退避
+     * @throws TipsException
+     */
+    public static Map<Integer, Score> getBPList(MessageEvent event, Matcher matcher,String text, @Nullable OsuMode mode, int defaultLimit) throws TipsException {
+        var data = getUserAndRange(matcher, mode);
+        var isMySelf = new AtomicBoolean(false);
+        OsuUser user;
+        try {
+            user = getUserWithSelfOrOtherAndRange(event, matcher, data, mode, isMySelf);
+            mode = user.getCurrentOsuMode();
+        } catch (BindException e) {
+            if (isMySelf.get() && HandleUtil.isAvoidance(text, "bp")) {
+                log.info(String.format("指令退避：BP 退避成功，被退避的玩家：%s", event.getSender().getName()));
+                return null;
+            } else {
+                throw e;
+            }
+        }
+        var range = data.range;
+        int offset = 0;
+        int limit = defaultLimit;
 
-    //isMultipleDefault20是给bs默认 20 用的，其他情况下 false 就可以
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, Matcher matcher, @Nullable OsuMode mode, int defaultLimit, boolean parseLimitWhen1Param) throws TipsException {
-        var range = parseRange(matcher, defaultLimit, parseLimitWhen1Param);
+        if (range.range2 > 0) {
+            offset = range.range1 - 1;
+            limit = range.range2 - offset;
+        } else if (range.range1 > 0) {
+            limit = range.range1;
+        }
 
-        int offset = range.offset();
-        int limit = range.limit();
-
-        return getOsuBPMap(user, mode, offset, limit);
+        return getBPList(user, mode, offset, limit);
     }
 
     // 重载
-    public static Map<Integer, Score> getOsuBPMap(OsuUser user, @Nullable OsuMode mode, int offset, int limit) throws TipsException {
+    public static Map<Integer, Score> getBPList(OsuUser user, @Nullable OsuMode mode, int offset, int limit) throws TipsException {
         List<Score> BPList = getOsuBPList(user, mode, offset, limit);
 
         var dataMap = new TreeMap<Integer, Score>();
@@ -463,7 +476,7 @@ public class HandleUtil {
     }
 
     public static List<Score> getOsuScoreList(OsuUser user, @Nullable OsuMode mode, Range range, boolean isPass) throws TipsException {
-        return getOsuScoreList(user, mode, range.offset(), range.limit(), isPass);
+        return getOsuScoreList(user, mode, 0, 0, isPass);
     }
 
     // 这个没有保底，有保底的请使用 getOsuBeatMapOrElse
@@ -511,10 +524,12 @@ public class HandleUtil {
         }
     }
 
-    public record Range(int offset, int limit) {}
+    public record Range(int range1, int range2) {
+    }
 
     /**
      * 用 getUserAndRange
+     *
      * @param defaultLimit         第二个参数的默认值
      * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      */
@@ -567,47 +582,45 @@ public class HandleUtil {
         return new Range(n, m);
     }
 
-    public record UserAndRange(@Nullable BinUser user, Range range) {
+    public record UserAndRange(@Nullable OsuUser user, Range range) {
     }
 
     /**
      * @param matcher 正则
-     * @param defaultLimit 第二个参数的默认值
-     * @param parseLimitWhen1Param 只有一个参数时，匹配 1-此位置
      * @return 用户和范围
      */
-    public static UserAndRange getUserAndRange(Matcher matcher, Integer defaultLimit, boolean parseLimitWhen1Param) {
-        if (! matcher.namedGroups().containsKey("ur")) throw new RuntimeException("No match found");
-        if (defaultLimit == null) defaultLimit = 1;
+    private static UserAndRange getUserAndRange(Matcher matcher, OsuMode mode) {
+        if (!matcher.namedGroups().containsKey("ur")) throw new RuntimeException("No match found");
+        if (Objects.isNull(mode)) mode = OsuMode.DEFAULT;
 
         var text = matcher.group("ur");
-        if (text.matches("^\\d{1,3}([\\-－]\\d{1,3})?$")) {
-            // 只有数字
-            int o, l;
-            if (text.contains("-") || text.contains("－")) {
-                var range = text.split("[\\-－]");
-                o = Math.max(Integer.parseInt(range[0]) - 1, 0);
-                l = Integer.parseInt(range[1]);
-            } else if (parseLimitWhen1Param) {
-                o = 0;
-                l = Integer.parseInt(text);
+
+        int rangeStart;
+        int rangeEnd = -1;
+
+        // 只有数字, 不包含名字
+        if (text.matches("^(\\d{1,2}[\\-－ ])?\\d{1,3}$")) {
+
+            if (text.contains("-") || text.contains("－") || text.contains(" ")) {
+                var range = text.split("[\\-－ ]");
+                rangeStart = Integer.parseInt(range[0]);
+                rangeEnd = Integer.parseInt(range[1]);
             } else {
-                o = Math.max(Integer.parseInt(text) - 1, 0);
-                l = defaultLimit;
+                rangeStart = Integer.parseInt(text);
             }
-            return new UserAndRange(null, new Range(o, l));
+            return new UserAndRange(null, new Range(rangeStart, rangeEnd));
         }
+
         // 包含名字
         int[] data;
         if (text.contains("#")) {
             data = getNameAndRangeHasHash(text);
         } else {
-            data = getNameAndRangeWithoutHash(text, defaultLimit, parseLimitWhen1Param);
+            data = getNameAndRangeWithoutHash(text);
         }
 
-        int o = data[3];
-        int l = data[4];
-
+        rangeStart = data[3];
+        rangeEnd = data[4];
         // 优先级: 双参数 > 单参数 > 无参数
         // yhc 22 33 优先级: yhc#22-33 > yhc 22#23 > yhc 22 23
         if (data[2] > 0) {
@@ -615,8 +628,8 @@ public class HandleUtil {
             try {
                 var name = text.substring(0, data[2]);
                 var id = userApiService.getOsuId(name);
-                BinUser user = new BinUser(id, name);
-                return new UserAndRange(user, new Range(o, l));
+                var user = getOsuUser(id, mode);
+                return new UserAndRange(user, new Range(rangeStart, rangeEnd));
             } catch (Exception ignore) {
             }
         }
@@ -626,8 +639,8 @@ public class HandleUtil {
             try {
                 var name = text.substring(0, data[1]);
                 var id = userApiService.getOsuId(name);
-                BinUser user = new BinUser(id, name);
-                return new UserAndRange(user, new Range(o, defaultLimit));
+                var user = getOsuUser(id, mode);
+                return new UserAndRange(user, new Range(rangeStart, -1));
             } catch (Exception ignore) {
             }
         }
@@ -636,8 +649,8 @@ public class HandleUtil {
         try {
             var name = text.substring(0, data[0]);
             var id = userApiService.getOsuId(name);
-            BinUser user = new BinUser(id, name);
-            return new UserAndRange(user, new Range(0, defaultLimit));
+            var user = getOsuUser(id, mode);
+            return new UserAndRange(user, new Range(-1, -1));
         } catch (Exception ignore) {
             throw new BindException(BindException.Type.BIND_Player_NotFound);
         }
@@ -661,7 +674,7 @@ public class HandleUtil {
         return result;
     }
 
-    private static int[] getNameAndRangeWithoutHash(String text, Integer defaultLimit, boolean parseLimitWhen1Param) {
+    private static int[] getNameAndRangeWithoutHash(String text) {
         int[] nameSet = new int[]{-1, -1};
         Consumer<Integer> setNameSet = value -> {
             if (nameSet[0] < 0) nameSet[0] = value;
@@ -671,11 +684,6 @@ public class HandleUtil {
         final int minIndex = 2;
         // 记录完整的名字
         int nameAll = text.length();
-
-        if (! StringUtils.hasText(text)) {
-            var r = parseRange(text, defaultLimit, parseLimitWhen1Param);
-            return new int[]{0, nameSet[0], nameSet[1], r.limit(), r.offset()};
-        }
 
         int m = -1, n = -1;
 
@@ -723,14 +731,8 @@ public class HandleUtil {
         for (var x : nameSet) {
             if (x > 0) System.out.println(text.substring(0, x));
         }
-        if (m > 0) System.out.println("m: " + m);
-        if (n > 0) System.out.println("n: " + n);
 
         return new int[]{nameAll, nameSet[0], nameSet[1], m, n};
-    }
-
-    public static OsuUser getOsuUser(BinUser user, OsuMode mode) throws TipsException {
-        return getOsuUser(user.getOsuName(), mode);
     }
 
     public static OsuUser getOsuUser(String name, OsuMode mode) throws TipsException {
@@ -939,6 +941,12 @@ public class HandleUtil {
 
         public CommandPatternBuilder appendQQ(boolean nullable) {
             append(REG_QQ);
+            if (nullable) whatever();
+            return this;
+        }
+
+        public CommandPatternBuilder appendNameAndRange(boolean nullable) {
+            append(REG_USER_AND_RANGE);
             if (nullable) whatever();
             return this;
         }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -374,70 +375,7 @@ public class OsuUser {
             return;
         }
 
-        this.setAccountHistory(o.getAccountHistory());
-        this.setActive(o.getActive());
-        this.setAvatarUrl(o.getAvatarUrl());
-        this.setBot(o.getBot());
-        this.setBadges(o.getBadges());
-        this.setBeatmapPlaycount(o.getBeatmapPlaycount());
-        this.setCommentsCount(o.getCommentsCount());
-        this.setCountry(o.getCountry());
-        this.setCountryCode(o.getCountryCode());
-        this.setCover(o.getCover());
-        this.setCoverUrl(o.getCoverUrl());
-        this.setDefaultGroup(o.getDefaultGroup());
-        this.setDeleted(o.getDeleted());
-        this.setDiscord(o.getDiscord());
-        this.setFavoriteCount(o.getFavoriteCount());
-        this.setFollowerCount(o.getFollowerCount());
-        this.setGroups(o.getGroups());
-        this.setGraveyardCount(o.getGraveyardCount());
-        this.setGuestCount(o.getGuestCount());
-        this.setHasSupported(o.getHasSupported());
-        this.setHighestRank(o.getHighestRank());
-        this.setId(o.getId());
-        this.setInterests(o.getInterests());
-        this.setJoinDate(o.getJoinDate());
-        this.setKudosu(o.getKudosu());
-        this.setLastVisit(o.getLastVisit());
-        this.setLocation(o.getLocation());
-        this.setLovedCount(o.getLovedCount());
-        this.setMappingFollowerCount(o.getMappingFollowerCount());
-        this.setMaxBlocks(o.getMaxBlocks());
-        this.setMaxFriends(o.getMaxFriends());
-        this.setMonthlyPlaycounts(o.getMonthlyPlaycounts());
-        this.setNominatedCount(o.getNominatedCount());
-        this.setOccupation(o.getOccupation());
-        this.setOnline(o.getOnline());
-        this.setPage(o.getPage());
-        this.setPP(o.getPP());
-        this.setPendingCount(o.getPendingCount());
-        this.setDefaultOsuMode(o.getDefaultOsuMode());
-        this.setPmFriendsOnly(o.getPmFriendsOnly());
-        this.setPlayStyle(o.getPlayStyle());
-        this.setPreviousNames(o.getPreviousNames());
-        this.setProfileOrder(o.getProfileOrder());
-        this.setProfileBanner(o.getProfileBanner());
-        this.setProfileBanners(o.getProfileBanners());
-        this.setProfileColor(o.getProfileColor());
-        this.setPostCount(o.getPostCount());
-        this.setRankHistory(o.getRankHistory());
-        this.setRankedCount(o.getRankedCount());
-        this.setReplaysWatchedCounts(o.getReplaysWatchedCounts());
-        this.setRestricted(o.getRestricted());
-        this.setStatistics(o.getStatistics());
-        this.setSupporter(o.getSupporter());
-        this.setSupportLevel(o.getSupportLevel());
-        this.setScoreBestCount(o.getScoreBestCount());
-        this.setScoreRecentCount(o.getScoreRecentCount());
-        this.setScorePinnedCount(o.getScorePinnedCount());
-        this.setScoreFirstCount(o.getScoreFirstCount());
-        this.setTitle(o.getTitle());
-        this.setTwitter(o.getTwitter());
-        this.setTitleUrl(o.getTitleUrl());
-        this.setUsername(o.getUsername());
-        this.setUserAchievements(o.getUserAchievements());
-        this.setWebsite(o.getWebsite());
+        BeanUtils.copyProperties(o, this);
     }
 
     public Boolean getPmFriendsOnly() {
@@ -546,10 +484,9 @@ public class OsuUser {
     // 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
     @Deprecated
     public OsuMode getOsuMode() {
-        return OsuMode.getMode(mode);
+        return getCurrentOsuMode();
     }
 
-    @Deprecated
     public void setOsuMode(OsuMode mode) {
         this.mode = mode.getName();
     }

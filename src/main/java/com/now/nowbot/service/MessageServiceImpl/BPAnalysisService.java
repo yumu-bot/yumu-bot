@@ -50,11 +50,11 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         boolean isMyself = false;
 
         var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode, 100);
+        var user = HandleUtil.getOtherUser(event, matcher, mode);
 
         if (Objects.isNull(user)) {
             isMyself = true;
-            user = HandleUtil.getMyselfUser(event, mode);
+            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
         }
 
         mode = HandleUtil.getModeOrElse(mode, user);

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.util.CollectionUtils;
 import rosu.Rosu;
 import rosu.parameter.JniScore;
-import rosu.result.JniResult;
+import rosu.result.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -154,6 +154,8 @@ public interface OsuBeatmapApiService {
     default void applyStarRatingChange(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
         JniResult r;
+
+
 
         try {
             r = getMaxPP(beatMap.getBeatMapID(), mode, modsInt);
