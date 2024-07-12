@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -251,6 +250,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         //成绩发送
+        byte[] image;
+
         if (isMultipleScore) {
             int scoreSize = scoreList.size();
 
@@ -262,7 +263,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             beatmapApiService.applySRAndPP(scoreList);
 
             try {
-                var image = imageService.getPanelA5(user, scores);
+                image = imageService.getPanelA5(user, scores);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩发送失败：", e);
@@ -272,19 +273,23 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } else {
             //单成绩发送
             var score = scoreList.getFirst();
+
             var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
 
+            /*
+            var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
+
+            if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
+
+            } else {
+                image = imageService.getPanelE(user, e5Param.score());
+            }
+
+             */
+
+
             try {
-                var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
-
-                byte[] image;
-
-                if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-                    image = imageService.getPanelE5(e5Param);
-                } else {
-                    image = imageService.getPanelE(user, e5Param.score());
-                }
-
+                image = imageService.getPanelE5(e5Param);
                 from.sendImage(image);
             } catch (Exception e) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(e5Param.score()), e);

@@ -371,13 +371,8 @@ public class ImageService {
         return doPost("panel_D", httpEntity);
     }
 
+    @Deprecated
     public byte[] getPanelE(OsuUser user, Score score) throws WebClientResponseException {
-        /*
-        if (ContextUtil.getContext("isTest", Boolean.FALSE, Boolean.class)) {
-            log.info("score.created_at_str: {}", score.getCreateTime());
-        }
-
-         */
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of("user", user,
                 "score", score

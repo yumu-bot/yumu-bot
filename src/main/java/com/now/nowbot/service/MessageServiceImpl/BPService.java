@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
@@ -10,7 +9,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -101,13 +99,17 @@ public class BPService implements MessageService<BPService.BPParam> {
                 }
 
                 var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+                image = imageService.getPanelE5(e5Param);
+                /*
                 var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
                 if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-                    image = imageService.getPanelE5(e5Param);
+
                 } else {
                     image = imageService.getPanelE(user, e5Param.score());
                 }
+
+                 */
             }
         } catch (Exception e) {
             log.error("最好成绩：渲染失败", e);

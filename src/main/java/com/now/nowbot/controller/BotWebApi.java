@@ -312,13 +312,17 @@ public class BotWebApi {
                 ArrayList<Integer> ranks = new ArrayList<>();
                 for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
 
-                beatmapApiService.applySRAndPP(scores);
-
                 if (isMultipleScore) {
+                    beatmapApiService.applySRAndPP(scores);
                     data = imageService.getPanelA4(osuUser, scores, ranks);
                     suffix = "-bps.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scores.getFirst());
+                    try {
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        data = imageService.getPanelE5(e5Param);
+                    } catch (Exception e) {
+                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                    }
                     suffix = "-bp.jpg";
                 }
             }
@@ -332,7 +336,12 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scores);
                     suffix = "-passes.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scores.getFirst());
+                    try {
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        data = imageService.getPanelE5(e5Param);
+                    } catch (Exception e) {
+                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                    }
                     suffix = "-pass.jpg";
                 }
             }
@@ -347,7 +356,12 @@ public class BotWebApi {
                     data = imageService.getPanelA5(osuUser, scores);
                     suffix = "-recents.jpg";
                 } else {
-                    data = imageService.getPanelE(osuUser, scores.getFirst());
+                    try {
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        data = imageService.getPanelE5(e5Param);
+                    } catch (Exception e) {
+                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                    }
                     suffix = "-recent.jpg";
                 }
             }
@@ -578,13 +592,16 @@ public class BotWebApi {
 
         if (Objects.isNull(score)) {
             throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
-        } else {
-            var beatMap = new BeatMap();
-            beatMap.setBeatMapID(bid);
-            score.setBeatMap(beatMap);
         }
 
-        var image = imageService.getPanelE(osuUser, score);
+        byte[] image;
+
+        try {
+            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, beatmapApiService);
+            image = imageService.getPanelE5(e5Param);
+        } catch (Exception e) {
+            throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+        }
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
     }
 

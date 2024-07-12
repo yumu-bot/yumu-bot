@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
@@ -17,7 +16,6 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -174,16 +172,20 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         }
 
         byte[] image;
+        var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
 
         try {
-            var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+            image = imageService.getPanelE5(e5Param);
+
+            /*
             var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
 
             if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-                image = imageService.getPanelE5(e5Param);
             } else {
                 image = imageService.getPanelE(user, e5Param.score());
             }
+
+             */
 
         } catch (Exception e) {
             log.error("成绩：渲染失败", e);
