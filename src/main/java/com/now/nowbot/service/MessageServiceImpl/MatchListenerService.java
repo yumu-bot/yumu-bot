@@ -246,16 +246,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
             );
 
-            // apply sr change
-            var b = round.getBeatMap();
+            var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
 
-            if (b != null) {
-                // extend beatmap
-                b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
-                
-                // apply changes
-                beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
-            }
+            // apply changes
+            beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
 
             round.setBeatMap(b);
 
@@ -269,11 +263,14 @@ public class MatchListenerService implements MessageService<MatchListenerService
     private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
         var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
 
+        // apply changes
+        beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
+
         var d = new MatchCalculate(match,
                 new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
                 beatmapApiService);
 
-        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, 0, 0, round.getMods());
+        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, Objects.requireNonNullElse(b.getMaxCombo(), 0), 0, round.getMods());
 
         try {
             return imageService.getPanelE3(d, b, x);
