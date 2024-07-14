@@ -189,6 +189,14 @@ public class Score {
         this.PP = pp;
     }
 
+    public Float getWeightedPP() {
+        if (Objects.nonNull(weight) && Objects.nonNull(weight.weightedPP)) {
+            return weight.weightedPP;
+        }
+
+        return 0f;
+    }
+
     public String getRank() {
         return rank;
     }

@@ -7,7 +7,7 @@ import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.Instructions;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class ServiceCountService implements MessageService<Integer> {
         if (! matcher.find()) return false;
 
         if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new TipsException("只有超级管理员 (OP，原批) 可以使用此功能！");
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
         }
 
         var d = matcher.group("days");

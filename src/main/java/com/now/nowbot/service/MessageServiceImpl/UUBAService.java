@@ -288,9 +288,9 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             float bpm = b.getBPM();
             bp.getMods().forEach(r -> {
                 if (modSum.containsKey(r)) {
-                    modSum.get(r).add(Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f));
+                    modSum.get(r).add(Optional.ofNullable(bp.getWeightedPP()).orElse(0f));
                 } else {
-                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f)));
+                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeightedPP()).orElse(0f)));
                 }
             });
 
@@ -340,7 +340,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             } else {
                 mapperSum.put(b.getMapperID(), new mapperData(bp.getPP(), b.getMapperID()));
             }
-            nowPP += bp.getWeight().weightedPP();
+            nowPP += bp.getWeightedPP();
         }
         avgCombo /= bps.size();
         avgLength /= bps.size();

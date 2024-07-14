@@ -19,7 +19,6 @@ public class SwitchException extends TipsException {
         SW_Service_NotFound("找不到名为 %s 的服务！"),
         SW_Service_RemoveNotExists("不需要解封本来就没被封禁的群组！"),
         SW_Service_AddExists("不需要封禁本来就已经被封禁的群组！"),
-        SW_Permission_Admin("只有超级管理员 (OP，原批) 可以使用此功能！"),
         SW_Render_Failed("服务列表渲染失败。"),
 
         ;

@@ -106,6 +106,10 @@ public class Instructions {
 
     public static final Pattern PP_MINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p?p[mv\\-](?![A-Za-z_])|p?pmvs?|ppminus|minus|minusvs))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
+    public static final Pattern GET_ID = Pattern.compile("^[!！]\\s*(?i)(ym)?(getid|gi(?![A-Za-z_]))\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:：`、]+)?");
+
+    public static final Pattern GET_NAME = Pattern.compile("^[!！]\\s*(?i)(ym)?(getname|gn)\\s*(?<data>[\\d\\s\\-_,，|:：`、]+)?");
+
     /*
 
     public static final Pattern PP_MINUS = HandleUtil.createPattern()
@@ -135,7 +139,7 @@ public class Instructions {
 
     public static final Pattern MAP = Pattern.compile("^[!！]\\s*(?i)(ym)?(beatmap|map(?![A-Za-z_])|m(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>\\d+\\.?\\d*)[a%]?)?\\s*([cx]?(?<combo>\\d+\\.?\\d*)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
-    public static final Pattern QUALIFIED_MAP = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![A-Za-z_])|q(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*([＃#](?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
+    public static final Pattern QUALIFIED_MAP = Pattern.compile("^[!！]\\s*(?i)(ym)?(qualified|qua(?![A-Za-z_])|q(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*([＃#](?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
 
     public static final Pattern LEADER_BOARD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![A-Za-z_])|list(?![A-Za-z_])|l(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?");
 
@@ -154,7 +158,7 @@ public class Instructions {
 
     public static final Pattern SERIES_RATING = Pattern.compile("^[!！]\\s*(?i)((?<uu>(u{1,2})(seriesrating|series|sra(?![A-Za-z_])|sa(?![A-Za-z_])))|(ym)?(?<main>(seriesrating|series|sa(?![A-Za-z_])|sra(?![A-Za-z_])))|(ym)?(?<csv>(csvseriesrating|csvseries|csa(?![A-Za-z_])|cs(?![A-Za-z_]))))\\s*([＃#](?<name>.+)[＃#])?\\s*(?<data>[\\d\\[\\]\\s,，|\\-]+)?(\\s*[Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?(\\s*(?<rematch>[Rr]))?(\\s*(?<failed>[Ff]))?");
 
-    public static final Pattern CSV_MATCH = Pattern.compile("[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-rt-wy-zA-RT-WY-Z_])|cra(?![a-rt-wy-zA-RT-WY-Z_])))\\s*(?<x>[xXsS])?\\s*(?<data>[\\d\\s,，|\\-]+)?");
+    public static final Pattern CSV_MATCH = Pattern.compile("^[!！]\\s*(?i)((ym)?(csvrating|cr(?![a-rt-wy-zA-RT-WY-Z_])|cra(?![a-rt-wy-zA-RT-WY-Z_])))\\s*(?<x>[xXsS])?\\s*(?<data>[\\d\\s,，|\\-]+)?");
 
     public static final Pattern MATCH_ROUND = Pattern.compile("^[!！]\\s*(?i)(ym)?(matchround(s)?|round(s)?(?![a-zA-Z_])|mr(?![a-zA-Z_])|ro(?![a-zA-Z_]))+\\s*(?<matchid>\\d+)?\\s*(?<round>\\d+)?(\\s*(?<keyword>[\\w\\s\\d-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+))?");
 
@@ -211,15 +215,18 @@ public class Instructions {
 
      */
 
+    public static final Pattern TEST_PPM = Pattern.compile("^[!！]\\s*(?i)(testppm|testcost|tp(?![A-Za-z_])|tc(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:：`、]+)?");
 
-    public static final Pattern TEST_PPM = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:]+)?");
+    public static final Pattern TEST_HD = Pattern.compile("^[!！]\\s*(?i)(testhd|th(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:：`、]+)?");
+
+    public static final Pattern TEST_FIX = Pattern.compile("^[!！]\\s*(?i)(testfix|tf(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:：`、]+)?");
+
+    public static final Pattern TEST_MAP = Pattern.compile("^[!！]\\s*(?i)(testmap|tm(?![A-Za-z_]))\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\s,，|\\-]+))?");
 
 
     public static final Pattern MAP_4D_CALCULATE = Pattern.compile("^[!！＃#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtrnc]+))?");
-    public static final Pattern TEST_TAIKO_SR_CALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
-    public static final Pattern TEST_MAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\d\\s,，|\\-]+))?");
-
+    public static final Pattern TEST_TAIKO_SR_CALCULATE = Pattern.compile("^[!！]\\s*(?i)(testtaiko|tt(?![A-Za-z_]))\\s*(?<data>[ox ]+)");
 
 
     // #-1 已弃用

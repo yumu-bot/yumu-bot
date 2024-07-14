@@ -277,24 +277,29 @@ public enum OsuMod {
         };
     }
 
-    public boolean checkValue(int i) {
-        return (value & i) != 0;
+    public static boolean hasMod(List<String> abbrList, OsuMod mod) {
+        return hasMod(getModsValueFromAbbrList(abbrList), mod);
+    }
+
+    public static boolean hasMod(Integer modInt, OsuMod mod) {
+        if (modInt == null || mod == null) return false;
+        return (mod.value & modInt) != 0;
     }
 
     public static boolean hasDt(int i) {
-        return DoubleTime.checkValue(i) || Nightcore.checkValue(i);
+        return hasMod(i, DoubleTime) || hasMod(i, Nightcore);
     }
 
     public static boolean hasHt(int i) {
-        return HalfTime.checkValue(i);
+        return hasMod(i, HalfTime);
     }
 
     public static boolean hasHr(int i) {
-        return HardRock.checkValue(i);
+        return hasMod(i, HardRock);
     }
 
     public static boolean hasEz(int i) {
-        return Easy.checkValue(i);
+        return hasMod(i, Easy);
     }
 
     private static final int changeRatingValue = Easy.value | HalfTime.value | TouchDevice.value |

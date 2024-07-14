@@ -135,6 +135,17 @@ public interface OsuBeatmapApiService {
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
         var t = s.getStatistics();
 
+        if (t.getCountAll(s.getMode()) > 0 && t.getCountMiss() > 0) {
+            t.setCountMiss(0);
+            t.setCount300(t.getCount300() + t.getCountMiss());
+        }
+
+        if (s.getBeatMap() == null || s.getBeatMap().getMaxCombo() == null) {
+            applyBeatMapExtend(s);
+        }
+
+        s.setMaxCombo(s.getBeatMap().getMaxCombo());
+
         JniScore js = new JniScore();
         js.setMode(s.getMode().toRosuMode());
         return getJniResult(m, t, b, js);
@@ -153,7 +164,8 @@ public interface OsuBeatmapApiService {
     }
 
     @NonNull
-    private Map<String, Object> getStats(@NonNull JniResult jniResult) {var result = new HashMap<String, Object>(6);
+    private Map<String, Object> getStats(@NonNull JniResult jniResult) {
+        var result = new HashMap<String, Object>(6);
         switch (jniResult) {
             case OsuResult o -> {
                 result.put("aim_pp", o.getPpAim());
@@ -210,6 +222,15 @@ public interface OsuBeatmapApiService {
     // 给成绩添加完整的谱面
     default void applyBeatMapExtend(Score score) {
         var extended = getBeatMapInfo(score.getBeatMap().getBeatMapID());
+        var lite = score.getBeatMap();
+
+        score.setBeatMap(BeatMap.extend(lite, extended));
+        score.setBeatMapSet(extended.getBeatMapSet());
+    }
+
+    // 给成绩添加完整的谱面
+    default void applyBeatMapExtendFromDataBase(Score score) {
+        var extended = getBeatMapInfoFromDataBase(score.getBeatMap().getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));

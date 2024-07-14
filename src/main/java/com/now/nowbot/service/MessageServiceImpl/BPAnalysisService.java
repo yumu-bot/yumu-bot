@@ -163,16 +163,16 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
 
             { // 统计 mods / rank
                 if (! CollectionUtils.isEmpty(s.getMods())) {
-                    s.getMods().forEach(m -> modsPPMap.add(m, s.getWeight().weightedPP()));
+                    s.getMods().forEach(m -> modsPPMap.add(m, s.getWeightedPP()));
                     modsSum += s.getMods().size();
                 } else {
 //                    modsPPSum.add("NM", s.getWeight().getPP());
                     modsSum += 1;
                 }
                 if (s.isPerfect()) {
-                    rankMap.add("FC", s.getWeight().weightedPP());
+                    rankMap.add("FC", s.getWeightedPP());
                 }
-                rankMap.add(s.getRank(), s.getWeight().weightedPP());
+                rankMap.add(s.getRank(), s.getWeightedPP());
             }
         }
 
@@ -256,7 +256,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
         var bonusPP = DataUtil.getBonusPP(userPP, bpPPs);
 
         //bpPP + remainPP (bp100之后的) = rawPP
-        var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeight().weightedPP()).orElse(0f)).sum();
+        var bpPP = (float) bps.stream().mapToDouble(s -> Optional.ofNullable(s.getWeightedPP()).orElse(0f)).sum();
         var rawPP = (float) (userPP - bonusPP);
 
         List<Attr> modsAttr;

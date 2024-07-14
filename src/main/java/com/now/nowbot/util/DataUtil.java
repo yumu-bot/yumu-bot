@@ -41,6 +41,21 @@ public class DataUtil {
     static Typeface EXTRA;
 
     /**
+     * 将按逗号或者 |、:：分隔的字符串分割
+     * 如果未含有分隔的字符，返回 null
+     * @param str 需要分析的字符串
+     * @return 玩家名列表
+     */
+    @Nullable
+    public static List<String> splitString(@Nullable String str) {
+        if (! StringUtils.hasText(str)) return null;
+        String[] strings = str.trim().split("[,，|:：`、]+"); //空格和-_不能匹配
+        if (strings.length == 0) return null;
+
+        return Arrays.stream(strings).map(String::trim).toList();
+    }
+
+    /**
      * 判定优秀成绩。用于临时区分 panel E 和 panel E5
      * @param score 成绩，需要先算好 pp，并使用完全体
      * @return 是否为优秀成绩
