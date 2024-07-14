@@ -246,12 +246,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
             );
 
-            var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
+            var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
 
             // apply changes
+            beatmapApiService.applyBeatMapExtend(b);
             beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
-
-            round.setBeatMap(b);
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -261,9 +260,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
-
         // apply changes
+        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
+        beatmapApiService.applyBeatMapExtend(b);
         beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
 
         var d = new MatchCalculate(match,

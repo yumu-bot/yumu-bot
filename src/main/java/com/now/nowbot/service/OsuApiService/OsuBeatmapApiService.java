@@ -219,6 +219,11 @@ public interface OsuBeatmapApiService {
         }
     }
 
+    // 给标准谱面添加完整的谱面
+    default void applyBeatMapExtend(BeatMap b) {
+        BeatMap.extend(b, getBeatMapInfo(b.getBeatMapID()));
+    }
+
     // 给成绩添加完整的谱面
     default void applyBeatMapExtend(Score score) {
         var extended = getBeatMapInfo(score.getBeatMap().getBeatMapID());

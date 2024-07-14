@@ -450,6 +450,12 @@ public class BeatMap implements Cloneable {
         this.hasLeaderBoard = hasLeaderBoard;
     }
 
+    public BeatMap() {}
+
+    public BeatMap(long id) {
+        this.setBeatMapID(id);
+    }
+
     @Override
     public String toString() {
         return STR."BeatMap{setID=\{setID}, starRating=\{starRating}, id=\{id}, mode='\{mode}\{'\''}, status='\{status}\{'\''}, totalLength=\{totalLength}, mapperID=\{mapperID}, difficultyName='\{difficultyName}\{'\''}, beatMapSet=\{beatMapSet}, md5='\{md5}\{'\''}, retryList=\{retryList}, failList=\{failList}, maxCombo=\{maxCombo}, OD=\{OD}, AR=\{AR}, BPM=\{BPM}, convert=\{convert}, circles=\{circles}, sliders=\{sliders}, spinners=\{spinners}, CS=\{CS}, deletedAt=\{deletedAt}, HP=\{HP}, hitLength=\{hitLength}, scoreAble=\{scoreAble}, lastUpdated='\{lastUpdated}\{'\''}, modeInt=\{modeInt}, passCount=\{passCount}, playCount=\{playCount}, ranked=\{ranked}, url='\{url}\{'\''}, retry=\{retry}, fail=\{fail}, hasLeaderBoard=\{hasLeaderBoard}\{'}'}";
@@ -469,7 +475,7 @@ public class BeatMap implements Cloneable {
     public static BeatMap extend(BeatMap lite, BeatMap extended) {
         if (extended == null) {
             return Objects.requireNonNullElseGet(lite, BeatMap::new);
-        } else if (lite == null){
+        } else if (lite == null || lite.getCS() == null){
             return extended;
         }
 
