@@ -133,7 +133,7 @@ public interface OsuBeatmapApiService {
     default JniResult getFcPP(Score s) throws Exception {
         var b = getBeatMapFile(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
-        var t = s.getStatistics();
+        var t = s.getStatistics().clone();
 
         if (t.getCountAll(s.getMode()) > 0 && t.getCountMiss() > 0) {
             t.setCountMiss(0);
@@ -144,7 +144,7 @@ public interface OsuBeatmapApiService {
             applyBeatMapExtend(s);
         }
 
-        s.setMaxCombo(s.getBeatMap().getMaxCombo());
+        //s.setMaxCombo(s.getBeatMap().getMaxCombo());
 
         JniScore js = new JniScore();
         js.setMode(s.getMode().toRosuMode());

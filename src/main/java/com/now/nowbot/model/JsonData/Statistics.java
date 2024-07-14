@@ -17,7 +17,7 @@ import java.util.Objects;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Statistics {
+public class Statistics implements Cloneable {
     @Nullable
     @JsonProperty("count_50")
     Integer count50;
@@ -442,5 +442,14 @@ public class Statistics {
     @Override
     public String toString() {
         return STR."Statistics{count50=\{count50}, count100=\{count100}, count300=\{count300}, countGeki=\{countGeki}, countKatu=\{countKatu}, countMiss=\{countMiss}, rankedScore=\{rankedScore}, totalScore=\{totalScore}, pp=\{pp}, accuracy=\{accuracy}, playCount=\{playCount}, playTime=\{playTime}, totalHits=\{totalHits}, maxCombo=\{maxCombo}, isRanked=\{isRanked}, globalRank=\{globalRank}, replaysWatchedByOthers=\{replaysWatchedByOthers}, countryRank=\{countryRank}, levelCurrent=\{levelCurrent}, levelProgress=\{levelProgress}, SS=\{SS}, SSH=\{SSH}, S=\{S}, SH=\{SH}, A=\{A}, countryRank7K=\{countryRank7K}, countryRank4K=\{countryRank4K}, rank7K=\{rank7K}, rank4K=\{rank4K}, PP7K=\{PP7K}, PP4K=\{PP4K}\{'}'}";
+    }
+
+    @Override
+    public Statistics clone() {
+        try {
+            return (Statistics) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

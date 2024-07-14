@@ -264,13 +264,15 @@ public class MatchListenerService implements MessageService<MatchListenerService
         var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
         beatmapApiService.applyBeatMapExtend(b);
         beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
+        round.setBeatMap(b);
 
         var d = new MatchCalculate(match,
                 new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
                 beatmapApiService);
 
-        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, Objects.requireNonNullElse(b.getMaxCombo(), 0), 0, round.getMods());
+        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
 
+        System.out.println(x);
         try {
             return imageService.getPanelE3(d, b, x);
         } catch (WebClientResponseException ignored) {
