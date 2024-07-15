@@ -131,6 +131,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
         OsuUser me = getOsuUser(binMe, mode);
         OsuUser other = isVs ? getOsuUser(binOther, mode) : null;
 
+        mode = HandleUtil.getModeOrElse(mode, binMe);
         mode = HandleUtil.getModeOrElse(mode, me);
 
         data.setValue(new PPMinusParam(isVs, me, other, mode));
