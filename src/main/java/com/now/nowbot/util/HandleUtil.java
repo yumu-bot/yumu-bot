@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDateTime;
@@ -302,6 +303,29 @@ public class HandleUtil {
         if (OsuMode.isDefaultOrNull(mode)) mode = user.getOsuMode();
 
         return getPlayerInfo(user.getOsuName(), mode);
+    }
+
+    public static OsuUser getUser(BinUser user, OsuMode mode, OsuUserApiService userApiService) throws GeneralTipsException {
+        var m = HandleUtil.getModeOrElse(mode, user);
+
+        try {
+            if (user != null && user.getOsuName() != null) {
+                return userApiService.getPlayerInfo(user.getOsuName(), m);
+            } else {
+                return null;
+            }
+        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.getOsuName());
+        } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getOsuName());
+        } catch (HttpClientErrorException | WebClientResponseException e) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
+        } catch (BindException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("HandleUtil：玩家信息获取失败：", e);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo);
+        }
     }
 
     // MapStatisticsService 专属
