@@ -453,7 +453,7 @@ public class BeatMap implements Cloneable {
     public BeatMap() {}
 
     public BeatMap(long id) {
-        this.setBeatMapID(id);
+        this.id = id;
     }
 
     @Override
@@ -476,7 +476,8 @@ public class BeatMap implements Cloneable {
         if (extended == null) {
             return Objects.requireNonNullElseGet(lite, BeatMap::new);
         } else if (lite == null || lite.getCS() == null){
-            return extended;
+            lite = extended;
+            return lite;
         }
 
         extended.setStarRating(lite.getStarRating());
@@ -488,6 +489,7 @@ public class BeatMap implements Cloneable {
         extended.setHitLength(lite.getHitLength());
         extended.setBPM(lite.getBPM());
 
-        return extended;
+        lite = extended;
+        return lite;
     }
 }

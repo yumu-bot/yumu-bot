@@ -246,11 +246,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
             );
 
-            var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
-
             // apply changes
-            beatmapApiService.applyBeatMapExtend(b);
-            beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
+            beatmapApiService.applyBeatMapExtend(round);
+            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -261,14 +259,14 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
     private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
         // apply changes
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
-        beatmapApiService.applyBeatMapExtend(b);
-        beatmapApiService.applySRAndPP(b, OsuMode.getMode(round.getMode()), round.getModInt());
-        round.setBeatMap(b);
+        beatmapApiService.applyBeatMapExtend(round);
+        beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
 
         var d = new MatchCalculate(match,
                 new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
                 beatmapApiService);
+
+        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
 
         var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
 

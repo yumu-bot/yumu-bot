@@ -220,8 +220,9 @@ public interface OsuBeatmapApiService {
     }
 
     // 给标准谱面添加完整的谱面
-    default void applyBeatMapExtend(BeatMap b) {
-        BeatMap.extend(b, getBeatMapInfo(b.getBeatMapID()));
+    default void applyBeatMapExtend(Match.MatchRound round) {
+        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
+        round.setBeatMap(getBeatMapInfo(b.getBeatMapID()));
     }
 
     // 给成绩添加完整的谱面
