@@ -65,6 +65,7 @@ public class BeatMapDao {
         var s = new BeatMapSet();
         s.setSID(Long.valueOf(mapSet.getId()));
         s.setCreatorID(Long.valueOf(mapSet.getMapperId()));
+        s.setCreator(mapSet.getCreator());
         var cover = new Covers();
         cover.setCover(mapSet.getCover());
         cover.setCover2x(mapSet.getCover());
