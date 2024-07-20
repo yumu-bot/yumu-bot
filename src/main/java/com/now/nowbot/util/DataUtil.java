@@ -491,7 +491,7 @@ public class DataUtil {
         }
     }
 
-    public static float MS2AR(int ms){
+    public static float MS2AR(float ms){
         if (0 < 1200 - ms){
             if (ms < 300) return 11;
             return  5 + (1200 - ms) / 150f;
@@ -516,8 +516,8 @@ public class DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f / 4f);
         }
-        ar = MS2AR((int) ms);
-        return (int)Math.ceil(ar * 100)/100f;
+        ar = MS2AR(ms);
+        return roundTwoDecimals(ar);
     }
 
     public static float OD2MS(float od){
@@ -542,7 +542,8 @@ public class DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f/4);
         }
-        return (int) Math.ceil(MS2OD(ms) * 100) / 100f;
+        od = MS2OD(ms);
+        return roundTwoDecimals(od);
     }
 
 
@@ -551,8 +552,8 @@ public class DataUtil {
             cs *= 1.3f;
         } else if (OsuMod.hasEz(mod)) {
             cs /= 2f;
-            }
-            return (int) Math.ceil(cs * 100) / 100f;
+        }
+        return roundTwoDecimals(cs);
     }
 
     public static float BPM(float bpm, int mod){
@@ -561,7 +562,7 @@ public class DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             bpm *= 0.75f;
         }
-        return bpm;
+        return roundTwoDecimals(bpm);
     }
 
     public static int Length(float length, int mod){
@@ -579,7 +580,11 @@ public class DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             hp /= 1.3f;
         }
-        return hp;
+        return roundTwoDecimals(hp);
+    }
+
+    private static float roundTwoDecimals(float value) {
+        return new BigDecimal(value).setScale(2, RoundingMode.HALF_EVEN).floatValue();
     }
 
     // 应用四维的变化 4 dimensions
