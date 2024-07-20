@@ -11,13 +11,11 @@ import java.util.Map;
 public class MicroUser {
     @JsonProperty("avatar_url")
     String avatarUrl;
-
     @JsonProperty("cover_url")
     String coverUrl;
     @JsonProperty("default_group")
     String group;
     Long id;
-
     @JsonProperty("is_active")
     Boolean active;
     @JsonProperty("is_bot")

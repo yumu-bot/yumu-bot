@@ -537,7 +537,6 @@ public class DataUtil {
             od /= 2f;
         }
         ms = OD2MS(od);
-
         if (OsuMod.hasDt(mod)){
             ms /= (3f/2);
         } else if (OsuMod.hasHt(mod)) {
@@ -552,8 +551,8 @@ public class DataUtil {
             cs *= 1.3f;
         } else if (OsuMod.hasEz(mod)) {
             cs /= 2f;
-        }
-        return cs;
+            }
+            return (int) Math.ceil(cs * 100) / 100f;
     }
 
     public static float BPM(float bpm, int mod){
