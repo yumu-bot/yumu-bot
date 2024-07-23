@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service("MAP")
@@ -46,12 +48,72 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         var mode = OsuMode.getMode(matcher.group("mode"));
 
         try {
-            user = HandleUtil.getMyselfUser(event, mode);
+            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
         } catch (BindException e) {
             user = null;
         }
 
-        var expected = HandleUtil.getExpectedScore(matcher, beatMap, mode);
+        double accuracy;
+        int combo;
+        int miss;
+
+        try {
+            accuracy = Double.parseDouble(matcher.group("accuracy"));
+        } catch (RuntimeException e) {
+            accuracy = 1d;
+        }
+
+        try {
+            combo = Integer.parseInt(matcher.group("combo"));
+        } catch (RuntimeException e) {
+            combo = 0;
+        }
+
+        try {
+            miss = Integer.parseInt(matcher.group("miss"));
+        } catch (RuntimeException e) {
+            miss = 0;
+        }
+
+        List<String> mods;
+
+        try {
+            mods = OsuMod.getModsAbbrList(matcher.group("mod"));
+        } catch (RuntimeException e) {
+            mods = new ArrayList<>();
+        }
+
+        // 标准化 acc 和 combo
+        Integer maxCombo = beatMap.getMaxCombo();
+
+        if (maxCombo != null) {
+            if (combo <= 0) {
+                combo = maxCombo;
+            } else {
+                combo = Math.min(combo, maxCombo);
+            }
+        }
+
+        if (combo < 0) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo);
+        }
+        if (accuracy > 1d && accuracy <= 100d) {
+            accuracy /= 100d;
+        } else if (accuracy > 100d && accuracy <= 10000d) {
+            accuracy /= 10000d;
+        } else if (accuracy <= 0d || accuracy > 10000d) {
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy);
+        }
+
+        //只有转谱才能赋予游戏模式
+
+        var beatMapMode = beatMap.getOsuMode();
+
+        if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
+            mode = beatMapMode;
+        }
+
+        var expected = new Expected(mode, accuracy, combo, miss, mods);
 
         data.setValue(new MapParam(user, beatMap, expected));
         return true;

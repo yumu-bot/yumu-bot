@@ -83,7 +83,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         var matcher = Instructions.SCORE_PR.matcher(messageText);
         if (! matcher.find()) return false;
 
-        var name = matcher.group("name");
+        var data = matcher.group("data");
         var s = matcher.group("s");
         var es = matcher.group("es");
         var nStr = matcher.group("n");
@@ -100,12 +100,12 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             long n = 1L;
             long m;
 
-            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
+            var noSpaceAtEnd = StringUtils.hasText(data) && ! data.endsWith(" ") && ! hasHash;
 
             if (StringUtils.hasText(nStr)) {
                 if (noSpaceAtEnd) {
                     // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
-                    name += nStr;
+                    data += nStr;
                     nStr = "";
                 } else {
                     // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
@@ -121,10 +121,10 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             //避免 !b 970 这样子被错误匹配
             var isIllegalN = n < 1L || n > 100L;
             if (isIllegalN) {
-                if (StringUtils.hasText(name)) {
-                    name += nStr;
+                if (StringUtils.hasText(data)) {
+                    data += nStr;
                 } else {
-                    name = nStr;
+                    data = nStr;
                 }
 
                 nStr = "";
@@ -172,26 +172,26 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         if (Objects.nonNull(at)) {
             user = bindDao.getUserFromQQ(at.getTarget());
-        } else if (StringUtils.hasText(name)) {
+        } else if (StringUtils.hasText(data)) {
             user = new BinUser();
             long id;
             try {
-                id = userApiService.getOsuId(name.trim());
-                user.setOsuName(name.trim());
+                id = userApiService.getOsuId(data.trim());
+                user.setOsuName(data.trim());
             } catch (WebClientResponseException.NotFound e) {
                 if (StringUtils.hasText(nStr)) {
                     // 补救机制 1
                     try {
-                        id = userApiService.getOsuId(name.concat(nStr));
-                        user.setOsuName(name.concat(nStr));
+                        id = userApiService.getOsuId(data.concat(nStr));
+                        user.setOsuName(data.concat(nStr));
                     } catch (WebClientResponseException.NotFound e1) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.concat(nStr));
+                        throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, data.concat(nStr));
                     }
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
+                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, data.trim());
                 }
             } catch (Exception e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, data.trim());
             }
 
             user.setOsuID(id);

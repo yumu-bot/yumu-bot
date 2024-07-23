@@ -127,7 +127,7 @@ public class ImageService {
         return doPost("panel_A5", httpEntity);
     }
     /**
-     * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， name 默认 ""
+     * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， data 默认 ""
      */
     public byte[] getPanelA6(String markdown) {
         return getPanelA6(Optional.empty(), markdown, "", 1840);
@@ -141,7 +141,7 @@ public class ImageService {
     }
 
     /**
-     * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840， name 默认 null
+     * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840， data 默认 null
      */
     public byte[] getPanelA6(Optional<OsuUser> user, String markdown) {
         return getPanelA6(user, markdown, "", 1840);

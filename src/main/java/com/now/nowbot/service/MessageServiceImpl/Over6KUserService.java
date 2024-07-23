@@ -124,7 +124,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.OverU
 
     private byte[] getUserData(OverUser u) {
         byte[] name = u.name.getBytes();
-        //  (size)4 + (uid)8 + (data)10 + name
+        //  (size)4 + (uid)8 + (data)10 + data
         int size = 22 + name.length;
         ByteBuffer data = ByteBuffer.allocate(size);
         data.putInt(size);

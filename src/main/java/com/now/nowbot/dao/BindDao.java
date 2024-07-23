@@ -168,7 +168,7 @@ public class BindDao {
             uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
         } catch (Exception e) {
             if (!(e instanceof NullPointerException)) {
-                log.error("get name Error", e);
+                log.error("get data Error", e);
             }
             return null;
         }

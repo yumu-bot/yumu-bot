@@ -106,14 +106,14 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
                 }
             }
         } else {
-            //查询其他人 [name]
+            //查询其他人 [data]
             String name = param.user().name();
             long id = 0;
             try {
                 id = userApiService.getOsuId(name);
                 bu = bindDao.getUserFromOsuid(id);
             } catch (BindException e) {
-                //构建只有 name + id 的对象, binUser == null
+                //构建只有 data + id 的对象, binUser == null
                 bu = new BinUser();
                 bu.setOsuID(id);
                 bu.setOsuName(name);

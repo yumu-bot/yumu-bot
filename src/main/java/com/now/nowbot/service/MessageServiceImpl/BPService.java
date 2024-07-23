@@ -7,10 +7,15 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.CommandUtil;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.command.CmdRange;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +26,17 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
     private static final Logger log = LoggerFactory.getLogger(BPService.class);
+    private static final int DEFAULT_BP_COUNT = 20;
     @Resource
     OsuBeatmapApiService beatmapApiService;
+    @Resource
+    OsuScoreApiService scoreApiService;
     @Resource
     ImageService imageService;
 
@@ -38,16 +48,44 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (! matcher.find()) return false;
 
         boolean isMultiple = StringUtils.hasText(matcher.group("s"));
-
-        var isMyself = false;
-
+        var isMyself = new AtomicBoolean();
         // 处理 range
-        var mode = HandleUtil.getMode(matcher);
+        var mode = CommandUtil.getMode(matcher);
+        CmdRange<OsuUser> range;
+        try {
+             range = CommandUtil.getUserWithRange(event, matcher, mode, isMyself);
+        } catch (BindException e) {
+            if (isMyself.get() && HandleUtil.isAvoidance(messageText, "bp")) {
+                log.debug(String.format("指令退避：BP 退避成功，被退避的玩家：%s", event.getSender().getName()));
+                return false;
+            } else {
+                throw e;
+            }
+        }
 
-        var bpMap = HandleUtil.getBPList(event, matcher, messageText, mode, 20);
+        int offset = 0;
+        int limit = isMultiple ? DEFAULT_BP_COUNT : 1;
+        if (Objects.nonNull(range.getEnd())) {
+            offset = Math.min(range.getStart() - 1, 0);
+            limit = Math.min(range.getEnd() - range.getStart(), 1);
+        } else if (Objects.nonNull(range.getStart())) {
+            limit = range.getStart();
+        }
 
-        if (Objects.isNull(bpMap)) return false;
-        data.setValue(new BPParam(user, mode, bpMap, isMyself));
+        var user = range.getData();
+        if (Objects.isNull(user)) return false;
+
+        var bpList = scoreApiService.getBestPerformance(user.getUserID(), mode.getData(), offset, limit);
+        var bpMap = new TreeMap<Integer, Score>();
+        int finalOffset = offset;
+        bpList.forEach(
+                ContextUtil.consumerWithIndex(
+                        (s, index) -> bpMap.put(index + finalOffset, s)
+                )
+        );
+
+
+        data.setValue(new BPParam(user, mode.getData(), bpMap, isMyself.get()));
         return true;
     }
 

@@ -67,7 +67,7 @@ public class TestPPMService implements MessageService<Matcher> {
                 user = userApiService.getPlayerOsuInfo(id);
                 bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
             } catch (Exception e) {
-                sb.append("name=").append(name).append("not found").append('\n');
+                sb.append("data=").append(name).append("not found").append('\n');
                 break;
             }
 

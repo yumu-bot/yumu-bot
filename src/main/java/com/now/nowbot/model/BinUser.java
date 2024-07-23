@@ -13,7 +13,7 @@ public class BinUser {
 
     Long baseId;
     /**
-     * osu name
+     * osu data
      */
     String osuName;
     /**

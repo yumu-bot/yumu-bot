@@ -62,13 +62,13 @@ public class RunTimeService implements SchedulingConfigurer {
             log.warn("no users");
             return;
         }
-        record QQUser(long qq, String name){};
+        record QQUser(long qq, String data){};
         var qqUserList = users.stream().map(e -> new QQUser(e.getId(),e.getNameCard())).toList();
-        record UserLog(long qq, String name, float pp) {
+        record UserLog(long qq, String data, float pp) {
         }
         var dataMap = new ArrayList<UserLog>();
         var p = Pattern.compile("\"pp\":(?<pp>\\d+(.\\d+)?),");
-        var name = Pattern.compile("^(\\s+(?<name>[0-9a-zA-Z\\[\\]\\-_ ]*))");
+        var data = Pattern.compile("^(\\s+(?<data>[0-9a-zA-Z\\[\\]\\-_ ]*))");
         for (var qqUser : qqUserList) {
             log.warn("获取qq[{}]信息", qqUser);
             try {
@@ -76,9 +76,9 @@ public class RunTimeService implements SchedulingConfigurer {
                 try {
                     u = bindDao.getUser(qqUser.qq);
                 } catch (BindException e) {
-                    var m = name.matcher(qqUser.name);
-                    if (m.find() && !m.group("name").trim().equals("")){
-                        var nu = osuGetService.getPlayerInfo(m.group("name").trim());
+                    var m = data.matcher(qqUser.data);
+                    if (m.find() && !m.group("data").trim().equals("")){
+                        var nu = osuGetService.getPlayerInfo(m.group("data").trim());
                         u = new BinUser();
                         u.setOsuID(nu.getId());
                         u.setOsuName(nu.getUsername());
@@ -110,11 +110,11 @@ public class RunTimeService implements SchedulingConfigurer {
         }
         var n = dataMap.stream().sorted(Comparator.comparing(UserLog::pp).reversed()).toList();
         var dataFormat = DateTimeFormatter.ofPattern("MM-dd");
-        var sb = new StringBuilder("QQ,name,pp\n");
+        var sb = new StringBuilder("QQ,data,pp\n");
         log.warn("处理结果中");
         for (var u : n) {
             sb.append(u.qq).append(',')
-                    .append(u.name).append(',')
+                    .append(u.data).append(',')
                     .append(u.pp).append('\n');
         }
         log.warn("完成: {}", sb);

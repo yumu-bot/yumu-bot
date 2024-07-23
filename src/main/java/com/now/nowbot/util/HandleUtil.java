@@ -17,6 +17,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.command.CmdPattemBuilder;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,7 +194,7 @@ public class HandleUtil {
     }
 
     /**
-     * 获取其他玩家, 支持 @ / qq= / uid= / name= , 注意不再处理 range
+     * 获取其他玩家, 支持 @ / qq= / uid= / data= , 注意不再处理 range
      *
      * @param event   必须
      * @param matcher 必须
@@ -278,132 +279,6 @@ public class HandleUtil {
         return userApiService.getPlayerInfo(user, mode);
     }
 
-    // MapStatisticsService 专属
-    public static MapStatisticsService.Expected getExpectedScore(Matcher matcher, @NonNull BeatMap beatMap, @Nullable OsuMode mode) throws TipsException {
-
-        double accuracy;
-        int combo;
-        int miss;
-
-        try {
-            accuracy = Double.parseDouble(matcher.group("accuracy"));
-        } catch (RuntimeException e) {
-            accuracy = 1d;
-        }
-
-        try {
-            combo = Integer.parseInt(matcher.group("combo"));
-        } catch (RuntimeException e) {
-            combo = 0;
-        }
-
-        try {
-            miss = Integer.parseInt(matcher.group("miss"));
-        } catch (RuntimeException e) {
-            miss = 0;
-        }
-
-        List<String> mods;
-
-        try {
-            mods = OsuMod.getModsAbbrList(matcher.group("mod"));
-        } catch (RuntimeException e) {
-            mods = new ArrayList<>();
-        }
-
-        // 标准化 acc 和 combo
-        Integer maxCombo = beatMap.getMaxCombo();
-
-        if (maxCombo != null) {
-            if (combo <= 0) {
-                combo = maxCombo;
-            } else {
-                combo = Math.min(combo, maxCombo);
-            }
-        }
-
-        if (combo < 0) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo);
-        }
-        if (accuracy > 1d && accuracy <= 100d) {
-            accuracy /= 100d;
-        } else if (accuracy > 100d && accuracy <= 10000d) {
-            accuracy /= 10000d;
-        } else if (accuracy <= 0d || accuracy > 10000d) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy);
-        }
-
-        //只有转谱才能赋予游戏模式
-
-        var beatMapMode = beatMap.getOsuMode();
-
-        if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
-            mode = beatMapMode;
-        }
-
-
-        return new MapStatisticsService.Expected(mode, accuracy, combo, miss, mods);
-
-    }
-
-
-    public static TodayBPService.TodayBPParam getTodayBPList(MessageEvent event, Matcher matcher) throws TipsException {
-        var mode = getMode(matcher);
-        var range = getUserAndRange(matcher, mode);
-        var isMyself = new AtomicBoolean(false);
-        OsuUser user = getUserWithSelfOrOtherAndRange(event, matcher, range, mode, isMyself);
-
-        int dayStart = 0;
-        int dayEnd = 1;
-
-        if (0 > range.range.range2) {
-            // range2 存在, range1一定存在
-            dayStart = range.range.range1;
-            dayEnd = range.range.range2;
-            if (dayStart > dayEnd) {
-                // 确保 start < end
-                int temp = dayStart;
-                dayStart = dayEnd;
-                dayEnd = temp;
-            }
-        } else if (0 > range.range.range1) {
-            dayStart = range.range.range1;
-        }
-
-
-        List<Score> BPList;
-
-        try {
-            BPList = scoreApiService.getBestPerformance(user.getUserID(), mode, 0, 100);
-        } catch (WebClientResponseException.Forbidden e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.getUsername());
-        } catch (WebClientResponseException.NotFound e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.getUsername());
-        } catch (WebClientResponseException e) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
-        } catch (Exception e) {
-            log.error("HandleUtil：获取今日最好成绩失败！", e);
-            throw new TipsException("HandleUtil：获取今日最好成绩失败！");
-        }
-
-        //筛选
-        LocalDateTime laterDay = LocalDateTime.now().minusDays(dayStart);
-        LocalDateTime earlierDay = LocalDateTime.now().minusDays(dayEnd);
-
-        var dataMap = new TreeMap<Integer, Score>();
-
-        BPList.forEach(
-                ContextUtil.consumerWithIndex(
-                        (s, index) -> {
-                            if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
-                                dataMap.put(index + 1, s);
-                            }
-                        }
-                )
-        );
-
-        return new TodayBPService.TodayBPParam(user, HandleUtil.getModeOrElse(mode, user), dataMap, isMyself.get());
-    }
 
     /**
      *
@@ -674,6 +549,11 @@ public class HandleUtil {
         return result;
     }
 
+    /**
+     *
+     * @param text data&range
+     * @return [nameIndex, name1, name2, range1, range2]
+     */
     private static int[] getNameAndRangeWithoutHash(String text) {
         int[] nameSet = new int[]{-1, -1};
         Consumer<Integer> setNameSet = value -> {
@@ -728,12 +608,45 @@ public class HandleUtil {
             setNameSet.accept(index + 1);
         }
 
-        for (var x : nameSet) {
-            if (x > 0) System.out.println(text.substring(0, x));
-        }
-
         return new int[]{nameAll, nameSet[0], nameSet[1], m, n};
     }
+
+    /**************************************************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public static OsuUser getOsuUser(String name, OsuMode mode) throws TipsException {
         try {
@@ -746,7 +659,7 @@ public class HandleUtil {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         } catch (Exception e) {
             log.error("HandleUtil：获取玩家信息失败！", e);
-            throw new TipsException("HandleUtil：获取玩家信息失败！");
+            throw new TipsException("获取玩家信息失败！");
         }
     }
 
@@ -761,7 +674,7 @@ public class HandleUtil {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI);
         } catch (Exception e) {
             log.error("HandleUtil：获取玩家信息失败！", e);
-            throw new TipsException("HandleUtil：获取玩家信息失败！");
+            throw new TipsException("获取玩家信息失败！");
         }
     }
 
@@ -839,7 +752,8 @@ public class HandleUtil {
             for (var area : areas) {
                 patternStr.append(area);
             }
-            patternStr.deleteCharAt(patternStr.length() - 1);
+            // 你这别硬抄啊, 前面是有 .append('|') 为了去掉最后一个 | 才这样写的
+            // patternStr.deleteCharAt(patternStr.length() - 1);
             patternStr.append("])");
             return this;
         }

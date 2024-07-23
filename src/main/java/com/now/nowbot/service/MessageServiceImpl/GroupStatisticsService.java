@@ -217,7 +217,7 @@ public class GroupStatisticsService implements MessageService<Long> {
             }
         }
 
-        StringBuilder sb = new StringBuilder("qq,id,name,pp,bp1\n");
+        StringBuilder sb = new StringBuilder("qq,id,data,pp,bp1\n");
 
         users.entrySet().stream()
                 .sorted(Comparator.<Map.Entry<Long, MicroUser>, Double>comparing(e -> {

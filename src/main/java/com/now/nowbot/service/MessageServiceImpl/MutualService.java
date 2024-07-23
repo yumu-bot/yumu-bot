@@ -103,7 +103,7 @@ public class MutualService implements MessageService<List<MutualService.MutualPa
             sb.addText(STR."\n\{u.name}：https://osu.ppy.sh/users/\{u.uid}");
 
             /*
-            var name4Url = u.name
+            var name4Url = u.data
                     .replaceAll("\\s", "%20")
                     .replaceAll("-", "%2D")
                     .replaceAll("\\[", "%5B")
@@ -114,9 +114,9 @@ public class MutualService implements MessageService<List<MutualService.MutualPa
 
             if (m.find()) {
                 //有数字，只能 uid
-                sb.addText(STR." \{u.name} : : https://osu.ppy.sh/users/\{u.uid}\n");
+                sb.addText(STR." \{u.data} : : https://osu.ppy.sh/users/\{u.uid}\n");
             } else {
-                sb.addText(STR." \{u.name} : https://osu.ppy.sh/users/\{name4Url}\n");
+                sb.addText(STR." \{u.data} : https://osu.ppy.sh/users/\{name4Url}\n");
             }
 
              */

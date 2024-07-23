@@ -25,7 +25,7 @@ import java.util.Random;
 import java.util.regex.Matcher;
 
 @Service("FRIEND")
-public class FriendService implements MessageService<Matcher> {
+public class FriendService implements MessageService<int[]> {
     private static final Logger log = LoggerFactory.getLogger(FriendService.class);
     @Resource
     BindDao bindDao;
@@ -35,16 +35,16 @@ public class FriendService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<int[]> data) {
         var m = Instructions.FRIEND.matcher(messageText);
         if (m.find()) {
-            data.setValue(m);
+            data.setValue(new int[0]);
             return true;
         } else return false;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(MessageEvent event, int[] data) throws Throwable {
         var from = event.getSubject();
         BinUser binUser;
         OsuUser osuUser;
@@ -54,25 +54,22 @@ public class FriendService implements MessageService<Matcher> {
         //拿到参数,默认1-24个
         int n1 = 0, n2;
         boolean doRandom = true;
-        String nStr = matcher.group("n");
-        String mStr = matcher.group("m");
-        if (Objects.nonNull(mStr) && Objects.nonNull(nStr)) {
+        if (data.length == 2) {
             doRandom = false;
-            n1 = Integer.parseInt(matcher.group("n"));
-            n2 = Integer.parseInt(matcher.group("m"));
+            n1 = data[0];
+            n2 = data[1];
             if (n1 > n2) {
-                n1 ^= n2;
-                n2 ^= n1;
-                n1 ^= n2;
+                int temp = n1;
+                n1 = n2;
+                n2 = temp;
             }
             n1--;
+        } else if (data.length == 1) {
+            n2 = data[0];
         } else {
-            if (Objects.isNull(mStr)) {
-                n2 = Objects.isNull(nStr) ? 12 : Integer.parseInt(nStr);
-            } else {
-                n2 = Integer.parseInt(mStr);
-            }
+            n2 = 12;
         }
+
         n2--;
         if (n2 == 0 || 100 < n2 - n1) {
             throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds);

@@ -95,19 +95,19 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
             throw new MiniCardException(MiniCardException.Type.MINI_Classification_Error);
         }
 
-        var name = matcher.group("name");
+        var data = matcher.group("data");
         var nStr = matcher.group("n");
         var hasHash = StringUtils.hasText(matcher.group("hash"));
 
         //处理 n
         long n = 1L;
 
-        var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
+        var noSpaceAtEnd = StringUtils.hasText(data) && ! data.endsWith(" ") && ! hasHash;
 
         if (StringUtils.hasText(nStr)) {
             if (noSpaceAtEnd) {
                 // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
-                name += nStr;
+                data += nStr;
                 nStr = "";
             } else {
                 // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
@@ -123,10 +123,10 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         //避免 !b 970 这样子被错误匹配
         var isIllegalN = n < 1L || n > 100L;
         if (isIllegalN) {
-            if (StringUtils.hasText(name)) {
-                name += nStr;
+            if (StringUtils.hasText(data)) {
+                data += nStr;
             } else {
-                name = nStr;
+                data = nStr;
             }
 
             nStr = "";
@@ -141,26 +141,26 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
 
         if (Objects.nonNull(at)) {
             binUser = bindDao.getUserFromQQ(at.getTarget());
-        } else if (StringUtils.hasText(name)) {
+        } else if (StringUtils.hasText(data)) {
             binUser = new BinUser();
             Long id;
             try {
-                id = userApiService.getOsuId(name.trim());
+                id = userApiService.getOsuId(data.trim());
                 binUser.setOsuID(id);
             } catch (WebClientResponseException.NotFound e) {
                 if (StringUtils.hasText(nStr)) {
                     // 补救机制 1
                     try {
-                        id = userApiService.getOsuId(name.concat(nStr));
+                        id = userApiService.getOsuId(data.concat(nStr));
                         binUser.setOsuID(id);
                     } catch (WebClientResponseException.NotFound e1) {
-                        throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.concat(nStr));
+                        throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, data.concat(nStr));
                     }
                 } else {
-                    throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
+                    throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, data.trim());
                 }
             } catch (Exception e) {
-                throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, name.trim());
+                throw new MiniCardException(MiniCardException.Type.MINI_Player_NotFound, data.trim());
             }
         } else if (StringUtils.hasText(qq)) {
             try {

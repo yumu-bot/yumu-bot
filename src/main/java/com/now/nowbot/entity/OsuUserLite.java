@@ -19,7 +19,7 @@ public class OsuUserLite {
     //@Lob
     @Column(name = "username", columnDefinition = "TEXT")
     private String userName;
-    // "country": {"code": "CN","name": "China"},            country_code
+    // "country": {"code": "CN","data": "China"},            country_code
     //@Lob
     @Column(columnDefinition = "TEXT")
     private String countryCode;

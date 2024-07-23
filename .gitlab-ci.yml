@@ -19,6 +19,7 @@ job-build:
     - git reset --hard origin/master
     - git pull
     - git lfs pull
+    - mvn clean
     - mvn package
 
 job-update:

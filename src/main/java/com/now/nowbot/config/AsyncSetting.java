@@ -56,7 +56,7 @@ public class AsyncSetting implements AsyncConfigurer {
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return (throwable, method, obj) -> {
-            log.info("Method name - {}", method.getName(), throwable);
+            log.info("Method data - {}", method.getName(), throwable);
             for (Object param : obj) {
                 log.info("Parameter value - {}", param.toString());
             }

@@ -66,7 +66,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                     var user = userApiService.getPlayerInfo(name);
                     name = user.getUsername();
                 } else {
-                    log.info("绑定：退避成功：!bind osu <name>");
+                    log.info("绑定：退避成功：!bind osu <data>");
                     return false;
                 }
             }

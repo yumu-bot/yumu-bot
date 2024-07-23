@@ -33,7 +33,7 @@ public class DrawConfig {
             if (jsonData.has(grade.name())) {
                 var gradeData = jsonData.get(grade.name());
                 var conf = new DrawConfig.Config(
-                        gradeData.get("name").asText("no name"),
+                        gradeData.get("name").asText("no data"),
                         gradeData.get("weight").asInt(100));
                 this.gradeConfigMap.put(grade, conf);
                 if (gradeData.get("cards").isArray() && !gradeData.get("cards").isEmpty()) {
@@ -41,7 +41,7 @@ public class DrawConfig {
                     int weightSum = 0;
                     for (var cardData : gradeData.get("cards")) {
                         var card = new DrawConfig.Card(
-                                cardData.get("name").asText("no name"),
+                                cardData.get("name").asText("no data"),
                                 cardData.get("weight").asInt(100),
                                 cardData.get("info").asText("default")
                         );

@@ -108,7 +108,7 @@ public class UserApiImpl implements OsuUserApiService {
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
         return base.osuApiWebClient.get()
                 .uri(l -> l
-                        .path("users/{name}/{mode}")
+                        .path("users/{data}/{mode}")
                         .queryParam("key", "username")
                         .build(userName, mode.getName())
                 )

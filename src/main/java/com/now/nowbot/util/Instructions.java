@@ -8,42 +8,60 @@ import java.util.regex.Pattern;
 public class Instructions {
 
     // #0 调出帮助
-    public static final Pattern HELP = Pattern.compile("^[!！]\\s*(?i)(ym)?(帮助|help|h)\\s*(?<module>[\\s\\S]*)?");
+    public static final Pattern HELP = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(帮助|help|h)\\s*(?<module>[\\s\\S]*)?");
 
-    public static final Pattern AUDIO = Pattern.compile("^[!！]\\s*(?i)(ym)?(song|audio|a(?![AaC-RT-Zc-rt-z_]))\\s*([:：]?(?<type>(bid|b|sid|s)))?\\s*(?<id>\\d+)?");
+    public static final Pattern AUDIO = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(song|audio|a(?![AaC-RT-Zc-rt-z_]))\\s*([:：]?(?<type>(bid|b|sid|s)))?\\s*(?<id>\\d+)?");
 
     // #1 BOT 内部指令
-    public static final Pattern PING = Pattern.compile("^[!！]\\s*(?i)((ym)?(ping|pi(?![A-Za-z_]))|yumu\\?)");
+    public static final Pattern PING = Pattern.compile(
+            "^[!！]\\s*(?i)((ym)?(ping|pi(?![A-Za-z_]))|yumu\\?)");
 
-    public static final Pattern BIND = Pattern.compile("^[!！]\\s*(?i)(?<ym>ym)?((?<ub>ub(?![A-Za-z_]))|(?<bi>bi(?![A-Za-z_]))|(?<un>un)?(?<bind>bind))\\s*([:：](?<full>f))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]+)?");
+    public static final Pattern BIND = Pattern.compile(
+            "^[!！]\\s*(?i)(?<ym>ym)?((?<ub>ub(?![A-Za-z_]))|(?<bi>bi(?![A-Za-z_]))|(?<un>un)?(?<bind>bind))\\s*([:：](?<full>f))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]+)?");
 
-    public static final Pattern BAN = Pattern.compile("^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black|white|ban)?list|add|remove|(un)?ban|[lkarubw]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]+)?");
+    public static final Pattern BAN = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(super|sp(?![A-Za-z_])|operate|op(?![A-Za-z_]))\\s*([:：]?(?<operate>(black|white|ban)?list|add|remove|(un)?ban|[lkarubw]))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(group=\\s*(?<group>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]+)?");
 
-    public static final Pattern SWITCH = Pattern.compile("^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))\\s*(([:：]|group=)\\s*(?<group>\\d+))?\\s*(?<service>\\w+)?\\s*(?<operate>\\w+)?");
+    public static final Pattern SWITCH = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(switch|sw(?![A-Za-z_]))\\s*(([:：]|group=)\\s*(?<group>\\d+))?\\s*(?<service>\\w+)?\\s*(?<operate>\\w+)?");
 
-    public static final Pattern ECHO = Pattern.compile("^[!！＃#]\\s*(?i)(ym)?(echo|ec(?![A-Za-z_]))\\s*(?<any>[\\s\\S]*)");
+    public static final Pattern ECHO = Pattern.compile(
+            "^[!！＃#]\\s*(?i)(ym)?(echo|ec(?![A-Za-z_]))\\s*(?<any>[\\s\\S]*)");
 
-    public static final Pattern SERVICE_COUNT = Pattern.compile("^[!！]\\s*(?i)(ym)?(servicecount|统计服务调用|sc(?![A-Za-z_]))\\s*((?<days>\\d+)d)?\\s*((?<hours>\\d+)h?)?");
+    public static final Pattern SERVICE_COUNT = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(servicecount|统计服务调用|sc(?![A-Za-z_]))\\s*((?<days>\\d+)d)?\\s*((?<hours>\\d+)h?)?");
 
 
     // #2 osu! 成绩指令
-    public static final Pattern SET_MODE = Pattern.compile("^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![A-Za-z_])|mo(?![A-Za-z_]))+\\s*([:：]?(?<mode>\\w+))");
+    public static final Pattern SET_MODE = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(setmode|mode|sm(?![A-Za-z_])|mo(?![A-Za-z_]))+\\s*([:：]?(?<mode>\\w+))");
 
-    public static final Pattern SCORE_PR = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
+    public static final Pattern SCORE_PR = Pattern.compile(
+            "^[!！]\\s*(?i)(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
 
-    //\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$")
+    //\\s*(?<data>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$")
 
-    public static final Pattern PR_CARD = Pattern.compile("^[!！]\\s*(?i)(?<pass>(ym)?(passcard|pc(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
+    public static final Pattern PR_CARD = Pattern.compile(
+            "^[!！]\\s*(?i)(?<pass>(ym)?(passcard|pc(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
 
-    public static final Pattern UU_PR = Pattern.compile("^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![A-Za-z_])))|uu(?<recent>(recent|r(?![A-Za-z_]))))+\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
+    public static final Pattern UU_PR = Pattern.compile(
+            "^[!！]\\s*(?i)(uu(?<pass>(pass|p(?![A-Za-z_])))|uu(?<recent>(recent|r(?![A-Za-z_]))))+\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
 
-    public static final Pattern SCORE = Pattern.compile("^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![A-Za-z_])))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
+    public static final Pattern SCORE = Pattern.compile(
+            "^[!！]\\s*(?i)(?<score>(ym)?(score|s(?![A-Za-z_])))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(?<bid>\\d+)\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
-    // b ymb ymbp :0-3 name 1-100
+    // b ymb ymbp :0-3 data 1-100
 
 //    public static final Pattern BP = Pattern.compile("^[!！]\\s*(?i)(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<range>(?<n>\\d+)([-－](?<m>\\d+))?))?$");
     public static final Pattern BP = HandleUtil.createPattern()
             .appendCommands("bestperformance", "best", "bp(?![a-rt-zA-RT-Z_])", "b(?![a-rt-zA-RT-Z_])")
+            .append("(?<s>s)?")
             .appendIgnoreAlphabets().appendSpace()
             .appendMode(true).appendSpace()
             .appendQQ(true).appendSpace()
@@ -74,8 +92,8 @@ public class Instructions {
             .build();
 
     /*
-    public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|best(performance)?)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
-    public static final Pattern BP_FIX = Pattern.compile("^[!！]\\s*(?i)(ym)?((bp|best(performance)?)\\s?(fix|fc)|(bp?f(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
+    public static final Pattern TODAY_BP = Pattern.compile("^[!！]\\s*(?i)(ym)?(today(bp|best(performance)?)|(t[bd]p|t(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<data>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<day>\\d*)\\s*)$");
+    public static final Pattern BP_FIX = Pattern.compile("^[!！]\\s*(?i)(ym)?((bp|best(performance)?)\\s?(fix|fc)|(bp?f(?![A-Za-z_])))\\s*([:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(\\*?(?<data>[0-9a-zA-Z\\[\\]\\-_\\s]*?))?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$");
 
      */
 
@@ -90,7 +108,7 @@ public class Instructions {
             .build();
 
     /*
-    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(\\*?(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
+    public static final Pattern BP_ANALYSIS = Pattern.compile("^[!！]\\s*(?i)(ym)?((bpanalysis)|(blue\\s*archive)|bpa(?![A-Za-z_])|ba(?![A-Za-z_]))(\\s*[:：](?<mode>\\w+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(\\*?(?<data>[0-9a-zA-Z\\[\\]\\-_\\s]{3,}))?");
     */
 
 
@@ -98,23 +116,35 @@ public class Instructions {
 
     // #3 osu! 玩家指令
 
-    // i ymi yminfo :0-3 name
+    // i ymi yminfo :0-3 data
     public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?([＃#](?<day>\\d+))?");
 
-    public static final Pattern INFO_CARD = Pattern.compile("^[!！]\\s*(?i)(ym)?(informationcard|infocard(?![A-Za-z_])|ic(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
+    public static final Pattern INFO_CARD = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(informationcard|infocard(?![A-Za-z_])|ic(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
 
-    public static final Pattern CSV_INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(c(sv)?)(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\w\\d\\[\\]\\s\\-_,，、|:：]+)?");
+    public static final Pattern CSV_INFO = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(c(sv)?)(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\w\\d\\[\\]\\s\\-_,，、|:：]+)?");
 
-    public static final Pattern UU_INFO = Pattern.compile("^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
+    public static final Pattern UU_INFO = Pattern.compile(
+            "^[!！]\\s*(?i)uu(info|i(?![A-Za-z_]))+\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?(?![\\w])\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
 
-    public static final Pattern I_MAPPER = Pattern.compile("^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(u?id=\\s*(?<id>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
-    
-    public static final Pattern FRIEND = Pattern.compile("^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![A-Za-z_]))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
+    public static final Pattern I_MAPPER = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?((im?)?mapper|im(?![A-Za-z_]))\\s*" +
+                    "(qq=\\s*(?<qq>\\d+))?\\s*(u?id=\\s*(?<id>\\d+))?(\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
-    public static final Pattern MUTUAL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mutual|mu(?![A-Za-z_]))\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?");
+    public static final Pattern FRIEND = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(friend(s)?|f(?![A-Za-z_]))\\s*(?<n>\\d+)?\\s*([:-]\\s*(?<m>\\d+))?");
+
+    public static final Pattern MUTUAL = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(mutual|mu(?![A-Za-z_]))\\s*(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?");
 
 
-    public static final Pattern PP_MINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p?p[mv\\-](?![A-Za-z_])|p?pmvs?|ppminus|minus|minusvs))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern PP_MINUS = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(?<function>(p?p[mv\\-](?![A-Za-z_])|p?pmvs?|ppminus|minus|minusvs))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
     /*
 
@@ -143,18 +173,30 @@ public class Instructions {
 
     // #4 osu! 谱面指令
 
-    public static final Pattern MAP = Pattern.compile("^[!！]\\s*(?i)(ym)?(beatmap|map(?![A-Za-z_])|m(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>\\d+\\.?\\d*)[a%]?)?\\s*([cx]?(?<combo>\\d+\\.?\\d*)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
+    public static final Pattern MAP = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(beatmap|map(?![A-Za-z_])|m(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>\\d+\\.?\\d*)[a%]?)?\\s*([cx]?(?<combo>\\d+\\.?\\d*)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*(\\+(?<mod>( ?[EZNMFHTDRSPCLO]{2})+))?");
 
-    public static final Pattern QUALIFIED_MAP = Pattern.compile("[!！]\\s*(?i)(ym)?(qualified|qua(?![A-Za-z_])|q(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*([＃#](?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
+    public static final Pattern QUALIFIED_MAP = Pattern.compile(
+            "[!！]\\s*(?i)(ym)?(qualified|qua(?![A-Za-z_])|q(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>\\w+))?\\s*([＃#](?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?");
 
-    public static final Pattern LEADER_BOARD = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![A-Za-z_])|list(?![A-Za-z_])|l(?![A-Za-z_]))\\s*([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?");
+    public static final Pattern LEADER_BOARD = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(mapscorelist|leaderboard|leader(?![A-Za-z_])|list(?![A-Za-z_])|l(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*(?<range>\\d+)?");
 
-    public static final Pattern MAP_MINUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(mapminus|mm(?![A-Za-z_]))\\s*(?<id>\\d+)?\\s*(\\+(?<mod>(\\s*[EZNMFHTDRSPCLO]{2})+)|([×xX]?\\s*(?<rate>[0-9.]*)[×xX]?))?");
+    public static final Pattern MAP_MINUS = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(mapminus|mm(?![A-Za-z_]))\\s*" +
+                    "(?<id>\\d+)?\\s*(\\+(?<mod>(\\s*[EZNMFHTDRSPCLO]{2})+)|([×xX]?\\s*(?<rate>[0-9.]*)[×xX]?))?");
 
-    public static final Pattern NOMINATION = Pattern.compile("^[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))\\s*([:：]?(?<mode>(bid|sid|s|b)))?\\s*(?<sid>\\d+)?");
+    public static final Pattern NOMINATION = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))\\s*" +
+                    "([:：]?(?<mode>(bid|sid|s|b)))?\\s*(?<sid>\\d+)?");
 
     // pp px ppp pp+ p+ ppplus ppv pppvs ppplusvs/ pa pc ppa ppc ppplusmap pppmap plusmapvs pluscompare ppplusmapvs plusmapcompare pppmv
-    public static final Pattern PP_PLUS = Pattern.compile("^[!！]\\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\\s*(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
+    public static final Pattern PP_PLUS = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\\s*" +
+                    "(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?");
 
     // #5 osu! 比赛指令
 
@@ -172,7 +214,7 @@ public class Instructions {
 
     public static final Pattern MAP_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(mappool|po(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))\\s*(?<name>\\w+)");
     /*
-    public static final Pattern ADD_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(addpool|ap(?![A-Za-z_]))\\s*(id=\\s*(?<id>\\d+))?\\s*(?<name>\\w+)");
+    public static final Pattern ADD_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(addpool|ap(?![A-Za-z_]))\\s*(id=\\s*(?<id>\\d+))?\\s*(?<data>\\w+)");
 
      */
     public static final Pattern GET_POOL = Pattern.compile("^[!！]\\s*(?i)(ym)?(getpool|gp(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*([＃#](?<name>.+)[＃#])?\\s*(?<data>[\\w\\d\\s,，|\\-]+)?");
@@ -225,11 +267,10 @@ public class Instructions {
     public static final Pattern TEST_PPM = Pattern.compile("[!！]\\s*(?i)testppm(\\s*[:：](?<mode>[\\w\\d]+))?\\s*(?<data>[\\[\\]\\w\\d\\s\\-_,，|:]+)?");
 
 
-    public static final Pattern MAP_4D_CALCULATE = Pattern.compile("^[!！＃#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtrnc]+))?");
+    public static final Pattern MAP_4D_CALCULATE        = Pattern.compile("^[!！＃#]\\s*(?i)cal\\s*(?<type>ar|od|cs|hp)\\s*(?<value>\\d+(\\.\\d+)?)\\s*\\+?(?<mods>([ezhdtrnc]+))?");
     public static final Pattern TEST_TAIKO_SR_CALCULATE = Pattern.compile("^[!！]\\s*(?i)testmt\\s*(?<data>[ox ]+)");
 
     public static final Pattern TEST_MAP = Pattern.compile("^[!！]\\s*(?i)testmap\\s*(?<id>\\d+)\\s*(\\+(?<mod>[\\w\\d\\s,，|\\-]+))?");
-
 
 
     // #-1 已弃用
