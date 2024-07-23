@@ -12,6 +12,7 @@ import java.util.List;
 
 public enum Mod {
     None(0, "", "#22AC38", 10),
+    NoMod(-1, "NM", None.color, 10),
     NoFail(1, "NF", "#00A0E9", 10),
     Easy(1 << 1, "EZ", None.color, 10),
     //替换未使用的 No Video
@@ -20,7 +21,7 @@ public enum Mod {
     HardRock(1 << 4, "HR", "#D32F2F", 17),
     SuddenDeath(1 << 5, "SD", "#FF9800", 20),
     DoubleTime(1 << 6, "DT", "#0068B7", 19),
-    Relax(1 << 7, "RL", "#8FC31F", 30),
+    Relax(1 << 7, "RX", "#8FC31F", 30),
     HalfTime(1 << 8, "HT", "#BDBDBD", 20),
     //总是和 DT 一起使用 : 512 + 64 = 576
     Nightcore((1 << 9) + (DoubleTime.value), "NC", "#601986", 20),
@@ -58,7 +59,6 @@ public enum Mod {
     FreeMod(522171579, "FM", ScoreIncreaseMods.color, 30),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
     LongNote(-1, "LN", NoFail.color, 20),
-    NoMod(-1, "NM", Easy.color, 10),
     Rice(-1, "RC", Easy.color, 10),
     Hybrid(-1, "HB", Hidden.color, 30),
     Extra(-1, "EX", SuddenDeath.color, 50),
@@ -290,7 +290,7 @@ public enum Mod {
             case "DT" -> DoubleTime;
             case "NC" -> Nightcore;
             case "FL" -> Flashlight;
-            case "RL" -> Relax;
+            case "RX" -> Relax;
             case "AP" -> Autopilot;
             case "AT" -> Autoplay;
             case "CM" -> Cinema;

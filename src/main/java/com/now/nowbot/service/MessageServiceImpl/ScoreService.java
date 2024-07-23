@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapUserScore;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
@@ -138,10 +137,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             } catch (WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
             }
-
-            var beatMap = new BeatMap();
-            beatMap.setBeatMapID(bid);
-            score.setBeatMap(beatMap);
+            beatmapApiService.applyBeatMapExtend(score);
 
         } else {
             try {
@@ -167,18 +163,30 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
         }
 
         //这里的mode必须用谱面传过来的
-        OsuUser osuUser;
+        OsuUser user;
         try {
-            osuUser = userApiService.getPlayerInfo(binUser, score.getMode());
+            user = userApiService.getPlayerInfo(binUser, score.getMode());
         } catch (Exception e) {
             log.error("成绩：获取失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
         }
 
         byte[] image;
+        var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
 
         try {
-            image = imageService.getPanelE(osuUser, score, beatmapApiService);
+            image = imageService.getPanelE5(e5Param);
+
+            /*
+            var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
+
+            if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
+            } else {
+                image = imageService.getPanelE(user, e5Param.score());
+            }
+
+             */
+
         } catch (Exception e) {
             log.error("成绩：渲染失败", e);
             throw new ScoreException(ScoreException.Type.SCORE_Render_Error);

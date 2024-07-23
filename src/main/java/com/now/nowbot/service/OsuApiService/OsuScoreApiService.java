@@ -92,7 +92,7 @@ public interface OsuScoreApiService {
 
     List<Score> getScoreAll(long bid, long uid, OsuMode mode);
 
-    List<Score> getBeatmapScores(long bid, OsuMode mode);
+    List<Score> getBeatMapScores(long bid, OsuMode mode);
 
     /**
      * 此功能作废, ppy将其限定为 `Resource Owner` 权限

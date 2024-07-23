@@ -55,7 +55,7 @@ public class ScoreLegacy {
         BeatMap b;
 
         try {
-            b = osuBeatmapApiService.getBeatMapInfo(bid);
+            b = osuBeatmapApiService.getBeatMapInfoFromDataBase(bid);
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }

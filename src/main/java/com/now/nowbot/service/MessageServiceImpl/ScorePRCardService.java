@@ -198,9 +198,7 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
         BeatMap beatMap;
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getBeatMapID());
-            score.setBeatMap(beatMap);
-            score.setBeatMapSet(beatMap.getBeatMapSet());
+            beatmapApiService.applyBeatMapExtend(score);
         } catch (Exception e) {
             throw new MiniCardException(MiniCardException.Type.MINI_Map_FetchError);
         }

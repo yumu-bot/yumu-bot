@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.ScoreWithFcPP;
-import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -97,11 +96,10 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         AtomicReference<Float> beforeBpSumAtomic = new AtomicReference<>(0f);
 
         bpMap.forEach((index, score) -> {
-            beforeBpSumAtomic.updateAndGet(v -> v + score.getWeight().weightedPP());
-            var beatmap = beatmapApiService.getBeatMapInfoFromDataBase(score.getBeatMap().getBeatMapID());
-            score.setBeatMap(beatmap);
+            beforeBpSumAtomic.updateAndGet(v -> v + score.getWeightedPP());
+            beatmapApiService.applyBeatMapExtendFromDataBase(score);
 
-            int max = beatmap.getMaxCombo();
+            int max = score.getBeatMap().getMaxCombo();
             int combo = score.getMaxCombo();
 
             int miss = score.getStatistics().getCountMiss();
@@ -116,7 +114,7 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
             if (isChoke || has1pMiss) {
                 bpList.add(
-                        initFixScore(score, index + 1, miss)
+                        initFixScore(score, index + 1)
                 );
             } else {
                 bpList.add(score);
@@ -159,20 +157,22 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         return result;
     }
 
-    private ScoreWithFcPP initFixScore(Score score, int index, int countMiss) {
+    private ScoreWithFcPP initFixScore(Score score, int index) {
         var result = ScoreWithFcPP.copyOf(score);
         result.setIndex(index + 1);
+
+        /*
         var statistics = score.getStatistics();
         if (countMiss > 0) {
             statistics.setCountMiss(0);
             statistics.setCount300(statistics.getCount300() + countMiss);
         }
         statistics.setMaxCombo(score.getBeatMap().getMaxCombo());
-        var bid = score.getBeatMap().getBeatMapID();
-        var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
+
+         */
 
         try {
-            var pp = beatmapApiService.getPP(bid, score.getMode(), mods, statistics);
+            var pp = beatmapApiService.getFcPP(score);
             result.setFcPP((float) pp.getPp());
         } catch (Exception e) {
             log.error("bp 计算 pp 出错:", e);

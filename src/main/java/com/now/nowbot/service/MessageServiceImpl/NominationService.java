@@ -98,7 +98,7 @@ public class NominationService implements MessageService<Matcher> {
                 s = beatmapApiService.getBeatMapSetInfo(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 try {
-                    var b = beatmapApiService.getBeatMapInfo(sid);
+                    var b = beatmapApiService.getBeatMapInfoFromDataBase(sid);
                     sid = b.getSetID();
                     s = beatmapApiService.getBeatMapSetInfo(sid);
                 } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
@@ -115,7 +115,7 @@ public class NominationService implements MessageService<Matcher> {
             }
         } else {
             try {
-                var b = beatmapApiService.getBeatMapInfo(sid);
+                var b = beatmapApiService.getBeatMapInfoFromDataBase(sid);
                 sid = b.getSetID();
                 s = beatmapApiService.getBeatMapSetInfo(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {

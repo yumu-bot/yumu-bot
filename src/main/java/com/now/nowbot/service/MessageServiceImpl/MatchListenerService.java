@@ -246,18 +246,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
             );
 
-            // apply sr change
-            var b = round.getBeatMap();
-
-            if (b != null) {
-                // extend beatmap
-                b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
-                
-                // apply changes
-                beatmapApiService.applyStarRatingChange(b, OsuMode.getMode(round.getMode()), round.getModInt());
-            }
-
-            round.setBeatMap(b);
+            // apply changes
+            beatmapApiService.applyBeatMapExtend(round);
+            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -267,14 +258,19 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap()); //按道理说这里也不会是 null
+        // apply changes
+        beatmapApiService.applyBeatMapExtend(round);
+        beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
 
         var d = new MatchCalculate(match,
                 new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
                 beatmapApiService);
 
-        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, 0, 0, round.getMods());
+        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
 
+        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
+
+        System.out.println(x);
         try {
             return imageService.getPanelE3(d, b, x);
         } catch (WebClientResponseException ignored) {

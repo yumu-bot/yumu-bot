@@ -65,7 +65,11 @@ public class MatchCalculate {
         if (delete) {
             rounds = rounds.stream().peek(round -> {
                 if (! CollectionUtils.isEmpty(round.getScores()) && round.getScores().size() > 1) {
-                    round.getScores().removeIf(s -> s.getScore() <= 10000);
+                    try {
+                        round.getScores().removeIf(s -> s.getScore() <= 10000);
+                    } catch (UnsupportedOperationException ignored) {
+                        //我不清楚为什么不能移除，难道是数组内最后一个元素？
+                    }
                 }
                 //我不清楚为什么不能移除，难道是数组内最后一个元素？
             }).collect(Collectors.toList());
@@ -153,7 +157,7 @@ public class MatchCalculate {
             b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
 
             // apply changes
-            beatmapApiService.applyStarRatingChange(b, m, i);
+            beatmapApiService.applySRAndPP(b, m, i);
 
             r.setBeatMap(b);
         }

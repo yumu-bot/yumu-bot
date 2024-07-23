@@ -44,14 +44,14 @@ public class LeaderBoardService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        long BID;
+        long bid;
         int range;
         var BIDstr = matcher.group("bid");
 
         if (BIDstr == null || BIDstr.isBlank()) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_NoBid);
 
         try {
-            BID = Long.parseLong(BIDstr);
+            bid = Long.parseLong(BIDstr);
         } catch (NumberFormatException e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_BidError);
         }
@@ -76,7 +76,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         boolean isRanked;
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfo(BID);
+            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(bid);
             isRanked = beatMap.hasLeaderBoard();
         } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);
@@ -88,7 +88,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
             // Mode 新增一个默认处理,以后用这个
             // if (matcher.group("mode") == null) mode = OsuMode.getMode(beatMap.getMode());
             mode = OsuMode.getMode(matcher.group("mode"), beatMap.getOsuMode());
-            scores = scoreApiService.getBeatmapScores(BID, mode);
+            scores = scoreApiService.getBeatMapScores(bid, mode);
         } catch (Exception e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed);
         }

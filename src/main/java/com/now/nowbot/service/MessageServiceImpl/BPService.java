@@ -104,21 +104,36 @@ public class BPService implements MessageService<BPService.BPParam> {
 
         try {
             if (BPMap.size() > 1) {
-                var rankList = new ArrayList<Integer>();
-                var scoreList = new ArrayList<Score>();
+                var ranks = new ArrayList<Integer>();
+                var scores = new ArrayList<Score>();
                 for (var e : BPMap.entrySet()) {
-                    rankList.add(e.getKey() + 1);
-                    scoreList.add(e.getValue());
+                    ranks.add(e.getKey() + 1);
+                    scores.add(e.getValue());
                 }
-                image = imageService.getPanelA4(user, scoreList, rankList);
+
+                beatmapApiService.applySRAndPP(scores);
+
+                image = imageService.getPanelA4(user, scores, ranks);
             } else {
                 Score score = null;
+
                 for (var e : BPMap.entrySet()) {
                     score = e.getValue();
                 }
-                image = imageService.getPanelE(user, score, beatmapApiService);
+
+                var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+                image = imageService.getPanelE5(e5Param);
+                /*
+                var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
+
+                if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
+
+                } else {
+                    image = imageService.getPanelE(user, e5Param.score());
+                }
+
+                 */
             }
-            // 玩家信息获取已经移动至 HandleUtil，故删去不可能进入的 catch
         } catch (Exception e) {
             log.error("最好成绩：渲染失败", e);
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩");

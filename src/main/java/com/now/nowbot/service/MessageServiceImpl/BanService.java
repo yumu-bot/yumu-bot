@@ -6,6 +6,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BanException;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -65,7 +66,7 @@ public class BanService implements MessageService<BanService.BanParam> {
     @Override
     public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
         if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new BanException(BanException.Type.SUPER_Permission_Admin);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
         }
 
         var from = event.getSubject();

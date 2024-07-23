@@ -7,6 +7,7 @@ import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.SwitchException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instructions;
@@ -49,7 +50,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
         }
 
         if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new SwitchException(SwitchException.Type.SW_Permission_Admin);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
         }
 
         var service = m.group("service");

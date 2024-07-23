@@ -10,16 +10,17 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
@@ -47,15 +48,15 @@ public class TestPPMService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        var nameList = parseDataString(matcher.group("data"));
+        var names = DataUtil.splitString(matcher.group("data"));
         var mode = OsuMode.getMode(matcher.group("mode"));
 
-        if (Objects.isNull(nameList) || nameList.isEmpty()) throw new PPMinusException(PPMinusException.Type.PM_Test_Empty);
+        if (CollectionUtils.isEmpty(names)) throw new PPMinusException(PPMinusException.Type.PM_Test_Empty);
 
         StringBuilder sb = new StringBuilder();
 
-        for (var name : nameList) {
-            if (Objects.isNull(name) || name.isBlank()) {
+        for (var name : names) {
+            if (! StringUtils.hasText(name)) {
                 break;
             }
 
@@ -65,9 +66,14 @@ public class TestPPMService implements MessageService<Matcher> {
             try {
                 var id = userApiService.getOsuId(name);
                 user = userApiService.getPlayerOsuInfo(id);
+
+                if (mode == OsuMode.DEFAULT) {
+                    mode = user.getCurrentOsuMode();
+                }
+                
                 bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
             } catch (Exception e) {
-                sb.append("data=").append(name).append("not found").append('\n');
+                sb.append("name=").append(name).append(" not found").append('\n');
                 break;
             }
 
@@ -110,7 +116,7 @@ public class TestPPMService implements MessageService<Matcher> {
         //必须群聊
         if (from instanceof Group group) {
             try {
-                group.sendFile(result.getBytes(StandardCharsets.UTF_8), STR."\{nameList.getFirst()}...-testppm.csv");
+                group.sendFile(result.getBytes(StandardCharsets.UTF_8), STR."\{names.getFirst()}...-testppm.csv");
             } catch (Exception e) {
                 log.error("TESTPPM:", e);
                 throw new PPMinusException(PPMinusException.Type.PM_Test_SendError);
@@ -144,11 +150,12 @@ public class TestPPMService implements MessageService<Matcher> {
         protected int xs = 0;
         protected int xx = 0;
         protected int notfc = 0;
+
         private void init(OsuUser user, List<Score> bps){
             double[] bpPPs = new double[bps.size()];
             for (int i = 0; i < bps.size(); i++) {
                 var bp = bps.get(i);
-                var bpiPP = Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f);
+                var bpiPP = Optional.ofNullable(bp.getWeightedPP()).orElse(0f);
                 var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
                 bpPP += bpiPP;
                 bpPPs[i] = bprPP;
@@ -214,13 +221,4 @@ public class TestPPMService implements MessageService<Matcher> {
              */
         }
     }
-
-    private List<String> parseDataString(String dataStr) {
-        if (Objects.isNull(dataStr) || dataStr.isBlank()) return null;
-        String[] dataStrArray = dataStr.trim().split("[,，|:]+"); //空格和-_不能匹配
-        if (dataStrArray.length == 0) return null;
-
-        return Arrays.asList(dataStrArray);
-    }
-
 }

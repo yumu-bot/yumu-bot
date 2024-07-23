@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.Statistics;
+import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
@@ -18,6 +20,8 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -39,6 +43,73 @@ public class DataUtil {
     static Typeface EXTRA;
 
     /**
+     * 将按逗号或者 |、:：分隔的字符串分割
+     * 如果未含有分隔的字符，返回 null
+     * @param str 需要分析的字符串
+     * @return 玩家名列表
+     */
+    @Nullable
+    public static List<String> splitString(@Nullable String str) {
+        if (! StringUtils.hasText(str)) return null;
+        String[] strings = str.trim().split("[,，|:：`、]+"); //空格和-_不能匹配
+        if (strings.length == 0) return null;
+
+        return Arrays.stream(strings).map(String::trim).toList();
+    }
+
+    /**
+     * 判定优秀成绩。用于临时区分 panel E 和 panel E5
+     * @param score 成绩，需要先算好 pp，并使用完全体
+     * @return 是否为优秀成绩
+     */
+    @NonNull
+    public static boolean isExcellentScore(@NonNull Score score, OsuUser user) {
+        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 1%。
+        int r = 0;
+        double p = getPP(score, user);
+
+        boolean ultra = score.getBeatMap().getStarRating() >= 8f;
+        boolean extreme = score.getBeatMap().getStarRating() >= 6.5f;
+        boolean acc = score.getAccuracy() >= 0.9f;
+        boolean combo = 1f * score.getMaxCombo() / Objects.requireNonNullElse(score.getBeatMap().getMaxCombo(), Integer.MAX_VALUE) >= 0.98f;
+        boolean pp = score.getPP() >= 300f;
+        boolean bp = p >= 400f && score.getPP() >= (p - 400f) / 25f;
+        boolean miss = score.getStatistics().getCountAll(score.getMode()) > 0 && score.getStatistics().getCountMiss() <= score.getStatistics().getCountAll(score.getMode()) * 0.01f;
+
+        boolean fail = score.getRank() == null || Objects.equals(score.getRank(), "F");
+
+        if (ultra) r++;
+        if (extreme) r++;
+        if (acc) r++;
+        if (combo) r++;
+        if (pp) r++;
+        if (bp) r += 2;
+        if (miss) r++;
+
+        return r >= 3 && !fail;
+    }
+
+    // 获取优秀成绩的私有方法
+    private static double getPP(Score score, OsuUser user) {
+        double pp = Objects.requireNonNullElse(user.getPP(), 0d);
+
+        boolean is4K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 4f;
+        boolean is7K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 7f;
+
+        if (is4K) {
+            pp = Objects.requireNonNullElse(user.getStatistics().getPP4K(), pp);
+        }
+
+        if (is7K) {
+            pp = Objects.requireNonNullElse(user.getStatistics().getPP7K(), pp);
+        }
+
+        return pp;
+    }
+
+    private record Range(Integer offset, Integer limit) {}
+
+    /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
      * @param start 开始
      * @param end 结束
@@ -46,8 +117,7 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Offset(@Nullable Integer start, @Nullable Integer end) {
-//        return parseRange(start, end).offset();
-        return 0;
+        return parseRange(start, end).offset();
     }
 
     /**
@@ -58,8 +128,7 @@ public class DataUtil {
      */
     @NonNull
     public static int parseRange2Limit(@Nullable Integer start, @Nullable Integer end) {
-//        return parseRange(start, end).limit();
-        return 0;
+        return parseRange(start, end).limit();
     }
 
     /**
@@ -69,7 +138,7 @@ public class DataUtil {
      * @return offset-limit 对
      */
     @NonNull
-    private static HandleUtil.Range parseRange(@Nullable Integer start, @Nullable Integer end) {
+    private static Range parseRange(@Nullable Integer start, @Nullable Integer end) {
         int offset;
         int limit;
 
@@ -92,7 +161,7 @@ public class DataUtil {
             }
         }
 
-        return new HandleUtil.Range(offset, limit);
+        return new Range(offset, limit);
     }
 
     /**
@@ -251,7 +320,6 @@ public class DataUtil {
 
     public static Double getRoundedNumber(double number, int level) {
 
-        boolean s = true; //正负符号
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
         //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
 
@@ -339,6 +407,41 @@ public class DataUtil {
         }
     }
 
+    public static double getProgress(Score score, String mapStr) throws IOException {
+        if (!Objects.equals(score.getRank(), "F") && score.getRank() != null) return 1d;
+
+        var hitObjects = OsuFile.getInstance(mapStr).getOsu().getHitObjects();
+        var count = getScoreJudgeCount(score);
+
+        if (count >= hitObjects.size()) return 1d;
+
+        return 1d * hitObjects.get(Math.max(count - 1, 0)).getStartTime() / hitObjects.getLast().getEndTime();
+    }
+
+    private static int getScoreJudgeCount(@NonNull Score score) {
+        var mode = score.getMode();
+
+        var s = score.getStatistics();
+        var n320 = s.getCountGeki();
+        var n300 = s.getCount300();
+        var n200 = s.getCountKatu();
+        var n100 = s.getCount100();
+        var n50 = s.getCount50();
+        var n0 = s.getCountMiss();
+
+        return switch (mode) {
+            case OSU -> n300 + n100 + n50 + n0;
+            case TAIKO -> n300 + n100 + n0;
+            case CATCH -> n300 + n0; //目前问题是，这个玩意没去掉miss中果，会偏大
+            //const attr = await getMapAttributes(bid, 0, 2, reload);
+            //return attr.nFruits || n300 + n0;
+
+            default -> n320 + n300 + n200 + n100 + n50 + n0;
+        };
+
+
+    }
+
     public static List<Integer> getMapObjectList(String mapStr) {
         var bucket = mapStr.split("\\[\\w+]");
         var hitObjects = bucket[bucket.length - 1].split("\\s+");
@@ -362,6 +465,7 @@ public class DataUtil {
                 }).toList();
     }
 
+    // 获取谱面密度，分割成 26 长度的数组
     public static List<Integer> getGrouping26(List<Integer> x) {
         var steps = (x.getLast() - x.getFirst()) / 26 + 1;
         var out = new LinkedList<Integer>();
@@ -371,7 +475,7 @@ public class DataUtil {
             if (i < m) {
                 sum++;
             } else {
-                out.push((int) sum);
+                out.add((int) sum);
                 sum = 0;
                 m += steps;
             }
@@ -389,7 +493,7 @@ public class DataUtil {
         }
     }
 
-    public static float MS2AR(int ms){
+    public static float MS2AR(float ms){
         if (0 < 1200 - ms){
             if (ms < 300) return 11;
             return  5 + (1200 - ms) / 150f;
@@ -414,8 +518,8 @@ public class DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f / 4f);
         }
-        ar = MS2AR((int) ms);
-        return (int)Math.ceil(ar * 100)/100f;
+        ar = MS2AR(ms);
+        return roundTwoDecimals(ar);
     }
 
     public static float OD2MS(float od){
@@ -435,13 +539,13 @@ public class DataUtil {
             od /= 2f;
         }
         ms = OD2MS(od);
-
         if (OsuMod.hasDt(mod)){
             ms /= (3f/2);
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f/4);
         }
-        return (int) Math.ceil(MS2OD(ms) * 100) / 100f;
+        od = MS2OD(ms);
+        return roundTwoDecimals(od);
     }
 
 
@@ -451,7 +555,7 @@ public class DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             cs /= 2f;
         }
-        return cs;
+        return roundTwoDecimals(cs);
     }
 
     public static float BPM(float bpm, int mod){
@@ -460,16 +564,16 @@ public class DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             bpm *= 0.75f;
         }
-        return bpm;
+        return roundTwoDecimals(bpm);
     }
 
-    public static int Length(float bpm, int mod){
+    public static int Length(float length, int mod){
         if (OsuMod.hasDt(mod)){
-            bpm /= 1.5f;
+            length /= 1.5f;
         } else if (OsuMod.hasHt(mod)) {
-            bpm /= 0.75f;
+            length /= 0.75f;
         }
-        return Math.round(bpm);
+        return Math.round(length);
     }
 
     public static float HP(float hp, int mod){
@@ -478,7 +582,11 @@ public class DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             hp /= 1.3f;
         }
-        return hp;
+        return roundTwoDecimals(hp);
+    }
+
+    private static float roundTwoDecimals(float value) {
+        return new BigDecimal(value).setScale(2, RoundingMode.HALF_EVEN).floatValue();
     }
 
     // 应用四维的变化 4 dimensions

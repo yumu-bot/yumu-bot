@@ -14,7 +14,7 @@ public class PPMinusTaiko extends PPMinus {
         double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var bpiPP = Optional.ofNullable(bp.getWeight().weightedPP()).orElse(0f);
+            var bpiPP = Optional.ofNullable(bp.getWeightedPP()).orElse(0f);
             var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
             bpPP += bpiPP;
             bpPPs[i] = bprPP;

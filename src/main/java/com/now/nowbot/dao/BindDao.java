@@ -207,7 +207,7 @@ public class BindDao {
 
     @Async
     public void refreshOldUserToken(OsuUserApiService osuGetService) {
-        long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis() + 6*60*60;
         int succeedCount = 0;
         int errCount = 0;
         List<OsuBindUserLite> users;

@@ -69,7 +69,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfo(bid);
+            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
             int mods = OsuMod.getModsValue(modsList);
             var s = beatmapApiService.getMaxPP(beatMap.getBeatMapID(), mods);

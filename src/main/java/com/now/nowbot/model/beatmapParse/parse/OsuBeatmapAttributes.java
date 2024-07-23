@@ -380,15 +380,15 @@ public class OsuBeatmapAttributes {
                 int x = Integer.parseInt(entity[0]);
                 int y = Integer.parseInt(entity[1]);
                 // 滑条计算 time = length / (SliderMultiplier * 100 * SV) * beatLength
-                int length = Integer.parseInt(entity[7]);
+                double length = Double.parseDouble(entity[7]);
                 double sliderMultiplier = getSliderMultiplier();
                 var timing = getBeforeTiming(startTime);
                 int sliderTime;
                 if (timing.isRedLine()) {
-                    sliderTime = (int) (length / (sliderMultiplier * 100 * 1) * timing.getBeatLength());
+                    sliderTime = (int) Math.round(length / (sliderMultiplier * 100 * 1) * timing.getBeatLength());
                 } else {
                     double sv = timing.getBeatLength() / - 100;
-                    sliderTime = (int) (length / (sliderMultiplier * 100 * sv) * timing.getBeatLength());
+                    sliderTime = (int) Math.round(length / (sliderMultiplier * 100 * sv) * timing.getBeatLength());
                 }
                 hit.setPosition(new HitObjectPosition(x, y));
                 hit.setStartTime(startTime);
@@ -414,10 +414,10 @@ public class OsuBeatmapAttributes {
 
     private Timing getBeforeTiming(int time) {
         int n = ContextUtil.getContext(THREAD_KEY, 0, Integer.class);
-        int all = timings.size();
-        if (n >= (all - 1)) return timings.get(n);
+        int size = timings.size();
+        if (n >= (size - 1)) return timings.get(n);
         int i = n;
-        while (i < all && timings.get(i + 1).getStartTime() < time) {
+        while (i < (size - 1) && timings.get(i).getStartTime() < time) {
             i++;
         }
         ContextUtil.setContext(THREAD_KEY, i);

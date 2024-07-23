@@ -64,7 +64,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
 
         if (param.isBid) {
             try {
-                sid = beatmapApiService.getBeatMapInfo(param.id).getSetID();
+                sid = beatmapApiService.getBeatMapInfoFromDataBase(param.id).getSetID();
             } catch (Exception e) {
                 throw new AudioException(AudioException.Type.SONG_Map_NotFound);
             }
@@ -83,7 +83,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
             } catch (Exception e) {
                 //输入的不是 SID
                 try {
-                    sid = beatmapApiService.getBeatMapInfo(param.id).getSetID();
+                    sid = beatmapApiService.getBeatMapInfoFromDataBase(param.id).getSetID();
                 } catch (Exception e1) {
                     throw new AudioException(AudioException.Type.SONG_Map_NotFound);
                 }

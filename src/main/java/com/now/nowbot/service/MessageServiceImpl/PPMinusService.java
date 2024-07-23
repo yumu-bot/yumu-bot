@@ -12,7 +12,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
@@ -22,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.Field;
@@ -128,8 +126,8 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
         boolean isVs = (binOther.getOsuName() != null) && (! binMe.equals(binOther));
 
-        OsuUser me = getOsuUser(binMe, mode);
-        OsuUser other = isVs ? getOsuUser(binOther, mode) : null;
+        OsuUser me = HandleUtil.getUser(binMe, mode, userApiService);
+        OsuUser other = isVs ? HandleUtil.getUser(binOther, mode, userApiService) : null;
 
         mode = HandleUtil.getModeOrElse(mode, me);
 
@@ -163,24 +161,6 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
         } catch (Exception e) {
             log.error("PP-：数据计算失败", e);
             throw new PPMinusException(PPMinusException.Type.PM_Calculate_Error);
-        }
-    }
-
-
-    // 感觉可以写到 OsuUser 或 BinUser 的公用方法里
-    private OsuUser getOsuUser(BinUser user, OsuMode mode) throws Throwable {
-        try {
-            if (user == null) return null;
-            else if (user.getOsuName() != null) return userApiService.getPlayerInfo(user.getOsuName(), mode);
-            else if (user.isAuthorized()) return userApiService.getPlayerInfo(user, mode);
-            else return null;
-        } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
-            throw new PPMinusException(PPMinusException.Type.PM_Player_NotFound);
-        } catch (BindException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("PP-：玩家信息获取失败：", e);
-            throw new PPMinusException(PPMinusException.Type.PM_Player_FetchFailed);
         }
     }
 

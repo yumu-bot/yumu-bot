@@ -11,8 +11,8 @@ public enum OsuMode {
     MANIA("mania",3),
     DEFAULT("",-1);
 
-    String name;
-    short modeValue;
+    final String name;
+    final short modeValue;
 
     OsuMode(String mode, int i) {
         name = mode;
@@ -59,16 +59,8 @@ public enum OsuMode {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public short getModeValue() {
         return modeValue;
-    }
-
-    public void setModeValue(short modeValue) {
-        this.modeValue = modeValue;
     }
 
     public Mode toRosuMode() {

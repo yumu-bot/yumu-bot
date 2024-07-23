@@ -6,13 +6,13 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.print.attribute.standard.MediaSize;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public enum OsuMod {
     None(0, ""),
+    NoMod(0, "NM"),
     NoFail(1, "NF"),
     Easy(1 << 1, "EZ"),
     //替换未使用的 No Video
@@ -21,7 +21,7 @@ public enum OsuMod {
     HardRock(1 << 4, "HR"),
     SuddenDeath(1 << 5, "SD"),
     DoubleTime(1 << 6, "DT"),
-    Relax(1 << 7, "RL"),
+    Relax(1 << 7, "RX"),
     HalfTime(1 << 8, "HT"),
     //总是和 DT 一起使用 : 512 + 64 = 576
     Nightcore((1 << 9) + (DoubleTime.value), "NC"),
@@ -264,7 +264,7 @@ public enum OsuMod {
             case "DT" -> DoubleTime;
             case "NC" -> Nightcore;
             case "FL" -> Flashlight;
-            case "RL" -> Relax;
+            case "RX" -> Relax;
             case "AP" -> Autopilot;
             case "AT" -> Autoplay;
             case "CM" -> Cinema;
@@ -277,24 +277,29 @@ public enum OsuMod {
         };
     }
 
-    public boolean checkValue(int i) {
-        return (value & i) != 0;
+    public static boolean hasMod(List<String> abbrList, OsuMod mod) {
+        return hasMod(getModsValueFromAbbrList(abbrList), mod);
+    }
+
+    public static boolean hasMod(Integer modInt, OsuMod mod) {
+        if (modInt == null || mod == null) return false;
+        return (mod.value & modInt) != 0;
     }
 
     public static boolean hasDt(int i) {
-        return DoubleTime.checkValue(i) || Nightcore.checkValue(i);
+        return hasMod(i, DoubleTime) || hasMod(i, Nightcore);
     }
 
     public static boolean hasHt(int i) {
-        return HalfTime.checkValue(i);
+        return hasMod(i, HalfTime);
     }
 
     public static boolean hasHr(int i) {
-        return HardRock.checkValue(i);
+        return hasMod(i, HardRock);
     }
 
     public static boolean hasEz(int i) {
-        return Easy.checkValue(i);
+        return hasMod(i, Easy);
     }
 
     private static final int changeRatingValue = Easy.value | HalfTime.value | TouchDevice.value |
