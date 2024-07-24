@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("MATCH_LISTENER")
@@ -154,8 +155,27 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 )
         );
 
+        Function<Integer, Boolean> handleOverTime = (time) -> {
+            from.sendMessage(String.format("""
+                    比赛(%d)已监听%d轮, 如果要继续监听请30秒内任意一人回复
+                    "%d"(不带引号)
+                    """, param.id, time, param.id));
+            var lock = ASyncMessageUtil.getLock(
+                    event.getSubject().getId(),
+                    null, 30*1000,
+                    (e)-> e.getRawMessage().equals(param.id.toString())
+            );
+            var newMessage = lock.get();
+            if (newMessage == null) {
+                ListenerCheck.cancel(senderId, groupEvent.getGroup().getId(), true, param.id);
+                from.sendMessage("监听已取消");
+                return false;
+            }
+            return true;
+        };
+
         @SuppressWarnings("all")
-        BiConsumer<List<Match.MatchEvent>, Match> handleEvent = (eventList, newMatch) -> {
+        ThreeArgConsumer<List<Match.MatchEvent>, Match, QQ_GroupRecord> handleEvent = (eventList, newMatch, key) -> {
             Optional<Match.MatchEvent> opt = eventList.stream()
                     .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getRoundID()))
                     .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
@@ -171,6 +191,12 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 status.set(Status.RESULT);
             } else {
                 status.set(Status.WAITING);
+
+                // 检查是否超过最大监听次数
+                key.countAdd();
+                if (key.check() && !handleOverTime.apply(key.count)) {
+                    return;
+                }
             }
 
             try {
@@ -192,22 +218,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 from.sendMessage(e.getMessage());
             }
         };
-        Consumer<Integer> handleOverTime = (time) -> {
-            from.sendMessage(String.format("""
-                    比赛(%d)已监听%d轮, 如果要继续监听请30秒内任意一人回复
-                    "%d go"(不带引号, 字母小写)
-                    """, param.id, time, param.id));
-            var lock = ASyncMessageUtil.getLock(
-                    event.getSubject().getId(),
-                    null, 30*1000,
-                    (e)-> e.getRawMessage().equals(param.id + " go")
-            );
-            var newMessage = lock.get();
-            if (newMessage == null) {
-                ListenerCheck.cancel(senderId, groupEvent.getGroup().getId(), true, param.id);
-                from.sendMessage("监听已取消");
-            }
-        };
 
         var key = ListenerCheck.add(
                 senderId,
@@ -219,7 +229,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 handleEvent,
                 handleStop,
                 match,
-                handleOverTime,
                 matchApiService
         );
 
@@ -289,7 +298,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
 
-        System.out.println(x);
         try {
             return imageService.getPanelE3(d, b, x);
         } catch (WebClientResponseException ignored) {
@@ -367,10 +375,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 long mid,
                 boolean isSuper,
                 Consumer<Match> start,
-                BiConsumer<List<Match.MatchEvent>, Match> event,
+                ThreeArgConsumer<List<Match.MatchEvent>, Match, QQ_GroupRecord> event,
                 BiConsumer<Match, MatchListener.StopType> stop,
                 Match match,
-                Consumer<Integer> overTime,
                 OsuMatchApiService matchApiService
         ) throws MatchListenerException {
             boolean notSuper = !isSuper;
@@ -402,16 +409,11 @@ public class MatchListenerService implements MessageService<MatchListenerService
                     listenerMap.remove(mid);
                 }
             };
-            var handlers = new Handlers(start, event, nStop.andThen(stop));
+
+            var handlers = new Handlers(start, (e, m) -> event.accept(e, m, key), nStop.andThen(stop));
             listeners.put(key, handlers);
-            var eventListenerPlus = handlers.event().andThen((list, m) -> {
-                key.countAdd();
-                if (key.check()) {
-                    overTime.accept(key.count);
-                }
-            });
             listener.addStartListener(handlers.start());
-            listener.addEventListener(eventListenerPlus);
+            listener.addEventListener(handlers.event());
             listener.addStopListener(handlers.stop());
 
             listener.startListener();
@@ -475,4 +477,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 .map(handlers -> handlers.messageID)
                 .toList();
     }
+}
+@FunctionalInterface
+interface ThreeArgConsumer<T, U, V> {
+    void accept(T t, U u, V v);
 }
