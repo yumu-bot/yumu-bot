@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.ServiceException.MatchListenerException;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
@@ -33,17 +34,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service("MATCH_LISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
 
     @Resource
-    OsuMatchApiService matchApiService;
+    OsuMatchApiService   matchApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
@@ -54,14 +56,14 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     public static class ListenerParam {
-        Integer id = null;
-        Status operate = Status.END;
+        Integer id      = null;
+        Status  operate = Status.END;
     }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
         var matcher = Instructions.MATCH_LISTENER.matcher(messageText);
-        if (! matcher.find()) return false;
+        if (!matcher.find()) return false;
 
         var param = new ListenerParam();
         var from = event.getSubject();
@@ -100,7 +102,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         AtomicReference<Status> status = new AtomicReference<>(Status.START);
 
         // 需要在群里使用
-        if (! (event instanceof GroupMessageEvent groupEvent)) {
+        if (!(event instanceof GroupMessageEvent groupEvent)) {
             throw new TipsException(MatchListenerException.Type.ML_Send_NotGroup.message);
         }
 
@@ -154,7 +156,6 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         @SuppressWarnings("all")
         BiConsumer<List<Match.MatchEvent>, Match> handleEvent = (eventList, newMatch) -> {
-
             Optional<Match.MatchEvent> opt = eventList.stream()
                     .filter(s -> Objects.nonNull(s.getRound()) && Objects.nonNull(s.getRound().getRoundID()))
                     .max(Comparator.naturalOrder()); // 这里是取最后一个包含 round 的
@@ -166,7 +167,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
             List<Match.MatchScore> scores = Objects.requireNonNull(matchEvent.getRound()).getScores(); //基本上不可能为 null，除非 ppy 作妖
 
             //有点脱裤子放屁的感觉，但是先这么写着，至少思路清晰一点
-            if (! CollectionUtils.isEmpty(scores))  {
+            if (!CollectionUtils.isEmpty(scores)) {
                 status.set(Status.RESULT);
             } else {
                 status.set(Status.WAITING);
@@ -174,7 +175,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             try {
                 byte[] image = switch (status.get()) {
-                    case WAITING -> getRoundStartImage(matchEvent.getRound(), newMatch.clone()); // 这个 newMatch 在算分的时候，貌似无法更改？
+                    case WAITING ->
+                            getRoundStartImage(matchEvent.getRound(), newMatch.clone()); // 这个 newMatch 在算分的时候，貌似无法更改？
                     case RESULT -> getRoundResultsImage(matchEvent, newMatch);
                     case null, default -> throw new RuntimeException("状态机状态异常！");
                 };
@@ -190,6 +192,22 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 from.sendMessage(e.getMessage());
             }
         };
+        Consumer<Integer> handleOverTime = (time) -> {
+            from.sendMessage(String.format("""
+                    比赛(%d)已监听%d轮, 如果要继续监听请30秒内任意一人回复
+                    "%d go"(不带引号, 字母小写)
+                    """, param.id, time, param.id));
+            var lock = ASyncMessageUtil.getLock(
+                    event.getSubject().getId(),
+                    null, 30*1000,
+                    (e)-> e.getRawMessage().equals(param.id + " go")
+            );
+            var newMessage = lock.get();
+            if (newMessage == null) {
+                ListenerCheck.cancel(senderId, groupEvent.getGroup().getId(), true, param.id);
+                from.sendMessage("监听已取消");
+            }
+        };
 
         var key = ListenerCheck.add(
                 senderId,
@@ -201,6 +219,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 handleEvent,
                 handleStop,
                 match,
+                handleOverTime,
                 matchApiService
         );
 
@@ -291,11 +310,31 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    record QQ_GroupRecord(long qq, long group, long messageID) {
+    static class QQ_GroupRecord {
+        final long qq;
+        final long group;
+        final long messageID;
+
+        public QQ_GroupRecord(long qq, long group, long messageID) {
+            this.qq = qq;
+            this.group = group;
+            this.messageID = messageID;
+        }
+
+        int count = 0;
+
+        public void countAdd() {
+            count++;
+        }
+
+        public boolean check() {
+            return count % 1 == 0;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (! (o instanceof QQ_GroupRecord that)) return false;
+            if (!(o instanceof QQ_GroupRecord that)) return false;
 
             if (qq != that.qq) return false;
             if (group != that.group) return false;
@@ -304,9 +343,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
         @Override
         public int hashCode() {
-            int result = (int) (qq ^ (qq >>> 32));
-            result = 31 * result + (int) (group ^ (group >>> 32));
-            result = 31 * result + (int) (messageID ^ (messageID >>> 32));
+            int result = Long.hashCode(qq);
+            result = 31 * result + Long.hashCode(group);
+            result = 31 * result + Long.hashCode(messageID);
             return result;
         }
     }
@@ -331,9 +370,10 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 BiConsumer<List<Match.MatchEvent>, Match> event,
                 BiConsumer<Match, MatchListener.StopType> stop,
                 Match match,
+                Consumer<Integer> overTime,
                 OsuMatchApiService matchApiService
         ) throws MatchListenerException {
-            boolean notSuper = ! isSuper;
+            boolean notSuper = !isSuper;
             var key = new QQ_GroupRecord(qq, group, mid);
 
             if (listeners.containsKey(key)) {
@@ -358,14 +398,20 @@ public class MatchListenerService implements MessageService<MatchListenerService
             BiConsumer<Match, MatchListener.StopType> nStop = (m, type) -> {
                 listeners.remove(key);
                 // 用户停止可能会多次调用, 不直接删除
-                if (! MatchListener.StopType.USER_STOP.equals(type)) {
+                if (!MatchListener.StopType.USER_STOP.equals(type)) {
                     listenerMap.remove(mid);
                 }
             };
             var handlers = new Handlers(start, event, nStop.andThen(stop));
             listeners.put(key, handlers);
+            var eventListenerPlus = handlers.event().andThen((list, m) -> {
+                key.countAdd();
+                if (key.check()) {
+                    overTime.accept(key.count);
+                }
+            });
             listener.addStartListener(handlers.start());
-            listener.addEventListener(handlers.event());
+            listener.addEventListener(eventListenerPlus);
             listener.addStopListener(handlers.stop());
 
             listener.startListener();
@@ -396,6 +442,28 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 }
 
             } else if (isSuper) {
+                var groupsListener = listeners.entrySet()
+                        .stream()
+                        .filter((e) -> e.getKey().messageID == matchID)
+                        .collect(Collectors.toSet());
+                // 当正在监听的群多于一个且是在这个群里的话, 只删除对应的这一个
+                if (groupsListener.size() > 1) {
+                    Handlers handler = null;
+                    for(var e : groupsListener) {
+                        if (e.getKey().group == group) {
+                            handler = e.getValue();
+                            listeners.remove(e.getKey());
+                            break;
+                        }
+                    }
+                    if (handler != null) {
+                        listener.removeListener(handler.start());
+                        listener.removeListener(handler.event());
+                        listener.removeListener(handler.stop(), MatchListener.StopType.SUPER_STOP);
+                    }
+                }
+
+                // 不在任何监听的群里, 停止所有群的监听
                 listener.stopListener(MatchListener.StopType.SUPER_STOP);
             }
         }
