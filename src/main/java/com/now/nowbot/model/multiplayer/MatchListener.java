@@ -166,7 +166,6 @@ public class MatchListener {
     }
 
     public void removeListener(Consumer<Match> start) {
-
         startListener.remove(start);
     }
 
