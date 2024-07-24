@@ -336,7 +336,8 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         public boolean check() {
-            return count % 1 == 0;
+            // 平均 6-8 取大的
+            return count % 8 == 0;
         }
 
         @Override
