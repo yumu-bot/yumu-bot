@@ -1,7 +1,11 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.util.command.CmdPattemBuilder
-import com.now.nowbot.util.command.CmdPatternStatic.*
+import com.now.nowbot.util.command.CmdPatternStatic.REG_COLUMN
+import com.now.nowbot.util.command.CmdPatternStatic.REG_EXCLAM
+import com.now.nowbot.util.command.CmdPatternStatic.REG_HASH
+import com.now.nowbot.util.command.CmdPatternStatic.REG_IGNORE
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 enum class Instruction(val pattern: Pattern) {
@@ -25,26 +29,21 @@ enum class Instruction(val pattern: Pattern) {
         commands("ping", "pi$REG_IGNORE", "yumu\\?")
     }),
     BIND(CmdPattemBuilder.create {
-        commands("(?<ub>ub(?![A-Za-z_]))", "(?<bi>bi$REG_IGNORE", "(?<un>un)?(?<bind>bind)")
+        commands("(?<ub>ub(?![A-Za-z_]))", "(?<bi>bi$REG_IGNORE)", "(?<un>un)?(?<bind>bind)")
         append("($REG_COLUMN(?<full>f))?")
         space()
-        appendQQ()
+        appendQQId()
         space()
         appendName()
     }),
     BAN(CmdPattemBuilder.create {
-        commands {
-            +"super"
-            +"sp$REG_IGNORE"
-            +"operate"
-            +"op$REG_IGNORE"
-        }
+        commands("super", "sp$REG_IGNORE", "operate", "op$REG_IGNORE")
         space()
         column()
         group("operate", "(black|white|ban)?list|add|remove|(un)?ban|[lkarubw]")
         whatever()
         space()
-        appendQQ()
+        appendQQId()
         space()
         appendQQGroup()
         space()
@@ -73,7 +72,6 @@ enum class Instruction(val pattern: Pattern) {
         startGroup {
             group("hours", "\\d+", false)
             +"h"
-            whatever()
         }
     }),
 
@@ -85,15 +83,15 @@ enum class Instruction(val pattern: Pattern) {
     }),
     SCORE_PR(CmdPattemBuilder.create {
         // 这一坨没法拆好像
-        commands("(?<pass>(ym)?(pass(?![sS])(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recent|r(?![a-rt-zA-RT-Z_]))))(?<s>s)?")
+        commands("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(?<recent>(recent|r(?![^s\\s]))))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
     PR_CARD(CmdPattemBuilder.create {
-        commands("(?<pass>(ym)?(passcard|pc(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))")
+        commands("$REG_EXCLAM(ym)?(?<pass>(passcard|pc(?![a-rt-zA-RT-Z_]))|(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))")
         `append(ModeQQUidNameRange)`()
     }),
     UU_PR(CmdPattemBuilder.create {
-        commands("uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
+        commands("${REG_EXCLAM}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
         `append(ModeQQUidNameRange)`()
     }),
     SCORE(CmdPattemBuilder.create {
@@ -102,7 +100,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendBid()
         space()
-        appendQQ()
+        appendQQId()
         space()
         appendUid()
         space()
@@ -158,7 +156,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
     I_MAPPER(CmdPattemBuilder.create {
         commands("mapper", "immapper", "imapper", "im")
-        appendQQ()
+        appendQQId()
         space()
         append("(u?id=\\s*(?<id>\\d+))?")
         space()
@@ -221,7 +219,123 @@ enum class Instruction(val pattern: Pattern) {
         // 245 个字符的正则...
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
         commands("(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))")
-        append("(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*([:：]\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?")
+        append("(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*($REG_COLUMN\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?")
     }),
-//todo: 还差 osu! 比赛指令 娱乐指令 辅助指令 其他
+
+    // #5 osu! 比赛指令
+
+    MATCH_LISTENER(CmdPattemBuilder.create {
+        commands("(make\\s*love)", "(match)?listen(er)?", "ml$REG_IGNORE", "li$REG_IGNORE")
+        group("matchid", "\\d+")
+        space()
+        group("operate", "info|list|start|stop|end|off|on|[lispefo]$REG_IGNORE")
+    }),
+    MU_RATING(CmdPattemBuilder.create {
+        commands("(?<uu>(u{1,2})(rating|ra$REG_IGNORE))", "(?<main>((ym)?rating|(ym)?ra$REG_IGNORE|mra$REG_IGNORE))")
+        group("matchid", "\\d+", whatever = false)
+        // 这是个啥, 所有命令前面都带了 (?i), 大小写就忽略了
+        // (\s*[Ee]([Zz]|a[sz]y)?\s*(?<easy>\d+\.?\d*)x?)?
+        startGroup {
+            space()
+            append("e(z|a[zs]y)?\\s*(?<easy>\\d+\\.?\\d*)x?")
+        }
+        startGroup {
+            space()
+            group("skip", "-?\\d+")
+        }
+        startGroup {
+            space()
+            group("ignore", "-?\\d+")
+        }
+        startGroup {
+            space()
+            append("(\\[(?<remove>[\\s,，\\-|:\\d]+)])")
+        }
+        startGroup {
+            space()
+            group("rematch", "r")
+        }
+        startGroup {
+            space()
+            group("failed", "f")
+        }
+    }),
+    SERIES_RATING(CmdPattemBuilder.create {
+        commands(
+            "(?<uu>(u{1,2})(seriesrating|series|sra$REG_IGNORE|sa$REG_IGNORE))",
+            "(ym)?(?<main>(seriesrating|series|sa$REG_IGNORE|sra$REG_IGNORE))",
+            "(ym)?(?<csv>(csvseriesrating|csvseries|csa$REG_IGNORE|cs$REG_IGNORE))"
+        )
+        startGroup {
+            +REG_HASH
+            group("name", ".+")
+            +REG_HASH
+        }
+        space()
+        group("data", "[\\d\\[\\]\\s,，|\\-]+")
+        space()
+        append("([Ee]([Zz]|a[sz]y)?\\s*(?<easy>\\d+\\.?\\d*)x?)?")
+        space()
+        group("rematch", "r")
+        space()
+        group("failed", "f")
+
+    }),
+    CSV_MATCH(CmdPattemBuilder.create {
+        commands("csvrating", "cra?(?![^s^x\\s])", "ml$REG_IGNORE", "li$REG_IGNORE")
+        group("x", "[xs]")
+        space()
+        group("data", "[\\d\\s,，|\\-]+")
+    }),
+    MATCH_ROUND(CmdPattemBuilder.create {
+        commands("(match)?rounds?$REG_IGNORE", "mr$REG_IGNORE", "ro$REG_IGNORE")
+        group("matchid", "\\d+")
+        space()
+        group("round", "\\d+")
+        space()
+        group("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+")
+    }),
+    MATCH_NOW(CmdPattemBuilder.create {
+        commands("monitornow", "matchnow", "mn$REG_IGNORE")
+        group("matchid", "\\d+", whatever = false)
+        space()
+        group("round", "\\d+")
+        space()
+        group("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+")
+    }),
+    MAP_POOL(CmdPattemBuilder.create {
+        commands("mappool", "po$REG_IGNORE")
+        appendMode(false)
+        space()
+        group("name", "\\w+", whatever = false)
+    }),
+    GET_POOL(CmdPattemBuilder.create {
+        commands("getpool", "gp$REG_IGNORE")
+        appendMode()
+        space()
+        startGroup {
+            +REG_HASH
+            group("name", ".+", whatever = false)
+            +REG_HASH
+        }
+        whatever()
+        space()
+        group("data", "[\\w\\s,，|\\-]+")
+    }),
+    // #6 聊天指令
+    // #7 娱乐指令
+
+    DICE(CmdPattemBuilder.create {
+        commands("([!！]|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
+        group("number","-?\\d*")
+        group("text","[\\s\\S]+")
+    }),
+    DRAW(CmdPattemBuilder.create {
+        commands("draw","w$REG_IGNORE")
+        group("d","\\d")
+    })
+
+//todo: 还差 辅助指令 其他
+    ;
+    fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)
 }

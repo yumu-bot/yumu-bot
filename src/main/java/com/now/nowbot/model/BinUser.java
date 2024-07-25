@@ -166,4 +166,8 @@ public class BinUser {
         result = 31 * result + Objects.hashCode(osuID);
         return result;
     }
+
+    public String getUsername() {
+        return getOsuName();
+    }
 }

@@ -15,8 +15,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,13 +49,13 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BindParam> data) throws Throwable {
-        var m = Instructions.BIND.matcher(messageText);
+        var m = Instruction.BIND.matcher(messageText);
         if (!m.find()) return false;
 
         var from = event.getSubject();
 
-        var qqStr = m.group("qq");
-        var name = m.group("name");
+        var qqStr = m.group(CmdPatternStatic.FLAG_QQ_ID);
+        var name = m.group(CmdPatternStatic.FLAG_NAME);
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         //!bind 给个提示
@@ -142,14 +143,6 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         bindQQ(event, me, param.isFull);
     }
-
-    /*
-
-    public static void main(String[] args) {
-        getQuestion(null);
-    }
-
-     */
 
     private void unbindQQ(Long qq) throws BindException {
         if (Objects.isNull(qq)) throw new BindException(BindException.Type.BIND_Player_NoQQ);

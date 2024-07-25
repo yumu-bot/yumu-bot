@@ -8,6 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class ServiceCountService implements MessageService<Integer> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Integer> data) throws Throwable {
-        var matcher = Instructions.SERVICE_COUNT.matcher(messageText);
+        var matcher = Instruction.SERVICE_COUNT.matcher(messageText);
         if (! matcher.find()) return false;
 
         if (!Permission.isSuperAdmin(event.getSender().getId())) {

@@ -5,7 +5,7 @@ import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import io.github.humbleui.skija.Canvas;
 import io.github.humbleui.skija.Font;
 import io.github.humbleui.skija.Image;
@@ -24,7 +24,7 @@ public class PingService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.PING.matcher(messageText);
+        var m = Instruction.PING.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

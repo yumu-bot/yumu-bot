@@ -5,7 +5,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class HelpService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.HELP.matcher(messageText);
+        var m = Instruction.HELP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

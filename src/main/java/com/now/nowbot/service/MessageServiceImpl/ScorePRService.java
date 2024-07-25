@@ -8,13 +8,11 @@ import com.now.nowbot.model.ScoreLegacy;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
 import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
@@ -25,7 +23,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -33,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 //Multiple Score也合并进来了
 @Service("SCORE_PR")
@@ -52,87 +50,26 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
     @Resource
     ImageService imageService;
 
-    public record ScorePRParam(@NonNull BinUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {}
+    public record ScorePRParam(OsuUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
+        List<Score> scores() {
+            return List.of();
+        }
+    }
 
     public record SingleScoreParam(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original, Map<String, Object> attributes) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
-        var matcher = Instructions.SCORE_PR.matcher(messageText);
+        var matcher = Instruction.SCORE_PR.matcher(messageText);
         if (! matcher.find()) return false;
 
-        var name = matcher.group("name");
         var s = matcher.group("s");
         var es = matcher.group("es");
-        var nStr = matcher.group("n");
-        var mStr = matcher.group("m");
-        var hasHash = StringUtils.hasText(matcher.group("hash"));
 
-        int offset;
-        int limit;
+        int offset = 0;
+        int limit = 1;
         boolean isRecent;
         boolean isMultipleScore;
-
-        {   // !p 45-55 offset/n = 44 limit/m = 11
-            //处理 n，m
-            long n = 1L;
-            long m;
-
-            var noSpaceAtEnd = StringUtils.hasText(name) && ! name.endsWith(" ") && ! hasHash;
-
-            if (StringUtils.hasText(nStr)) {
-                if (noSpaceAtEnd) {
-                    // 如果名字后面没有空格，并且有 n 匹配，则主观认为后面也是名字的一部分（比如 !t lolol233）
-                    name += nStr;
-                    nStr = "";
-                } else {
-                    // 如果输入的有空格，并且有名字，后面有数字，则主观认为后面的是天数（比如 !t osu 420），如果找不到再合起来
-                    // 没有名字，但有 n 匹配的也走这边 parse
-                    try {
-                        n = Long.parseLong(nStr);
-                    } catch (NumberFormatException e) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
-                    }
-                }
-            }
-
-            //避免 !b 970 这样子被错误匹配
-            var isIllegalN = n < 1L || n > 100L;
-            if (isIllegalN) {
-                if (StringUtils.hasText(name)) {
-                    name += nStr;
-                } else {
-                    name = nStr;
-                }
-
-                nStr = "";
-                n = 1L;
-            }
-
-            if (! StringUtils.hasText(mStr)) {
-                m = n;
-            } else {
-                try {
-                    m = Long.parseLong(mStr);
-                } catch (NumberFormatException e) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Score_RankError);
-                }
-            }
-
-            offset = DataUtil.parseRange2Offset(Math.toIntExact(n), Math.toIntExact(m));
-            limit = DataUtil.parseRange2Limit(Math.toIntExact(n), Math.toIntExact(m));
-
-            //如果匹配多成绩模式，则自动设置 offset 和 limit
-            if (StringUtils.hasText(s) || StringUtils.hasText(es)) {
-                offset = 0;
-                if (! StringUtils.hasText(nStr) || isIllegalN) {
-                    limit = 20;
-                } else if (! StringUtils.hasText(mStr)) {
-                    limit = Math.toIntExact(n);
-                }
-            }
-            isMultipleScore = (limit > 1);
-        }
 
         if (matcher.group("recent") != null) {
             isRecent = true;
@@ -143,64 +80,25 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
         }
 
-        // 构建参数
-        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        String qqStr = matcher.group("qq");
-        BinUser user;
-        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
+        var isMyself = new AtomicBoolean();
+        var mode = CommandUtil.getMode(matcher);
+        var range = CommandUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent");
 
-        if (Objects.nonNull(at)) {
-            user = bindDao.getUserFromQQ(at.getTarget());
-        } else if (StringUtils.hasText(name)) {
-            user = new BinUser();
-            long id;
-            try {
-                id = userApiService.getOsuId(name.trim());
-                user.setOsuName(name.trim());
-            } catch (WebClientResponseException.NotFound e) {
-                if (StringUtils.hasText(nStr)) {
-                    // 补救机制 1
-                    try {
-                        id = userApiService.getOsuId(name.concat(nStr));
-                        user.setOsuName(name.concat(nStr));
-                    } catch (WebClientResponseException.NotFound e1) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.concat(nStr));
-                    }
-                } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
-                }
-            } catch (Exception e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
-            }
-
-            user.setOsuID(id);
-            user.setOsuMode(mode);
-        } else if (StringUtils.hasText(qqStr)) {
-            try {
-                long qq = Long.parseLong(qqStr);
-                user = bindDao.getUserFromQQ(qq);
-            } catch (BindException e) {
-                throw new ScoreException(ScoreException.Type.SCORE_QQ_NotFound, qqStr);
-            }
-        } else {
-            try {
-                user = bindDao.getUserFromQQ(event.getSender().getId());
-            } catch (BindException e) {
-                //退避 !recent
-                if (event.getRawMessage().toLowerCase().contains("recent")) {
-                    log.info("recent 退避成功");
-                    return false;
-                } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-                }
-            }
-        }
-
-        if (Objects.isNull(user)) {
+        if (Objects.isNull(range.getData())) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        data.setValue(new ScorePRParam(user, offset, limit, isRecent, isMultipleScore, HandleUtil.getModeOrElse(mode, user)));
+        if (Objects.isNull(range.getStart()) && Objects.isNull(range.getEnd())) {
+
+        } else if ()
+
+        if (Objects.nonNull(s) || Objects.nonNull(es)) {
+            isMultipleScore = true;
+        } else {
+            isMultipleScore = false;
+        }
+
+        data.setValue(new ScorePRParam(range.getData(), offset, limit, isRecent, isMultipleScore, mode.getData()));
         return true;
     }
 
@@ -213,13 +111,12 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         boolean isRecent = param.isRecent();
         boolean isMultipleScore = param.isMultipleScore();
 
-        BinUser binUser = param.user();
-        OsuUser user;
+        OsuUser user = param.user();
 
         List<Score> scoreList;
 
         try {
-            scoreList = scoreApiService.getRecent(binUser.getOsuID(), param.mode(), offset, limit, !isRecent);
+            scoreList = scoreApiService.getRecent(user.getUserID(), param.mode(), offset, limit, !isRecent);
         } catch (WebClientResponseException e) {
             //退避 !recent
             if (event.getRawMessage().toLowerCase().contains("recent")) {
@@ -230,7 +127,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
             } else if (e instanceof WebClientResponseException.Forbidden) {
                 throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
             } else {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
+                throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, user.getUsername());
             }
         } catch (Exception e) {
             log.error("成绩：列表获取失败", e);
@@ -238,15 +135,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         if (CollectionUtils.isEmpty(scoreList)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, binUser.getOsuName());
-        }
-
-        try {
-            user = userApiService.getPlayerInfo(binUser, param.mode());
-        } catch (WebClientResponseException.Forbidden e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_Banned);
-        } catch (Exception e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, binUser.getOsuName());
+            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
         }
 
         //成绩发送
@@ -273,21 +162,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         } else {
             //单成绩发送
             var score = scoreList.getFirst();
-
             var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
-
-            /*
-            var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
-
-            if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-
-            } else {
-                image = imageService.getPanelE(user, e5Param.score());
-            }
-
-             */
-
-
             try {
                 image = imageService.getPanelE5(e5Param);
                 from.sendImage(image);

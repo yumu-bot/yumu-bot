@@ -36,7 +36,7 @@ public class ASyncMessageUtil {
 
     private static final Logger log = LoggerFactory.getLogger(ASyncMessageUtil.class);
 
-    public static Lock getLock(long group, long send, long offTime, Function<MessageEvent, Boolean> check) {
+    public static Lock getLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
         var l = new OLock(group, send, offTime, check);
         return l;
     }

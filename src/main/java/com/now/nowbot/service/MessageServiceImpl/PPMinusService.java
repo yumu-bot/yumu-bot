@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
+import com.now.nowbot.util.CommandUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -126,8 +127,8 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
         boolean isVs = (binOther.getOsuName() != null) && (! binMe.equals(binOther));
 
-        OsuUser me = HandleUtil.getUser(binMe, mode, userApiService);
-        OsuUser other = isVs ? HandleUtil.getUser(binOther, mode, userApiService) : null;
+        OsuUser me = userApiService.getPlayerInfo(binMe, mode);
+        OsuUser other = isVs ? userApiService.getPlayerInfo(binOther, mode) : null;
 
         mode = HandleUtil.getModeOrElse(mode, me);
 

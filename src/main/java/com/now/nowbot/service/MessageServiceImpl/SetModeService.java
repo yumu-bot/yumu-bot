@@ -4,7 +4,8 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
+import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ public class SetModeService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.SET_MODE.matcher(messageText);
+        var m = Instruction.SET_MODE.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -29,7 +30,7 @@ public class SetModeService implements MessageService<Matcher> {
         var user = bindDao.getUserFromQQ(event.getSender().getId());
         var from = event.getSubject();
 
-        var modeStr = matcher.group("mode");
+        var modeStr = matcher.group(CmdPatternStatic.FLAG_MODE);
         var mode = OsuMode.getMode(modeStr);
         if (mode == OsuMode.DEFAULT) {
             from.sendMessage("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)");

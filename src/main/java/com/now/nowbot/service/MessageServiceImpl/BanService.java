@@ -8,8 +8,10 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BanException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +30,14 @@ public class BanService implements MessageService<BanService.BanParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BanParam> data) {
-        var matcher = Instructions.BAN.matcher(messageText);
+        var matcher = Instruction.BAN.matcher(messageText);
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        var qq = matcher.group("qq");
-        var group = matcher.group("group");
-        var name = matcher.group("name");
+        var qq = matcher.group(CmdPatternStatic.FLAG_QQ_ID);
+        var group = matcher.group(CmdPatternStatic.FLAG_QQ_GROUP);
+        var name = matcher.group(CmdPatternStatic.FLAG_NAME);
         var operate = matcher.group("operate");
 
         if (Objects.nonNull(at)) {

@@ -5,6 +5,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class EchoService implements MessageService<String> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<String> data) throws Throwable {
-        var m = Instructions.ECHO.matcher(messageText);
+        var m = Instruction.ECHO.matcher(messageText);
         if (m.find()) {
 
             if (!Permission.isSuperAdmin(event.getSender().getId())) {

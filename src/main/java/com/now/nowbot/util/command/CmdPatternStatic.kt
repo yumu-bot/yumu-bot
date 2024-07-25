@@ -1,64 +1,98 @@
-package com.now.nowbot.util.command;
+package com.now.nowbot.util.command
 
-import org.intellij.lang.annotations.Language;
+import org.intellij.lang.annotations.Language
 
-public class CmdPatternStatic {
-    public static final char CHAR_HASH        = '#';
-    public static final char CHAR_HASH_FULL   = '＃';
-    public static final char CHAR_WHATEVER    = '?';
-    public static final char CHAR_ANY         = '*';
-    public static final char CHAR_MORE        = '+';
-    public static final char CHAR_SEPARATOR   = '|';
-    public static final char CHAR_START       = '^';
-    public static final char CHAR_END         = '$';
-    public static final char CHAR_GROUP_START = '(';
-    public static final char CHAR_GROUP_END   = ')';
+object CmdPatternStatic {
+    const val CHAR_HASH: Char = '#'
+    const val CHAR_HASH_FULL: Char = '＃'
+    const val CHAR_WHATEVER: Char = '?'
+    const val CHAR_ANY: Char = '*'
+    const val CHAR_MORE: Char = '+'
+    const val CHAR_SEPARATOR: Char = '|'
+    const val CHAR_START: Char = '^'
+    const val CHAR_END: Char = '$'
+    const val CHAR_GROUP_START: Char = '('
+    const val CHAR_GROUP_END: Char = ')'
 
-    public static final String FLAG_USER_AND_RANGE = "ur";
-    public static final String FLAG_MODE           = "mode";
-    public static final String FLAG_NAME           = "name";
-    public static final String FLAG_UID            = "uid";
-    public static final String FLAG_QQ             = "qq";
+    const val FLAG_USER_AND_RANGE: String = "ur"
+    const val FLAG_MOD: String = "mod"
+    const val FLAG_MODE: String = "mode"
+    const val FLAG_NAME: String = "name"
+    const val FLAG_UID: String = "uid"
+    const val FLAG_BID: String = "bid"
+    const val FLAG_SID: String = "sid"
+    const val FLAG_ID: String = "id"
+    const val FLAG_RANGE: String = "range"
+    const val FLAG_QQ_ID: String = "qq"
+    const val FLAG_QQ_GROUP: String = "group"
 
     @Language("RegExp")
-    static final        String REG_USER_AND_RANGE = "(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?";
-    @Language("RegExp")
-    public static final String REG_START          = "(?i)([!！](ym)?)|(/ym)";
+    val REG_USER_AND_RANGE: String =
+        "(?<$FLAG_USER_AND_RANGE>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?"
 
     @Language("RegExp")
-    public static final String REG_SPACE          = "\\s*";
+    val REG_START: String = "(?i)"
+
     @Language("RegExp")
-    public static final String REG_SPACE_1P       = "\\s+";
+    val REG_START_SORT: String = "/ym"
+
     @Language("RegExp")
-    public static final String REG_SPACE_01       = "\\s?";
+    val REG_START_ALL: String = "[!！](ym)?"
+
     @Language("RegExp")
-    public static final String REG_COLUMN         = "[:：]";
+    val REG_SPACE: String = "\\s*"
+
     @Language("RegExp")
-    public static final String REG_HASH           = "[#＃]";
+    val REG_SPACE_1P: String = "\\s+"
+
     @Language("RegExp")
-    public static final String REG_HYPHEN         = "[\\-－]";
+    val REG_SPACE_01: String = "\\s?"
+
     @Language("RegExp")
-    public static final String REG_IGNORE         = "(?![A-Za-z_])";
+    val REG_COLUMN: String = "[:：]"
+
     @Language("RegExp")
-    public static final String REG_NAME           = "(?<name>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])";
+    val REG_HASH: String = "[#＃]"
+
     @Language("RegExp")
-    public static final String REG_QQ_ID          = "(qq=\\s*(?<qq>\\d{5,}))";
+    val REG_HYPHEN: String = "[\\-－]"
+
     @Language("RegExp")
-    public static final String REG_QQ_GROUP       = "(group=\\s*(?<group>\\d{5,}))";
+    val REG_EXCLAM: String = "[!！]"
+
     @Language("RegExp")
-    public static final String REG_UID            = "(uid=(?<uid>\\d+))";
+    val REG_IGNORE: String = "(?![a-z_])"
+
     @Language("RegExp")
-    public static final String REG_MOD            = "(\\+?(?<mod>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))";
+    val REG_NAME: String = "(?<$FLAG_NAME>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])"
+
     @Language("RegExp")
-    public static final String REG_MODE           = "(?<mode>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)";
+    val REG_QQ_ID: String = "(qq=\\s*(?<$FLAG_QQ_ID>\\d{5,}))"
+
     @Language("RegExp")
-    public static final String REG_RANGE          = "(?<range>(100|\\d{1,2})([\\-－]\\d{1,3})?)";
+    val REG_QQ_GROUP: String = "(group=\\s*(?<$FLAG_QQ_GROUP>\\d{5,}))"
+
     @Language("RegExp")
-    public static final String REG_RANGE_DAY      = "(?<range>\\d{1,3}([\\-－]\\d{1,3})?)";
+    val REG_UID: String = "(uid=(?<$FLAG_UID>\\d+))"
+
     @Language("RegExp")
-    public static final String REG_ID             = "(?<id>\\d+)";
+    val REG_MOD: String = "(\\+?(?<$FLAG_MOD>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))"
+
     @Language("RegExp")
-    public static final String REG_BID            = "(?<bid>\\d+)";
+    val REG_MODE: String = "(?<$FLAG_MODE>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
+
     @Language("RegExp")
-    public static final String REG_SID            = "(?<sid>\\d+)";
+    val REG_RANGE: String = "(?<$FLAG_RANGE>(100|\\d{1,2})([\\-－]\\d{1,3})?)"
+
+    @Language("RegExp")
+    val REG_RANGE_DAY: String = "(?<$FLAG_RANGE>\\d{1,3}([\\-－]\\d{1,3})?)"
+
+    @Language("RegExp")
+    val REG_ID: String = "(?<$FLAG_ID>\\d+)"
+
+    @Language("RegExp")
+    val REG_BID: String = "(?<$FLAG_BID>\\d+)"
+
+    @Language("RegExp")
+    val REG_SID: String = "(?<$FLAG_SID>\\d+)"
 }

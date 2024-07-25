@@ -10,12 +10,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.CommandUtil;
-import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.command.CmdRange;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,24 +47,17 @@ public class BPService implements MessageService<BPService.BPParam> {
         // 处理 range
         var mode = CommandUtil.getMode(matcher);
         CmdRange<OsuUser> range;
-        try {
-             range = CommandUtil.getUserWithRange(event, matcher, mode, isMyself);
-        } catch (BindException e) {
-            if (isMyself.get() && HandleUtil.isAvoidance(messageText, "bp")) {
-                log.debug(String.format("指令退避：BP 退避成功，被退避的玩家：%s", event.getSender().getName()));
-                return false;
-            } else {
-                throw e;
-            }
-        }
+        range = CommandUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp");
 
         int offset = 0;
         int limit = isMultiple ? DEFAULT_BP_COUNT : 1;
-        if (Objects.nonNull(range.getEnd())) {
+        if (Objects.nonNull(range.getEnd()) && Objects.nonNull(range.getStart())) {
             offset = Math.min(range.getStart() - 1, 0);
             limit = Math.min(range.getEnd() - range.getStart(), 1);
         } else if (Objects.nonNull(range.getStart())) {
             limit = range.getStart();
+        } else if (Objects.nonNull(range.getEnd())) {
+            limit = range.getEnd();
         }
 
         var user = range.getData();

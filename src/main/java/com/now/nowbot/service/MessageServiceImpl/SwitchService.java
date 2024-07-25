@@ -10,7 +10,9 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.SwitchException;
 import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -44,7 +46,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<SwitchParam> data) throws Throwable {
-        var m = Instructions.SWITCH.matcher(messageText);
+        var m = Instruction.SWITCH.matcher(messageText);
         if (!m.find()) {
             return false;
         }
@@ -57,7 +59,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
         var operate = m.group("operate");
         //var o = Pattern.compile("(black|white)?list|on|off|start|close|[bkwlofsc]+");
 
-        var groupID = m.group("group");
+        var groupID = m.group(CmdPatternStatic.FLAG_QQ_GROUP);
 
         if (StringUtils.hasText(service)) {
             if (StringUtils.hasText(operate)) {

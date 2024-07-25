@@ -4,7 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.AudioException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class AudioService implements MessageService<AudioService.AudioParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<AudioParam> data) throws Exception {
-        var matcher = Instructions.AUDIO.matcher(messageText);
+        var matcher = Instruction.AUDIO.matcher(messageText);
         if (!matcher.find()) {
             return false;
         }

@@ -1,6 +1,31 @@
 package com.now.nowbot.util.command
 
-import com.now.nowbot.util.command.CmdPatternStatic.*
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_ANY
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_END
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_GROUP_END
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_GROUP_START
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_MORE
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_SEPARATOR
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_START
+import com.now.nowbot.util.command.CmdPatternStatic.CHAR_WHATEVER
+import com.now.nowbot.util.command.CmdPatternStatic.REG_BID
+import com.now.nowbot.util.command.CmdPatternStatic.REG_COLUMN
+import com.now.nowbot.util.command.CmdPatternStatic.REG_IGNORE
+import com.now.nowbot.util.command.CmdPatternStatic.REG_MOD
+import com.now.nowbot.util.command.CmdPatternStatic.REG_MODE
+import com.now.nowbot.util.command.CmdPatternStatic.REG_NAME
+import com.now.nowbot.util.command.CmdPatternStatic.REG_QQ_GROUP
+import com.now.nowbot.util.command.CmdPatternStatic.REG_QQ_ID
+import com.now.nowbot.util.command.CmdPatternStatic.REG_RANGE
+import com.now.nowbot.util.command.CmdPatternStatic.REG_SID
+import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE
+import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE_01
+import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE_1P
+import com.now.nowbot.util.command.CmdPatternStatic.REG_START
+import com.now.nowbot.util.command.CmdPatternStatic.REG_START_ALL
+import com.now.nowbot.util.command.CmdPatternStatic.REG_START_SORT
+import com.now.nowbot.util.command.CmdPatternStatic.REG_UID
+import com.now.nowbot.util.command.CmdPatternStatic.REG_USER_AND_RANGE
 import org.intellij.lang.annotations.Language
 import java.util.regex.Pattern
 
@@ -11,31 +36,36 @@ class CmdPattemBuilder private constructor(start: String? = null) {
      * @param commands 连续的命令 ("p", "pr")
      */
     fun commands(@Language("RegExp") vararg commands: String) {
-        commands(false, *commands)
+        commands(null, false, *commands)
     }
-    fun commands(ignore:Boolean, @Language("RegExp") vararg commands: String) {
+
+    fun commands(ignore: Boolean, @Language("RegExp") vararg commands: String) {
+        commands(null, ignore, *commands)
+    }
+
+    fun commands(sort: String? = null, ignore: Boolean, @Language("RegExp") vararg commands: String) {
+        // "((/ym_sort_)|[!！](ym)?(a|b|c))\\s*"
+        +CHAR_GROUP_START
+        if (sort != null) {
+            startGroup {
+                +REG_START_SORT
+                +sort
+            }
+            +CHAR_SEPARATOR
+        }
         if (commands.size == 1) {
             +commands[0]
         } else {
-            // (
-            startGroup()
-            // a|b|c|d
-            +commands.joinToString(CHAR_SEPARATOR.toString())
-            // )
-            endGroup()
-            // (?![a-zA-Z_]) 避免指令污染
-             if (ignore) appendIgnoreAlphabets()
+            +REG_START_ALL
+            startGroup {
+                // a|b|c|d
+                +commands.joinToString(CHAR_SEPARATOR.toString())
+            }
         }
+        +CHAR_GROUP_END
+        // (?![a-zA-Z_]) 避免指令污染
+        if (ignore) appendIgnoreAlphabets()
         // \\s*
-        space()
-    }
-
-    fun commands(commandBuild: VarargList.() -> Unit) {
-        val commands = VarargList()
-        commands.commandBuild()
-        startGroup()
-        +commands.joinToString(CHAR_SEPARATOR.toString())
-        endGroup()
         space()
     }
 
@@ -48,14 +78,14 @@ class CmdPattemBuilder private constructor(start: String? = null) {
         if (ignores.isEmpty()) return
         +"(?!"
         +ignores.joinToString(CHAR_SEPARATOR.toString())
-        endGroup()
+        +CHAR_GROUP_END
     }
 
     fun appendIgnoreAlphabets() {
         appendIgnores(REG_IGNORE)
     }
 
-    fun appendQQ(whatever: Boolean = true) {
+    fun appendQQId(whatever: Boolean = true) {
         +REG_QQ_ID
         if (whatever) whatever()
     }
@@ -111,7 +141,7 @@ class CmdPattemBuilder private constructor(start: String? = null) {
     fun `append(ModeQQUidNameRange)`() {
         appendMode()
         space()
-        appendQQ()
+        appendQQId()
         space()
         appendUid()
         space()
@@ -121,7 +151,7 @@ class CmdPattemBuilder private constructor(start: String? = null) {
     fun `append(ModeQQUidName)`() {
         appendMode()
         space()
-        appendQQ()
+        appendQQId()
         space()
         appendUid()
         space()
@@ -161,26 +191,19 @@ class CmdPattemBuilder private constructor(start: String? = null) {
     fun group(
         name: String, @Language("RegExp") pattern: String, whatever: Boolean = true
     ) {
-        startGroup()
-        patternStr.append("?<$name>$pattern")
-        endGroup()
+        startGroup {
+            patternStr.append("?<$name>$pattern")
+        }
         if (whatever) {
             whatever()
         }
     }
 
-    fun startGroup(group: CmdPattemBuilder.() -> Unit) {
+    fun startGroup(whatever: Boolean = true, group: CmdPattemBuilder.() -> Unit) {
         +CHAR_GROUP_START
-        group()
+        this.group()
         +CHAR_GROUP_END
-    }
-
-    fun startGroup() {
-        +CHAR_GROUP_START
-    }
-
-    fun endGroup() {
-        +CHAR_GROUP_END
+        if (whatever) whatever()
     }
 
     fun whatever() {
@@ -197,19 +220,9 @@ class CmdPattemBuilder private constructor(start: String? = null) {
 
     private val patternStr: StringBuilder = StringBuilder()
 
-    init {
-        start?.let {
-            +it
-            +REG_SPACE
-        } ?: {
-            +CHAR_START
-            +REG_START
-            +REG_SPACE
-        }
-    }
-
     fun build(doBuild: CmdPattemBuilder.() -> Unit): Pattern {
         this.doBuild()
+        space()
         +CHAR_END
         return Pattern.compile(patternStr.toString())
     }
@@ -225,26 +238,27 @@ class CmdPattemBuilder private constructor(start: String? = null) {
         return this@CmdPattemBuilder
     }
 
+    init {
+        if (start != null) {
+            +start
+            +REG_SPACE
+        } else {
+            +CHAR_START
+            +REG_START
+            +REG_SPACE
+        }
+    }
+
     companion object {
         /**
-         * 构建出来正则开头 ^[!！/](?i)(ym)?\\s*
+         * 构建出来正则开头 ^(?i)
          */
         fun create(doBuild: CmdPattemBuilder.() -> Unit) = CmdPattemBuilder().build(doBuild)
 
         /**
-         * 构建出来正则开头 $start\\s*
+         * 构建出来正则开头 $start
          */
         fun create(@Language("RegExp") start: String, doBuild: CmdPattemBuilder.() -> Unit) =
             CmdPattemBuilder(start).build(doBuild)
-    }
-
-    class VarargList {
-        val list = mutableListOf<String>()
-
-        operator fun String.unaryPlus() {
-            list.add(this)
-        }
-
-        fun joinToString(compiled: CharSequence) = list.joinToString(compiled)
     }
 }
