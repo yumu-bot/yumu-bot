@@ -1,35 +1,9 @@
 package com.now.nowbot.util.command
 
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_ANY
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_END
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_GROUP_END
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_GROUP_START
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_MORE
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_SEPARATOR
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_START
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_WHATEVER
-import com.now.nowbot.util.command.CmdPatternStatic.REG_BID
-import com.now.nowbot.util.command.CmdPatternStatic.REG_COLUMN
-import com.now.nowbot.util.command.CmdPatternStatic.REG_IGNORE
-import com.now.nowbot.util.command.CmdPatternStatic.REG_MOD
-import com.now.nowbot.util.command.CmdPatternStatic.REG_MODE
-import com.now.nowbot.util.command.CmdPatternStatic.REG_NAME
-import com.now.nowbot.util.command.CmdPatternStatic.REG_QQ_GROUP
-import com.now.nowbot.util.command.CmdPatternStatic.REG_QQ_ID
-import com.now.nowbot.util.command.CmdPatternStatic.REG_RANGE
-import com.now.nowbot.util.command.CmdPatternStatic.REG_SID
-import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE
-import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE_01
-import com.now.nowbot.util.command.CmdPatternStatic.REG_SPACE_1P
-import com.now.nowbot.util.command.CmdPatternStatic.REG_START
-import com.now.nowbot.util.command.CmdPatternStatic.REG_START_ALL
-import com.now.nowbot.util.command.CmdPatternStatic.REG_START_SORT
-import com.now.nowbot.util.command.CmdPatternStatic.REG_UID
-import com.now.nowbot.util.command.CmdPatternStatic.REG_USER_AND_RANGE
 import org.intellij.lang.annotations.Language
 import java.util.regex.Pattern
 
-class CmdPattemBuilder private constructor(start: String? = null) {
+class CmdPatterBuilder private constructor(start: String? = null) {
 
     /**
      * 加命令, 后面自带 space
@@ -199,7 +173,7 @@ class CmdPattemBuilder private constructor(start: String? = null) {
         }
     }
 
-    fun startGroup(whatever: Boolean = true, group: CmdPattemBuilder.() -> Unit) {
+    fun startGroup(whatever: Boolean = true, group: CmdPatterBuilder.() -> Unit) {
         +CHAR_GROUP_START
         this.group()
         +CHAR_GROUP_END
@@ -220,22 +194,24 @@ class CmdPattemBuilder private constructor(start: String? = null) {
 
     private val patternStr: StringBuilder = StringBuilder()
 
-    fun build(doBuild: CmdPattemBuilder.() -> Unit): Pattern {
+    fun build(doBuild: CmdPatterBuilder.() -> Unit): Pattern {
         this.doBuild()
         space()
         +CHAR_END
         return Pattern.compile(patternStr.toString())
     }
 
-    @Language("RegExp")
-    operator fun String.unaryPlus(): CmdPattemBuilder {
+    /**
+     * 重载操作符, 但是 idea 不太好整正则语法提示, 所以不好使
+     */
+    operator fun String.unaryPlus(): CmdPatterBuilder {
         patternStr.append(this)
-        return this@CmdPattemBuilder
+        return this@CmdPatterBuilder
     }
 
-    operator fun Char.unaryPlus(): CmdPattemBuilder {
+    operator fun Char.unaryPlus(): CmdPatterBuilder {
         patternStr.append(this)
-        return this@CmdPattemBuilder
+        return this@CmdPatterBuilder
     }
 
     init {
@@ -253,12 +229,12 @@ class CmdPattemBuilder private constructor(start: String? = null) {
         /**
          * 构建出来正则开头 ^(?i)
          */
-        fun create(doBuild: CmdPattemBuilder.() -> Unit) = CmdPattemBuilder().build(doBuild)
+        fun create(doBuild: CmdPatterBuilder.() -> Unit) = CmdPatterBuilder().build(doBuild)
 
         /**
          * 构建出来正则开头 $start
          */
-        fun create(@Language("RegExp") start: String, doBuild: CmdPattemBuilder.() -> Unit) =
-            CmdPattemBuilder(start).build(doBuild)
+        fun create(@Language("RegExp") start: String, doBuild: CmdPatterBuilder.() -> Unit) =
+            CmdPatterBuilder(start).build(doBuild)
     }
 }

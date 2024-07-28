@@ -9,7 +9,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -39,26 +38,21 @@ public class BPService implements MessageService<BPService.BPParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
-        var matcher = Instructions.BP.matcher(messageText);
+        var matcher = Instruction.BP.matcher(messageText);
         if (! matcher.find()) return false;
 
         boolean isMultiple = StringUtils.hasText(matcher.group("s"));
         var isMyself = new AtomicBoolean();
         // 处理 range
-        var mode = CommandUtil.getMode(matcher);
+        var mode = CmdUtil.getMode(matcher);
         CmdRange<OsuUser> range;
-        range = CommandUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp");
+        range = CmdUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp");
 
-        int offset = 0;
-        int limit = isMultiple ? DEFAULT_BP_COUNT : 1;
-        if (Objects.nonNull(range.getEnd()) && Objects.nonNull(range.getStart())) {
-            offset = Math.min(range.getStart() - 1, 0);
-            limit = Math.min(range.getEnd() - range.getStart(), 1);
-        } else if (Objects.nonNull(range.getStart())) {
-            limit = range.getStart();
-        } else if (Objects.nonNull(range.getEnd())) {
-            limit = range.getEnd();
-        }
+        int offset = range.getValue(1, false) - 1;
+        int limit = range.getValue(isMultiple ? DEFAULT_BP_COUNT : 1, true);
+
+        offset = Math.min(0, offset);
+        limit = Math.min(1, limit);
 
         var user = range.getData();
         if (Objects.isNull(user)) return false;

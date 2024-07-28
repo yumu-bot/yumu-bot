@@ -1,22 +1,19 @@
 package com.now.nowbot.util
 
-import com.now.nowbot.util.command.CmdPattemBuilder
-import com.now.nowbot.util.command.CmdPatternStatic.REG_COLUMN
-import com.now.nowbot.util.command.CmdPatternStatic.REG_EXCLAM
-import com.now.nowbot.util.command.CmdPatternStatic.REG_HASH
-import com.now.nowbot.util.command.CmdPatternStatic.REG_IGNORE
+import com.now.nowbot.util.command.CmdPatterBuilder
+import com.now.nowbot.util.command.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
-    HELP(CmdPattemBuilder.create {
+    HELP(CmdPatterBuilder.create {
         commands("help", "帮助", "h")
         group("module", "[\\s\\S]*")
     }),
 
     // 不太懂为什么 audio 算在帮助里, 娱乐/其他 更合适吧
-    AUDIO(CmdPattemBuilder.create {
+    AUDIO(CmdPatterBuilder.create {
         commands("audio", "song", "a(?![AaC-RT-Zc-rt-z_])")
         column()
         group("type", "(bid|b|sid|s)")
@@ -25,10 +22,10 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // #1 BOT 内部指令
-    PING(CmdPattemBuilder.create {
+    PING(CmdPatterBuilder.create {
         commands("ping", "pi$REG_IGNORE", "yumu\\?")
     }),
-    BIND(CmdPattemBuilder.create {
+    BIND(CmdPatterBuilder.create {
         commands("(?<ub>ub(?![A-Za-z_]))", "(?<bi>bi$REG_IGNORE)", "(?<un>un)?(?<bind>bind)")
         append("($REG_COLUMN(?<full>f))?")
         space()
@@ -36,7 +33,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendName()
     }),
-    BAN(CmdPattemBuilder.create {
+    BAN(CmdPatterBuilder.create {
         commands("super", "sp$REG_IGNORE", "operate", "op$REG_IGNORE")
         space()
         column()
@@ -49,7 +46,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendName()
     }),
-    SWITCH(CmdPattemBuilder.create {
+    SWITCH(CmdPatterBuilder.create {
         commands("switch", "sw$REG_IGNORE")
         column()
         appendQQGroup()
@@ -58,43 +55,43 @@ enum class Instruction(val pattern: Pattern) {
         space()
         group("operate", "\\w+")
     }),
-    ECHO(CmdPattemBuilder.create {
+    ECHO(CmdPatterBuilder.create {
         commands("echo")
         column()
         group("any", "[\\s\\S]*", false)
     }),
-    SERVICE_COUNT(CmdPattemBuilder.create {
+    SERVICE_COUNT(CmdPatterBuilder.create {
         commands("servicecount", "统计服务调用", "sc$REG_IGNORE")
         startGroup {
             group("days", "\\d+", false)
-            +"d"
+            +'d'
         }
         startGroup {
             group("hours", "\\d+", false)
-            +"h"
+            +'h'
         }
     }),
 
     // #2 osu! 成绩指令
     // 我强烈建议set mod放到玩家指令这个分类里
-    SET_MODE(CmdPattemBuilder.create {
+    SET_MODE(CmdPatterBuilder.create {
         commands("setmode", "mode", "sm$REG_IGNORE", "mo$REG_IGNORE")
         appendMode()
     }),
-    SCORE_PR(CmdPattemBuilder.create {
+    SCORE_PR(CmdPatterBuilder.create {
         // 这一坨没法拆好像
         commands("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(?<recent>(recent|r(?![^s\\s]))))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
-    PR_CARD(CmdPattemBuilder.create {
-        commands("$REG_EXCLAM(ym)?(?<pass>(passcard|pc(?![a-rt-zA-RT-Z_]))|(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))")
+    PR_CARD(CmdPatterBuilder.create {
+        commands("(?<pass>(passcard|pc$REG_IGNORE))", "(?<recent>(recentcard|rc$REG_IGNORE))")
         `append(ModeQQUidNameRange)`()
     }),
-    UU_PR(CmdPattemBuilder.create {
+    UU_PR(CmdPatterBuilder.create {
         commands("${REG_EXCLAM}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
         `append(ModeQQUidNameRange)`()
     }),
-    SCORE(CmdPattemBuilder.create {
+    SCORE(CmdPatterBuilder.create {
         commands("(?<score>(ym)?(score|s$REG_IGNORE))")
         column()
         space()
@@ -108,44 +105,44 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendMod()
     }),
-    BP(CmdPattemBuilder.create {
+    BP(CmdPatterBuilder.create {
         commands("(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
-    TODAY_BP(CmdPattemBuilder.create {
+    TODAY_BP(CmdPatterBuilder.create {
         commands(true, "todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
         `append(ModeQQUidNameRange)`()
     }),
-    BP_FIX(CmdPattemBuilder.create {
+    BP_FIX(CmdPatterBuilder.create {
         commands(true, "bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
-        `append(ModeQQUidNameRange)`()
+        `append(ModeQQUidName)`()
     }),
-    BP_ANALYSIS(CmdPattemBuilder.create {
+    BP_ANALYSIS(CmdPatterBuilder.create {
         commands(true, "bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
-        `append(ModeQQUidNameRange)`()
+        `append(ModeQQUidName)`()
     }),
-    UU_BA(CmdPattemBuilder.create {
+    UU_BA(CmdPatterBuilder.create {
         commands("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
-        `append(ModeQQUidNameRange)`()
+        `append(ModeQQUidName)`()
     }),
 
     // #3 osu! 玩家指令
-    INFO(CmdPattemBuilder.create {
+    INFO(CmdPatterBuilder.create {
         commands("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
         `append(ModeQQUidNameRange)`()
     }),
-    INFO_CARD(CmdPattemBuilder.create {
+    INFO_CARD(CmdPatterBuilder.create {
         commands("informationcard", "infocard$REG_IGNORE", "ic$REG_IGNORE")
         `append(ModeQQUidName)`()
     }),
-    CSV_INFO(CmdPattemBuilder.create {
+    CSV_INFO(CmdPatterBuilder.create {
         // 给你展开了
         commands("(c(sv)?)information", "(c(sv)?)info$REG_IGNORE", "(c(sv)?)i$REG_IGNORE")
         appendMode()
         space()
         append("(?<data>[\\w\\[\\]\\s\\-_,，、|:：]+)?")
     }),
-    UU_INFO(CmdPattemBuilder.create {
+    UU_INFO(CmdPatterBuilder.create {
         // 给你展开了
         commands("uuinfo", "uui$REG_IGNORE")
         appendMode()
@@ -154,7 +151,7 @@ enum class Instruction(val pattern: Pattern) {
         space(1)
         appendName()
     }),
-    I_MAPPER(CmdPattemBuilder.create {
+    I_MAPPER(CmdPatterBuilder.create {
         commands("mapper", "immapper", "imapper", "im")
         appendQQId()
         space()
@@ -162,15 +159,15 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendName()
     }),
-    FRIEND(CmdPattemBuilder.create {
+    FRIEND(CmdPatterBuilder.create {
         commands("friends?", "f$REG_IGNORE")
         appendRange()
     }),
-    MUTUAL(CmdPattemBuilder.create {
+    MUTUAL(CmdPatterBuilder.create {
         commands("mutual", "mu$REG_IGNORE")
         append("(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?")
     }),
-    PP_MINUS(CmdPattemBuilder.create {
+    PP_MINUS(CmdPatterBuilder.create {
         commands("(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
         appendMode()
         space()
@@ -181,7 +178,7 @@ enum class Instruction(val pattern: Pattern) {
 
     // #4 osu! 谱面指令
 
-    MAP(CmdPattemBuilder.create {
+    MAP(CmdPatterBuilder.create {
         commands("beatmap", "map$REG_IGNORE", "m$REG_IGNORE")
         appendMode()
         space()
@@ -189,25 +186,25 @@ enum class Instruction(val pattern: Pattern) {
         space()
         append("($REG_COLUMN\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?")
     }),
-    QUALIFIED_MAP(CmdPattemBuilder.create {
+    QUALIFIED_MAP(CmdPatterBuilder.create {
         commands("qualified", "qua$REG_IGNORE", "q$REG_IGNORE")
         appendMode()
         space()
         append("($REG_HASH(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")
     }),
-    LEADER_BOARD(CmdPattemBuilder.create {
+    LEADER_BOARD(CmdPatterBuilder.create {
         commands("qualified", "qua$REG_IGNORE", "q$REG_IGNORE")
         appendMode()
         space()
         append("($REG_HASH(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")
     }),
-    MAP_MINUS(CmdPattemBuilder.create {
+    MAP_MINUS(CmdPatterBuilder.create {
         commands("mapminus", "mm$REG_IGNORE")
         appendMode()
         space()
         append("(?<id>\\d+)?\\s*(\\+(?<mod>(\\s*[EZNMFHTDRSPCLO]{2})+)|([×xX]?\\s*(?<rate>[0-9.]*)[×xX]?))?")
     }),
-    NOMINATION(CmdPattemBuilder.create {
+    NOMINATION(CmdPatterBuilder.create {
         commands("(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))")
         column()
         // 这个mode还是特殊的mode
@@ -215,7 +212,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendSid()
     }),
-    PP_PLUS(CmdPattemBuilder.create {
+    PP_PLUS(CmdPatterBuilder.create {
         // 245 个字符的正则...
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
         commands("(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))")
@@ -224,13 +221,13 @@ enum class Instruction(val pattern: Pattern) {
 
     // #5 osu! 比赛指令
 
-    MATCH_LISTENER(CmdPattemBuilder.create {
+    MATCH_LISTENER(CmdPatterBuilder.create {
         commands("(make\\s*love)", "(match)?listen(er)?", "ml$REG_IGNORE", "li$REG_IGNORE")
         group("matchid", "\\d+")
         space()
         group("operate", "info|list|start|stop|end|off|on|[lispefo]$REG_IGNORE")
     }),
-    MU_RATING(CmdPattemBuilder.create {
+    MU_RATING(CmdPatterBuilder.create {
         commands("(?<uu>(u{1,2})(rating|ra$REG_IGNORE))", "(?<main>((ym)?rating|(ym)?ra$REG_IGNORE|mra$REG_IGNORE))")
         group("matchid", "\\d+", whatever = false)
         // 这是个啥, 所有命令前面都带了 (?i), 大小写就忽略了
@@ -260,7 +257,7 @@ enum class Instruction(val pattern: Pattern) {
             group("failed", "f")
         }
     }),
-    SERIES_RATING(CmdPattemBuilder.create {
+    SERIES_RATING(CmdPatterBuilder.create {
         commands(
             "(?<uu>(u{1,2})(seriesrating|series|sra$REG_IGNORE|sa$REG_IGNORE))",
             "(ym)?(?<main>(seriesrating|series|sa$REG_IGNORE|sra$REG_IGNORE))",
@@ -281,13 +278,13 @@ enum class Instruction(val pattern: Pattern) {
         group("failed", "f")
 
     }),
-    CSV_MATCH(CmdPattemBuilder.create {
+    CSV_MATCH(CmdPatterBuilder.create {
         commands("csvrating", "cra?(?![^s^x\\s])", "ml$REG_IGNORE", "li$REG_IGNORE")
         group("x", "[xs]")
         space()
         group("data", "[\\d\\s,，|\\-]+")
     }),
-    MATCH_ROUND(CmdPattemBuilder.create {
+    MATCH_ROUND(CmdPatterBuilder.create {
         commands("(match)?rounds?$REG_IGNORE", "mr$REG_IGNORE", "ro$REG_IGNORE")
         group("matchid", "\\d+")
         space()
@@ -295,7 +292,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         group("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+")
     }),
-    MATCH_NOW(CmdPattemBuilder.create {
+    MATCH_NOW(CmdPatterBuilder.create {
         commands("monitornow", "matchnow", "mn$REG_IGNORE")
         group("matchid", "\\d+", whatever = false)
         space()
@@ -303,13 +300,13 @@ enum class Instruction(val pattern: Pattern) {
         space()
         group("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+")
     }),
-    MAP_POOL(CmdPattemBuilder.create {
+    MAP_POOL(CmdPatterBuilder.create {
         commands("mappool", "po$REG_IGNORE")
         appendMode(false)
         space()
         group("name", "\\w+", whatever = false)
     }),
-    GET_POOL(CmdPattemBuilder.create {
+    GET_POOL(CmdPatterBuilder.create {
         commands("getpool", "gp$REG_IGNORE")
         appendMode()
         space()
@@ -325,12 +322,12 @@ enum class Instruction(val pattern: Pattern) {
     // #6 聊天指令
     // #7 娱乐指令
 
-    DICE(CmdPattemBuilder.create {
+    DICE(CmdPatterBuilder.create {
         commands("([!！]|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
         group("number","-?\\d*")
         group("text","[\\s\\S]+")
     }),
-    DRAW(CmdPattemBuilder.create {
+    DRAW(CmdPatterBuilder.create {
         commands("draw","w$REG_IGNORE")
         group("d","\\d")
     })

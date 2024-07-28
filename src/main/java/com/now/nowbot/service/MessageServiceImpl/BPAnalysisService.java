@@ -6,11 +6,10 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,19 +21,22 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("BP_ANALYSIS")
 public class BPAnalysisService implements MessageService<BPAnalysisService.BAParam> {
-    private static final Logger log = LoggerFactory.getLogger(BPAnalysisService.class);
+    private static final Logger   log        = LoggerFactory.getLogger(BPAnalysisService.class);
     private static final String[] RANK_ARRAY = new String[]{"XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F"};
     @Resource
-    OsuUserApiService userApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
-    ImageService imageService;
+    OsuUserApiService    userApiService;
     @Resource
-    UUBAService uubaService;
+    ImageService         imageService;
+    @Resource
+    UUBAService          uubaService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
@@ -44,24 +46,21 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BAParam> data) throws Throwable {
-        var matcher = Instructions.BP_ANALYSIS.matcher(messageText);
+        var matcher = Instruction.BP_ANALYSIS.matcher(messageText);
         if (!matcher.find()) return false;
 
-        boolean isMyself = false;
+        var isMyself = new AtomicBoolean();
 
-        var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode);
+        var mode = CmdUtil.getMode(matcher);
+        var user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself);
 
         if (Objects.isNull(user)) {
-            isMyself = true;
-            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
+            return false;
         }
 
-        mode = HandleUtil.getModeOrElse(mode, user);
+        var bpList = scoreApiService.getBestPerformance(user.getUserID(), mode.getData(), 0, 100);
 
-        var bpList = HandleUtil.getOsuBPList(user, mode, 0, 100);
-
-        data.setValue(new BAParam(user, bpList, isMyself));
+        data.setValue(new BAParam(user, bpList, isMyself.get()));
         return true;
     }
 
@@ -162,7 +161,7 @@ public class BPAnalysisService implements MessageService<BPAnalysisService.BAPar
             }
 
             { // 统计 mods / rank
-                if (! CollectionUtils.isEmpty(s.getMods())) {
+                if (!CollectionUtils.isEmpty(s.getMods())) {
                     s.getMods().forEach(m -> modsPPMap.add(m, s.getWeightedPP()));
                     modsSum += s.getMods().size();
                 } else {

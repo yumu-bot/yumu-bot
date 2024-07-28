@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -12,19 +11,21 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.MiniCardException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.CmdUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("PR_CARD")
-public class ScorePRCardService implements MessageService<ScorePRService.ScorePRParam> {
+public class ScorePRCardService implements MessageService<ScorePRCardService.PRCardParam> {
 
     private static final Logger log = LoggerFactory.getLogger(ScorePRCardService.class);
     @Resource
@@ -38,18 +39,32 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
+    public record PRCardParam(OsuUser user, Score score) {}
+
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRService.ScorePRParam> data) throws Throwable {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<PRCardParam> data) throws Throwable {
         var matcher2 = Instructions.DEPRECATED_YMX.matcher(messageText);
         if (matcher2.find()) throw new MiniCardException(MiniCardException.Type.MINI_Deprecated_X);
 
-        var matcher = Instructions.PR_CARD.matcher(messageText);
+        var matcher = Instruction.PR_CARD.matcher(messageText);
         if (! matcher.find()) return false;
+        Score score = null;
 
-        var mode = HandleUtil.getMode(matcher);
+        var mode = CmdUtil.getMode(matcher);
+        var range = CmdUtil.getUserWithRange(event, matcher, mode, new AtomicBoolean());
 
-        boolean isPass;
+        var offset = Math.max(0, range.getValue(0, true));
+        List<Score> scores;
+        if (StringUtils.hasText(matcher.group("recent"))) {
+            scores = scoreApiService.getRecent(range.getData().getUserID(), mode.getData(),offset, 1);
+        } else if (StringUtils.hasText(matcher.group("pass"))) {
+            scores = scoreApiService.getRecentIncludingFail(range.getData().getUserID(), mode.getData(),offset, 1);
+        } else {
+            throw new MiniCardException(MiniCardException.Type.MINI_Classification_Error);
+        }
+        if (!scores.isEmpty()) score = scores.getFirst();
+        data.setValue(new PRCardParam(range.getData(), score));
 /*
         if (StringUtils.hasText(matcher.group("recent"))) {
             isPass = false;
@@ -186,16 +201,15 @@ public class ScorePRCardService implements MessageService<ScorePRService.ScorePR
      */
 
     @Override
-    public void HandleMessage(MessageEvent event, ScorePRService.ScorePRParam param) throws Throwable {
+    public void HandleMessage(MessageEvent event, PRCardParam param) throws Throwable {
         var from = event.getSubject();
         var user = param.user();
 
-        if (CollectionUtils.isEmpty(param.scores())) {
+        if (Objects.isNull(param.score)) {
             throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
         }
 
-        Score score = param.scores().getFirst();
-        BeatMap beatMap;
+        Score score = param.score();
 
         try {
             beatmapApiService.applyBeatMapExtend(score);

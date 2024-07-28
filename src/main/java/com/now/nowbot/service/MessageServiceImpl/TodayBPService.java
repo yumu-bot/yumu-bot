@@ -10,10 +10,9 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.CommandUtil;
+import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,23 +38,21 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<TodayBPParam> data) throws Throwable {
-        var matcher = Instructions.TODAY_BP.matcher(messageText);
+        var matcher = Instruction.TODAY_BP.matcher(messageText);
         if (!matcher.find()) return false;
-        var mode = CommandUtil.getMode(matcher);
+        var mode = CmdUtil.getMode(matcher);
         var isMyself = new AtomicBoolean();
-        var range = CommandUtil.getUserWithRange(event, matcher, mode, isMyself);
+        var range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself);
         var user = range.getData();
-        int dayStart = 0;
-        int dayEnd = 1;
-        if (Objects.nonNull(range.getEnd())) {
-            dayStart = Math.min(range.getStart() - 1, 0);
-            dayEnd = Math.min(range.getEnd() - 1, dayStart + 1);
-        } else if (Objects.nonNull(range.getStart())) {
-            dayEnd = range.getStart();
-        }
+        int dayStart = range.getValue(1, false) - 1;
+        int dayEnd = range.getValue(1, true) - 1;
+        dayStart = Math.min(0, dayStart);
+        dayEnd = Math.min(dayEnd, dayStart + 1);
+
         if (Objects.isNull(user)) {
             throw new TipsException("没找到玩家");
         }
+
         List<Score> bpList;
         try {
             bpList = scoreApiService.getBestPerformance(user.getUserID(), mode.getData(), 0, 100);

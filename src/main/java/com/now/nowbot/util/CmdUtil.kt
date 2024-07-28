@@ -3,6 +3,7 @@ package com.now.nowbot.util
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
@@ -13,13 +14,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.LogException
 import com.now.nowbot.throwable.ServiceException.BindException
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_HASH
-import com.now.nowbot.util.command.CmdPatternStatic.CHAR_HASH_FULL
-import com.now.nowbot.util.command.CmdPatternStatic.FLAG_MODE
-import com.now.nowbot.util.command.CmdPatternStatic.FLAG_NAME
-import com.now.nowbot.util.command.CmdPatternStatic.FLAG_QQ_ID
-import com.now.nowbot.util.command.CmdPatternStatic.FLAG_UID
-import com.now.nowbot.util.command.CmdPatternStatic.FLAG_USER_AND_RANGE
+import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -31,10 +26,11 @@ import java.util.function.Supplier
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-object CommandUtil {
+object CmdUtil {
     /**
      * 获取玩家信息, 末尾没有 range
      */
+    @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithOutRange(
         event: MessageEvent,
@@ -48,7 +44,7 @@ object CommandUtil {
             isMyself.set(true)
             val bind = bindDao!!.getUserFromQQ(event.sender.id)
             checkOsuMode(mode, bind.osuMode)
-            userObj = userApiService!!.getPlayerOsuInfo(bind)
+            userObj = userApiService!!.getPlayerInfo(bind, mode.data)
         }
         return userObj
     }
@@ -105,13 +101,13 @@ object CommandUtil {
         val text: String = matcher.group(FLAG_USER_AND_RANGE)
 
         if (JUST_RANGE.matcher(text).matches()) {
-            val range = `$parseRange`(text)
+            val range = parseRange(text)
             return CmdRange(null, range[0], range[1])
         }
         val ranges = if (text[CHAR_HASH.code].code > 0 || text[CHAR_HASH_FULL.code].code > 0) {
-            `$parseNameAndRangeHasHash`(text)
+            parseNameAndRangeHasHash(text)
         } else {
-            `$parseNameAndRangeWithoutHash`(text)
+            parseNameAndRangeWithoutHash(text)
         }
 
         var result = CmdRange<OsuUser>(null, null, null)
@@ -137,14 +133,14 @@ object CommandUtil {
         return result
     }
 
-    private fun `$parseNameAndRangeHasHash`(text: String): LinkedList<CmdRange<String>> {
+    private fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var hashIndex: Int = text.indexOf(CHAR_HASH)
         if (hashIndex < 0) hashIndex = text.indexOf(CHAR_HASH_FULL)
         var nameStr: String? = text.substring(0, hashIndex).trim { it <= ' ' }
         if (!StringUtils.hasText(nameStr)) nameStr = null
         val rangeStr = text.substring(hashIndex + 1).trim { it <= ' ' }
-        val rangeInt = `$parseRange`(rangeStr)
+        val rangeInt = parseRange(rangeStr)
         ranges.add(
             CmdRange(
                 nameStr, rangeInt[0], rangeInt[1]
@@ -153,7 +149,7 @@ object CommandUtil {
         return ranges
     }
 
-    private fun `$parseNameAndRangeWithoutHash`(text: String): LinkedList<CmdRange<String>> {
+    private fun parseNameAndRangeWithoutHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var tempRange = CmdRange(text, null, null)
         // 保底 只有名字
@@ -221,7 +217,7 @@ object CommandUtil {
         return ranges
     }
 
-    private fun `$parseRange`(text: String): Array<Int?> {
+    private fun parseRange(text: String): Array<Int?> {
         val rangeInt = arrayOf<Int?>(null, null)
 
         try {
@@ -310,7 +306,7 @@ object CommandUtil {
         }
     }
 
-    fun isAvoidance(text:String, vararg cmd: String): Boolean {
+    private fun isAvoidance(text: String, vararg cmd: String): Boolean {
         for (c in cmd) {
             if (text.contains(c)) return true
         }
@@ -325,6 +321,31 @@ object CommandUtil {
         val result = CmdObject(OsuMode.DEFAULT)
         if (matcher.namedGroups().containsKey(FLAG_MODE)) {
             result.data = OsuMode.getMode(matcher.group(FLAG_MODE))
+        }
+        return result
+    }
+
+    @JvmStatic
+    fun getBid(matcher: Matcher): Long {
+        if (!matcher.namedGroups().containsKey(FLAG_BID)) {
+            return 0
+        }
+        return matcher.group(FLAG_BID).toLong()
+    }
+
+    @JvmStatic
+    fun getMod(matcher: Matcher): String {
+        if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
+            return ""
+        }
+        return matcher.group(FLAG_MOD)
+    }
+
+    @JvmStatic
+    fun processBP(bp: Iterable<Score>): Map<Int, Score> {
+        val result = TreeMap<Int, Score>()
+        bp.forEachIndexed { index, score ->
+            result[index + 1] = score
         }
         return result
     }
@@ -355,4 +376,19 @@ object CommandUtil {
 }
 
 data class CmdObject<T>(var data: T? = null)
-data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null)
+data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
+    fun allNull() = start == null && end == null
+    fun getValue(default: Int = 20, important: Boolean) = if (start != null && end != null) {
+        if (important) {
+            start!!
+        } else {
+            end!!
+        }
+    } else if (important && start != null) {
+        start!!
+    } else if (important && end != null) {
+        end!!
+    } else {
+        default
+    }
+}

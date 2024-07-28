@@ -8,10 +8,9 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service("BP_FIX")
@@ -30,27 +30,27 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
     @Resource
     ImageService         imageService;
     @Resource
+    OsuScoreApiService   scoreApiService;
+    @Resource
     OsuBeatmapApiService beatmapApiService;
 
     public record BPFixParam(OsuUser user, Map<Integer, Score> bpMap, OsuMode mode) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPFixParam> data) throws Throwable {
-        var matcher = Instructions.BP_FIX.matcher(messageText);
+        var matcher = Instruction.BP_FIX.matcher(messageText);
         if (! matcher.find()) return false;
 
-        var mode = HandleUtil.getMode(matcher);
-        var user = HandleUtil.getOtherUser(event, matcher, mode);
+        var mode = CmdUtil.getMode(matcher);
+        var user = CmdUtil.getUserWithOutRange(event, matcher, mode, new AtomicBoolean());
 
         if (Objects.isNull(user)) {
-            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
+            return false;
         }
 
-        mode = HandleUtil.getModeOrElse(mode, user);
+        var bpMap = scoreApiService.getBestPerformance(user.getUserID(), mode.getData(), 0, 100);
 
-        var bpMap = HandleUtil.getBPList(user, mode, 0, 100);
-
-        data.setValue(new BPFixParam(user, bpMap, mode));
+        data.setValue(new BPFixParam(user, CmdUtil.processBP(bpMap), mode.getData()));
 
         return true;
     }

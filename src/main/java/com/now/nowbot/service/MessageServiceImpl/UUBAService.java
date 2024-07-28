@@ -15,6 +15,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -67,7 +68,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
             throw new BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated);
         }
 
-        var matcher = Instructions.UU_BA.matcher(messageText);
+        var matcher = Instruction.UU_BA.matcher(messageText);
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
         var mode = OsuMode.getMode(matcher.group("mode"));

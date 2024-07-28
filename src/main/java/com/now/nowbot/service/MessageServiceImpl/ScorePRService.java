@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -50,11 +48,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
     @Resource
     ImageService imageService;
 
-    public record ScorePRParam(OsuUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) {
-        List<Score> scores() {
-            return List.of();
-        }
-    }
+    public record ScorePRParam(OsuUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) { }
 
     public record SingleScoreParam(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original, Map<String, Object> attributes) {}
 
@@ -81,22 +75,22 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         }
 
         var isMyself = new AtomicBoolean();
-        var mode = CommandUtil.getMode(matcher);
-        var range = CommandUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent");
+        var mode = CmdUtil.getMode(matcher);
+        var range = CmdUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent");
 
         if (Objects.isNull(range.getData())) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        if (Objects.isNull(range.getStart()) && Objects.isNull(range.getEnd())) {
-
-        } else if ()
-
-        if (Objects.nonNull(s) || Objects.nonNull(es)) {
-            isMultipleScore = true;
-        } else {
-            isMultipleScore = false;
+        offset = range.getValue(0, true);
+        limit = range.getValue(1, false);
+        limit = Math.max(1, offset - limit);
+        offset = Math.max(0, limit - 1);
+        if ((Objects.nonNull(s) || Objects.nonNull(es)) && range.allNull()) {
+            limit = 20;
         }
+
+        isMultipleScore = limit > 1;
 
         data.setValue(new ScorePRParam(range.getData(), offset, limit, isRecent, isMultipleScore, mode.getData()));
         return true;

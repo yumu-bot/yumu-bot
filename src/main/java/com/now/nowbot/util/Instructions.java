@@ -46,7 +46,7 @@ public class Instructions {
     //\\s*(?<data>[0-9a-zA-Z\\[\\]\\-_\\s]*?)?((?<hash>[＃#]\\s*)?(?<n>\\d+)([-－](?<m>\\d+))?)?$")
 
     public static final Pattern PR_CARD = Pattern.compile(
-            "^[!！]\\s*(?i)(?<pass>(ym)?(passcard|pc(?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))\\s*" +
+            "^[!！]\\s*(?i)(?<pass>(ym)?(passcard| (?![a-rt-zA-RT-Z_]))|(ym)?(?<recent>(recentcard|rc(?![a-rt-zA-RT-Z_]))))\\s*" +
                     "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<ur>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?");
 
     public static final Pattern UU_PR = Pattern.compile(

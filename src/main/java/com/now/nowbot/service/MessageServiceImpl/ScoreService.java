@@ -16,8 +16,11 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.util.CmdUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.command.CmdPatternStaticKt;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,91 +30,52 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("SCORE")
 public class ScoreService implements MessageService<ScoreService.ScoreParam> {
     private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
     @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    BindDao bindDao;
-    @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
-    public record ScoreParam(BinUser user, OsuMode mode, long bid, String modsStr, boolean isDefault, boolean isMyself) {}
+    public record ScoreParam(OsuUser user, OsuMode mode, long bid, String modsStr, boolean isDefault,
+                             boolean isMyself) {
+    }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScoreParam> data) throws ScoreException {
-        var matcher = Instructions.SCORE.matcher(messageText);
-        if (! matcher.find()) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScoreParam> data) throws TipsException {
+        var matcher = Instruction.SCORE.matcher(messageText);
+        if (!matcher.find()) {
             return false;
         }
 
-        // 构建参数
-        AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        String qqStr = matcher.group("qq");
-        BinUser user;
-        OsuMode mode = OsuMode.getMode(matcher.group("mode"));
-        boolean isMyself = false;
-        boolean isDefault = false;
-
-        var bid = Long.parseLong(matcher.group("bid"));
-        var mod = matcher.group("mod");
-        var name = matcher.group("name");
-
-        if (Objects.nonNull(at)) {
-            try {
-                user = bindDao.getUserFromQQ(at.getTarget());
-            } catch (Exception e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
+        var mode = CmdUtil.getMode(matcher);
+        var isMyself = new AtomicBoolean(false);
+        var isDefault = OsuMode.isDefaultOrNull(mode.getData());
+        OsuUser user;
+        try {
+            user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself);
+        } catch (BindException e) {
+            if (isMyself.get() && messageText.toLowerCase().contains("score")) {
+                log.info("score 退避");
+                return false;
             }
-        } else if (StringUtils.hasText(name)) {
-            user = new BinUser();
-            Long id;
-            try {
-                id = userApiService.getOsuId(name.trim());
-                user.setOsuID(id);
-                user.setOsuName(name.trim());
-            } catch (WebClientResponseException.NotFound | NumberFormatException e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Player_NotFound, name.trim());
-            }
-        } else if (StringUtils.hasText(qqStr)) {
-            try {
-                user = bindDao.getUserFromQQ(Long.parseLong(qqStr));
-            } catch (BindException | NumberFormatException e) {
-                throw new ScoreException(ScoreException.Type.SCORE_QQ_NotFound, qqStr);
-            }
-        } else {
-            try {
-                user = bindDao.getUserFromQQ(event.getSender().getId());
-                isMyself = true;
-            } catch (BindException e) {
-                //退避 !score
-                if (messageText.toLowerCase().contains("score")) {
-                    log.info("score 退避成功");
-                    return false;
-                } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
-                }
-            }
+            throw isMyself.get() ?
+                    new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired) :
+                    new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
         }
 
         if (Objects.isNull(user)) {
             throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
         }
 
-        if (OsuMode.isDefaultOrNull(mode)) {
-            isDefault = true;
-            mode = user.getOsuMode();
-        }
+        var bid = CmdUtil.getBid(matcher);
+        data.setValue(new ScoreParam(user, mode.getData(), bid, CmdUtil.getMod(matcher), isDefault, isMyself.get()));
 
-        data.setValue(
-                new ScoreParam(user, mode, bid, mod, isDefault, isMyself)
-        );
         return true;
     }
 
@@ -119,7 +83,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
     public void HandleMessage(MessageEvent event, ScoreParam param) throws Throwable {
         var from = event.getSubject();
         var mode = param.mode();
-        var binUser = param.user();
+        var user = param.user();
         boolean isDefault = param.isDefault();
 
         var bid = param.bid();
@@ -132,7 +96,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             BeatmapUserScore scoreall;
             List<OsuMod> osuMods = OsuMod.getModsList(modsStr);
             try {
-                scoreall = scoreApiService.getScore(bid, binUser, mode, osuMods);
+                scoreall = scoreApiService.getScore(bid, user.getUserID(), mode, osuMods);
                 score = scoreall.getScore();
             } catch (WebClientResponseException e) {
                 throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
@@ -141,12 +105,12 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
 
         } else {
             try {
-                score = scoreApiService.getScore(bid, binUser, mode).getScore();
+                score = scoreApiService.getScore(bid, user.getUserID(), mode).getScore();
             } catch (WebClientResponseException.NotFound e) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        score = scoreApiService.getScore(bid, binUser, OsuMode.DEFAULT).getScore();
+                        score = scoreApiService.getScore(bid, user.getUserID(), OsuMode.DEFAULT).getScore();
                     } catch (WebClientResponseException e1) {
                         throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
                     }
@@ -162,15 +126,6 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             }
         }
 
-        //这里的mode必须用谱面传过来的
-        OsuUser user;
-        try {
-            user = userApiService.getPlayerInfo(binUser, score.getMode());
-        } catch (Exception e) {
-            log.error("成绩：获取失败", e);
-            throw new ScoreException(ScoreException.Type.SCORE_Player_NoScore, binUser.getOsuName());
-        }
-
         byte[] image;
         var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
 
@@ -184,8 +139,7 @@ public class ScoreService implements MessageService<ScoreService.ScoreParam> {
             } else {
                 image = imageService.getPanelE(user, e5Param.score());
             }
-
-             */
+            */
 
         } catch (Exception e) {
             log.error("成绩：渲染失败", e);

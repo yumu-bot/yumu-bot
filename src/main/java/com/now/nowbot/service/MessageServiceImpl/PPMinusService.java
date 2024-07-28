@@ -13,7 +13,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
-import com.now.nowbot.util.CommandUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;

@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.ScoreLegacy;
+import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
@@ -11,8 +12,8 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.CmdUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -24,10 +25,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("UU_PR")
-public class UUPRService implements MessageService<ScorePRService.ScorePRParam> {
+public class UUPRService implements MessageService<UUPRService.UUPRParam> {
     private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
 
     @Resource
@@ -41,48 +44,37 @@ public class UUPRService implements MessageService<ScorePRService.ScorePRParam> 
     @Resource
     BindDao bindDao;
 
+    public record UUPRParam(OsuUser user, Score score, OsuMode mode) {}
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRService.ScorePRParam> data) throws Throwable {
-        var matcher = Instructions.UU_PR.matcher(messageText);
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<UUPRParam> data) throws Throwable {
+        var matcher = Instruction.UU_PR.matcher(messageText);
 
         if (! matcher.find()) return false;
 
-        var mode = HandleUtil.getMode(matcher);
-
-        boolean isPass = ! StringUtils.hasText(matcher.group("recent"));
-/*
-        var ur = HandleUtil.getUserAndRange(matcher, 1, false);
-        OsuUser user;
-
-        if (Objects.isNull(ur.user())) {
-            user = HandleUtil.getMyselfUser(event, mode);
-        } else {
-            user = HandleUtil.getOsuUser(ur.user(), mode);
+        var mode = CmdUtil.getMode(matcher);
+        var range = CmdUtil.getUserWithRange(event, matcher, mode, new AtomicBoolean());
+        if (Objects.isNull(range.getData())) {
+            return false;
         }
+        var uid = range.getData().getUserID();
+        boolean includeFail = StringUtils.hasText(matcher.group("recent"));
+        int offset=  range.getValue(0, true);
 
-        mode = HandleUtil.getModeOrElse(mode, user);
-
-        var scores = HandleUtil.getOsuScoreList(user, mode, ur.range(), isPass);
-
-        data.setValue(new ScorePRService.ScorePRParam(user, scores, mode));
-*/
+        var list = scoreApiService.getRecent(uid, mode.getData(), offset, 1, includeFail);
+        if (list.isEmpty()) throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, range.getData().getUsername());
+        data.setValue(new UUPRParam(range.getData(), list.getFirst(), mode.getData()));
         return true;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, ScorePRService.ScorePRParam param) throws Throwable {
+    public void HandleMessage(MessageEvent event, UUPRParam param) throws Throwable {
         var from = event.getSubject();
-
-        var user = param.user();
-        var scores = param.scores();
-
-        if (CollectionUtils.isEmpty(scores)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, user.getUsername());
-        }
+        var score = param.score();
 
         //单成绩发送
         try {
-            getTextOutput(scores.getFirst(), from);
+            getTextOutput(score, from);
         } catch (ScoreException e) {
             throw e;
         } catch (Exception e) {
@@ -97,7 +89,6 @@ public class UUPRService implements MessageService<ScorePRService.ScorePRParam> 
         @SuppressWarnings("unchecked")
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
-
         QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
     }
 }
