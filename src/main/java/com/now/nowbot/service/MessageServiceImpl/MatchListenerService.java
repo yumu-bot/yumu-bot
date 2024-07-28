@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 @Service("MATCH_LISTENER")
 public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
+    static final int    BREAK_ROUND = 15;
 
     @Resource
     OsuMatchApiService   matchApiService;
@@ -336,8 +337,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         public boolean check() {
-            // 平均 6-8 取大的
-            return count % 8 == 0;
+            return count % BREAK_ROUND == 0;
         }
 
         @Override
