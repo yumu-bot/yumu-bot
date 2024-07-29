@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
@@ -33,15 +34,15 @@ import java.util.Optional;
 public class InfoService implements MessageService<InfoService.InfoParam> {
     private static final Logger log = LoggerFactory.getLogger(InfoService.class);
     @Resource
-    OsuUserApiService userApiService;
+    OsuUserApiService  userApiService;
     @Resource
     OsuScoreApiService scoreApiService;
     @Resource
-    BindDao           bindDao;
+    BindDao            bindDao;
     @Resource
-    OsuUserInfoDao    infoDao;
+    OsuUserInfoDao     infoDao;
     @Resource
-    ImageService      imageService;
+    ImageService       imageService;
 
     public record InfoParam(BinUser user, OsuMode mode, int day, boolean isMyself) {
     }
@@ -49,7 +50,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<InfoParam> data) throws InfoException {
         var matcher = Instructions.INFO.matcher(messageText);
-        if (! matcher.find()) return false;
+        if (!matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         AtMessage at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
@@ -84,7 +85,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                 isMyself = true;
             }
         } catch (BindException e) {
-            if (! messageText.contains("information") && messageText.contains("info")) {
+            if (!messageText.contains("information") && messageText.contains("info")) {
                 log.info("info 退避成功");
                 return false;
             } else {
@@ -164,6 +165,9 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
         /*
         log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
          */
+        if (ContextUtil.isTestUser() && historyUser.isPresent()) {
+            log.info("info  {} -> {}", historyUser.get().getGlobalRank(), osuUser.getGlobalRank());
+        }
         byte[] image;
 
         try {
