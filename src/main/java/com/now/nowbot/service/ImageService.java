@@ -363,7 +363,7 @@ public class ImageService {
 
         historyUser.ifPresent(user -> {
             if (user.getStatistics() instanceof InfoLogStatistics log) {
-                body.put("day", ChronoUnit.DAYS.between(log.getLogTime(), LocalDate.now()));
+                body.put("day", ChronoUnit.DAYS.between(log.getLogTime().toLocalDate(), LocalDate.now()));
             }
             body.put("historyUser", user);
         });
