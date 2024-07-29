@@ -14,10 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.InfoException;
-import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,28 +147,28 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         //recents = scoreApiService.getRecent(user, mode, 0, 3);
 
-        Optional<OsuUser> historyUser =
+        var historyUser =
                 infoDao.getLastFrom(osuUser.getUserID(),
                                 mode == OsuMode.DEFAULT ? osuUser.getCurrentOsuMode() : mode,
                                 LocalDate.now().minusDays(param.day))
+                        .map(OsuUserInfoDao::fromArchive)
                         /*
                         .map(arch -> {
                             if (osuUser.getUID().equals(17064371L))
                                 log.info("arch: {}", JacksonUtil.objectToJsonPretty(arch));
                             return arch;
                         })
-                        */
-                        .map(OsuUserInfoDao::fromArchive);
+                        */;
         /*
-        log.info("old: {}\nJson: {}", infoOpt.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(infoOpt.orElse(null)));
+        log.info("old: {}\nJson: {}", historyUser.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(historyUser.orElse(null)));
          */
         if (ContextUtil.isTestUser() && historyUser.isPresent()) {
-            log.info("info  {} -> {}", historyUser.get().getGlobalRank(), osuUser.getGlobalRank());
+            log.info("Json: {}", JacksonUtil.objectToJsonPretty(historyUser.orElse(null)));
+//            log.info("info  {} -> {}", historyUser.get().getGlobalRank(), osuUser.getGlobalRank());
         }
         byte[] image;
 
         try {
-            //image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
             image = imageService.getPanelD(osuUser, historyUser, BPs, mode);
         } catch (Exception e) {
             log.error("玩家信息：图片渲染失败", e);
