@@ -172,7 +172,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
 
         try {
             //image = imageService.getPanelD(osuUser, infoOpt, BPs, recents, mode);
-            image = imageService.getPanelD(osuUser, historyUser, param.day, BPs, mode);
+            image = imageService.getPanelD(osuUser, historyUser, BPs, mode);
         } catch (Exception e) {
             log.error("玩家信息：图片渲染失败", e);
             throw new InfoException(InfoException.Type.I_Fetch_Error);

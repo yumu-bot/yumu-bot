@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service("NOWBOT_IMAGE")
@@ -333,7 +334,7 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, Integer day, List<Score> BPs, OsuMode mode) {
+    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, OsuMode mode) {
 
         double bonus = 0f;
 
@@ -361,8 +362,8 @@ public class ImageService {
         ));
 
         historyUser.ifPresent(user -> {
-            if (day != null) {
-                body.put("day", day);
+            if (user.getStatistics() instanceof InfoLogStatistics log) {
+                body.put("day", ChronoUnit.DAYS.between(log.getLogTime(), LocalDate.now()));
             }
             body.put("historyUser", user);
         });
