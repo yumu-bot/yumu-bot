@@ -422,14 +422,23 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
 
         static void cancel(long qq, long group, boolean isSuper, long matchID) {
-            var key = new QQ_GroupRecord(qq, group, matchID);
-            var l = listeners.get(key);
+            // var key = new QQ_GroupRecord(qq, group, matchID);
+            // 疑似有bug, 目前先改成只要同群的用户都能停
+            QQ_GroupRecord key = null;
+            Handlers handle = null;
+            for (var x : listeners.keySet()) {
+                if (x.group == group && x.messageID == matchID) {
+                    key = x;
+                    handle = listeners.get(x);
+                }
+            }
+
             var listener = listenerMap.get(matchID);
             if (Objects.isNull(listener)) return;
-            if (Objects.nonNull(l)) {
-                listener.removeListener(l.start());
-                listener.removeListener(l.event());
-                listener.removeListener(l.stop(), MatchListener.StopType.USER_STOP);
+            if (Objects.nonNull(handle)) {
+                listener.removeListener(handle.start());
+                listener.removeListener(handle.event());
+                listener.removeListener(handle.stop(), MatchListener.StopType.USER_STOP);
                 listeners.remove(key);
 
                 // 如果没有其他群在监听则停止监听
