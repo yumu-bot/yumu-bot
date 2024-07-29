@@ -3,6 +3,7 @@ package com.now.nowbot.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
+import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.JsonData.OsuUser;
@@ -30,6 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -43,22 +45,25 @@ import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_
 public class BotWebApi {
     private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
     @Resource
-    OsuUserApiService userApiService;
+    OsuUserApiService       userApiService;
     @Resource
-    OsuMatchApiService matchApiService;
+    OsuMatchApiService      matchApiService;
     @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService      scoreApiService;
     @Resource
-    OsuBeatmapApiService beatmapApiService;
+    OsuBeatmapApiService    beatmapApiService;
     @Resource
-    ImageService imageService;
+    ImageService            imageService;
     @Resource
     OsuDiscussionApiService discussionApiService;
+    @Resource
+    OsuUserInfoDao          infoDao;
 
     /**
      * SN 图片接口 (SAN)
      * 私密，仅消防栓使用
-     * @param name 玩家名称
+     *
+     * @param name     玩家名称
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
@@ -90,8 +95,8 @@ public class BotWebApi {
     /**
      * PM 图片接口 (PPM)
      *
-     * @param name 玩家名称
-     * @param name2 第二个玩家名称，不为空会转到 PV 接口
+     * @param name     玩家名称
+     * @param name2    第二个玩家名称，不为空会转到 PV 接口
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
@@ -127,8 +132,8 @@ public class BotWebApi {
     /**
      * PV 图片接口 (PPMVS)
      *
-     * @param name 玩家名称
-     * @param name2 第二个玩家名称，必填
+     * @param name     玩家名称
+     * @param name2    第二个玩家名称，必填
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
@@ -166,10 +171,10 @@ public class BotWebApi {
      * 比赛结果图片接口 (MN)
      *
      * @param matchID 比赛编号
-     * @param k 跳过开头对局数量，跳过热手
-     * @param d 忽略结尾对局数量，忽略 TB 表演赛
-     * @param f 是否删除低于 1w 分的成绩，不传默认删除
-     * @param r 是否保留重复对局，不传默认保留
+     * @param k       跳过开头对局数量，跳过热手
+     * @param d       忽略结尾对局数量，忽略 TB 表演赛
+     * @param f       是否删除低于 1w 分的成绩，不传默认删除
+     * @param r       是否保留重复对局，不传默认保留
      * @return image 比赛结果图片
      */
     @GetMapping(value = "match/now")
@@ -205,10 +210,10 @@ public class BotWebApi {
      * 比赛评分图片接口 (RA)
      *
      * @param matchID 比赛编号
-     * @param k 跳过开头对局数量，跳过热手
-     * @param d 忽略结尾对局数量，忽略 TB 表演赛
-     * @param f 是否删除低于 1w 分的成绩，不传默认删除
-     * @param r 是否保留重复对局，不传默认保留
+     * @param k       跳过开头对局数量，跳过热手
+     * @param d       忽略结尾对局数量，忽略 TB 表演赛
+     * @param f       是否删除低于 1w 分的成绩，不传默认删除
+     * @param r       是否保留重复对局，不传默认保留
      * @return image 评分图片
      */
     @GetMapping(value = "match/rating")
@@ -244,7 +249,7 @@ public class BotWebApi {
     /**
      * 生成图池接口 (GP)
      *
-     * @param name 玩家名称
+     * @param name    玩家名称
      * @param dataMap 需要传进来的图池请求体。结构是 {"HD": [114514, 1919810]} 组成的 Map
      * @return image 生成图池图片
      */
@@ -275,11 +280,11 @@ public class BotWebApi {
     /**
      * 多组成绩接口（当然单成绩也行，我把接口改了）
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式,可为空
-     * @param type scoreType
-     * @param start !bp 45-55 或 !bp 45 里的 45
-     * @param end !bp 45-55 里的 55
+     * @param type     scoreType
+     * @param start    !bp 45-55 或 !bp 45 里的 45
+     * @param end      !bp 45-55 里的 55
      * @return image 成绩图片
      */
     public ResponseEntity<byte[]> getScore(
@@ -420,9 +425,9 @@ public class BotWebApi {
     /**
      * 今日最好成绩接口 (T)
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param day 天数，不传默认一天内
+     * @param day      天数，不传默认一天内
      * @return image 今日最好成绩图片
      */
     @GetMapping(value = "bp/today")
@@ -449,10 +454,10 @@ public class BotWebApi {
     /**
      * 多个最近通过成绩接口 (PS) 不计入 Failed 成绩
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param start 开始位置，不传默认 1
-     * @param end 结束位置，不传默认等于开始位置
+     * @param start    开始位置，不传默认 1
+     * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近通过成绩图片
      */
     @GetMapping(value = "score/passes")
@@ -469,10 +474,10 @@ public class BotWebApi {
     /**
      * 多个最近成绩接口 (RS) 计入 Failed 成绩
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param start 开始位置，不传默认 1
-     * @param end 结束位置，不传默认等于开始位置
+     * @param start    开始位置，不传默认 1
+     * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近成绩图片
      */
     @GetMapping(value = "score/recents")
@@ -489,9 +494,9 @@ public class BotWebApi {
     /**
      * 最好成绩接口 (B)
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param start 开始位置，不传默认 1
+     * @param start    开始位置，不传默认 1
      * @return image 最好成绩图片
      */
     @GetMapping(value = "bp")
@@ -507,9 +512,9 @@ public class BotWebApi {
     /**
      * 最近通过成绩接口 (P) 不计入 Failed 成绩
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param start 开始位置，不传默认 1
+     * @param start    开始位置，不传默认 1
      * @return image 最近通过成绩图片
      */
     @GetMapping(value = "score/pass")
@@ -525,9 +530,9 @@ public class BotWebApi {
     /**
      * 最近成绩接口 (R) 计入 Failed 成绩
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @param start 开始位置，不传默认 1
+     * @param start    开始位置，不传默认 1
      * @return image 最近成绩图片
      */
     @GetMapping(value = "score/recent")
@@ -543,10 +548,10 @@ public class BotWebApi {
     /**
      * 谱面成绩接口 (S)
      *
-     * @param name 玩家名称
-     * @param bid 谱面编号
+     * @param name     玩家名称
+     * @param bid      谱面编号
      * @param playMode 模式，可为空
-     * @param mods 模组字符串，可为空
+     * @param mods     模组字符串，可为空
      * @return image 谱面成绩图片
      */
     @GetMapping(value = "score")
@@ -608,7 +613,7 @@ public class BotWebApi {
     /**
      * 分析最好成绩接口 (BA)
      *
-     * @param name 玩家名称
+     * @param name     玩家名称
      * @param playMode 模式，可为空
      * @return image 分析最好成绩图片
      */
@@ -646,7 +651,7 @@ public class BotWebApi {
     /**
      * 扔骰子接口 (D)
      *
-     * @param range 范围，支持 0 ~ 2147483647
+     * @param range   范围，支持 0 ~ 2147483647
      * @param compare 需要比较的文本，也可以把范围输入到这里来
      * @return String 扔骰子结果
      */
@@ -747,10 +752,12 @@ public class BotWebApi {
             throw new RuntimeException("谱面信息：API 异常");
         }
     }
+
     /**
      * 获取玩家信息 (I)
-     * @param uid 玩家编号
-     * @param name 玩家名称
+     *
+     * @param uid     玩家编号
+     * @param name    玩家名称
      * @param modeStr 游戏模式
      * @return 玩家信息图片
      */
@@ -764,18 +771,25 @@ public class BotWebApi {
     ) {
         if (Objects.isNull(day)) day = 1;
         var user = getPlayerInfoJson(uid, name, modeStr);
+        var mode = OsuMode.getMode(modeStr);
+        if (OsuMode.isDefaultOrNull(mode)) mode = user.getCurrentOsuMode();
 
         var BPs = scoreApiService.getBestPerformance(user);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);
+        var historyUser = infoDao.getLastFrom(user.getUserID(),
+                        mode,
+                        LocalDate.now().minusDays(day))
+                .map(OsuUserInfoDao::fromArchive);
 
-        var image = imageService.getPanelD(user, Optional.empty(), day, BPs, user.getCurrentOsuMode());
+        var image = imageService.getPanelD(user, historyUser, BPs, user.getCurrentOsuMode());
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUserID()}-info.jpg", image.length), HttpStatus.OK);
     }
 
     /**
      * 获取谱师信息 (IM)
-     * @param uid 玩家编号
+     *
+     * @param uid  玩家编号
      * @param name 玩家名称
      * @return 谱师信息图片
      */
@@ -794,6 +808,7 @@ public class BotWebApi {
 
     /**
      * 获取提名信息 (N)
+     *
      * @param sid 谱面集编号
      * @param bid 谱面编号
      * @return 提名信息图片
@@ -837,8 +852,9 @@ public class BotWebApi {
 
     /**
      * 获取玩家信息的 OsuUser JSON，即原 uui
-     * @param uid 玩家编号
-     * @param name 玩家名称
+     *
+     * @param uid     玩家编号
+     * @param name    玩家名称
      * @param modeStr 玩家模组
      * @return OsuUser JSON
      */
@@ -860,6 +876,7 @@ public class BotWebApi {
 
     /**
      * 获取谱面信息的 BeatMap JSON
+     *
      * @param bid 谱面编号
      * @return BeatMap JSON
      */
@@ -876,7 +893,8 @@ public class BotWebApi {
 
     /**
      * 获取谱面的附加信息 Attr JSON
-     * @param bid 谱面编号
+     *
+     * @param bid  谱面编号
      * @param mods 模组字符串，通过逗号分隔
      * @param mode 游戏模式，默认为谱面自己的
      * @return BeatMap JSON
@@ -896,11 +914,12 @@ public class BotWebApi {
 
     /**
      * 获取 BP 信息的 JSON
-     * @param uid 玩家编号
-     * @param name 玩家名称
+     *
+     * @param uid     玩家编号
+     * @param name    玩家名称
      * @param modeStr 玩家模组
-     * @param start !bp 45-55 或 !bp 45 里的 45
-     * @param end !bp 45-55 里的 55
+     * @param start   !bp 45-55 或 !bp 45 里的 45
+     * @param end     !bp 45-55 里的 55
      * @return OsuUser JSON
      */
     @GetMapping(value = "bp/json")
@@ -928,11 +947,12 @@ public class BotWebApi {
 
     /**
      * 获取成绩信息的 JSON
-     * @param uid 玩家编号
-     * @param name 玩家名称
-     * @param modeStr 游戏模式
-     * @param start !bp 45-55 或 !bp 45 里的 45
-     * @param end !bp 45-55 里的 55
+     *
+     * @param uid      玩家编号
+     * @param name     玩家名称
+     * @param modeStr  游戏模式
+     * @param start    !bp 45-55 或 !bp 45 里的 45
+     * @param end      !bp 45-55 里的 55
      * @param isPassed 是否通过，默认通过（真）
      * @return List<Score> JSON
      */
@@ -944,7 +964,7 @@ public class BotWebApi {
             @RequestParam("start") @Nullable Integer start,
             @RequestParam("end") @Nullable Integer end,
             @RequestParam("isPassed") @Nullable Boolean isPassed
-    ){
+    ) {
         var mode = OsuMode.getMode(modeStr);
         if (Objects.isNull(isPassed)) isPassed = true;
 

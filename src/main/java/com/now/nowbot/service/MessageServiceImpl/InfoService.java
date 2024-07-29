@@ -159,9 +159,7 @@ public class InfoService implements MessageService<InfoService.InfoParam> {
                             return arch;
                         })
                         */;
-        /*
-        log.info("old: {}\nJson: {}", historyUser.map(OsuUser::toString).orElse(""), JacksonUtil.objectToJsonPretty(historyUser.orElse(null)));
-         */
+
         if (ContextUtil.isTestUser() && historyUser.isPresent()) {
             log.info("Json: {}", JacksonUtil.objectToJsonPretty(historyUser.orElse(null)));
 //            log.info("info  {} -> {}", historyUser.get().getGlobalRank(), osuUser.getGlobalRank());
