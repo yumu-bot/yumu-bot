@@ -9,6 +9,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<GetPoolParam> data) throws Throwable {
-        var matcher = Instructions.GET_POOL.matcher(messageText);
+        var matcher = Instruction.GET_POOL.matcher(messageText);
         if (!matcher.find()) return false;
 
         var dataStr = matcher.group("data");

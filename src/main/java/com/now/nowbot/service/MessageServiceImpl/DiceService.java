@@ -5,6 +5,7 @@ import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.DiceException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +30,10 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<DiceParam> data) throws Throwable {
-        var m2 = Instructions.DEPRECATED_AYACHI_NENE.matcher(messageText);
+        var m2 = Instruction.DEPRECATED_AYACHI_NENE.matcher(messageText);
         if (m2.find()) throw new DiceException(DiceException.Type.DICE_EasterEgg_0d00);
 
-        var m = Instructions.DICE.matcher(messageText);
+        var m = Instruction.DICE.matcher(messageText);
         if (!m.find()) return false;
 
         var dice = m.group("dice");

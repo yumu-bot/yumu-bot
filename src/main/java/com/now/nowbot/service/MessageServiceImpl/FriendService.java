@@ -9,7 +9,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
-import java.util.regex.Matcher;
 
 @Service("FRIEND")
 public class FriendService implements MessageService<int[]> {
@@ -36,7 +34,7 @@ public class FriendService implements MessageService<int[]> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<int[]> data) {
-        var m = Instructions.FRIEND.matcher(messageText);
+        var m = Instruction.FRIEND.matcher(messageText);
         if (m.find()) {
             data.setValue(new int[0]);
             return true;

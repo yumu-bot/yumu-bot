@@ -2,6 +2,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ public class TestTaikoSRCalculateService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.TEST_TAIKO_SR_CALCULATE.matcher(messageText);
+        var m = Instruction.TEST_TAIKO_SR_CALCULATE.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

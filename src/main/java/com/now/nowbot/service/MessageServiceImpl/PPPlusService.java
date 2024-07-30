@@ -16,6 +16,7 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -49,7 +50,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPPlusParam> data) throws Throwable {
-        var matcher = Instructions.PP_PLUS.matcher(messageText);
+        var matcher = Instruction.PP_PLUS.matcher(messageText);
         if (! matcher.find()) return false;
 
         var cmd = Objects.requireNonNullElse(matcher.group("function"), "pp");

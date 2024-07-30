@@ -11,6 +11,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class TestFixPPService implements MessageService<Matcher> {
     
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.TEST_FIX.matcher(messageText);
+        var m = Instruction.TEST_FIX.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

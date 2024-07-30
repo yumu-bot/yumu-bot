@@ -11,6 +11,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MOD;
 
 @Service("MAP_MINUS")
 public class MapMinusService implements MessageService<Matcher> {
@@ -30,7 +33,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.MAP_MINUS.matcher(messageText);
+        var m = Instruction.MAP_MINUS.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -46,7 +49,7 @@ public class MapMinusService implements MessageService<Matcher> {
         String fileStr;
         BeatMap beatMap;
 
-        var modsList = OsuMod.getModsList(matcher.group("mod"));
+        var modsList = OsuMod.getModsList(matcher.group(FLAG_MOD));
         boolean isChangedRating = OsuMod.hasChangeRating(modsList);
 
 

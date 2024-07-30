@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.throwable.ServiceException.LeaderBoardException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -20,6 +21,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.List;
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_BID;
 
 @Service("LEADER_BOARD")
 public class LeaderBoardService implements MessageService<Matcher> {
@@ -33,7 +36,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.LEADER_BOARD.matcher(messageText);
+        var m = Instruction.LEADER_BOARD.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -46,7 +49,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
 
         long bid;
         int range;
-        var BIDstr = matcher.group("bid");
+        var BIDstr = matcher.group(FLAG_BID);
 
         if (BIDstr == null || BIDstr.isBlank()) throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_NoBid);
 

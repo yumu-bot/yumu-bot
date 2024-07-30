@@ -10,10 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_NAME;
 
 @Service("MAP_POOL")
 public class MapPoolService implements MessageService<MapPoolService.PoolParam> {
@@ -42,11 +41,11 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PoolParam> data) throws TipsException {
-        var m = Instructions.MAP_POOL.matcher(messageText);
+        var m = Instruction.MAP_POOL.matcher(messageText);
         if (!m.find()) return false;
 
-        String name = m.group("name");
-        OsuMode mode = HandleUtil.getMode(m);
+        String name = m.group(FLAG_NAME);
+        OsuMode mode = CmdUtil.getMode(m).getData();
 
         if (! StringUtils.hasText(name)) {
             throw new TipsException("id 解析错误, 请确保只有数字");

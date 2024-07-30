@@ -165,7 +165,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     fun group(
         name: String, @Language("RegExp") pattern: String, whatever: Boolean = true
     ) {
-        startGroup {
+        startGroup(false) {
             patternStr.append("?<$name>$pattern")
         }
         if (whatever) {
@@ -217,7 +217,6 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     init {
         if (start != null) {
             +start
-            +REG_SPACE
         } else {
             +CHAR_START
             +REG_START

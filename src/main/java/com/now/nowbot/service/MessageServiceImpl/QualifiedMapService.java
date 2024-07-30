@@ -7,7 +7,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.QualifiedMapException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MODE;
 
 @Service("QUALIFIED_MAP")
 public class QualifiedMapService implements MessageService<Matcher> {
@@ -26,7 +28,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.QUALIFIED_MAP.matcher(messageText);
+        var m = Instruction.QUALIFIED_MAP.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -35,7 +37,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         // 获取参数
-        var mode_str = matcher.group("mode");
+        var mode_str = matcher.group(FLAG_MODE);
         var status = matcher.group("status");
         var sort = matcher.group("sort");
         var range_str = matcher.group("range");

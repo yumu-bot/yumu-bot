@@ -3,11 +3,10 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -19,12 +18,10 @@ import java.util.regex.Matcher;
 public class GetIDService implements MessageService<Matcher> {
     @Resource
     OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.GET_ID.matcher(messageText);
+        var m = Instruction.GET_ID.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

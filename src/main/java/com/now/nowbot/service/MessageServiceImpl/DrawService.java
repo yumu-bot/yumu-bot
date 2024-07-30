@@ -8,6 +8,7 @@ import com.now.nowbot.mapper.DrawLogLiteRepository;
 import com.now.nowbot.model.DrawConfig;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
@@ -27,7 +28,7 @@ public class DrawService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.DRAW.matcher(messageText);
+        var m = Instruction.DRAW.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

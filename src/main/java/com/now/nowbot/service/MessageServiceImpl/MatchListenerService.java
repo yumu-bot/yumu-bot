@@ -18,6 +18,7 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
-        var matcher = Instructions.MATCH_LISTENER.matcher(messageText);
+        var matcher = Instruction.MATCH_LISTENER.matcher(messageText);
         if (!matcher.find()) return false;
 
         var param = new ListenerParam();

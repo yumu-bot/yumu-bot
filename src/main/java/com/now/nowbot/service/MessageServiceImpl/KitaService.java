@@ -7,6 +7,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.KitaException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -14,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_BID;
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MOD;
 
 @Service("KITA")
 public class KitaService implements MessageService<Matcher> {
@@ -25,7 +29,7 @@ public class KitaService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.KITA.matcher(messageText);
+        var m = Instruction.KITA.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
@@ -41,7 +45,7 @@ public class KitaService implements MessageService<Matcher> {
         String round;
         BeatMap beatMap;
         boolean hasBG = matcher.group("noBG") == null;
-        var BIDstr = matcher.group("bid");
+        var BIDstr = matcher.group(FLAG_BID);
 
         if (BIDstr == null) throw new KitaException(KitaException.Type.KITA_Parameter_NoBid);
         try {
@@ -50,7 +54,7 @@ public class KitaService implements MessageService<Matcher> {
             throw new KitaException(KitaException.Type.KITA_Parameter_BidError);
         }
 
-        if (matcher.group("mod") == null) {
+        if (matcher.group(FLAG_MOD) == null) {
             mod = "NM";
             position = 1;
         } else {

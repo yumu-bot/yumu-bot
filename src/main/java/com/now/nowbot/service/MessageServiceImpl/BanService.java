@@ -9,13 +9,13 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BanException;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
 
 @Service("BAN")
 public class BanService implements MessageService<BanService.BanParam> {
@@ -35,9 +35,9 @@ public class BanService implements MessageService<BanService.BanParam> {
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        var qq = matcher.group(CmdPatternStatic.FLAG_QQ_ID);
-        var group = matcher.group(CmdPatternStatic.FLAG_QQ_GROUP);
-        var name = matcher.group(CmdPatternStatic.FLAG_NAME);
+        var qq = matcher.group(FLAG_QQ_ID);
+        var group = matcher.group(FLAG_QQ_GROUP);
+        var name = matcher.group(FLAG_NAME);
         var operate = matcher.group("operate");
 
         if (Objects.nonNull(at)) {

@@ -11,10 +11,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.CustomException;
-import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -57,12 +54,12 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
     public boolean isHandle(MessageEvent event, String messageText, DataValue<CustomParam> data) throws Throwable {
         var from = event.getSubject();
 
-        var matcher2 = Instructions.DEPRECATED_SET.matcher(messageText);
+        var matcher2 = Instruction.DEPRECATED_SET.matcher(messageText);
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("set"))) {
             throw new CustomException(CustomException.Type.CUSTOM_Instruction_Deprecated);
         }
 
-        var matcher = Instructions.CUSTOM.matcher(messageText);
+        var matcher = Instruction.CUSTOM.matcher(messageText);
         if (! matcher.find()) {
             return false;
         }

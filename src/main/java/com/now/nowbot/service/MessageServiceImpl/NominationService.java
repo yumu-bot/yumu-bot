@@ -11,6 +11,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuDiscussionApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.NominationException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_SID;
 
 @Service("NOMINATION")
 public class NominationService implements MessageService<Matcher> {
@@ -40,7 +43,7 @@ public class NominationService implements MessageService<Matcher> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
 
-        var matcher = Instructions.NOMINATION.matcher(messageText);
+        var matcher = Instruction.NOMINATION.matcher(messageText);
         if (! matcher.find()) return false;
 
         data.setValue(matcher);
@@ -60,7 +63,7 @@ public class NominationService implements MessageService<Matcher> {
         }
 
         try {
-            sid = Long.parseLong(matcher.group("sid"));
+            sid = Long.parseLong(matcher.group(FLAG_SID));
         } catch (NumberFormatException e) {
             throw new NominationException(NominationException.Type.N_Instructions);
         }

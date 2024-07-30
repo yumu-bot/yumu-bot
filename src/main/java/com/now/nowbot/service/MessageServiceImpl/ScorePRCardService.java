@@ -44,7 +44,7 @@ public class ScorePRCardService implements MessageService<ScorePRCardService.PRC
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PRCardParam> data) throws Throwable {
-        var matcher2 = Instructions.DEPRECATED_YMX.matcher(messageText);
+        var matcher2 = Instruction.DEPRECATED_YMX.matcher(messageText);
         if (matcher2.find()) throw new MiniCardException(MiniCardException.Type.MINI_Deprecated_X);
 
         var matcher = Instruction.PR_CARD.matcher(messageText);

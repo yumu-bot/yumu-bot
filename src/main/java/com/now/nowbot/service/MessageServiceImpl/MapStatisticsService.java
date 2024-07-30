@@ -10,6 +10,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) throws Throwable {
-        var matcher = Instructions.MAP.matcher(messageText);
+        var matcher = Instruction.MAP.matcher(messageText);
         if (!matcher.find()) return false;
 
         var beatMap = HandleUtil.getOsuBeatMap(matcher);

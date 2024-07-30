@@ -5,11 +5,12 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
 
 @Service("SET_MODE")
 public class SetModeService implements MessageService<Matcher> {
@@ -30,7 +31,7 @@ public class SetModeService implements MessageService<Matcher> {
         var user = bindDao.getUserFromQQ(event.getSender().getId());
         var from = event.getSubject();
 
-        var modeStr = matcher.group(CmdPatternStatic.FLAG_MODE);
+        var modeStr = matcher.group(FLAG_MODE);
         var mode = OsuMode.getMode(modeStr);
         if (mode == OsuMode.DEFAULT) {
             from.sendMessage("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)");

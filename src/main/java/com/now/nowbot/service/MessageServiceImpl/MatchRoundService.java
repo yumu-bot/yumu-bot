@@ -10,6 +10,7 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.MATCH_ROUND.matcher(messageText);
+        var m = Instruction.MATCH_ROUND.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

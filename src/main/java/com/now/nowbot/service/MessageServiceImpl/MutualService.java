@@ -7,6 +7,7 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -35,7 +36,7 @@ public class MutualService implements MessageService<List<MutualService.MutualPa
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<List<MutualParam>> data) throws Throwable {
-        var m = Instructions.MUTUAL.matcher(messageText);
+        var m = Instruction.MUTUAL.matcher(messageText);
         if (!m.find()) return false;
 
         var name = m.group("names");

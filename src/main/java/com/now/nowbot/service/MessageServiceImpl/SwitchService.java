@@ -11,13 +11,12 @@ import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.SwitchException;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
-import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
 
 
 @Service("SWITCH") //修改service名 "switch" 一定要修改 Permission
@@ -59,7 +58,7 @@ public class SwitchService implements MessageService<SwitchService.SwitchParam> 
         var operate = m.group("operate");
         //var o = Pattern.compile("(black|white)?list|on|off|start|close|[bkwlofsc]+");
 
-        var groupID = m.group(CmdPatternStatic.FLAG_QQ_GROUP);
+        var groupID = m.group(FLAG_QQ_GROUP);
 
         if (StringUtils.hasText(service)) {
             if (StringUtils.hasText(operate)) {

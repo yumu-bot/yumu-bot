@@ -14,6 +14,7 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -50,7 +51,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<PPMinusParam> data) throws Throwable {
-        var matcher = Instructions.PP_MINUS.matcher(messageText);
+        var matcher = Instruction.PP_MINUS.matcher(messageText);
         if (!matcher.find()) return false;
 
         var status = switch (Optional.ofNullable(

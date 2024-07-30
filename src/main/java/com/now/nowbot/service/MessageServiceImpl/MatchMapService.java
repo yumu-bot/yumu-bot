@@ -6,8 +6,8 @@ import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.HandleUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,9 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
     private static final Logger log = LoggerFactory.getLogger(MatchMapService.class);
 
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
 
     public record MatchMapParam(Long bid, OsuMode osuMode, MatchCalculate mc, String modStr) {
 
@@ -38,7 +40,7 @@ public class MatchMapService implements MessageService<MatchMapService.MatchMapP
 
         if (param.bid == 0) return;
 
-        var beatMap = HandleUtil.getOsuBeatMap(param.bid);
+        var beatMap = beatmapApiService.getBeatMapInfo(param.bid);
 
         // 标准化 combo
         int combo;

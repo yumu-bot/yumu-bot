@@ -17,7 +17,6 @@ import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
-import com.now.nowbot.util.command.CmdPatternStatic;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
@@ -54,8 +55,8 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var from = event.getSubject();
 
-        var qqStr = m.group(CmdPatternStatic.FLAG_QQ_ID);
-        var name = m.group(CmdPatternStatic.FLAG_NAME);
+        var qqStr = m.group(FLAG_QQ_ID);
+        var name = m.group(FLAG_NAME);
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         //!bind 给个提示

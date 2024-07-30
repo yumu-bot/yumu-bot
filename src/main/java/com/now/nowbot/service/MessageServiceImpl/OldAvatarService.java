@@ -10,6 +10,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.OldAvatarException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -20,6 +21,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
+
+import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
 
 @Service("OLD_AVATAR")
 public class OldAvatarService implements MessageService<OldAvatarService.OAParam> {
@@ -35,13 +38,13 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<OAParam> data) {
-        var matcher = Instructions.OLD_AVATAR.matcher(messageText);
+        var matcher = Instruction.OLD_AVATAR.matcher(messageText);
         if (!matcher.find()) return false;
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qqStr = matcher.group("qq");
-        var uidStr = matcher.group("uid");
-        var name = matcher.group("name");
+        var qqStr = matcher.group(FLAG_QQ_ID);
+        var uidStr = matcher.group(FLAG_UID);
+        var name = matcher.group(FLAG_NAME);
 
         if (Objects.nonNull(at)) {
             data.setValue(new OAParam(at.getTarget(), null, null, null, true, false));

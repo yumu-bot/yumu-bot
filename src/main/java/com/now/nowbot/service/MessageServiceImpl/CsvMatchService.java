@@ -10,6 +10,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.ServiceException.MRAException;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -36,14 +37,8 @@ public class CsvMatchService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instructions.CSV_MATCH.matcher(messageText);
+        var m = Instruction.CSV_MATCH.matcher(messageText);
         if (m.find()) {
-            /*
-            if (! Permission.isGroupAdmin(event)) {
-                throw new MRAException(MRAException.Type.RATING_Permission_OnlyGroupAdmin);
-            }
-
-             */
             data.setValue(m);
             return true;
         } else return false;

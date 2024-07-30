@@ -11,7 +11,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Instructions;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +112,7 @@ public class GroupStatisticsService implements MessageService<Long> {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }
-        var m = Instructions.GROUP_STATISTICS.matcher(messageText);
+        var m = Instruction.GROUP_STATISTICS.matcher(messageText);
         if (m.find()) {
             switch (m.group("group")) {
                 case "a", "进阶群" -> data.setValue(928936255L);

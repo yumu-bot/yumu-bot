@@ -28,6 +28,8 @@ public class NowbotApplication {
     public static Logger log = LoggerFactory.getLogger(NowbotApplication.class);
 
     public static void main(String[] args) throws IOException {
+        var p = Instruction.PP_MINUS.getPattern();
+        if (p != null) return;
         var application = new SpringApplication(NowbotApplication.class);
         application.setBannerMode(Banner.Mode.OFF);
         application.run(args);

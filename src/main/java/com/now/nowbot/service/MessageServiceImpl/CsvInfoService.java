@@ -7,6 +7,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.CsvInfoException;
 import com.now.nowbot.util.DataUtil;
+import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -29,7 +30,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<CIParam> param) throws Throwable {
-        var matcher = Instructions.CSV_INFO.matcher(messageText);
+        var matcher = Instruction.CSV_INFO.matcher(messageText);
         if (! matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
