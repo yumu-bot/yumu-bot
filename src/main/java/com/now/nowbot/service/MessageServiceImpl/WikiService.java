@@ -18,8 +18,8 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-@Service("WIKI")
 public class WikiService implements MessageService<Matcher> {
     Logger log = LoggerFactory.getLogger(WikiService.class);
     static JsonNode WIKI;
@@ -35,7 +35,7 @@ public class WikiService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.WIKI.matcher(messageText);
+        var m = Pattern.compile("^[!！]\\s*(?i)(ym)?(wiki)\\s*(?<key>\\s*)?").matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;

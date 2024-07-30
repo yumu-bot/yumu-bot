@@ -259,21 +259,26 @@ public class Instructions {
 
     // #8 辅助指令
 
-    public static final Pattern OLD_AVATAR = Pattern.compile("^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
+    public static final Pattern OLD_AVATAR = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?((old|osu)?avatar|oa(?![A-Za-z_]))\\s*" +
+                    "(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?");
 
-    public static final Pattern OVER_SR = Pattern.compile("^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
+    public static final Pattern OVER_SR = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(overstarrating|overrating|oversr|or(?![A-Za-z_]))(\\s+(?<SR>[0-9.]*))?");
 
-    public static final Pattern TRANS = Pattern.compile("^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G＃#]{1,2})(?<b>\\w)");
+    public static final Pattern TRANS = Pattern.compile(
+            "^[!！]\\s*((?i)(ym)?((tr)(?![A-Za-z_])|(trans)))\\s*(?<a>[A-G＃#]{1,2})(?<b>\\w)");
 
-    public static final Pattern KITA = Pattern.compile("^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
+    public static final Pattern KITA = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(kita|k(?![a-wy-zA-WY-Z_]))(?<noBG>([xX](?![A-Za-z_])))?\\s*(?<bid>\\d+)?\\s*(?<mod>\\w+)?\\s*(?<round>[\\w\\s]+)?");
 
     // 未列入辅助的
+    /*
     public static final Pattern WIKI = Pattern.compile("^[!！]\\s*(?i)(ym)?(wiki)\\s*(?<key>\\s*)?");
-
     public static final Pattern COUNT_MESSAGE_LEGACY = Pattern.compile("^[＃#]统计(?<d>(新人)|(进阶)|(高阶))群管理$");
 
     public static final Pattern COUNT_MESSAGE = Pattern.compile("^[!！]\\s*(?i)(ym)?(cm(?![A-Za-z_])|countmessage|countmsg)\\s*(?<d>(n)|(a)|(h))");
-
+    */
     public static final Pattern GROUP_STATISTICS = Pattern.compile("^[!！]\\s*(?i)(ym)?(gs(?![A-Za-z_])|groupstat(s)?|groupstatistic(s)?|统计(超限)?)\\s*(?<group>[:：]?[nah]|((新人|进阶|高阶)群))(?!\\w)");
 
     // #9 自定义

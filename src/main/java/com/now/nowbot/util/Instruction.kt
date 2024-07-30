@@ -320,19 +320,48 @@ enum class Instruction(val pattern: Pattern) {
         group("data", "[\\w\\s,，|\\-]+")
     }),
     // #6 聊天指令
+    // ...
     // #7 娱乐指令
 
     DICE(CmdPatterBuilder.create {
         commands("([!！]|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
-        group("number","-?\\d*")
-        group("text","[\\s\\S]+")
+        group("number", "-?\\d*")
+        group("text", "[\\s\\S]+")
     }),
     DRAW(CmdPatterBuilder.create {
-        commands("draw","w$REG_IGNORE")
-        group("d","\\d")
-    })
+        commands("draw", "w$REG_IGNORE")
+        group("d", "\\d")
+    }),
 
+    // #8 辅助指令
+    OLD_AVATAR(CmdPatterBuilder.create {
+        commands("(old|osu)?avatar", "oa$REG_IGNORE")
+        appendQQId()
+        appendUid()
+        appendName()
+    }),
+    OVER_SR(CmdPatterBuilder.create {
+        commands("overstarrating", "overrating", "oversr", "or$REG_IGNORE")
+        group("SR", "[0-9]+(\\.[0-9]+)?")
+    }),
+    TRANS(CmdPatterBuilder.create {
+        commands("trans", "tr$REG_IGNORE")
+        group("a", "[A-G＃#]{1,2}", whatever = false)
+        group("b", "\\w", whatever = false)
+    }),
+    KITA(CmdPatterBuilder.create {
+        commands("k(?![^x\\s])", "kita")
+        group("noBG", "x$REG_IGNORE")
+        space()
+        // 这里改了
+        appendBid()
+        space()
+        appendMod()
+        space()
+        group("round", "[\\w\\s]+")
+    }),
 //todo: 还差 辅助指令 其他
     ;
+
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)
 }

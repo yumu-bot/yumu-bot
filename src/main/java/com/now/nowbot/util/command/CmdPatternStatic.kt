@@ -60,7 +60,7 @@ val REG_HYPHEN: String = "[\\-－]"
 val REG_EXCLAM: String = "[!！]"
 
 @Language("RegExp")
-val REG_IGNORE: String = "(?![a-z_])"
+val REG_IGNORE: String = "(?![A-Za-z_])"
 
 @Language("RegExp")
 val REG_NAME: String = "(?<$FLAG_NAME>[0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])"
