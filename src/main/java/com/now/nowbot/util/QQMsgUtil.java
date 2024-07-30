@@ -1,13 +1,11 @@
 package com.now.nowbot.util;
 
 import com.now.nowbot.config.YumuConfig;
-import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.Message;
 import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.ReplyMessage;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
@@ -16,15 +14,13 @@ import java.util.*;
 public class QQMsgUtil {
     private static final Base64.Encoder base64Util = Base64.getEncoder();
     private static final Map<String, FileData> FILE_DATA = new HashMap<>();
-    private static QQMessageDao qqMessageDao;
     private static List<Long>   LocalBotList;
     private static String       LocalUrl;
     private static String       PublicUrl;
 
     public record FileData(String name, ByteBuffer bytes) {}
 
-    public static void init(QQMessageDao qqMessageDao, YumuConfig yumuConfig) {
-        QQMsgUtil.qqMessageDao = qqMessageDao;
+    public static void init(YumuConfig yumuConfig) {
         LocalBotList = yumuConfig.getPrivateDevice();
         LocalUrl = STR."\{yumuConfig.getPrivateUrl()}/pub/file/%s";
         PublicUrl = STR."\{yumuConfig.getPublicUrl()}/pub/file/%s";
@@ -48,10 +44,6 @@ public class QQMsgUtil {
     }
     public static <T extends com.now.nowbot.qq.message.Message> List<T> getTypeAll(MessageChain msg, Class<T> T) {
         return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
-    }
-    @Nullable
-    public static MessageChain getReply(ReplyMessage reply) {
-        return qqMessageDao.getReply(reply);
     }
 
     public static void sendImageAndText(MessageEvent event, byte[] image, String text) {

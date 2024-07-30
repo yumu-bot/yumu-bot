@@ -1,26 +1,21 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.mapper.MessageMapper;
 import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service("COUNT_MESSAGE")
 public class CountQQMessageService implements MessageService<Matcher> {
-    @Resource
-    MessageMapper messageMapper;
     @Resource
     ImageService  imageService;
 
@@ -33,12 +28,15 @@ public class CountQQMessageService implements MessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instructions.COUNT_MESSAGE.matcher(messageText);
+        /*
+         * 不再记录qq消息, 所以本功能作废, 等待删掉
+         */
+        var m = pattern1.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
             return true;
         } else {
-            m = Instructions.COUNT_MESSAGE_LEGACY.matcher(messageText);
+            m = pattern2.matcher(messageText);
             if (m.find()) {
                 data.setValue(m);
                 return true;
@@ -56,10 +54,7 @@ public class CountQQMessageService implements MessageService<Matcher> {
         if (false) {
             var end = LocalDateTime.now();
             var start = end.plusDays(-1);
-            var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
-                    Long.parseLong(groupType),
-                    Long.parseLong("0")
-            );
+            var res = new ArrayList<HashMap<String, Number>>(0);
             if (res.isEmpty()) {
                 event.getSubject().sendMessage("无消息");
             }
@@ -88,10 +83,7 @@ public class CountQQMessageService implements MessageService<Matcher> {
         }
         var end = LocalDateTime.now();
         var start = end.plusDays(-7);
-        var res = messageMapper.contGroupSender(start.toEpochSecond(ZoneOffset.ofHours(8)), end.toEpochSecond(ZoneOffset.ofHours(8)),
-                groupId,
-                userArr
-        );
+        var res = new ArrayList<HashMap<String, Number>>(0);
         var resList = res.stream().map(l -> new Res(l.get("QQ").longValue(), l.get("sum").intValue()))
                 .sorted(Comparator.comparingInt(Res::n).reversed()).toList();
         StringBuilder sb = new StringBuilder("|消息数量|QQ|群名片|\n|--:|:--:|:--|\n");

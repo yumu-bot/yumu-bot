@@ -2,7 +2,6 @@ package com.now.nowbot.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckAspect;
-import com.now.nowbot.dao.QQMessageDao;
 import com.now.nowbot.listener.LocalCommandListener;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.service.MessageService;
@@ -62,7 +61,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
       ioc容器加载完毕运行
      */
     public void run(String... args) {
-        QQMsgUtil.init(applicationContext.getBean(QQMessageDao.class), applicationContext.getBean(YumuConfig.class));
+        QQMsgUtil.init(applicationContext.getBean(YumuConfig.class));
         MoliUtil.init(applicationContext.getBean("template", RestTemplate.class));
         var services = applicationContext.getBeansOfType(MessageService.class);
         permissionImplement.init(services);
