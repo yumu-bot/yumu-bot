@@ -2,6 +2,7 @@ package com.now.nowbot.dao;
 
 import com.now.nowbot.entity.OsuUserInfoArchiveLite;
 import com.now.nowbot.mapper.OsuUserInfoMapper;
+import com.now.nowbot.model.JsonData.InfoLogStatistics;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Statistics;
@@ -56,13 +57,15 @@ public class OsuUserInfoDao {
         user.setMode(archive.getMode().getName());
         user.setUserID(archive.getOsuID());
 
-        Statistics statistics = new Statistics();
+        InfoLogStatistics statistics = new InfoLogStatistics();
         statistics.setA(archive.getGrade_counts_a());
         statistics.setS(archive.getGrade_counts_s());
         statistics.setSS(archive.getGrade_counts_ss());
         statistics.setSH(archive.getGrade_counts_sh());
         statistics.setSSH(archive.getGrade_counts_ssh());
 
+        statistics.setGlobalRank(archive.getGlobal_rank());
+        statistics.setCountryRank(archive.getCountry_rank());
         statistics.setTotalScore(archive.getTotal_score());
         statistics.setTotalHits(archive.getTotal_hits());
         statistics.setRankedScore(archive.getRanked_score());
@@ -73,6 +76,8 @@ public class OsuUserInfoDao {
         statistics.setLevelProgress(archive.getLevel_progress());
         statistics.setMaxCombo(archive.getMaximum_combo());
         statistics.setPP(archive.getPP());
+
+        statistics.setLogTime(archive.getTime());
 
         user.setStatistics(statistics);
         return user;
