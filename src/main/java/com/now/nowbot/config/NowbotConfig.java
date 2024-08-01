@@ -94,8 +94,8 @@ public class NowbotConfig {
     public String proxyType;
     @Value("${spring.proxy.host:'localhost'}")
     public String proxyHost;
-    @Value("${spring.proxy.port:0}")
-    public        int proxyPort;
+    @Value("${spring.proxy.port:7890}")
+    public int proxyPort;
 
     @Autowired
     public NowbotConfig(FileConfig fileConfig) {
