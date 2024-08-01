@@ -8,10 +8,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.service.MessageServiceImpl.SystemInfoService;
 import com.now.nowbot.service.PerformancePlusService;
-import com.now.nowbot.util.HandleUtil;
-import com.now.nowbot.util.JacksonUtil;
-import com.now.nowbot.util.MoliUtil;
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +47,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
             PermissionImplement permissionImplement) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
+        CmdUtil.init(applicationContext);
         LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;
