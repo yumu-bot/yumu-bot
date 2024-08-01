@@ -178,7 +178,7 @@ enum class Instruction(val pattern: Pattern) {
         append("(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?")
     }),
     PP_MINUS(CmdPatterBuilder.create {
-        commands("(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
+        commands("$REG_EXCLAM(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
         appendMode()
         space()
         group("area1", "[0-9a-zA-Z\\[\\]\\-_\\s]*")
