@@ -301,7 +301,7 @@ enum class Instruction(val pattern: Pattern) {
 
     }),
     CSV_MATCH(CmdPatterBuilder.create {
-        commands("csvrating", "cra?(?![^s^x\\s])", "ml$REG_IGNORE", "li$REG_IGNORE")
+        commands("csvrating", "cra?(?![^s^x\\s])")
         group("x", "[xs]")
         space()
         group("data", "[\\d\\s,，|\\-]+")
