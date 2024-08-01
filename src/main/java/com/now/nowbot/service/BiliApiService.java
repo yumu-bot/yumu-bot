@@ -42,7 +42,6 @@ public class BiliApiService {
         for (JsonNode room : data) {
             var r = new LiveRoom(room);
             rooms.add(r);
-            System.out.println(r);
         }
         return rooms;
     }

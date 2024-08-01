@@ -70,7 +70,6 @@ public class BPFixService implements MessageService<BPFixService.BPFixParam> {
         var fixData = fix(pp, bpMap);
 
         if (fixData == null) throw new GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP);
-        System.out.println(fixData);
 
         byte[] image;
 

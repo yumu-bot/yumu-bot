@@ -135,7 +135,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.OverU
     }
 
     private void saveUser(long id, String name, String timeStr) throws IOException {
-        System.out.println("save "+id);
+
         try (var f = writeFile();) {
             var u = new OverUser(id, name, LocalDate.parse(timeStr));
             var d = getUserData(u);

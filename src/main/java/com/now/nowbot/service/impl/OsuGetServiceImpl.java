@@ -18,10 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.HashMap;
 
-// qnmd, 瞎 warning
 @SuppressWarnings("all")
-// ??
-
 public class OsuGetServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(OsuGetServiceImpl.class);
 
@@ -48,7 +45,6 @@ public class OsuGetServiceImpl {
         HttpEntity httpEntity = new HttpEntity(headers);
         ResponseEntity<byte[]> c = null;
         try {
-            System.out.println(uri);
             c = template.exchange(uri, HttpMethod.GET, httpEntity, byte[].class);
         } catch (RestClientException e) {
             e.printStackTrace();
