@@ -45,9 +45,9 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
         var range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself);
         var user = range.getData();
         int dayStart = range.getValue(1, false) - 1;
-        int dayEnd = range.getValue(1, true) - 1;
+        int dayEnd = range.getValue(1, true);
         dayStart = Math.min(0, dayStart);
-        dayEnd = Math.min(dayEnd, dayStart + 1);
+        dayEnd = Math.max(dayEnd, dayStart + 1);
 
         if (Objects.isNull(user)) {
             throw new TipsException("没找到玩家");

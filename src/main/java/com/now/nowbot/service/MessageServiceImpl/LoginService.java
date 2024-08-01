@@ -43,6 +43,7 @@ public class LoginService implements MessageService<String> {
         var qq = event.getSender().getId();
         var u = bindDao.getUserFromQQ(qq);
         String code;
+        // 防止key重复, 循环构造随机字符串
         while (LOGIN_USER_MAP.containsKey((code = getRoStr()).toUpperCase())) {
         }
         event.getSubject().sendMessage(STR."您的登录验证码: \{code}");
@@ -70,12 +71,5 @@ public class LoginService implements MessageService<String> {
     }
 
     public record LoginUser(Long uid, String name, Long time) {
-    }
-
-    public static void main(String[] args) {
-        int i = 'L' - 'A';
-        System.out.println(i);
-        i = 'I' - 'A';
-        System.out.println(i);
     }
 }

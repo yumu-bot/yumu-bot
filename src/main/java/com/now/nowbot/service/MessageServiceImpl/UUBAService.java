@@ -30,6 +30,8 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MODE;
+
 @Service("UU_BA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
     private static final Logger log = LoggerFactory.getLogger(UUBAService.class);
@@ -71,7 +73,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
         var matcher = Instruction.UU_BA.matcher(messageText);
         if (!matcher.find()) return false;
         boolean info = Strings.isNotBlank(matcher.group("info"));
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        var mode = OsuMode.getMode(matcher.group(FLAG_MODE));
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         if (Objects.nonNull(at)) {
