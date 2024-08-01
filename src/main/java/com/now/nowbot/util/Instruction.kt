@@ -121,14 +121,25 @@ enum class Instruction(val pattern: Pattern) {
         `append(ModeQQUidName)`()
     }),
     UU_BA(CmdPatterBuilder.create {
-        commands("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
+        commands("uu?((bp?)?a)(?<info>(-?i))?\\s*", "uubpanalysis")
         `append(ModeQQUidName)`()
     }),
 
     // #3 osu! 玩家指令
     INFO(CmdPatterBuilder.create {
-        commands("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
-        `append(ModeQQUidNameRange)`()
+        commands("information", "info$REG_IGNORE", "i$REG_IGNORE")
+        appendMode()
+        space()
+        appendQQId()
+        space()
+        appendUid()
+        space()
+        appendName()
+        space()
+        startGroup {
+            append(REG_HASH)
+            group("day", "\\d+", whatever = false)
+        }
     }),
     INFO_CARD(CmdPatterBuilder.create {
         commands("informationcard", "infocard$REG_IGNORE", "ic$REG_IGNORE")

@@ -98,19 +98,21 @@ object CmdUtil {
             mode.data = OsuMode.DEFAULT
         }
 
-        val text: String = matcher.group(FLAG_USER_AND_RANGE)
-
+        val text: String = matcher.group(FLAG_USER_AND_RANGE) ?: ""
+        if (text.isBlank()) {
+            return CmdRange()
+        }
         if (JUST_RANGE.matcher(text).matches()) {
             val range = parseRange(text)
             return CmdRange(null, range[0], range[1])
         }
-        val ranges = if (text[CHAR_HASH.code].code > 0 || text[CHAR_HASH_FULL.code].code > 0) {
+        val ranges = if (text.indexOf(CHAR_HASH) > 0 || text.indexOf(CHAR_HASH_FULL) > 0) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
         }
 
-        var result = CmdRange<OsuUser>(null, null, null)
+        var result = CmdRange<OsuUser>()
         for (range in ranges) {
             try {
                 val id = userApiService!!.getOsuId(range.data)
@@ -249,7 +251,7 @@ object CmdUtil {
             qq = at!!.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
-                qq = matcher.group(FLAG_QQ_ID).toLong()
+                qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0
             } catch (ignore: RuntimeException) {
             }
         }
@@ -262,15 +264,15 @@ object CmdUtil {
         var uid: Long = 0
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
-                uid = matcher.group(FLAG_UID).toLong()
+                uid = matcher.group(FLAG_UID)?.toLong() ?: 0
             } catch (ignore: RuntimeException) {
             }
             if (uid != 0L) return getOsuUser(uid, mode.data)
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
-            val name: String = matcher.group(FLAG_NAME)
-            if (!StringUtils.hasText(name)) return getOsuUser(name, mode.data)
+            val name: String = matcher.group(FLAG_NAME) ?: ""
+            if (StringUtils.hasText(name)) return getOsuUser(name, mode.data)
         }
         return null
     }
@@ -320,7 +322,7 @@ object CmdUtil {
     fun getMode(matcher: Matcher): CmdObject<OsuMode> {
         val result = CmdObject(OsuMode.DEFAULT)
         if (matcher.namedGroups().containsKey(FLAG_MODE)) {
-            result.data = OsuMode.getMode(matcher.group(FLAG_MODE))
+            result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
         }
         return result
     }
@@ -330,7 +332,7 @@ object CmdUtil {
         if (!matcher.namedGroups().containsKey(FLAG_BID)) {
             return 0
         }
-        return matcher.group(FLAG_BID).toLong()
+        return matcher.group(FLAG_BID)?.toLong() ?: 0
     }
 
     @JvmStatic
@@ -338,7 +340,7 @@ object CmdUtil {
         if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
             return ""
         }
-        return matcher.group(FLAG_MOD)
+        return matcher.group(FLAG_MOD) ?: ""
     }
 
     @JvmStatic
@@ -360,13 +362,14 @@ object CmdUtil {
     private const val OSU_MIN_INDEX = 2
 
     private val SPLIT_RANGE = "[\\-－ ]".toRegex()
-    private val JUST_RANGE: Pattern = Pattern.compile("^(\\d{1,2}[\\-－ ])?\\d{1,3}$")
+    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*(\\d{1,2}[\\-－ ]+)?\\d{1,3}\\s*$")
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private var bindDao: BindDao? = null
     private var userApiService: OsuUserApiService? = null
     private var scoreApiService: OsuScoreApiService? = null
     private var beatmapApiService: OsuBeatmapApiService? = null
 
+    @JvmStatic
     fun init(applicationContext: ApplicationContext) {
         bindDao = applicationContext.getBean(BindDao::class.java)
         userApiService = applicationContext.getBean(OsuUserApiService::class.java)

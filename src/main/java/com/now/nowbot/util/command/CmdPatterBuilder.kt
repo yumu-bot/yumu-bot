@@ -31,7 +31,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
             +commands[0]
         } else {
             +REG_START_ALL
-            startGroup {
+            startGroup(whatever = false) {
                 // a|b|c|d
                 +commands.joinToString(CHAR_SEPARATOR.toString())
             }
@@ -56,7 +56,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun appendIgnoreAlphabets() {
-        appendIgnores(REG_IGNORE)
+        +REG_IGNORE
     }
 
     fun appendQQId(whatever: Boolean = true) {
@@ -95,8 +95,10 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun appendMode(whatever: Boolean = true) {
-        column(false)
-        +REG_MODE
+        startGroup {
+            column(false)
+            +REG_MODE
+        }
         if (whatever) whatever()
     }
 
