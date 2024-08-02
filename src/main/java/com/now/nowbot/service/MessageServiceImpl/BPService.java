@@ -49,10 +49,19 @@ public class BPService implements MessageService<BPService.BPParam> {
         range = CmdUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp");
 
         int offset = range.getValue(1, true) - 1;
-        int limit = range.getValue(isMultiple ? DEFAULT_BP_COUNT : offset + 1, false);
+        int limit = range.getValue(0, false);
 
-        offset = Math.max(0, offset);
-        limit = Math.max(1, limit - offset);
+        if (isMultiple) {
+            offset = Math.max(0, offset);
+            if (limit < 1) {
+                limit = DEFAULT_BP_COUNT;
+            } else {
+                limit = Math.max(1, limit - offset);
+            }
+        } else if (limit < 1) {
+            limit = 1;
+        }
+
 
         var user = range.getData();
         if (Objects.isNull(user)) return false;
