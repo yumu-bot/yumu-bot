@@ -25,21 +25,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("BP")
 public class BPService implements MessageService<BPService.BPParam> {
-    private static final Logger log = LoggerFactory.getLogger(BPService.class);
-    private static final int DEFAULT_BP_COUNT = 20;
+    private static final Logger log              = LoggerFactory.getLogger(BPService.class);
+    private static final int    DEFAULT_BP_COUNT = 20;
     @Resource
     OsuBeatmapApiService beatmapApiService;
     @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
 
-    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> BPMap, boolean isMyself) {}
+    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> BPMap, boolean isMyself) {
+    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
         var matcher = Instruction.BP.matcher(messageText);
-        if (! matcher.find()) return false;
+        if (!matcher.find()) return false;
 
         boolean isMultiple = StringUtils.hasText(matcher.group("s"));
         var isMyself = new AtomicBoolean();
@@ -54,7 +55,8 @@ public class BPService implements MessageService<BPService.BPParam> {
         if (isMultiple) {
             offset = Math.max(0, offset);
             if (limit < 1) {
-                limit = DEFAULT_BP_COUNT;
+                limit = offset == 0 ? DEFAULT_BP_COUNT : offset + 1;
+                offset = 0;
             } else {
                 limit = Math.max(1, limit - offset);
             }
