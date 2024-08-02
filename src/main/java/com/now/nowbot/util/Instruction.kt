@@ -55,7 +55,7 @@ enum class Instruction(val pattern: Pattern) {
         group("operate", "\\w+")
     }),
     ECHO(CmdPatterBuilder.create {
-        commands("echo")
+        command("echo")
         column()
         group("any", "[\\s\\S]*", false)
     }),
@@ -79,7 +79,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
     SCORE_PR(CmdPatterBuilder.create {
         // 这一坨没法拆好像
-        commands("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(?<recent>(recent|r(?![^s\\s]))))(?<s>s)?")
+        command("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(?<recent>(recent|r(?![^s\\s]))))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
     PR_CARD(CmdPatterBuilder.create {
@@ -87,11 +87,11 @@ enum class Instruction(val pattern: Pattern) {
         `append(ModeQQUidNameRange)`()
     }),
     UU_PR(CmdPatterBuilder.create {
-        commands("${REG_EXCLAM}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
+        command("${REG_EXCLAM}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
         `append(ModeQQUidNameRange)`()
     }),
     SCORE(CmdPatterBuilder.create {
-        commands("$REG_EXCLAM(?<score>(ym)?(score|s$REG_IGNORE))")
+        command("$REG_EXCLAM(?<score>(ym)?(score|s$REG_IGNORE))")
         column()
         space()
         appendBid()
@@ -105,7 +105,7 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
     BP(CmdPatterBuilder.create {
-        commands("$REG_EXCLAM(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?")
+        command("$REG_EXCLAM(?<bp>(ym)?(bestperformance|best|bp(?![a-rt-zA-RT-Z_])|b(?![a-rt-zA-RT-Z_])))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
     TODAY_BP(CmdPatterBuilder.create {
@@ -178,7 +178,7 @@ enum class Instruction(val pattern: Pattern) {
         append("(?<names>[0-9a-zA-Z\\[\\]\\-_ ,]+)?")
     }),
     PP_MINUS(CmdPatterBuilder.create {
-        commands("$REG_EXCLAM(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
+        command("$REG_EXCLAM(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
         appendMode()
         space()
         group("area1", "[0-9a-zA-Z\\[\\]\\-_\\s]*")
@@ -225,7 +225,7 @@ enum class Instruction(val pattern: Pattern) {
         append("(?<id>\\d+)?\\s*(\\+(?<mod>(\\s*[EZNMFHTDRSPCLO]{2})+)|([×xX]?\\s*(?<rate>[0-9.]*)[×xX]?))?")
     }),
     NOMINATION(CmdPatterBuilder.create {
-        commands("$REG_EXCLAM(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))")
+        command("$REG_EXCLAM(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))")
         column()
         // 这个mode还是特殊的mode
         group("mode", "bid|sid|s|b")
@@ -235,7 +235,7 @@ enum class Instruction(val pattern: Pattern) {
     PP_PLUS(CmdPatterBuilder.create {
         // 245 个字符的正则...
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
-        commands("(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))")
+        command("$REG_EXCLAM(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))")
         append("(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*($REG_COLUMN\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?")
     }),
 

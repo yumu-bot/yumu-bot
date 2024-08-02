@@ -17,6 +17,24 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         commands(null, ignore, *commands)
     }
 
+    fun command(@Language("RegExp") command: String, sort: String? = null, ignore: Boolean = false) {
+        // "((/ym_sort_)|[!！](ym)?cmd)\\s*"
+        +CHAR_GROUP_START
+        if (sort != null) {
+            startGroup {
+                +REG_START_SORT
+                +sort
+            }
+            +CHAR_SEPARATOR
+        }
+        +command
+        +CHAR_GROUP_END
+        // (?![a-zA-Z_]) 避免指令污染
+        if (ignore) appendIgnoreAlphabets()
+        // \\s*
+        space()
+    }
+
     fun commands(sort: String? = null, ignore: Boolean, @Language("RegExp") vararg commands: String) {
         // "((/ym_sort_)|[!！](ym)?(a|b|c))\\s*"
         +CHAR_GROUP_START
@@ -27,14 +45,10 @@ class CmdPatterBuilder private constructor(start: String? = null) {
             }
             +CHAR_SEPARATOR
         }
-        if (commands.size == 1) {
-            +commands[0]
-        } else {
-            +REG_START_ALL
-            startGroup(whatever = false) {
-                // a|b|c|d
-                +commands.joinToString(CHAR_SEPARATOR.toString())
-            }
+        +REG_START_ALL
+        startGroup(whatever = false) {
+            // a|b|c|d
+            +commands.joinToString(CHAR_SEPARATOR.toString())
         }
         +CHAR_GROUP_END
         // (?![a-zA-Z_]) 避免指令污染
