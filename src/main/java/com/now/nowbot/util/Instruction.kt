@@ -448,22 +448,19 @@ enum class Instruction(val pattern: Pattern) {
     }),
     DEPRECATED_BPHT(CmdPatterBuilder.create {
         commands("(?<bpht>bpht)")
-        +".*"
+        append("(-i)?")
     }),
     DEPRECATED_SET(CmdPatterBuilder.create {
         commands("(?<set>set)")
-        +".*"
     }),
     DEPRECATED_AYACHI_NENE(CmdPatterBuilder.create {
         commands("(?<nene>0d0(0)?)")
     }),
     DEPRECATED_YMX(CmdPatterBuilder.create {
         commands("(?<x>x)")
-        +".*"
     }),
     DEPRECATED_YMY(CmdPatterBuilder.create {
         commands("(?<y>y)")
-        +".*"
     }),
     ;
 
