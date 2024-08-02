@@ -91,7 +91,7 @@ enum class Instruction(val pattern: Pattern) {
         `append(ModeQQUidNameRange)`()
     }),
     SCORE(CmdPatterBuilder.create {
-        commands("(?<score>(ym)?(score|s$REG_IGNORE))")
+        commands("$REG_EXCLAM(?<score>(ym)?(score|s$REG_IGNORE))")
         column()
         space()
         appendBid()
@@ -225,7 +225,7 @@ enum class Instruction(val pattern: Pattern) {
         append("(?<id>\\d+)?\\s*(\\+(?<mod>(\\s*[EZNMFHTDRSPCLO]{2})+)|([×xX]?\\s*(?<rate>[0-9.]*)[×xX]?))?")
     }),
     NOMINATION(CmdPatterBuilder.create {
-        commands("(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))")
+        commands("$REG_EXCLAM(nominat(e|ion)s?|nom(?![AC-RT-Zac-rt-z_])|n(?![AC-RT-Zac-rt-z_]))")
         column()
         // 这个mode还是特殊的mode
         group("mode", "bid|sid|s|b")
@@ -363,7 +363,7 @@ enum class Instruction(val pattern: Pattern) {
     // #7 娱乐指令
 
     DICE(CmdPatterBuilder.create {
-        commands("([!！]|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
+        commands("($REG_EXCLAM|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
         group("number", "-?\\d*")
         group("text", "[\\s\\S]+")
     }),
