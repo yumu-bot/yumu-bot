@@ -212,10 +212,10 @@ enum class Instruction(val pattern: Pattern) {
         append("($REG_HASH(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")
     }),
     LEADER_BOARD(CmdPatterBuilder.create {
-        commands("qualified", "qua$REG_IGNORE", "q$REG_IGNORE")
+        commands("mapscorelist", "leaderboard", "leader$REG_IGNORE", "list$REG_IGNORE", "l$REG_IGNORE")
         appendMode()
         space()
-        appendBid()
+        group("bid", "\\d+")
         group("range", "\\d+")
     }),
     MAP_MINUS(CmdPatterBuilder.create {

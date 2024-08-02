@@ -113,12 +113,16 @@ public class Instructions {
     */
 
 
-    public static final Pattern UU_BA = Pattern.compile("^[!！]\\s*(?i)(uubpanalysis|u(u)?((bp?)?a))(?<info>(-?i))?\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,})?");
+    public static final Pattern UU_BA = Pattern.compile(
+            "^[!！]\\s*(?i)(uubpanalysis|u(u)?((bp?)?a))(?<info>(-?i))?\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]{3,})?");
 
     // #3 osu! 玩家指令
 
     // i ymi yminfo :0-3 data
-    public static final Pattern INFO = Pattern.compile("^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?([＃#](?<day>\\d+))?");
+    public static final Pattern INFO = Pattern.compile(
+            "^[!！]\\s*(?i)(ym)?(information|info(?![A-Za-z_])|i(?![A-Za-z_]))\\s*" +
+                    "([:：](?<mode>[\\w\\d]+))?\\s*(qq=\\s*(?<qq>\\d+))?\\s*(uid=\\s*(?<uid>\\d+))?\\s*(?<name>[0-9a-zA-Z\\[\\]\\-_\\s]*)?([＃#](?<day>\\d+))?");
 
     public static final Pattern INFO_CARD = Pattern.compile(
             "^[!！]\\s*(?i)(ym)?(informationcard|infocard(?![A-Za-z_])|ic(?![A-Za-z_]))\\s*" +
