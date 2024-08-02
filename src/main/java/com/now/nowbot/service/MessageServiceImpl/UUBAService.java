@@ -16,7 +16,6 @@ import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;

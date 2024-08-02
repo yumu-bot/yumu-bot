@@ -4,7 +4,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

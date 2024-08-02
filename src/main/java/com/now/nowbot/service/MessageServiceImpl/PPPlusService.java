@@ -17,7 +17,6 @@ import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.throwable.ServiceException.PPPlusException;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;

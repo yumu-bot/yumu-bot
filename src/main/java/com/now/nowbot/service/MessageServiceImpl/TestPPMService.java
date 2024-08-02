@@ -12,7 +12,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

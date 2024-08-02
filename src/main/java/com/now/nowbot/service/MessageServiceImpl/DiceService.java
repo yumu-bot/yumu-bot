@@ -6,7 +6,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.ServiceException.DiceException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;

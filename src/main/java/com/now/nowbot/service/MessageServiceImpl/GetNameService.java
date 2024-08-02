@@ -8,7 +8,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;

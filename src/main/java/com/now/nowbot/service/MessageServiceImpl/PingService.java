@@ -6,12 +6,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import io.github.humbleui.skija.Canvas;
-import io.github.humbleui.skija.Font;
-import io.github.humbleui.skija.Image;
-import io.github.humbleui.skija.Paint;
-import io.github.humbleui.skija.Surface;
-import io.github.humbleui.skija.TextLine;
+import io.github.humbleui.skija.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

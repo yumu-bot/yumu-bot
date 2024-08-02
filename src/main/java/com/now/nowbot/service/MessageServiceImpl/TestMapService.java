@@ -6,7 +6,6 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 

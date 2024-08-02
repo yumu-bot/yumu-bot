@@ -5,7 +5,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import org.springframework.stereotype.Service;
 
 @Service("MAP_4D_CALCULATE")

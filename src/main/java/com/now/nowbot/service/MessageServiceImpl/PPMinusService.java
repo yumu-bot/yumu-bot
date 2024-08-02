@@ -15,7 +15,6 @@ import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
 import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.Instructions;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -28,7 +27,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
-import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.*;
+import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.USER;
+import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.USER_VS;
 
 @Service("PP_MINUS")
 public class PPMinusService implements MessageService<PPMinusService.PPMinusParam> {
