@@ -363,7 +363,7 @@ enum class Instruction(val pattern: Pattern) {
     // #7 娱乐指令
 
     DICE(CmdPatterBuilder.create {
-        commands("($REG_EXCLAM|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
+        command("($REG_EXCLAM|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
         group("number", "-?\\d*")
         group("text", "[\\s\\S]+")
     }),
