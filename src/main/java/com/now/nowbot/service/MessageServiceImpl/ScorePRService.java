@@ -84,8 +84,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
         offset = range.getValue(0, true);
         limit = range.getValue(1, false);
-        limit = Math.max(1, offset - limit);
-        offset = Math.max(0, limit - 1);
+        offset = Math.max(0, offset - 1);
+        limit = Math.max(1, limit - offset);
         if ((Objects.nonNull(s) || Objects.nonNull(es)) && range.allNull()) {
             limit = 20;
         }

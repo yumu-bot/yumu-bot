@@ -171,7 +171,7 @@ object CmdUtil {
         }
         val rangeN = text.substring(index + 1).toInt()
         tempRange = CmdRange(
-            text.substring(0, index + 1).trim { it <= ' ' },
+            text.substring(0, index + 1).trim(),
             rangeN,
             null
         )
@@ -202,7 +202,7 @@ object CmdUtil {
         }
 
         tempRange = CmdRange(
-            text.substring(0, index + 1),
+            text.substring(0, index + 1).trim(),
             rangeN,
             text.substring(index + 1, index + i + 1).toInt()
         )
