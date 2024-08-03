@@ -38,8 +38,6 @@ public class Permission {
     private static PermissionDao permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
 
-    private static Bot bot;
-
     private final boolean isAllWhite = true;
 
     @Autowired
@@ -401,7 +399,7 @@ public class Permission {
         return testerList.contains(qq);
     }
 
-    public static boolean isGroupAdmin(long groupId, long qq) {
+    public static boolean isGroupAdmin(Bot bot, long groupId, long qq) {
         if (bot == null) return false;
         Group group;
         if ((group = bot.getGroup(groupId)) == null) return false;
@@ -412,7 +410,7 @@ public class Permission {
 
     //超级管理员无视此限制
     public static boolean isGroupAdmin(MessageEvent event) {
-        return isGroupAdmin(event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
+        return isGroupAdmin(event.getBot(), event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
     }
 
     public static void stopListener() {
