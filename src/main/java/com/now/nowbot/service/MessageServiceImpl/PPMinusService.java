@@ -94,14 +94,18 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
                     var area = StringUtils.hasText(area1) ? area1 : area2;
 
                     switch (status) {
-                        case USER -> //pm 1 or 2
-                                binMe.setOsuName(area);
-
+                        case USER -> {//pm 1 or 2
+                            var uid = bindDao.getOsuId(area);
+                            if (uid == null) throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
+                            binMe.setOsuID(uid);
+                        }
                         case USER_VS -> {
                             isMyself = true;
                             //pv 0v1 or 0v2
                             binMe = bindDao.getUserFromQQ(event.getSender().getId());
-                            binOther.setOsuName(area);
+                            var uid = bindDao.getOsuId(area);
+                            if (uid == null) throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
+                            binOther.setOsuID(uid);
                         }
                     }
                 }

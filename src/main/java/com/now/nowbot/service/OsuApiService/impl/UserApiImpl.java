@@ -109,8 +109,7 @@ public class UserApiImpl implements OsuUserApiService {
         return base.osuApiWebClient.get()
                 .uri(l -> l
                         .path("users/{data}/{mode}")
-                        .queryParam("key", "username")
-                        .build(userName, mode.getName())
+                        .build('@'+userName, mode.getName())
                 )
                 .headers(base::insertHeader)
                 .retrieve()
@@ -126,7 +125,6 @@ public class UserApiImpl implements OsuUserApiService {
         return base.osuApiWebClient.get()
                 .uri(l -> l
                         .path("users/{id}/{mode}")
-                        .queryParam("key", "id")
                         .build(id, mode.getName()))
                 .headers(base::insertHeader)
                 .retrieve()
