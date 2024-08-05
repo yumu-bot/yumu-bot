@@ -36,7 +36,6 @@ shiro:
     server:
       enable: true
       url: "/pub/onebotSocket"
-      max-session-idle-timeout: 10
     timeout: 10
     max-binary-message-buffer-size: 5120000
     max-text-message-buffer-size: 512000
@@ -44,7 +43,7 @@ shiro:
   task-pool:
     enable-task-pool: false
   group-event-filter: true
-  group-event-filter-time: 15000
+  group-event-filter-time: 5000
   limiter:
     # 是否启用限速器
     enable: true

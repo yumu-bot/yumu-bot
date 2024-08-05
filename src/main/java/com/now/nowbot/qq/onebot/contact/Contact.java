@@ -52,14 +52,14 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         long id;
         ActionData<MsgId> d;
         if (this instanceof Group) {
-            d = bot.customRequest(() -> "send_group_msg", Map.of(
+            d = bot.customRawRequest(() -> "send_group_msg", Map.of(
                     "group_id", getId(),
                     "message", getMsgJson(msg),
                     "auto_escape", false
             ), MsgId.class);
             id = getId();
         } else if (this instanceof GroupContact g) {
-            d = bot.customRequest(() -> "send_private_msg", Map.of(
+            d = bot.customRawRequest(() -> "send_private_msg", Map.of(
                     "group_id", g.getGroupId(),
                     "user_id", g.getId(),
                     "message", getMsgJson(msg),
@@ -67,7 +67,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             ), MsgId.class);
             id = g.getGroupId();
         } else {
-            d = bot.customRequest(() -> "send_private_msg", Map.of(
+            d = bot.customRawRequest(() -> "send_private_msg", Map.of(
                     "user_id", getId(),
                     "message", getMsgJson(msg),
                     "auto_escape", false

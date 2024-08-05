@@ -63,7 +63,7 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
         try {
             ActionData<DownloadFileResp> rep = null;
             for (int i = 0; i < 5; i++) {
-                rep = bot.customRequest(() -> "download_file", Map.of(
+                rep = bot.customRawRequest(() -> "download_file", Map.of(
                         "name", name,
                         "base64", QQMsgUtil.byte2str(data) //框架说这里要加 base64://，但是看起来加了会直接跑到文件里？
                 ), DownloadFileResp.class);
