@@ -308,7 +308,8 @@ object CmdUtil {
         }
     }
 
-    private fun isAvoidance(text: String, vararg cmd: String): Boolean {
+    @JvmStatic
+    fun isAvoidance(text: String, vararg cmd: String): Boolean {
         for (c in cmd) {
             if (text.contains(c)) return true
         }
@@ -323,6 +324,14 @@ object CmdUtil {
         val result = CmdObject(OsuMode.DEFAULT)
         if (matcher.namedGroups().containsKey(FLAG_MODE)) {
             result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
+        }
+        return result
+    }
+    @JvmStatic
+    fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): CmdObject<OsuMode> {
+        val result = getMode(matcher)
+        if (OsuMode.isDefaultOrNull(result.data) && !OsuMode.isDefaultOrNull(other)) {
+            result.data = other
         }
         return result
     }
@@ -352,7 +361,8 @@ object CmdUtil {
         return result
     }
 
-    private fun checkOsuMode(mode: CmdObject<OsuMode>, other: OsuMode): OsuMode {
+    @JvmStatic
+    fun checkOsuMode(mode: CmdObject<OsuMode>, other: OsuMode): OsuMode {
         if (OsuMode.isDefaultOrNull(mode.data) && !OsuMode.isDefaultOrNull(other)) {
             mode.data = other
         }

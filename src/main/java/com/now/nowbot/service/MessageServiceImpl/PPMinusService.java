@@ -13,7 +13,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.PPMinusException;
-import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -25,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusStatus.USER;
@@ -34,19 +35,59 @@ import static com.now.nowbot.service.MessageServiceImpl.PPMinusService.PPMinusSt
 public class PPMinusService implements MessageService<PPMinusService.PPMinusParam> {
     private static final Logger log = LoggerFactory.getLogger(PPMinusService.class);
     @Resource
-    OsuUserApiService userApiService;
+    OsuUserApiService  userApiService;
     @Resource
     OsuScoreApiService scoreApiService;
     @Resource
-    BindDao bindDao;
+    BindDao            bindDao;
     @Resource
-    ImageService imageService;
+    ImageService       imageService;
 
-    public record PPMinusParam(boolean isVs, OsuUser me, OsuUser other, OsuMode mode) {}
+    public record PPMinusParam(boolean isVs, OsuUser me, OsuUser other, OsuMode mode) {
+    }
 
     public enum PPMinusStatus {
         USER,
         USER_VS,
+    }
+
+    boolean parseName(String name1, String name2, BinUser binMe, BinUser binOther, PPMinusStatus status) throws PPMinusException {
+        if (StringUtils.hasText(name1) && StringUtils.hasText(name2)) {
+            //pv 1v2
+            binMe.setOsuID(bindDao.getOsuId(name1));
+            binOther.setOsuID(bindDao.getOsuId(name2));
+
+            if (Objects.isNull(binMe.getOsuID()) || Objects.isNull(binOther.getOsuID())) {
+                throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
+            }
+
+            return false;
+        }
+        String area;
+        if (StringUtils.hasText(name1)) {
+            area = name1;
+        } else {
+            area = name2;
+        }
+        switch (status) {
+            case USER -> {
+                //pm 1 or 2
+                binMe.setOsuID(bindDao.getOsuId(area));
+                if (Objects.isNull(binMe.getOsuID())) {
+                    throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
+                }
+            }
+            case USER_VS -> {
+                //pv 0v1 or 0v2
+                binOther.setOsuID(bindDao.getOsuId(area));
+                if (Objects.isNull(binOther.getOsuID())) {
+                    throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
+                }
+            }
+        }
+
+
+        return status == USER_VS;
     }
 
     @Override
@@ -86,28 +127,9 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
                     }
                 }
             } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
-                if (StringUtils.hasText(area1) && StringUtils.hasText(area2)) {
-                    //pv 1v2
-                    binMe.setOsuName(area1);
-                    binOther.setOsuName(area2);
-                } else {
-                    var area = StringUtils.hasText(area1) ? area1 : area2;
-
-                    switch (status) {
-                        case USER -> {//pm 1 or 2
-                            var uid = bindDao.getOsuId(area);
-                            if (uid == null) throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
-                            binMe.setOsuID(uid);
-                        }
-                        case USER_VS -> {
-                            isMyself = true;
-                            //pv 0v1 or 0v2
-                            binMe = bindDao.getUserFromQQ(event.getSender().getId());
-                            var uid = bindDao.getOsuId(area);
-                            if (uid == null) throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
-                            binOther.setOsuID(uid);
-                        }
-                    }
+                isMyself = parseName(area1, area2, binMe, binOther, status);
+                if (isMyself) {
+                    binMe = bindDao.getUserFromQQ(event.getSender().getId());
                 }
             } else {
                 // pm 0
@@ -122,19 +144,23 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             }
         }
 
-        var mode = HandleUtil.getMode(matcher);
-
+        var modeObj = CmdUtil.getMode(matcher);
+        OsuMode mode;
         // 在新人群管理群里查询，则主动认为是 osu 模式
-        if (event.getSubject().getId() == 695600319L && OsuMode.isDefaultOrNull(mode)) {
+        if (event.getSubject().getId() == 695600319L && OsuMode.isDefaultOrNull(modeObj.getData())) {
             mode = OsuMode.OSU;
+        } else {
+            mode = CmdUtil.checkOsuMode(modeObj, binMe.getOsuMode());
         }
 
-        boolean isVs = (binOther.getOsuName() != null) && (! binMe.equals(binOther));
+        boolean isVs = (binOther.getOsuID() != null) && !(Objects.equals(binMe.getOsuID(), binOther.getOsuID()));
 
         OsuUser me = userApiService.getPlayerInfo(binMe, mode);
         OsuUser other = isVs ? userApiService.getPlayerInfo(binOther, mode) : null;
 
-        mode = HandleUtil.getModeOrElse(mode, me);
+        if (OsuMode.isDefaultOrNull(mode)) {
+            mode = OsuMode.getMode(mode, me.getCurrentOsuMode());
+        }
 
         data.setValue(new PPMinusParam(isVs, me, other, mode));
 
@@ -143,6 +169,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
 
     /**
      * 获取 PPM 信息重写
+     *
      * @param user 玩家信息
      * @return PPM 实例
      */
@@ -206,7 +233,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
         byte[] image;
 
         try {
-            if (! param.isVs && event.getSubject().getId() == 695600319L) {
+            if (!param.isVs && event.getSubject().getId() == 695600319L) {
                 image = imageService.getPanelGamma(me, param.mode, my);
             } else {
                 image = imageService.getPanelB1(me, other, my, others, param.mode);
@@ -227,7 +254,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
     private static void customizePerformanceMinus(PPMinus minus, float value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
         if (minus == null) return;
 
-        Class<?> PPMClass =  Class.forName("com.now.nowbot.model.ppminus.PPMinus");
+        Class<?> PPMClass = Class.forName("com.now.nowbot.model.ppminus.PPMinus");
         Field[] valieFields = {
                 PPMClass.getDeclaredField("value1"),
                 PPMClass.getDeclaredField("value2"),
@@ -238,7 +265,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
                 PPMClass.getDeclaredField("value7"),
                 PPMClass.getDeclaredField("value8"),
         };
-        for (var i : valieFields){
+        for (var i : valieFields) {
             i.setAccessible(true);
             i.set(minus, value);
         }

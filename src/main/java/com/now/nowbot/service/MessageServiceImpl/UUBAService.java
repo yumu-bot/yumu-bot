@@ -14,7 +14,6 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -126,7 +125,7 @@ public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> 
 
         List<Score> bps;
 
-        var mode = HandleUtil.getModeOrElse(param.user.mode(), bu);
+        var mode = OsuMode.getMode(param.user.mode(), bu.getOsuMode());
 
         try {
             bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);

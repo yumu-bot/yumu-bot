@@ -7,8 +7,8 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapPoolException;
+import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
         }
 
         var dataMap = parseDataString(dataStr);
-        var mode = getModeOrElse(HandleUtil.getMode(matcher), getFirstMapMode(dataStr));
+        var mode = CmdUtil.getMode(matcher, getFirstMapMode(dataStr)).getData();
 
         data.setValue(new GetPoolParam(dataMap, nameStr, mode));
         return true;

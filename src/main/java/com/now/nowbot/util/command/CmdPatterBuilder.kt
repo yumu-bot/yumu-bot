@@ -10,18 +10,22 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param commands 连续的命令 ("p", "pr")
      */
     fun commands(@Language("RegExp") vararg commands: String) {
-        commands(null, false, *commands)
+        commandBase(null, false, *commands)
     }
 
-    fun commands(ignore: Boolean, @Language("RegExp") vararg commands: String) {
-        commands(null, ignore, *commands)
+    /**
+     * 加命令, 前面带short
+     * @param commands 连续的命令 ("p", "pr")
+     */
+    fun commandWithShort(short: String, @Language("RegExp") vararg commands: String) {
+        commandBase(short, false, *commands)
     }
 
     fun command(@Language("RegExp") command: String, sort: String? = null, ignore: Boolean = false) {
         // "((/ym_sort_)|[!！](ym)?cmd)\\s*"
         +CHAR_GROUP_START
         if (sort != null) {
-            startGroup {
+            startGroup(false) {
                 +REG_START_SORT
                 +sort
             }
@@ -35,18 +39,22 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         space()
     }
 
-    fun commands(sort: String? = null, ignore: Boolean, @Language("RegExp") vararg commands: String) {
+    fun commandWithIgnore(@Language("RegExp") vararg commands: String) {
+        commandBase(null, true, *commands)
+    }
+
+    fun commandBase(short: String? = null, ignore: Boolean, @Language("RegExp") vararg commands: String) {
         // "((/ym_sort_)|[!！](ym)?(a|b|c))\\s*"
         +CHAR_GROUP_START
-        if (sort != null) {
-            startGroup {
+        if (short != null) {
+            startGroup(false) {
                 +REG_START_SORT
-                +sort
+                +short
             }
             +CHAR_SEPARATOR
         }
         +REG_START_ALL
-        startGroup(whatever = false) {
+        startGroup(false) {
             // a|b|c|d
             +commands.joinToString(CHAR_SEPARATOR.toString())
         }
@@ -109,11 +117,10 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun appendMode(whatever: Boolean = true) {
-        startGroup {
+        startGroup(whatever) {
             column(false)
             +REG_MODE
         }
-        if (whatever) whatever()
     }
 
     fun appendMod(whatever: Boolean = true) {

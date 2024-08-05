@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
+import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMod;
@@ -7,9 +8,11 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.HandleUtil;
+import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -24,22 +27,35 @@ import java.util.List;
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
     private static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
     @Resource
-    ImageService imageService;
+    ImageService         imageService;
+    @Resource
+    OsuBeatmapApiService beatmapApiService;
+    @Resource
+    OsuUserApiService    userApiService;
+    @Resource
+    BindDao              bindDao;
 
-    public record MapParam(@Nullable OsuUser user, BeatMap beatMap, Expected expected) {}
 
-    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<String> mods) {}
+    public record MapParam(@Nullable OsuUser user, BeatMap beatMap, Expected expected) {
+    }
+
+    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<String> mods) {
+    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) throws Throwable {
         var matcher = Instruction.MAP.matcher(messageText);
         if (!matcher.find()) return false;
 
-        var beatMap = HandleUtil.getOsuBeatMap(matcher);
+        var bid = CmdUtil.getBid(matcher);
+        BeatMap beatMap = null;
+        if (bid != 0) {
+            beatMap = beatmapApiService.getBeatMapInfo(bid);
+        }
 
         if (beatMap == null) {
-            if (HandleUtil.isAvoidance(messageText, "！m", "!m")) {
-                log.info(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.getSender().getName()));
+            if (CmdUtil.isAvoidance(messageText, "！m", "!m")) {
+                log.debug(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.getSender().getName()));
             }
             return false;
         }
@@ -48,7 +64,8 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         var mode = OsuMode.getMode(matcher.group("mode"));
 
         try {
-            user = HandleUtil.getMyselfUser(event.getSender().getId(), mode);
+            var bind = bindDao.getUserFromQQ(event.getSender().getId());
+            user = userApiService.getPlayerInfo(bind, mode);
         } catch (BindException e) {
             user = null;
         }

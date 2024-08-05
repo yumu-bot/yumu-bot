@@ -33,7 +33,7 @@ val REG_USER_AND_RANGE: String =
 val REG_START: String = "(?i)"
 
 @Language("RegExp")
-val REG_START_SORT: String = "/ym"
+val REG_START_SORT: String = "\\\\ym"
 
 @Language("RegExp")
 val REG_START_ALL: String = "[!！](ym)?"

@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CmdPatterBuilder.create {
-        commands("help", "帮助", "h")
+        commandWithShort("help","help", "帮助", "h")
         group("module", "[\\s\\S]*")
     }),
 
@@ -109,15 +109,15 @@ enum class Instruction(val pattern: Pattern) {
         `append(ModeQQUidNameRange)`()
     }),
     TODAY_BP(CmdPatterBuilder.create {
-        commands(true, "todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
+        commandWithIgnore("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
         `append(ModeQQUidNameRange)`()
     }),
     BP_FIX(CmdPatterBuilder.create {
-        commands(true, "bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
+        commandWithIgnore("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
         `append(ModeQQUidName)`()
     }),
     BP_ANALYSIS(CmdPatterBuilder.create {
-        commands(true, "bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
+        commandWithIgnore("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
         `append(ModeQQUidName)`()
     }),
     UU_BA(CmdPatterBuilder.create {

@@ -18,7 +18,6 @@ import com.now.nowbot.service.MessageServiceImpl.*;
 import com.now.nowbot.service.OsuApiService.*;
 import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.HandleUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -149,7 +148,7 @@ public class BotWebApi {
         var user1 = userApiService.getPlayerInfo(name.trim(), mode);
         var user2 = userApiService.getPlayerInfo(name2.trim(), mode);
 
-        mode = HandleUtil.getModeOrElse(mode, user1);
+        mode = OsuMode.getMode(playMode, user1.getCurrentOsuMode());
 
         var bplist1 = scoreApiService.getBestPerformance(user1.getUserID(), mode, 0, 100);
         var bplist2 = scoreApiService.getBestPerformance(user2.getUserID(), mode, 0, 100);

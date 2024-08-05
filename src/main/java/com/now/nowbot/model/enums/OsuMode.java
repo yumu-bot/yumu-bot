@@ -29,6 +29,10 @@ public enum OsuMode {
         if (DEFAULT.equals(m)) return defaultMode;
         return m;
     }
+    public static OsuMode getMode(OsuMode m, OsuMode defaultMode) {
+        if (DEFAULT.equals(m)) return defaultMode;
+        return m;
+    }
 
     public static OsuMode getMode(String desc){
         if (desc == null) return DEFAULT;
