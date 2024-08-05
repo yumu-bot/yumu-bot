@@ -54,8 +54,8 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
     boolean parseName(String name1, String name2, BinUser binMe, BinUser binOther, PPMinusStatus status) throws PPMinusException {
         if (StringUtils.hasText(name1) && StringUtils.hasText(name2)) {
             //pv 1v2
-            binMe.setOsuID(bindDao.getOsuId(name1));
-            binOther.setOsuID(bindDao.getOsuId(name2));
+            binMe.setOsuID(userApiService.getOsuId(name1));
+            binOther.setOsuID(userApiService.getOsuId(name2));
 
             if (Objects.isNull(binMe.getOsuID()) || Objects.isNull(binOther.getOsuID())) {
                 throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
@@ -72,14 +72,14 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
         switch (status) {
             case USER -> {
                 //pm 1 or 2
-                binMe.setOsuID(bindDao.getOsuId(area));
+                binMe.setOsuID(userApiService.getOsuId(area));
                 if (Objects.isNull(binMe.getOsuID())) {
                     throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
                 }
             }
             case USER_VS -> {
                 //pv 0v1 or 0v2
-                binOther.setOsuID(bindDao.getOsuId(area));
+                binOther.setOsuID(userApiService.getOsuId(area));
                 if (Objects.isNull(binOther.getOsuID())) {
                     throw new PPMinusException(PPMinusException.Type.PM_Me_FetchFailed);
                 }
