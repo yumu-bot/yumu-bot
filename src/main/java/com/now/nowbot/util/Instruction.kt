@@ -75,7 +75,10 @@ enum class Instruction(val pattern: Pattern) {
     // 我强烈建议set mod放到玩家指令这个分类里
     SET_MODE(CmdPatterBuilder.create {
         commands("setmode", "mode", "sm$REG_IGNORE", "mo$REG_IGNORE")
-        appendMode()
+        startGroup {
+            column()
+            +REG_MODE
+        }
     }),
     SCORE_PR(CmdPatterBuilder.create {
         // 这一坨没法拆好像
