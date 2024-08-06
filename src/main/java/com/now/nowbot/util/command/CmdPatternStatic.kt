@@ -27,7 +27,7 @@ const val FLAG_QQ_GROUP: String = "group"
 
 @Language("RegExp")
 val REG_USER_AND_RANGE: String =
-    "(?<$FLAG_USER_AND_RANGE>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?"
+    "(?<$FLAG_USER_AND_RANGE>([0-9a-zA-Z\\[\\]\\-_][0-9a-zA-Z\\[\\]\\-_ ]+[0-9a-zA-Z\\[\\]\\-_])?\\s*([#＃]?((\\d{1,3})[\\-－ ])?(\\d{1,3}))?)?"
 
 @Language("RegExp")
 val REG_START: String = "(?i)"
