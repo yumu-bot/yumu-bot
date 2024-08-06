@@ -165,7 +165,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun appendSpaceAny() {
-        +(REG_SPACE)
+        +(REG_SPACE_ANY)
     }
 
     fun appendSpaceLeast() {
@@ -178,6 +178,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
 
     fun column(whatever: Boolean = true) {
         +REG_COLUMN
+        +REG_SPACE_ANY
         if (whatever) whatever()
     }
 
@@ -243,7 +244,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         } else {
             +CHAR_START
             +REG_START
-            +REG_SPACE
+            +REG_SPACE_ANY
         }
     }
 
