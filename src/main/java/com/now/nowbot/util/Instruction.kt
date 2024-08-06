@@ -82,7 +82,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
     SCORE_PR(CmdPatterBuilder.create {
         // 这一坨没法拆好像
-        command("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![a-rt-zA-RT-Z_]))|(?<recent>(recent|r(?![^s\\s]))))(?<s>s)?")
+        command("$REG_EXCLAM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p(?![^s\\d\\s]))|(?<recent>(recent|r(?![^s\\d\\s]))))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
     PR_CARD(CmdPatterBuilder.create {
