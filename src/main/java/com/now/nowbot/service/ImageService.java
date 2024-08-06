@@ -311,7 +311,7 @@ public class ImageService {
         return getPanelB3(hashMap);
     }
 
-    public byte[] getPanelB3(HashMap<String, Object> hashMap) {
+    public byte[] getPanelB3(Map<String, Object> hashMap) {
         hashMap.put("isVs", hashMap.containsKey("other"));
         HttpHeaders headers = getDefaultHeader();
 

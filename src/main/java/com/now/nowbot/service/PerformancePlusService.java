@@ -52,7 +52,7 @@ public class PerformancePlusService {
         OSU_FILE_DIR = Path.of(config.getOsuFilePath());
     }
 
-    public PPPlus getMapPerformancePlus(Long beatmapId) {
+    public PPPlus getMapPerformancePlus(Long beatmapId, int modInt) {
         checkFile(beatmapId);
         var p = performancePlusLiteRepository.findBeatMapPPPById(beatmapId);
         if (p.isPresent()) {
@@ -67,6 +67,7 @@ public class PerformancePlusService {
                                 .port(API_PORT)
                                 .path("/api/calculation")
                                 .queryParam("BeatmapId", beatmapId)
+                                .queryParam("Mods", modInt)
                                 .build()
                 )
                 .retrieve()

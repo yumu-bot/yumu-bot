@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CmdPatterBuilder.create {
-        commandWithShort("help","help", "帮助", "h")
+        commandWithShort("help", "help", "帮助", "h")
         group("module", "[\\s\\S]*")
     }),
 
@@ -235,10 +235,16 @@ enum class Instruction(val pattern: Pattern) {
         space()
         appendSid()
     }),
+    PP_PLUS_MAP(CmdPatterBuilder.create {
+        commands("p?pa(?![A-Za-z_])", "ppplusmap", "pppmap", "plusmap")
+        appendBid()
+        space()
+        appendMod()
+    }),
     PP_PLUS(CmdPatterBuilder.create {
         // 245 个字符的正则...
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
-        command("$REG_EXCLAM(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))")
+        command("$REG_EXCLAM(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs))")
         append("(?<area1>[0-9a-zA-Z\\[\\]\\-_\\s]*)?\\s*($REG_COLUMN\\s*(?<area2>[0-9a-zA-Z\\[\\]\\-_\\s]*))?")
     }),
 

@@ -2,7 +2,6 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.PPPlus;
 import com.now.nowbot.model.enums.OsuMode;
@@ -10,7 +9,6 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
@@ -38,8 +36,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
     OsuUserApiService    userApiService;
     @Resource
     OsuScoreApiService   scoreApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
     @Resource
     BindDao              bindDao;
     @Resource
@@ -79,10 +75,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
                         setUser(a1, a2, me, true, data);
                     }
                 }
-                case "pa", "ppa", "ppplusmap", "pppmap", "plusmap", "pppm", "ppplusmapvs", "plusmapvs", "pppmv" -> {
-                    // 这部分确实是 isVs 指令没什么区别, 完全是按照参数数量来判断的, 甚至没参数会默认调用 user
-                    setMap(a1, a2, data);
-                }
                 default -> {
                     log.error("PP+ 指令解析失败: [{}]", cmd);
                     return false;
@@ -105,29 +97,17 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         var dataMap = new HashMap<String, Object>(6);
 
-        if (param.isUser()) {
-            // user 对比
-            dataMap.put("isUser", true);
-            OsuUser u1 = (OsuUser) param.me;
-            dataMap.put("me", u1);
-            dataMap.put("my", getUserPerformancePlus(u1.getUserID()));
+        // user 对比
+        dataMap.put("isUser", true);
+        OsuUser u1 = (OsuUser) param.me;
+        dataMap.put("me", u1);
+        dataMap.put("my", getUserPerformancePlus(u1.getUserID()));
 
-            if (Objects.nonNull(param.other)) {
-                // 包含另一个就是 vs, 直接判断了
-                OsuUser u2 = (OsuUser) param.other;
-                dataMap.put("other", u2);
-                dataMap.put("others", getUserPerformancePlus(u2.getUserID()));
-            }
-        } else {
-            dataMap.put("isUser", false);
-            BeatMap m1 = (BeatMap) param.me;
-            dataMap.put("me", m1);
-            dataMap.put("my", getBeatMapPerformancePlus(m1.getBeatMapID()));
-            if (Objects.nonNull(param.other)) {
-                BeatMap m2 = (BeatMap) param.other;
-                dataMap.put("other", m2);
-                dataMap.put("others", getBeatMapPerformancePlus(m2.getBeatMapID()));
-            }
+        if (Objects.nonNull(param.other)) {
+            // 包含另一个就是 vs, 直接判断了
+            OsuUser u2 = (OsuUser) param.other;
+            dataMap.put("other", u2);
+            dataMap.put("others", getUserPerformancePlus(u2.getUserID()));
         }
 
         byte[] image;
@@ -188,57 +168,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
         }
 
         data.setValue(new PPPlusParam(true, p1, p2));
-    }
-
-    private void setMap(String a1, String a2, DataValue<PPPlusParam> data) throws PPPlusException {
-        BeatMap m1 = StringUtils.hasText(a1) ? getBeatMap(a1) : null;
-        BeatMap m2 = StringUtils.hasText(a2) ? getBeatMap(a2) : null;
-
-        if (Objects.isNull(m1) && Objects.isNull(m2)) {
-            throw new PPPlusException(PPPlusException.Type.PL_Player_VSNotFound);
-        } else if (Objects.isNull(m1)) {
-            m1 = m2;
-            m2 = null;
-        }
-
-        // 不支持其他模式
-        if (OsuMode.getMode(m1.getMode()) != OsuMode.OSU || (Objects.nonNull(m2) && OsuMode.getMode(m2.getMode()) != OsuMode.OSU)) {
-            throw new PPPlusException(PPPlusException.Type.PL_Function_NotSupported);
-        }
-
-        data.setValue(new PPPlusParam(false, m1, m2));
-    }
-
-    private BeatMap getBeatMap(String bidStr) throws PPPlusException {
-        BeatMap beatMap;
-        long id;
-
-        try {
-            id = Long.parseLong(bidStr);
-        } catch (NumberFormatException e) {
-            throw new PPPlusException(PPPlusException.Type.PL_Map_BIDParseError);
-        }
-
-        try {
-            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(id);
-        } catch (WebClientResponseException ignored) {
-            try {
-                beatMap = beatmapApiService.getBeatMapSetInfo(id).getTopDiff();
-            } catch (WebClientResponseException e) {
-                throw new PPPlusException(PPPlusException.Type.PL_Map_NotFound);
-            }
-        }
-
-        return beatMap;
-    }
-
-    private PPPlus getBeatMapPerformancePlus(long bid) throws PPPlusException {
-        try {
-            return performancePlusService.getMapPerformancePlus(bid);
-        } catch (RuntimeException e) {
-            log.error("PP+：获取失败", e);
-            throw new PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed);
-        }
     }
 
     // 计算进阶指数的等级
