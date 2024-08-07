@@ -30,7 +30,9 @@ public class QQMsgUtil {
         if (Objects.isNull(data)) return "";
         return base64Util.encodeToString(data);
     }
+
     @Nullable
+    @SuppressWarnings("unchecked")
     public static <T extends Message> T getType(MessageChain msg, Class<T> T) {
         return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
     }
@@ -39,9 +41,31 @@ public class QQMsgUtil {
         var from = event.getSubject();
         from.sendImage(image);
     }
+
+    public static void sendImages(MessageEvent event, List<byte[]> images) {
+        var from = event.getSubject();
+        var b = new MessageChain.MessageChainBuilder();
+
+        for (int i = 0; i < images.size(); i++) {
+            var image = images.get(i);
+
+            // qq 一次性只能发 20 张图
+            if (i >= 20 && i % 20 == 0) {
+                from.sendMessage(b.build());
+                b = new MessageChain.MessageChainBuilder();
+            }
+
+            b.addImage(image);
+        }
+
+        from.sendMessage(b.build());
+    }
+
     private static void beforeContact(Contact from) {
         //from.sendMessage("正在处理图片请稍候...");
     }
+
+    @SuppressWarnings("unchecked")
     public static <T extends com.now.nowbot.qq.message.Message> List<T> getTypeAll(MessageChain msg, Class<T> T) {
         return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
     }

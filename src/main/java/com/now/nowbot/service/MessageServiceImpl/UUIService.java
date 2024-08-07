@@ -26,7 +26,7 @@ public class UUIService implements MessageService<UUIService.UUIParam> {
     @Resource
     RestTemplate template;
 
-    record UUIParam(OsuUser user, OsuMode mode) {}
+    public record UUIParam(OsuUser user, OsuMode mode) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<UUIParam> data) throws TipsException {

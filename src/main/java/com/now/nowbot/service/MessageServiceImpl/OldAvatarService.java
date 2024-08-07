@@ -9,16 +9,19 @@ import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.OldAvatarException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
@@ -43,7 +46,7 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         var qqStr = matcher.group(FLAG_QQ_ID);
         var uidStr = matcher.group(FLAG_UID);
-        var name = matcher.group(FLAG_NAME);
+        var name = matcher.group(FLAG_DATA);
 
         if (Objects.nonNull(at)) {
             data.setValue(new OAParam(at.getTarget(), null, null, null, true, false));
@@ -68,13 +71,13 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
     @Override
     public void HandleMessage(MessageEvent event, OAParam param) throws Throwable {
         var from = event.getSubject();
-        OsuUser osuUser = null;
+        OsuUser user;
 
         if (Objects.nonNull(param.uid)) {
             try {
-                osuUser = userApiService.getPlayerInfo(param.uid);
+                user = userApiService.getPlayerInfo(param.uid);
             } catch (Exception e) {
-                throw new OldAvatarException(OldAvatarException.Type.OA_Player_NotFound);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid);
             }
 
         } else if (Objects.nonNull(param.qq)) {
@@ -83,49 +86,78 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
                 binUser = bindDao.getUserFromQQ(param.qq);
             } catch (Exception e) {
                 if (param.isMyself) {
-                    throw new OldAvatarException(OldAvatarException.Type.OA_Me_NotBind);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me);
                 } else {
-                    throw new OldAvatarException(OldAvatarException.Type.OA_Player_TokenExpired);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
                 }
             }
 
             try {
-                osuUser = userApiService.getPlayerInfo(binUser);
+                user = userApiService.getPlayerInfo(binUser);
             } catch (WebClientResponseException e) {
-                throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, binUser.getOsuName());
             } catch (Exception e) {
                 log.error("旧头像：获取玩家信息失败: ", e);
-                throw new OldAvatarException(OldAvatarException.Type.OA_Player_FetchFailed);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo);
             }
         } else {
-            String name = param.name;
-            long id;
+            List<OsuUser> users = parseDataString(param.name);
+
+            if (CollectionUtils.isEmpty(users)) throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
+
+            var images = new ArrayList<byte[]>(users.size());
 
             try {
-                id = userApiService.getOsuId(name);
-            } catch (Exception e) {
-                try {
-                    id = Long.parseLong(name);
-                } catch (NumberFormatException e1) {
-                    throw new OldAvatarException(OldAvatarException.Type.OA_Parameter_Error);
+                for (var u : users) {
+                    images.add(imageService.getPanelEpsilon(u));
                 }
-            }
 
-            try {
-                if (userApiService != null) {
-                    osuUser = userApiService.getPlayerInfo(id);
-                }
+                QQMsgUtil.sendImages(event, images);
+                return;
             } catch (Exception e) {
-                throw new OldAvatarException(OldAvatarException.Type.OA_Player_NotFound);
+                log.error("旧头像：发送失败", e);
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像");
             }
         }
 
         try {
-            var image = imageService.getPanelEpsilon(osuUser);
+            var image = imageService.getPanelEpsilon(user);
             from.sendImage(image);
         } catch (Exception e) {
             log.error("旧头像：发送失败", e);
-            throw new OldAvatarException(OldAvatarException.Type.OA_Send_Error);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像");
         }
+    }
+
+    private List<OsuUser> parseDataString(String dataStr) throws GeneralTipsException {
+        String[] dataStrArray = dataStr.trim().split("[,，|:：]+");
+        if (dataStr.isBlank() || dataStrArray.length == 0) return null;
+
+        var ids = new ArrayList<Long>();
+        var users = new ArrayList<OsuUser>();
+
+        for (String s: dataStrArray) {
+            if (! StringUtils.hasText(s)) continue;
+
+            try {
+                ids.add(Long.parseLong(s));
+            } catch (NumberFormatException e) {
+                try {
+                    ids.add(userApiService.getOsuId(s.trim()));
+                } catch (WebClientResponseException e1) {
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_UserName);
+                }
+            }
+        }
+
+        for (var id : ids) {
+            try {
+                users.add(userApiService.getPlayerInfo(id));
+            } catch (WebClientResponseException e) {
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id);
+            }
+        }
+
+        return users;
     }
 }

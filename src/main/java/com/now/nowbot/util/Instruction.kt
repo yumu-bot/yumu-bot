@@ -194,11 +194,11 @@ enum class Instruction(val pattern: Pattern) {
     }),
     GET_ID(CmdPatterBuilder.create {
         commands("getid", "gi$REG_IGNORE")
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     GET_NAME(CmdPatterBuilder.create {
         commands("getname", "gn")
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
 
     // #4 osu! 谱面指令
@@ -296,7 +296,7 @@ enum class Instruction(val pattern: Pattern) {
             +REG_HASH
         }
         space()
-        group("data", "[\\d\\[\\]\\s,，|\\-]+")
+        group(FLAG_DATA, "[\\d\\[\\]\\s,，|\\-]+")
         space()
         startGroup {
             append("e(z|a[sz]y)?")
@@ -314,7 +314,7 @@ enum class Instruction(val pattern: Pattern) {
         commands("csvrating", "cra?(?![^s^x\\s])")
         group("x", "[xs]")
         space()
-        group("data", "[\\d\\s,，|\\-]+")
+        group(FLAG_DATA, "[\\d\\s,，|\\-]+")
     }),
     MATCH_ROUND(CmdPatterBuilder.create {
         commands("(match)?rounds?$REG_IGNORE", "mr$REG_IGNORE", "ro$REG_IGNORE")
@@ -366,7 +366,7 @@ enum class Instruction(val pattern: Pattern) {
         }
         whatever()
         space()
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     // #6 聊天指令
     // ...
@@ -387,7 +387,7 @@ enum class Instruction(val pattern: Pattern) {
         commands("(old|osu)?avatar", "oa$REG_IGNORE")
         appendQQId()
         appendUid()
-        appendName()
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     OVER_SR(CmdPatterBuilder.create {
         commands("overstarrating", "overrating", "oversr", "or$REG_IGNORE")
@@ -424,18 +424,18 @@ enum class Instruction(val pattern: Pattern) {
     TEST_PPM(CmdPatterBuilder.create {
         commands("testppm", "testcost", "tp$REG_IGNORE", "tc$REG_IGNORE")
         appendMode()
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     TEST_HD(CmdPatterBuilder.create {
         commands("testhd", "th$REG_IGNORE")
         appendMode()
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     TEST_FIX(CmdPatterBuilder.create {
         commands("testfix", "tf$REG_IGNORE")
         appendMode()
         space()
-        group("data", REG_NAME_MULTI)
+        group(FLAG_DATA, REG_NAME_MULTI)
     }),
     TEST_MAP(CmdPatterBuilder.create {
         commands("testmap", "tm$REG_IGNORE")
@@ -445,7 +445,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
     TEST_TAIKO_SR_CALCULATE(CmdPatterBuilder.create {
         commands("testtaiko", "tt$REG_IGNORE")
-        group("data", "[xo\\s]+")
+        group(FLAG_DATA, "[xo\\s]+")
     }),
     MAP_4D_CALCULATE(CmdPatterBuilder.create("^[!！＃#]\\s*(?i)cal") {
         space()
