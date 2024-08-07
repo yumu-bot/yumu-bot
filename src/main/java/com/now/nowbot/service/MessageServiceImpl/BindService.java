@@ -61,7 +61,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         //!bind 给个提示
-        if (messageText.substring(0,3).contains("ym") && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
+        if (! messageText.substring(0,3).contains("ym") && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
 
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
