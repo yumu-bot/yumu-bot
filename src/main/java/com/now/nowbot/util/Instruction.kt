@@ -108,7 +108,7 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
     BP(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<bp>(ym)?(bestperformance|best|bp$REG_IGNORE_S}|b$REG_IGNORE_S))(?<s>s)?")
+        command("$REG_EXCLAIM(?<bp>(ym)?(bestperformance|best|bp$REG_IGNORE_S|b$REG_IGNORE_S))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
     TODAY_BP(CmdPatterBuilder.create {

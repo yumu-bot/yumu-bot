@@ -10,6 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.throwable.ServiceException.PPPlusException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -59,7 +60,7 @@ open class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
         }
 
-        map.addPPPlus(pp)
+        map.addPPPlus(pp, data.Mods)
         val dataMap = mutableMapOf<String, Any>()
         dataMap["isUser"] = false
         dataMap["me"] = map
@@ -69,10 +70,12 @@ open class PPPlusMapService(
     }
 
 
-    private fun BeatMap.addPPPlus(pp: PPPlus) {
-        cs = 0f
-        ar = 0f
-        od = 0f
+    private fun BeatMap.addPPPlus(pp: PPPlus, mods: Int) {
         starRating = pp.difficulty.total?.toFloat() ?: 0f
+        if (mods != 0) {
+            cs = DataUtil.CS(cs, mods)
+            ar = DataUtil.AR(ar, mods)
+            od = DataUtil.OD(od, mods)
+        }
     }
 }
