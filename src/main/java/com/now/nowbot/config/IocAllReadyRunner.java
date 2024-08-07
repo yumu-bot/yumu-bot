@@ -64,7 +64,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
         var services = applicationContext.getBeansOfType(MessageService.class);
         permissionImplement.init(services);
         permission.init(applicationContext);
-        HandleUtil.init(applicationContext);
 
 //        initFountWidth();
 
