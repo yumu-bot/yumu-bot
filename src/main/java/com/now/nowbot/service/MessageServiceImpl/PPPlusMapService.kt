@@ -1,5 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl
 
+import com.now.nowbot.model.JsonData.BeatMap
+import com.now.nowbot.model.JsonData.PPPlus
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
@@ -57,6 +59,7 @@ open class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
         }
 
+        map.addPPPlus(pp)
         val dataMap = mutableMapOf<String, Any>()
         dataMap["isUser"] = false
         dataMap["me"] = map
@@ -65,4 +68,11 @@ open class PPPlusMapService(
         event.subject.sendImage(image)
     }
 
+
+    private fun BeatMap.addPPPlus(pp: PPPlus) {
+        cs = 0f
+        ar = 0f
+        od = 0f
+        starRating = pp.difficulty.total?.toFloat() ?: 0f
+    }
 }
