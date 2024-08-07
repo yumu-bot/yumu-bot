@@ -440,11 +440,12 @@ enum class Instruction(val pattern: Pattern) {
     TEST_MAP(CmdPatterBuilder.create {
         commands("testmap", "tm$REG_IGNORE")
         group("id", "\\d+")
+        space()
         appendMod()
     }),
     TEST_TAIKO_SR_CALCULATE(CmdPatterBuilder.create {
         commands("testtaiko", "tt$REG_IGNORE")
-        group("data", "[xo ]+")
+        group("data", "[xo\\s]+")
     }),
     MAP_4D_CALCULATE(CmdPatterBuilder.create("^[!！＃#]\\s*(?i)cal") {
         space()
@@ -457,7 +458,8 @@ enum class Instruction(val pattern: Pattern) {
     }),
     DEPRECATED_BPHT(CmdPatterBuilder.create {
         commands("(?<bpht>bpht)")
-        append("(-i)?")
+        append("(-i)")
+        whatever()
     }),
     DEPRECATED_SET(CmdPatterBuilder.create {
         commands("(?<set>set)")
