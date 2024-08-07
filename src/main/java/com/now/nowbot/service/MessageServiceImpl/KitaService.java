@@ -27,7 +27,10 @@ public class KitaService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
+        var matcher2 = Instruction.DEPRECATED_YMK.matcher(messageText);
+        if (matcher2.find()) throw new KitaException(KitaException.Type.KITA_Deprecated_K);
+
         var m = Instruction.KITA.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

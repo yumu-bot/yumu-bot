@@ -22,9 +22,10 @@ open class PPPlusMapService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
 ) : MessageService<PPPlusMapService.Param> {
+
     data class Param(
         val bid: Long,
-        val Mods: Int,
+        val mods: Int,
     )
 
     override fun isHandle(event: MessageEvent?, messageText: String?, data: MessageService.DataValue<Param?>): Boolean {
@@ -55,12 +56,12 @@ open class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, data.Mods)
+            performancePlusService.getMapPerformancePlus(data.bid, data.mods)
         } catch (e: Exception) {
             throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
         }
 
-        map.addPPPlus(pp, data.Mods)
+        map.addPPPlus(pp, data.mods)
         val dataMap = mutableMapOf<String, Any>()
         dataMap["isUser"] = false
         dataMap["me"] = map

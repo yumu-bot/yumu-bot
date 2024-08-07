@@ -42,7 +42,8 @@ public class QQMsgUtil {
         from.sendImage(image);
     }
 
-    public static void sendImages(MessageEvent event, List<byte[]> images) {
+
+    public static void sendImages(MessageEvent event, List<byte[]> images) throws InterruptedException {
         var from = event.getSubject();
         var b = new MessageChain.MessageChainBuilder();
 
@@ -52,6 +53,7 @@ public class QQMsgUtil {
             // qq 一次性只能发 20 张图
             if (i >= 20 && i % 20 == 0) {
                 from.sendMessage(b.build());
+                Thread.sleep(1000L);
                 b = new MessageChain.MessageChainBuilder();
             }
 

@@ -399,7 +399,7 @@ enum class Instruction(val pattern: Pattern) {
         group("b", "\\w", whatever = false)
     }),
     KITA(CmdPatterBuilder.create {
-        commands("k(?![^x\\s])", "kita")
+        commands("kt(?![^x\\s])", "kita")
         group("noBG", "x$REG_IGNORE")
         space()
         // 这里改了
@@ -466,6 +466,9 @@ enum class Instruction(val pattern: Pattern) {
     }),
     DEPRECATED_AYACHI_NENE(CmdPatterBuilder.create {
         commands("(?<nene>0d0(0)?)")
+    }),
+    DEPRECATED_YMK(CmdPatterBuilder.create {
+        commands("(?<k>k)")
     }),
     DEPRECATED_YMX(CmdPatterBuilder.create {
         commands("(?<x>x)")
