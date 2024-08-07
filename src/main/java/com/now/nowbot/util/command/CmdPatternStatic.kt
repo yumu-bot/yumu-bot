@@ -94,12 +94,12 @@ val REG_EXCLAIM: String = "[!！]"
 @Language("RegExp")
 val REG_IGNORE: String = "(?![A-Za-z\\-_])"
 
-// 用在多成绩的指令里（可能有 s）
 @Language("RegExp")
+// 用在多成绩的指令里（可能有 s）
 val REG_IGNORE_S: String = "(?![^s:：\\d\\s])"
 
-// 用在有时候需要匹配 bid 和 sid 的指令里
 @Language("RegExp")
+// 用在有时候需要匹配 bid 和 sid 的指令里
 val REG_IGNORE_BS: String = "(?![^bs:：\\d\\s])"
 
 @Language("RegExp")
@@ -130,7 +130,7 @@ val REG_MOD: String = "($REG_PLUS(?<$FLAG_MOD>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|
 
 @Language("RegExp")
 // 加号不一定要
-val REG_MOD_ANY: String = "($REG_PLUS_01(?<$FLAG_MOD>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))"
+val REG_MOD_01: String = "($REG_PLUS_01(?<$FLAG_MOD>(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)+))"
 
 @Language("RegExp")
 val REG_MODE: String = "(?<$FLAG_MODE>osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"

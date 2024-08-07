@@ -124,8 +124,12 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun appendMod(whatever: Boolean = true) {
-        column()
         +REG_MOD
+        if (whatever) whatever()
+    }
+
+    fun appendModAny(whatever: Boolean = true) {
+        +REG_MOD_01
         if (whatever) whatever()
     }
 

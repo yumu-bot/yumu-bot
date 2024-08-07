@@ -206,7 +206,8 @@ enum class Instruction(val pattern: Pattern) {
     MAP(CmdPatterBuilder.create {
         commands("beatmap", "map$REG_IGNORE", "m$REG_IGNORE")
         // 看花眼了
-        append("([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>$REG_NUMBER_DECIMAL)[a%]?)?\\s*([cx]?(?<combo>$REG_NUMBER_DECIMAL)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*$REG_MOD")
+        append("([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>$REG_NUMBER_DECIMAL)[a%]?)?\\s*([cx]?(?<combo>$REG_NUMBER_DECIMAL)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*")
+        appendMod()
     }),
     QUALIFIED_MAP(CmdPatterBuilder.create {
         commands("qualified", "qua$REG_IGNORE", "q$REG_IGNORE")
@@ -439,7 +440,7 @@ enum class Instruction(val pattern: Pattern) {
     TEST_MAP(CmdPatterBuilder.create {
         commands("testmap", "tm$REG_IGNORE")
         group("id", "\\d+")
-        group("data", REG_NAME_MULTI)
+        appendMod()
     }),
     TEST_TAIKO_SR_CALCULATE(CmdPatterBuilder.create {
         commands("testtaiko", "tt$REG_IGNORE")
@@ -451,8 +452,7 @@ enum class Instruction(val pattern: Pattern) {
         space()
         group("value", REG_NUMBER_DECIMAL, whatever = false)
         space()
-        append(REG_PLUS_01)
-        append(REG_MOD_ANY)
+        appendModAny()
 
     }),
     DEPRECATED_BPHT(CmdPatterBuilder.create {
