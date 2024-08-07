@@ -140,7 +140,7 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
             if (! StringUtils.hasText(s)) continue;
 
             try {
-                ids.add(Long.parseLong(s));
+                ids.add(Long.parseLong(s.trim()));
             } catch (NumberFormatException e) {
                 try {
                     ids.add(userApiService.getOsuId(s.trim()));
@@ -154,7 +154,11 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
             try {
                 users.add(userApiService.getPlayerInfo(id));
             } catch (WebClientResponseException e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id);
+                try {
+                    users.add(userApiService.getPlayerInfo(id.toString()));
+                } catch (WebClientResponseException e1) {
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id);
+                }
             }
         }
 
