@@ -177,9 +177,10 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun column(whatever: Boolean = true) {
-        +REG_COLUMN
-        +REG_SPACE_ANY
-        if (whatever) whatever()
+        startGroup(whatever) {
+            +REG_COLUMN
+            +REG_SPACE_ANY
+        }
     }
 
     fun append(@Language("RegExp") str: String) {
