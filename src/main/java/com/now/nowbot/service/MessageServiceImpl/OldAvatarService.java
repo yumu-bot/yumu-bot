@@ -140,11 +140,11 @@ public class OldAvatarService implements MessageService<OldAvatarService.OAParam
             if (! StringUtils.hasText(s)) continue;
 
             try {
-                ids.add(Long.parseLong(s.trim()));
-            } catch (NumberFormatException e) {
+                ids.add(userApiService.getOsuId(s.trim()));
+            } catch (WebClientResponseException e) {
                 try {
-                    ids.add(userApiService.getOsuId(s.trim()));
-                } catch (WebClientResponseException e1) {
+                    ids.add(Long.parseLong(s.trim()));
+                } catch (NumberFormatException e1) {
                     throw new GeneralTipsException(GeneralTipsException.Type.G_Null_UserName);
                 }
             }
