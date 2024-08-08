@@ -5,11 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 interface BeatmapObjectCountMapper:JpaRepository<BeatmapObjectCountLite, Long> {
-    @Query("select b.density from BeatmapObjectCountLite b where b.bid = :bid and b.check = :check")
-    fun getDensityByBidAndCheck(bid: Long, check: String): IntArray?
+    @Query("""
+         select density from osu_beatmap_object_count where bid = :bid and check_str = :check
+    """, nativeQuery = true)
+    fun getDensityByBidAndCheck(bid: Long, check: String): List<IntArray>
 
     @Query("select b.density from BeatmapObjectCountLite b where b.bid = :bid")
-    fun getDensityByBid(bid: Long): IntArray?
+    fun getDensityByBid(bid: Long): List<IntArray>
 
     @Query("""
         select (oc.timestamp_arr[:index] - oc.timestamp_arr[1]) as result

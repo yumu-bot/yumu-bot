@@ -270,13 +270,15 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Override
     public int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception {
-        int[] result;
+        int[] result = null;
         if (StringUtils.hasText(map.getMd5())) {
-            result = beatmapObjectCountMapper.getDensityByBidAndCheck(map.getBeatMapID(), map.getMd5());
+            var r = beatmapObjectCountMapper.getDensityByBidAndCheck(map.getBeatMapID(), map.getMd5());
+            if (!r.isEmpty()) result = r.getFirst();
         } else {
-            result = beatmapObjectCountMapper.getDensityByBid(map.getBeatMapID());
+            var r = beatmapObjectCountMapper.getDensityByBid(map.getBeatMapID());
+            if (!r.isEmpty()) result = r.getFirst();
         }
-        if (result == null || result.length == 0) {
+        if (result == null) {
             var dataObj = getNewCount(map.getBeatMapID());
             dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
             result = dataObj.getDensity();
