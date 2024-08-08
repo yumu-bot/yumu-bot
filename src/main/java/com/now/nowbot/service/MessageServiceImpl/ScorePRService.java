@@ -136,6 +136,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         byte[] image;
 
         if (isMultipleScore) {
+            if (event.getSubject().getId() == 595985887L) ContextUtil.setContext("isNewbie", true);
             int scoreSize = scoreList.size();
 
             //M太大

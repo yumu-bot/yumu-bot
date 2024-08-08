@@ -9,6 +9,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.MessageServiceImpl.ScorePRService;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -119,6 +120,9 @@ public class ImageService {
 
     public byte[] getPanelA5(OsuUser user, List<Score> scores) {
         HttpHeaders headers = getDefaultHeader();
+        if (ContextUtil.getContext("isNewbie", Boolean.FALSE, Boolean.class)) {
+            scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() < 5.6f).toList();
+        }
         var body = Map.of(
                 "user", user,
                 "score", scores
