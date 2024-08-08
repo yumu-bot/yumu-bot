@@ -2,7 +2,6 @@ package com.now.nowbot;
 
 
 import com.now.nowbot.config.OneBotConfig;
-import com.now.nowbot.util.Instruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.Banner;

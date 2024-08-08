@@ -55,6 +55,8 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     Integer modeInt;
     Integer ranked;
+    @Column(name = "check_str", columnDefinition = "char(32)")
+    String md5;
 
     @ManyToOne()
     @JoinColumn(name = "map_id")
@@ -85,6 +87,7 @@ public class BeatmapLite {
         setHitLength(beatMap.getHitLength());
         setModeInt(beatMap.getModeInt());
         setUserId(beatMap.getMapperID());
+        setMd5(beatMap.getMd5());
     }
 
     public Long getId() {
@@ -282,6 +285,14 @@ public class BeatmapLite {
         this.mapSet = mapSet;
     }
 
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
     public BeatMap toBeatMap(){
         var b = new BeatMap();
         b.setBeatMapID(getId());
@@ -305,6 +316,7 @@ public class BeatmapLite {
         b.setHitLength(getHitLength());
         b.setModeInt(getModeInt());
         b.setMapperID(getUserId());
+        b.setMd5(getMd5());
         return b;
     }
 }

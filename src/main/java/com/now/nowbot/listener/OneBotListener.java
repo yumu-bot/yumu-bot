@@ -49,7 +49,7 @@ public class OneBotListener {
         if (nowTime - onebotEvent.getTime() > 30) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
         log.trace("收到消息[{}] -> {}", event.getSubject().getId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
-
+        if (event.getGroup().getId() != 722292097 && event.getGroup().getId() != 746671531) return;
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }

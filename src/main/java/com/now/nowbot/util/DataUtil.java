@@ -7,7 +7,6 @@ import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.OsuUser;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.model.JsonData.Statistics;
-import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import io.github.humbleui.skija.Typeface;
@@ -25,7 +24,6 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class DataUtil {
     private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
@@ -407,83 +405,6 @@ public class DataUtil {
         }
     }
 
-    public static double getProgress(Score score, String mapStr) throws IOException {
-        if (!Objects.equals(score.getRank(), "F") && score.getRank() != null) return 1d;
-
-        var hitObjects = OsuFile.getInstance(mapStr).getOsu().getHitObjects();
-        var count = getScoreJudgeCount(score);
-
-        if (count >= hitObjects.size()) return 1d;
-
-        return 1d * hitObjects.get(Math.max(count - 1, 0)).getStartTime() / hitObjects.getLast().getEndTime();
-    }
-
-    private static int getScoreJudgeCount(@NonNull Score score) {
-        var mode = score.getMode();
-
-        var s = score.getStatistics();
-        var n320 = s.getCountGeki();
-        var n300 = s.getCount300();
-        var n200 = s.getCountKatu();
-        var n100 = s.getCount100();
-        var n50 = s.getCount50();
-        var n0 = s.getCountMiss();
-
-        return switch (mode) {
-            case OSU -> n300 + n100 + n50 + n0;
-            case TAIKO -> n300 + n100 + n0;
-            case CATCH -> n300 + n0; //目前问题是，这个玩意没去掉miss中果，会偏大
-            //const attr = await getMapAttributes(bid, 0, 2, reload);
-            //return attr.nFruits || n300 + n0;
-
-            default -> n320 + n300 + n200 + n100 + n50 + n0;
-        };
-
-
-    }
-
-    public static List<Integer> getMapObjectList(String mapStr) {
-        var bucket = mapStr.split("\\[\\w+]");
-        var hitObjects = bucket[bucket.length - 1].split("\\s+");
-        var hitObjectStr = new ArrayList<String>();
-        for (var x : hitObjects) {
-            if (!x.trim().isEmpty()) {
-                hitObjectStr.add(x);
-            }
-        }
-
-        var p = Pattern.compile("^\\d+,\\d+,(\\d+)");
-
-        return hitObjectStr.stream()
-                .map((m) -> {
-                    var m2 = p.matcher(m);
-                    if (m2.find()) {
-                        return Integer.parseInt(m2.group(1));
-                    } else {
-                        return 0;
-                    }
-                }).toList();
-    }
-
-    // 获取谱面密度，分割成 26 长度的数组
-    public static List<Integer> getGrouping26(List<Integer> x) {
-        var steps = (x.getLast() - x.getFirst()) / 26 + 1;
-        var out = new LinkedList<Integer>();
-        int m = x.getFirst() + steps;
-        short sum = 0;
-        for (var i : x) {
-            if (i < m) {
-                sum++;
-            } else {
-                out.add((int) sum);
-                sum = 0;
-                m += steps;
-            }
-        }
-
-        return out;
-    }
-
     public static int AR2MS(float ar){
         if (0 < ar - 5){
             if (ar > 11) return 300;
@@ -599,15 +520,6 @@ public class DataUtil {
             beatMap.setHP(DataUtil.HP(Optional.ofNullable(beatMap.getHP()).orElse(0f), mods));
             beatMap.setTotalLength(DataUtil.Length(beatMap.getTotalLength(), mods));
         }
-    }
-
-    public static void main(String[] args) {
-        System.out.println(OD(7, OsuMod.Easy.value));
-        System.out.println(OD(7, OsuMod.add(OsuMod.Easy.value, OsuMod.HalfTime)));
-        System.out.println(OD(7, OsuMod.add(OsuMod.HardRock.value, OsuMod.HalfTime)));
-        System.out.println(OD(7, OsuMod.HardRock.value));
-        System.out.println(OD(7, OsuMod.DoubleTime.value));
-        System.out.println(OD(7, OsuMod.add(OsuMod.HardRock.value, OsuMod.DoubleTime)));
     }
 
     public static int getPlayedRankedMapCount(double bonusPP) {

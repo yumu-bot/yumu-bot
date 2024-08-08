@@ -10,6 +10,8 @@ import com.now.nowbot.model.JsonData.Covers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class BeatMapDao {
     MapSetMapper mapSetMapper;
@@ -41,6 +43,14 @@ public class BeatMapDao {
             throw new NullPointerException("not found");
         }
         return lite.get();
+    }
+
+    public Optional<MapSetLite> getMapSetLite(long id){
+        return beatMapMapper.getMapSetByBid(id);
+    }
+
+    public Optional<MapSetLite> getMapSetLite(int id){
+        return getMapSetLite((long)id);
     }
 
     public static BeatMap fromBeatmapLite(BeatmapLite bl){

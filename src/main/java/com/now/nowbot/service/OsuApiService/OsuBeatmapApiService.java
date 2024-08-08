@@ -55,6 +55,14 @@ public interface OsuBeatmapApiService {
 
     BeatMap getBeatMapInfoFromDataBase(long bid);
 
+    boolean isRanked(long bid);
+
+    int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception;
+
+    int getFailTime(long bid, int passObj);
+
+    double getPlayPercentage(Score score);
+
     BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
 
     BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue);
@@ -274,9 +282,6 @@ public interface OsuBeatmapApiService {
     default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
         JniResult r;
-
-
-
         try {
             r = getMaxPP(beatMap.getBeatMapID(), mode, modsInt);
         } catch (Exception e) {
