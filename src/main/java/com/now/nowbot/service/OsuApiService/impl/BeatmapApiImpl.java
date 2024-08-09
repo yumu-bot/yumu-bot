@@ -163,16 +163,16 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public boolean isRanked(long bid) {
+    public boolean testNewbieCountMap(long bid) {
         try {
-            var set = beatMapDao.getBeatMapLite(bid);
-            return set.getStatus().equalsIgnoreCase("ranked");
+            var map = beatMapDao.getBeatMapLite(bid);
+            return map.getStatus().equalsIgnoreCase("ranked") && map.getDifficultyRating() < 5.7;
         } catch (Exception ignore) {
         }
 
         try {
             var map = getBeatMapInfo(bid);
-            return map.getStatus().equalsIgnoreCase("ranked");
+            return map.getStatus().equalsIgnoreCase("ranked") && map.getStarRating() < 5.7;
         } catch (WebClientResponseException.NotFound e) {
             return false;
         }
