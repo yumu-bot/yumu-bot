@@ -19,7 +19,7 @@ class NewbiePlayStatisticsService(
 ) : MessageService<Any?> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Any?>): Boolean {
-//        if (event.subject.id != 695600319L) return false
+        if (event.subject.id != 695600319L) return false
         if (messageText.startsWith("统计打图数据")) {
             data.value = messageText.substringAfter("统计打图数据").trim()
             return true

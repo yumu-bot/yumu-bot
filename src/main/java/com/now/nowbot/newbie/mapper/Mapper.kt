@@ -52,7 +52,7 @@ class NewbieService(
     private val log = LoggerFactory.getLogger(NewbieService::class.java)
 
     fun checkRank(bid: Int, cache: MutableMap<Int, Boolean>) = cache.getOrPut(bid) {
-        osuMapService.isRanked(bid.toLong())
+        osuMapService.testNewbieCountMap(bid.toLong())
     }
 
     fun getUserPlayRecords(

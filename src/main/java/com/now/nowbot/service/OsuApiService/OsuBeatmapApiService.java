@@ -55,7 +55,7 @@ public interface OsuBeatmapApiService {
 
     BeatMap getBeatMapInfoFromDataBase(long bid);
 
-    boolean isRanked(long bid);
+    boolean testNewbieCountMap(long bid);
 
     int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception;
 
