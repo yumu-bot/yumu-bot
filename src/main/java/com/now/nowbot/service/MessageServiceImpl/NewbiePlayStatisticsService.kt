@@ -5,6 +5,7 @@ import com.now.nowbot.newbie.mapper.NewbieService
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.stereotype.Service
@@ -18,6 +19,11 @@ class NewbiePlayStatisticsService(
     private val botContainer: BotContainer,
 ) : MessageService<Any?> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
+    @PostConstruct
+    fun init() {
+        log.info("===== NewbiePlayStatisticsService init success! =====")
+    }
+
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Any?>): Boolean {
         if (event.subject.id != 695600319L) return false
         if (messageText.startsWith("统计打图数据")) {
