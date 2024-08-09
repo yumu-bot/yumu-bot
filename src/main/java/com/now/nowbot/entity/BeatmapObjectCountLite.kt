@@ -7,7 +7,7 @@ import org.hibernate.annotations.Type
 @Entity
 @Table(
     name = "osu_beatmap_object_count",
-    indexes = [Index(name = "bid", columnList = "bid"), Index(name = "check", columnList = "bid, check_str")]
+    indexes = [Index(name = "bid", columnList = "bid"), Index(name = "check_s", columnList = "bid, check_str")]
 )
 class BeatmapObjectCountLite(
     @Id

@@ -13,6 +13,7 @@ object AsyncMethodExecutor {
     private val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
 
     @Throws(Exception::class)
+    @Suppress("UNCHECKED_CAST")
     private fun <T> waitForResult(lock: Condition, key: Any, defaultValue: T): T {
         var countDownLock: CountDownLatch? = null
         try {
@@ -68,6 +69,7 @@ object AsyncMethodExecutor {
     }
 
     @Throws(Exception::class)
+    @Suppress("UNCHECKED_CAST")
     private fun <T> waitForResult(lock: Condition, key: Any, getDefault: Supplier<T>): T {
         var countDownLock: CountDownLatch? = null
         try {
