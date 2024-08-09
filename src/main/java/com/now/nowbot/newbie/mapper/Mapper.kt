@@ -5,11 +5,10 @@ import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.DependsOn
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,7 +44,7 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
 
 @Service
 @DependsOn("newbieEntityManagerFactory")
-@ConditionalOnBean(LocalContainerEntityManagerFactoryBean::class, name = ["newbieEntityManagerFactory"])
+@ConditionalOnProperty(prefix = "spring.datasource.newbie", name = ["enable"], havingValue = "true")
 class NewbieService(
     private val mapper: UserPlayRecordsMapper,
     private var osuMapService: OsuBeatmapApiService,
