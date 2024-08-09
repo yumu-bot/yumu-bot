@@ -32,8 +32,8 @@ class NewbiePlayStatisticsService(
 
     override fun HandleMessage(event: MessageEvent, data: Any?) {
         if (event !is GroupMessageEvent) return
-        val bot = botContainer.robots[1708547915] ?: throw Exception("Bot not found")
-        val userIds = bot.getGroupMemberList(595985887).data.map { it.userId }.slice(500..699)
+        val ng = event.bot.getGroup(695600319L)
+        val userIds = ng.allUser.map { it.id }.slice(500..699)
         event.group.sendMessage("正在统计打图数据，总计 ${userIds.size} 人, 请稍候")
         val fPath = Path("/home/spring/result.txt")
         val write = Files.newOutputStream(fPath)
@@ -46,6 +46,6 @@ class NewbiePlayStatisticsService(
         buffer.flush()
         buffer.close()
 
-        event.group.sendFile(Files.readAllBytes(fPath), "result.csv")
+        ng.sendFile(Files.readAllBytes(fPath), "result.csv")
     }
 }
