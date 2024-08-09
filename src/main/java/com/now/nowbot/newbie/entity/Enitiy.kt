@@ -68,8 +68,7 @@ data class UserPlayRecords(
 data class Bindings(
     @Id
     @Column(name = "UserId")
-    var userId: Long?,
+    var qq: Long?,
     @Column(name = "OsuId")
     var osuId: Int?,
-
 )

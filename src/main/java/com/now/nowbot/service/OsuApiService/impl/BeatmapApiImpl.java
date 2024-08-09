@@ -300,7 +300,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 return 0;
             }
         }
-        return time;
+        return time / 1000;
     }
 
     /**

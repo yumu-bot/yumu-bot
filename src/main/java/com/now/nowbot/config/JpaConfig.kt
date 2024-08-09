@@ -1,5 +1,7 @@
 package com.now.nowbot.config
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -87,8 +89,8 @@ class NewbieJpa(
 
         val jpa = HibernateJpaVendorAdapter()
         factory.jpaVendorAdapter = jpa
-        val prop = Properties()
-        prop["show-sql"] = env.getProperty("spring.jpa.show-sql")
+        val prop = Properties()// org.hibernate.SQL
+        prop["hibernate.show_sql"] = env.getProperty("spring.jpa.show-sql")
         prop["database-platform"] = env.getProperty("spring.jpa.database-platform")
         prop["hibernate.ddl-auto"] = "none"
         prop["hibernate.globally_quoted_identifiers"] = "true"
@@ -98,12 +100,20 @@ class NewbieJpa(
 
     @Bean
     fun newbieDataSource(): DataSource {
-        val dataSource = DriverManagerDataSource()
-        dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name", ""))
-        dataSource.url = env.getProperty("spring.datasource.newbie.url")
-        dataSource.username = env.getProperty("spring.datasource.newbie.username")
-        dataSource.password = env.getProperty("spring.datasource.newbie.password")
-        return dataSource
+        val config = HikariConfig()
+        config.driverClassName = env.getProperty("spring.datasource.driver-class-name", "")
+        config.jdbcUrl = env.getProperty("spring.datasource.newbie.url")
+        config.username = env.getProperty("spring.datasource.newbie.username")
+        config.password = env.getProperty("spring.datasource.newbie.password")
+
+        // 设置连接池参数
+        config.maximumPoolSize = 10
+        config.minimumIdle = 5
+        config.connectionTimeout = 6000_000
+        config.idleTimeout = 600_000
+        config.maxLifetime = 1800_000
+
+        return HikariDataSource(config)
     }
 
     @Bean("newbieTransactionManager")

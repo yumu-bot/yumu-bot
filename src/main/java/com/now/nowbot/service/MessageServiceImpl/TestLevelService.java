@@ -30,11 +30,11 @@ public class TestLevelService implements MessageService<BinUser> {
 
     // 娱乐评分
     @Resource
-    BindDao            bindDao;
+    BindDao              bindDao;
     @Resource
-    OsuScoreApiService scoreApiService;
+    OsuScoreApiService   scoreApiService;
     @Resource
-    OsuUserApiService  osuUserApiService;
+    OsuUserApiService    osuUserApiService;
     @Resource
     OsuBeatmapApiService beatmapApiService;
 
@@ -106,13 +106,13 @@ public class TestLevelService implements MessageService<BinUser> {
 
 
         bp.stream()
-                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getBeatMapID()))
+                .filter(s -> !mapIdSet.contains(s.getBeatMap().getBeatMapID()))
                 .sorted(Comparator.comparingInt(Score::getMaxCombo).reversed())
                 .limit(5)
                 .forEach(s -> mapIdSet.add(s.getBeatMap().getBeatMapID()));
 
         bp.stream()
-                .filter(s -> ! mapIdSet.contains(s.getBeatMap().getBeatMapID()))
+                .filter(s -> !mapIdSet.contains(s.getBeatMap().getBeatMapID()))
                 .map(s -> new ScoreLite(s.getMaxCombo(), s.getBeatMap().getMaxCombo() - s.getMaxCombo(),
                         s.getAccuracy(), OsuMod.getModsValueFromAbbrList(s.getMods()), s.getBeatMap().getBeatMapID()))
                 .sorted(Comparator.comparingInt(ScoreLite::diff)
@@ -121,8 +121,9 @@ public class TestLevelService implements MessageService<BinUser> {
                         .thenComparingInt(ScoreLite::mods))
                 .limit(5).forEach(s -> mapIdSet.add(s.mapId));
 
-        var suppliers = mapIdSet.stream().<AsyncMethodExecutor.Supplier<BeatmapUserScore>>map(bid -> () -> scoreApiService
-                .getScore(bid, user, user.getOsuMode())).toList();
+        var suppliers = mapIdSet.stream()
+                .<AsyncMethodExecutor.Supplier<BeatmapUserScore>>map(bid -> () -> scoreApiService
+                        .getScore(bid, user, user.getOsuMode())).toList();
         var scores = AsyncMethodExecutor.AsyncSupplier(suppliers);
         double sum = 0;
 

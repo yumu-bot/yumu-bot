@@ -1,208 +1,224 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+object AsyncMethodExecutor {
+    private val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
 
-public class AsyncMethodExecutor {
-    private static final Logger log = LoggerFactory.getLogger(AsyncMethodExecutor.class);
-
-    public interface Supplier<T> {
-        T get() throws Exception;
-    }
-
-    public interface Runnable {
-        void run() throws Exception;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T waitForResult(Condition lock, Object key, T defaultValue) throws Exception {
-        CountDownLatch countDownLock = null;
+    @Throws(Exception::class)
+    private fun <T> waitForResult(lock: Condition, key: Any, defaultValue: T): T {
+        var countDownLock: CountDownLatch? = null
         try {
-            reentrantLock.lock();
-            Util.add(lock);
-            lock.await();
-            reentrantLock.unlock();
-            countDownLock = countDownLocks.get(key);
-            Object result = results.get(key);
-            if (result instanceof Exception e) {
-                throw e;
+            reentrantLock.lock()
+            Util.add(lock)
+            lock.await()
+            reentrantLock.unlock()
+            countDownLock = countDownLocks[key]
+            val result = results[key]
+            if (result is Exception) {
+                throw result
             }
-            return (T) result;
-        } catch (InterruptedException ignore) {
-            return defaultValue;
+
+            return  result as T
+        } catch (ignore: InterruptedException) {
+            return defaultValue
         } finally {
-            if (countDownLock != null) countDownLock.countDown();
+            countDownLock?.countDown()
         }
     }
 
-    private static final ReentrantLock                             reentrantLock  = new ReentrantLock();
-    private static final ConcurrentHashMap<Object, CountDownLatch> countDownLocks = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Object, Condition>      locks          = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Object, Object>         results        = new ConcurrentHashMap<>();
+    private val reentrantLock = ReentrantLock()
+    private val countDownLocks = ConcurrentHashMap<Any, CountDownLatch>()
+    private val locks = ConcurrentHashMap<Any, Condition>()
+    private val results = ConcurrentHashMap<Any, Any>()
 
-    @SuppressWarnings("unused")
-    public static <T> T execute(Supplier<T> supplier, Object key, T defaultValue) throws Exception {
-        boolean hasLock;
-        Condition lock;
-        reentrantLock.lock();
-        hasLock = locks.containsKey(key);
-        lock = locks.computeIfAbsent(key, s -> reentrantLock.newCondition());
-        reentrantLock.unlock();
-        if (hasLock) {
-            return waitForResult(lock, key, defaultValue);
+    @JvmStatic
+    @Suppress("unused")
+    @Throws(Exception::class)
+    fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T): T {
+        reentrantLock.lock()
+        val hasLock = locks.containsKey(key)
+        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        reentrantLock.unlock()
+        return if (hasLock) {
+            waitForResult(lock, key, defaultValue)
         } else {
-            return getResult(lock, key, supplier);
+            getResult(lock, key, supplier)
         }
     }
 
-    public static <T> T execute(Supplier<T> supplier, Object key, Supplier<T> getDefault) throws Exception {
-        boolean hasLock;
-        Condition lock;
-        reentrantLock.lock();
-        hasLock = locks.containsKey(key);
-        lock = locks.computeIfAbsent(key, s -> reentrantLock.newCondition());
-        reentrantLock.unlock();
-        if (hasLock) {
-            return waitForResult(lock, key, getDefault);
+    @Throws(Exception::class)
+    fun <T : Any> execute(supplier: Supplier<T>, key: Any, getDefault: Supplier<T>): T {
+        reentrantLock.lock()
+        val hasLock = locks.containsKey(key)
+        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        reentrantLock.unlock()
+        return if (hasLock) {
+            waitForResult(lock, key, getDefault)
         } else {
-            return getResult(lock, key, supplier);
+            getResult(lock, key, supplier)
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T waitForResult(Condition lock, Object key, Supplier<T> getDefault) throws Exception {
-        CountDownLatch countDownLock = null;
+    @Throws(Exception::class)
+    private fun <T> waitForResult(lock: Condition, key: Any, getDefault: Supplier<T>): T {
+        var countDownLock: CountDownLatch? = null
         try {
-            reentrantLock.lock();
-            Util.add(lock);
-            lock.await();
-            reentrantLock.unlock();
-            countDownLock = countDownLocks.get(key);
-            Object result = results.get(key);
-            if (result instanceof Exception e) {
-                throw e;
+            reentrantLock.lock()
+            Util.add(lock)
+            lock.await()
+            reentrantLock.unlock()
+            countDownLock = countDownLocks[key]
+            val result = results[key]
+            if (result is Exception) {
+                throw result
             }
-            return (T) result;
-        } catch (InterruptedException ignore) {
-            return getDefault.get();
+            return result as T
+        } catch (ignore: InterruptedException) {
+            return getDefault.get()
         } finally {
-            if (countDownLock != null) countDownLock.countDown();
+            countDownLock?.countDown()
         }
     }
 
-    private static <T> T getResult(Condition lock, Object key, Supplier<T> supplier) throws Exception {
-
+    @Throws(Exception::class)
+    private fun <T : Any> getResult(lock: Condition, key: Any, supplier: Supplier<T>): T {
         try {
-            T result = supplier.get();
-            results.put(key, result);
-            return result;
-        } catch (Exception e) {
-            results.put(key, e);
-            throw e;
+            val result = supplier.get()
+            results[key] = result
+            return result
+        } catch (e: Exception) {
+            results[key] = e
+            throw e
         } finally {
-            reentrantLock.lock();
-            int locksSum = Util.getAndRemove(lock);
-            log.info("sum : {}", locksSum);
-            CountDownLatch count = countDownLocks.computeIfAbsent(key, k -> new CountDownLatch(locksSum));
-            lock.signalAll();
-            reentrantLock.unlock();
+            reentrantLock.lock()
+            val locksSum = Util.getAndRemove(lock)
+            log.info("sum : {}", locksSum)
+            val count = countDownLocks.computeIfAbsent(key) { k: Any? -> CountDownLatch(locksSum) }
+            lock.signalAll()
+            reentrantLock.unlock()
             if (!count.await(5, TimeUnit.SECONDS)) {
-                if (locksSum > 0) log.warn("wait to long");
+                if (locksSum > 0) log.warn("wait to long")
             }
-            results.remove(key);
-            locks.remove(key);
-            countDownLocks.remove(key);
+            results.remove(key)
+            locks.remove(key)
+            countDownLocks.remove(key)
         }
-
     }
 
-    @SuppressWarnings("unused")
-    public static void execute(Runnable work, Object key) throws Exception {
-        boolean hasLock;
-        Condition lock;
-        reentrantLock.lock();
-        hasLock = locks.containsKey(key);
-        lock = locks.computeIfAbsent(key, s -> reentrantLock.newCondition());
-        reentrantLock.unlock();
+    @Suppress("unused")
+    @Throws(Exception::class)
+    fun execute(work: Runnable, key: Any) {
+        reentrantLock.lock()
+        val hasLock = locks.containsKey(key)
+        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        reentrantLock.unlock()
 
         if (hasLock) {
             try {
-                reentrantLock.lock();
-                lock.await();
-                reentrantLock.unlock();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                reentrantLock.lock()
+                lock.await()
+                reentrantLock.unlock()
+            } catch (e: InterruptedException) {
+                throw RuntimeException(e)
             }
-            return;
+            return
         }
         try {
-            work.run();
+            work.run()
         } finally {
-            reentrantLock.lock();
-            lock.signalAll();
-            reentrantLock.unlock();
-            locks.remove(key);
+            reentrantLock.lock()
+            lock.signalAll()
+            reentrantLock.unlock()
+            locks.remove(key)
         }
     }
 
-    private static class Util {
-        static ConcurrentHashMap<Condition, Integer> conditionCount = new ConcurrentHashMap<>();
-
-        static void add(Condition lock) {
-            conditionCount.putIfAbsent(lock, 0);
-            conditionCount.computeIfPresent(lock, (k, v) -> v + 1);
-        }
-
-        static int getAndRemove(Condition lock) {
-            Integer count = conditionCount.remove(lock);
-            return Objects.nonNull(count) ? count : 0;
-        }
-    }
-
-    public static void AsyncRunnable(Collection<Runnable> works) {
-        works.stream()
-                .<java.lang.Runnable>map(w -> (() -> {
+    fun AsyncRunnable(works: Collection<Runnable>) {
+        works.stream().map { w: Runnable ->
+                (Runnable {
                     try {
-                        w.run();
-                    } catch (Throwable e) {
-                        log.error("Async error", e);
-                    }
-                }))
-                .forEach(Thread::startVirtualThread);
-    }
-
-    public static <T> List<T> AsyncSupplier(Collection<Supplier<T>> works) {
-        int size = works.size();
-        var lock = new CountDownLatch(size);
-        final List<T> results = new LinkedList<>();
-        works.stream()
-                .<java.lang.Runnable>map(w -> () -> {
-                    try {
-                        T result = w.get();
-                        results.add(result);
-                    } catch (Exception e) {
-                        results.add(null);
-                        log.error("AsyncSupplier error", e);
-                    } finally {
-                        lock.countDown();
+                        w.run()
+                    } catch (e: Throwable) {
+                        log.error("Async error", e)
                     }
                 })
-                .forEach(Thread::startVirtualThread);
+            }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+    }
+
+    @JvmStatic
+    fun <T> AsyncSupplier(works: Collection<Supplier<T>>): List<T?> {
+        val size = works.size
+        val lock = CountDownLatch(size)
+        val results: MutableList<T?> = LinkedList()
+        works.stream().map { w: Supplier<T> ->
+                Runnable {
+                    try {
+                        val result = w.get()
+                        results.add(result)
+                    } catch (e: Exception) {
+                        results.add(null)
+                        log.error("AsyncSupplier error", e)
+                    } finally {
+                        lock.countDown()
+                    }
+                }
+            }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
         try {
-            lock.await(120, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            log.error("lock error", e);
+            lock.await(120, TimeUnit.SECONDS)
+        } catch (e: InterruptedException) {
+            log.error("lock error", e)
         }
-        return results;
+        return results
+    }
+
+    fun interface Supplier<T> : java.util.function.Supplier<T> {
+        override fun get(): T
+    }
+
+    fun interface Runnable : java.lang.Runnable{
+        @Throws(Exception::class)
+        override fun run()
+    }
+
+    @Throws(Exception::class)
+    fun <T>doRetry(retry: Int, supplier: Supplier<T>): T {
+        var result:T
+        if (retry <= 0) {
+            throw IllegalArgumentException("retry must be greater than 0")
+        }
+        var err: Exception? = null
+        for (i in 0 until retry) {
+            try {
+                result = supplier.get()
+                return result
+            } catch (e: Exception) {
+                err = e
+                log.error("retry $retry error", e)
+                Thread.sleep(1000L * i * i)
+            }
+        }
+        throw err!!
+    }
+
+    private object Util {
+        var conditionCount: ConcurrentHashMap<Condition, Int> = ConcurrentHashMap()
+
+        fun add(lock: Condition) {
+            conditionCount.putIfAbsent(lock, 0)
+            conditionCount.computeIfPresent(lock) { k: Condition?, v: Int -> v + 1 }
+        }
+
+        fun getAndRemove(lock: Condition): Int {
+            val count = conditionCount.remove(lock)
+            return if (Objects.nonNull(count)) count!! else 0
+        }
     }
 }
