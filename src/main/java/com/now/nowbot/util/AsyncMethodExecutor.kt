@@ -42,7 +42,7 @@ object AsyncMethodExecutor {
     @JvmStatic
     @Suppress("unused")
     @Throws(Exception::class)
-    fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T): T {
+    fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T?): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
         val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
@@ -55,7 +55,7 @@ object AsyncMethodExecutor {
     }
 
     @Throws(Exception::class)
-    fun <T : Any> execute(supplier: Supplier<T>, key: Any, getDefault: Supplier<T>): T {
+    fun <T : Any> execute(supplier: Supplier<T>, key: Any, getDefault: Supplier<T?>): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
         val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
