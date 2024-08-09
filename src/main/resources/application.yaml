@@ -58,8 +58,6 @@ shiro:
     timeout: 10
 #数据源
 spring:
-  profiles:
-    include: [ 'test' ]
   # 用于配置 dc bot 以及请求ppy接口时使用代理
   proxy:
     # type 通常只允许 DIRECT / HTTP / SOCKS
