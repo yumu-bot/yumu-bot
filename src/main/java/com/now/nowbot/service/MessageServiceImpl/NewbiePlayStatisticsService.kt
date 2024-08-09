@@ -21,7 +21,7 @@ class NewbiePlayStatisticsService(
 ) : MessageService<Any?> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Any?>): Boolean {
-        if (event.sender.id != 365246692L) return false
+        if (event.subject.id != 695600319L) return false
         if (messageText.startsWith("统计打图数据")) {
             data.value = messageText.substringAfter("统计打图数据").trim()
             return true
@@ -32,8 +32,8 @@ class NewbiePlayStatisticsService(
 
     override fun HandleMessage(event: MessageEvent, data: Any?) {
         if (event !is GroupMessageEvent) return
-        val ng = event.bot.getGroup(695600319L)
-        val userIds = ng.allUser.map { it.id }.slice(500..699)
+        val ng = event.bot.getGroup(595985887L)
+        val userIds = ng.allUser.map { it.id }
         event.group.sendMessage("正在统计打图数据，总计 ${userIds.size} 人, 请稍候")
         val fPath = Path("/home/spring/result.txt")
         val write = Files.newOutputStream(fPath)
@@ -46,6 +46,6 @@ class NewbiePlayStatisticsService(
         buffer.flush()
         buffer.close()
 
-        ng.sendFile(Files.readAllBytes(fPath), "result.csv")
+        event.group.sendMessage("统计完成, 文件在 /home/spring/result.csv")
     }
 }

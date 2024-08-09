@@ -110,7 +110,7 @@ class NewbieService(
         }
         val todayTime = LocalDate.now().atTime(0, 0, 0)
 //        val yesterdayTime = LocalDate.of(2024, 8, 1).atTime(0, 0, 0)
-        val yesterdayTime = todayTime.minusDays(-1)
+        val yesterdayTime = todayTime.minusDays(1)
         val timeRange = TimeRange(yesterdayTime, todayTime)
         log.info("ready to count ${under3K.size} users")
         return getAll(under3K.toList(), timeRange, userPP)
