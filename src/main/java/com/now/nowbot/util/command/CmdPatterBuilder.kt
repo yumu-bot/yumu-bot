@@ -10,27 +10,13 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param commands 连续的命令 ("p", "pr")
      */
     fun commands(@Language("RegExp") vararg commands: String) {
-        commandBase(null, false, *commands)
+        commandBase(false, *commands)
     }
 
-    /**
-     * 加命令, 前面带short
-     * @param commands 连续的命令 ("p", "pr")
-     */
-    fun commandWithShort(short: String, @Language("RegExp") vararg commands: String) {
-        commandBase(short, false, *commands)
-    }
 
-    fun command(@Language("RegExp") command: String, sort: String? = null, ignore: Boolean = false) {
+    fun command(@Language("RegExp") command: String, ignore: Boolean = false) {
         // "((/ym_sort_)|[!！](ym)?cmd)\\s*"
         +CHAR_GROUP_START
-        if (sort != null) {
-            startGroup(false) {
-                +REG_START_SORT
-                +sort
-            }
-            +CHAR_SEPARATOR
-        }
         +command
         +CHAR_GROUP_END
         // (?![a-zA-Z_]) 避免指令污染
@@ -40,19 +26,12 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun commandWithIgnore(@Language("RegExp") vararg commands: String) {
-        commandBase(null, true, *commands)
+        commandBase(true, *commands)
     }
 
-    fun commandBase(short: String? = null, ignore: Boolean, @Language("RegExp") vararg commands: String) {
+    fun commandBase(ignore: Boolean, @Language("RegExp") vararg commands: String) {
         // "((/ym_sort_)|[!！](ym)?(a|b|c))\\s*"
         +CHAR_GROUP_START
-        if (short != null) {
-            startGroup(false) {
-                +REG_START_SORT
-                +short
-            }
-            +CHAR_SEPARATOR
-        }
         +REG_START_ALL
         startGroup(false) {
             // a|b|c|d

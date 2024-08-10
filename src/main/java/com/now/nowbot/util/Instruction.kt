@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CmdPatterBuilder.create {
-        commandWithShort("help", "help", "帮助", "h")
+        commands("help", "help", "帮助", "h")
         group("module", REG_ANY)
     }),
 
