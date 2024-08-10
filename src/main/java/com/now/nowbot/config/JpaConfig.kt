@@ -36,6 +36,7 @@ class JpaConfig(
         factory.persistenceUnitName = "bot"
 
         val jpa = HibernateJpaVendorAdapter()
+        jpa.setGenerateDdl(true)
         factory.jpaVendorAdapter = jpa
         val prop = Properties()
         prop["show-sql"] = env.getProperty("spring.jpa.show-sql")
@@ -51,12 +52,13 @@ class JpaConfig(
     @Bean
     @Primary
     fun botDataSource(): DataSource {
-        val dataSource = DriverManagerDataSource()
-        dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name", ""))
-        dataSource.url = env.getProperty("spring.datasource.url")
-        dataSource.username = env.getProperty("spring.datasource.username")
-        dataSource.password = env.getProperty("spring.datasource.password")
-        return dataSource
+        val config = HikariConfig()
+        config.driverClassName = env.getProperty("spring.datasource.driver-class-name", "")
+        config.jdbcUrl = env.getProperty("spring.datasource.url")
+        config.username = env.getProperty("spring.datasource.username")
+        config.password = env.getProperty("spring.datasource.password")
+
+        return HikariDataSource(config)
     }
 
 

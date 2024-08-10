@@ -295,12 +295,13 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 var dataObj = getNewCount(bid);
                 if (Objects.requireNonNull(dataObj.getTimestamp()).length < passObj) return 0;
                 dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
-                return Objects.requireNonNull(dataObj.getTimestamp())[passObj];
+                var start = Objects.requireNonNull(dataObj.getTimestamp())[0];
+                return Objects.requireNonNull(dataObj.getTimestamp())[passObj] - start;
             } catch (Exception e) {
                 return 0;
             }
         }
-        return time / 1000;
+        return (time / 1000);
     }
 
     /**
