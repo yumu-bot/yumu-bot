@@ -1,6 +1,5 @@
 package com.now.nowbot.entity
 
-import com.now.nowbot.model.JsonData.BeatMap
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
@@ -20,21 +19,27 @@ class OsuCourseLite(
     var base: String? = null,
 
     @Type(IntArrayType::class)
-    @Column(name = "course_children", columnDefinition = "integer[]")
-    var children: IntArray? = null,
+    @Column(name = "course_single", columnDefinition = "integer[]")
+    var single: IntArray? = null,
 
     @Enumerated(EnumType.STRING)
     var criteriaType: CriteriaType? = null,
+
+    @Enumerated(EnumType.STRING)
+    var criteriaTrend: CriteriaTrend? = null,
 
     var criteriaTarget: Double? = null,
 
     @Enumerated(EnumType.STRING)
     var criteriaScoreType: CriteriaScoreType? = null,
 ) {
+    enum class CriteriaTrend {
+        MORE, MORE_EQUAL, LESS_EQUAL, LESS, EQUAL, NOT_EQUAL
+    }
     enum class CriteriaType {
-        ACC,
+        ACC, COMBO, SCORE
     }
     enum class CriteriaScoreType {
-        V2
+        SCORE, SCORE_V2
     }
 }

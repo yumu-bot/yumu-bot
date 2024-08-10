@@ -1,6 +1,6 @@
 package com.now.nowbot.model.JsonData
 
-import com.now.nowbot.entity.OsuCouresDanLite
+import com.now.nowbot.entity.OsuCourseSingleLite
 import com.now.nowbot.entity.OsuCourseLite
 
 data class Course(
@@ -9,14 +9,14 @@ data class Course(
     val base: String,
     val danBid: List<Long>,
     val danCount: List<Int>,
-    val dan: List<OsuCouresDanLite>,
+    val dan: List<OsuCourseSingleLite>,
     val beatmap: List<BeatMap>,
     val criteria: Criteria,
 ) {
     companion object {
         fun create(
             course: OsuCourseLite,
-            dan: List<OsuCouresDanLite>,
+            dan: List<OsuCourseSingleLite>,
             beatmaps: List<BeatMap>,
         ): Course {
             val criteria = Criteria (
