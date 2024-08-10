@@ -12,6 +12,7 @@ const val CHAR_START: Char = '^'
 const val CHAR_END: Char = '$'
 const val CHAR_GROUP_START: Char = '('
 const val CHAR_GROUP_END: Char = ')'
+const val CHAR_SLASH: Char = '/'
 
 const val CHAR_NAME: String = "[0-9a-zA-Z\\[\\]\\-_]"
 const val CHAR_NAME_WITH_SPACE: String = "[0-9a-zA-Z\\[\\]\\-_ ]"

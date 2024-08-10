@@ -13,6 +13,42 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         commandBase(false, *commands)
     }
 
+    /**
+     * 加命令, 官方机器人的匹配方式
+     * @param commands 连续的命令 ("p", "pr")
+     */
+    fun commandsOfficial(ignore: Boolean = false, @Language("RegExp") vararg commands: String) {
+        +CHAR_GROUP_START
+        +CHAR_SLASH
+        +"ym"
+        space()
+        +commands.joinToString(CHAR_SEPARATOR.toString())
+        +CHAR_GROUP_END
+        space()
+    }
+
+    fun commandsOfficial(@Language("RegExp") vararg commands: String) {
+        commandsOfficial(false, *commands)
+    }
+
+    fun commandOfficial(ignore: Boolean = false, @Language("RegExp") command: String) {
+        +CHAR_GROUP_START
+        +CHAR_SLASH
+        +"ym"
+        space()
+        +command
+        +CHAR_GROUP_END
+        if (ignore) appendIgnoreAlphabets()
+        space()
+    }
+
+    fun commandOfficial(@Language("RegExp") command: String) {
+        commandOfficial(false, command)
+    }
+
+    fun commandOfficialWithIgnore(@Language("RegExp") command: String) {
+        commandOfficial(true, command)
+    }
 
     fun command(@Language("RegExp") command: String, ignore: Boolean = false) {
         // "((/ym_sort_)|[!！](ym)?cmd)\\s*"
@@ -30,7 +66,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     fun commandBase(ignore: Boolean, @Language("RegExp") vararg commands: String) {
-        // "((/ym_sort_)|[!！](ym)?(a|b|c))\\s*"
+        // "([!！](ym)?(a|b|c))\\s*"
         +CHAR_GROUP_START
         +REG_START_ALL
         startGroup(false) {
