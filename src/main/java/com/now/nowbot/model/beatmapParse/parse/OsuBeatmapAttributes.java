@@ -392,7 +392,7 @@ public class OsuBeatmapAttributes {
                 }
                 hit.setPosition(new HitObjectPosition(x, y));
                 hit.setStartTime(startTime);
-                hit.setStartTime(startTime + sliderTime);
+                hit.setEndTime(startTime + sliderTime);
             }
             // 转盘
             case SPINNER -> {

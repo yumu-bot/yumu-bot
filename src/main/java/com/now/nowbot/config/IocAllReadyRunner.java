@@ -18,6 +18,7 @@ import org.springframework.boot.system.ApplicationHome;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.boot.web.embedded.tomcat.TomcatWebServer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,9 @@ public class IocAllReadyRunner implements CommandLineRunner {
     @Resource
     WebServerApplicationContext webServerApplicationContext;
     @Resource(name = "mainExecutor")
-    Executor executor;
+    Executor    executor;
+    @Resource
+    Environment env;
 
     @Autowired
     public IocAllReadyRunner(
@@ -79,8 +82,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
             MatchListenerService.stopAllListener();
         }, "endThread"));
 
-        DiscordConfig discordConfig = applicationContext.getBean(DiscordConfig.class);
-        log.info("dc conf: [{}]", discordConfig.getToken());
+        log.info("newbie: {}", env.getProperty("spring.datasource.newbie.enable", "false"));
 
         try {
             boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");

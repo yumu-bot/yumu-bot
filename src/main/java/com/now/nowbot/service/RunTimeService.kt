@@ -1,55 +1,100 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service
 
+import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.NewbiePlayCount
+import com.now.nowbot.mapper.NewbiePlayCountRepository
+import com.now.nowbot.newbie.mapper.NewbieService
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import jakarta.annotation.Resource
+import org.hibernate.resource.beans.container.internal.NoSuchBeanException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationContext
+import org.springframework.core.task.TaskExecutor
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.scheduling.annotation.SchedulingConfigurer
+import org.springframework.scheduling.config.ScheduledTaskRegistrar
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
+import java.lang.management.ManagementFactory
+import java.util.concurrent.atomic.AtomicInteger
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.annotation.SchedulingConfigurer;
-import org.springframework.scheduling.config.ScheduledTaskRegistrar;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.lang.management.ManagementFactory;
 
 /***
  * 统一设置定时任务
  */
 @Service
-public class RunTimeService implements SchedulingConfigurer {
-    private static final Logger log = LoggerFactory.getLogger(RunTimeService.class);
+class RunTimeService : SchedulingConfigurer {
+    @Resource
+    var biliApiService: BiliApiService? = null
 
     @Resource
-    BiliApiService biliApiService;
-    @Resource
-    BindDao bindDao;
-    @Resource
-    RestTemplate restTemplate;
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    TaskExecutor taskExecutor;
+    var bindDao: BindDao? = null
 
     @Resource
-    ApplicationContext applicationContext;
+    var restTemplate: RestTemplate? = null
 
-    ScheduledTaskRegistrar scheduledTaskRegistrar;
+    @Resource
+    var userApiService: OsuUserApiService? = null
+
+    @Resource
+    var taskExecutor: TaskExecutor? = null
+
+
+    @Resource
+    var applicationContext: ApplicationContext? = null
+
+    var scheduledTaskRegistrar: ScheduledTaskRegistrar? = null
+
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
-
-
     @Scheduled(cron = "0 0 4 * * *")
-    public void refreshToken() {
-        log.info("开始执行更新令牌任务");
-        bindDao.refreshOldUserToken(userApiService);
+    fun refreshToken() {
+        log.info("开始执行更新令牌任务")
+        bindDao!!.refreshOldUserToken(userApiService)
     }
 
 
-    public void sayBp1() {
+    @Scheduled(cron = "0 6 8 * 8,9 *")
+    fun newbiePlayCount() {
+        log.info("开始执行新人统计任务")
+        val newbiePlayCount: NewbiePlayCountRepository
+        val newbieService = try {
+            newbiePlayCount = applicationContext!!.getBean(NewbiePlayCountRepository::class.java)
+            applicationContext!!.getBean(NewbieService::class.java)
+        } catch (e: Exception) {
+            log.warn("未找到统计服务, 结束任务", e)
+            return
+        }
+        val bot: com.mikuac.shiro.core.Bot?
+        val users = try {
+            val botContainer = applicationContext!!.getBean(BotContainer::class.java)
+            bot = botContainer.robots[1563653406] ?: botContainer.robots.values.find {
+                it.groupList.data.find { g -> g.groupId == 595985887L } != null
+            }
+            bot?.getGroupMemberList(595985887L)?.data?.map { it.userId }
+        } catch (e: Exception) {
+            log.warn("未找到主bot机器人, 结束任务", e)
+            return
+        }
+        if (users == null) {
+            log.info("未找到目标群, 结束任务")
+            return
+        }
+        val count = AtomicInteger(0)
+        newbieService.countToday(users).chunked(200) { records ->
+            val u = records.map {
+                NewbiePlayCount(it)
+            }
+            count.addAndGet(u.size)
+            newbiePlayCount.saveAllAndFlush(u)
+        }
+        log.info("新人统计任务结束")
+        bot?.sendGroupMsg(695600319, "新人群打图数据统计任务结束, 共计 ${count.get()} 个活跃玩家", true)
+    }
+
+    fun sayBp1() {
         /*
         var group = bot.getGroup(928936255);
         var devGroup = bot.getGroup(746671531);
@@ -128,44 +173,43 @@ public class RunTimeService implements SchedulingConfigurer {
      * 白天输出内存占用信息
      */
     @Scheduled(cron = "0 0/30 8-18 * * *")
-    public void alive() {
-        var m = ManagementFactory.getMemoryMXBean();
-        var nm = m.getNonHeapMemoryUsage();
-        var t = ManagementFactory.getThreadMXBean();
-        var z = ManagementFactory.getMemoryPoolMXBeans();
-        log.debug("方法区 已申请 {}M 已使用 {}M ",
-                nm.getCommitted() / 1024 / 1024,
-                nm.getUsed() / 1024 / 1024
-        );
-        log.debug("堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
-                m.getHeapMemoryUsage().getMax() / 1024 / 1024,
-                m.getHeapMemoryUsage().getCommitted() / 1024 / 1024,
-                m.getHeapMemoryUsage().getUsed() / 1024 / 1024,
-                t.getThreadCount(),
-                t.getDaemonThreadCount(),
-                t.getPeakThreadCount()
-        );
-        for (var pool : z) {
-            log.debug("vm内存 {} 已申请 {}M 已使用 {}M ",
-                    pool.getName(),
-                    pool.getUsage().getCommitted() / 1024 / 1024,
-                    pool.getUsage().getUsed() / 1024 / 1024
-            );
+    fun alive() {
+        val m = ManagementFactory.getMemoryMXBean()
+        val nm = m.nonHeapMemoryUsage
+        val t = ManagementFactory.getThreadMXBean()
+        val z = ManagementFactory.getMemoryPoolMXBeans()
+        log.debug(
+            "方法区 已申请 {}M 已使用 {}M ",
+            nm.committed / 1024 / 1024,
+            nm.used / 1024 / 1024
+        )
+        log.debug(
+            "堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
+            m.heapMemoryUsage.max / 1024 / 1024,
+            m.heapMemoryUsage.committed / 1024 / 1024,
+            m.heapMemoryUsage.used / 1024 / 1024,
+            t.threadCount,
+            t.daemonThreadCount,
+            t.peakThreadCount
+        )
+        for (pool in z) {
+            log.debug(
+                "vm内存 {} 已申请 {}M 已使用 {}M ",
+                pool.name,
+                pool.usage.committed / 1024 / 1024,
+                pool.usage.used / 1024 / 1024
+            )
         }
     }
 
 
-
-    @Override
-    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        this.scheduledTaskRegistrar = taskRegistrar;
+    override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
+        this.scheduledTaskRegistrar = taskRegistrar
     }
 
-    public void addTask(Runnable task, String cron) {
-        scheduledTaskRegistrar.addCronTask(() -> taskExecutor.execute(task), cron);
-    }
-
-    /*
+    fun addTask(task: Runnable?, cron: String?) {
+        scheduledTaskRegistrar!!.addCronTask({ taskExecutor!!.execute(task!!) }, cron!!)
+    } /*
 
      public void example() {
         try {
@@ -205,4 +249,8 @@ public class RunTimeService implements SchedulingConfigurer {
         }
     }
     */
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(RunTimeService::class.java)
+    }
 }

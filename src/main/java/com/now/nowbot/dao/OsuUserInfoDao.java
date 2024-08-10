@@ -35,6 +35,7 @@ public class OsuUserInfoDao {
     public void saveUsers(List<MicroUser> users) {
         var all = users.stream()
                 .flatMap(microUser -> {
+                    if (microUser.getRulesets() == null) return Stream.empty();
                     var osu = fromStatistics(microUser.getRulesets().getOsu(), OsuMode.OSU);
                     if (osu != null) osu.setOsuID(microUser.getUserID());
                     var taiko = fromStatistics(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);

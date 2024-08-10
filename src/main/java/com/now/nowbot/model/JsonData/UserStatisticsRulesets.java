@@ -2,7 +2,7 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// 这不就是 osumode?
+// 这不就是 osumode? 这是四 mode 下的数据
 public class UserStatisticsRulesets {
     @JsonProperty("osu")
     Statistics osu;

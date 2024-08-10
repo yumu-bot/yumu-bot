@@ -50,7 +50,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
 
     public record ScorePRParam(OsuUser user, int offset, int limit, boolean isRecent, boolean isMultipleScore, OsuMode mode) { }
 
-    public record SingleScoreParam(OsuUser user, Score score, List<Integer> density, Double progress, Map<String, Object> original, Map<String, Object> attributes) {}
+    public record SingleScoreParam(OsuUser user, Score score, int[] density, Double progress, Map<String, Object> original, Map<String, Object> attributes) {}
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ScorePRParam> data) throws Throwable {
@@ -136,6 +136,7 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         byte[] image;
 
         if (isMultipleScore) {
+            if (event.getSubject().getId() == 595985887L) ContextUtil.setContext("isNewbie", true);
             int scoreSize = scoreList.size();
 
             //M太大
@@ -199,9 +200,8 @@ public class ScorePRService implements MessageService<ScorePRService.ScorePRPara
         attributes.put("full_pp", beatmapApiService.getFcPP(score).getPp());
         attributes.put("perfect_pp", beatmapApiService.getMaxPP(score).getPp());
 
-        var fileStr = beatmapApiService.getBeatMapFile(b.getBeatMapID());
-        var density = DataUtil.getGrouping26(DataUtil.getMapObjectList(fileStr));
-        var progress = DataUtil.getProgress(score, fileStr);
+        var density = beatmapApiService.getBeatmapObjectGrouping26(b);
+        var progress = beatmapApiService.getPlayPercentage(score);
 
         return new SingleScoreParam(user, score, density, progress, original, attributes);
     }

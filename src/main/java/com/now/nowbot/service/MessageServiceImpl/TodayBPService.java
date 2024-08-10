@@ -74,7 +74,7 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
                 ContextUtil.consumerWithIndex(
                         (s, index) -> {
                             if (s.getCreateTimePretty().isBefore(laterDay) && s.getCreateTimePretty().isAfter(earlierDay)) {
-                                dataMap.put(index + 1, s);
+                                dataMap.put(index, s);
                             }
                         }
                 )
@@ -98,67 +98,6 @@ public class TodayBPService implements MessageService<TodayBPService.TodayBPPara
             }
             throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, param.user().getUsername(), mode);
         }
-
-        /*
-
-        List<Score> BPs;
-        List<Score> todayBPs = new ArrayList<>();
-        OsuUser user;
-        var BPRanks = new ArrayList<Integer>();
-
-        try {
-            user = userApiService.getPlayerInfo(param.user, param.mode);
-        } catch (Exception e) {
-            throw new TodayBPException(TodayBPException.Type.TBP_Me_TokenExpired);
-        }
-
-        try {
-            BPs = scoreApiService.getBestPerformance(param.user, param.mode, 0, 100);
-        } catch (Exception e) {
-            log.error("今日最好成绩：获取列表失败");
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
-        }
-
-        if (CollectionUtils.isEmpty(BPs)) {
-            if (param.day <= 1) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.getOsuName());
-            }
-
-            // 补救机制 2
-            try {
-                var id = userApiService.getOsuId(param.user.getOsuName() + param.day);
-                user = userApiService.getPlayerInfo(id, param.mode);
-                BPs = scoreApiService.getBestPerformance(id, param.mode, 0, 100);
-            } catch (Exception e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.getOsuName() + param.day);
-            }
-        }
-
-        //筛选
-        LocalDateTime dayBefore = LocalDateTime.now().minusDays(param.day);
-
-        for (int i = 0; i < BPs.size(); i++) {
-            var bp = BPs.get(i);
-
-            if (dayBefore.isBefore(bp.getCreateTimePretty())){
-                todayBPs.add(bp);
-                BPRanks.add(i + 1);
-            }
-        }
-
-        //没有的话
-        if (todayBPs.isEmpty()) {
-            if (! user.getActive()) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.getUsername());
-            }
-            if (param.day <= 1) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_TodayBP, user.getUsername());
-            } else {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, user.getUsername());
-            }
-        }
-
-         */
 
         var ranks = new ArrayList<Integer>();
         var scores = new ArrayList<Score>();
