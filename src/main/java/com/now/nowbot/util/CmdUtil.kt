@@ -87,7 +87,7 @@ object CmdUtil {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(text, *cmd)) throw LogException("指令退避")
+            if (isMyself.get() && isAvoidance(text, *cmd)) throw LogException("退避指令 $cmd")
             throw e
         }
     }
