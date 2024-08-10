@@ -161,7 +161,7 @@ enum class Instruction(val pattern: Pattern) {
         appendMode()
         // 原来是 `([:：](?<mode>[\w\d]+))?(?![\w])\s*(?<name>[0-9a-zA-Z\[\]\-_\s]*)?`
         // ==================实在搞不懂这个 ^ 是干什么用的, 简单理解为必须要一个空格
-        space(1)
+        space()
         appendName()
     }),
     I_MAPPER(CmdPatterBuilder.create {
@@ -465,7 +465,7 @@ enum class Instruction(val pattern: Pattern) {
         commands("(?<set>set)")
     }),
     DEPRECATED_AYACHI_NENE(CmdPatterBuilder.create {
-        commands("(?<nene>0d0(0)?)")
+        append("(?<nene>0d0(0)?)") // 无需 commands
     }),
     DEPRECATED_YMK(CmdPatterBuilder.create {
         commands("(?<k>k)")
