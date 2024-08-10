@@ -469,7 +469,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             is = ChangeCase(is);
         }
 
-        //如果还是有条件。那么进入多匹配模式。
+        //如果还是有空格，那么进入多匹配模式。
         {
             var lm = MULTIPLE.pattern.matcher(left);
             var rm = MULTIPLE.pattern.matcher(right);
@@ -477,7 +477,8 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             var leftHas = lm.find() && (StringUtils.hasText(lm.group("m1")) || StringUtils.hasText(lm.group("m2")));
             var rightHas = rm.find() && (StringUtils.hasText(rm.group("m1")) || StringUtils.hasText(rm.group("m2")));
 
-            if (leftHas || rightHas) {
+            // TODO 临时修改，还没有更好的解决方法
+            if (split != TIME && (leftHas || rightHas)) {
                 return chooseMultiple(s); //LR一样的
             }
         }
