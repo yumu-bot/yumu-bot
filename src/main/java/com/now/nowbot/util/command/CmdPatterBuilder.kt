@@ -120,7 +120,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param whatever 是否可忽略, 不传默认为 true
      */
     fun appendName(whatever: Boolean = true) {
-        +REG_NAME
+        +REG_NAME_GROUP
         if (whatever) whatever()
     }
 
@@ -156,7 +156,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param whatever 是否可忽略, 不传默认为 true
      */
     fun appendNameAndRange(whatever: Boolean = true) {
-        +REG_USER_AND_RANGE
+        +REG_USER_AND_RANGE_GROUP
         if (whatever) whatever()
     }
 
@@ -167,7 +167,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     fun appendMode(whatever: Boolean = true) {
         startGroup(whatever) {
             column(false)
-            +REG_MODE
+            +REG_MODE_GROUP
         }
     }
 
@@ -176,7 +176,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param whatever 是否可忽略, 不传默认为 true
      */
     fun appendMod(whatever: Boolean = true) {
-        +REG_MOD
+        +REG_MOD_1P
         if (whatever) whatever()
     }
 
@@ -195,7 +195,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      */
     fun appendRange(whatever: Boolean = true) {
         column()
-        +REG_RANGE
+        +REG_RANGE_GROUP
         if (whatever) whatever()
     }
 
@@ -299,7 +299,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * 末尾加个'?'
      */
     fun whatever() {
-        +CHAR_WHATEVER
+        +CHAR_01
     }
 
     /**
@@ -313,7 +313,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * 末尾加个'+'
      */
     fun more() {
-        +CHAR_MORE
+        +CHAR_1P
     }
 
     private val patternStr: StringBuilder = StringBuilder()
@@ -324,7 +324,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     fun build(doBuild: CmdPatterBuilder.() -> Unit): Pattern {
         this.doBuild()
         space()
-        +CHAR_END
+        +CHAR_FINAL
         return Pattern.compile(patternStr.toString())
     }
 
@@ -348,8 +348,8 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         if (start != null) {
             +start
         } else {
-            +CHAR_START
-            +REG_START
+            +CHAR_BEGIN
+            +REG_CAPS_INSENSITIVE
             +REG_SPACE_ANY
         }
     }

@@ -80,13 +80,13 @@ enum class Instruction(val pattern: Pattern) {
         commands("setmode", "mode", "sm$REG_IGNORE", "mo$REG_IGNORE")
         startGroup {
             column()
-            +REG_MODE
+            +REG_MODE_GROUP
         }
     }),
 
     SCORE_PR(CmdPatterBuilder.create {
         // 这一坨没法拆好像
-        command("$REG_EXCLAIM(ym)?(?<pass>(pass(?!s)(?<es>es)?|p$REG_IGNORE_S)|(?<recent>(recent|r$REG_IGNORE_S)))(?<s>s)?")
+        command("$REG_EXCLAMINATION(ym)?(?<pass>(pass(?!s)(?<es>es)?|p$REG_IGNORE_S)|(?<recent>(recent|r$REG_IGNORE_S)))(?<s>s)?")
         space()
         `append(ModeQQUidNameRange)`()
     }),
@@ -98,13 +98,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     UU_PR(CmdPatterBuilder.create {
-        command("${REG_EXCLAIM}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
+        command("${REG_EXCLAMINATION}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
         space()
         `append(ModeQQUidNameRange)`()
     }),
 
     SCORE(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<score>(ym)?(score|s$REG_IGNORE))")
+        command("$REG_EXCLAMINATION(?<score>(ym)?(score|s$REG_IGNORE))")
         column()
         space()
         appendBid()
@@ -119,7 +119,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BP(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<bp>(ym)?(bestperformance|best|bp$REG_IGNORE_S|b$REG_IGNORE_S))(?<s>s)?")
+        command("$REG_EXCLAMINATION(?<bp>(ym)?(bestperformance|best|bp$REG_IGNORE_S|b$REG_IGNORE_S))(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
 
@@ -142,7 +142,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     UU_BA(CmdPatterBuilder.create {
-        append("${REG_EXCLAIM}uu?((bp?)?a)(?<info>(-?i))?$REG_SPACE_ANY|uubpanalysis")
+        append("${REG_EXCLAMINATION}uu?((bp?)?a)(?<info>(-?i))?$REG_SPACE_ANY|uubpanalysis")
         space()
         `append(ModeQQUidName)`()
     }),
@@ -208,7 +208,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     PP_MINUS(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
+        command("$REG_EXCLAMINATION(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
         appendMode()
         space()
         group("area1", REG_NAME_ANY)
@@ -257,11 +257,11 @@ enum class Instruction(val pattern: Pattern) {
         commands("mapminus", "mm$REG_IGNORE")
         appendMode()
         space()
-        append("(?<id>\\d+)?\\s*($REG_MOD|([×xX]?\\s*(?<rate>$REG_NUMBER_DECIMAL)[×xX]?))?")
+        append("(?<id>\\d+)?\\s*($REG_MOD_1P|([×xX]?\\s*(?<rate>$REG_NUMBER_DECIMAL)[×xX]?))?")
     }),
 
     NOMINATION(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(nominat(e|ion)s?|nom$REG_IGNORE_BS|n$REG_IGNORE_BS)")
+        command("$REG_EXCLAMINATION(nominat(e|ion)s?|nom$REG_IGNORE_BS|n$REG_IGNORE_BS)")
         column()
         // 这个mode还是特殊的mode
         group("mode", "bid|sid|s|b")
@@ -279,7 +279,7 @@ enum class Instruction(val pattern: Pattern) {
     PP_PLUS(CmdPatterBuilder.create {
         // 245 个字符的正则...
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
-        command("$REG_EXCLAIM(ym)?(?<function>(p[px]$REG_IGNORE|pp[pvx]$REG_IGNORE|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs))")
+        command("$REG_EXCLAMINATION(ym)?(?<function>(p[px]$REG_IGNORE|pp[pvx]$REG_IGNORE|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs))")
         append("(?<area1>$REG_NAME_ANY)?\\s*($REG_COLUMN\\s*(?<area2>$REG_NAME_ANY))?")
     }),
 
@@ -413,7 +413,7 @@ enum class Instruction(val pattern: Pattern) {
     // #7 娱乐指令
 
     DICE(CmdPatterBuilder.create {
-        command("($REG_EXCLAIM|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
+        command("($REG_EXCLAMINATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
         group("number", "-?\\d*")
         group("text", REG_ANY_1P)
     }),

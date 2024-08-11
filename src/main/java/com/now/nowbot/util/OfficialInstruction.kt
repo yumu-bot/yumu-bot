@@ -38,7 +38,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         commandsOfficial("sm$REG_IGNORE", "mo$REG_IGNORE")
         startGroup {
             column()
-            +REG_MODE
+            +REG_MODE_GROUP
         }
     }),
 
@@ -56,13 +56,13 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     UU_PR(CmdPatterBuilder.create {
-        append("${REG_EXCLAIM}uu(?<pass>(p$REG_IGNORE))|uu(?<recent>(r$REG_IGNORE))")
+        append("${REG_EXCLAMINATION}uu(?<pass>(p$REG_IGNORE))|uu(?<recent>(r$REG_IGNORE))")
         space()
         `append(ModeQQUidNameRange)`()
     }),
 
     SCORE(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<score>(ym)?(score|s$REG_IGNORE))")
+        command("$REG_EXCLAMINATION(?<score>(ym)?(score|s$REG_IGNORE))")
         column()
         space()
         appendBid()
@@ -77,7 +77,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     BP(CmdPatterBuilder.create {
-        command("$REG_EXCLAIM(?<bp>b$REG_IGNORE_S)(?<s>s)?")
+        command("$REG_EXCLAMINATION(?<bp>b$REG_IGNORE_S)(?<s>s)?")
         `append(ModeQQUidNameRange)`()
     }),
 
@@ -100,7 +100,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     UU_BA(CmdPatterBuilder.create {
-        append("${REG_EXCLAIM}uu?((bp?)?a)(?<info>(-?i))?$REG_SPACE_ANY|uubpanalysis")
+        append("${REG_EXCLAMINATION}uu?((bp?)?a)(?<info>(-?i))?$REG_SPACE_ANY|uubpanalysis")
         space()
         `append(ModeQQUidName)`()
     }),
