@@ -11,6 +11,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
+import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.BindException;
@@ -35,19 +36,23 @@ import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_QQ_ID;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
-    private static final Logger log = LoggerFactory.getLogger(BindService.class);
-    public static final Map<Long, BindData> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static boolean CLEAR = false;
+    private static final Logger              log          = LoggerFactory.getLogger(BindService.class);
+    public static final  Map<Long, BindData> BIND_MSG_MAP = new ConcurrentHashMap<>();
+    private static       boolean             CLEAR        = false;
 
     @Resource
     OsuUserApiService userApiService;
     @Resource
-    BindDao bindDao;
+    BindDao           bindDao;
     @Resource
-    TaskExecutor taskExecutor;
+    TaskExecutor      taskExecutor;
+    @Resource
+    ImageService      imageService;
 
     // full: 全绑定，只有 bot 开发可以这样做
-    public record BindParam(@NonNull Long qq, String name, boolean at, boolean unbind, boolean isSuper, boolean isFull) {}
+    public record BindParam(@NonNull Long qq, String name, boolean at, boolean unbind, boolean isSuper,
+                            boolean isFull) {
+    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<BindParam> data) throws Throwable {
@@ -61,7 +66,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
         //!bind 给个提示
-        if (! messageText.substring(0,3).contains("ym") && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
+        if (!messageText.substring(0, 3).contains("ym") && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
 
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
@@ -80,7 +85,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
             event = lock.get();
 
-            if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
+            if (Objects.isNull(event) || !event.getRawMessage().toUpperCase().contains("OK")) {
                 from.recall(receipt);
                 return false;
             } else {
@@ -104,7 +109,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                 data.setValue(new BindParam(qq, name, false, unbind, isSuper, isFull));
                 return true;
             }
-        } else if (StringUtils.hasText(qqStr) && ! qqStr.trim().equals("0")) {
+        } else if (StringUtils.hasText(qqStr) && !qqStr.trim().equals("0")) {
             data.setValue(new BindParam(Long.parseLong(qqStr), null, false, unbind, isSuper, isFull));
             return true;
         } else {
@@ -236,18 +241,19 @@ public class BindService implements MessageService<BindService.BindParam> {
                     );
                 }
 
-                if (Objects.nonNull(osuUser) && ! osuUser.getUserID().equals(binUser.getOsuID())) {
+                if (Objects.nonNull(osuUser) && !osuUser.getUserID().equals(binUser.getOsuID())) {
                     throw new RuntimeException();
                 }
 
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
-                if (Objects.isNull(s) || ! s.getRawMessage().toUpperCase().contains("OK")) {
+                if (Objects.isNull(s) || !s.getRawMessage().toUpperCase().contains("OK")) {
                     from.sendMessage(BindException.Type.BIND_Receive_Refused.message);
                     return;
                 }
 
-            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized | BindException e) {
+            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized |
+                     BindException e) {
                 throw e;
             } catch (Exception ignored) {
                 // 如果符合，直接允许绑定
@@ -296,7 +302,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     private void putBind(Long t, BindData b) {
         removeOldBind();
-        if (BIND_MSG_MAP.size() > 20 && ! CLEAR) {
+        if (BIND_MSG_MAP.size() > 20 && !CLEAR) {
             CLEAR = true;
             taskExecutor.execute(() -> {
                 try {
@@ -341,7 +347,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             throw new BindException(BindException.Type.BIND_Question_Overtime);
         }
 
-        if (! a.contains(event.getTextMessage())) {
+        if (!a.contains(event.getTextMessage().trim())) {
             throw new BindException(BindException.Type.BIND_Question_Wrong);
         }
 
@@ -352,8 +358,6 @@ public class BindService implements MessageService<BindService.BindParam> {
         bindDao.bindQQ(qq, new BinUser(UID, name));
     }
 
-    /*
-
     private static int find(int[][] map, int size, int start, int end) {
         int[] toMin = new int[size];
         int[] find = new int[size];
@@ -363,7 +367,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         int pointBef = start;
         for (int n = 0; n < size - 1; n++) {
 
-            int minIndex = - 1;
+            int minIndex = -1;
             int min = Integer.MAX_VALUE;
             for (int i = 0; i < size; i++) {
                 if (find[i] == 1) continue;
@@ -384,53 +388,48 @@ public class BindService implements MessageService<BindService.BindParam> {
                     }
                 }
             }
-            System.out.print((char) ('A' + minIndex));
-            System.out.println(STR."  \{Arrays.toString(toMin)}");
             find[minIndex] = 1;
             pointBef = point;
             point = minIndex;
-
         }
-        return - 1;
+        return toMin[end];
     }
 
-     */
-
-    public static Set<String> getQuestion(@NonNull Contact from) {
-        /*
+    public Set<String> getQuestion(@NonNull Contact from) {
         Random random = new Random();
         int start = random.nextInt(0, 5);
         int end = random.nextInt(5, 10);
         int[][] cost = new int[10][10];
         StringBuilder sb = new StringBuilder();
+        sb.append("|.|");
         for (int i = 0; i < 10; i++) {
-            sb.append('\t').append((char) ('A' + i));
+            sb.append(' ').append((char) ('A' + i)).append(" |");
         }
+        sb.append('\n');
+        sb.append("|---|---|---|---|---|---|---|---|---|---|---|");
         sb.append('\n');
         for (int i = 0; i < 100; i++) {
             if (i / 10 != i % 10) cost[i / 10][i % 10] = random.nextInt(9, 1000);
-            if (i % 10 == 0) sb.append((char) ('A' + (i / 10)));
-            sb.append('\t').append(cost[i / 10][i % 10]);
-            if (i % 10 == 9) sb.append('\n');
+            if (i % 10 == 0) sb.append("|").append((char) ('A' + (i / 10)));
+            sb.append('|').append(cost[i / 10][i % 10]);
+            if (i % 10 == 9) sb.append("|\n");
         }
-        // 10
+        // 11
         var question = STR."""
                 ### 请回答本问题:
 
-                已知有向图, 由 A-J 10个节点组成, 下面是使用邻接矩阵表示
+                已知有向图, 由节点 A-J 组成, 下面是使用邻接矩阵表示
 
-                ```
                 \{sb.toString()}
-                ```
 
-                请半分钟内回答：\{(char) ('A' + start)} 到 \{(char) ('A' + end)} 的最短距离
+                请回答：\{(char) ('A' + start)} 到 \{(char) ('A' + end)} 的最短距离
 
                 直接回复数字即可
                 """;
-
-         */
-
-        from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
-        return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
+        var result = find(cost, 10, start, end);
+        log.info("bind result: {}", result);
+        var image = imageService.getMarkdownImage(question, 730);
+        from.sendImage(image);
+        return new HashSet<>(Collections.singletonList(String.valueOf(result)));
     }
 }

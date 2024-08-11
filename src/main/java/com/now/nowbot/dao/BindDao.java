@@ -97,7 +97,7 @@ public class BindDao {
             Optional<OsuBindUserLite> buLiteOpt;
             try {
                 buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
-            } catch (NonUniqueResultException e) {
+            } catch (Exception e) {
                 // 查出多个
                 bindUserMapper.deleteOldByOsuId(user.getOsuID());
                 buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
