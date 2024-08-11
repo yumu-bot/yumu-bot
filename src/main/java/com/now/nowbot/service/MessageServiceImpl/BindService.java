@@ -30,15 +30,18 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_NAME;
 import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_QQ_ID;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {
-    private static final Logger              log          = LoggerFactory.getLogger(BindService.class);
-    public static final  Map<Long, BindData> BIND_MSG_MAP = new ConcurrentHashMap<>();
-    private static       boolean             CLEAR        = false;
+    private static final Logger                log          = LoggerFactory.getLogger(BindService.class);
+    public static final  Map<Long, BindData>   BIND_MSG_MAP = new ConcurrentHashMap<>();
+    private static final Map<Long, List<Long>> BIND_CACHE   = new ConcurrentHashMap<>();
+    private static       boolean               CLEAR        = false;
 
     @Resource
     OsuUserApiService userApiService;
@@ -49,9 +52,15 @@ public class BindService implements MessageService<BindService.BindParam> {
     @Resource
     ImageService      imageService;
 
+
     // full: 全绑定，只有 bot 开发可以这样做
-    public record BindParam(@NonNull Long qq, String name, boolean at, boolean unbind, boolean isSuper,
-                            boolean isFull) {
+    public record BindParam(@NonNull Long qq,
+                            String name,
+                            boolean at,
+                            boolean unbind,
+                            boolean isSuper,
+                            boolean isFull
+    ) {
     }
 
     @Override
@@ -64,10 +73,17 @@ public class BindService implements MessageService<BindService.BindParam> {
         var qqStr = m.group(FLAG_QQ_ID);
         var name = m.group(FLAG_NAME);
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        // 带着 ym 以及特殊短链不用问
+        boolean isYmBot = messageText.substring(0, 3).contains("ym") ||
+                m.group("bi") != null ||
+                m.group("un") != null ||
+                m.group("ub") != null;
 
         //!bind 给个提示
-        if (!messageText.substring(0, 3).contains("ym") && Objects.isNull(m.group("un")) && Objects.nonNull(m.group("bind"))) {
-
+        if (
+                !isYmBot &&
+                        Objects.nonNull(m.group("bind"))
+        ) {
             //!bind osu
             if (StringUtils.hasText(name) && name.contains("osu")) {
                 if (userApiService.isPlayerExist(name)) {
@@ -98,24 +114,20 @@ public class BindService implements MessageService<BindService.BindParam> {
         boolean isSuper = Permission.isSuperAdmin(qq);
         boolean isFull = Objects.nonNull(m.group("full"));
 
+        BindParam param;
+
         if (Objects.nonNull(at)) {
-            data.setValue(new BindParam(at.getTarget(), null, true, unbind, isSuper, isFull));
-            return true;
-        } else if (StringUtils.hasText(name)) {
-            if (Objects.nonNull(qqStr)) {
-                data.setValue(new BindParam(Long.parseLong(qqStr), name, false, unbind, isSuper, isFull));
-                return true;
-            } else {
-                data.setValue(new BindParam(qq, name, false, unbind, isSuper, isFull));
-                return true;
-            }
+            // bi/ub @
+            param = new BindParam(at.getTarget(), name, true, unbind, isSuper, isFull);
         } else if (StringUtils.hasText(qqStr) && !qqStr.trim().equals("0")) {
-            data.setValue(new BindParam(Long.parseLong(qqStr), null, false, unbind, isSuper, isFull));
-            return true;
+            // bi qq=123
+            param = new BindParam(Long.parseLong(qqStr), name, false, unbind, isSuper, isFull);
         } else {
-            data.setValue(new BindParam(qq, null, false, unbind, isSuper, isFull));
-            return true;
+            // bi
+            param = new BindParam(qq, name, false, unbind, isSuper, isFull);
         }
+        data.setValue(param);
+        return true;
     }
 
     @Override
@@ -128,27 +140,57 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
 
+        // bi name (self)
         if (Objects.nonNull(param.name) && me == param.qq) {
             bindQQName(event, param.name, me);
             return;
         }
 
-        //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper) {
-            if (Objects.nonNull(param.name) && me != param.qq) {
-                bindQQName(event, param.name, param.qq);
-            }
-            if (param.at) {
-                bindQQAt(event, param.qq);
-                return;
-            }
-            if (param.unbind) { //超管也可以解绑自己，就不写 me != param.qq 了
-                unbindQQ(param.qq);
-                return;
-            }
+        if (param.unbind && !param.isSuper) {
+            // ub 但是不是自己, 也不是超管
+            throw new BindException(BindException.Type.BIND_Me_Blacklisted);
         }
 
-        bindQQ(event, me, param.isFull);
+        // 超管 解绑
+        if (param.isSuper && param.unbind()) {
+            if (Objects.nonNull(param.name)) {
+                // name
+                unbindName(param.name);
+            } else {
+                unbindQQ(param.qq);
+            }
+            return;
+        }
+
+        //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
+        if (param.isSuper) {
+            if (Objects.nonNull(param.name)) {
+                bindQQName(event, param.name, param.qq);
+            } else {
+                bindQQAt(event, param.qq);
+            }
+            return;
+        }
+
+        if (me == param.qq) {
+            bindQQ(event, me, param.isFull);
+        }
+
+        // 不是超管，也不是自己
+        throw new BindException(BindException.Type.BIND_Me_Blacklisted);
+    }
+
+    private void unbindName(String name) throws BindException {
+        var uid = bindDao.getOsuId(name);
+        if (uid == null)
+            throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+        Long qq;
+        try {
+            qq = bindDao.getQQ(uid);
+        } catch (Exception e) {
+            throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+        }
+        unbindQQ(qq);
     }
 
     private void unbindQQ(Long qq) throws BindException {
@@ -338,7 +380,9 @@ public class BindService implements MessageService<BindService.BindParam> {
             );
             return;
         }
-
+        if (check(event.getSender().getId())) {
+            return;
+        }
         var a = getSimplifiedQuestion(from);
         var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
@@ -399,6 +443,21 @@ public class BindService implements MessageService<BindService.BindParam> {
     public Set<String> getSimplifiedQuestion(@NonNull Contact from) {
         from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
         return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
+    }
+
+    /**
+     * 检查绑定次数
+     */
+    boolean check(Long qq) {
+        Predicate<Long> check = t -> t + 1000 * 60 * 30 < System.currentTimeMillis();
+        BIND_CACHE.entrySet().removeIf(e -> {
+            e.getValue().removeIf(check);
+            return e.getValue().isEmpty();
+        });
+        var timeList = BIND_CACHE.computeIfAbsent(qq, k -> new ArrayList<>());
+        timeList.removeIf(check);
+        timeList.addLast(System.currentTimeMillis());
+        return timeList.size() > 3;
     }
 
     public Set<String> getQuestion(@NonNull Contact from) {
