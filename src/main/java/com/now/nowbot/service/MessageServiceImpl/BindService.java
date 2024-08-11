@@ -339,7 +339,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
 
-        var a = getQuestion(from);
+        var a = getSimplifiedQuestion(from);
         var lock = ASyncMessageUtil.getLock(event, 30000);
         event = lock.get();
 
@@ -393,6 +393,12 @@ public class BindService implements MessageService<BindService.BindParam> {
             point = minIndex;
         }
         return toMin[end];
+    }
+
+    // 重申一遍，门槛至少设为普通高等院校大一年级学生会接触到的难度，而不是计算机专业的学生会接触到的难度
+    public Set<String> getSimplifiedQuestion(@NonNull Contact from) {
+        from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
+        return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
     }
 
     public Set<String> getQuestion(@NonNull Contact from) {
