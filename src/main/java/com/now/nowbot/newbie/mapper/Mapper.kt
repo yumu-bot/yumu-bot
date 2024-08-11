@@ -90,6 +90,8 @@ class NewbieService(
             }
         }
 
+        log.info("user $uid pass: $passTime, unpass: $unpassTime")
+
         return UserCount(uid, pp, playData.size, passTime + unpassTime, countTth)
     }
 
