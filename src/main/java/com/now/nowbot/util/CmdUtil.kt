@@ -92,6 +92,11 @@ object CmdUtil {
         }
     }
 
+    /**
+     * 获取命令中的 用户 和 range, 不包括 自己的QQ/at
+     * @param matcher 正则
+     * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 user 信息
+     */
     private fun getUserAndRange(matcher: Matcher, mode: CmdObject<OsuMode>): CmdRange<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) { "Matcher 中不包含 ur 分组" }
         if (Objects.isNull(mode.data)) {
@@ -135,6 +140,9 @@ object CmdUtil {
         return result
     }
 
+    /**
+     * 内部方法, 解析'#'后的 range
+     */
     private fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var hashIndex: Int = text.indexOf(CHAR_HASH)
@@ -151,6 +159,9 @@ object CmdUtil {
         return ranges
     }
 
+    /**
+     * 内部方法, 解析 name 与 range
+     */
     private fun parseNameAndRangeWithoutHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var tempRange = CmdRange(text, null, null)
@@ -219,6 +230,9 @@ object CmdUtil {
         return ranges
     }
 
+    /**
+     * 内部方法
+     */
     private fun parseRange(text: String): Array<Int?> {
         val rangeInt = arrayOf<Int?>(null, null)
 
@@ -242,6 +256,13 @@ object CmdUtil {
         return c in '0'..'9'
     }
 
+    /**
+     * 内部方法
+     * 获取玩家信息, 优先级为 at > qq= > uid= > name, 不处理自身绑定,
+     * 如果传入 mode 为 default, 同时是 @qq 绑定, 则改为绑定的模式, 否则就是对应用户的官网主模式
+     * at / qq / uid / name 都没有就返回 null, 即使是自己绑定了(逻辑需要, 勿动)
+     * @param mode 如果是非默认模式则使用该模式查询 user
+     */
     @Throws(TipsException::class)
     private fun getOsuUser(event: MessageEvent, matcher: Matcher, mode: CmdObject<OsuMode>): OsuUser? {
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
@@ -277,21 +298,40 @@ object CmdUtil {
         return null
     }
 
+    /**
+     * 获取 user 信息
+     * @param user 绑定
+     * @param mode 指定模式
+     */
     @Throws(TipsException::class)
     fun getOsuUser(user: BinUser, mode: OsuMode?): OsuUser {
         return getOsuUser({ userApiService!!.getPlayerInfo(user, mode) }, user.osuID)
     }
 
+    /**
+     * 获取 user 信息
+     * @param name 用户名
+     * @param mode 指定模式
+     */
     @Throws(TipsException::class)
     fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
         return getOsuUser({ userApiService!!.getPlayerInfo(name, mode) }, name)
     }
 
+    /**
+     * 获取 user 信息
+     * @param uid 用户ID
+     * @param mode 指定模式
+     */
     @Throws(TipsException::class)
     fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
         return getOsuUser({ userApiService!!.getPlayerInfo(uid, mode) }, uid)
     }
 
+    /**
+     * 内部方法
+     * 封装获取 user 的方法, 包装出现的异常
+     */
     @Throws(TipsException::class)
     private fun <T> getOsuUser(consumer: Supplier<T>, tips: Any): T {
         try {
@@ -308,6 +348,9 @@ object CmdUtil {
         }
     }
 
+    /**
+     * 判断是否包含避讳指令
+     */
     @JvmStatic
     fun isAvoidance(text: String, vararg cmd: String): Boolean {
         for (c in cmd) {
@@ -317,7 +360,9 @@ object CmdUtil {
     }
 
     /**
-     * 获取一个包装的 mode, 方便用户绑定 bot 的主 mode 覆盖 default
+     * 获取一个包装的 mode
+     * 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果
+     * 单纯为了java添加的重载方法, 可以不指定, 所以这里没有这个参数
      */
     @JvmStatic
     fun getMode(matcher: Matcher): CmdObject<OsuMode> {
@@ -327,6 +372,11 @@ object CmdUtil {
         }
         return result
     }
+
+    /**
+     * 获取一个包装的 mode
+     * 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果
+     */
     @JvmStatic
     fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): CmdObject<OsuMode> {
         val result = getMode(matcher)
@@ -336,6 +386,9 @@ object CmdUtil {
         return result
     }
 
+    /**
+     * 从正则中提取 bid
+     */
     @JvmStatic
     fun getBid(matcher: Matcher): Long {
         if (!matcher.namedGroups().containsKey(FLAG_BID)) {
@@ -344,6 +397,9 @@ object CmdUtil {
         return matcher.group(FLAG_BID)?.toLong() ?: 0
     }
 
+    /**
+     * 从正则中提取mod (结果为字符串)
+     */
     @JvmStatic
     fun getMod(matcher: Matcher): String {
         if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
@@ -352,6 +408,10 @@ object CmdUtil {
         return matcher.group(FLAG_MOD) ?: ""
     }
 
+    /**
+     * 将 [Score]列表转换为 indexMap
+     * 注意, 这里 index 从 1 开始
+     */
     @JvmStatic
     fun processBP(bp: Iterable<Score>): Map<Int, Score> {
         val result = TreeMap<Int, Score>()
@@ -361,6 +421,9 @@ object CmdUtil {
         return result
     }
 
+    /**
+     * 用于 default mode 覆盖
+     */
     @JvmStatic
     fun checkOsuMode(mode: CmdObject<OsuMode>, other: OsuMode): OsuMode {
         if (OsuMode.isDefaultOrNull(mode.data) && !OsuMode.isDefaultOrNull(other)) {
@@ -388,9 +451,25 @@ object CmdUtil {
     }
 }
 
+/**
+ * 包装类, 貌似只 mode 用到了
+ */
 data class CmdObject<T>(var data: T? = null)
+
+/**
+ * 包装类, 记录包括 range 结果
+ */
 data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
     fun allNull() = start == null && end == null
+
+    /**
+     * 获取值
+     * 参数 important 是表示取值是否优先
+     * default 只有取值是 null 时才会返回
+     * 如果 range 为 [5, 9], getValue(20, true) 返回 5, getValue(20, false) 返回 9
+     * 如果 range 为 [5, null], getValue(20, true) 返回 5, getValue(20, false) 返回 20
+     * 如果 range 为 [null, null], getValue(20, true) 返回 20, getValue(20, false) 返回 20
+     */
     fun getValue(default: Int = 20, important: Boolean) = if (start != null && end != null) {
         if (important) {
             start!!

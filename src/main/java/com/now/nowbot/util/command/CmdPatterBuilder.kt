@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 class CmdPatterBuilder private constructor(start: String? = null) {
 
     /**
-     * 加命令, 后面自带 space
+     * 加命令, 后面自带 space, 展开后为 (!ym(p|pr))\s*
      * @param commands 连续的命令 ("p", "pr")
      */
     fun commands(@Language("RegExp") vararg commands: String) {
@@ -50,30 +50,16 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         commandOfficial(true, command)
     }
 
+    /**
+     * 添加命令开头, 不进行前面加 !ym 处理, 展开后就是 (cmd)\s*
+     * @param command 命令
+     * @param ignore 尾部是否必须加空格 true 就是加上 (?![a-zA-Z_])
+     */
     fun command(@Language("RegExp") command: String, ignore: Boolean = false) {
-        // "((/ym_sort_)|[!！](ym)?cmd)\\s*"
-        +CHAR_GROUP_START
-        +command
-        +CHAR_GROUP_END
-        // (?![a-zA-Z_]) 避免指令污染
-        if (ignore) appendIgnoreAlphabets()
-        // \\s*
-        space()
-    }
-
-    fun commandWithIgnore(@Language("RegExp") vararg commands: String) {
-        commandBase(true, *commands)
-    }
-
-    fun commandBase(ignore: Boolean, @Language("RegExp") vararg commands: String) {
-        // "([!！](ym)?(a|b|c))\\s*"
-        +CHAR_GROUP_START
-        +REG_START_ALL
+        // "(cmd)\\s*"
         startGroup(false) {
-            // a|b|c|d
-            +commands.joinToString(CHAR_SEPARATOR.toString())
+            +command
         }
-        +CHAR_GROUP_END
         // (?![a-zA-Z_]) 避免指令污染
         if (ignore) appendIgnoreAlphabets()
         // \\s*
@@ -81,56 +67,103 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 避免不必要的命令重复，所带来的指令污染。比如：!ymb 和 !ymbind。
-     * 如果前面并未加 (?!ind)，则后面的指令也会在前面被错误匹配（获取叫 ind 玩家的 bp）
-     * @param ignores 避免匹配
+     * 添加命令开头, 末尾添加 (?![a-zA-Z_]) , 展开后是 !ym(p|pr)(?![a-zA-Z_])\s*
+     * @param commands 连续的命令 ("p", "pr")
      */
-    fun appendIgnores(@Language("RegExp") vararg ignores: String) {
-        if (ignores.isEmpty()) return
-        +"(?!"
-        +ignores.joinToString(CHAR_SEPARATOR.toString())
-        +CHAR_GROUP_END
+    fun commandWithIgnore(@Language("RegExp") vararg commands: String) {
+        commandBase(true, *commands)
+    }
+
+    /**
+     * 构建命令基方法
+     */
+    private fun commandBase(ignore: Boolean, @Language("RegExp") vararg commands: String) {
+        // "([!！](ym)?(a|b|c))\\s*"
+        startGroup(false) {
+            +REG_START_ALL
+            startGroup(false) {
+                // a|b|c|d
+                +commands.joinToString(CHAR_SEPARATOR.toString())
+            }
+        }
+        // (?![a-zA-Z_]) 避免指令污染
+        if (ignore) appendIgnoreAlphabets()
+        // \\s*
+        space()
     }
 
     fun appendIgnoreAlphabets() {
         +REG_IGNORE
     }
 
+    /**
+     * 加 qq=(?<qq>\d+) 的匹配
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendQQId(whatever: Boolean = true) {
         +REG_QQ_ID
         if (whatever) whatever()
     }
 
+    /**
+     * group=(?<group>\d+)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendQQGroup(whatever: Boolean = true) {
         +REG_QQ_GROUP
         if (whatever) whatever()
     }
 
+    /**
+     * osu 合法名称
+     * (?<name>...)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendName(whatever: Boolean = true) {
         +REG_NAME
         if (whatever) whatever()
     }
 
+    /**
+     * uid=(?<uid>\d+)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendUid(whatever: Boolean = true) {
         +REG_UID
         if (whatever) whatever()
     }
 
+    /**
+     * (?<bid>\d+)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendBid(whatever: Boolean = true) {
         +REG_BID
         if (whatever) whatever()
     }
 
+    /**
+     * (?<sid>\d+)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendSid(whatever: Boolean = true) {
         +REG_SID
         if (whatever) whatever()
     }
 
+    /**
+     * osu名与范围
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendNameAndRange(whatever: Boolean = true) {
         +REG_USER_AND_RANGE
         if (whatever) whatever()
     }
 
+    /**
+     * (?<mode>可用的模式)
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendMode(whatever: Boolean = true) {
         startGroup(whatever) {
             column(false)
@@ -138,22 +171,37 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         }
     }
 
+    /**
+     * (+(?<mod>可用的mod)) 必须加'+'
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendMod(whatever: Boolean = true) {
         +REG_MOD
         if (whatever) whatever()
     }
 
+    /**
+     * (+?(?<mod>mod)) 可以不用加'+'
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendModAny(whatever: Boolean = true) {
         +REG_MOD_01
         if (whatever) whatever()
     }
 
+    /**
+     * (:?(?<range>0-999))范围
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun appendRange(whatever: Boolean = true) {
         column()
         +REG_RANGE
         if (whatever) whatever()
     }
 
+    /**
+     * 添加一个复合匹配组, 包括 mode, qq, uid, name, range
+     */
     fun `append(ModeQQUidNameRange)`() {
         appendMode()
         space()
@@ -164,6 +212,9 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         appendNameAndRange()
     }
 
+    /**
+     * 添加一个复合匹配组, 包括 mode, qq, uid, name
+     */
     fun `append(ModeQQUidName)`() {
         appendMode()
         space()
@@ -174,7 +225,10 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         appendName()
     }
 
-    // 默认就是 Any
+    /**
+     * 添加一个空格
+     * @param num 0 为可以没有或者有一个空格, 1 为至少一个空格, 其他为任意个空格, 默认为任意个空格
+     */
     fun space(num: Int = -1) {
         when (num) {
             0 -> appendSpaceOnce()
@@ -195,6 +249,9 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         +(REG_SPACE_01)
     }
 
+    /**
+     * 冒号
+     */
     fun column(whatever: Boolean = true) {
         startGroup(whatever) {
             +REG_COLUMN
@@ -202,10 +259,19 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         }
     }
 
+    /**
+     * 添加一段正则
+     */
     fun append(@Language("RegExp") str: String) {
         +str
     }
 
+    /**
+     * 添加一个捕获组, 展开后就是 (?<name>pattern)
+     * @param name 组名
+     * @param pattern 正则
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun group(
         name: String, @Language("RegExp") pattern: String, whatever: Boolean = true
     ) {
@@ -217,6 +283,11 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         }
     }
 
+    /**
+     * 创建一个组, 展开后就是 (pattern)
+     * @param group 执行一段添加组的操作
+     * @param whatever 是否可忽略, 不传默认为 true
+     */
     fun startGroup(whatever: Boolean = true, group: CmdPatterBuilder.() -> Unit) {
         +CHAR_GROUP_START
         this.group()
@@ -224,20 +295,32 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         if (whatever) whatever()
     }
 
+    /**
+     * 末尾加个'?'
+     */
     fun whatever() {
         +CHAR_WHATEVER
     }
 
+    /**
+     * 末尾加个'*'
+     */
     fun any() {
         +CHAR_ANY
     }
 
+    /**
+     * 末尾加个'+'
+     */
     fun more() {
         +CHAR_MORE
     }
 
     private val patternStr: StringBuilder = StringBuilder()
 
+    /**
+     * 构造正则
+     */
     fun build(doBuild: CmdPatterBuilder.() -> Unit): Pattern {
         this.doBuild()
         space()
@@ -258,6 +341,9 @@ class CmdPatterBuilder private constructor(start: String? = null) {
         return this@CmdPatterBuilder
     }
 
+    /**
+     * 初始化, 如果 start 为空, 则默认为 ^(?i)\s*, 否则就是 start
+     */
     init {
         if (start != null) {
             +start
