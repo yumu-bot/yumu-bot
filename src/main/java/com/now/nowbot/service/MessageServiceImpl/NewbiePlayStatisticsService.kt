@@ -1,6 +1,7 @@
 package com.now.nowbot.service.MessageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.newbie.mapper.NewbieService
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
@@ -21,7 +22,6 @@ class NewbiePlayStatisticsService(
 ) : MessageService<Any?> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Any?>): Boolean {
-        if (event.subject.id != 695600319L) return false
         if (messageText.startsWith("统计打图数据")) {
             data.value = messageText.substringAfter("统计打图数据").trim()
             return true
@@ -30,6 +30,7 @@ class NewbiePlayStatisticsService(
         return false
     }
 
+    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, data: Any?) {
         if (event !is GroupMessageEvent) return
         val ng = event.bot.getGroup(595985887L)
