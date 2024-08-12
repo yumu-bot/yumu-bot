@@ -2,535 +2,320 @@ package com.now.nowbot.util
 
 import com.now.nowbot.util.command.CmdPatterBuilder
 import com.now.nowbot.util.command.*
+import com.now.nowbot.util.command.MatchLevel.*
+
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
-    HELP(CmdPatterBuilder.create {
-        commands("help", "help", "帮助", "h")
-        group("module", REG_ANY)
+    HELP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("help", "helps", "帮助", "h")
+        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
-    AUDIO(CmdPatterBuilder.create {
-        commands("audio", "song", "a(?![AaC-RT-Zc-rt-z_])")
-        column()
-        group("type", "(bid|b|sid|s)")
-        space()
-        group("id", "\\d+")
+    AUDIO(CommandPatternBuilder.create {
+        appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
+        appendColonCaptureGroup(MAYBE, "type", "bid", "b", "sid", "s")
+        appendSpace()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
     }),
 
     // #1 BOT 内部指令
-    PING(CmdPatterBuilder.create {
-        commands("ping", "pi$REG_IGNORE", "yumu\\?")
+    PING(CommandPatternBuilder.create {
+        appendGroup {
+            appendCommandsIgnoreAll("ping", "pi")
+        }
+        append(CHAR_SEPARATOR)
+        appendGroup {
+            append("yumu${REG_SPACE}${CHAR_ANY}${REG_QUESTION}")
+        }
     }),
 
-    BIND(CmdPatterBuilder.create {
-        commands("(?<ub>ub$REG_IGNORE)", "(?<bi>bi$REG_IGNORE)", "(?<un>un)?(?<bind>bind)")
-        append("($REG_COLUMN(?<full>f))?")
-        space()
-        appendQQId()
-        space()
+    BIND(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)", "(?<un>un)?(?<bind>bind)")
+        appendColonCaptureGroup("full", "f")
+        appendQQID()
         appendName()
     }),
 
-    BAN(CmdPatterBuilder.create {
-        commands("super", "sp$REG_IGNORE", "operate", "op$REG_IGNORE")
-        space()
-        column()
-        group("operate", "(black|white|ban)?list|add|remove|(un)?ban|[lkarubw]")
-        space()
-        appendQQId()
-        space()
+    BAN(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("super", "sp", "operate", "op")
+        appendColonCaptureGroup(MAYBE, "operate", "(black|white|ban)?list", "add", "remove", "(un)?ban", "[lkarubw]")
+        appendQQID()
         appendQQGroup()
-        space()
         appendName()
     }),
 
-    SWITCH(CmdPatterBuilder.create {
-        commands("switch", "sw$REG_IGNORE")
-        column()
-        appendQQGroup()
-        space()
-        group("service", "\\w+")
-        space()
-        group("operate", "\\w+")
+    SWITCH(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("switch", "sw")
+        appendColonCaptureGroup(MAYBE, FLAG_QQ_GROUP, "${FLAG_QQ_GROUP}=${REG_NUMBER}")
+        appendSpace()
+        appendCaptureGroup("service", REG_WORD, MORE)
+        appendSpace(MORE)
+        appendCaptureGroup("operate", REG_WORD, MORE)
     }),
 
-    ECHO(CmdPatterBuilder.create {
-        command("echo")
-        column()
-        group("any", "[\\s\\S]*", false)
+    ECHO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("echo", "ec")
+        appendCaptureGroup("any", REG_ANYTHING, ANY)
     }),
 
-    SERVICE_COUNT(CmdPatterBuilder.create {
-        commands("servicecount", "统计服务调用", "sc$REG_IGNORE")
-        startGroup {
-            group("days", "\\d+", false)
-            +'d'
+    SERVICE_COUNT(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("servicecount", "统计服务调用", "ec")
+
+        appendGroup {
+           appendCaptureGroup("days", REG_NUMBER, MORE)
+           append('d')
         }
-        startGroup {
-            group("hours", "\\d+", false)
-            +'h'
+        appendGroup {
+            appendCaptureGroup("hours", REG_NUMBER, MORE)
+            append('h')
         }
     }),
+
 
     // #2 osu! 成绩指令
-    SET_MODE(CmdPatterBuilder.create {
-        commands("setmode", "mode", "sm$REG_IGNORE", "mo$REG_IGNORE")
-        startGroup {
-            column()
-            +REG_MODE_GROUP
+    SET_MODE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("setmode", "mode", "sm", "mo")
+        appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+    }),
+
+    SCORE_PR(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
+        appendModeQQUIDNameRange()
+    }),
+
+    PR_CARD(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(?<pass>(passcard|pc))", "(?<recent>(recentcard|rc))")
+        appendModeQQUIDNameRange()
+    }),
+
+    UU_PR(CommandPatternBuilder.create {
+        appendUUIgnoreAll("(?<pass>(pass|p))", "(?<recent>(recent|r))")
+        appendModeQQUIDNameRange()
+    }),
+
+    SCORE(CommandPatternBuilder.create {
+        appendGroup() {
+            append(REG_EXCLAMINATION)
+            appendSpace()
+            append("(?<score>(ym)?(score|s))")
+            appendIgnore()
         }
+        appendModeBIDQQUIDNameMod()
     }),
 
-    SCORE_PR(CmdPatterBuilder.create {
-        // 这一坨没法拆好像
-        command("$REG_EXCLAMINATION(ym)?(?<pass>(pass(?!s)(?<es>es)?|p$REG_IGNORE_S)|(?<recent>(recent|r$REG_IGNORE_S)))(?<s>s)?")
-        space()
-        `append(ModeQQUidNameRange)`()
+    BP(CommandPatternBuilder.create {
+
     }),
 
-    PR_CARD(CmdPatterBuilder.create {
-        commands("(?<pass>(passcard|pc$REG_IGNORE))", "(?<recent>(recentcard|rc$REG_IGNORE))")
-        space()
-        `append(ModeQQUidNameRange)`()
+    TODAY_BP(CommandPatternBuilder.create {
+
     }),
 
-    UU_PR(CmdPatterBuilder.create {
-        command("${REG_EXCLAMINATION}uu(?<pass>(pass|p$REG_IGNORE))|uu(?<recent>(recent|r$REG_IGNORE))")
-        space()
-        `append(ModeQQUidNameRange)`()
+    BP_FIX(CommandPatternBuilder.create {
+
     }),
 
-    SCORE(CmdPatterBuilder.create {
-        command("$REG_EXCLAMINATION(?<score>(ym)?(score|s$REG_IGNORE))")
-        column()
-        space()
-        appendBid()
-        space()
-        appendQQId()
-        space()
-        appendUid()
-        space()
-        appendName()
-        space()
-        appendMod()
+    BP_ANALYSIS(CommandPatternBuilder.create {
+
     }),
 
-    BP(CmdPatterBuilder.create {
-        command("$REG_EXCLAMINATION(?<bp>(ym)?(bestperformance|best|bp$REG_IGNORE_S|b$REG_IGNORE_S))(?<s>s)?")
-        `append(ModeQQUidNameRange)`()
-    }),
+    UU_BA(CommandPatternBuilder.create {
 
-    TODAY_BP(CmdPatterBuilder.create {
-        commandWithIgnore("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
-        space()
-        `append(ModeQQUidNameRange)`()
-    }),
-
-    BP_FIX(CmdPatterBuilder.create {
-        commandWithIgnore("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
-        space()
-        `append(ModeQQUidName)`()
-    }),
-
-    BP_ANALYSIS(CmdPatterBuilder.create {
-        commandWithIgnore("bpanalysis", "blue archive", "bluearchive", "bpa", "ba")
-        space()
-        `append(ModeQQUidName)`()
-    }),
-
-    UU_BA(CmdPatterBuilder.create {
-        append("${REG_EXCLAMINATION}uu?((bp?)?a)(?<info>(-?i))?$REG_SPACE_ANY|uubpanalysis")
-        space()
-        `append(ModeQQUidName)`()
     }),
 
     // #3 osu! 玩家指令
-    INFO(CmdPatterBuilder.create {
-        commands("information", "info$REG_IGNORE", "i$REG_IGNORE")
-        space()
-        appendMode()
-        space()
-        appendQQId()
-        space()
-        appendUid()
-        space()
-        appendName()
-        space()
-        startGroup {
-            append(REG_HASH)
-            group("day", "\\d+", whatever = false)
-        }
+    INFO(CommandPatternBuilder.create {
+
     }),
 
-    INFO_CARD(CmdPatterBuilder.create {
-        commands("informationcard", "infocard$REG_IGNORE", "ic$REG_IGNORE")
-        `append(ModeQQUidName)`()
+    INFO_CARD(CommandPatternBuilder.create {
+
     }),
 
-    CSV_INFO(CmdPatterBuilder.create {
-        // 给你展开了
-        commands("(c(sv)?)information", "(c(sv)?)info$REG_IGNORE", "(c(sv)?)i$REG_IGNORE")
-        appendMode()
-        space()
-        group("data", REG_NAME_MULTI, true)
+    CSV_INFO(CommandPatternBuilder.create {
+
     }),
 
-    UU_INFO(CmdPatterBuilder.create {
-        // 给你展开了
-        commands("uuinfo", "uui$REG_IGNORE")
-        appendMode()
-        // 原来是 `([:：](?<mode>[\w\d]+))?(?![\w])\s*(?<name>[0-9a-zA-Z\[\]\-_\s]*)?`
-        // ==================实在搞不懂这个 ^ 是干什么用的, 简单理解为必须要一个空格
-        space()
-        appendName()
+    UU_INFO(CommandPatternBuilder.create {
+
     }),
 
-    I_MAPPER(CmdPatterBuilder.create {
-        commands("mapper", "immapper", "imapper", "im")
-        appendQQId()
-        space()
-        append("(u?id=\\s*(?<id>\\d+))?")
-        space()
-        appendName()
+    I_MAPPER(CommandPatternBuilder.create {
+
     }),
 
-    FRIEND(CmdPatterBuilder.create {
-        commands("friends?", "f$REG_IGNORE")
-        appendRange()
+    FRIEND(CommandPatternBuilder.create {
+
     }),
 
-    MUTUAL(CmdPatterBuilder.create {
-        commands("mutual", "mu$REG_IGNORE")
-        append("(?<names>$REG_NAME_MULTI)?")
+    MUTUAL(CommandPatternBuilder.create {
+
     }),
 
-    PP_MINUS(CmdPatterBuilder.create {
-        command("$REG_EXCLAMINATION(?<function>(p?p[mv\\-]$REG_IGNORE|p?pmvs?|ppminus|minus|minusvs))")
-        appendMode()
-        space()
-        group("area1", REG_NAME_ANY)
-        space()
-        startGroup {
-            append(REG_COLUMN)
-            space()
-            group("area2", REG_NAME_ANY, whatever = false)
-        }
+    PP_MINUS(CommandPatternBuilder.create {
+
     }),
 
-    GET_ID(CmdPatterBuilder.create {
-        commands("getid", "gi$REG_IGNORE")
-        group(FLAG_DATA, REG_NAME_MULTI)
+    GET_ID(CommandPatternBuilder.create {
+
     }),
 
-    GET_NAME(CmdPatterBuilder.create {
-        commands("getname", "gn")
-        group(FLAG_DATA, REG_NAME_MULTI)
+    GET_NAME(CommandPatternBuilder.create {
+
     }),
 
     // #4 osu! 谱面指令
-    MAP(CmdPatterBuilder.create {
-        commands("beatmap", "map$REG_IGNORE", "m$REG_IGNORE")
-        // 看花眼了
-        append("([:：](?<mode>\\w+))?\\s*(?<bid>\\d+)?\\s*([a%]?(?<accuracy>$REG_NUMBER_DECIMAL)[a%]?)?\\s*([cx]?(?<combo>$REG_NUMBER_DECIMAL)[cx]?)?\\s*([\\-m]?(?<miss>\\d+)[\\-m]?)?\\s*")
-        appendMod()
+    MAP(CommandPatternBuilder.create {
+
     }),
 
-    QUALIFIED_MAP(CmdPatterBuilder.create {
-        commands("qualified", "qua$REG_IGNORE", "q$REG_IGNORE")
-        appendMode()
-        space()
-        append("($REG_HASH(?<status>[-\\w]+))?\\s*(\\*?(?<sort>[\\-_+a-zA-Z]+))?\\s*(?<range>\\d+)?")
+    QUALIFIED_MAP(CommandPatternBuilder.create {
+
+
     }),
 
-    LEADER_BOARD(CmdPatterBuilder.create {
-        commands("mapscorelist", "leaderboard", "leader$REG_IGNORE", "list$REG_IGNORE", "l$REG_IGNORE")
-        appendMode()
-        space()
-        group("bid", "\\d+")
-        group("range", "\\d+")
+    LEADER_BOARD(CommandPatternBuilder.create {
+
     }),
 
-    MAP_MINUS(CmdPatterBuilder.create {
-        commands("mapminus", "mm$REG_IGNORE")
-        appendMode()
-        space()
-        append("(?<id>\\d+)?\\s*($REG_MOD_1P|([×xX]?\\s*(?<rate>$REG_NUMBER_DECIMAL)[×xX]?))?")
+    MAP_MINUS(CommandPatternBuilder.create {
+
     }),
 
-    NOMINATION(CmdPatterBuilder.create {
-        command("$REG_EXCLAMINATION(nominat(e|ion)s?|nom$REG_IGNORE_BS|n$REG_IGNORE_BS)")
-        column()
-        // 这个mode还是特殊的mode
-        group("mode", "bid|sid|s|b")
-        space()
-        appendSid()
+    NOMINATION(CommandPatternBuilder.create {
+
     }),
 
-    PP_PLUS_MAP(CmdPatterBuilder.create {
-        commands("p?pa$REG_IGNORE", "ppplusmap", "pppmap", "plusmap")
-        appendBid()
-        space()
-        appendMod()
+    PP_PLUS_MAP(CommandPatternBuilder.create {
+
     }),
 
-    PP_PLUS(CmdPatterBuilder.create {
-        // 245 个字符的正则...
+    PP_PLUS(CommandPatternBuilder.create {
+
+    }),
+
         // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
-        command("$REG_EXCLAMINATION(ym)?(?<function>(p[px]$REG_IGNORE|pp[pvx]$REG_IGNORE|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs))")
-        append("(?<area1>$REG_NAME_ANY)?\\s*($REG_COLUMN\\s*(?<area2>$REG_NAME_ANY))?")
-    }),
 
     // #5 osu! 比赛指令
-    MATCH_LISTENER(CmdPatterBuilder.create {
-        commands("(make\\s*love)", "(match)?listen(er)?", "ml$REG_IGNORE", "li$REG_IGNORE")
-        group("matchid", "\\d+")
-        space()
-        group("operate", "info|list|start|stop|end|off|on|[lispefo]$REG_IGNORE")
+    MATCH_LISTENER(CommandPatternBuilder.create {
+
     }),
 
-    MU_RATING(CmdPatterBuilder.create {
-        commands("(?<uu>(u{1,2})(rating|ra$REG_IGNORE))", "(?<main>((ym)?rating|(ym)?ra$REG_IGNORE|mra$REG_IGNORE))")
-        group("matchid", "\\d+", whatever = false)
-        // 这是个啥, 所有命令前面都带了 (?i), 大小写就忽略了
-        // (\s*[Ee]([Zz]|a[sz]y)?\s*(?<easy>\d+\.?\d*)x?)?
-        startGroup {
-            space()
-            append("e(z|a[sz]y)?")
-            space()
-            group("easy", REG_NUMBER_DECIMAL, whatever = false)
-            append("x?")
-        }
-        space()
-        group("skip", "-?\\d+")
-        space()
-        group("ignore", "-?\\d+")
-        space()
-        startGroup {
-            append("\\[")
-            group("remove", REG_NUMBER_MULTI, whatever = false)
-            append("]")
-        }
-        space()
-        group("rematch", "r")
-        space()
-        group("failed", "f")
+    MU_RATING(CommandPatternBuilder.create {
+
     }),
 
-    SERIES_RATING(CmdPatterBuilder.create {
-        commands(
-            "(?<uu>(u{1,2})(seriesrating|series|sra$REG_IGNORE|sa$REG_IGNORE))",
-            "(ym)?(?<main>(seriesrating|series|sa$REG_IGNORE|sra$REG_IGNORE))",
-            "(ym)?(?<csv>(csvseriesrating|csvseries|csa$REG_IGNORE|cs$REG_IGNORE))"
-        )
-        startGroup {
-            +REG_HASH
-            group("name", REG_ANY_1P)
-            +REG_HASH
-        }
-        space()
-        group(FLAG_DATA, "[\\d\\[\\]\\s,，|\\-]+")
-        space()
-        startGroup {
-            append("e(z|a[sz]y)?")
-            space()
-            group("easy", REG_NUMBER_DECIMAL, whatever = false)
-            append("x?")
-        }
-        space()
-        group("rematch", "r")
-        space()
-        group("failed", "f")
+    SERIES_RATING(CommandPatternBuilder.create {
+
     }),
 
-    CSV_MATCH(CmdPatterBuilder.create {
-        commands("csvrating", "cra?(?![^s^x\\s])")
-        group("x", "[xs]")
-        space()
-        group(FLAG_DATA, "[\\d\\s,，|\\-]+")
+    CSV_MATCH(CommandPatternBuilder.create {
+
     }),
 
-    MATCH_ROUND(CmdPatterBuilder.create {
-        commands("(match)?rounds?$REG_IGNORE", "mr$REG_IGNORE", "ro$REG_IGNORE")
-        group("matchid", "\\d+")
-        space()
-        group("round", "\\d+")
-        space()
-        group("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]+")
+    MATCH_ROUND(CommandPatternBuilder.create {
+
     }),
 
-    MATCH_NOW(CmdPatterBuilder.create {
-        commands("monitornow", "matchnow", "mn$REG_IGNORE")
-        group("matchid", "\\d+")
-        space()
-        startGroup {
-            append("e(z|a[sz]y)?")
-            space()
-            group("easy", REG_NUMBER_DECIMAL, whatever = false)
-            append("x?")
-        }
-        space()
-        group("skip", "\\d+")
-        space()
-        group("ignore", "\\d+")
-        space()
-        startGroup {
-            append("\\[")
-            group("remove", REG_NUMBER_MULTI, whatever = false)
-            append("]")
-        }
-        space()
-        group("rematch", "r")
-        space()
-        group("failed", "f")
+    MATCH_NOW(CommandPatternBuilder.create {
+
     }),
 
-    MAP_POOL(CmdPatterBuilder.create {
-        commands("mappool", "po$REG_IGNORE")
-        appendMode(false)
-        space()
-        group("name", "\\w+", whatever = false)
+    MAP_POOL(CommandPatternBuilder.create {
+
     }),
 
-    GET_POOL(CmdPatterBuilder.create {
-        commands("getpool", "gp$REG_IGNORE")
-        appendMode()
-        space()
-        startGroup {
-            +REG_HASH
-            group("name", REG_ANY_1P, whatever = false)
-            +REG_HASH
-        }
-        whatever()
-        space()
-        group(FLAG_DATA, REG_NAME_MULTI)
+    GET_POOL(CommandPatternBuilder.create {
+
     }),
 
     // #6 聊天指令
     // ...
     // #7 娱乐指令
 
-    DICE(CmdPatterBuilder.create {
-        command("($REG_EXCLAMINATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d$REG_IGNORE)")
-        group("number", "-?\\d*")
-        group("text", REG_ANY_1P)
+    DICE(CommandPatternBuilder.create {
+
     }),
 
-    DRAW(CmdPatterBuilder.create {
-        commands("draw", "w$REG_IGNORE")
-        group("d", "\\d")
+    DRAW(CommandPatternBuilder.create {
+
     }),
 
     // #8 辅助指令
-    OLD_AVATAR(CmdPatterBuilder.create {
-        commands("(old|osu)?avatar", "oa$REG_IGNORE")
-        appendQQId()
-        appendUid()
-        group(FLAG_DATA, REG_NAME_MULTI)
+    OLD_AVATAR(CommandPatternBuilder.create {
+
     }),
 
-    OVER_SR(CmdPatterBuilder.create {
-        commands("overstarrating", "overrating", "oversr", "or$REG_IGNORE")
-        group("SR", REG_NUMBER_DECIMAL)
+    OVER_SR(CommandPatternBuilder.create {
+
     }),
 
-    TRANS(CmdPatterBuilder.create {
-        commands("trans", "tr$REG_IGNORE")
-        group("a", "[A-G][＃#]", whatever = false)
-        group("b", "\\w", whatever = false)
+    TRANS(CommandPatternBuilder.create {
+
     }),
 
-    KITA(CmdPatterBuilder.create {
-        commands("kt(?![^x\\s])", "kita")
-        group("noBG", "x$REG_IGNORE")
-        space()
-        // 这里改了
-        appendBid()
-        space()
-        appendMod()
-        space()
-        group("round", "[\\w\\s]+")
+    KITA(CommandPatternBuilder.create {
+
     }),
 
-    GROUP_STATISTICS(CmdPatterBuilder.create {
-        commands("groupstat(s)?", "groupstatistic(s)?", "统计(超限)?", "gs$REG_IGNORE")
-        group("group", "$REG_COLUMN?[nah]|((新人|进阶|高阶)群)", whatever = false)
+    GROUP_STATISTICS(CommandPatternBuilder.create {
+
     }),
 
     // #9 自定义
-    CUSTOM(CmdPatterBuilder.create {
-        commands("custom", "c$REG_IGNORE")
-        column()
-        group("operate", "\\w+")
-        group("type", "\\w+")
+    CUSTOM(CommandPatternBuilder.create {
+
     }),
 
-    TEST_PPM(CmdPatterBuilder.create {
-        commands("testppm", "testcost", "tp$REG_IGNORE", "tc$REG_IGNORE")
-        appendMode()
-        group(FLAG_DATA, REG_NAME_MULTI)
+    TEST_PPM(CommandPatternBuilder.create {
+
     }),
 
-    TEST_HD(CmdPatterBuilder.create {
-        commands("testhd", "th$REG_IGNORE")
-        appendMode()
-        group(FLAG_DATA, REG_NAME_MULTI)
+    TEST_HD(CommandPatternBuilder.create {
+
     }),
 
-    TEST_FIX(CmdPatterBuilder.create {
-        commands("testfix", "tf$REG_IGNORE")
-        appendMode()
-        space()
-        group(FLAG_DATA, REG_NAME_MULTI)
+    TEST_FIX(CommandPatternBuilder.create {
+
     }),
 
-    TEST_MAP(CmdPatterBuilder.create {
-        commands("testmap", "tm$REG_IGNORE")
-        group("id", "\\d+")
-        space()
-        appendMod()
+    TEST_MAP(CommandPatternBuilder.create {
+
     }),
 
-    TEST_TAIKO_SR_CALCULATE(CmdPatterBuilder.create {
-        commands("testtaiko", "tt$REG_IGNORE")
-        group(FLAG_DATA, "[xo\\s]+")
+    TEST_TAIKO_SR_CALCULATE(CommandPatternBuilder.create {
+
     }),
 
-    MAP_4D_CALCULATE(CmdPatterBuilder.create("^[!！＃#]\\s*(?i)cal") {
-        space()
-        group("type", "ar|od|cs|hp", whatever = false)
-        space()
-        group("value", REG_NUMBER_DECIMAL, whatever = false)
-        space()
-        appendModAny()
+    MAP_4D_CALCULATE(CommandPatternBuilder.create("^[!！＃#]\\s*(?i)cal") {
+
     }),
 
-    DEPRECATED_BPHT(CmdPatterBuilder.create {
-        commands("(?<bpht>bpht)")
-        append("(-i)")
-        whatever()
+    DEPRECATED_BPHT(CommandPatternBuilder.create {
+
     }),
 
-    DEPRECATED_SET(CmdPatterBuilder.create {
-        commands("(?<set>set)")
+    DEPRECATED_SET(CommandPatternBuilder.create {
+
     }),
 
-    DEPRECATED_AYACHI_NENE(CmdPatterBuilder.create {
-        append("(?<nene>0d0(0)?)") // 无需 commands
+    DEPRECATED_AYACHI_NENE(CommandPatternBuilder.create {
+
     }),
 
-    DEPRECATED_YMK(CmdPatterBuilder.create {
-        commands("(?<k>k)")
+    DEPRECATED_YMK(CommandPatternBuilder.create {
+
     }),
 
-    DEPRECATED_YMX(CmdPatterBuilder.create {
-        commands("(?<x>x)")
+    DEPRECATED_YMX(CommandPatternBuilder.create {
+
     }),
 
-    DEPRECATED_YMY(CmdPatterBuilder.create {
-        commands("(?<y>y)")
+    DEPRECATED_YMY(CommandPatternBuilder.create {
+
     }),
 
     ;

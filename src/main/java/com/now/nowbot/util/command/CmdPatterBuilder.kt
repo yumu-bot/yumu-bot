@@ -166,7 +166,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      */
     fun appendMode(whatever: Boolean = true) {
         startGroup(whatever) {
-            column(false)
+            colon(false)
             +REG_MODE_GROUP
         }
     }
@@ -194,7 +194,7 @@ class CmdPatterBuilder private constructor(start: String? = null) {
      * @param whatever 是否可忽略, 不传默认为 true
      */
     fun appendRange(whatever: Boolean = true) {
-        column()
+        colon()
         +REG_RANGE_GROUP
         if (whatever) whatever()
     }
@@ -252,9 +252,9 @@ class CmdPatterBuilder private constructor(start: String? = null) {
     /**
      * 冒号
      */
-    fun column(whatever: Boolean = true) {
+    fun colon(whatever: Boolean = true) {
         startGroup(whatever) {
-            +REG_COLUMN
+            +REG_COLON
             +REG_SPACE_ANY
         }
     }

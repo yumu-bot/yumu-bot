@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MODE;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MODE;
 
 @Service("QUALIFIED_MAP")
 public class QualifiedMapService implements MessageService<Matcher> {

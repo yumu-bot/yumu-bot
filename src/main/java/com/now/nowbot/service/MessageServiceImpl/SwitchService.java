@@ -17,7 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_QQ_GROUP;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_QQ_GROUP;
 
 
 @Service("SWITCH") //修改service名 "switch" 一定要修改 Permission

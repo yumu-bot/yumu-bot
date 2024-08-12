@@ -28,7 +28,9 @@ const val FLAG_DATA: String = "data"
 const val FLAG_UID: String = "uid"
 const val FLAG_BID: String = "bid"
 const val FLAG_SID: String = "sid"
+const val FLAG_MATCHID: String = "matchid"
 const val FLAG_ID: String = "id"
+const val FLAG_DAY: String = "day"
 const val FLAG_RANGE: String = "range"
 const val FLAG_QQ_ID: String = "qq"
 const val FLAG_QQ_GROUP: String = "group"
@@ -55,6 +57,9 @@ val REG_ANY_1P: String = "[\\s\\S]+"
 val REG_SPACE: String = "\\s"
 
 @Language("RegExp")
+val REG_STAR: String = "\\*"
+
+@Language("RegExp")
 val REG_SPACE_ANY: String = "\\s*"
 
 @Language("RegExp")
@@ -76,10 +81,13 @@ val REG_NUMBER_5P: String = "\\d{5,}"
 val REG_NUMBER: String = "\\d"
 
 @Language("RegExp")
+val REG_WORD: String = "\\w"
+
+@Language("RegExp")
 val REG_NUMBER_1P: String = "\\d+"
 
 @Language("RegExp")
-val REG_NUMBER_MULTI: String = "[\\d\\-\\s_,，|:：`、]*"
+val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]*"
 
 @Language("RegExp")
 val REG_NUMBER_DECIMAL: String = "\\d+\\.?\\d*"
@@ -91,7 +99,10 @@ val REG_PLUS: String = "\\+"
 val REG_PLUS_01: String = "\\+?"
 
 @Language("RegExp")
-val REG_COLUMN: String = "[:：]"
+val REG_COLON: String = "[:：]"
+
+@Language("RegExp")
+val REG_QUESTION: String = "[?？]"
 
 @Language("RegExp")
 val REG_HASH: String = "[#＃]"
@@ -128,10 +139,10 @@ val REG_USER_AND_RANGE_GROUP: String =
     "(?<$FLAG_USER_AND_RANGE>($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?)?"
 
 @Language("RegExp")
-val REG_NAME_MULTI: String = "[0-9a-zA-Z\\[\\]\\-\\s_,，|:：`、]+"
+val REG_USERNAME_SEPERATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s_,，|:：`、]"
 
 @Language("RegExp")
-val REG_NAME_ANY: String = "[0-9a-zA-Z\\[\\]\\-\\s_]*"
+val REG_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 
 @Language("RegExp")
 val REG_QQ_ID: String = "(qq=$REG_SPACE_ANY(?<$FLAG_QQ_ID>$REG_NUMBER_5P))"

@@ -28,7 +28,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MODE;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MODE;
 
 @Service("UU_BA")
 public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {

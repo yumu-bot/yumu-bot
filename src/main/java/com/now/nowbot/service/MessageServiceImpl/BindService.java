@@ -30,11 +30,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_NAME;
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_QQ_ID;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_NAME;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_QQ_ID;
 
 @Service("BIND")
 public class BindService implements MessageService<BindService.BindParam> {

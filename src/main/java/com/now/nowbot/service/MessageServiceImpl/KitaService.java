@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_BID;
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MOD;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_BID;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MOD;
 
 @Service("KITA")
 public class KitaService implements MessageService<Matcher> {

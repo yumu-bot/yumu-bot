@@ -51,7 +51,7 @@ public class IMapperService implements MessageService<Matcher> {
         BinUser binUser;
         String name = matcher.group("name");
         String qqStr = matcher.group("qq");
-        String idStr = matcher.group("id");
+        String idStr = matcher.group("uid");
 
         if (StringUtils.hasText(name)) {
             try {

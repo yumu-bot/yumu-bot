@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_SID;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_SID;
 
 @Service("NOMINATION")
 public class NominationService implements MessageService<Matcher> {

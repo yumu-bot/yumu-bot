@@ -26,7 +26,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_NAME;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_NAME;
 
 @Service("MAP_POOL")
 public class MapPoolService implements MessageService<MapPoolService.PoolParam> {

@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.List;
 import java.util.regex.Matcher;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_BID;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_BID;
 
 @Service("LEADER_BOARD")
 public class LeaderBoardService implements MessageService<Matcher> {

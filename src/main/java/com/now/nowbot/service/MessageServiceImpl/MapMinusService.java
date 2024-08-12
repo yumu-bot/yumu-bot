@@ -20,7 +20,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.regex.Matcher;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.FLAG_MOD;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MOD;
 
 @Service("MAP_MINUS")
 public class MapMinusService implements MessageService<Matcher> {

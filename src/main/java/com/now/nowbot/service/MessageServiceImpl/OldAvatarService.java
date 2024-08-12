@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.*;
 
 @Service("OLD_AVATAR")
 public class OldAvatarService implements MessageService<OldAvatarService.OAParam> {

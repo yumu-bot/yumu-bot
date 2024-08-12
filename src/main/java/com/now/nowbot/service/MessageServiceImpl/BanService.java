@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.now.nowbot.util.command.CmdPatternStaticKt.*;
+import static com.now.nowbot.util.command.CommandPatternStaticKt.*;
 
 @Service("BAN")
 public class BanService implements MessageService<BanService.BanParam> {
