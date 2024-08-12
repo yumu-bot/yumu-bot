@@ -2,7 +2,7 @@ package com.now.nowbot.util
 
 import com.now.nowbot.util.command.*
 import com.now.nowbot.util.command.MatchLevel.*
-import com.now.nowbot.util.command.CmdPatterBuilder
+import com.now.nowbot.util.command.CommandPatternBuilder
 import java.util.regex.Pattern
 
 enum class OfficialInstruction(val pattern: Pattern) {
@@ -258,4 +258,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     // #9 自定义
+}
+
+// 检查正则
+fun main() {
+    for(i in OfficialInstruction.values()) {
+        println("${i.name}: ${i.pattern.pattern()}")
+    }
 }

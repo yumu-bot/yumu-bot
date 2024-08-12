@@ -4,6 +4,7 @@ import org.intellij.lang.annotations.Language
 
 const val CHAR_HASH: Char = '#'
 const val CHAR_HASH_FULL: Char = '＃'
+const val CHAR_EQUAL: Char = '='
 const val CHAR_01: Char = '?'
 const val CHAR_ANY: Char = '*'
 const val CHAR_1P: Char = '+'
@@ -87,7 +88,7 @@ val REG_WORD: String = "\\w"
 val REG_NUMBER_1P: String = "\\d+"
 
 @Language("RegExp")
-val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]*"
+val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]"
 
 @Language("RegExp")
 val REG_NUMBER_DECIMAL: String = "\\d+\\.?\\d*"
@@ -136,7 +137,7 @@ val REG_USER_AND_RANGE: String =
 
 @Language("RegExp")
 val REG_USER_AND_RANGE_GROUP: String =
-    "(?<$FLAG_USER_AND_RANGE>($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?)?"
+    "(?<$FLAG_USER_AND_RANGE>$REG_NAME?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?)?"
 
 @Language("RegExp")
 val REG_USERNAME_SEPERATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s_,，|:：`、]"

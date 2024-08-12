@@ -9,12 +9,16 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.ServiceException.FriendException;
+import com.now.nowbot.util.CmdRange;
+import com.now.nowbot.util.CmdUtil;
+import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -22,8 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_RANGE;
+
 @Service("FRIEND")
-public class FriendService implements MessageService<int[]> {
+public class FriendService implements MessageService<FriendService.FriendParam> {
     private static final Logger log = LoggerFactory.getLogger(FriendService.class);
     @Resource
     BindDao bindDao;
@@ -32,17 +38,35 @@ public class FriendService implements MessageService<int[]> {
     @Resource
     ImageService imageService;
 
+    public record FriendParam(Integer offset, Integer limit) {}
+
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<int[]> data) {
+    public boolean isHandle(MessageEvent event, String messageText, DataValue<FriendParam> data) {
         var m = Instruction.FRIEND.matcher(messageText);
         if (m.find()) {
-            data.setValue(new int[0]);
+            var s = m.group(FLAG_RANGE).split("[\\-－—]");
+            if (s.length >= 2 && StringUtils.hasText(s[0]) && StringUtils.hasText(s[1])) {
+                data.setValue(
+                        new FriendParam(
+                                DataUtil.parseRange2Offset(Integer.parseInt(s[0]), Integer.parseInt(s[1])),
+
+                                DataUtil.parseRange2Limit(Integer.parseInt(s[0]), Integer.parseInt(s[1]))
+                        )
+                );
+            } else if (s.length == 1 && StringUtils.hasText(s[0])) {
+                data.setValue(
+                        new FriendParam(0, Integer.parseInt(s[0]))
+                );
+            } else {
+                data.setValue(new FriendParam(0, 12));
+            }
+
             return true;
         } else return false;
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, int[] data) throws Throwable {
+    public void HandleMessage(MessageEvent event, FriendParam param) throws Throwable {
         var from = event.getSubject();
         BinUser binUser;
         OsuUser osuUser;
@@ -50,26 +74,10 @@ public class FriendService implements MessageService<int[]> {
         List<MicroUser> friends = new ArrayList<>();
 
         //拿到参数,默认1-24个
-        int n1 = 0, n2;
-        boolean doRandom = true;
-        if (data.length == 2) {
-            doRandom = false;
-            n1 = data[0];
-            n2 = data[1];
-            if (n1 > n2) {
-                int temp = n1;
-                n1 = n2;
-                n2 = temp;
-            }
-            n1--;
-        } else if (data.length == 1) {
-            n2 = data[0];
-        } else {
-            n2 = 12;
-        }
+        int offset = param.offset(), limit = param.limit();
+        boolean doRandom = (offset == 0 && limit == 12);
 
-        n2--;
-        if (n2 == 0 || 100 < n2 - n1) {
+        if (limit == 0 || 100 < limit - offset) {
             throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds);
         }
 
@@ -118,7 +126,7 @@ public class FriendService implements MessageService<int[]> {
             }
         }
 
-        for (int i = n1; i <= n2 && i < friendList.size(); i++) {
+        for (int i = offset; i < limit && i < friendList.size(); i++) {
             if (doRandom) {
                 friends.add(friendList.get(index[i]));
             } else {

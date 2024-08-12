@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -58,7 +59,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_BidError);
         }
 
-        if (matcher.group("range") == null) {
+        if (! StringUtils.hasText(matcher.group("range"))) {
             range = 50;
         } else {
             try {

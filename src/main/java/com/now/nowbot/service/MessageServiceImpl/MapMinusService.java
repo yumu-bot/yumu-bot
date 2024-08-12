@@ -53,7 +53,7 @@ public class MapMinusService implements MessageService<Matcher> {
 
 
         try {
-            bid = Long.parseLong(matcher.group("id"));
+            bid = Long.parseLong(matcher.group("bid"));
         } catch (NumberFormatException e) {
             throw new MapMinusException(MapMinusException.Type.MM_Bid_Error);
         }

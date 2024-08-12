@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service("MAP")
 public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
@@ -83,7 +84,17 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         try {
             combo = Integer.parseInt(matcher.group("combo"));
         } catch (RuntimeException e) {
-            combo = 0;
+            try {
+                var rate = Double.parseDouble(matcher.group("combo"));
+                if (rate >= 0d && rate <= 1d) {
+                    combo = Math.toIntExact(Math.round(
+                            Objects.requireNonNullElse(beatMap.getMaxCombo(), 0) * rate));
+                } else {
+                    combo = 0;
+                }
+            } catch (RuntimeException e1) {
+                combo = 0;
+            }
         }
 
         try {

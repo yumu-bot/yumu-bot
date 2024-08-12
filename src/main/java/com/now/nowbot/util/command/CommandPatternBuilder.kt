@@ -104,16 +104,24 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      */
     fun appendQQID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_QQ_ID, "${FLAG_QQ_ID}=${REG_NUMBER}", level)
+        appendGroup(MAYBE) {
+            append(FLAG_QQ_ID)
+            append(CHAR_EQUAL)
+            appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, level)
+        }
         appendSpace()
     }
 
     /**
-     * 加 (?<id>\d+) 的匹配。
+     * 加 id=(?<id>\d+) 的匹配。
      * @param level 匹配等级。
      */
     fun appendID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, level)
+        appendGroup(MAYBE) {
+            append(FLAG_ID)
+            append(CHAR_EQUAL)
+            appendCaptureGroup(FLAG_ID, REG_NUMBER, level)
+        }
         appendSpace()
     }
 
@@ -122,7 +130,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      */
     fun appendQQGroup(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_QQ_GROUP, "${FLAG_QQ_GROUP}=${REG_NUMBER}", level)
+        appendGroup(MAYBE) {
+            append(FLAG_QQ_GROUP)
+            append(CHAR_EQUAL)
+            appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, level)
+        }
         appendSpace()
     }
 
@@ -141,7 +153,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      */
     fun appendUID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_UID, "${FLAG_UID}=${REG_NUMBER}", level)
+        appendGroup(MAYBE) {
+            append(FLAG_UID)
+            append(CHAR_EQUAL)
+            appendCaptureGroup(FLAG_UID, REG_NUMBER, level)
+        }
         appendSpace()
     }
 
@@ -168,9 +184,9 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      * @param level 匹配等级。
      */
-    fun appendNameAndRange(level: MatchLevel? = MAYBE, level2: MatchLevel? = MAYBE) {
-        appendName(level)
-        appendRange(level2)
+    fun appendNameAndRange(level: MatchLevel? = MAYBE) {
+        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", EXIST, level)
+        appendSpace()
     }
 
     /**
@@ -197,7 +213,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append(REG_PLUS)
             appendMatchLevel(level2)
             appendSpace()
-            appendCaptureGroup(FLAG_MODE, REG_MOD, MORE)
+            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE)
         }
         appendMatchLevel(level2)
         appendSpace()
@@ -239,7 +255,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     fun appendMatchParam() {
-        appendGroup {
+        appendGroup(MAYBE) {
             appendSpace()
             append("e(z|a[sz]y)?")
             appendSpace()
@@ -251,7 +267,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
         appendCaptureGroup("ignore", "-?\\d+")
         appendSpace()
-        appendGroup {
+        appendGroup(MAYBE) {
             append("\\[")
             appendCaptureGroup("remove", REG_NUMBER_SEPERATOR, MORE)
             append("\\]")
@@ -288,8 +304,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendMode()
         appendQQID()
         appendUID()
-        appendName()
-        appendRange()
+        appendNameAndRange()
     }
 
     /**
@@ -297,7 +312,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendModeBIDQQUIDNameMod() {
         appendMode()
-        appendBID()
+        appendBID(ANY)
         appendQQID()
         appendUID()
         appendName()

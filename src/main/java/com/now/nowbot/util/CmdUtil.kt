@@ -39,14 +39,14 @@ object CmdUtil {
         isMyself: AtomicBoolean,
     ): OsuUser? {
         isMyself.set(false)
-        var userObj = getOsuUser(event, matcher, mode)
-        if (Objects.isNull(userObj)) {
+        var user = getOsuUser(event, matcher, mode)
+        if (Objects.isNull(user)) {
             isMyself.set(true)
             val bind = bindDao!!.getUserFromQQ(event.sender.id)
             checkOsuMode(mode, bind.osuMode)
-            userObj = userApiService!!.getPlayerInfo(bind, mode.data)
+            user = userApiService!!.getPlayerInfo(bind, mode.data)
         }
-        return userObj
+        return user
     }
 
     /**
@@ -111,7 +111,8 @@ object CmdUtil {
             val range = parseRange(text)
             return CmdRange(null, range[0], range[1])
         }
-        val ranges = if (text.indexOf(CHAR_HASH) > 0 || text.indexOf(CHAR_HASH_FULL) > 0) {
+        // -1 才是没找到
+        val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
@@ -120,6 +121,10 @@ object CmdUtil {
         var result = CmdRange<OsuUser>()
         for (range in ranges) {
             try {
+                if (range.data == null) {
+                    result = CmdRange(null, range.start, range.end)
+                    break
+                } // 傻逼 kotlin 自动转换
                 val id = userApiService!!.getOsuId(range.data)
                 val user = getOsuUser(id, mode.data)
                 result = CmdRange(user, range.start, range.end)
@@ -233,6 +238,7 @@ object CmdUtil {
     /**
      * 内部方法
      */
+    @JvmStatic
     private fun parseRange(text: String): Array<Int?> {
         val rangeInt = arrayOf<Int?>(null, null)
 
@@ -295,6 +301,7 @@ object CmdUtil {
             val name: String = matcher.group(FLAG_NAME) ?: ""
             if (StringUtils.hasText(name)) return getOsuUser(name, mode.data)
         }
+
         return null
     }
 
