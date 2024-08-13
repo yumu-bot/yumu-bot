@@ -5,9 +5,6 @@ import org.intellij.lang.annotations.Language
 const val CHAR_HASH: Char = '#'
 const val CHAR_HASH_FULL: Char = '＃'
 const val CHAR_EQUAL: Char = '='
-const val CHAR_01: Char = '?'
-const val CHAR_ANY: Char = '*'
-const val CHAR_1P: Char = '+'
 const val CHAR_SEPARATOR: Char = '|'
 const val CHAR_BEGIN: Char = '^'
 const val CHAR_FINAL: Char = '$'
@@ -17,6 +14,10 @@ const val CHAR_COMMAS: Char = ','
 const val CHAR_GROUP_START: Char = '('
 const val CHAR_GROUP_END: Char = ')'
 const val CHAR_SLASH: Char = '/'
+
+const val LEVEL_MAYBE: Char = '?'
+const val LEVEL_ANY: Char = '*'
+const val LEVEL_MORE: Char = '+'
 
 const val CHAR_NAME: String = "[0-9a-zA-Z\\[\\]\\-_]"
 const val CHAR_NAME_WITH_SPACE: String = "[0-9a-zA-Z\\[\\]\\-_ ]"
@@ -40,19 +41,7 @@ const val FLAG_QQ_GROUP: String = "group"
 val REG_CAPS_INSENSITIVE: String = "(?i)"
 
 @Language("RegExp")
-val REG_START_SORT: String = "\\\\ym"
-
-@Language("RegExp")
-val REG_START_ALL: String = "[!！](ym)?"
-
-@Language("RegExp")
 val REG_ANYTHING: String = "[\\s\\S]"
-
-@Language("RegExp")
-val REG_ANY: String = "[\\s\\S]*"
-
-@Language("RegExp")
-val REG_ANY_1P: String = "[\\s\\S]+"
 
 @Language("RegExp")
 val REG_SPACE: String = "\\s"
@@ -61,31 +50,16 @@ val REG_SPACE: String = "\\s"
 val REG_STAR: String = "\\*"
 
 @Language("RegExp")
-val REG_SPACE_ANY: String = "\\s*"
-
-@Language("RegExp")
-val REG_SPACE_1P: String = "\\s+"
-
-@Language("RegExp")
-val REG_SPACE_01: String = "\\s?"
-
-@Language("RegExp")
 val REG_NUMBER_12: String = "\\d{1,2}"
 
 @Language("RegExp")
 val REG_NUMBER_13: String = "\\d{1,3}"
 
 @Language("RegExp")
-val REG_NUMBER_5P: String = "\\d{5,}"
-
-@Language("RegExp")
 val REG_NUMBER: String = "\\d"
 
 @Language("RegExp")
 val REG_WORD: String = "\\w"
-
-@Language("RegExp")
-val REG_NUMBER_1P: String = "\\d+"
 
 @Language("RegExp")
 val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]"
@@ -95,9 +69,6 @@ val REG_NUMBER_DECIMAL: String = "\\d+\\.?\\d*"
 
 @Language("RegExp")
 val REG_PLUS: String = "\\+"
-
-@Language("RegExp")
-val REG_PLUS_01: String = "\\+?"
 
 @Language("RegExp")
 val REG_COLON: String = "[:：]"
@@ -129,66 +100,20 @@ val REG_IGNORE_BS: String = "(?![^bs:：\\d\\s])"
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 
 @Language("RegExp")
-val REG_NAME_GROUP: String = "(?<$FLAG_NAME>$CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
-
-@Language("RegExp")
-val REG_USER_AND_RANGE: String =
-    "$REG_NAME_GROUP?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))"
-
-@Language("RegExp")
-val REG_USER_AND_RANGE_GROUP: String =
-    "(?<$FLAG_USER_AND_RANGE>$REG_NAME?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?)?"
-
-@Language("RegExp")
 val REG_USERNAME_SEPERATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s_,，|:：`、]"
 
 @Language("RegExp")
 val REG_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 
 @Language("RegExp")
-val REG_QQ_ID: String = "(qq=$REG_SPACE_ANY(?<$FLAG_QQ_ID>$REG_NUMBER_5P))"
-
-@Language("RegExp")
-val REG_QQ_GROUP: String = "(group=$REG_SPACE_ANY(?<$FLAG_QQ_GROUP>$REG_NUMBER_5P))"
-
-@Language("RegExp")
-val REG_UID: String = "(uid=$REG_SPACE_ANY(?<$FLAG_UID>$REG_NUMBER_1P))"
-
-@Language("RegExp")
 val REG_MOD: String = "(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)"
 
 @Language("RegExp")
-// 加号必须要
-val REG_MOD_1P: String = "($REG_PLUS(?<$FLAG_MOD>$REG_MOD$CHAR_1P))"
-
-@Language("RegExp")
-// 加号不一定要
-val REG_MOD_01: String = "($REG_PLUS_01(?<$FLAG_MOD>$REG_MOD$CHAR_1P))"
-
-@Language("RegExp")
 val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
-
-@Language("RegExp")
-val REG_MODE_GROUP: String = "(?<$FLAG_MODE>$REG_MODE)"
 
 @Language("RegExp")
 val REG_RANGE: String = "((100|$REG_NUMBER_12)($REG_HYPHEN$REG_NUMBER_13)?)"
 
 @Language("RegExp")
 val REG_RANGE_DAY: String = "($REG_NUMBER_13($REG_HYPHEN$REG_NUMBER_13)?)"
-
-@Language("RegExp")
-val REG_RANGE_GROUP: String = "(?<$FLAG_RANGE>$REG_RANGE)"
-
-@Language("RegExp")
-val REG_RANGE_DAY_GROUP: String = "(?<$FLAG_RANGE>$REG_RANGE_DAY)"
-
-@Language("RegExp")
-val REG_ID: String = "(?<$FLAG_ID>$REG_NUMBER_1P)"
-
-@Language("RegExp")
-val REG_BID: String = "(?<$FLAG_BID>$REG_NUMBER_1P)"
-
-@Language("RegExp")
-val REG_SID: String = "(?<$FLAG_SID>$REG_NUMBER_1P)"
 

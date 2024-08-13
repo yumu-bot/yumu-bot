@@ -24,11 +24,13 @@ enum class Instruction(val pattern: Pattern) {
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
         appendGroup {
-            appendCommandsIgnoreAll("ping", "pi")
-        }
-        append(CHAR_SEPARATOR)
-        appendGroup {
-            append("yumu${REG_SPACE}${CHAR_ANY}${REG_QUESTION}")
+            appendGroup {
+                appendCommandsIgnoreAll("ping", "pi")
+            }
+            append(CHAR_SEPARATOR)
+            appendGroup {
+                append("yumu${REG_SPACE}${LEVEL_ANY}${REG_QUESTION}")
+            }
         }
     }),
 
@@ -65,15 +67,16 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERVICE_COUNT(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("servicecount", "统计服务调用", "ec")
+        appendCommandsIgnoreAll("servicecount", "统计服务调用", "sc")
 
-        appendGroup {
+        appendGroup(MAYBE) {
            appendCaptureGroup("days", REG_NUMBER, MORE)
            append('d')
         }
-        appendGroup {
+        appendGroup(MAYBE) {
             appendCaptureGroup("hours", REG_NUMBER, MORE)
             append('h')
+            appendMatchLevel(MAYBE)
         }
     }),
 
@@ -142,10 +145,10 @@ enum class Instruction(val pattern: Pattern) {
     INFO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("information", "info", "i")
         appendModeQQUIDName()
-        appendGroup () {
+        appendGroup (MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
-            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER)
         }
     }),
 
@@ -295,7 +298,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("(?<function>(p[px]|pp[pvx]|p?p\\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs))")
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendSpace()
-        appendGroup {
+        appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, ANY)
@@ -317,7 +320,7 @@ enum class Instruction(val pattern: Pattern) {
     MU_RATING(CommandPatternBuilder.create {
         append(REG_EXCLAMINATION)
         appendSpace()
-        append("(?<uu>(u{1,2})(rating|ra))|(?<main>((ym)?rating|(ym)?ra|mra))")
+        append("((?<uu>(u{1,2})(rating|ra))|(?<main>((ym)?rating|(ym)?ra|mra)))")
         appendIgnore()
         appendSpace()
 
@@ -335,9 +338,9 @@ enum class Instruction(val pattern: Pattern) {
             "(ym)?(?<csv>(csvseriesrating|csvseries|csa|cs))"
         )
 
-        appendGroup {
+        appendGroup(MAYBE) {
             append(REG_HASH)
-            appendCaptureGroup("name", REG_ANY, MORE)
+            appendCaptureGroup("name", REG_ANYTHING, MORE)
             append(REG_HASH)
         }
         appendSpace()
@@ -379,9 +382,9 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("getpool", "gp")
         appendMode()
         appendSpace()
-        appendGroup {
+        appendGroup(MAYBE) {
             append(REG_HASH)
-            appendCaptureGroup("name", REG_ANY, MORE)
+            appendCaptureGroup("name", REG_ANYTHING, MORE)
             append(REG_HASH)
         }
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, ANY)
@@ -394,7 +397,7 @@ enum class Instruction(val pattern: Pattern) {
     DICE(CommandPatternBuilder.create {
         append("($REG_EXCLAMINATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
         appendCaptureGroup("number", "-?\\d", ANY)
-        appendCaptureGroup("text", REG_ANY, MORE)
+        appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
 
     DRAW(CommandPatternBuilder.create {
@@ -441,9 +444,9 @@ enum class Instruction(val pattern: Pattern) {
     // #9 自定义
     CUSTOM(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("custom", "c")
-        appendColonCaptureGroup(MAYBE, "operate", "${REG_WORD}${CHAR_1P}")
+        appendColonCaptureGroup(MAYBE, "operate", "${REG_WORD}${LEVEL_MORE}")
         appendSpace()
-        appendColonCaptureGroup(MAYBE, "type", "${REG_WORD}${CHAR_1P}")
+        appendColonCaptureGroup(MAYBE, "type", "${REG_WORD}${LEVEL_MORE}")
     }),
 
     TEST_PPM(CommandPatternBuilder.create {

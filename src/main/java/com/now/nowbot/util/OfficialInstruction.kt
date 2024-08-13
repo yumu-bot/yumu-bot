@@ -26,7 +26,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         }
         append(CHAR_SEPARATOR)
         appendGroup {
-            append("yumu${REG_SPACE}${CHAR_ANY}${REG_QUESTION}")
+            append("yumu${REG_SPACE}${LEVEL_ANY}${REG_QUESTION}")
         }
     }),
 
@@ -90,10 +90,10 @@ enum class OfficialInstruction(val pattern: Pattern) {
     INFO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("i")
         appendModeQQUIDName()
-        appendGroup () {
+        appendGroup (MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
-            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER)
         }
     }),
 
@@ -111,7 +111,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("(?<function>(p?p[mv\\-]))")
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, ANY)
-        appendGroup {
+        appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, MORE)
@@ -208,7 +208,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("(?<function>(p[px]|pp[pvx]|p?p\\+))")
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendSpace()
-        appendGroup {
+        appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, ANY)
@@ -241,7 +241,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     DICE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("d")
         appendCaptureGroup("number", "-?\\d", ANY)
-        appendCaptureGroup("text", REG_ANY, MORE)
+        appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
 
     // #8 辅助指令

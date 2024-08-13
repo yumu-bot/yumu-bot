@@ -185,7 +185,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      */
     fun appendNameAndRange(level: MatchLevel? = MAYBE) {
-        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", EXIST, level)
+        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", EXIST, level)
         appendSpace()
     }
 
@@ -376,12 +376,12 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendMatchLevel(level: MatchLevel? = EXIST) {
         when (level) {
             ANY_LAZY -> {
-                append(CHAR_ANY)
-                append(CHAR_01)
+                append(LEVEL_ANY)
+                append(LEVEL_MAYBE)
             }
-            ANY -> append(CHAR_ANY)
-            MAYBE -> append(CHAR_01)
-            MORE -> append(CHAR_1P)
+            ANY -> append(LEVEL_ANY)
+            MAYBE -> append(LEVEL_MAYBE)
+            MORE -> append(LEVEL_MORE)
             EXIST -> {} // do nothing
             null -> {} // do nothing
         }
@@ -575,7 +575,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         } else {
             +CHAR_BEGIN
             +REG_CAPS_INSENSITIVE
-            +REG_SPACE_ANY
+            +REG_SPACE
+            +LEVEL_ANY
         }
     }
 

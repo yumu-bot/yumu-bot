@@ -50,12 +50,10 @@ public class BindException extends TipsRuntimeException{
 
         BIND_Response_AlreadyBound("""
                 您已绑定，并且 Oauth2 令牌仍旧生效。
-                如果要改绑，请先输入 !unbind 解绑。
-                """),
+                如果要改绑，请先输入 !unbind 解绑。"""),
         BIND_Response_AlreadyBoundInfo("""
                 %s 已绑定 %s，并且 Oauth2 令牌仍旧生效（也许？）。
-                如果要改绑，请先输入 !unbind 解绑。
-                """),
+                如果要改绑，请先输入 !unbind 解绑。"""),
         BIND_Response_Success("已绑定成功！"),
 
         ;
