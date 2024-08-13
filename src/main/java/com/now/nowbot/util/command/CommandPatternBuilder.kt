@@ -22,7 +22,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
-    fun appendCommandsIgnore(@Language("RegExp") ignore : String?, @Language("RegExp") vararg commands: String) {
+    fun appendCommandsIgnore(@Language("RegExp") ignore: String?, @Language("RegExp") vararg commands: String) {
         __appendCommands(*commands)
         appendIgnore(ignore)
         appendSpace()
@@ -37,6 +37,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         }
     }
 
+    // 就不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 加命令, 展开后为 (!uu(p|pr))\s*
      * @param commands 连续的命令 ("p", "pr")
@@ -46,6 +47,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+
     // 效果等同于 appendCommandsIgnore(null, ...)
     fun appendUUIgnoreAll(@Language("RegExp") vararg commands: String) {
         __appendUU(*commands)
@@ -53,7 +55,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
-    fun appendUUIgnore(@Language("RegExp") ignore : String?, @Language("RegExp") vararg commands: String) {
+    fun appendUUIgnore(@Language("RegExp") ignore: String?, @Language("RegExp") vararg commands: String) {
         __appendCommands(*commands)
         appendIgnore(ignore)
         appendSpace()
@@ -84,14 +86,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
-    fun appendOfficialCommandsIgnore(@Language("RegExp") ignore : String?, @Language("RegExp") vararg commands: String) {
+    fun appendOfficialCommandsIgnore(@Language("RegExp") ignore: String?, @Language("RegExp") vararg commands: String) {
         __appendOfficialCommands(*commands)
         appendIgnore(ignore)
         appendSpace()
     }
-    
+
     private fun __appendOfficialCommands(@Language("RegExp") vararg commands: String) {
-        appendGroup {
+        appendGroup(EXIST) {
             append(CHAR_SLASH)
             appendSpace()
             append("ym")
@@ -101,39 +103,38 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 加 qq=(?<qq>\d+) 的匹配。
-     * @param level 匹配等级。
+     * 不是很懂 qq 为什么要传MathLevel, 难道qq还能有一个字符?
      */
-    fun appendQQID(level: MatchLevel? = MORE) {
+    fun appendQQID() {
         appendGroup(MAYBE) {
             append(FLAG_QQ_ID)
             append(CHAR_EQUAL)
-            appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, level)
+            // qq起码5位
+            appendCaptureGroupColonAndContentAreMathLevel(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
 
     /**
      * 加 id=(?<id>\d+) 的匹配。
-     * @param level 匹配等级。
      */
-    fun appendID(level: MatchLevel? = MORE) {
+    fun appendID() {
         appendGroup(MAYBE) {
             append(FLAG_ID)
             append(CHAR_EQUAL)
-            appendCaptureGroup(FLAG_ID, REG_NUMBER, level)
+            appendCaptureGroupColonAndContentAreMathLevel(FLAG_ID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
 
     /**
      * group=(?<group>\d+)
-     * @param level 匹配等级。
      */
-    fun appendQQGroup(level: MatchLevel? = MORE) {
+    fun appendQQGroup() {
         appendGroup(MAYBE) {
             append(FLAG_QQ_GROUP)
             append(CHAR_EQUAL)
-            appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, level)
+            appendCaptureGroupColonAndContentAreMathLevel(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -141,51 +142,47 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     /**
      * osu 合法名称
      * (?<name> X X+ X)
-     * @param level 匹配等级。
      */
-    fun appendName(level: MatchLevel? = MAYBE) {
-        appendCaptureGroup(FLAG_NAME, REG_NAME, level)
+    fun appendName() {
+        appendCaptureGroup(FLAG_NAME, REG_NAME)
         appendSpace()
     }
 
     /**
      * uid=(?<uid>\d+)。**默认一个或更多个 (+)。注意！**
-     * @param level 匹配等级。
      */
-    fun appendUID(level: MatchLevel? = MORE) {
+    fun appendUID() {
         appendGroup(MAYBE) {
             append(FLAG_UID)
             append(CHAR_EQUAL)
-            appendCaptureGroup(FLAG_UID, REG_NUMBER, level)
+            appendCaptureGroupColonAndContentAreMathLevel(FLAG_UID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
 
     /**
      * (?<bid>\d+)。**默认一个或更多个 (+)。注意！**
-     * @param level 匹配等级。
      */
-    fun appendBID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_BID, REG_NUMBER, level)
+    fun appendBID() {
+        appendCaptureGroupColonAndContentAreMathLevel(FLAG_BID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
     /**
      * (?<sid>\d+)。**默认一个或更多个 (+)。注意！**
-     * @param level 匹配等级。
      */
-    fun appendSID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_SID, REG_NUMBER, level)
+    fun appendSID() {
+        appendCaptureGroupColonAndContentAreMathLevel(FLAG_SID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
-    /**
-     * osu 合法名称范围
-     * (?<name> X X+ X)
-     * @param level 匹配等级。
-     */
-    fun appendNameAndRange(level: MatchLevel? = MAYBE) {
-        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", level)
+    fun appendNameAndRange() {
+        appendCaptureGroupColonAndContentAreMathLevel(
+            FLAG_USER_AND_RANGE,
+            "$REG_NAME?\\s*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+            EXIST,
+            MAYBE,
+        )
         appendSpace()
     }
 
@@ -193,11 +190,13 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * [:：](?<mode>mode)。
      * @param level 匹配等级。**默认没有或者一个 (?)。注意！**
      */
-    fun appendMode(level: MatchLevel? = MAYBE) {
-        appendGroup(level) {
+    fun appendMode() {
+        appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup(FLAG_MODE, REG_MODE, MAYBE)
+            // 不是很理解 原来你写mode 匹配是 (?<mode>(mode))? 现在要 (?<mode>(mode)?)?
+            // (?<mode>(mode)?)? 这样就算没有匹配到, group("mode") 就是空字符串, (mode)? 就允许为空
+            appendCaptureGroupContentIsMathLevel(FLAG_MODE, REG_MODE, EXIST)
         }
         appendSpace()
     }
@@ -205,52 +204,49 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * (+(?<mod>mod))。
-     * @param level 匹配等级。**默认没有或者一个 (?)。注意！**
-     * @param level2 **加号**（**+**）的匹配等级。**默认必须出现 ()。注意！**
+     * @param plusMust '+' 是否必须
      */
-    fun appendMod(level: MatchLevel? = MAYBE, level2: MatchLevel? = EXIST) {
+    fun appendMod(plusMust: Boolean = false) {
+        val level = if (plusMust) EXIST else MAYBE
         appendGroup(level) {
             append(REG_PLUS)
-            appendMatchLevel(level2)
+            if (!plusMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE)
+            appendCaptureGroupContentIsMathLevel(FLAG_MOD, REG_MOD, MORE)
         }
-        appendMatchLevel(level2)
         appendSpace()
     }
 
     /**
      * (#?(?<range>0-100))范围。**默认没有或者一个 (?)。注意！**
-     * @param level 匹配等级。
-     * @param level2 **井号**（**#**）的匹配等级。**默认没有或者一个 (?)。注意！**
+     * @param hashMust '#' 是否必须
      */
-    fun appendRange(level: MatchLevel? = MAYBE, level2: MatchLevel? = MAYBE) {
-        appendGroup(level) {
-            append(REG_HYPHEN)
-            appendMatchLevel(level2)
+    fun appendRange(hashMust: Boolean = false) {
+        // 你这原来是 -?\s*(?<range>([100|\d])+)? 写错了
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            if (!hashMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, REG_RANGE)
+            appendCaptureGroup(FLAG_RANGE, "(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})")
         }
         appendSpace()
     }
 
     /**
      * (#?(?<range>0-999))范围。
-     * @param level 匹配等级。**默认没有或者一个 (?)。注意！**
-     * @param level2 **井号**（**#**）的匹配等级。**默认没有或者一个 (?)。注意！**
      */
-    fun appendRangeDay(level: MatchLevel? = MAYBE, level2: MatchLevel? = MAYBE) {
-        appendGroup(level) {
-            append(REG_HYPHEN)
-            appendMatchLevel(level2)
+    private fun appendRangeDay() {
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, REG_RANGE_DAY, MAYBE)
+            appendCaptureGroupContentIsMathLevel(FLAG_RANGE, REG_RANGE_DAY, EXIST)
         }
         appendSpace()
     }
 
-    fun appendMatchID(level: MatchLevel? = MORE) {
-        appendCaptureGroup(FLAG_MATCHID, REG_NUMBER, level)
+    fun appendMatchID() {
+        appendCaptureGroupColonAndContentAreMathLevel(FLAG_MATCHID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
@@ -269,7 +265,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
         appendGroup(MAYBE) {
             append("\\[")
-            appendCaptureGroup("remove", REG_NUMBER_SEPERATOR, MORE)
+            appendCaptureGroupContentIsMathLevel("remove", REG_NUMBER_SEPERATOR, MORE)
             append("\\]")
         }
         appendSpace()
@@ -312,7 +308,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendModeBIDQQUIDNameMod() {
         appendMode()
-        appendBID(ANY)
+        appendBID()
         appendQQID()
         appendUID()
         appendName()
@@ -335,7 +331,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      * @return 无
      */
-    fun appendSpace(level: MatchLevel? = ANY) {
+    fun appendSpace(level: MatchLevel = ANY) {
         append(REG_SPACE)
         appendMatchLevel(level)
     }
@@ -345,8 +341,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @return 无
      */
     fun appendMatchArea(less: Int? = 1, more: Int? = 2) {
-        val l1 : Int?
-        val l2 : Int?
+        val l1: Int?
+        val l2: Int?
 
         if (less == null && more == null) {
             return
@@ -373,50 +369,59 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      * @return 无
      */
-    fun appendMatchLevel(level: MatchLevel? = EXIST) {
+    fun appendMatchLevel(level: MatchLevel) {
         when (level) {
             ANY_LAZY -> {
                 append(LEVEL_ANY)
                 append(LEVEL_MAYBE)
             }
+
             ANY -> append(LEVEL_ANY)
             MAYBE -> append(LEVEL_MAYBE)
             MORE -> append(LEVEL_MORE)
-            EXIST -> {} // do nothing
-            null -> {} // do nothing
+            EXIST -> return // do nothing
         }
     }
+
     /**
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
      * @param flag 组名
      * @param str 正则
-     * @param level 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
-     * @param level2 匹配等级。注意这个匹配是在**组外**的，也就是 (?<>abc ) **这里**，默认没有或者一个 (?)。
+     * @param contentLevel 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
+     * @param bodyLevel 匹配等级。注意这个匹配是在**组外**的，也就是 (?<>abc ) **这里**，默认没有或者一个 (?)。
      */
-    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = EXIST, level2: MatchLevel? = MAYBE
+    fun appendCaptureGroupColonAndContentAreMathLevel(
+        flag: String,
+        @Language("RegExp") str: String,
+        contentLevel: MatchLevel,
+        bodyLevel: MatchLevel
     ) {
-        appendGroup(level2) {
+        appendGroup(bodyLevel) {
             append("?<${flag}>${str}")
-            appendMatchLevel(level)
+            appendMatchLevel(contentLevel)
         }
     }
 
 
     /**
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
-     * @param level 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
+     * @param contentLevel 匹配等级一般是 MORE/EXIST。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
      */
-    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = EXIST
+    fun appendCaptureGroupContentIsMathLevel(
+        flag: String,
+        @Language("RegExp") str: String,
+        contentLevel: MatchLevel
     ) {
-        appendCaptureGroup(flag, str, level, MAYBE)
+        appendCaptureGroupColonAndContentAreMathLevel(flag, str, contentLevel, MAYBE)
     }
 
     /**
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
      */
-    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String
+    fun appendCaptureGroup(
+        flag: String, @Language("RegExp") str: String
     ) {
-        appendCaptureGroup(flag, str, EXIST, MAYBE)
+        appendCaptureGroupColonAndContentAreMathLevel(flag, str, EXIST, MAYBE)
     }
 
     /**
@@ -424,7 +429,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param group 执行一段添加组的操作
      * @param level 匹配等级。
      */
-    fun appendGroup(level: MatchLevel? = EXIST, group: CommandPatternBuilder.() -> Unit) {
+    fun appendGroup(level: MatchLevel = EXIST, group: CommandPatternBuilder.() -> Unit) {
         append(CHAR_GROUP_START)
         this.group()
         append(CHAR_GROUP_END)
@@ -434,13 +439,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     /**
      * 创建一个组, 展开后就是 (...)
      */
-    fun appendGroup(level: MatchLevel? = EXIST, @Language("RegExp") vararg strs: String) {
+    fun appendGroup(level: MatchLevel = EXIST, @Language("RegExp") vararg strs: String) {
         append(CHAR_GROUP_START)
         appendSeperator(*strs)
         append(CHAR_GROUP_END)
         appendMatchLevel(level)
     }
 
+    // 不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 创建一个组, 展开后就是 (...|xxx|aaa)
      */
@@ -448,6 +454,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(EXIST, *strs)
     }
 
+    // 不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 用分隔符来将多个隔开。a, b, c -> **a|b|c**
      */
@@ -455,10 +462,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         append(strs.joinToString(CHAR_SEPARATOR.toString()))
     }
 
+    // 用不到就删, 这个完全可以被 appendColonCaptureGroup 取代
     /**
      * 创建一个组，前面带冒号, ([：:].....)?
      */
-    fun appendColonGroup(level: MatchLevel? = MAYBE, @Language("RegExp") vararg strs: String) {
+    fun appendColonGroupBodyIsMatchLevel(level: MatchLevel, @Language("RegExp") vararg strs: String) {
         append(CHAR_GROUP_START)
         append(REG_COLON)
         appendSeperator(*strs)
@@ -470,40 +478,51 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 创建一个组，前面带冒号, ([：:].....)
      */
     fun appendColonGroup(@Language("RegExp") vararg strs: String) {
-        appendColonGroup(MAYBE, *strs)
+        appendColonGroupBodyIsMatchLevel(MAYBE, *strs)
     }
 
     /**
      * 创建一个捕获组，前面带冒号, ([：:](?< name >.....))?
-     * @param level 匹配等级。注意这个匹配是在**冒号后**的，也就是 ([：:]**这里**(?< name >.....))?
-     * @param level2 匹配等级。注意这个匹配是在**组里**的，也就是 ([：:](?< name >.....)**这里**)?
-     * @param level3 匹配等级。注意这个匹配是在**组外**的，也就是 ([：:](?< name >.....)) **这里**，默认没有或者一个 (?)。
+     * @param colonLevel 匹配等级。注意这个匹配是在**冒号后**的，也就是 ([：:]**这里**(?< name >.....))?
+     * @param contentLevel 匹配等级。注意这个匹配是在**组里**的，也就是 ([：:](?< name >.....)**这里**)?
+     * @param BodyLevel 匹配等级。注意这个匹配是在**组外**的，也就是 ([：:](?< name >.....)) **这里**，默认没有或者一个 (?)。
      */
-    fun appendColonCaptureGroup(level: MatchLevel? = EXIST, level2: MatchLevel? = EXIST, level3: MatchLevel? = MAYBE, flag: String, @Language("RegExp") vararg strs: String) {
+    private fun appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(
+        colonLevel: MatchLevel,
+        contentLevel: MatchLevel,
+        BodyLevel: MatchLevel,
+        flag: String,
+        @Language("RegExp") vararg strs: String
+    ) {
         append(CHAR_GROUP_START)
         append(REG_COLON)
-        appendMatchLevel(level)
-        appendGroup() {
+        appendMatchLevel(colonLevel)
+        appendGroup {
             append("?<$flag>${strs.joinToString(CHAR_SEPARATOR.toString())}")
-            appendMatchLevel(level2)
+            appendMatchLevel(contentLevel)
         }
         append(CHAR_GROUP_END)
-        appendMatchLevel(level3)
+        appendMatchLevel(BodyLevel)
     }
 
+    // 不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 创建一个捕获组，前面带冒号, ([：:](.....))?
      */
     fun appendColonCaptureGroup(flag: String, @Language("RegExp") vararg strs: String) {
-        appendColonCaptureGroup(EXIST, EXIST, MAYBE, flag, *strs)
+        appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(EXIST, EXIST, MAYBE, flag, *strs)
     }
 
     /**
      * 创建一个捕获组，前面带冒号, ([：:](.....))?
      * @param level 匹配等级。注意这个匹配是在**冒号后**的，也就是 ([：:]**这里**(?< name >.....))?
      */
-    fun appendColonCaptureGroup(level: MatchLevel? = EXIST, flag: String, @Language("RegExp") vararg strs: String) {
-        appendColonCaptureGroup(level, EXIST, MAYBE, flag, *strs)
+    fun appendColonCaptureGroupColonIsMatchLevel(
+        level: MatchLevel,
+        flag: String,
+        @Language("RegExp") vararg strs: String
+    ) {
+        appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(level, EXIST, MAYBE, flag, *strs)
     }
 
 
@@ -511,8 +530,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 添加随便一段正则
      */
     fun append(@Language("RegExp") vararg strs: String) {
-        strs.forEach {
-            str -> +str
+        strs.forEach { str ->
+            +str
         }
     }
 
@@ -557,7 +576,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun build(doBuild: CommandPatternBuilder.() -> Unit): Pattern {
         this.doBuild()
-        appendSpace()
+        if (!patternStr.endsWith("\\s*")) appendSpace()
         append(CHAR_FINAL)
         return Pattern.compile(patternStr.toString())
     }

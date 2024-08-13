@@ -60,11 +60,11 @@ public class BPService implements MessageService<BPService.BPParam> {
             if (limit < 1) {
                 limit = offset == 0 ? DEFAULT_BP_COUNT : offset + 1;
                 offset = 0;
-            } else {
-                limit = Math.max(1, limit - offset);
             }
-        } else if (limit < 1) {
+        } else if (limit <= 1) {
             limit = 1;
+        } else {
+            limit = Math.max(1, limit - offset);
         }
 
 
