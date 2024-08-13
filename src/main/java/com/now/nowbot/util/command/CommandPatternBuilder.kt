@@ -110,7 +110,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append(FLAG_QQ_ID)
             append(CHAR_EQUAL)
             // qq起码5位
-            appendCaptureGroupColonAndContentAreMathLevel(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -122,7 +122,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(MAYBE) {
             append(FLAG_ID)
             append(CHAR_EQUAL)
-            appendCaptureGroupColonAndContentAreMathLevel(FLAG_ID, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -134,7 +134,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(MAYBE) {
             append(FLAG_QQ_GROUP)
             append(CHAR_EQUAL)
-            appendCaptureGroupColonAndContentAreMathLevel(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -155,7 +155,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(MAYBE) {
             append(FLAG_UID)
             append(CHAR_EQUAL)
-            appendCaptureGroupColonAndContentAreMathLevel(FLAG_UID, REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup(FLAG_UID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -164,7 +164,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<bid>\d+)。**默认一个或更多个 (+)。注意！**
      */
     fun appendBID() {
-        appendCaptureGroupColonAndContentAreMathLevel(FLAG_BID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_BID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
@@ -172,17 +172,17 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<sid>\d+)。**默认一个或更多个 (+)。注意！**
      */
     fun appendSID() {
-        appendCaptureGroupColonAndContentAreMathLevel(FLAG_SID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_SID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
     fun appendNameAndRange() {
-        appendCaptureGroupColonAndContentAreMathLevel(
-            FLAG_USER_AND_RANGE,
-            "$REG_NAME?\\s*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
-            EXIST,
-            MAYBE,
-        )
+        appendCaptureGroup(
+                    FLAG_USER_AND_RANGE,
+                    "$REG_NAME?${REG_SPACE}${LEVEL_ANY}($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+                    EXIST,
+                    MAYBE,
+                )
         appendSpace()
     }
 
@@ -194,9 +194,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            // 不是很理解 原来你写mode 匹配是 (?<mode>(mode))? 现在要 (?<mode>(mode)?)?
-            // (?<mode>(mode)?)? 这样就算没有匹配到, group("mode") 就是空字符串, (mode)? 就允许为空
-            appendCaptureGroupContentIsMathLevel(FLAG_MODE, REG_MODE, EXIST)
+            appendCaptureGroup(FLAG_MODE, REG_MODE, EXIST)
         }
         appendSpace()
     }
@@ -212,7 +210,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append(REG_PLUS)
             if (!plusMust) append('?')
             appendSpace()
-            appendCaptureGroupContentIsMathLevel(FLAG_MOD, REG_MOD, MORE)
+            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE)
         }
         appendSpace()
     }
@@ -240,13 +238,13 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroupContentIsMathLevel(FLAG_RANGE, REG_RANGE_DAY, EXIST)
+            appendCaptureGroup(FLAG_RANGE, REG_RANGE_DAY, EXIST)
         }
         appendSpace()
     }
 
     fun appendMatchID() {
-        appendCaptureGroupColonAndContentAreMathLevel(FLAG_MATCHID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_MATCHID, REG_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
@@ -265,7 +263,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
         appendGroup(MAYBE) {
             append("\\[")
-            appendCaptureGroupContentIsMathLevel("remove", REG_NUMBER_SEPERATOR, MORE)
+            appendCaptureGroup("remove", REG_NUMBER_SEPERATOR, MORE)
             append("\\]")
         }
         appendSpace()
@@ -364,7 +362,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 添加匹配次数。如果不使用此方法，则是必须出现一个，否则匹配失败
+     * 添加匹配次数。如果不使用此方法，则是必须出现一个，否则匹配失败（什么都不加）
      * appendEnd
      * @param level 匹配等级。
      * @return 无
@@ -390,7 +388,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param contentLevel 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
      * @param bodyLevel 匹配等级。注意这个匹配是在**组外**的，也就是 (?<>abc ) **这里**，默认没有或者一个 (?)。
      */
-    fun appendCaptureGroupColonAndContentAreMathLevel(
+    fun appendCaptureGroup(
         flag: String,
         @Language("RegExp") str: String,
         contentLevel: MatchLevel,
@@ -407,12 +405,12 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
      * @param contentLevel 匹配等级一般是 MORE/EXIST。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
      */
-    fun appendCaptureGroupContentIsMathLevel(
+    fun appendCaptureGroup(
         flag: String,
         @Language("RegExp") str: String,
         contentLevel: MatchLevel
     ) {
-        appendCaptureGroupColonAndContentAreMathLevel(flag, str, contentLevel, MAYBE)
+        appendCaptureGroup(flag, str, contentLevel, MAYBE)
     }
 
     /**
@@ -421,7 +419,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendCaptureGroup(
         flag: String, @Language("RegExp") str: String
     ) {
-        appendCaptureGroupColonAndContentAreMathLevel(flag, str, EXIST, MAYBE)
+        appendCaptureGroup(flag, str, EXIST, MAYBE)
     }
 
     /**
@@ -466,7 +464,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     /**
      * 创建一个组，前面带冒号, ([：:].....)?
      */
-    fun appendColonGroupBodyIsMatchLevel(level: MatchLevel, @Language("RegExp") vararg strs: String) {
+    fun appendColonGroup(level: MatchLevel, @Language("RegExp") vararg strs: String) {
         append(CHAR_GROUP_START)
         append(REG_COLON)
         appendSeperator(*strs)
@@ -478,7 +476,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 创建一个组，前面带冒号, ([：:].....)
      */
     fun appendColonGroup(@Language("RegExp") vararg strs: String) {
-        appendColonGroupBodyIsMatchLevel(MAYBE, *strs)
+        appendColonGroup(MAYBE, *strs)
     }
 
     /**
@@ -487,7 +485,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param contentLevel 匹配等级。注意这个匹配是在**组里**的，也就是 ([：:](?< name >.....)**这里**)?
      * @param BodyLevel 匹配等级。注意这个匹配是在**组外**的，也就是 ([：:](?< name >.....)) **这里**，默认没有或者一个 (?)。
      */
-    private fun appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(
+    private fun appendColonCaptureGroup(
         colonLevel: MatchLevel,
         contentLevel: MatchLevel,
         BodyLevel: MatchLevel,
@@ -510,19 +508,19 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 创建一个捕获组，前面带冒号, ([：:](.....))?
      */
     fun appendColonCaptureGroup(flag: String, @Language("RegExp") vararg strs: String) {
-        appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(EXIST, EXIST, MAYBE, flag, *strs)
+        appendColonCaptureGroup(EXIST, EXIST, MAYBE, flag, *strs)
     }
 
     /**
      * 创建一个捕获组，前面带冒号, ([：:](.....))?
      * @param level 匹配等级。注意这个匹配是在**冒号后**的，也就是 ([：:]**这里**(?< name >.....))?
      */
-    fun appendColonCaptureGroupColonIsMatchLevel(
+    fun appendColonCaptureGroup(
         level: MatchLevel,
         flag: String,
         @Language("RegExp") vararg strs: String
     ) {
-        appendColonCaptureGroupColonAndContentAndBodyAreMatchLevel(level, EXIST, MAYBE, flag, *strs)
+        appendColonCaptureGroup(level, EXIST, MAYBE, flag, *strs)
     }
 
 
