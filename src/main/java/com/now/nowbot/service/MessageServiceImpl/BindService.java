@@ -14,6 +14,7 @@ import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
@@ -71,6 +72,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var qqStr = m.group(FLAG_QQ_ID);
         var name = m.group(FLAG_NAME);
+        if (name.trim().isEmpty()) name = null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 带着 ym 以及特殊短链不用问
         boolean isYmBot = messageText.substring(0, 3).contains("ym") ||
@@ -133,51 +135,48 @@ public class BindService implements MessageService<BindService.BindParam> {
     public void HandleMessage(MessageEvent event, BindParam param) throws Throwable {
         var me = event.getSender().getId();
 
-        //解绑自己的权限下放。这个不应该是超级管理员的专属权利。
-        if (param.unbind && me == param.qq) {
-            unbindQQ(me);
-            return;
-        }
-
-        // bi name (self)
-        if (Objects.nonNull(param.name) && me == param.qq) {
-            bindQQName(event, param.name, me);
-            return;
-        }
-
-        if (me == param.qq) {
-            bindQQ(event, me, param.isFull);
-            return;
-        }
-
-        if (param.unbind && !param.isSuper) {
-            // ub 但是不是自己, 也不是超管
-            throw new BindException(BindException.Type.BIND_Me_Blacklisted);
-        }
-
-        // 超管 解绑
-        if (param.isSuper && param.unbind()) {
-            if (Objects.nonNull(param.name)) {
-                // name
-                unbindName(param.name);
+        if (param.isSuper) {
+            // 超管 解绑
+            if (param.unbind) {
+                if (Objects.nonNull(param.name)) {
+                    unbindName(param.name);
+                } else {
+                    unbindQQ(param.qq);
+                }
             } else {
-                unbindQQ(param.qq);
+                //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
+                if (Objects.nonNull(param.name)) {
+                    bindQQName(event, param.name, param.qq);
+                } else if (param.at) {
+                    bindQQAt(event, param.qq);
+                } else if (me == param.qq) {
+                    bindQQ(event, me, param.isFull);
+                } else {
+                    throw new BindException(BindException.Type.BIND_Player_NoEnoughInfo);
+                }
             }
-            return;
-        }
+        } else {
+            if (me != param.qq) {
+                // ub 但是不是自己, 也不是超管
+                throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
+            }
 
-        //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper && Objects.nonNull(param.name)) {
-            bindQQName(event, param.name, param.qq);
-            return;
-        }
-        if (param.isSuper && param.at) {
-            bindQQAt(event, param.qq);
-            return;
+            if (param.unbind) {
+                //解绑自己的权限下放。这个不应该是超级管理员的专属权利。
+                unbindQQ(me);
+            } else {
+                if (Objects.nonNull(param.name)) {
+                    bindQQName(event, param.name, me);
+                } else if (me == param.qq) {
+                    bindQQ(event, me, param.isFull);
+                } else {
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_QQ);
+                }
+            }
         }
 
         // 不是超管，也不是自己
-        throw new BindException(BindException.Type.BIND_Me_Blacklisted);
+        // throw new BindException(BindException.Type.BIND_Me_Blacklisted);
     }
 
     private void unbindName(String name) throws BindException {

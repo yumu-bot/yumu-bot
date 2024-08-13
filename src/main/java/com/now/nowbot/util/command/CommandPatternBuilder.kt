@@ -386,7 +386,6 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             null -> {} // do nothing
         }
     }
-
     /**
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
      * @param flag 组名
@@ -394,11 +393,22 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
      * @param level2 匹配等级。注意这个匹配是在**组外**的，也就是 (?<>abc ) **这里**，默认没有或者一个 (?)。
      */
-    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = MAYBE
+    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = EXIST, level2: MatchLevel? = MAYBE
     ) {
-        appendGroup(level) {
+        appendGroup(level2) {
             append("?<${flag}>${str}")
+            appendMatchLevel(level)
         }
+    }
+
+
+    /**
+     * 添加一个捕获组, 展开后就是 (? < name >...)?。
+     * @param level 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
+     */
+    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = EXIST
+    ) {
+        appendCaptureGroup(flag, str, level, MAYBE)
     }
 
     /**
@@ -406,7 +416,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendCaptureGroup(flag: String, @Language("RegExp") str: String
     ) {
-        appendCaptureGroup(flag, str, MAYBE)
+        appendCaptureGroup(flag, str, EXIST, MAYBE)
     }
 
     /**
