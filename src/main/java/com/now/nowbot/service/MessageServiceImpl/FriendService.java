@@ -137,7 +137,7 @@ public class FriendService implements MessageService<FriendService.FriendParam> 
                 friends.add(friendList.get(index[i]));
             } else {
                 try {
-                    friends.add(friendList.get(i));
+                    friends.add(friendList.get(offset + i));
                 } catch (IndexOutOfBoundsException e) {
                     log.error("Friend: 莫名其妙的数组越界", e);
                     throw new FriendException(FriendException.Type.FRIEND_Send_Error);
