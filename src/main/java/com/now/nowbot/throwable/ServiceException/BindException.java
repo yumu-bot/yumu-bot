@@ -22,7 +22,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Question_Wrong("回答错误。"),
         BIND_Question_Overtime("回答超时，撤回绑定请求。"),
 
-        BIND_Progress_Binding("正在将 %s 绑定到 (%s) %s 上"),
+        BIND_Progress_Binding("已经将 %s 绑定到了 (%s) %s 上"),
         BIND_Progress_BindingRecoverInfo("""
                 您已绑定 (%s) %s，但是令牌可能还没有失效。
                 如果要改绑，请回复 OK。"""),
@@ -47,14 +47,15 @@ public class BindException extends TipsRuntimeException{
         BIND_Player_Banned("哼哼，他号没了"),
 
         BIND_API_TooManyRequests("ppy API 访问量超限，暂时不能绑定呢..."),
-
+        BIND_TooManyRequests("尝试次数过多, 禁止答题, 请使用不带名字的方式来绑定."),
 
         BIND_Response_AlreadyBound("""
                 您已绑定，并且 Oauth2 令牌仍旧生效。
                 如果要改绑，请先输入 !unbind 解绑。"""),
         BIND_Response_AlreadyBoundInfo("""
                 %s 已绑定 %s，并且 Oauth2 令牌仍旧生效（也许？）。
-                如果要改绑，请先输入 !unbind 解绑。"""),
+                如果要改绑，请先使用原来的QQ账号输入 !unbind 解绑。"""),
+
         BIND_Response_Success("已绑定成功！"),
 
         ;

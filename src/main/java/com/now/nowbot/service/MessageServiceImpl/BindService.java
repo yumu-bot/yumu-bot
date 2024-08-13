@@ -133,12 +133,11 @@ public class BindService implements MessageService<BindService.BindParam> {
     @Override
     public void HandleMessage(MessageEvent event, BindParam param) throws Throwable {
         var me = event.getSender().getId();
-        
+
         if (me == param.qq) {
             if (param.unbind) {
                 unbindQQ(me);
-            } else 
-            if (Objects.nonNull(param.name)) {
+            } else if (Objects.nonNull(param.name)) {
                 bindQQName(event, param.name, me);
             } else {
                 bindQQ(event, me, param.isFull);
@@ -157,14 +156,13 @@ public class BindService implements MessageService<BindService.BindParam> {
                     unbindQQ(param.qq);
                 }
             } else
-            //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-            if (Objects.nonNull(param.name)) {
-                bindQQName(event, param.name, param.qq);
+                //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
+                if (Objects.nonNull(param.name)) {
+                    bindQQName(event, param.name, param.qq);
 
-            } else
-            if (param.at) {
-                bindQQAt(event, param.qq, param.isFull);
-            }
+                } else if (param.at) {
+                    bindQQAt(event, param.qq, param.isFull);
+                }
             return;
         }
 
@@ -381,10 +379,11 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
         if (check(event.getSender().getId())) {
+            from.sendMessage(BindException.Type.BIND_TooManyRequests.message);
             return;
         }
-        var a = getSimplifiedQuestion(from);
-        var lock = ASyncMessageUtil.getLock(event, 30000);
+        var a = generateQuestion(from);
+        var lock = ASyncMessageUtil.getLock(event, 2 * 60000);
         event = lock.get();
 
         if (Objects.isNull(event)) {
@@ -395,11 +394,11 @@ public class BindService implements MessageService<BindService.BindParam> {
             throw new BindException(BindException.Type.BIND_Question_Wrong);
         }
 
+        bindDao.bindQQ(qq, new BinUser(UID, name));
+
         from.sendMessage(
                 String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
         );
-
-        bindDao.bindQQ(qq, new BinUser(UID, name));
     }
 
     private static int find(int[][] map, int size, int start, int end) {
@@ -443,6 +442,38 @@ public class BindService implements MessageService<BindService.BindParam> {
     public Set<String> getSimplifiedQuestion(@NonNull Contact from) {
         from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
         return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
+    }
+
+    static Set<String> generateQuestion(@NonNull Contact from) {
+        Random random = new Random();
+        int a0 = random.nextInt(2, 5);
+        int multi = random.nextInt(2, 5);
+        int t = random.nextInt(18, 22) * a0;
+        int v2 = random.nextInt(t, 100) * multi;
+        int v1 = (v2 / multi - t);
+        boolean isMuzi = random.nextBoolean();
+        var question = STR."""
+        建议使用!ymbind 不加你的 osu 名称的方式绑定
+        如果非要使用 osu 名称绑定, 规矩你知道的, 要通过测试才行, 请正确回答下面的问题:
+        假设木子与春晚同时开始刷pp,
+        已知木子每月能刷 \{v2} pp, 而瓶颈期严重的春晚, 每月刷到的 pp 比上个月刷到的少 \{a0 * 2} pp,
+        经过一段时间后, 春晚一天只能刷到 \{v1} pp, 而此时木子的 pp 是春晚的 \{multi} 倍
+        请问此时\{isMuzi ? "木子" : "春晚"}的 pp 是多少? (直接回复数字即可, 其他表示方法视为错误.)
+
+        如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
+        如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
+        如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
+        """;
+        from.sendMessage(question);
+        int d;
+        if (isMuzi) {
+            d = t * v2 / a0;
+        } else {
+            d = t * v2 / (a0 * multi);
+        }
+        var result = new HashSet<String>();
+        result.add(String.valueOf(d));
+        return result;
     }
 
     /**
