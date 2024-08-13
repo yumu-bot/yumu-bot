@@ -71,6 +71,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var qqStr = m.group(FLAG_QQ_ID);
         var name = m.group(FLAG_NAME);
+        if (name.trim().isEmpty()) name = null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 带着 ym 以及特殊短链不用问
         boolean isYmBot = messageText.substring(0, 3).contains("ym") ||
@@ -165,7 +166,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         if (param.isSuper) {
             if (Objects.nonNull(param.name)) {
                 bindQQName(event, param.name, param.qq);
-            } else {
+            } else if (param.at) {
                 bindQQAt(event, param.qq);
             }
             return;
