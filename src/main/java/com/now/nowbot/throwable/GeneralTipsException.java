@@ -24,6 +24,7 @@ public class GeneralTipsException extends TipsException {
         G_Null_TheoreticalBP("您（选中）的最好成绩已经全是理论值了！"),
 
         G_Overtime_ExchangeTooMany("%s：连接渲染模块超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试缩小范围。"),
+        G_Wrong_QQ("QQ 参数错误，请检查。"),
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"),
         G_Wrong_ParamCombo("连击参数错误，请检查。"),
 

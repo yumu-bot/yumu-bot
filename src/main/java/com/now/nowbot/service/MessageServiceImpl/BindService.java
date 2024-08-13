@@ -14,6 +14,7 @@ import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
@@ -132,52 +133,44 @@ public class BindService implements MessageService<BindService.BindParam> {
     @Override
     public void HandleMessage(MessageEvent event, BindParam param) throws Throwable {
         var me = event.getSender().getId();
-
-        //解绑自己的权限下放。这个不应该是超级管理员的专属权利。
-        if (param.unbind && me == param.qq) {
-            unbindQQ(me);
-            return;
-        }
-
-        // bi name (self)
-        if (Objects.nonNull(param.name) && me == param.qq) {
-            bindQQName(event, param.name, me);
-            return;
-        }
-
+        
         if (me == param.qq) {
-            bindQQ(event, me, param.isFull);
-            return;
-        }
-
-        if (param.unbind && !param.isSuper) {
-            // ub 但是不是自己, 也不是超管
-            throw new BindException(BindException.Type.BIND_Me_Blacklisted);
-        }
-
-        // 超管 解绑
-        if (param.isSuper && param.unbind()) {
+            if (param.unbind) {
+                unbindQQ(me);
+            } else 
             if (Objects.nonNull(param.name)) {
-                // name
-                unbindName(param.name);
+                bindQQName(event, param.name, me);
             } else {
-                unbindQQ(param.qq);
+                bindQQ(event, me, param.isFull);
             }
             return;
         }
 
-        //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper && Objects.nonNull(param.name)) {
-            bindQQName(event, param.name, param.qq);
-            return;
-        }
-        if (param.isSuper && param.at) {
-            bindQQAt(event, param.qq, param.isFull);
+        // 超管使用量少, 所以相关分支靠后
+        if (param.isSuper) {
+            // 超管 解绑
+            if (param.unbind()) {
+                if (Objects.nonNull(param.name)) {
+                    // name
+                    unbindName(param.name);
+                } else {
+                    unbindQQ(param.qq);
+                }
+            } else
+            //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
+            if (Objects.nonNull(param.name)) {
+                bindQQName(event, param.name, param.qq);
+
+            } else
+            if (param.at) {
+                bindQQAt(event, param.qq, param.isFull);
+            }
             return;
         }
 
-        // 不是超管，也不是自己
-        throw new BindException(BindException.Type.BIND_Me_Blacklisted);
+        // bi ub 但是不是自己, 也不是超管
+        throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
+
     }
 
     private void unbindName(String name) throws BindException {

@@ -42,6 +42,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Player_HadNotBind("对方还没有绑定。"),
         BIND_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),
         BIND_Player_NoQQ("请输入正确的 QQ！"),
+        BIND_Player_NoEnoughInfo("输入的信息不足，无法完成超管绑定！"),
         BIND_Player_NotFound("这是谁呀，小沐找不到他哦？"),
         BIND_Player_Banned("哼哼，他号没了"),
 

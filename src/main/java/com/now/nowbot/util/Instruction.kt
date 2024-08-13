@@ -11,14 +11,14 @@ enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("help", "helps", "帮助", "h")
-        appendCaptureGroup("module", REG_ANYTHING + '*', MAYBE)
+        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
     AUDIO(CommandPatternBuilder.create {
         appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
         appendColonCaptureGroup(MAYBE, "type", "bid", "b", "sid", "s")
         appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER + '+', MAYBE)
+        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
     }),
 
     // #1 BOT 内部指令
@@ -215,19 +215,19 @@ enum class Instruction(val pattern: Pattern) {
 
         appendGroup(MAYBE) {
             append("[a%]?")
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST)
+            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
             append("[a%]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[cx]?")
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST)
+            appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
             append("[cx]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER, EXIST)
+            appendCaptureGroup("miss", REG_NUMBER, MORE)
             append("[\\-m]?")
         }
         appendSpace()
@@ -397,6 +397,7 @@ enum class Instruction(val pattern: Pattern) {
     DICE(CommandPatternBuilder.create {
         append("($REG_EXCLAMINATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
         appendCaptureGroup("number", "-?\\d", ANY)
+        appendSpace()
         appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
 
@@ -479,6 +480,10 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAP_4D_CALCULATE(CommandPatternBuilder.create("^(?i)[!！＃#]\\s*cal") {
+        append("[!！＃#]")
+        appendSpace()
+        appendGroup(MAYBE, "ym")
+        append("(cal|calculate|cl)")
         appendSpace()
         appendCaptureGroup("type", "ar|od|cs|hp", EXIST)
         appendSpace()

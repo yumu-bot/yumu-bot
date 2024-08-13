@@ -9,14 +9,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("h")
-        appendCaptureGroup("module", REG_ANYTHING + '*', MAYBE)
+        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
     AUDIO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnore(REG_IGNORE_BS, "a")
         appendColonCaptureGroup(MAYBE, "type", "b", "s")
         appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER + '+', MAYBE)
+        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
     }),
 
     // #1 BOT 内部指令
@@ -127,19 +127,19 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
         appendGroup(MAYBE) {
             append("[a%]?")
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST)
+            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
             append("[a%]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[cx]?")
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST)
+            appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
             append("[cx]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER + '+', EXIST)
+            appendCaptureGroup("miss", REG_NUMBER, MORE)
             append("[\\-m]?")
         }
         appendSpace()
