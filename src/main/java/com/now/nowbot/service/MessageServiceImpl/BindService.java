@@ -52,7 +52,7 @@ public class BindService implements MessageService<BindService.BindParam> {
     ImageService      imageService;
 
 
-    // full: 全绑定，只有 bot 开发可以这样做
+    // full: 全绑定，只有 oauth 应用所有者可以这样做
     public record BindParam(@NonNull Long qq,
                             String name,
                             boolean at,
@@ -172,7 +172,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
         if (param.isSuper && param.at) {
-            bindQQAt(event, param.qq);
+            bindQQAt(event, param.qq, param.isFull);
             return;
         }
 
@@ -207,7 +207,11 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
     }
 
-    private void bindQQAt(MessageEvent event, long qq) {
+    private void bindQQAt(MessageEvent event, long qq, boolean isFull) {
+        if (isFull) {
+            bindUrl(event.getSubject(), qq);
+            return;
+        }
         // 只有管理才有权力@人绑定,提示就不改了
         var from = event.getSubject();
         from.sendMessage(BindException.Type.BIND_Receive_NoName.message);
@@ -244,7 +248,6 @@ public class BindService implements MessageService<BindService.BindParam> {
         from.sendMessage(
                 String.format(BindException.Type.BIND_Progress_BindingRecover.message, u.getOsuUser().getOsuName(), qq)
         );
-        //from.sendMessage(STR."\{u.getOsuUser().getOsuName()}绑定在 QQ \{qq} 上，是否覆盖？回复 OK 生效");
 
         s = lock.get();
         if (Objects.nonNull(s) && s.getRawMessage().toUpperCase().startsWith("OK")) {
@@ -303,12 +306,16 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
 
         // 需要绑定
+        bindUrl(from, qq);
+    }
+
+    void bindUrl(Contact from, long qq) {
         // 将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         String state = STR."\{qq}+\{timeMillis}";
 
         // 将消息回执作为 value
-        state = userApiService.getOauthUrl(state, isFull);
+        state = userApiService.getOauthUrl(state, qq == 1340691940L);
         var send = new MessageChain.MessageChainBuilder()
                 .addAt(qq)
                 .addText("\n")
