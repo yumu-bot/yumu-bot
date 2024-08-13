@@ -9,14 +9,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("h")
-        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
+        appendCaptureGroup("module", REG_ANYTHING + '*', MAYBE)
     }),
 
     AUDIO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnore(REG_IGNORE_BS, "a")
         appendColonCaptureGroup(MAYBE, "type", "b", "s")
         appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_ID, REG_NUMBER + '+', MAYBE)
     }),
 
     // #1 BOT 内部指令
@@ -90,7 +90,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     INFO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("i")
         appendModeQQUIDName()
-        appendGroup (MAYBE) {
+        appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
             appendCaptureGroup(FLAG_DAY, REG_NUMBER)
@@ -117,6 +117,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
             appendCaptureGroup("area2", REG_USERNAME, MORE)
         }
     }),
+
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("m")
@@ -126,19 +127,19 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
         appendGroup(MAYBE) {
             append("[a%]?")
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST, EXIST)
+            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST)
             append("[a%]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[cx]?")
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST, EXIST)
+            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST)
             append("[cx]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup("miss", REG_NUMBER + '+', EXIST)
             append("[\\-m]?")
         }
         appendSpace()
@@ -262,7 +263,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    for(i in OfficialInstruction.values()) {
+    for (i in OfficialInstruction.values()) {
         println("${i.name}: ${i.pattern.pattern()}")
     }
 }

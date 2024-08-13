@@ -24,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_RANGE;
@@ -32,37 +33,42 @@ import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_RANGE;
 public class FriendService implements MessageService<FriendService.FriendParam> {
     private static final Logger log = LoggerFactory.getLogger(FriendService.class);
     @Resource
-    BindDao bindDao;
+    BindDao           bindDao;
     @Resource
     OsuUserApiService userApiService;
     @Resource
-    ImageService imageService;
+    ImageService      imageService;
 
-    public record FriendParam(Integer offset, Integer limit) {}
+    public record FriendParam(Integer offset, Integer limit) {
+    }
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<FriendParam> data) {
         var m = Instruction.FRIEND.matcher(messageText);
-        if (m.find()) {
-            var s = m.group(FLAG_RANGE).split("[\\-－—]");
-            if (s.length >= 2 && StringUtils.hasText(s[0]) && StringUtils.hasText(s[1])) {
-                data.setValue(
-                        new FriendParam(
-                                DataUtil.parseRange2Offset(Integer.parseInt(s[0]), Integer.parseInt(s[1])),
-
-                                DataUtil.parseRange2Limit(Integer.parseInt(s[0]), Integer.parseInt(s[1]))
-                        )
-                );
-            } else if (s.length == 1 && StringUtils.hasText(s[0])) {
-                data.setValue(
-                        new FriendParam(0, Integer.parseInt(s[0]))
-                );
-            } else {
-                data.setValue(new FriendParam(0, 12));
-            }
-
+        if (!m.find()) {
+            return false;
+        }
+        var range = m.group(FLAG_RANGE);
+        if (Objects.isNull(range)) {
+            data.setValue(new FriendParam(0, 12));
             return true;
-        } else return false;
+        }
+        var s = range.split("[\\-－—]");
+        if (s.length >= 2 && StringUtils.hasText(s[0]) && StringUtils.hasText(s[1])) {
+            data.setValue(
+                    new FriendParam(
+                            DataUtil.parseRange2Offset(Integer.parseInt(s[0]), Integer.parseInt(s[1])),
+
+                            DataUtil.parseRange2Limit(Integer.parseInt(s[0]), Integer.parseInt(s[1]))
+                    )
+            );
+        } else if (s.length == 1 && StringUtils.hasText(s[0])) {
+            data.setValue(
+                    new FriendParam(0, Integer.parseInt(s[0]))
+            );
+        }
+
+        return true;
     }
 
     @Override

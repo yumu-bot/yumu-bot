@@ -71,7 +71,6 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var qqStr = m.group(FLAG_QQ_ID);
         var name = m.group(FLAG_NAME);
-        if (name.trim().isEmpty()) name = null;
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 带着 ym 以及特殊短链不用问
         boolean isYmBot = messageText.substring(0, 3).contains("ym") ||
@@ -146,6 +145,11 @@ public class BindService implements MessageService<BindService.BindParam> {
             return;
         }
 
+        if (me == param.qq) {
+            bindQQ(event, me, param.isFull);
+            return;
+        }
+
         if (param.unbind && !param.isSuper) {
             // ub 但是不是自己, 也不是超管
             throw new BindException(BindException.Type.BIND_Me_Blacklisted);
@@ -163,17 +167,13 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
 
         //超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper) {
-            if (Objects.nonNull(param.name)) {
-                bindQQName(event, param.name, param.qq);
-            } else if (param.at) {
-                bindQQAt(event, param.qq);
-            }
+        if (param.isSuper && Objects.nonNull(param.name)) {
+            bindQQName(event, param.name, param.qq);
             return;
         }
-
-        if (me == param.qq) {
-            bindQQ(event, me, param.isFull);
+        if (param.isSuper && param.at) {
+            bindQQAt(event, param.qq);
+            return;
         }
 
         // 不是超管，也不是自己

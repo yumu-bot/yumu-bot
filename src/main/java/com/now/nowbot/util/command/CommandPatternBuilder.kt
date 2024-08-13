@@ -185,7 +185,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。
      */
     fun appendNameAndRange(level: MatchLevel? = MAYBE) {
-        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", EXIST, level)
+        appendCaptureGroup(FLAG_USER_AND_RANGE, "$REG_NAME?$REG_SPACE*($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?", level)
         appendSpace()
     }
 
@@ -229,7 +229,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append(REG_HYPHEN)
             appendMatchLevel(level2)
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, REG_RANGE, MAYBE)
+            appendCaptureGroup(FLAG_RANGE, REG_RANGE)
         }
         appendSpace()
     }
@@ -394,11 +394,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param level 匹配等级。注意这个匹配是在**组里**的，也就是 (?<>abc **这里** )
      * @param level2 匹配等级。注意这个匹配是在**组外**的，也就是 (?<>abc ) **这里**，默认没有或者一个 (?)。
      */
-    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = EXIST, level2: MatchLevel? = MAYBE
+    fun appendCaptureGroup(flag: String, @Language("RegExp") str: String, level: MatchLevel? = MAYBE
     ) {
-        appendGroup(level2) {
+        appendGroup(level) {
             append("?<${flag}>${str}")
-            appendMatchLevel(level)
         }
     }
 
@@ -407,7 +406,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendCaptureGroup(flag: String, @Language("RegExp") str: String
     ) {
-        appendCaptureGroup(flag, str, EXIST, MAYBE)
+        appendCaptureGroup(flag, str, MAYBE)
     }
 
     /**

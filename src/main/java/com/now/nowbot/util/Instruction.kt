@@ -11,14 +11,14 @@ enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("help", "helps", "帮助", "h")
-        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
+        appendCaptureGroup("module", REG_ANYTHING + '*', MAYBE)
     }),
 
     AUDIO(CommandPatternBuilder.create {
         appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
         appendColonCaptureGroup(MAYBE, "type", "bid", "b", "sid", "s")
         appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_ID, REG_NUMBER + '+', MAYBE)
     }),
 
     // #1 BOT 内部指令
@@ -70,8 +70,8 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("servicecount", "统计服务调用", "sc")
 
         appendGroup(MAYBE) {
-           appendCaptureGroup("days", REG_NUMBER, MORE)
-           append('d')
+            appendCaptureGroup("days", REG_NUMBER, MORE)
+            append('d')
         }
         appendGroup(MAYBE) {
             appendCaptureGroup("hours", REG_NUMBER, MORE)
@@ -145,7 +145,7 @@ enum class Instruction(val pattern: Pattern) {
     INFO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("information", "info", "i")
         appendModeQQUIDName()
-        appendGroup (MAYBE) {
+        appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
             appendCaptureGroup(FLAG_DAY, REG_NUMBER)
@@ -215,19 +215,19 @@ enum class Instruction(val pattern: Pattern) {
 
         appendGroup(MAYBE) {
             append("[a%]?")
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST, EXIST)
+            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL, EXIST)
             append("[a%]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[cx]?")
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST, EXIST)
+            appendCaptureGroup("combo", REG_NUMBER_DECIMAL, EXIST)
             append("[cx]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER, MORE, EXIST)
+            appendCaptureGroup("miss", REG_NUMBER, EXIST)
             append("[\\-m]?")
         }
         appendSpace()
@@ -305,7 +305,7 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
-        // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
+    // ^[!！]\s*(?i)(ym)?(?<function>(p[px](?![A-Za-z_])|pp[pvx](?![A-Za-z_])|p?p\+|(pp)?plus|ppvs|pppvs|(pp)?plusvs|p?pa(?![A-Za-z_])|ppplusmap|pppmap|plusmap))\s*(?<area1>[0-9a-zA-Z\[\]\-_\s]*)?\s*([:：]\s*(?<area2>[0-9a-zA-Z\[\]\-_\s]*))?
 
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
@@ -420,8 +420,8 @@ enum class Instruction(val pattern: Pattern) {
 
     TRANS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("trans", "tr")
-        appendCaptureGroup("a", "[A-G][＃#]?", EXIST, EXIST)
-        appendCaptureGroup("b", REG_NUMBER, EXIST, EXIST)
+        appendCaptureGroup("a", "[A-G][＃#]?", EXIST)
+        appendCaptureGroup("b", REG_NUMBER, EXIST)
     }),
 
     KITA(CommandPatternBuilder.create {
@@ -480,9 +480,9 @@ enum class Instruction(val pattern: Pattern) {
 
     MAP_4D_CALCULATE(CommandPatternBuilder.create("^(?i)[!！＃#]\\s*cal") {
         appendSpace()
-        appendCaptureGroup("type", "ar|od|cs|hp", EXIST, EXIST)
+        appendCaptureGroup("type", "ar|od|cs|hp", EXIST)
         appendSpace()
-        appendCaptureGroup("value", REG_NUMBER_DECIMAL, EXIST, EXIST)
+        appendCaptureGroup("value", REG_NUMBER_DECIMAL, EXIST)
         appendSpace()
         appendMod(MAYBE, MAYBE)
     }),
@@ -520,7 +520,7 @@ enum class Instruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    for(i in Instruction.values()) {
+    for (i in Instruction.values()) {
         println("${i.name}: ${i.pattern.pattern()}")
     }
 }

@@ -42,7 +42,9 @@ public interface Contact {
     }
 
     default void recall(MessageReceipt msg){
-        msg.recall();
+        try {
+            msg.recall();
+        } catch (Exception ignore) {}
     }
     default void recallIn(MessageReceipt msg , long time){
         msg.recallIn(time);

@@ -59,7 +59,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Parameter_BidError);
         }
 
-        if (! StringUtils.hasText(matcher.group("range"))) {
+        if (matcher.group("range") == null) {
             range = 50;
         } else {
             try {
