@@ -1,166 +1,199 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.FriendException;
-import com.now.nowbot.util.CmdRange;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_RANGE;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.JsonData.MicroUser
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageServiceImpl.FriendService.FriendParam
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.ServiceException.FriendException
+import com.now.nowbot.util.CmdObject
+import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.Instruction
+import jakarta.annotation.Resource
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("FRIEND")
-public class FriendService implements MessageService<FriendService.FriendParam> {
-    private static final Logger log = LoggerFactory.getLogger(FriendService.class);
+class FriendService : MessageService<FriendParam?> {
     @Resource
-    BindDao           bindDao;
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    ImageService      imageService;
+    var bindDao: BindDao? = null
 
-    public record FriendParam(Integer offset, Integer limit) {
-    }
+    @Resource
+    var userApiService: OsuUserApiService? = null
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<FriendParam> data) {
-        var m = Instruction.FRIEND.matcher(messageText);
+    @Resource
+    var imageService: ImageService? = null
+
+    data class FriendParam(val offset: Int, val limit: Int, val uid: Long = 0, val name: String? = null)
+
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<FriendParam?>
+    ): Boolean {
+        val m = Instruction.FRIEND.matcher(messageText)
         if (!m.find()) {
-            return false;
-        }
-        var range = m.group(FLAG_RANGE);
-        if (Objects.isNull(range)) {
-            data.setValue(new FriendParam(0, 12));
-            return true;
-        }
-        var s = range.split("[\\-－—]");
-        if (s.length >= 2 && StringUtils.hasText(s[0]) && StringUtils.hasText(s[1])) {
-            data.setValue(
-                    new FriendParam(
-                            DataUtil.parseRange2Offset(Integer.parseInt(s[0]), Integer.parseInt(s[1])),
-
-                            DataUtil.parseRange2Limit(Integer.parseInt(s[0]), Integer.parseInt(s[1]))
-                    )
-            );
-        } else if (s.length == 1 && StringUtils.hasText(s[0])) {
-            data.setValue(
-                    new FriendParam(0, Integer.parseInt(s[0]))
-            );
+            return false
         }
 
-        return true;
+        val isMyself = AtomicBoolean(false)
+        val range = CmdUtil.getUserWithRange(event, m, CmdObject(), isMyself)
+        if (range.data != null && !isMyself.get()) {
+            // 如果不是自己代表是 !f xxx / @
+            var u = range.data
+            data.value = FriendParam(0, 0, u?.userID ?: 0, u?.username)
+        }
+        val offset = range.getValue(0, false)
+        val limit = range.getValue(12, true)
+        data.value = FriendParam(offset, limit, 0)
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, FriendParam param) throws Throwable {
-        var from = event.getSubject();
-        BinUser binUser;
-        OsuUser osuUser;
-
-        List<MicroUser> friends = new ArrayList<>();
-
-        //拿到参数,默认1-24个
-        int offset = param.offset(), limit = param.limit();
-        boolean doRandom = (offset == 0 && limit == 12);
-
-        if (limit == 0 || 100 < limit - offset) {
-            throw new FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds);
-        }
-
-        try {
-            binUser = bindDao.getUserFromQQ(event.getSender().getId());
-        } catch (Exception e) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: FriendParam?) {
+        val from = event.subject
+        val binUser = try {
+            bindDao!!.getUserFromQQ(event.sender.id)
+        } catch (e: Exception) {
+            throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
         }
 
         if (binUser == null) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_NoBind);
-        } else if (!binUser.isAuthorized()) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_NoPermission);
+            throw FriendException(FriendException.Type.FRIEND_Me_NoBind)
+        } else if (!binUser.isAuthorized) {
+            throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
             //无权限
         }
 
-        try {
-            osuUser = userApiService.getPlayerInfo(binUser);
-        } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_TokenExpired);
-        } catch (Exception e) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_NotFound);
+        if (param!!.uid != 0L) {
+            // 判断是不是好友
+            checkMultiFriend(from, binUser, param)
+        } else {
+            sendFriendList(from, binUser, param)
+        }
+    }
+
+    fun checkMultiFriend(from: Contact, binUser: BinUser, user: FriendParam) {
+        val friendList = userApiService!!.getFriendList(binUser)
+        val uid = user.uid
+        val friend = friendList.find { it?.userID == uid }
+        //
+        val isMulti = try {
+            val otherBinUser = bindDao?.getBindUser(uid) ?: throw Exception()
+            if (!otherBinUser.isAuthorized) {
+                throw Exception()
+            }
+            userApiService!!.getFriendList(otherBinUser).find { it?.userID == binUser.osuID } != null
+        } catch (ignore: Exception) {
+            // 对面没绑定不处理
+            false
         }
 
-        List<MicroUser> friendList;
-        try {
-            friendList = userApiService.getFriendList(binUser);
-        } catch (Exception e) {
-            throw new FriendException(FriendException.Type.FRIEND_Me_FetchFailed);
+        val message = if (friend == null) {
+            "你并没有关注 ${user.name}"
+        } else {
+            if (isMulti) {
+                "你与 ${friend.userName} 互相关注了"
+            } else {
+                "你已经关注 ${friend.userName} 了"
+            }
+        }
+        from.sendText(message)
+    }
+
+    fun sendFriendList(from: Contact, binUser: BinUser, param: FriendParam) {
+        val osuUser: OsuUser
+
+        val friends: MutableList<MicroUser?> = ArrayList()
+
+        //拿到参数,默认1-24个
+        val offset = param.offset
+        val limit = param.limit
+        val doRandom = (offset == 0 && limit == 12)
+
+        if (limit == 0 || 100 < limit - offset) {
+            throw FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds)
         }
 
-        int[] index = null;
+
+        try {
+            osuUser = userApiService!!.getPlayerInfo(binUser)
+        } catch (e: HttpClientErrorException.Unauthorized) {
+            throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
+        } catch (e: WebClientResponseException.Unauthorized) {
+            throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
+        } catch (e: Exception) {
+            throw FriendException(FriendException.Type.FRIEND_Me_NotFound)
+        }
+
+        val friendList: List<MicroUser>
+        try {
+            friendList = userApiService!!.getFriendList(binUser)
+        } catch (e: Exception) {
+            throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
+        }
+
+        var index: IntArray? = null
         if (doRandom) {
             //构造随机数组
-            index = new int[friendList.size()];
-            for (int i = 0; i < index.length; i++) {
-                index[i] = i;
+            index = IntArray(friendList.size)
+            for (i in index.indices) {
+                index[i] = i
             }
-            for (int i = 0; i < index.length; i++) {
-                int rand = rand(i, index.length);
+            for (i in index.indices) {
+                val rand = rand(i, index.size)
                 if (rand != 1) {
-                    int temp = index[rand];
-                    index[rand] = index[i];
-                    index[i] = temp;
+                    val temp = index[rand]
+                    index[rand] = index[i]
+                    index[i] = temp
                 }
             }
         }
 
-        for (int i = offset; i < limit && i < friendList.size(); i++) {
+        var i = offset
+        while (i < limit && i < friendList.size) {
             if (doRandom) {
-                friends.add(friendList.get(index[i]));
+                friends.add(friendList[index!![i]])
             } else {
                 try {
-                    friends.add(friendList.get(offset + i));
-                } catch (IndexOutOfBoundsException e) {
-                    log.error("Friend: 莫名其妙的数组越界", e);
-                    throw new FriendException(FriendException.Type.FRIEND_Send_Error);
+                    friends.add(friendList[offset + i])
+                } catch (e: IndexOutOfBoundsException) {
+                    log.error("Friend: 莫名其妙的数组越界", e)
+                    throw FriendException(FriendException.Type.FRIEND_Send_Error)
                 }
             }
+            i++
         }
 
-        if (CollectionUtils.isEmpty(friends)) throw new FriendException(FriendException.Type.FRIEND_Client_NoFriend);
+        if (CollectionUtils.isEmpty(friends)) throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
 
         try {
-            var image = imageService.getPanelA1(osuUser, friends);
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("Friend: ", e);
-            throw new FriendException(FriendException.Type.FRIEND_Send_Error);
+            val image = imageService!!.getPanelA1(osuUser, friends)
+            from.sendImage(image)
+        } catch (e: Exception) {
+            log.error("Friend: ", e)
+            throw FriendException(FriendException.Type.FRIEND_Send_Error)
         }
     }
 
 
-    static final Random random = new Random();
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(FriendService::class.java)
+        val random: Random = Random()
 
-    static int rand(int min, int max) {
-        return min + random.nextInt(max - min);
+        fun rand(min: Int, max: Int): Int {
+            return min + random.nextInt(max - min)
+        }
     }
-
 }

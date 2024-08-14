@@ -179,7 +179,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendNameAndRange() {
         appendCaptureGroup(
                     FLAG_USER_AND_RANGE,
-                    "$REG_NAME?${REG_SPACE}${LEVEL_ANY}($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+                    "$REG_NAME?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
                     EXIST,
                     MAYBE,
                 )
@@ -204,13 +204,13 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (+(?<mod>mod))。
      * @param plusMust '+' 是否必须
      */
-    fun appendMod(plusMust: Boolean = false) {
-        val level = if (plusMust) EXIST else MAYBE
+    fun appendMod(plusMust: Boolean = false, bodyMust:Boolean = false) {
+        val level = if (bodyMust) EXIST else MAYBE
         appendGroup(level) {
             append(REG_PLUS)
             if (!plusMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE)
+            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE, EXIST)
         }
         appendSpace()
     }

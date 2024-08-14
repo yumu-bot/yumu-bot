@@ -70,8 +70,8 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     ECHO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("echo", "ec")
-        appendCaptureGroup("any", REG_ANYTHING, ANY)
+        append("#echo ")
+        appendCaptureGroup("any", ".*", EXIST, EXIST)
     }),
 
     SERVICE_COUNT(CommandPatternBuilder.create {
@@ -184,7 +184,7 @@ enum class Instruction(val pattern: Pattern) {
 
     FRIEND(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("friends", "friend", "f")
-        appendRange()
+        appendNameAndRange()
     }),
 
     MUTUAL(CommandPatternBuilder.create {
@@ -485,17 +485,13 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, "[xo\\s]", MORE)
     }),
 
-    MAP_4D_CALCULATE(CommandPatternBuilder.create("^(?i)[!！＃#]\\s*cal") {
-        append("[!！＃#]")
+    MAP_4D_CALCULATE(CommandPatternBuilder.create {
+        appendCommands("cal", "calculate", "cl")
+        appendCaptureGroup("type", "ar|od|cs|hp", EXIST, EXIST)
         appendSpace()
-        appendGroup(MAYBE, "ym")
-        append("(cal|calculate|cl)")
+        appendCaptureGroup("value", REG_NUMBER_DECIMAL, EXIST, EXIST)
         appendSpace()
-        appendCaptureGroup("type", "ar|od|cs|hp", EXIST)
-        appendSpace()
-        appendCaptureGroup("value", REG_NUMBER_DECIMAL, EXIST)
-        appendSpace()
-        appendMod()
+        appendMod(plusMust = true)
     }),
 
     DEPRECATED_BPHT(CommandPatternBuilder.create {

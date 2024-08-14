@@ -90,27 +90,31 @@ public class BindDao {
     }
 
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
-        bindQQMapper.deleteOtherBind(user.getOsuID(), qq);
-        var qqBind = new QQBindLite();
-        qqBind.setQq(qq);
-        if (user.getRefreshToken() == null) {
-            Optional<OsuBindUserLite> buLiteOpt;
-            try {
-                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
-            } catch (Exception e) {
-                // 查出多个
-                bindUserMapper.deleteOldByOsuId(user.getOsuID());
-                buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
+        try {
+            bindQQMapper.deleteOtherBind(user.getOsuID(), qq);
+            var qqBind = new QQBindLite();
+            qqBind.setQq(qq);
+            if (user.getRefreshToken() == null) {
+                Optional<OsuBindUserLite> buLiteOpt;
+                try {
+                    buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
+                } catch (Exception e) {
+                    // 查出多个
+                    bindUserMapper.deleteOldByOsuId(user.getOsuID());
+                    buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
+                }
+                if (buLiteOpt.isPresent()) {
+                    var uLite = buLiteOpt.get();
+                    qqBind.setOsuUser(uLite);
+                    return bindQQMapper.save(qqBind);
+                }
             }
-            if (buLiteOpt.isPresent()) {
-                var uLite = buLiteOpt.get();
-                qqBind.setOsuUser(uLite);
-                return bindQQMapper.save(qqBind);
-            }
-        }
 
-        qqBind.setOsuUser(bindUserMapper.checkSave(user));
-        return bindQQMapper.save(qqBind);
+            qqBind.setOsuUser(bindUserMapper.checkSave(user));
+            return bindQQMapper.save(qqBind);
+        } finally {
+            bindQQMapper.deleteOtherBindByUid(user.getOsuID());
+        }
     }
 
     public DiscordBindLite bindDiscord(String discordId, BinUser user) {
@@ -126,6 +130,12 @@ public class BindDao {
 
     public BinUser getBindUser(String name) {
         var id = getOsuId(name);
+        if (id == null) return null;
+        var data = bindUserMapper.getByOsuId(id);
+        return fromLite(data.orElseGet(null));
+    }
+
+    public BinUser getBindUser(Long id) {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return fromLite(data.orElseGet(null));

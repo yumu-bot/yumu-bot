@@ -7,6 +7,8 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import org.springframework.stereotype.Service;
 
+import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MOD;
+
 @Service("MAP_4D_CALCULATE")
 public class Map4DCalculate implements MessageService<Map4DCalculate.Map4DParam> {
     public record Map4DParam(String type, float value, String mods){}
@@ -18,7 +20,7 @@ public class Map4DCalculate implements MessageService<Map4DCalculate.Map4DParam>
             var d = new Map4DParam(
                     matcher.group("type"),
                     Float.parseFloat(matcher.group("value")),
-                    matcher.group("mods")
+                    matcher.group(FLAG_MOD)
             );
             data.setValue(d);
             return true;
