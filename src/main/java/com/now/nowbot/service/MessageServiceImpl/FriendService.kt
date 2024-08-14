@@ -51,12 +51,13 @@ class FriendService : MessageService<FriendParam?> {
         val range = CmdUtil.getUserWithRange(event, m, CmdObject(), isMyself)
         if (range.data != null && !isMyself.get()) {
             // 如果不是自己代表是 !f xxx / @
-            var u = range.data
+            val u = range.data
             data.value = FriendParam(0, 0, u?.userID ?: 0, u?.username)
+        } else {
+            val offset = range.getValue(0, false)
+            val limit = range.getValue(12, true)
+            data.value = FriendParam(offset, limit, 0)
         }
-        val offset = range.getValue(0, false)
-        val limit = range.getValue(12, true)
-        data.value = FriendParam(offset, limit, 0)
         return true
     }
 
