@@ -454,10 +454,12 @@ public class BindService implements MessageService<BindService.BindParam> {
         boolean isMuzi = random.nextBoolean();
         var question = STR."""
         建议使用!ymbind 不加你的 osu 名称的方式绑定
-        如果非要使用 osu 名称绑定, 规矩你知道的, 要通过测试才行, 请正确回答下面的问题:
-        假设木子与春晚同时开始刷pp,
+        如果非要使用 osu 名称绑定, 规矩你知道的
+        If you want it(指用名字绑定)，then you have to take it(指解题):
+
+        假设木子与春晚同时从零开始刷pp,
         已知木子每月能刷 \{v2} pp, 而瓶颈期严重的春晚, 每月刷到的 pp 比上个月刷到的少 \{a0 * 2} pp,
-        经过一段时间后, 春晚一天只能刷到 \{v1} pp, 而此时木子的 pp 是春晚的 \{multi} 倍
+        经过一段时间后, 春晚一月只能刷到 \{v1} pp, 而此时木子的 pp 是春晚的 \{multi} 倍
         请问此时\{isMuzi ? "木子" : "春晚"}的 pp 是多少? (直接回复数字即可, 其他表示方法视为错误.)
 
         如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
