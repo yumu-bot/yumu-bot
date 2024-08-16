@@ -699,7 +699,7 @@ public class DiceService implements MessageService<DiceService.DiceParam> {
             s = m.group("m2");
         }
 
-        String[] strings = s.split("还是|或者?是?|[是或与,，.。/?!、？！:：]|\\s+");
+        String[] strings = s.split("还是|\\s*(?<![A-Za-z])or(?![A-Za-z])\\s*|或者?是?|[是或与,，.。/?!、？！:：]|\\s+");
         List<String> stringList = Arrays.stream(strings).filter(StringUtils::hasText).toList();
 
         if (stringList.isEmpty() || stringList.size() == 1) {
