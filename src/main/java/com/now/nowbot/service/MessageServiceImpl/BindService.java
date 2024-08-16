@@ -378,6 +378,10 @@ public class BindService implements MessageService<BindService.BindParam> {
             );
             return;
         }
+        if (from.getId() == 728433725L) {
+            from.sendMessage("你不许再答题了!");
+            return;
+        }
         if (check(event.getSender().getId())) {
             from.sendMessage(BindException.Type.BIND_TooManyRequests.message);
             return;
