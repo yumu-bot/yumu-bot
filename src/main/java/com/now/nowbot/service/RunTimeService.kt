@@ -7,7 +7,6 @@ import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.mapper.NewbieService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import jakarta.annotation.Resource
-import org.hibernate.resource.beans.container.internal.NoSuchBeanException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -18,6 +17,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.lang.management.ManagementFactory
+import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -82,6 +82,25 @@ class RunTimeService : SchedulingConfigurer {
             log.info("未找到目标群, 结束任务")
             return
         }
+
+
+        val today = LocalDate.now()
+        if (today.monthValue == 8 && today.dayOfMonth == 18) {
+            bot?.sendGroupMsg(695600319, "补充计算 8-17 的数据", true)
+            val count = AtomicInteger(0)
+            val start = LocalDate.of(2021, 8, 16).atStartOfDay()
+            val end = start.plusDays(1)
+            newbieService.countData(users, start, end).chunked(200) { records ->
+                val u = records.map {
+                    NewbiePlayCount(it)
+                }
+                count.addAndGet(u.size)
+                newbiePlayCount.saveAllAndFlush(u)
+            }
+            bot?.sendGroupMsg(695600319, "8-17 数据: ${count.get()} 个活跃玩家", true)
+
+        }
+
         val count = AtomicInteger(0)
         newbieService.countToday(users).chunked(200) { records ->
             val u = records.map {
@@ -92,6 +111,7 @@ class RunTimeService : SchedulingConfigurer {
         }
         log.info("新人统计任务结束")
         bot?.sendGroupMsg(695600319, "新人群打图数据统计任务结束, 共计 ${count.get()} 个活跃玩家", true)
+
     }
 
     fun sayBp1() {
@@ -250,7 +270,14 @@ class RunTimeService : SchedulingConfigurer {
     }
     */
 
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(RunTimeService::class.java)
+
+        @JvmStatic
+        @Deprecated("建议替换", replaceWith = ReplaceWith("testNew(s)"))
+        fun test(s:String) {}
+        @JvmStatic
+        fun testNew(s:String) {}
     }
 }

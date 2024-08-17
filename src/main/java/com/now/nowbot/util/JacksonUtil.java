@@ -86,18 +86,6 @@ public class JacksonUtil {
         return null;
     }
 
-    public static <T> List<T> parseObjectList(String body, String field, Class<T> clazz) {
-        JsonNode node;
-        try {
-            node = mapper.readTree(body);
-            JsonNode leaf = node.get(field);
-
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
 
     public static Integer parseInteger(String body, String field) {
         JsonNode node;

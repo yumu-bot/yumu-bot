@@ -36,6 +36,16 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
 
     @Query(
         """
+        select u.id as userId, u.beatmapId as beatmapId, u.rank as rank,
+        u.count300 as n300, u.count100 as n100, u.count50 as n50, u.countMiss as misses, u.date as data
+        from UserPlayRecords u
+        where u.mode = 0 and u.userId = :uid and u.date between :start and :end
+    """
+    )
+    fun queryDataAll(uid: Int, start: LocalDateTime, end: LocalDateTime): List<CountUser1>
+
+    @Query(
+        """
         select b.osuId from Bindings b where b.qq in (:qqs)
     """
     )
@@ -95,7 +105,7 @@ class NewbieService(
         return UserCount(uid, pp, playData.size, passTime + unpassTime, countTth)
     }
 
-    fun countToday(qqIds: List<Long>): List<UserCount> {
+    fun countData(qqIds: List<Long>, start: LocalDateTime, end: LocalDateTime): List<UserCount> {
         val users = mapper.queryBind(qqIds)
         val under3K = mutableSetOf<Int>()
         val userPP = mutableMapOf<Int, Float>()
@@ -110,11 +120,15 @@ class NewbieService(
                     it.id.toInt()
                 }.forEach { under3K.add(it) }
         }
-        val todayTime = LocalDate.now().atTime(0, 0, 0)
-        val yesterdayTime = todayTime.minusDays(1)
-        val timeRange = TimeRange(yesterdayTime, todayTime)
+        val timeRange = TimeRange(start, end)
         log.info("ready to count ${under3K.size} users")
         return getAll(under3K.toList(), timeRange, userPP)
+    }
+
+    fun countToday(qqIds: List<Long>): List<UserCount> {
+        val todayTime = LocalDate.now().atTime(0, 0, 0)
+        val yesterdayTime = todayTime.minusDays(1)
+        return countData(qqIds, todayTime, yesterdayTime)
     }
 
 
@@ -133,7 +147,9 @@ class NewbieService(
                 val resultList = mutableListOf<UserCount>()
                 for (id in it) {
                     val r = AsyncMethodExecutor.doRetry(5) {
-                        getUserPlayRecords(id, timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
+                        Thread.sleep(3000)
+                        log.info("start to count $id")
+                        this.getUserPlayRecords(id, timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
                     }
                     val c = countAll.incrementAndGet()
                     log.info("$c(work $n) - $id done")
@@ -154,9 +170,16 @@ class NewbieService(
     }
 
     data class TimeRange(
-        val start: LocalDateTime,
-        val end: LocalDateTime,
-    )
+        var start: LocalDateTime,
+        var end: LocalDateTime,
+    ) {
+        init {
+            if (start.isAfter(end)) {
+                start = end.also { end = start }
+            }
+        }
+
+    }
 
     data class UserCount(
         var id: Int,
@@ -180,4 +203,15 @@ interface CountUser {
     val n100: Int
     val n50: Int
     val misses: Int
+}
+
+interface CountUser1 {
+    val userId: Int
+    val beatmapId: Int
+    val rank: String
+    val n300: Int
+    val n100: Int
+    val n50: Int
+    val misses: Int
+    val data: LocalDateTime
 }

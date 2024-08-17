@@ -8,9 +8,11 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.random.Random
 
 object AsyncMethodExecutor {
-    private val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
+    val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
+    val random = Random(System.currentTimeMillis())
 
     @Throws(Exception::class)
     @Suppress("UNCHECKED_CAST")
@@ -27,7 +29,7 @@ object AsyncMethodExecutor {
                 throw result
             }
 
-            return  result as T
+            return result as T
         } catch (ignore: InterruptedException) {
             return defaultValue
         } finally {
@@ -145,14 +147,14 @@ object AsyncMethodExecutor {
 
     fun AsyncRunnable(works: Collection<Runnable>) {
         works.stream().map { w: Runnable ->
-                (Runnable {
-                    try {
-                        w.run()
-                    } catch (e: Throwable) {
-                        log.error("Async error", e)
-                    }
-                })
-            }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+            (Runnable {
+                try {
+                    w.run()
+                } catch (e: Throwable) {
+                    log.error("Async error", e)
+                }
+            })
+        }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
     }
 
     @JvmStatic
@@ -161,18 +163,18 @@ object AsyncMethodExecutor {
         val lock = CountDownLatch(size)
         val results: MutableList<T?> = LinkedList()
         works.stream().map { w: Supplier<T> ->
-                Runnable {
-                    try {
-                        val result = w.get()
-                        results.add(result)
-                    } catch (e: Exception) {
-                        results.add(null)
-                        log.error("AsyncSupplier error", e)
-                    } finally {
-                        lock.countDown()
-                    }
+            Runnable {
+                try {
+                    val result = w.get()
+                    results.add(result)
+                } catch (e: Exception) {
+                    results.add(null)
+                    log.error("AsyncSupplier error", e)
+                } finally {
+                    lock.countDown()
                 }
-            }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+            }
+        }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
         try {
             lock.await(120, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
@@ -185,26 +187,26 @@ object AsyncMethodExecutor {
         override fun get(): T
     }
 
-    fun interface Runnable : java.lang.Runnable{
+    fun interface Runnable : java.lang.Runnable {
         @Throws(Exception::class)
         override fun run()
     }
 
     @Throws(Exception::class)
-    fun <T>doRetry(retry: Int, supplier: Supplier<T>): T {
-        var result:T
+    inline fun <T> doRetry(retry: Int, crossinline supplier: () -> T): T {
+        var result: T
         if (retry <= 0) {
             throw IllegalArgumentException("retry must be greater than 0")
         }
         var err: Exception? = null
         for (i in 0 until retry) {
             try {
-                result = supplier.get()
+                result = supplier()
                 return result
             } catch (e: Exception) {
                 err = e
                 log.error("retry $retry error", e)
-                Thread.sleep(1000L * i * i)
+                Thread.sleep(random.nextLong(800, 1000) * (1 shl i))
             }
         }
         throw err!!
