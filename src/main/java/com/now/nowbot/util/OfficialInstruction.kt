@@ -180,7 +180,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     MAP_MINUS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("mm")
         appendMode()
-        appendID()
+        appendBID()
         appendMod()
         appendGroup(MAYBE) {
             append("[×xX]")

@@ -116,14 +116,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 加 id=(?<id>\d+) 的匹配。
+     * 加 (?<id>\d+) 的匹配。
      */
     fun appendID() {
-        appendGroup(MAYBE) {
-            append(FLAG_ID)
-            append(CHAR_EQUAL)
-            appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, EXIST)
-        }
+        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE)
         appendSpace()
     }
 
