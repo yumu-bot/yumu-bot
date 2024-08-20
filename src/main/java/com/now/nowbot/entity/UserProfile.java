@@ -32,12 +32,15 @@ public class UserProfile {
     @JsonProperty("header")
     @Column(name = "header", columnDefinition = "TEXT")
     String headerBorder;
+
     @JsonProperty("info")
     @Column(name = "panel_info", columnDefinition = "TEXT")
     String infoPanel;
+
     @JsonProperty("score")
     @Column(name = "panel_score", columnDefinition = "TEXT")
     String scorePanel;
+
     @JsonProperty("ppm")
     @Column(name = "panel_ppm", columnDefinition = "TEXT")
     String ppmPanel;

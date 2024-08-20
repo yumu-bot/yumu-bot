@@ -45,14 +45,14 @@ public class PingService implements MessageService<Matcher> {
                 //throw new RuntimeException("ping failed cuz no BG??!");
             }
 
-            Font x = new Font(DataUtil.getTorusRegular(), 160);
+            Font x = new Font(DataUtil.getTORUS_REGULAR(), 160);
             TextLine t = TextLine.make("?", x);
             canvas.drawTextLine(t, (648 - t.getWidth()) / 2, 208, new Paint().setARGB(255,191,193,124));
 
             x.close();
             t.close();
 
-            x = new Font(DataUtil.getTorusRegular(), 40);
+            x = new Font(DataUtil.getTORUS_REGULAR(), 40);
             t = TextLine.make(STR."\{System.currentTimeMillis()}ms", x);
             canvas.drawTextLine(t, 10, t.getCapHeight() + 10, new Paint().setARGB(200,191,193,124));
             x.close();

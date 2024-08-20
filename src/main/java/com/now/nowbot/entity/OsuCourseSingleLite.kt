@@ -3,8 +3,8 @@ package com.now.nowbot.entity
 import jakarta.persistence.*
 
 // 完全确定表结构前, 别取消注释
-//@Entity
-//@Table(name = "osu_course_dan")
+@Entity
+@Table(name = "osu_course_dan")
 class OsuCourseSingleLite(
     @Id
     // 这个是自增id, 如果每一个都有确定的id就不用, 如果需要自动生成就保留

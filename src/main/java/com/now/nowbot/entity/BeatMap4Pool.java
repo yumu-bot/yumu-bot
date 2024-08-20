@@ -1,10 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.util.MapPoolUtil;
-import org.hibernate.annotations.Type;
-
 import jakarta.persistence.*;
-import java.lang.reflect.InvocationTargetException;
 
 @Entity
 @Table(name = "beat_map_4_pool")
@@ -18,9 +14,11 @@ public class BeatMap4Pool {
     @Column(name = "order_number")
     Integer order;
 
-    Integer beatmapId;
+    @Column(name = "beatmap_id")
+    Integer beatmapID;
 
-    Integer poolId;
+    @Column(name = "pool_id")
+    Integer poolID;
 
     //@Lob
     @Column(columnDefinition = "TEXT")
@@ -46,20 +44,20 @@ public class BeatMap4Pool {
         this.order = order;
     }
 
-    public Integer getBeatmapId() {
-        return beatmapId;
+    public Integer getBeatmapID() {
+        return beatmapID;
     }
 
-    public void setBeatmapId(Integer beatmapId) {
-        this.beatmapId = beatmapId;
+    public void setBeatmapID(Integer beatmapID) {
+        this.beatmapID = beatmapID;
     }
 
-    public Integer getPoolId() {
-        return poolId;
+    public Integer getPoolID() {
+        return poolID;
     }
 
-    public void setPoolId(Integer poolId) {
-        this.poolId = poolId;
+    public void setPoolID(Integer poolID) {
+        this.poolID = poolID;
     }
 
     public String getInfo() {

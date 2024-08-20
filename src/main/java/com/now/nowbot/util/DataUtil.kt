@@ -1,44 +1,102 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.JsonData.Statistics;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import io.github.humbleui.skija.Typeface;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.model.JsonData.BeatMap
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.JsonData.Statistics
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.*
+import io.github.humbleui.skija.Typeface
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
+import java.io.File
+import java.io.IOException
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import kotlin.math.*
 
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+object DataUtil {
+    private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
 
-public class DataUtil {
-    private static final Logger log = LoggerFactory.getLogger(DataUtil.class);
+    private val mapper: ObjectMapper = JsonMapper.builder().build()
 
-    private static final ObjectMapper mapper = JsonMapper.builder().build();
+    var TORUS_REGULAR: Typeface? = null
+        @JvmStatic get() {
+            if (field == null || field!!.isClosed) {
+                try {
+//                InputStream in = class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
+//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
+                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-Regular.ttf")
+                } catch (e: Exception) {
+                    log.error("未读取到目标字体:Torus-Regular.ttf", e)
+                    field = Typeface.makeDefault()
+                }
+            }
+            return field
+        }
 
-    static Typeface TORUS_REGULAR;
+    var TORUS_SEMIBOLD: Typeface? = null
+        @JvmStatic get() {
+            if (field == null || field!!.isClosed) {
+                try {
+                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-SemiBold.ttf")
+                } catch (e: Exception) {
+                    log.error("未读取到目标字体:Torus-SemiBold.ttf", e)
+                    field = Typeface.makeDefault()
+                }
+            }
+            return field
+        }
 
-    static Typeface TORUS_SEMIBOLD;
+    var PUHUITI: Typeface? = null
+        @JvmStatic get() {
+            if (field == null || field!!.isClosed) {
+                try {
+                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Puhuiti.ttf")
+                } catch (e: Exception) {
+                    log.error("Alibaba-PuHuiTi-Medium.ttf", e)
+                    field = Typeface.makeDefault()
+                }
+            }
+            return field
+        }
 
-    static Typeface PUHUITI;
+    var PUHUITI_MEDIUM: Typeface? = null
+        @JvmStatic get() {
+            if (field == null || field!!.isClosed) {
+                try {
+                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
+                } catch (e: Exception) {
+                    log.error("Alibaba-PuHuiTi-Medium.ttf", e)
+                    field = Typeface.makeDefault()
+                }
+            }
+            return field
+        }
 
-    static Typeface PUHUITI_MEDIUM;
-
-    static Typeface EXTRA;
+    var EXTRA: Typeface? = null
+        @JvmStatic get() {
+            if (field == null || field!!.isClosed) {
+                try {
+                    field = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf")
+                } catch (e: Exception) {
+                    log.error("未读取到目标字体:extra.ttf", e)
+                    throw e
+                }
+            }
+            return field
+        }
 
     /**
      * 将按逗号或者 |、:：分隔的字符串分割
@@ -46,13 +104,16 @@ public class DataUtil {
      * @param str 需要分析的字符串
      * @return 玩家名列表
      */
+    @JvmStatic
     @Nullable
-    public static List<String> splitString(@Nullable String str) {
-        if (! StringUtils.hasText(str)) return null;
-        String[] strings = str.trim().split("[,，|:：`、]+"); //空格和-_不能匹配
-        if (strings.length == 0) return null;
+    fun splitString(@Nullable str: String): List<String>? {
+        if (!StringUtils.hasText(str)) return null
+        val strings = str.trim { it <= ' ' }.split("[,，|:：`、]+".toRegex()).dropLastWhile { it.isEmpty() }
+            .toTypedArray() //空格和-_不能匹配
+        if (strings.size == 0) return null
 
-        return Arrays.stream(strings).map(String::trim).toList();
+        return Arrays.stream(strings).map { obj: String -> obj.trim { it <= ' ' } }
+            .toList()
     }
 
     /**
@@ -61,51 +122,52 @@ public class DataUtil {
      * @return 是否为优秀成绩
      */
     @NonNull
-    public static boolean isExcellentScore(@NonNull Score score, OsuUser user) {
+    fun isExcellentScore(@NonNull score: Score, user: OsuUser): Boolean {
         // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 1%。
-        int r = 0;
-        double p = getPP(score, user);
+        var r = 0
+        val p = getPP(score, user)
 
-        boolean ultra = score.getBeatMap().getStarRating() >= 8f;
-        boolean extreme = score.getBeatMap().getStarRating() >= 6.5f;
-        boolean acc = score.getAccuracy() >= 0.9f;
-        boolean combo = 1f * score.getMaxCombo() / Objects.requireNonNullElse(score.getBeatMap().getMaxCombo(), Integer.MAX_VALUE) >= 0.98f;
-        boolean pp = score.getPP() >= 300f;
-        boolean bp = p >= 400f && score.getPP() >= (p - 400f) / 25f;
-        boolean miss = score.getStatistics().getCountAll(score.getMode()) > 0 && score.getStatistics().getCountMiss() <= score.getStatistics().getCountAll(score.getMode()) * 0.01f;
+        val ultra = score.beatMap.starRating >= 8f
+        val extreme = score.beatMap.starRating >= 6.5f
+        val acc = score.accuracy >= 0.9f
+        val combo = 1f * score.maxCombo / Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
+        val pp = score.pp >= 300f
+        val bp = p >= 400f && score.pp >= (p - 400f) / 25f
+        val miss =
+            score.statistics.getCountAll(score.mode) > 0 && score.statistics.countMiss <= score.statistics.getCountAll(
+                score.mode
+            ) * 0.01f
 
-        boolean fail = score.getRank() == null || Objects.equals(score.getRank(), "F");
+        val fail = score.rank == null || score.rank == "F"
 
-        if (ultra) r++;
-        if (extreme) r++;
-        if (acc) r++;
-        if (combo) r++;
-        if (pp) r++;
-        if (bp) r += 2;
-        if (miss) r++;
+        if (ultra) r++
+        if (extreme) r++
+        if (acc) r++
+        if (combo) r++
+        if (pp) r++
+        if (bp) r += 2
+        if (miss) r++
 
-        return r >= 3 && !fail;
+        return r >= 3 && !fail
     }
 
     // 获取优秀成绩的私有方法
-    private static double getPP(Score score, OsuUser user) {
-        double pp = Objects.requireNonNullElse(user.getPP(), 0d);
+    private fun getPP(score: Score, user: OsuUser): Double {
+        var pp = Objects.requireNonNullElse(user.pp, 0.0)
 
-        boolean is4K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 4f;
-        boolean is7K = score.getBeatMap().getOsuMode() == OsuMode.MANIA && score.getBeatMap().getCS() == 7f;
+        val is4K = score.beatMap.osuMode == MANIA && score.beatMap.cs == 4f
+        val is7K = score.beatMap.osuMode == MANIA && score.beatMap.cs == 7f
 
         if (is4K) {
-            pp = Objects.requireNonNullElse(user.getStatistics().getPP4K(), pp);
+            pp = Objects.requireNonNullElse(user.statistics.pP4K, pp)
         }
 
         if (is7K) {
-            pp = Objects.requireNonNullElse(user.getStatistics().getPP7K(), pp);
+            pp = Objects.requireNonNullElse(user.statistics.pP7K, pp)
         }
 
-        return pp;
+        return pp
     }
-
-    private record Range(Integer offset, Integer limit) {}
 
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
@@ -113,9 +175,10 @@ public class DataUtil {
      * @param end 结束
      * @return offset
      */
+    @JvmStatic
     @NonNull
-    public static int parseRange2Offset(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).offset();
+    fun parseRange2Offset(@Nullable start: Int, @Nullable end: Int): Int {
+        return parseRange(start, end).offset
     }
 
     /**
@@ -124,9 +187,10 @@ public class DataUtil {
      * @param end 结束
      * @return limit
      */
+    @JvmStatic
     @NonNull
-    public static int parseRange2Limit(@Nullable Integer start, @Nullable Integer end) {
-        return parseRange(start, end).limit();
+    fun parseRange2Limit(@Nullable start: Int, @Nullable end: Int): Int {
+        return parseRange(start, end).limit
     }
 
     /**
@@ -136,30 +200,31 @@ public class DataUtil {
      * @return offset-limit 对
      */
     @NonNull
-    private static Range parseRange(@Nullable Integer start, @Nullable Integer end) {
-        int offset;
-        int limit;
+    private fun parseRange(@Nullable start: Int, @Nullable end: Int): Range {
+        var start = start
+        val offset: Int
+        val limit: Int
 
-        if (Objects.isNull(start) || start < 1 || start > 100) start = 1;
+        if (Objects.isNull(start) || start < 1 || start > 100) start = 1
 
         if (Objects.isNull(end) || end < 1 || end > 100) {
-            offset = start - 1;
-            limit = 1;
+            offset = start - 1
+            limit = 1
         } else {
             //分流：正常，相等，相反
             if (end > start) {
-                offset = start - 1;
-                limit = end - start + 1;
-            } else if (Objects.equals(start, end)) {
-                offset = start - 1;
-                limit = 1;
+                offset = start - 1
+                limit = end - start + 1
+            } else if (start == end) {
+                offset = start - 1
+                limit = 1
             } else {
-                offset = end - 1;
-                limit = start - end + 1;
+                offset = end - 1
+                limit = start - end + 1
             }
         }
 
-        return new Range(offset, limit);
+        return Range(offset, limit)
     }
 
     /**
@@ -169,104 +234,113 @@ public class DataUtil {
      * @return 达到目标准确率时的判定结果
      */
     @NonNull
-    public static Statistics maniaAimingAccuracy2Statistics(Double aiming, @NonNull Statistics stat) {
-        if (stat.isNull()) {
-            return new Statistics();
+    fun maniaAimingAccuracy2Statistics(aiming: Double?, @NonNull stat: Statistics): Statistics {
+        if (stat.isNull) {
+            return Statistics()
         }
 
         if (aiming == null) {
-            return stat;
+            return stat
         }
 
-        int total = stat.getCountAll(OsuMode.MANIA);
+        val total = stat.getCountAll(MANIA)
 
         // geki, 300, katu, 100, 50, 0
-        var list = Arrays.asList(stat.getCountGeki(), stat.getCount300(), stat.getCountKatu(), stat.getCount100(), stat.getCount50(), stat.getCountMiss());
+        val list =
+            Arrays.asList(stat.countGeki, stat.count300, stat.countKatu, stat.count100, stat.count50, stat.countMiss)
 
         //一个物件所占的 Acc 权重
-        if (total <= 0) return stat;
-        double weight = 1d / total;
+        if (total <= 0) return stat
+        val weight = 1.0 / total
 
         //彩黄比
-        double ratio = (stat.getCount300() + stat.getCountGeki() > 0) ? stat.getCountGeki() * 1d / (stat.getCount300() + stat.getCountGeki()) : 0;
+        val ratio =
+            if ((stat.count300 + stat.countGeki > 0)) stat.countGeki * 1.0 / (stat.count300 + stat.countGeki) else 0.0
 
-        double current = stat.getAccuracy(OsuMode.MANIA);
+        var current = stat.getAccuracy(MANIA)
 
-        if (current >= aiming) return stat;
+        if (current >= aiming) return stat
 
         //交换评级
-        if (current < aiming && stat.getCountMiss() > 0) {
-            var ex = exchangeJudge(list.getFirst(), list.getLast(), 1d, 0d, current, aiming, weight);
-            list.set(0, ex.great);
-            list.set(5, ex.bad);
-            current = ex.accuracy;
+        if (current < aiming && stat.countMiss > 0) {
+            val ex = exchangeJudge(list.first(), list.last(), 1.0, 0.0, current, aiming, weight)
+            list[0] = ex.great
+            list[5] = ex.bad
+            current = ex.accuracy
         }
 
-        if (current < aiming && stat.getCount50() > 0) {
-            var ex = exchangeJudge(list.getFirst(), list.get(4), 1d, 1d / 6d, current, aiming, weight);
-            list.set(0, ex.great);
-            list.set(4, ex.bad);
-            current = ex.accuracy;
+        if (current < aiming && stat.count50 > 0) {
+            val ex = exchangeJudge(list.first(), list[4], 1.0, 1.0 / 6.0, current, aiming, weight)
+            list[0] = ex.great
+            list[4] = ex.bad
+            current = ex.accuracy
         }
 
-        if (current < aiming && stat.getCount100() > 0) {
-            var ex = exchangeJudge(list.getFirst(), list.get(3), 1d, 1d / 3d, current, aiming, weight);
-            list.set(0, ex.great);
-            list.set(3, ex.bad);
-            current = ex.accuracy;
+        if (current < aiming && stat.count100 > 0) {
+            val ex = exchangeJudge(list.first(), list[3], 1.0, 1.0 / 3.0, current, aiming, weight)
+            list[0] = ex.great
+            list[3] = ex.bad
+            current = ex.accuracy
         }
 
-        if (current < aiming && stat.getCountKatu() > 0) {
-            var ex = exchangeJudge(list.getFirst(), list.get(2), 1d, 2d / 3d, current, aiming, weight);
-            list.set(0, ex.great);
-            list.set(2, ex.bad);
+        if (current < aiming && stat.countKatu > 0) {
+            val ex = exchangeJudge(list.first(), list[2], 1.0, 2.0 / 3.0, current, aiming, weight)
+            list[0] = ex.great
+            list[2] = ex.bad
             // current = ex.accuracy;
         }
 
-        var nGreat = list.getFirst() + list.get(1);
+        val nGreat = list.first() + list[1]
 
-        list.set(0, (int) Math.floor(nGreat * ratio));
-        list.set(1, Math.max((nGreat - list.getFirst()), 0));
+        list[0] = floor(nGreat * ratio).toInt()
+        list[1] = max((nGreat - list.first()).toDouble(), 0.0).toInt()
 
-        stat.setCountGeki(list.getFirst());
-        stat.setCount300(list.get(1));
-        stat.setCountKatu(list.get(2));
-        stat.setCount100(list.get(3));
-        stat.setCount50(list.get(4));
-        stat.setCountMiss(list.getLast());
+        stat.setCountGeki(list.first())
+        stat.setCount300(list[1])
+        stat.setCountKatu(list[2])
+        stat.setCount100(list[3])
+        stat.setCount50(list[4])
+        stat.setCountMiss(list.last())
 
-        return stat;
+        return stat
     }
-
-    public record Exchange(int great, int bad, double accuracy) {}
 
     // 交换评级
     @NonNull
-    public static Exchange exchangeJudge(int nGreat, int nBad, double wGreat, double wBad, double currentAcc, double aimingAcc, double weight) {
-        var g = nGreat;
-        var b = nBad;
-        var c = currentAcc;
+    fun exchangeJudge(
+        nGreat: Int,
+        nBad: Int,
+        wGreat: Double,
+        wBad: Double,
+        currentAcc: Double,
+        aimingAcc: Double,
+        weight: Double
+    ): Exchange {
+        var g = nGreat
+        var b = nBad
+        var c = currentAcc
 
-        double gainAcc = weight * (wGreat - wBad);
+        val gainAcc = weight * (wGreat - wBad)
 
-        for (int i = 0; i < nBad; i++) {
+        for (i in 0 until nBad) {
+            g++
+            b--
+            c += gainAcc
 
-            g ++;
-            b --;
-            c += gainAcc;
-
-            if (c >= aimingAcc) break;
+            if (c >= aimingAcc) break
         }
 
-        return new Exchange(g, b, currentAcc);
+        return Exchange(g, b, currentAcc)
     }
 
 
+    @JvmStatic
     @NonNull
-    public static boolean isHelp(@Nullable String str) {
-        if (str == null) return false;
+    fun isHelp(@Nullable str: String?): Boolean {
+        if (str == null) return false
 
-        return str.trim().equalsIgnoreCase("help") || str.trim().equalsIgnoreCase("帮助");
+        return str.trim { it <= ' ' }.equals("help", ignoreCase = true) || str.trim { it <= ' ' }
+            .equals("帮助", ignoreCase = true)
     }
 
     /**
@@ -274,50 +348,52 @@ public class DataUtil {
      * @param str 需要分割的，含分割符和玩家名的长文本
      * @return 分割好的玩家名
      */
+    @JvmStatic
     @NonNull
-    public static List<String> parseUsername(@Nullable String str) {
-        if (Objects.isNull(str)) return Collections.singletonList("");
-        String[] split = str.trim().split("[,，、|:：]+");
-        if (split.length == 0) return Collections.singletonList(str);
+    fun parseUsername(@Nullable str: String): List<String> {
+        if (Objects.isNull(str)) return listOf("")
+        val split = str.trim { it <= ' ' }.split("[,，、|:：]+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (split.size == 0) return listOf(str)
 
-        return Arrays.stream(split).map(String::trim).filter(StringUtils::hasText).toList();
+        return Arrays.stream(split).map { obj: String -> obj.trim { it <= ' ' } }
+            .filter { str: String? -> StringUtils.hasText(str) }.toList()
     }
 
-    public static String String2Markdown(String str) {
-        return str.replace("\n", "\n\n");
-    }
-    public static String JsonString2Markdown(String str) {
-        if (Objects.isNull(str)) return null;
-        return str.replace("},", "},\n\n");
+    fun String2Markdown(str: String): String {
+        return str.replace("\n", "\n\n")
     }
 
-    public static char getRoundedNumberUnit(double number, int level) {
-        char unit = '-';
-        number = Math.abs(number);
-        if (level < 1 || level > 2) return '-';
-        int m = 1 + level;
+    fun JsonString2Markdown(str: String): String? {
+        if (Objects.isNull(str)) return null
+        return str.replace("},", "},\n\n")
+    }
 
-        if (number < Math.pow(10, m)) {  //level==1->100 level==2->1000
-            unit = 0;
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'K';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'M';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'G';
-        } else if (number < Math.pow(10, (m += 3))) {
-            unit = 'T';
-        } else if (number < Math.pow(10, m + 3)) {
-            unit = 'P';
+    fun getRoundedNumberUnit(number: Double, level: Int): Char {
+        var number = number
+        var unit = '-'
+        number = abs(number)
+        if (level < 1 || level > 2) return '-'
+        var m = 1 + level
+
+        if (number < 10.0.pow(m)) {  //level==1->100 level==2->1000
+            unit = 0.toChar()
+        } else if (number < 10.0.pow(3.let { m += it; m })) {
+            unit = 'K'
+        } else if (number < 10.0.pow(3.let { m += it; m })) {
+            unit = 'M'
+        } else if (number < 10.0.pow(3.let { m += it; m })) {
+            unit = 'G'
+        } else if (number < 10.0.pow(3.let { m += it; m })) {
+            unit = 'T'
+        } else if (number < 10.0.pow((m + 3))) {
+            unit = 'P'
         }
 
-        return unit;
+        return unit
     }
 
 
-
-    public static Double getRoundedNumber(double number, int level) {
-
+    fun getRoundedNumber(number: Double, level: Int): Double {
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
         //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
 
@@ -326,222 +402,227 @@ public class DataUtil {
 
         //将负值纳入计算
 
+        var number = number
         while (number >= 1000 || number <= -1000) {
-            number /= 1000;
+            number /= 1000.0
         }
 
         if (level == 1) {
             if (number >= 100) {
-                number /= 1000;
+                number /= 1000.0
             }
-            number = (double) Math.round(number * 10) / 10D;
+            number = Math.round(number * 10).toDouble() / 10.0
         } else if (level == 2) {
-            number = (double) Math.round(number * 1000) / 1000D;
+            number = Math.round(number * 1000).toDouble() / 1000.0
         }
-        if (number - Math.round(number) <= 0.0001) number = (double) Math.round(number);
+        if (number - Math.round(number) <= 0.0001) number = Math.round(number).toDouble()
 
-        return number;
+        return number
     }
 
-    public static String getRoundedNumberStr(double number, int level) {
-        var c = getRoundedNumberUnit(number, level);
-        boolean isInt;
-        int intValue;
-        if (c == 0) {
-            intValue = (int) number;
-            if (level == 1) {
-                isInt = number - intValue <= 0.1;
+    fun getRoundedNumberStr(number: Double, level: Int): String {
+        var number = number
+        val c = getRoundedNumberUnit(number, level)
+        val isInt: Boolean
+        val intValue: Int
+        if (c.code == 0) {
+            intValue = number.toInt()
+            isInt = if (level == 1) {
+                number - intValue <= 0.1
             } else {
-                isInt = number - intValue <= 0.001;
+                number - intValue <= 0.001
             }
-            if (isInt) return String.valueOf(intValue);
-            return String.valueOf(number);
+            if (isInt) return intValue.toString()
+            return number.toString()
         }
 
         while (number >= 1000 || number <= -1000) {
-            number /= 1000;
+            number /= 1000.0
         }
 
         if (level == 1) {
             if (number >= 100) {
-                number /= 1000;
+                number /= 1000.0
             }
-            number = (double) Math.round(number * 10) / 10D;
+            number = Math.round(number * 10).toDouble() / 10.0
         } else if (level == 2) {
-            number = (double) Math.round(number * 1000) / 1000D;
+            number = Math.round(number * 1000).toDouble() / 1000.0
         }
-        intValue = (int) number;
-        if (level == 1) {
-            isInt = number - intValue <= 0.1;
+        intValue = number.toInt()
+        isInt = if (level == 1) {
+            number - intValue <= 0.1
         } else {
-            isInt = number - intValue <= 0.001;
+            number - intValue <= 0.001
         }
 
         if (isInt) {
-            return String.format("%d%c", intValue, c);
+            return String.format("%d%c", intValue, c)
         }
-        String out = String.format(level == 1 ? "%.1f%c" : "%.2f%c", number, c);
-        if (out.charAt(out.length() - 2) == '0') {
-            out = out.substring(0, out.length() - 2) + c;
+        var out = String.format(if (level == 1) "%.1f%c" else "%.2f%c", number, c)
+        if (out[out.length - 2] == '0') {
+            out = out.substring(0, out.length - 2) + c
         }
-        return out;
+        return out
     }
 
-    public static String Time2HourAndMinient(long time) {
+    fun Time2HourAndMinient(time: Long): String {
         if (time < 3600000) {
-            return String.format("%dM", time / 60000);
+            return String.format("%dM", time / 60000)
         }
-        var h = time / 3600000;
-        var m = (time % 3600000) / 60000;
-        return String.format("%dH%dM", h, m);
+        val h = time / 3600000
+        val m = (time % 3600000) / 60000
+        return String.format("%dH%dM", h, m)
     }
 
-    public static <T> T getObject(String filepath, Class<T> T) {
-        try {
-            return mapper.readValue(new File(filepath), T);
-        } catch (IOException e) {
-            log.error("读取json错误", e);
-            throw new RuntimeException("见上一条");
-        }
+    @JvmStatic
+    fun AR2MS(ar: Float): Int = when {
+        ar > 10 -> 300
+        ar > 5 -> 1200 - (150 * (ar - 5)).toInt()
+        ar > 0 -> 1800 - (120 * ar).toInt()
+        else -> 1800
     }
 
-    public static int AR2MS(float ar){
-        if (0 < ar - 5){
-            if (ar > 11) return 300;
-            return  1200 - (int) (150 * (ar - 5));
-        } else {
-            return  1800 - (int) (120 * ar);
-        }
+    fun MS2AR(ms: Float): Float = when {
+        ms < 300 -> 11f
+        ms < 1200 -> 5 +  (1200 - ms) / 150f
+        ms < 2400 -> (1800 - ms) / 120f
+        else -> -5f
     }
 
-    public static float MS2AR(float ms){
-        if (0 < 1200 - ms){
-            if (ms < 300) return 11;
-            return  5 + (1200 - ms) / 150f;
-        } else {
-            if (ms >= 2400) return -5;
-            return  (1800 - ms) / 120f;
-        }
-    }
-
-    public static float AR(float ar, int mod){
-        float ms;
-//      1800  -  1200  -  450  -  300
-        if (OsuMod.hasHr(mod)){
-            ar *= 1.4f;
+    @JvmStatic
+    fun AR(ar: Float, mod: Int): Float {
+        var ar = ar
+        //      1800  -  1200  -  450  -  300
+        if (OsuMod.hasHr(mod)) {
+            ar *= 1.4f
         } else if (OsuMod.hasEz(mod)) {
-            ar /= 2;
+            ar /= 2f
         }
-        ar = Math.min(10f, ar);
-        ms = AR2MS(ar);
-        if (OsuMod.hasDt(mod)){
-            ms /= (3f / 2f);
+        var ms = AR2MS(ar).toFloat()
+        if (OsuMod.hasDt(mod)) {
+            ms /= (3f / 2f)
         } else if (OsuMod.hasHt(mod)) {
-            ms /= (3f / 4f);
+            ms /= (3f / 4f)
         }
-        ar = MS2AR(ms);
-        return roundTwoDecimals(ar);
+        ar = MS2AR(ms)
+        return roundTwoDecimals(ar)
     }
 
-    public static float OD2MS(float od){
-        if (od > 10) return 20;
-        return 80 - (6 * od);
+    @JvmStatic
+    fun OD2MS(od: Float): Float = when {
+        od > 10 -> 20f
+        od > 0 -> 80 - 6 * od
+        else -> 80f
     }
 
-    public static float MS2OD(float ms){
-        return (80 - ms) / 6f;
+    fun MS2OD(ms: Float): Float {
+        return (80 - ms) / 6f
     }
 
-    public static float OD(float od, int mod){
-        float ms;
-        if (OsuMod.hasHr(mod)){
-            od *= 1.4f;
+    @JvmStatic
+    fun OD(od: Float, mod: Int): Float {
+        var od = od
+        if (OsuMod.hasHr(mod)) {
+            od *= 1.4f
         } else if (OsuMod.hasEz(mod)) {
-            od /= 2f;
+            od /= 2f
         }
-        ms = OD2MS(od);
-        if (OsuMod.hasDt(mod)){
-            ms /= (3f/2);
+        var ms = OD2MS(od)
+        if (OsuMod.hasDt(mod)) {
+            ms /= (3f / 2)
         } else if (OsuMod.hasHt(mod)) {
-            ms /= (3f/4);
+            ms /= (3f / 4)
         }
-        od = MS2OD(ms);
-        return roundTwoDecimals(od);
+        od = MS2OD(ms)
+        return roundTwoDecimals(od)
     }
 
 
-    public static float CS(float cs, int mod){
-        if (OsuMod.hasHr(mod)){
-            cs *= 1.3f;
+    @JvmStatic
+    fun CS(cs: Float, mod: Int): Float {
+        var cs = cs
+        if (OsuMod.hasHr(mod)) {
+            cs *= 1.3f
         } else if (OsuMod.hasEz(mod)) {
-            cs /= 2f;
+            cs /= 2f
         }
-        return roundTwoDecimals(cs);
+        if (cs > 10) cs = 10f
+        else if (cs < 0) cs = 0f
+        return roundTwoDecimals(cs)
     }
 
-    public static float BPM(float bpm, int mod){
-        if (OsuMod.hasDt(mod)){
-            bpm *= 1.5f;
+    @JvmStatic
+    fun BPM(bpm: Float, mod: Int): Float {
+        var bpm = bpm
+        if (OsuMod.hasDt(mod)) {
+            bpm *= 1.5f
         } else if (OsuMod.hasHt(mod)) {
-            bpm *= 0.75f;
+            bpm *= 0.75f
         }
-        return roundTwoDecimals(bpm);
+        return roundTwoDecimals(bpm)
     }
 
-    public static int Length(float length, int mod){
-        if (OsuMod.hasDt(mod)){
-            length /= 1.5f;
+    @JvmStatic
+    fun Length(length: Float, mod: Int): Int {
+        var length = length
+        if (OsuMod.hasDt(mod)) {
+            length /= 1.5f
         } else if (OsuMod.hasHt(mod)) {
-            length /= 0.75f;
+            length /= 0.75f
         }
-        return Math.round(length);
+        return Math.round(length)
     }
 
-    public static float HP(float hp, int mod){
-        if (OsuMod.hasHr(mod)){
-            hp *= 1.3f;
+    @JvmStatic
+    fun HP(hp: Float, mod: Int): Float {
+        var hp = hp
+        if (OsuMod.hasHr(mod)) {
+            hp *= 1.3f
         } else if (OsuMod.hasEz(mod)) {
-            hp /= 1.3f;
+            hp /= 1.3f
         }
-        return roundTwoDecimals(hp);
+        if (hp > 10) hp = 10f
+        else if (hp < 0) hp = 0f
+        return roundTwoDecimals(hp)
     }
 
-    private static float roundTwoDecimals(float value) {
-        return new BigDecimal(value).setScale(2, RoundingMode.HALF_EVEN).floatValue();
+    private fun roundTwoDecimals(value: Float): Float {
+        return BigDecimal(value.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
     }
 
     // 应用四维的变化 4 dimensions
-    public static void applyBeatMapChanges(BeatMap beatMap, int mods) {
+    @JvmStatic
+    fun applyBeatMapChanges(beatMap: BeatMap, mods: Int) {
         if (OsuMod.hasChangeRating(mods)) {
-            beatMap.setBPM(DataUtil.BPM(Optional.ofNullable(beatMap.getBPM()).orElse(0f), mods));
-            beatMap.setAR(DataUtil.AR(Optional.ofNullable(beatMap.getAR()).orElse(0f), mods));
-            beatMap.setCS(DataUtil.CS(Optional.ofNullable(beatMap.getCS()).orElse(0f), mods));
-            beatMap.setOD(DataUtil.OD(Optional.ofNullable(beatMap.getOD()).orElse(0f), mods));
-            beatMap.setHP(DataUtil.HP(Optional.ofNullable(beatMap.getHP()).orElse(0f), mods));
-            beatMap.setTotalLength(DataUtil.Length(beatMap.getTotalLength(), mods));
+            beatMap.bpm =
+                BPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
+            beatMap.ar = AR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
+            beatMap.cs = CS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
+            beatMap.od = OD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
+            beatMap.hp = HP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
+            beatMap.totalLength = Length(beatMap.totalLength.toFloat(), mods)
         }
     }
 
-    public static int getPlayedRankedMapCount(double bonusPP) {
-        double v = - (bonusPP / (1000f / 2.4f)) + 1;
-
-        if (v < 0) {
-            return 0;
+    fun getPlayedRankedMapCount(bonusPP: Double): Int {
+        val v = -(bonusPP / (1000f / 2.4f)) + 1
+        return if (v < 0) {
+            0
         } else {
-            return (int) Math.round(Math.log(v) / Math.log(0.9994));
+            Math.round(ln(v) / ln(0.9994)).toInt()
         }
     }
 
-    public static float getBonusPP(double playerPP, List<Double> fullPP) {
-        if (CollectionUtils.isEmpty(fullPP)) return 0f;
+    fun getBonusPP(playerPP: Double, fullPP: List<Double>): Float {
+        if (CollectionUtils.isEmpty(fullPP)) return 0f
 
-        double[] array = new double[fullPP.size()];
+        val array = DoubleArray(fullPP.size)
 
-        for (int i = 0; i < fullPP.size(); i++) {
-            array[i] = Objects.requireNonNullElse(fullPP.get(i), 0d);
+        for (i in fullPP.indices) {
+            array[i] = Objects.requireNonNullElse(fullPP[i], 0.0)
         }
 
-        return getBonusPP(playerPP, array);
+        return getBonusPP(playerPP, array)
     }
 
     /**
@@ -549,127 +630,136 @@ public class DataUtil {
      * 算法是最小二乘 y = kx + b
      * 输入的PP数组应该是加权之前的数组。
      */
-    public static float getBonusPP(double playerPP, double[] fullPP) {
-        double bonusPP, remainPP = 0, k, b, bpPP = 0, x = 0, x2 = 0, xy = 0, y = 0;
+    @JvmStatic
+    fun getBonusPP(playerPP: Double, fullPP: DoubleArray?): Float {
+        val bonusPP: Double
+        var remainPP = 0.0
+        val k: Double
+        val b: Double
+        var bpPP = 0.0
+        var x = 0.0
+        var x2 = 0.0
+        var xy = 0.0
+        var y = 0.0
 
-        if (fullPP == null || fullPP.length == 0d) return 0f;
+        if (fullPP == null || fullPP.size.toDouble() == 0.0) return 0f
 
-        int length = fullPP.length;
+        val length = fullPP.size
 
-        for (int i = 0; i < length; i++) {
-            double weight = Math.pow(0.95f, i);
-            double PP = fullPP[i];
+        for (i in 0 until length) {
+            val weight: Double = 0.95.pow(i)
+            val PP = fullPP[i]
 
             //只拿最后50个bp来算，这样精准
             if (i >= 50) {
-                x += i;
-                y += PP;
-                x2 += Math.pow(i, 2f);
-                xy += i * PP;
+                x += i.toDouble()
+                y += PP
+                x2 += i.toDouble().pow(2)
+                xy += i * PP
             }
-            bpPP += PP * weight;//前 100 的bp上的 pp
+            bpPP += PP * weight //前 100 的bp上的 pp
         }
 
-        double N = length - 50;
+        val N = (length - 50).toDouble()
         // Exiyi - Nxy__ / Ex2i - Nx_2
-        k = (xy - (x * y / N)) / (x2 - (Math.pow(x, 2f) / N));
-        b = (y / N) - k * (x / N);
+        k = (xy - (x * y / N)) / (x2 - (x.pow(2.0) / N))
+        b = (y / N) - k * (x / N)
 
         //找零点
-        int expectedX = (k == 0f) ? -1 : (int) Math.floor(- b / k);
+        val expectedX = if ((k == 0.0)) -1 else floor(-b / k).toInt()
 
         //这个预估的零点应该在很后面，不应该小于 100
         //如果bp没满100，那么bns直接可算得，remainPP = 0
         if (length < 100 || expectedX <= 100) {
-            bonusPP = playerPP - bpPP;
+            bonusPP = playerPP - bpPP
         } else {
             //对离散数据求和
-            for (int i = length; i <= expectedX; i++) {
-                double weight = Math.pow(0.95f, i);
-                remainPP += (k * i + b) * weight;
+            for (i in length..expectedX) {
+                val weight: Double = 0.95.pow(i)
+                remainPP += (k * i + b) * weight
             }
 
-            bonusPP = playerPP - bpPP - remainPP;
+            bonusPP = playerPP - bpPP - remainPP
         }
 
-        return (float) Math.max(Math.min(bonusPP, 413.894179759f), 0f);
+        return max(min(bonusPP, 413.894179759), 0.0).toFloat()
     }
 
-    public static double getV3ScoreProgress(Score score) { //下下策
-        OsuMode mode = score.getMode();
-        double progress;
+    fun getV3ScoreProgress(score: Score): Double { //下下策
+        val mode = score.mode
 
-        if(!score.getPassed()){
-            progress = 1D * score.getStatistics().getCountAll(mode) / score.getBeatMap().getMaxCombo();
+        val progress = if (!score.passed) {
+            1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
         } else {
-            progress = 1D;
+            1.0
         }
-        return progress;
+        return progress
     }
 
-    public static String getV3Score(Score score) {
+    fun getV3Score(score: Score): String {
         // 算 v3 分（lazer的计分方式
         // 有个版本指出，目前 stable 的 v2 是这个算法的复杂版本，acc是10次方，转盘分数纳入mod倍率
 
-        OsuMode mode = score.getMode();
-        List<String> mods = score.getMods();
+        val mode = score.mode
+        val mods = score.mods
 
-        int fc = 100_0000;
-        double i = getV3ModsMultiplier(mods,mode);
-        double p = getV3ScoreProgress(score); //下下策
-        int c = score.getMaxCombo();
-        int m = score.getBeatMap().getMaxCombo();
-        double ap8 = Math.pow(score.getAccuracy(), 8f);
-        double v3 = switch (score.getMode()) {
-            case OSU, CATCH, DEFAULT -> fc * i * (0.7f * c / m + 0.3f * ap8) * p;
-            case TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p;
-            case MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p;
-        };
+        val fc = 1000000
+        val i = getV3ModsMultiplier(mods, mode)
+        val p = getV3ScoreProgress(score) //下下策
+        val c = score.maxCombo
+        val m = score.beatMap.maxCombo
+        val ap8: Double = score.accuracy.pow(8.0)
+        val v3 = when (score.mode) {
+            OSU, CATCH, DEFAULT -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
+            TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
+            MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
+        }
 
-        return String.format("%07d",Math.round(v3)); //补 7 位达到 v3 分数的要求
+        return String.format("%07d", Math.round(v3)) //补 7 位达到 v3 分数的要求
     }
 
     // 这东西是啥?
-    public static double getV3ModsMultiplier(List<String> mod, OsuMode mode) {
-        double index = 1.00D;
+    fun getV3ModsMultiplier(mod: List<String?>, mode: OsuMode?): Double {
+        var index = 1.00
 
-        if (mod.contains("EZ")) index *= 0.50D;
+        if (mod.contains("EZ")) index *= 0.50
 
-        switch (mode){
-            case OSU:{
-                if (mod.contains("HT")) index *= 0.30D;
-                if (mod.contains("HR")) index *= 1.10D;
-                if (mod.contains("DT")) index *= 1.20D;
-                if (mod.contains("NC")) index *= 1.20D;
-                if (mod.contains("HD")) index *= 1.06D;
-                if (mod.contains("FL")) index *= 1.12D;
-                if (mod.contains("SO")) index *= 0.90D;
-            } break;
-
-            case TAIKO:{
-                if (mod.contains("HT")) index *= 0.30D;
-                if (mod.contains("HR")) index *= 1.06D;
-                if (mod.contains("DT")) index *= 1.12D;
-                if (mod.contains("NC")) index *= 1.12D;
-                if (mod.contains("HD")) index *= 1.06D;
-                if (mod.contains("FL")) index *= 1.12D;
-            } break;
-
-            case CATCH:{
-                if (mod.contains("HT")) index *= 0.30D;
-                if (mod.contains("HR")) index *= 1.12D;
-                if (mod.contains("DT")) index *= 1.12D;
-                if (mod.contains("NC")) index *= 1.12D;
-                if (mod.contains("FL")) index *= 1.12D;
-            } break;
-
-            case MANIA: {
-                if (mod.contains("HT")) index *= 0.50D;
-                if (mod.contains("CO")) index *= 0.90D;
+        when (mode) {
+            OSU -> {
+                if (mod.contains("HT")) index *= 0.30
+                if (mod.contains("HR")) index *= 1.10
+                if (mod.contains("DT")) index *= 1.20
+                if (mod.contains("NC")) index *= 1.20
+                if (mod.contains("HD")) index *= 1.06
+                if (mod.contains("FL")) index *= 1.12
+                if (mod.contains("SO")) index *= 0.90
             }
-        }
 
-        return index;
+            TAIKO -> {
+                if (mod.contains("HT")) index *= 0.30
+                if (mod.contains("HR")) index *= 1.06
+                if (mod.contains("DT")) index *= 1.12
+                if (mod.contains("NC")) index *= 1.12
+                if (mod.contains("HD")) index *= 1.06
+                if (mod.contains("FL")) index *= 1.12
+            }
+
+            CATCH -> {
+                if (mod.contains("HT")) index *= 0.30
+                if (mod.contains("HR")) index *= 1.12
+                if (mod.contains("DT")) index *= 1.12
+                if (mod.contains("NC")) index *= 1.12
+                if (mod.contains("FL")) index *= 1.12
+            }
+
+            MANIA -> {
+                if (mod.contains("HT")) index *= 0.50
+                if (mod.contains("CO")) index *= 0.90
+            }
+
+            null, DEFAULT -> { }
+        }
+        return index
     }
 
     /***
@@ -678,94 +768,30 @@ public class DataUtil {
      * @param MaxWidth 最大宽度
      * @return 返回已缩短的字符
      */
-    public static String getShortenStr (String Str, int MaxWidth){
-        StringBuilder sb = new StringBuilder();
-        var Char = Str.toCharArray();
+    fun getShortenStr(Str: String, MaxWidth: Int): String {
+        val sb = StringBuilder()
+        val Char = Str.toCharArray()
 
-        float allWidth = 0;
-        int backL = 0;
+        var allWidth = 0f
+        var backL = 0
 
-        for (var thisChar : Char) {
-            if (allWidth > MaxWidth){
-                break;
+        for (thisChar in Char) {
+            if (allWidth > MaxWidth) {
+                break
             }
-            sb.append(thisChar);
-            if ((allWidth) < MaxWidth){
-                backL++;
-            }
-        }
-        if (allWidth > MaxWidth){
-            sb.delete(backL,sb.length());
-            sb.append("...");
-        }
-
-        sb.delete(0,sb.length());
-        allWidth = 0;
-        backL = 0;
-
-        return sb.toString();
-    }
-
-    public static Typeface getTorusRegular() {
-        if (TORUS_REGULAR == null || TORUS_REGULAR.isClosed()) {
-            try {
-//                InputStream in = class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
-//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
-                TORUS_REGULAR = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-Regular.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-Regular.ttf", e);
-                TORUS_REGULAR = Typeface.makeDefault();
+            sb.append(thisChar)
+            if ((allWidth) < MaxWidth) {
+                backL++
             }
         }
-        return TORUS_REGULAR;
-    }
-
-    public static Typeface getTorusSemiBold() {
-        if (TORUS_SEMIBOLD == null || TORUS_SEMIBOLD.isClosed()) {
-            try {
-                TORUS_SEMIBOLD = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Torus-SemiBold.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:Torus-SemiBold.ttf", e);
-                TORUS_SEMIBOLD = Typeface.makeDefault();
-            }
+        if (allWidth > MaxWidth) {
+            sb.delete(backL, sb.length)
+            sb.append("...")
         }
-        return TORUS_SEMIBOLD;
-    }
 
-    public static Typeface getPUHUITI() {
-        if (PUHUITI == null || PUHUITI.isClosed()) {
-            try {
-                PUHUITI = Typeface.makeFromFile(STR."\{NowbotConfig.FONT_PATH}Puhuiti.ttf");
-            } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
-                PUHUITI = Typeface.makeDefault();
-            }
-        }
-        return PUHUITI;
-    }
+        sb.delete(0, sb.length)
 
-    public static Typeface getPUHUITIMedium() {
-        if (PUHUITI_MEDIUM == null || PUHUITI_MEDIUM.isClosed()) {
-            try {
-                PUHUITI_MEDIUM = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "Alibaba-PuHuiTi-Medium.ttf");
-            } catch (Exception e) {
-                log.error("Alibaba-PuHuiTi-Medium.ttf", e);
-                PUHUITI_MEDIUM = Typeface.makeDefault();
-            }
-        }
-        return PUHUITI_MEDIUM;
-    }
-
-    public static Typeface getEXTRA(){
-        if (EXTRA == null || EXTRA.isClosed()) {
-            try {
-                EXTRA = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf");
-            } catch (Exception e) {
-                log.error("未读取到目标字体:extra.ttf", e);
-                throw e;
-            }
-        }
-        return EXTRA;
+        return sb.toString()
     }
 
     /*
@@ -836,32 +862,32 @@ public class DataUtil {
     }
 
      */
-
     /**
      * 获取该文件名的 Markdown 文件并转成字符串
      * @param path 文件名，和相对路径
      * @return 文件内容
      */
-    public static String getMarkdownFile(String path) {
-        StringBuilder sb = new StringBuilder();
+    @JvmStatic
+    fun getMarkdownFile(path: String?): String? {
+        val sb = StringBuilder()
 
         try {
-            var bufferedReader = Files.newBufferedReader(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
-            );
+            val bufferedReader = Files.newBufferedReader(
+                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
+            )
 
             // 逐行读取文本内容
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line).append('\n');
+            var line: String?
+            while ((bufferedReader.readLine().also { line = it }) != null) {
+                sb.append(line).append('\n')
             }
 
             // 关闭流
-            bufferedReader.close();
+            bufferedReader.close()
 
-            return sb.toString();
-        } catch (Exception ignored) {
-            return null;
+            return sb.toString()
+        } catch (ignored: Exception) {
+            return null
         }
     }
 
@@ -870,15 +896,22 @@ public class DataUtil {
      * @param path 图片名，和相对路径
      * @return 图片流
      */
-    public static byte[] getPicture(String path) {
-        if (path.isEmpty()) return null;
+    @JvmStatic
+    fun getPicture(path: String): ByteArray? {
+        if (path.isEmpty()) return null
 
-        try {
-            return Files.readAllBytes(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
-            );
-        } catch (IOException e) {
-            return null;
+        return try {
+            Files.readAllBytes(
+                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
+            )
+        } catch (e: IOException) {
+            null
         }
     }
+
+    @JvmRecord
+    private data class Range(val offset: Int, val limit: Int)
+
+    @JvmRecord
+    data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 }
