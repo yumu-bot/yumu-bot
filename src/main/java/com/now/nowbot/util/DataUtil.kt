@@ -476,7 +476,7 @@ object DataUtil {
 
     @JvmStatic
     fun AR2MS(ar: Float): Int = when {
-        ar > 10 -> 300
+        ar > 10 -> 450
         ar > 5 -> 1200 - (150 * (ar - 5)).toInt()
         ar > 0 -> 1800 - (120 * ar).toInt()
         else -> 1800
