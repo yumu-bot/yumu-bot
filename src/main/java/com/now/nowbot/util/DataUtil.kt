@@ -476,15 +476,15 @@ object DataUtil {
 
     @JvmStatic
     fun AR2MS(ar: Float): Int = when {
-        ar > 10 -> 450
-        ar > 5 -> 1200 - (150 * (ar - 5)).toInt()
-        ar > 0 -> 1800 - (120 * ar).toInt()
+        ar > 11f -> 300
+        ar > 5f -> 1200 - (150 * (ar - 5)).toInt()
+        ar > 0f -> 1800 - (120 * ar).toInt()
         else -> 1800
     }
 
     fun MS2AR(ms: Float): Float = when {
         ms < 300 -> 11f
-        ms < 1200 -> 5 +  (1200 - ms) / 150f
+        ms < 1200 -> 5 + (1200 - ms) / 150f
         ms < 2400 -> (1800 - ms) / 120f
         else -> -5f
     }
@@ -510,13 +510,13 @@ object DataUtil {
 
     @JvmStatic
     fun OD2MS(od: Float): Float = when {
-        od > 10 -> 20f
-        od > 0 -> 80 - 6 * od
-        else -> 80f
+        od > 11 -> 14f
+        else -> 80 - 6 * od
     }
 
-    fun MS2OD(ms: Float): Float {
-        return (80 - ms) / 6f
+    fun MS2OD(ms: Float): Float = when {
+        ms < 14 -> 11f
+        else -> (80 - ms) / 6f
     }
 
     @JvmStatic
@@ -710,7 +710,7 @@ object DataUtil {
         val m = score.beatMap.maxCombo
         val ap8: Double = score.accuracy.pow(8.0)
         val v3 = when (score.mode) {
-            OSU, CATCH, DEFAULT -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
+            OSU, CATCH, DEFAULT, null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
             TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
             MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
         }
