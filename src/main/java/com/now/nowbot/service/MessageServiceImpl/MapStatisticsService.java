@@ -106,7 +106,7 @@ public class MapStatisticsService implements MessageService<MapStatisticsService
         List<String> mods;
 
         try {
-            mods = OsuMod.getModsAbbrList(matcher.group("mod"));
+            mods = OsuMod.getModsAbbrList(matcher.group("mod")).stream().distinct().toList();
         } catch (RuntimeException e) {
             mods = new ArrayList<>();
         }
