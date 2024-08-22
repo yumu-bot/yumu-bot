@@ -498,7 +498,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             ar /= 2f
         }
-        var ms = AR2MS(ar).toFloat()
+        var ms = AR2MS(ar.limit()).toFloat()
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2f)
         } else if (OsuMod.hasHt(mod)) {
@@ -527,7 +527,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             od /= 2f
         }
-        var ms = OD2MS(od)
+        var ms = OD2MS(od.limit())
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2)
         } else if (OsuMod.hasHt(mod)) {
@@ -546,9 +546,18 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             cs /= 2f
         }
-        if (cs > 10) cs = 10f
-        else if (cs < 0) cs = 0f
-        return roundTwoDecimals(cs)
+        return roundTwoDecimals(cs.limit())
+    }
+
+    @JvmStatic
+    fun HP(hp: Float, mod: Int): Float {
+        var hp = hp
+        if (OsuMod.hasHr(mod)) {
+            hp *= 1.3f
+        } else if (OsuMod.hasEz(mod)) {
+            hp /= 1.3f
+        }
+        return roundTwoDecimals(hp.limit())
     }
 
     @JvmStatic
@@ -571,19 +580,6 @@ object DataUtil {
             length /= 0.75f
         }
         return Math.round(length)
-    }
-
-    @JvmStatic
-    fun HP(hp: Float, mod: Int): Float {
-        var hp = hp
-        if (OsuMod.hasHr(mod)) {
-            hp *= 1.3f
-        } else if (OsuMod.hasEz(mod)) {
-            hp /= 1.3f
-        }
-        if (hp > 10) hp = 10f
-        else if (hp < 0) hp = 0f
-        return roundTwoDecimals(hp)
     }
 
     private fun roundTwoDecimals(value: Float): Float {
@@ -757,7 +753,7 @@ object DataUtil {
                 if (mod.contains("CO")) index *= 0.90
             }
 
-            null, DEFAULT -> { }
+            null, DEFAULT -> {}
         }
         return index
     }
@@ -914,4 +910,6 @@ object DataUtil {
 
     @JvmRecord
     data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
+
+    fun Float.limit() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
 }
