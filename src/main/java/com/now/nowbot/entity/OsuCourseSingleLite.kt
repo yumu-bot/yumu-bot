@@ -1,8 +1,8 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.Course
 import jakarta.persistence.*
 
-// 完全确定表结构前, 别取消注释
 @Entity
 @Table(name = "osu_course_dan")
 class OsuCourseSingleLite(
@@ -32,4 +32,16 @@ class OsuCourseSingleLite(
 
     @Column(columnDefinition = "text")
     var version: String? = null,
-)
+) {
+    fun toCourseSingle() = Course.CourseSingle(
+        id = id,
+        artist = artist,
+        artistUnicode = artistUnicode,
+        title = title,
+        titleUnicode = titleUnicode,
+        creator = creator,
+        version = version,
+        bid = bid ?: 0,
+        count = count ?: 0,
+    )
+}
