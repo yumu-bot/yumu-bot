@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckAspect;
 import com.now.nowbot.listener.LocalCommandListener;
 import com.now.nowbot.permission.PermissionImplement;
+import com.now.nowbot.qq.tencent.YumuServer;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
 import com.now.nowbot.service.MessageServiceImpl.SystemInfoService;
+import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.util.*;
 import jakarta.annotation.Resource;
@@ -50,6 +52,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
             PermissionImplement permissionImplement) {
         this.applicationContext = applicationContext;
         var services = applicationContext.getBeansOfType(MessageService.class);
+        YumuServer.userApiService = applicationContext.getBean(OsuUserApiService.class);
         CmdUtil.init(applicationContext);
         LocalCommandListener.setHandler(services);
         this.check = check;

@@ -1,6 +1,7 @@
 package com.now.nowbot.qq.tencent
 
 import com.now.nowbot.permission.PermissionImplement
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.yumu.YumuService
 import com.yumu.model.packages.Command
 import com.yumu.model.packages.QueryName
@@ -13,7 +14,9 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 object YumuServer : YumuService {
-    override suspend fun onCommand(param: Command.Request): Command.Response? {
+    lateinit var userApiService: OsuUserApiService
+
+    override suspend fun onCommand(param: Command.Request): Command.Response {
         val channel = Channel<Command.Response>(0, BufferOverflow.DROP_LATEST)
         val scope = CoroutineScope(coroutineContext)
         val contact = Contact(param.uid) {
@@ -27,6 +30,8 @@ object YumuServer : YumuService {
     }
 
     override suspend fun onQueryName(param: QueryName.Request): QueryName.Response? {
-        return null
+        val userID = userApiService.getOsuId(param.name) ?: -1
+
+        return QueryName.Response(param.name, userID)
     }
 }
