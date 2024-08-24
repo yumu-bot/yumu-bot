@@ -221,8 +221,12 @@ public class CheckAspect {
         if (ser != null) {
             name = ser.value();
         }
-        if (pjp.getArgs()[0] instanceof MessageEvent e) {
-            log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
+        if (pjp.getArgs()[0] instanceof MessageEvent e && Objects.nonNull(e)) {
+            if (e.getSubject().getId()<0) {
+                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getId(), name);
+            } else {
+                log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
+            }
         }
         try {
             pjp.proceed(pjp.getArgs());

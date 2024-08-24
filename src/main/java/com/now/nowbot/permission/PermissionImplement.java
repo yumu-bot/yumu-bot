@@ -80,10 +80,8 @@ public class PermissionImplement implements PermissionController {
                 if (service.isHandle(event, event.getRawMessage(), data)) {
                     service.HandleMessage(event, data.getValue());
                 }
-            } catch (TipsException | TipsRuntimeException e) {
-                event.getSubject().sendMessage(e.getMessage());
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                event.getSubject().sendMessage(e.getMessage());
             }
         });
     }
