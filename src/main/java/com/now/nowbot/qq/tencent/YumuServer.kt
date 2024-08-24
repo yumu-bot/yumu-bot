@@ -24,14 +24,13 @@ object YumuServer : YumuService {
         }
         val event = Event(contact, param.command)
         PermissionImplement.onTencentMessage(event)
-        return withTimeout(30.seconds) {
+        return withTimeout(5.seconds) {
             channel.receive()
         }
     }
 
     override suspend fun onQueryName(param: QueryName.Request): QueryName.Response? {
         val userID = userApiService.getOsuId(param.name) ?: -1
-
         return QueryName.Response(param.name, userID)
     }
 }

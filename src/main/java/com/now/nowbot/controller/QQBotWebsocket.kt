@@ -2,12 +2,12 @@ package com.now.nowbot.controller
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.qq.tencent.Listener
 import com.now.nowbot.qq.tencent.TencentAdapter
 import com.now.nowbot.qq.tencent.YumuServer
-import com.now.nowbot.util.ContextUtil
-import com.now.nowbot.util.JacksonUtil
+import com.yumu.Listener
+import com.yumu.WebsocketAdapter
 import com.yumu.Yumu
+import com.yumu.core.extensions.toJson
 import com.yumu.model.WebsocketPackage
 import jakarta.annotation.PostConstruct
 import jakarta.websocket.CloseReason
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ServerEndpoint("/qq-ws")
 @RestController
-class QQBotWebsocket {
+class QQBotWebsocket : WebsocketAdapter() {
     private var session: Session? = null
     private val scope = CoroutineScope(Dispatchers.Default)
 
@@ -38,8 +38,9 @@ class QQBotWebsocket {
     fun onOpen(session: Session) {
         this.session = session
         session.addMessageHandler(String::class.java) { message: String? ->
-            session.launch {
-                it(WebsocketPackage.toNodePackage(message!!))
+            val request = WebsocketPackage.toNodePackage(message!!)
+            session.launch { listener ->
+                listener(request, this)
             }
         }
         websockets.add(this)
@@ -72,12 +73,6 @@ class QQBotWebsocket {
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(QQBotWebsocket::class.java)
-        val sessionContextName = "ws-session"
-
-        fun sendMessage(message: String) {
-            val ws = ContextUtil.getContext(sessionContextName, Session::class.java)
-            ws?.send(message) ?: throw Exception("session not found")
-        }
 
         /**
          * 连接数
@@ -103,17 +98,15 @@ class QQBotWebsocket {
     }
 
     fun Session.launch(action: suspend (Listener) -> Unit) {
-        val session = this
         scope.launch {
             supervisorScope {
                 TencentAdapter.listener.forEach { l ->
-                    ContextUtil.setContext(sessionContextName, session)
                     try {
                         action(l)
+                    } catch (ignore: TimeoutCancellationException) {
+
                     } catch (e: Exception) {
-                        log.error("err:", e)
-                    } finally {
-                        ContextUtil.remove()
+                        log.error("Error", e)
                     }
                 }
             }
@@ -121,7 +114,8 @@ class QQBotWebsocket {
     }
 
     val type = object : TypeReference<WebsocketPackage<JsonNode>>() {}
-    fun String.toPackage(): WebsocketPackage<JsonNode> {
-        return JacksonUtil.mapper.readValue(this, type)
+
+    override suspend fun send(message: WebsocketPackage<*>) {
+        session?.send(message.toJson())
     }
 }
