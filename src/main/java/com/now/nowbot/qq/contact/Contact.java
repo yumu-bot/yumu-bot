@@ -25,10 +25,6 @@ public interface Contact {
         return sendMessage(new MessageChain.MessageChainBuilder().addText(msg).build());
     }
 
-    default MessageReceipt sendImage(String path) {
-        return sendMessage(new MessageChain.MessageChainBuilder().addImage(path).build());
-    }
-
     default MessageReceipt sendImage(URL url) {
         return sendMessage(new MessageChain.MessageChainBuilder().addImage(url).build());
     }

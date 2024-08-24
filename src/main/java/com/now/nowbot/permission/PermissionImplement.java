@@ -10,6 +10,8 @@ import com.now.nowbot.mapper.ServiceSwitchMapper;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
@@ -66,7 +68,22 @@ public class PermissionImplement implements PermissionController {
                     service.HandleMessage(event, data.getValue());
                 }
             } catch (Throwable e) {
-                errorHandle.accept(event, e);
+                   errorHandle.accept(event, e);
+            }
+        });
+    }
+
+    public static void onTencentMessage(MessageEvent event) {
+        servicesMap.forEach((name, service) -> {
+            try {
+                var data = new MessageService.DataValue<>();
+                if (service.isHandle(event, event.getRawMessage(), data)) {
+                    service.HandleMessage(event, data.getValue());
+                }
+            } catch (TipsException | TipsRuntimeException e) {
+                event.getSubject().sendMessage(e.getMessage());
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
             }
         });
     }

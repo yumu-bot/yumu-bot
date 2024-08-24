@@ -8,10 +8,6 @@ public class MessageChain {
     public static class MessageChainBuilder {
         private final MessageChain msgChain = new MessageChain();
 
-        public MessageChainBuilder addImage(String path) {
-            msgChain.addMessage(new ImageMessage(path));
-            return this;
-        }
         public MessageChainBuilder addImage(URL path) {
             msgChain.addMessage(new ImageMessage(path));
             return this;
@@ -55,7 +51,7 @@ public class MessageChain {
 
     protected LinkedList<Message> messageList;
 
-    MessageChain(String msg) {
+    public MessageChain(String msg) {
         messageList = new LinkedList<>();
         addMessage(new TextMessage(msg));
     }

@@ -45,6 +45,7 @@ public class BindDao {
     }
 
     public BinUser getUserFromQQ(Long qq) throws BindException {
+        if (qq < 0) return getUserFromOsuid(-qq);
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
             throw new BindException(BindException.Type.BIND_Me_NotBind);
