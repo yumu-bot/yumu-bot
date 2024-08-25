@@ -140,7 +140,7 @@ public class PPMinusService implements MessageService<PPMinusService.PPMinusPara
             if (isMyself) {
                 throw new PPMinusException(PPMinusException.Type.PM_Me_TokenExpired);
             } else {
-                throw new PPMinusException(PPMinusException.Type.PM_Player_TokenExpired);
+                throw new PPMinusException(PPMinusException.Type.PM_Player_NotFound);
             }
         }
 
