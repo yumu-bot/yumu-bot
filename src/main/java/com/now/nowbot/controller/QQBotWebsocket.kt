@@ -10,7 +10,6 @@ import com.yumu.Yumu
 import com.yumu.core.extensions.toJson
 import com.yumu.model.WebsocketPackage
 import jakarta.annotation.PostConstruct
-import jakarta.websocket.CloseReason
 import jakarta.websocket.OnClose
 import jakarta.websocket.OnOpen
 import jakarta.websocket.Session
@@ -19,14 +18,12 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RestController
-import java.io.IOException
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.atomic.AtomicInteger
 
-@ServerEndpoint("/qq-ws")
 @RestController
-class QQBotWebsocket : WebsocketAdapter() {
-    private var session: Session? = null
+@Suppress("unused")
+@ServerEndpoint("/qq-ws")
+class QQBotWebsocket {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     @PostConstruct
@@ -36,65 +33,29 @@ class QQBotWebsocket : WebsocketAdapter() {
 
     @OnOpen
     fun onOpen(session: Session) {
-        this.session = session
+        val wsObject = WebsocketObject(session)
         session.addMessageHandler(String::class.java) { message: String? ->
             val request = WebsocketPackage.toNodePackage(message!!)
             session.launch { listener ->
-                listener(request, this)
+                listener(request, wsObject)
             }
         }
-        websockets.add(this)
-        addCount()
     }
 
     @OnClose
-    fun onClose() {
-        if (websockets.contains(this)) {
-            on = false
-            websockets.remove(this)
-            subCount()
-        }
-        println(session!!.id + " is closed")
+    fun onClose(session: Session) {
+        websockets.remove(session)
     }
 
     var on: Boolean = true
-
-    @Throws(IOException::class)
-    fun sendMessage(message: ByteArray) {
-        session!!.basicRemote.sendStream.write(message)
-        session!!.basicRemote.sendStream.flush()
-    }
-
-    @Throws(IOException::class)
-    fun close() {
-        websockets.remove(this)
-        session!!.close(CloseReason(CloseReason.CloseCodes.getCloseCode(1015), "closed"))
-    }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(QQBotWebsocket::class.java)
 
         /**
-         * 连接数
-         */
-        private val SocketConut = AtomicInteger(0)
-
-        /**
          * 所有的链接
          */
-        private val websockets = CopyOnWriteArraySet<QQBotWebsocket>()
-        private fun addCount() {
-            SocketConut.getAndIncrement()
-        }
-
-        private fun subCount() {
-            SocketConut.getAndDecrement()
-        }
-
-
-        fun Session.send(message: String) {
-            basicRemote.sendText(message)
-        }
+        private val websockets = CopyOnWriteArraySet<Session>()
     }
 
     fun Session.launch(action: suspend (Listener) -> Unit) {
@@ -115,7 +76,11 @@ class QQBotWebsocket : WebsocketAdapter() {
 
     val type = object : TypeReference<WebsocketPackage<JsonNode>>() {}
 
-    override suspend fun send(message: WebsocketPackage<*>) {
-        session?.send(message.toJson())
+    class WebsocketObject(val session: Session) :WebsocketAdapter() {
+        override suspend fun send(message: WebsocketPackage<*>) {
+            withContext(Dispatchers.IO) {
+                session.basicRemote.sendText(message.toJson())
+            }
+        }
     }
 }
