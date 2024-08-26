@@ -121,7 +121,7 @@ public class ImageService {
     public byte[] getPanelA5(OsuUser user, List<Score> scores) {
         HttpHeaders headers = getDefaultHeader();
         if (ContextUtil.getContext("isNewbie", Boolean.FALSE, Boolean.class)) {
-            scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() < 5.6f).toList();
+            scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() <= 5.7f).toList();
         }
         var body = Map.of(
                 "user", user,
@@ -417,12 +417,12 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "user", param.user(),
-                "score", param.score(),
-                "density", param.density(),
-                "progress", param.progress(),
-                "original", param.original(),
-                "attributes", param.attributes()
+                "user", param.user,
+                "score", param.score,
+                "density", param.density,
+                "progress", param.progress,
+                "original", param.original,
+                "attributes", param.attributes
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E5", httpEntity);
