@@ -89,7 +89,7 @@ class ScorePRCardService(
         }
     }
 
-    override fun Accept(event: MessageEvent, messageText: String): PRCardParam? {
+    override fun accept(event: MessageEvent, messageText: String): PRCardParam? {
         var matcher: Matcher
         val isRecentAll: Boolean
         when {
@@ -130,7 +130,7 @@ class ScorePRCardService(
         return PRCardParam(score)
     }
 
-    override fun Reply(event: MessageEvent, data: PRCardParam): MessageChain? {
+    override fun reply(event: MessageEvent, data: PRCardParam): MessageChain? {
         return getMessageChain(data.score)
     }
 

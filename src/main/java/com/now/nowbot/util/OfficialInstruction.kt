@@ -85,6 +85,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeQQUIDNameRange()
     }),
 
+    BPS(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("bs")
+        appendModeQQUIDNameRange()
+    }),
+
     TODAY_BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("t")
         appendModeQQUIDNameRange()

@@ -1,145 +1,174 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.CmdRange;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.BPService.BPParam
+import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getScore4PanelE5
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.*
+import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.CmdUtil.getUserWithRange
+import jakarta.annotation.Resource
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
+import kotlin.math.max
 
 @Service("BP")
-public class BPService implements MessageService<BPService.BPParam> {
-    private static final Logger log              = LoggerFactory.getLogger(BPService.class);
-    private static final int    DEFAULT_BP_COUNT = 20;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    OsuScoreApiService   scoreApiService;
-    @Resource
-    ImageService         imageService;
+class BPService(
+    var beatmapApiService: OsuBeatmapApiService? = null,
+    var scoreApiService: OsuScoreApiService? = null,
+    var imageService: ImageService? = null,
+) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    public record BPParam(OsuUser user, OsuMode mode, Map<Integer, Score> BPMap, boolean isMyself) {
+    data class BPParam(val user: OsuUser?, val BPMap: Map<Int, Score>, val isMyself: Boolean)
+
+    @Throws(Throwable::class)
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPParam>): Boolean {
+        val matcher = Instruction.BP.matcher(messageText)
+        if (!matcher.find()) return false
+
+        val isMultiple = StringUtils.hasText(matcher.group("s"))
+        val isMyself = AtomicBoolean()
+        // 处理 range
+        val mode = getMode(matcher)
+        val range =
+            getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+
+        val user = range.data ?: return false
+
+        val bpMap = range.getBPMap(isMultiple, mode.data!!)
+
+        data.value = BPParam(user, bpMap, isMyself.get())
+
+        return true
     }
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<BPParam> data) throws Throwable {
-        var matcher = Instruction.BP.matcher(messageText);
-        if (!matcher.find()) return false;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: BPParam) {
+        val from = event.subject
 
-        boolean isMultiple = StringUtils.hasText(matcher.group("s"));
-        var isMyself = new AtomicBoolean();
+        // 校验为空提取到预处理部分
+
+        val image: ByteArray = param.getImage()
+
+        try {
+            from.sendImage(image)
+        } catch (e: Exception) {
+            log.error("最好成绩：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩")
+        }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): BPParam? {
+        var matcher: Matcher
+        val isMultiple: Boolean
+        when {
+            OfficialInstruction.BP
+                .matcher(messageText)
+                .apply { matcher = this }
+                .find() -> isMultiple = false
+
+            OfficialInstruction.BPS
+                .matcher(messageText)
+                .apply { matcher = this }
+                .find() -> isMultiple = true
+
+            else -> return null
+        }
+
+        val isMyself = AtomicBoolean()
         // 处理 range
-        var mode = CmdUtil.getMode(matcher);
-        CmdRange<OsuUser> range;
-        range = CmdUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp");
+        val mode = getMode(matcher)
 
-        int offset = range.getValue(1, true) - 1;
-        int limit = range.getValue(0, false);
+        val range = getUserWithRange(event, matcher, mode, isMyself)
+
+        val user = range.data ?: return null
+
+        val bpMap = range.getBPMap(isMultiple, mode.data!!)
+
+        return BPParam(user, bpMap, isMyself.get())
+    }
+
+    override fun reply(event: MessageEvent, data: BPParam): MessageChain? = QQMsgUtil.getImage(data.getImage())
+
+    private fun CmdRange<OsuUser>.getBPMap(isMultiple: Boolean, mode: OsuMode): TreeMap<Int, Score> {
+        var offset = getValue(1, true) - 1
+        var limit = getValue(0, false)
 
         if (isMultiple) {
-            offset = Math.max(0, offset);
+            offset = max(0, offset)
             if (limit < 1) {
-                limit = offset == 0 ? DEFAULT_BP_COUNT : offset + 1;
-                offset = 0;
+                limit = if (offset == 0) DEFAULT_BP_COUNT else offset + 1
+                offset = 0
             }
         } else if (limit <= 1) {
-            limit = 1;
+            limit = 1
         } else {
-            limit = Math.max(1, limit - offset);
+            limit = max(1, limit - offset)
         }
 
+        val bpList = scoreApiService!!.getBestPerformance(data!!.userID, mode, offset, limit)
+        val bpMap = TreeMap<Int, Score>()
 
-        var user = range.getData();
-        if (Objects.isNull(user)) return false;
+        // 检查查到的数据是否为空
+        if (bpList.isEmpty()) throw GeneralTipsException(
+            GeneralTipsException.Type.G_Null_PlayerRecord,
+            mode.toString()
+        )
 
-        var bpList = scoreApiService.getBestPerformance(user.getUserID(), mode.getData(), offset, limit);
-        var bpMap = new TreeMap<Integer, Score>();
-        int finalOffset = offset;
         bpList.forEach(
-                ContextUtil.consumerWithIndex(
-                        (s, index) -> bpMap.put(index + finalOffset, s)
-                )
-        );
-
-
-        data.setValue(new BPParam(user, mode.getData(), bpMap, isMyself.get()));
-        return true;
+            ContextUtil.consumerWithIndex { s: Score, index: Int ->
+                bpMap[index + offset] = s
+            }
+        )
+        return bpMap
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, BPParam param) throws Throwable {
-        var from = event.getSubject();
-
-        var BPMap = param.BPMap();
-        var mode = param.mode();
-        var user = param.user();
-
-        if (CollectionUtils.isEmpty(BPMap))
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerRecord, mode);
-
-        byte[] image;
-
-        try {
-            if (BPMap.size() > 1) {
-                var ranks = new ArrayList<Integer>();
-                var scores = new ArrayList<Score>();
-                for (var e : BPMap.entrySet()) {
-                    ranks.add(e.getKey() + 1);
-                    scores.add(e.getValue());
-                }
-
-                beatmapApiService.applySRAndPP(scores);
-
-                image = imageService.getPanelA4(user, scores, ranks);
-            } else {
-                Score score = null;
-
-                for (var e : BPMap.entrySet()) {
-                    score = e.getValue();
-                }
-
-                var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
-                image = imageService.getPanelE5(e5Param);
-                /*
-                var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
-
-                if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-
-                } else {
-                    image = imageService.getPanelE(user, e5Param.score());
-                }
-
-                 */
+    fun BPParam.getImage(): ByteArray = try {
+        if (BPMap.size > 1) {
+            val ranks = ArrayList<Int>()
+            val scores = ArrayList<Score?>()
+            for ((key, value) in BPMap) {
+                ranks.add(key + 1)
+                scores.add(value)
             }
-        } catch (Exception e) {
-            log.error("最好成绩：渲染失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩");
-        }
 
-        try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("最好成绩：发送失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩");
+            beatmapApiService!!.applySRAndPP(scores)
+
+            imageService!!.getPanelA4(user, scores, ranks)
+        } else {
+            var score: Score? = null
+
+            for ((_, value) in BPMap) {
+                score = value
+            }
+
+            val e5Param = getScore4PanelE5(user, score!!, beatmapApiService!!)
+            imageService!!.getPanelE5(e5Param)
         }
+    } catch (e: Exception) {
+        log.error("最好成绩：渲染失败", e)
+        throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩")
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
+        private const val DEFAULT_BP_COUNT = 20
     }
 }

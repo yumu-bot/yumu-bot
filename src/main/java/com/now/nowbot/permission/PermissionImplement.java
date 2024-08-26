@@ -81,11 +81,11 @@ public class PermissionImplement implements PermissionController {
             var service = entry.getValue();
             MessageChain reply = null;
             try {
-                var data = service.Accept(event, event.getTextMessage());
+                var data = service.accept(event, event.getTextMessage());
                 if (data == null) {
                     continue;
                 }
-                reply = service.Reply(event, data);
+                reply = service.reply(event, data);
             } catch (Throwable e) {
                 if (e instanceof BotException) {
                     reply = new MessageChain(e.getMessage());

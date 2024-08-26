@@ -237,12 +237,12 @@ class HelpService(
         }
     }
 
-    override fun Accept(event: MessageEvent, messageText: String) : String? {
+    override fun accept(event: MessageEvent, messageText: String) : String? {
         if (OfficialInstruction.HELP.matcher(messageText).find()) return "OFFICIAL";
         else return null;
     }
 
-    override fun Reply(event: MessageEvent, data: String): MessageChain? {
+    override fun reply(event: MessageEvent, data: String): MessageChain? {
         return QQMsgUtil.getImage(getHelpPicture(data, imageService))
     }
 }
