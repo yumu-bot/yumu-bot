@@ -24,6 +24,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #1 BOT 内部指令
     // 官方 bot 有指令自动填充, 长点没事, 而且一个功能不要多指令
     PING(CommandPatternBuilder.create {
+        // 检查 bot 服务是否在线
         appendOfficialCommandsIgnoreAll("ping")
     }),
 
@@ -37,42 +38,50 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
+        // 用于设置自己的主要模式 /setmode [mode]
         appendOfficialCommandsIgnoreAll("setmode")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
+        // 获取最近一个通过的成绩 /pr [:mode] [username]
         appendOfficialCommandsIgnoreAll("pr")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_PRS(CommandPatternBuilder.create {
+        // 获取最近多个通过的成绩 /ps [:mode] [username] [number]
         appendOfficialCommandsIgnoreAll("ps")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_RE(CommandPatternBuilder.create {
+        // 获取最近一个玩过的成绩 /re [:mode] [username]
         appendOfficialCommandsIgnoreAll("re")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_RES(CommandPatternBuilder.create {
+        // 获取最近多个玩过的成绩 /rs [:mode] [username] [number]
         appendOfficialCommandsIgnoreAll("rs")
         appendModeQQUIDNameRange()
     }),
 
     PR_CARD(CommandPatternBuilder.create {
+        // 获取最近一个通过的成绩, 另一个面板 /pc [:mode] [username]
         appendOfficialCommandsIgnoreAll("pc")
         appendModeQQUIDNameRange()
     }),
 
     RE_CARD(CommandPatternBuilder.create {
+        // 获取最近一个玩过的成绩, 另一个面板 /rc [:mode] [username]
         appendOfficialCommandsIgnoreAll("rc")
         appendModeQQUIDNameRange()
     }),
 
     SCORE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("score")
+        // 获取指定成绩的分数 /score [:mode] [username] <bid>
+        appendOfficialCommandsIgnoreAll("s")
         appendModeBIDQQUIDNameMod()
     }),
 
@@ -283,7 +292,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #9 自定义
     ;
 
-    fun matcher(text:String):Matcher {
+    fun matcher(text: String): Matcher {
         return pattern.matcher(text)
     }
 }

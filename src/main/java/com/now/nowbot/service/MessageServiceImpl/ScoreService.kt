@@ -1,150 +1,179 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.model.JsonData.BeatmapUserScore;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.now.nowbot.model.JsonData.BeatmapUserScore
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getScore4PanelE5
+import com.now.nowbot.service.MessageServiceImpl.ScoreService.ScoreParam
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.throwable.ServiceException.ScoreException
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.CmdUtil.getBid
+import com.now.nowbot.util.CmdUtil.getMod
+import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.QQMsgUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("SCORE")
-public class ScoreService implements MessageService<ScoreService.ScoreParam> {
-    private static final Logger log = LoggerFactory.getLogger(ScoreService.class);
-    @Resource
-    OsuScoreApiService   scoreApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    ImageService         imageService;
+class ScoreService(
+    var scoreApiService: OsuScoreApiService? = null,
+    var beatmapApiService: OsuBeatmapApiService? = null,
+    var imageService: ImageService? = null,
+) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
-    public record ScoreParam(OsuUser user, OsuMode mode, long bid, String modsStr, boolean isDefault,
-                             boolean isMyself) {
-    }
+    data class ScoreParam(
+        val user: OsuUser?,
+        val mode: OsuMode?,
+        val bid: Long,
+        val modsStr: String,
+        val isDefault: Boolean,
+        val isMyself: Boolean
+    )
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ScoreParam> data) throws TipsException {
-        var matcher = Instruction.SCORE.matcher(messageText);
+    @Throws(TipsException::class)
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<ScoreParam>): Boolean {
+        val matcher = Instruction.SCORE.matcher(messageText)
         if (!matcher.find()) {
-            return false;
+            return false
         }
 
-        var mode = CmdUtil.getMode(matcher);
-        var isMyself = new AtomicBoolean(false);
-        var isDefault = OsuMode.isDefaultOrNull(mode.getData());
-        OsuUser user;
+        val mode = getMode(matcher)
+        val isMyself = AtomicBoolean(false)
+        val isDefault = OsuMode.isDefaultOrNull(mode.data)
+        val user: OsuUser?
         try {
-            user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself);
-        } catch (BindException e) {
-            if (isMyself.get() && messageText.toLowerCase().contains("score")) {
-                log.info("score 退避");
-                return false;
+            user = getUserWithOutRange(event, matcher, mode, isMyself)
+        } catch (e: BindException) {
+            if (isMyself.get() && messageText.lowercase(Locale.getDefault()).contains("score")) {
+                log.info("score 退避")
+                return false
             }
-            throw isMyself.get() ?
-                    new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired) :
-                    new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
+            throw if (isMyself.get()) ScoreException(ScoreException.Type.SCORE_Me_TokenExpired) else ScoreException(
+                ScoreException.Type.SCORE_Player_TokenExpired
+            )
         }
 
         if (Objects.isNull(user)) {
-            throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+            throw ScoreException(ScoreException.Type.SCORE_Me_TokenExpired)
         }
 
-        var bid = CmdUtil.getBid(matcher);
-        data.setValue(new ScoreParam(user, mode.getData(), bid, CmdUtil.getMod(matcher), isDefault, isMyself.get()));
+        val bid = getBid(matcher)
+        data.value = ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
 
-        return true;
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, ScoreParam param) throws Throwable {
-        var from = event.getSubject();
-        var mode = param.mode();
-        var user = param.user();
-        boolean isDefault = param.isDefault();
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
+        val from = event.subject
 
-        var bid = param.bid();
+        try {
+            from.sendMessage(getMessageChain(param))
+        } catch (e: Exception) {
+            log.error("成绩：发送失败", e)
+            throw ScoreException(ScoreException.Type.SCORE_Send_Error)
+        }
+    }
+
+    override fun isHandle(event: MessageEvent, messageText: String): ScoreParam? {
+        val matcher = OfficialInstruction.SCORE.matcher(messageText)
+        if (!matcher.find()) return null
+
+
+        val mode = getMode(matcher)
+        val isMyself = AtomicBoolean(false)
+        val isDefault = OsuMode.isDefaultOrNull(mode.data)
+        val user: OsuUser = try {
+            getUserWithOutRange(event, matcher, mode, isMyself)!!
+        } catch (e: BindException) {
+            // 理论上官方直接用的uid绑定, 找不到只可能是名字打错了
+            throw ScoreException(ScoreException.Type.SCORE_Player_NotFound)
+        }
+
+        val bid = getBid(matcher)
+        return ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
+    }
+
+    override fun getReply(event: MessageEvent, data: ScoreParam): MessageChain? {
+        return getMessageChain(data)
+    }
+
+    private fun getMessageChain(param: ScoreParam): MessageChain {
+        val mode = param.mode
+        val user = param.user
+        val isDefault = param.isDefault
+
+        val bid = param.bid
 
         // 处理 mods
-        var modsStr = param.modsStr();
+        val modsStr = param.modsStr
 
-        Score score;
+        val score: Score?
         if (StringUtils.hasText(modsStr)) {
-            BeatmapUserScore scoreall;
-            List<OsuMod> osuMods = OsuMod.getModsList(modsStr);
+            val scoreall: BeatmapUserScore
+            val osuMods = OsuMod.getModsList(modsStr)
             try {
-                scoreall = scoreApiService.getScore(bid, user.getUserID(), mode, osuMods);
-                score = scoreall.getScore();
-            } catch (WebClientResponseException e) {
-                throw new ScoreException(ScoreException.Type.SCORE_Score_NotFound, String.valueOf(bid));
+                scoreall = scoreApiService!!.getScore(bid, user!!.userID, mode, osuMods)
+                score = scoreall.score
+            } catch (e: WebClientResponseException) {
+                throw ScoreException(ScoreException.Type.SCORE_Score_NotFound, bid.toString())
             }
-            beatmapApiService.applyBeatMapExtend(score);
-
+            beatmapApiService!!.applyBeatMapExtend(score)
         } else {
-            try {
-                score = scoreApiService.getScore(bid, user.getUserID(), mode).getScore();
-            } catch (WebClientResponseException.NotFound e) {
+            score = try {
+                scoreApiService!!.getScore(bid, user!!.userID, mode).score
+            } catch (e: WebClientResponseException.NotFound) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        score = scoreApiService.getScore(bid, user.getUserID(), OsuMode.DEFAULT).getScore();
-                    } catch (WebClientResponseException e1) {
-                        throw new ScoreException(ScoreException.Type.SCORE_Mode_NotFound);
+                        scoreApiService!!.getScore(bid, user!!.userID, OsuMode.DEFAULT).score
+                    } catch (e1: WebClientResponseException) {
+                        throw ScoreException(ScoreException.Type.SCORE_Mode_NotFound)
                     }
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound, mode.getName());
+                    throw ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound, mode!!.getName())
                 }
-            } catch (WebClientResponseException.Unauthorized e) {
-                if (param.isMyself()) {
-                    throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+            } catch (e: WebClientResponseException.Unauthorized) {
+                if (param.isMyself) {
+                    throw ScoreException(ScoreException.Type.SCORE_Me_TokenExpired)
                 } else {
-                    throw new ScoreException(ScoreException.Type.SCORE_Player_TokenExpired);
+                    throw ScoreException(ScoreException.Type.SCORE_Player_TokenExpired)
                 }
             }
         }
 
-        byte[] image;
-        var e5Param = ScorePRService.getScore4PanelE5(user, score, beatmapApiService);
+        val image: ByteArray
+        val e5Param = getScore4PanelE5(user, score!!, beatmapApiService!!)
 
         try {
-            image = imageService.getPanelE5(e5Param);
-
-            /*
-            var excellent = DataUtil.isExcellentScore(e5Param.score(), user);
-
-            if (excellent || Permission.isSuperAdmin(event.getSender().getId())) {
-            } else {
-                image = imageService.getPanelE(user, e5Param.score());
-            }
-            */
-
-        } catch (Exception e) {
-            log.error("成绩：渲染失败", e);
-            throw new ScoreException(ScoreException.Type.SCORE_Render_Error);
+            image = imageService!!.getPanelE5(e5Param)
+            return QQMsgUtil.getImage(image)
+        } catch (e: Exception) {
+            log.error("成绩：渲染失败", e)
+            throw ScoreException(ScoreException.Type.SCORE_Render_Error)
         }
+    }
 
-        try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("成绩：发送失败", e);
-            throw new ScoreException(ScoreException.Type.SCORE_Send_Error);
-        }
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(ScoreService::class.java)
     }
 }

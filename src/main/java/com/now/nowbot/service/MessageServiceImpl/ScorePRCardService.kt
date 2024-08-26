@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.JsonData.OsuUser
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -20,7 +19,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
-import jakarta.annotation.Resource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -71,7 +69,7 @@ class ScorePRCardService(
             throw ScoreException(ScoreException.Type.SCORE_Recent_NotFound, range.data!!.username)
         }
 
-        data.setValue(PRCardParam(score))
+        data.value = PRCardParam(score)
 
         return true
     }
