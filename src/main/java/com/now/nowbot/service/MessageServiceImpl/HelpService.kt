@@ -1,4 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl
+
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -18,67 +19,67 @@ import org.springframework.lang.Nullable
 import org.springframework.stereotype.Service
 import java.util.*
 
-@Service("HELP") 
+@Service("HELP")
 class HelpService(
-    var imageService:ImageService? = null
+    var imageService: ImageService? = null
 ) : MessageService<String>, TencentMessageService<String> {
 
-    override fun isHandle(event:MessageEvent, messageText:String, data:DataValue<String>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
         val m = Instruction.HELP.matcher(messageText)
         if (m.find()) {
-            data.setValue(m.group("module").trim{it <= ' '}.lowercase(Locale.getDefault())) //传东西进来
+            data.setValue(m.group("module").trim { it <= ' ' }.lowercase(Locale.getDefault())) //传东西进来
             return true
         } else return false
     }
-    
-    @Throws(Throwable::class)
-    override fun HandleMessage(event:MessageEvent, module : String) {
-         val from = event.subject
 
-         try {
-             val image = getHelpPicture(module, imageService)
-            
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, module: String) {
+        val from = event.subject
+
+        try {
+            val image = getHelpPicture(module, imageService)
+
             if (Objects.nonNull(image)) {
                 from.sendImage(image)
             } else {
                 throw TipsException("窝趣，找不到文件")
             }
-        } catch (e : TipsException) {
-             val imgLegacy = getHelpImageLegacy(module)
-             val msgLegacy = getHelpLinkLegacy(module)
-            
+        } catch (e: TipsException) {
+            val imgLegacy = getHelpImageLegacy(module)
+            val msgLegacy = getHelpLinkLegacy(module)
+
             if (Objects.nonNull(imgLegacy)) {
                 from.sendImage(imgLegacy)
             }
-            
+
             if (Objects.nonNull(msgLegacy)) {
                 from.sendMessage(msgLegacy).recallIn((110 * 1000).toLong())
             }
-        } catch (e : NullPointerException) {
-             val imgLegacy = getHelpImageLegacy(module)
-             val msgLegacy = getHelpLinkLegacy(module)
-            
+        } catch (e: NullPointerException) {
+            val imgLegacy = getHelpImageLegacy(module)
+            val msgLegacy = getHelpLinkLegacy(module)
+
             if (Objects.nonNull(imgLegacy)) {
                 from.sendImage(imgLegacy)
             }
-            
+
             if (Objects.nonNull(msgLegacy)) {
                 from.sendMessage(msgLegacy).recallIn((110 * 1000).toLong())
             }
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             log.error("Help A6 输出错误，使用默认方法也出错？", e)
         }
     }
-    
+
     companion object {
-        private val log:Logger = LoggerFactory.getLogger(HelpService::class.java)
-        
+        private val log: Logger = LoggerFactory.getLogger(HelpService::class.java)
+
         /**
          * 目前的 help 方法，走 panel A6
          * @param module 需要查询的功能名字
          * @return 图片流
          */
-        private fun getHelpPicture(module:String, imageService:ImageService?): ByteArray? {
+        private fun getHelpPicture(module: String, imageService: ImageService?): ByteArray? {
             val fileName = when (module) {
                 "interbot", "inter", "it", "因特" -> "interbot"
                 "maomaobot", "meowbot", "meow", "maomao", "kanonbot", "kanon", "cat", "kn", "猫猫", "猫猫bot" -> "kanonbot"
@@ -133,21 +134,22 @@ class HelpService(
                 "OFFICIAL" -> "OFFICIAL"
                 else -> "GUIDE"
             }
-            
+
             return try {
                 imageService!!.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
-            } catch (e : Exception) {
+            } catch (e: Exception) {
                 null
             }
         }
-        
+
         /**
-        * 老旧的 help 方法，可以备不时之需
-        * @param module 需要查询的功能名字
-        * @return 图片流
-        */
-        private fun getHelpImageLegacy(@Nullable module:String): ByteArray? {
-            val fileName = when (module) {"bot", "b" -> "help-bot"
+         * 老旧的 help 方法，可以备不时之需
+         * @param module 需要查询的功能名字
+         * @return 图片流
+         */
+        private fun getHelpImageLegacy(@Nullable module: String): ByteArray? {
+            val fileName = when (module) {
+                "bot", "b" -> "help-bot"
                 "score", "s" -> "help-score"
                 "player", "p" -> "help-player"
                 "map", "m" -> "help-map"
@@ -158,18 +160,18 @@ class HelpService(
                 "" -> "help-default"
                 else -> ""
             }
-            
+
             return getPicture("${fileName}.png")
         }
-        
+
         /**
-        * 老旧的 help 方法，可以备不时之需
-        * @param module 需要查询的功能名字
-        * @return 请参阅：link
-        */
-        private fun getHelpLinkLegacy(@Nullable module:String): String? {
+         * 老旧的 help 方法，可以备不时之需
+         * @param module 需要查询的功能名字
+         * @return 请参阅：link
+         */
+        private fun getHelpLinkLegacy(@Nullable module: String): String? {
             val web = "https://docs.365246692.xyz/help/"
-            val link = when (module){
+            val link = when (module) {
                 "bot", "b" -> "bot"
                 "score", "s" -> "score"
                 "player", "p" -> "player"
@@ -180,7 +182,7 @@ class HelpService(
                 "tournament", "t" -> "tournament"
                 else -> ""
             }
-            
+
             //这个是细化的功能
             val link2 = when (module) {
                 "help", "h" -> "bot.html#help"
@@ -224,7 +226,7 @@ class HelpService(
                 "kita", "k" -> "aid.html#kita"
                 else -> ""
             }
-            
+
             return if (link.isEmpty() && link2.isEmpty()) {
                 "请参阅：${web}"
             } else if (!link.isEmpty() && link2.isEmpty()) {
@@ -237,12 +239,11 @@ class HelpService(
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String) : String? {
-        if (OfficialInstruction.HELP.matcher(messageText).find()) return "OFFICIAL";
-        else return null;
+    override fun accept(event: MessageEvent, messageText: String) = if (OfficialInstruction.HELP.matcher(messageText).find()) {
+        "OFFICIAL"
+    } else {
+        null
     }
 
-    override fun reply(event: MessageEvent, data: String): MessageChain? {
-        return QQMsgUtil.getImage(getHelpPicture(data, imageService))
-    }
+    override fun reply(event: MessageEvent, data: String): MessageChain? = QQMsgUtil.getImage(getHelpPicture(data, imageService))
 }

@@ -91,6 +91,7 @@ public class PermissionImplement implements PermissionController {
                     reply = new MessageChain(e.getMessage());
                 } else {
                     log.error("其他错误", e);
+                    continue;
                 }
             }
 

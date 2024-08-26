@@ -69,7 +69,7 @@ class TodayBPService(
 
     override fun accept(event: MessageEvent, messageText: String): TodayBPParam? {
         val matcher = OfficialInstruction.TODAY_BP.matcher(messageText)
-        return if (!matcher.find()) {
+        return if (matcher.find()) {
             getParam(matcher, event)
         } else {
             null

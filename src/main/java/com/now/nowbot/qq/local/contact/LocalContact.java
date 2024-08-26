@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class LocalContact implements com.now.nowbot.qq.contact.Contact {
     @Override
     public long getId() {
-        return - 10086;
+        return - 17064371;
     }
 
     @Override

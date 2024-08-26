@@ -32,11 +32,11 @@ object YumuServer : YumuService {
         PermissionImplement.onTencentMessage(event) {
             df.complete(it)
         }
-        val response = withTimeoutOrNull(5.seconds) {
+        val response = withTimeoutOrNull(10.seconds) {
             val messageChain = df.await()
             messageToResponse(messageChain)
         }
-        return response ?: Command.Response("请求超时")
+        return response ?: Command.Response("结果处理超时啦, 压力比较大, 请稍后再试")
     }
 
     override suspend fun onQueryName(param: QueryName.Request): QueryName.Response {
