@@ -9,9 +9,10 @@ import com.now.nowbot.entity.ServiceSwitchLite;
 import com.now.nowbot.mapper.ServiceSwitchMapper;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.tencent.TencentMessageService;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.TipsRuntimeException;
+import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
@@ -24,17 +25,19 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 @Component
 public class PermissionImplement implements PermissionController {
     private static final Logger                          log               = LoggerFactory.getLogger(PermissionImplement.class);
     private static final ScheduledExecutorService        EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.V_THREAD_FACORY);
-    public static final String GLOBAL_PERMISSION = "PERMISSION_ALL";
-    private static final Long                            LOCAL_GROUP_ID    = - 10086L;
+    public static final  String                          GLOBAL_PERMISSION = "PERMISSION_ALL";
+    private static final Long                            LOCAL_GROUP_ID    = -10086L;
     private static final Set<String>                     superService      = new CopyOnWriteArraySet<>();
     private static final Map<String, PermissionService>  permissionMap     = new LinkedHashMap<>();
-    private static final Map<String, MessageService>     servicesMap       = new LinkedHashMap<>();
+    private static final Map<String, MessageService<Object>>     servicesMap       = new LinkedHashMap<>();
+    private static final Map<String, TencentMessageService<Object>>     serviceMap4TX     = new LinkedHashMap<>();
     private static final Map<String, ScheduledFuture<?>> futureMap         = new ConcurrentHashMap<>();
 
     private static Set<Long>         supetList;
@@ -54,7 +57,7 @@ public class PermissionImplement implements PermissionController {
                 // 服务截止
                 if (checkStopListener()) return;
                 // super 用户不受检查
-                if (! isSuper(event.getSender().getId())) {
+                if (!isSuper(event.getSender().getId())) {
                     // 是否再黑名单内
                     if (isBlock(serviceName, event)) {
                         // 被黑名单禁止
@@ -68,22 +71,36 @@ public class PermissionImplement implements PermissionController {
                     service.HandleMessage(event, data.getValue());
                 }
             } catch (Throwable e) {
-                   errorHandle.accept(event, e);
+                errorHandle.accept(event, e);
             }
         });
     }
 
-    public static void onTencentMessage(MessageEvent event) {
-        servicesMap.forEach((name, service) -> {
-            try {
-                var data = new MessageService.DataValue<>();
-                if (service.isHandle(event, event.getRawMessage(), data)) {
-                    service.HandleMessage(event, data.getValue());
-                }
-            } catch (Throwable e) {
-                event.getSubject().sendMessage(e.getMessage());
+    public static void onTencentMessage(MessageEvent event, Consumer<MessageChain> onMessage) {
+        for (var entry : serviceMap4TX.entrySet()) {
+            var service = entry.getValue();
+            var data = service.isHandle(event, event.getTextMessage());
+            if (data == null) {
+                continue;
             }
-        });
+            MessageChain reply = null;
+            try {
+                reply = service.getReply(event, data);
+            } catch (Throwable e) {
+                if (e instanceof BotException) {
+                    reply = new MessageChain(e.getMessage());
+                } else {
+                    log.error("其他错误", e);
+                }
+            }
+
+            if (reply == null) {
+                reply = new MessageChain("没有响应呢, 一会再试试吧");
+            }
+            onMessage.accept(reply);
+            return;
+        }
+        onMessage.accept(new MessageChain("没找到对应的功能, 是不是打错命令了呢"));
     }
 
     private static boolean checkStopListener() {
@@ -103,10 +120,10 @@ public class PermissionImplement implements PermissionController {
         if (event instanceof GroupMessageEvent group) {
             var gid = group.getGroup().getId();
             var uid = group.getSender().getId();
-            return ! globalPermission.check(gid, uid) || ! servicePermission.check(gid, uid);
+            return !globalPermission.check(gid, uid) || !servicePermission.check(gid, uid);
         } else {
             var uid = event.getSender().getId();
-            return ! globalPermission.check(null, uid) || ! servicePermission.check(null, uid);
+            return !globalPermission.check(null, uid) || !servicePermission.check(null, uid);
         }
     }
 
@@ -184,7 +201,13 @@ public class PermissionImplement implements PermissionController {
                         (ToIntFunction<Map.Entry<String, Integer>>) Map.Entry::getValue).reversed()
                 )
                 .map(Map.Entry::getKey)
-                .forEach(name -> servicesMap.put(name, services.get(name)));
+                .forEach(name -> {
+                    var service = services.get(name);
+                    servicesMap.put(name, service);
+                    if (service instanceof TencentMessageService tx) {
+                        serviceMap4TX.put(name, tx);
+                    }
+                });
 
 
         //初始化暗杀名单
@@ -299,7 +322,7 @@ public class PermissionImplement implements PermissionController {
         switchService(name, open);
         if (Objects.nonNull(time)) {
             futureMap.computeIfPresent(name, this::cancelFuture);
-            var future = EXECUTOR.schedule(() -> switchService(name, ! open), time, TimeUnit.MILLISECONDS);
+            var future = EXECUTOR.schedule(() -> switchService(name, !open), time, TimeUnit.MILLISECONDS);
             futureMap.put(name, future);
         }
     }
@@ -441,7 +464,7 @@ public class PermissionImplement implements PermissionController {
         result.add(queryGlobal());
         permissionMap.forEach((name, p) -> result.add(new LockRecord(
                 name,
-                ! p.isDisable(),
+                !p.isDisable(),
                 Objects.requireNonNullElseGet(p.getGroupList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.getUserList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.getGroupSelfBlackList(), HashSet::new)
@@ -465,7 +488,7 @@ public class PermissionImplement implements PermissionController {
 
         return new LockRecord(
                 p.name,
-                ! p.permission.isDisable(),
+                !p.permission.isDisable(),
                 Objects.requireNonNullElseGet(p.permission().getGroupList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.permission().getUserList(), HashSet::new),
                 Objects.requireNonNullElseGet(p.permission().getGroupSelfBlackList(), HashSet::new)

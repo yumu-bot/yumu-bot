@@ -42,6 +42,14 @@ public class QQMsgUtil {
         from.sendImage(image);
     }
 
+    public static MessageChain getImage(byte[] image) {
+        return new MessageChain.MessageChainBuilder().addImage(image).build();
+    }
+
+    public static MessageChain getTextAndImage(String text,byte[] image) {
+        return new MessageChain.MessageChainBuilder().addText(text).addImage(image).build();
+    }
+
 
     public static void sendImages(MessageEvent event, List<byte[]> images) throws InterruptedException {
         var from = event.getSubject();

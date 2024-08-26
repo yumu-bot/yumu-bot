@@ -3,10 +3,16 @@ package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.NowbotConfig;
 import com.now.nowbot.qq.event.MessageEvent;
+import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.tencent.TencentMessageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
+import com.now.nowbot.util.OfficialInstruction;
+import com.now.nowbot.util.QQMsgUtil;
 import io.github.humbleui.skija.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,7 +21,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 @Service("PING")
-public class PingService implements MessageService<Matcher> {
+public class PingService implements MessageService<Matcher>, TencentMessageService<Matcher> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
@@ -27,9 +33,31 @@ public class PingService implements MessageService<Matcher> {
     }
 
     @Override
-//    @CheckPermission(roles = {"we","are","winner"})
+    public @Nullable Matcher isHandle(MessageEvent event, String messageText) {
+        var m = OfficialInstruction.PING.matcher(messageText);
+        if (m.find()) {
+            return m;
+        }
+        return null;
+    }
+
+    @Override
+    public @Nullable MessageChain getReply(@NotNull MessageEvent event, Matcher data) throws Throwable {
+        var image = getImage();
+        if (image == null) return null;
+        return QQMsgUtil.getImage(image);
+    }
+
+    @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
+        var image = getImage();
+        if (image != null) {
+            from.sendImage(image).recallIn(5000);
+        }
+    }
+
+    public byte[] getImage() {
         byte[] image;
         try (Surface surface = Surface.makeRasterN32Premul(648, 648)) {
             Canvas canvas = surface.getCanvas();
@@ -59,9 +87,6 @@ public class PingService implements MessageService<Matcher> {
             t.close();
             image = surface.makeImageSnapshot().encodeToData().getBytes();
         }
-        if (image != null) {
-            from.sendImage(image).recallIn(5000);
-        }
-
+        return image;
     }
 }

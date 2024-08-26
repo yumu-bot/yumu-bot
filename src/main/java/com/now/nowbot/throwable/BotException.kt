@@ -1,9 +1,12 @@
-package com.now.nowbot.throwable;
+package com.now.nowbot.throwable
 
-public interface BotException {
-    String getMessage();
+interface BotException {
+    val message: String?
 
-    boolean hasImage();
+    fun hasImage(): Boolean {
+        return false
+    }
 
-    byte[] getImage();
+    val image: ByteArray?
+        get() = null
 }
