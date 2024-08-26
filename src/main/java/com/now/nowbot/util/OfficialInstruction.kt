@@ -42,22 +42,22 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("pass")
+        appendOfficialCommandsIgnoreAll("pr")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_PRS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("passall")
+        appendOfficialCommandsIgnoreAll("ps")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_RE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("recent")
+        appendOfficialCommandsIgnoreAll("re")
         appendModeQQUIDNameRange()
     }),
 
     SCORE_RES(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("recentall")
+        appendOfficialCommandsIgnoreAll("rs")
         appendModeQQUIDNameRange()
     }),
 
@@ -290,7 +290,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    val test: String? = "/ymppmvs 2654 :aaaadddd"
+    val test: String? = "/ymsetmode 0"
     for (i in OfficialInstruction.values()) {
         if (test != null) {
             if (i.pattern.matcher(test).find()) {

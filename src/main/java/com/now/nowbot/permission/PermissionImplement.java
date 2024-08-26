@@ -30,15 +30,15 @@ import java.util.function.ToIntFunction;
 
 @Component
 public class PermissionImplement implements PermissionController {
-    private static final Logger                          log               = LoggerFactory.getLogger(PermissionImplement.class);
-    private static final ScheduledExecutorService        EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.V_THREAD_FACORY);
-    public static final  String                          GLOBAL_PERMISSION = "PERMISSION_ALL";
-    private static final Long                            LOCAL_GROUP_ID    = -10086L;
-    private static final Set<String>                     superService      = new CopyOnWriteArraySet<>();
-    private static final Map<String, PermissionService>  permissionMap     = new LinkedHashMap<>();
-    private static final Map<String, MessageService<Object>>     servicesMap       = new LinkedHashMap<>();
-    private static final Map<String, TencentMessageService<Object>>     serviceMap4TX     = new LinkedHashMap<>();
-    private static final Map<String, ScheduledFuture<?>> futureMap         = new ConcurrentHashMap<>();
+    private static final Logger                                     log               = LoggerFactory.getLogger(PermissionImplement.class);
+    private static final ScheduledExecutorService                   EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.V_THREAD_FACORY);
+    public static final  String                                     GLOBAL_PERMISSION = "PERMISSION_ALL";
+    private static final Long                                       LOCAL_GROUP_ID    = -10086L;
+    private static final Set<String>                                superService      = new CopyOnWriteArraySet<>();
+    private static final Map<String, PermissionService>             permissionMap     = new LinkedHashMap<>();
+    private static final Map<String, MessageService<Object>>        servicesMap       = new LinkedHashMap<>();
+    private static final Map<String, TencentMessageService<Object>> serviceMap4TX     = new LinkedHashMap<>();
+    private static final Map<String, ScheduledFuture<?>>            futureMap         = new ConcurrentHashMap<>();
 
     private static Set<Long>         supetList;
     private static Set<Long>         testerList;
@@ -79,12 +79,12 @@ public class PermissionImplement implements PermissionController {
     public static void onTencentMessage(MessageEvent event, Consumer<MessageChain> onMessage) {
         for (var entry : serviceMap4TX.entrySet()) {
             var service = entry.getValue();
-            var data = service.isHandle(event, event.getTextMessage());
-            if (data == null) {
-                continue;
-            }
             MessageChain reply = null;
             try {
+                var data = service.isHandle(event, event.getTextMessage());
+                if (data == null) {
+                    continue;
+                }
                 reply = service.getReply(event, data);
             } catch (Throwable e) {
                 if (e instanceof BotException) {
