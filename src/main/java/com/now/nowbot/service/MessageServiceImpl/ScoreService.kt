@@ -94,7 +94,7 @@ class ScoreService(
         }
     }
 
-    override fun isHandle(event: MessageEvent, messageText: String): ScoreParam? {
+    override fun Accept(event: MessageEvent, messageText: String): ScoreParam? {
         val matcher = OfficialInstruction.SCORE.matcher(messageText)
         if (!matcher.find()) return null
 
@@ -113,7 +113,7 @@ class ScoreService(
         return ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
     }
 
-    override fun getReply(event: MessageEvent, data: ScoreParam): MessageChain? {
+    override fun Reply(event: MessageEvent, data: ScoreParam): MessageChain? {
         return getMessageChain(data)
     }
 

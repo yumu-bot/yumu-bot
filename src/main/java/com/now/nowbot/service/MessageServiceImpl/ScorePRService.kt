@@ -114,7 +114,7 @@ class ScorePRService(
         getMessageChain(param, event)?.let { from.sendMessage(it) }
     }
 
-    override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {
+    override fun Accept(event: MessageEvent, messageText: String): ScorePRParam? {
         var matcher: Matcher
         val isRecent: Boolean
         val isMulti: Boolean
@@ -180,7 +180,7 @@ class ScorePRService(
     }
 
     @Throws(Throwable::class)
-    override fun reply(event: MessageEvent, data: ScorePRParam): MessageChain? {
+    override fun Reply(event: MessageEvent, data: ScorePRParam): MessageChain? {
         return getMessageChain(data)
     }
 
