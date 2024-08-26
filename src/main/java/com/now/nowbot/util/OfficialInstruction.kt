@@ -13,31 +13,10 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("h")
     }),
 
-    // 没处理编码暂时不发音频
-    /*
-    AUDIO(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnore(REG_IGNORE_BS, "a")
-        appendColonCaptureGroup(MAYBE, "type", "b", "s")
-        appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
-    }),
-
-     */
-
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ping")
     }),
-
-    //bind 不在这里绑定
-    /*
-    BIND(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)")
-        appendColonCaptureGroup("full", "f")
-        appendQQID()
-        appendName()
-    }),
-     */
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
@@ -131,7 +110,8 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendGroup(MAYBE) {
-            append(REG_COLON)
+            // ':' 与前面 mode 冲突
+            append(REG_HASH)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, MORE)
         }
