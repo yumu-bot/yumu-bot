@@ -62,12 +62,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     PR_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("passcard")
+        appendOfficialCommandsIgnoreAll("pc")
         appendModeQQUIDNameRange()
     }),
 
     RE_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("recentcard")
+        appendOfficialCommandsIgnoreAll("rc")
         appendModeQQUIDNameRange()
     }),
 

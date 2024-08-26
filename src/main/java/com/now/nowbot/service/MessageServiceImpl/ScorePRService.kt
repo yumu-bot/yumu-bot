@@ -95,8 +95,8 @@ class ScorePRService(
 
         offset = range.getValue(0, true)
         limit = range.getValue(1, false)
-        offset = max(0.0, (offset - 1).toDouble()).toInt()
-        limit = max(1.0, (limit - offset).toDouble()).toInt()
+        offset = max(0, (offset - 1))
+        limit = max(1, (limit - offset))
         if ((Objects.nonNull(s) || Objects.nonNull(es)) && range.allNull()) {
             limit = 20
         }
@@ -167,8 +167,8 @@ class ScorePRService(
 
         offset = range.getValue(0, true)
         limit = range.getValue(1, false)
-        offset = max(0.0, (offset - 1).toDouble()).toInt()
-        limit = max(1.0, (limit - offset).toDouble()).toInt()
+        offset = max(0, (offset - 1))
+        limit = max(1, (limit - offset))
         if (isMulti && range.allNull()) {
             limit = 20
         }
