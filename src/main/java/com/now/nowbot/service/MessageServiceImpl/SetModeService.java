@@ -41,14 +41,14 @@ public class SetModeService implements MessageService<String>, TencentMessageSer
     }
 
     @Override
-    public @Nullable String isHandle(@NotNull MessageEvent event, @NotNull String messageText) {
+    public @Nullable String accept(@NotNull MessageEvent event, @NotNull String messageText) {
         var m = OfficialInstruction.SET_MODE.matcher(messageText);
         if (m.find()) return m.group(FLAG_MODE);
         return null;
     }
 
     @Override
-    public @Nullable MessageChain getReply(@NotNull MessageEvent event, String data) throws Throwable {
+    public @Nullable MessageChain reply(@NotNull MessageEvent event, String data) throws Throwable {
         var user = bindDao.getUserFromQQ(event.getSender().getId());
         if (user.isAuthorized()) return getReply(data, user);
         return new MessageChain("需要先绑定 yumu 才能使用哦");

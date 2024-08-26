@@ -12,7 +12,7 @@ public class GeneralTipsException extends TipsException {
         G_Exceed_Param("请输入正确的编号或范围！"),
         G_Exceed_Day("你输入的天数范围太久远了！"),
 
-        G_Null_Param("请输入编号或范围！"),
+        G_Null_Param("请输入正确的参数！"),
         G_Null_UserName("请输入正确的玩家名！"),
         G_Null_BID("请输入正确的谱面编号！"),
         G_Null_Map("找不到这张谱面，请检查。"),

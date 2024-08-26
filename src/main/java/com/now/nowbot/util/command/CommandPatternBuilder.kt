@@ -96,7 +96,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(EXIST) {
             append(CHAR_SLASH)
             appendSpace()
-            append("ym")
+            appendGroup(MAYBE, "ym")
             appendGroup(*commands)
         }
     }

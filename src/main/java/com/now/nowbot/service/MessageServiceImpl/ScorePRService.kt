@@ -15,6 +15,7 @@ import com.now.nowbot.service.MessageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.ScoreException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.*
@@ -73,8 +74,8 @@ class ScorePRService(
         val s = matcher.group("s")
         val es = matcher.group("es")
 
-        var offset = 0
-        var limit = 1
+        var offset : Int
+        var limit : Int
 
         val isRecent = if (matcher.group("recent") != null) {
             true
@@ -113,40 +114,40 @@ class ScorePRService(
         getMessageChain(param, event)?.let { from.sendMessage(it) }
     }
 
-    override fun isHandle(event: MessageEvent, messageText: String): ScorePRParam? {
+    override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {
         var matcher: Matcher
-        val isRecentAll: Boolean
+        val isRecent: Boolean
         val isMulti: Boolean
         when {
-            OfficialInstruction.SCORE_PR
+            OfficialInstruction.SCORE_PASS
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = false
+                isRecent = false
                 isMulti = false
             }
 
-            OfficialInstruction.SCORE_PRS
+            OfficialInstruction.SCORE_PASSES
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = false
+                isRecent = false
                 isMulti = true
             }
 
-            OfficialInstruction.SCORE_RE
+            OfficialInstruction.SCORE_RECENT
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = true
+                isRecent = true
                 isMulti = false
             }
 
-            OfficialInstruction.SCORE_RES
+            OfficialInstruction.SCORE_RECENTS
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = true
+                isRecent = true
                 isMulti = true
             }
 
@@ -162,7 +163,7 @@ class ScorePRService(
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
 
         if (Objects.isNull(range.data)) {
-            throw TipsException("什么也没有发现, 检查一下是否绑定/名称错误")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Param)
         }
 
         offset = range.getValue(0, true)
@@ -175,11 +176,11 @@ class ScorePRService(
 
         val isMultipleScore = limit > 1
 
-        return ScorePRParam(range.data, offset, limit, isRecentAll, isMultipleScore, mode.data)
+        return ScorePRParam(range.data, offset, limit, isRecent, isMultipleScore, mode.data)
     }
 
     @Throws(Throwable::class)
-    override fun getReply(event: MessageEvent, data: ScorePRParam): MessageChain? {
+    override fun reply(event: MessageEvent, data: ScorePRParam): MessageChain? {
         return getMessageChain(data)
     }
 

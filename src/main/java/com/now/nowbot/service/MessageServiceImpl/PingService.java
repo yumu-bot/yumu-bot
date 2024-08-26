@@ -33,7 +33,7 @@ public class PingService implements MessageService<Matcher>, TencentMessageServi
     }
 
     @Override
-    public @Nullable Matcher isHandle(MessageEvent event, String messageText) {
+    public @Nullable Matcher accept(MessageEvent event, String messageText) {
         var m = OfficialInstruction.PING.matcher(messageText);
         if (m.find()) {
             return m;
@@ -42,7 +42,7 @@ public class PingService implements MessageService<Matcher>, TencentMessageServi
     }
 
     @Override
-    public @Nullable MessageChain getReply(@NotNull MessageEvent event, Matcher data) throws Throwable {
+    public @Nullable MessageChain reply(@NotNull MessageEvent event, Matcher data) throws Throwable {
         var image = getImage();
         if (image == null) return null;
         return QQMsgUtil.getImage(image);

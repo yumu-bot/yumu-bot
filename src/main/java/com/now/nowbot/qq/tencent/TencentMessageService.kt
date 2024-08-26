@@ -4,8 +4,10 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 
 interface TencentMessageService<T> {
-    fun isHandle(event: MessageEvent, messageText: String): T?
+    // 等同于 isHandle, 如果为空，则不接受
+    fun accept(event: MessageEvent, messageText: String): T?
 
     @Throws(Throwable::class)
-    fun getReply(event: MessageEvent, data: T): MessageChain?
+    // 等同于 HandleMessage，需要返回一个消息链
+    fun reply(event: MessageEvent, data: T): MessageChain?
 }

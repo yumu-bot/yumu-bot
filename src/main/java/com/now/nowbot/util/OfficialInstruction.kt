@@ -10,10 +10,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #0 调出帮助
     // 与官方 bot 使用上有差异先不发
     HELP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("help")
+        appendOfficialCommandsIgnoreAll("h")
     }),
 
     // 没处理编码暂时不发音频
+    /*
     AUDIO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnore(REG_IGNORE_BS, "a")
         appendColonCaptureGroup(MAYBE, "type", "b", "s")
@@ -21,84 +22,87 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
     }),
 
+     */
+
     // #1 BOT 内部指令
-    // 官方 bot 有指令自动填充, 长点没事, 而且一个功能不要多指令
     PING(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ping")
     }),
 
     //bind 不在这里绑定
+    /*
     BIND(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)")
         appendColonCaptureGroup("full", "f")
         appendQQID()
         appendName()
     }),
+     */
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("setmode")
+        appendOfficialCommandsIgnoreAll("mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
-    SCORE_PR(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("pr")
+    SCORE_PASS(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("p")
         appendModeQQUIDNameRange()
     }),
 
-    SCORE_PRS(CommandPatternBuilder.create {
+    SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps")
         appendModeQQUIDNameRange()
     }),
 
-    SCORE_RE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("re")
+    SCORE_RECENT(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("r")
         appendModeQQUIDNameRange()
     }),
 
-    SCORE_RES(CommandPatternBuilder.create {
+    SCORE_RECENTS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rs")
         appendModeQQUIDNameRange()
     }),
 
     PR_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("passcard")
+        appendOfficialCommandsIgnoreAll("pc")
         appendModeQQUIDNameRange()
     }),
 
     RE_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("recentcard")
+        appendOfficialCommandsIgnoreAll("rc")
         appendModeQQUIDNameRange()
     }),
 
     SCORE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("score")
+        appendOfficialCommandsIgnoreAll("s")
         appendModeBIDQQUIDNameMod()
     }),
 
     BP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bp")
+        appendOfficialCommandsIgnoreAll("b")
         appendModeQQUIDNameRange()
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("todaybp")
+        appendOfficialCommandsIgnoreAll("t")
         appendModeQQUIDNameRange()
     }),
 
     BP_FIX(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bpfix")
+        appendOfficialCommandsIgnoreAll("bf")
         appendModeQQUIDName()
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bpanalysis")
+        appendOfficialCommandsIgnoreAll("ba")
         appendModeQQUIDName()
     }),
 
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("info")
+        appendOfficialCommandsIgnoreAll("i")
         appendModeQQUIDName()
         appendGroup(MAYBE) {
             append(REG_HASH)
@@ -108,17 +112,17 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     INFO_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("infocard")
+        appendOfficialCommandsIgnoreAll("ic")
         appendModeQQUIDName()
     }),
 
     I_MAPPER(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("imapper")
+        appendOfficialCommandsIgnoreAll("im")
         appendQQUIDName()
     }),
 
     PP_MINUS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ppm")
+        appendOfficialCommandsIgnoreAll("pm")
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendGroup(MAYBE) {
@@ -129,7 +133,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     PP_MINUS_VS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ppmvs")
+        appendOfficialCommandsIgnoreAll("pv")
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, MORE)
         appendGroup(MAYBE) {
@@ -223,13 +227,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     PP_PLUS_MAP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("p?pa")
+        appendOfficialCommandsIgnoreAll("pa")
         appendBID()
         appendMod()
     }),
 
+    // px, pp
     PP_PLUS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("(?<function>(p[px]|pp[pvx]|p?p\\+))")
+        appendOfficialCommandsIgnoreAll("(?<function>(px|pp))")
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendSpace()
         appendGroup(MAYBE) {
@@ -242,11 +247,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #5 osu! 比赛指令
 
     MU_RATING(CommandPatternBuilder.create {
-        append(CHAR_SLASH)
-        append("ym")
-        append("(?<main>(ra))")
-        appendIgnore()
-        appendSpace()
+        appendOfficialCommandsIgnoreAll("(?<main>(ra))")
         appendMatchID()
         appendMatchParam()
     }),
