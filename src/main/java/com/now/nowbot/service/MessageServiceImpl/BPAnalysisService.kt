@@ -35,11 +35,11 @@ import kotlin.math.max
 
 @Service("BP_ANALYSIS")
 class BPAnalysisService(
-    var scoreApiService: OsuScoreApiService? = null,
-    var userApiService: OsuUserApiService? = null,
-    var imageService: ImageService? = null,
-    var uubaService: UUBAService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
+    private val scoreApiService: OsuScoreApiService,
+    private val userApiService: OsuUserApiService,
+    private val imageService: ImageService,
+    private val uubaService: UUBAService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     data class BAParam(val user: OsuUser, val bpList: List<Score>, val isMyself: Boolean)
@@ -57,7 +57,7 @@ class BPAnalysisService(
 
         val user = getUserWithOutRange(event, matcher, mode, isMyself)?: return false
 
-        val bpList = scoreApiService!!.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
         data.value = BAParam(user, bpList, isMyself.get())
 
@@ -89,7 +89,7 @@ class BPAnalysisService(
 
         val user = getUserWithOutRange(event, matcher, mode, isMyself)?: return null
 
-        val bpList = scoreApiService!!.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
        return BAParam(user, bpList, isMyself.get())
     }
@@ -109,20 +109,20 @@ class BPAnalysisService(
         }
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService!!.applySRAndPP(bpList)
+        beatmapApiService.applySRAndPP(bpList)
 
         val data = parseData(
             user, bpList,
-            userApiService!!
+            userApiService
         )
 
         return try {
-            imageService!!.getPanelJ(data)
+            imageService.getPanelJ(data)
         } catch (e: HttpServerErrorException.InternalServerError) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
-                val msg = uubaService!!.getAllMsg(bpList, user.username, user.mode)
-                imageService!!.getPanelAlpha(*msg)
+                val msg = uubaService.getAllMsg(bpList, user.username, user.mode)
+                imageService.getPanelAlpha(*msg)
             } catch (e1: ResourceAccessException) {
                 log.error("最好成绩分析：渲染失败", e1)
                 throw BPAnalysisException(BPAnalysisException.Type.BA_Render_Error)

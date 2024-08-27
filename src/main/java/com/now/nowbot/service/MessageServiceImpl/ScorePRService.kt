@@ -37,13 +37,10 @@ import kotlin.math.max
 //Multiple Score也合并进来了
 @Service("SCORE_PR")
 class ScorePRService(
-    var template: RestTemplate? = null,
-    var userApiService: OsuUserApiService? = null,
-    var scoreApiService: OsuScoreApiService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
-    var bindDao: BindDao? = null,
-    var imageService: ImageService? = null
-
+    private val template: RestTemplate,
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
     @JvmRecord
@@ -209,7 +206,7 @@ class ScorePRService(
         val scoreList: List<Score?>
 
         try {
-            scoreList = scoreApiService!!.getRecent(user!!.userID, param.mode, offset, limit, !isRecent)
+            scoreList = scoreApiService.getRecent(user!!.userID, param.mode, offset, limit, !isRecent)
         } catch (e: WebClientResponseException) {
             // 退避 !recent
             if (event != null && event.rawMessage.lowercase(Locale.getDefault()).contains("recent")) {
@@ -246,12 +243,12 @@ class ScorePRService(
             if (limit <= 0) throw ScoreException(ScoreException.Type.SCORE_Score_OutOfRange)
 
             val scores: List<Score?> = scoreList.subList(offset, offset + limit)
-            beatmapApiService!!.applySRAndPP(scoreList)
+            beatmapApiService.applySRAndPP(scoreList)
 
             try {
                 // 处理新人群 ps 超星问题
                 if (event?.subject?.id == 595985887L) ContextUtil.setContext("isNewbie", true)
-                image = imageService!!.getPanelA5(user, scores)
+                image = imageService.getPanelA5(user, scores)
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩发送失败：", e)
@@ -262,9 +259,9 @@ class ScorePRService(
         } else {
             //单成绩发送
             val score: Score = scoreList.first()
-            val e5Param = getScore4PanelE5(user, score, beatmapApiService!!)
+            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
             try {
-                image = imageService!!.getPanelE5(e5Param)
+                image = imageService.getPanelE5(e5Param)
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(e5Param.score), e)

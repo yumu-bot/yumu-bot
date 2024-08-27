@@ -31,9 +31,9 @@ import kotlin.math.max
 
 @Service("BP")
 class BPService(
-    var beatmapApiService: OsuBeatmapApiService? = null,
-    var scoreApiService: OsuScoreApiService? = null,
-    var imageService: ImageService? = null,
+    private var beatmapApiService: OsuBeatmapApiService,
+    private var scoreApiService: OsuScoreApiService,
+    private var imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
     data class BPParam(val user: OsuUser?, val BPMap: Map<Int, Score>, val isMyself: Boolean)
@@ -123,7 +123,7 @@ class BPService(
             limit = max(1, limit - offset)
         }
 
-        val bpList = scoreApiService!!.getBestPerformance(data!!.userID, mode, offset, limit)
+        val bpList = scoreApiService.getBestPerformance(data!!.userID, mode, offset, limit)
         val bpMap = TreeMap<Int, Score>()
 
         // 检查查到的数据是否为空
@@ -149,9 +149,9 @@ class BPService(
                 scores.add(value)
             }
 
-            beatmapApiService!!.applySRAndPP(scores)
+            beatmapApiService.applySRAndPP(scores)
 
-            imageService!!.getPanelA4(user, scores, ranks)
+            imageService.getPanelA4(user, scores, ranks)
         } else {
             var score: Score? = null
 
@@ -159,8 +159,8 @@ class BPService(
                 score = value
             }
 
-            val e5Param = getScore4PanelE5(user, score!!, beatmapApiService!!)
-            imageService!!.getPanelE5(e5Param)
+            val e5Param = getScore4PanelE5(user, score!!, beatmapApiService)
+            imageService.getPanelE5(e5Param)
         }
     } catch (e: Exception) {
         log.error("最好成绩：渲染失败", e)

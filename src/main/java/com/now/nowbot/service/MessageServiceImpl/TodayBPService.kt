@@ -31,9 +31,9 @@ import kotlin.math.min
 
 @Service("TODAY_BP")
 class TodayBPService(
-    var imageService: ImageService? = null,
-    var scoreApiService: OsuScoreApiService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
     data class TodayBPParam(
@@ -92,7 +92,7 @@ class TodayBPService(
 
         val bpList: List<Score>
         try {
-            bpList = scoreApiService!!.getBestPerformance(user!!.userID, mode.data, 0, 100)
+            bpList = scoreApiService.getBestPerformance(user!!.userID, mode.data, 0, 100)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user!!.username)
         } catch (e: WebClientResponseException.NotFound) {
@@ -134,10 +134,10 @@ class TodayBPService(
             scores.add(value)
         }
 
-        beatmapApiService!!.applySRAndPP(scores)
+        beatmapApiService.applySRAndPP(scores)
 
         return try {
-            imageService!!.getPanelA4(user, scores, ranks)
+            imageService.getPanelA4(user, scores, ranks)
         } catch (e: Exception) {
             log.error("今日最好成绩：图片渲染失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩")

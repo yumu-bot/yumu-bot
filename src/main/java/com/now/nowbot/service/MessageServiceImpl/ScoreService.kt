@@ -35,9 +35,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("SCORE")
 class ScoreService(
-    var scoreApiService: OsuScoreApiService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
-    var imageService: ImageService? = null,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val imageService: ImageService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
     data class ScoreParam(
@@ -132,20 +132,20 @@ class ScoreService(
             val scoreall: BeatmapUserScore
             val osuMods = OsuMod.getModsList(modsStr)
             try {
-                scoreall = scoreApiService!!.getScore(bid, user!!.userID, mode, osuMods)
+                scoreall = scoreApiService.getScore(bid, user!!.userID, mode, osuMods)
                 score = scoreall.score
             } catch (e: WebClientResponseException) {
                 throw ScoreException(ScoreException.Type.SCORE_Score_NotFound, bid.toString())
             }
-            beatmapApiService!!.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatMapExtend(score)
         } else {
             score = try {
-                scoreApiService!!.getScore(bid, user!!.userID, mode).score
+                scoreApiService.getScore(bid, user!!.userID, mode).score
             } catch (e: WebClientResponseException.NotFound) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        scoreApiService!!.getScore(bid, user!!.userID, OsuMode.DEFAULT).score
+                        scoreApiService.getScore(bid, user!!.userID, OsuMode.DEFAULT).score
                     } catch (e1: WebClientResponseException) {
                         throw ScoreException(ScoreException.Type.SCORE_Mode_NotFound)
                     }
@@ -162,10 +162,10 @@ class ScoreService(
         }
 
         val image: ByteArray
-        val e5Param = getScore4PanelE5(user, score!!, beatmapApiService!!)
+        val e5Param = getScore4PanelE5(user, score!!, beatmapApiService)
 
         try {
-            image = imageService!!.getPanelE5(e5Param)
+            image = imageService.getPanelE5(e5Param)
             return QQMsgUtil.getImage(image)
         } catch (e: Exception) {
             log.error("成绩：渲染失败", e)

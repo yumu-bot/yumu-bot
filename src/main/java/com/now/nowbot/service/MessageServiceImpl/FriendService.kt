@@ -25,15 +25,11 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("FRIEND")
-class FriendService : MessageService<FriendParam?> {
-    @Resource
-    var bindDao: BindDao? = null
-
-    @Resource
-    var userApiService: OsuUserApiService? = null
-
-    @Resource
-    var imageService: ImageService? = null
+class FriendService(
+    private val bindDao: BindDao,
+    private val userApiService: OsuUserApiService,
+    private val imageService: ImageService,
+) : MessageService<FriendParam?> {
 
     data class FriendParam(val offset: Int, val limit: Int, val uid: Long = 0, val name: String? = null)
 
@@ -86,7 +82,7 @@ class FriendService : MessageService<FriendParam?> {
     }
 
     fun checkMultiFriend(from: Contact, binUser: BinUser, user: FriendParam) {
-        val friendList = userApiService!!.getFriendList(binUser)
+        val friendList = userApiService.getFriendList(binUser)
         val uid = user.uid
         val friend = friendList.find { it?.userID == uid }
         //
@@ -95,7 +91,7 @@ class FriendService : MessageService<FriendParam?> {
             if (!otherBinUser.isAuthorized) {
                 throw Exception()
             }
-            userApiService!!.getFriendList(otherBinUser).find { it?.userID == binUser.osuID } != null
+            userApiService.getFriendList(otherBinUser).find { it?.userID == binUser.osuID } != null
         } catch (ignore: Exception) {
             // 对面没绑定不处理
             false
@@ -129,7 +125,7 @@ class FriendService : MessageService<FriendParam?> {
 
 
         try {
-            osuUser = userApiService!!.getPlayerInfo(binUser)
+            osuUser = userApiService.getPlayerInfo(binUser)
         } catch (e: HttpClientErrorException.Unauthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
         } catch (e: WebClientResponseException.Unauthorized) {
@@ -140,7 +136,7 @@ class FriendService : MessageService<FriendParam?> {
 
         val friendList: List<MicroUser>
         try {
-            friendList = userApiService!!.getFriendList(binUser)
+            friendList = userApiService.getFriendList(binUser)
         } catch (e: Exception) {
             throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
         }
@@ -180,7 +176,7 @@ class FriendService : MessageService<FriendParam?> {
         if (CollectionUtils.isEmpty(friends)) throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
 
         try {
-            val image = imageService!!.getPanelA1(osuUser, friends)
+            val image = imageService.getPanelA1(osuUser, friends)
             from.sendImage(image)
         } catch (e: Exception) {
             log.error("Friend: ", e)

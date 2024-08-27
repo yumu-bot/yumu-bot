@@ -1,455 +1,489 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.Service.UserParam;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BPAnalysisException;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MODE;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.Service.UserParam
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.AtMessage
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.UUBAService.BPHeadTailParam
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.ServiceException.BPAnalysisException
+import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.FLAG_MODE
+import org.apache.logging.log4j.util.Strings
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.text.DecimalFormat
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
+import java.util.regex.Matcher
 
 @Service("UU_BA")
-public class UUBAService implements MessageService<UUBAService.BPHeadTailParam> {
-    private static final Logger log = LoggerFactory.getLogger(UUBAService.class);
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService   scoreApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    BindDao              bindDao;
-    @Resource
-    ImageService imageService;
+class UUBAService(
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val bindDao: BindDao,
+    private val imageService: ImageService,
+) : MessageService<BPHeadTailParam>, TencentMessageService<BPHeadTailParam> {
 
     //bpht 的全称大概是 BP Head / Tail
-    public record BPHeadTailParam(UserParam user, boolean info){}
+    data class BPHeadTailParam(val user: UserParam, val info: Boolean)
 
-    static class intValue {
-        int value = 1;
-
-        public intValue add() {
-            value++;
-            return this;
-        }
-
-        public int value() {
-            return value;
-        }
-    }
-
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<BPHeadTailParam> data) throws BPAnalysisException {
+    @Throws(BPAnalysisException::class)
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPHeadTailParam>): Boolean {
         //旧功能指引
-        var matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText);
+        val matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText)
         if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated);
+            throw BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated)
         }
 
-        var matcher = Instruction.UU_BA.matcher(messageText);
-        if (!matcher.find()) return false;
-        boolean info = Strings.isNotBlank(matcher.group("info"));
-        var mode = OsuMode.getMode(matcher.group(FLAG_MODE));
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
+        val matcher = Instruction.UU_BA.matcher(messageText)
+        if (!matcher.find()) return false
+        val info = Strings.isNotBlank(matcher.group("info"))
+        val mode: OsuMode = OsuMode.getMode(matcher.group(FLAG_MODE))
+        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
         if (Objects.nonNull(at)) {
-            data.setValue(new BPHeadTailParam(
-                    new UserParam(at.getTarget(), null, mode, true), info));
-            return true;
+            data.value = BPHeadTailParam(
+                UserParam(at!!.target, null, mode, true), info
+            )
+            return true
         }
-        String name = matcher.group("name");
+        val name = matcher.group("name")
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(new BPHeadTailParam(
-                    new UserParam(null, name, mode, false), info));
-            return true;
+            data.setValue(
+                BPHeadTailParam(
+                    UserParam(null, name, mode, false), info
+                )
+            )
+            return true
         }
-        data.setValue(new BPHeadTailParam(
-                new UserParam(event.getSender().getId(), null, mode, false), info));
-        return true;
+        data.value = BPHeadTailParam(
+            UserParam(event.sender.id, null, mode, false), info
+        )
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, BPHeadTailParam param) throws Throwable {
-        var from = event.getSubject();
-        BinUser bu;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: BPHeadTailParam) {
+        val from = event.subject
+        var bu: BinUser
 
         // 是否为绑定用户
-        if (Objects.nonNull(param.user().qq())) {
+        if (Objects.nonNull(param.user.qq)) {
             try {
-                bu = bindDao.getUserFromQQ(param.user().qq());
-            } catch (BindException e) {
-                if (!param.user().at()) {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
+                bu = bindDao.getUserFromQQ(param.user.qq)
+            } catch (e: BindException) {
+                if (!param.user.at) {
+                    throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
                 } else {
-                    throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
+                    throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
                 }
             }
         } else {
             //查询其他人 [data]
-            String name = param.user().name();
-            long id = 0;
+            val name = param.user.name
+            var id: Long = 0
             try {
-                id = userApiService.getOsuId(name);
-                bu = bindDao.getUserFromOsuid(id);
-            } catch (BindException e) {
+                id = userApiService.getOsuId(name)
+                bu = bindDao.getUserFromOsuid(id)
+            } catch (e: BindException) {
                 //构建只有 data + id 的对象, binUser == null
-                bu = new BinUser();
-                bu.setOsuID(id);
-                bu.setOsuName(name);
-            } catch (Exception e) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound);
+                bu = BinUser()
+                bu.osuID = id
+                bu.osuName = name
+            } catch (e: Exception) {
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound)
             }
         }
 
-        List<Score> bps;
+        val bps: List<Score>?
 
-        var mode = OsuMode.getMode(param.user.mode(), bu.getOsuMode());
+        val mode = OsuMode.getMode(param.user.mode, bu.osuMode)
 
         try {
-            bps = scoreApiService.getBestPerformance(bu, mode, 0, 100);
-        } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
+            bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
+        } catch (e: HttpClientErrorException.BadRequest) {
             // 请求失败 超时/断网
-            if (param.user().qq() == event.getSender().getId()) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
+            if (param.user.qq == event.sender.id) {
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired);
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
             }
-        } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
+        } catch (e: WebClientResponseException.BadRequest) {
+            if (param.user.qq == event.sender.id) {
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
+            } else {
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
+            }
+        } catch (e: HttpClientErrorException.Unauthorized) {
             // 未绑定
-            throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired);
+            throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
+        } catch (e: WebClientResponseException.Unauthorized) {
+            throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
         }
 
-        if (bps == null || bps.size() <= 10) {
-            if (!param.user().at() && Objects.isNull(param.user().name())) {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, mode.getName());
+        if (bps == null || bps.size <= 10) {
+            if (!param.user.at && Objects.isNull(param.user.name)) {
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, mode!!.getName())
             } else {
-                throw new BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, mode.getName());
+                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, mode!!.getName())
             }
         }
 
-        beatmapApiService.applySRAndPP(bps);
-
-        String[] Lines;
-        if (param.info()) {
+        beatmapApiService.applySRAndPP(bps)
+        val lines = if (param.info) {
             if (mode == null || mode == OsuMode.DEFAULT) {
-                Lines = getAllMsgI(bps, bu.getOsuName(), OsuMode.DEFAULT);
+                getAllMsgI(bps, bu.osuName, "")
             } else {
-                Lines = getAllMsgI(bps, bu.getOsuName(), mode);
+                getAllMsgI(bps, bu.osuName, mode.getName())
             }
         } else {
             if (mode == null || mode == OsuMode.DEFAULT) {
-                Lines = getAllMsg(bps, bu.getOsuName(), "");
+                getAllMsg(bps, bu.osuName, "")
             } else {
-                Lines = getAllMsg(bps, bu.getOsuName(), mode.getName());
+                getAllMsg(bps, bu.osuName, mode.getName())
             }
         }
 
         try {
-            var image = imageService.getPanelAlpha(Lines);
-            from.sendImage(image);
-        } catch (Exception e) {
-            throw new BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError);
+            val image = imageService.getPanelAlpha(*lines)
+            from.sendImage(image)
+        } catch (e: Exception) {
+            throw BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError)
         }
     }
 
-    public String[] getAllMsg(List<Score> bps, String name, String mode) {
-        var sb = new StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n');
-        double allPP = 0;
-        int sSum = 0;
-        int xSum = 0;
-        int fcSum = 0;
-        TreeMap<String, intValue> modTreeMap = new TreeMap<>(); //各个mod的数量
+    override fun accept(event: MessageEvent, messageText: String): BPHeadTailParam? {
+        val info: Boolean
+        var matcher: Matcher
+        when {
+            OfficialInstruction.UU_BA
+                .matcher(messageText)
+                .apply { matcher = this }
+                .find() -> {
+                info = false
+            }
 
-        for (int i = 0; i < bps.size(); i++) {
-            var bp = bps.get(i);
+            OfficialInstruction.UU_BAI
+                .matcher(messageText)
+                .apply { matcher = this }
+                .find() -> {
+                info = true
+            }
+
+            else -> return null
+        }
+        val mode = CmdUtil.getMode(matcher)
+        val isMyself = AtomicBoolean(false)
+        val user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself)
+            ?: throw if (isMyself.get()) TipsException("我还不知道你是谁哦")
+            else BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound)
+
+        return BPHeadTailParam(
+            UserParam(user.userID, user.username, mode.data, false), info
+        )
+    }
+
+    override fun reply(event: MessageEvent, data: BPHeadTailParam): MessageChain? {
+        val mode = data.user.mode
+        val bu = BinUser()
+        with(bu) {
+            osuID = data.user.qq
+            osuName = data.user.name
+            osuMode = mode
+        }
+        val bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
+        beatmapApiService.applySRAndPP(bps)
+        val modeStr = mode?.getName() ?: ""
+        val lines = if (data.info) {
+            getAllMsgI(bps, bu.osuName, modeStr)
+        } else {
+            getAllMsg(bps, bu.osuName, modeStr)
+        }
+        return QQMsgUtil.getImage(imageService.getPanelAlpha(*lines))
+    }
+
+    fun getAllMsg(bps: List<Score>, name: String?, mode: String?): Array<String?> {
+        val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
+        var allPP = 0.0
+        var sSum = 0
+        var xSum = 0
+        var fcSum = 0
+        val modTreeMap = TreeMap<String, AtomicInteger>() //各个mod的数量
+
+        for (i in bps.indices) {
+            val bp = bps[i]
             //显示前五跟后五的数据
-            if (i < 5 || i >= bps.size() - 5) {
+            if (i < 5 || i >= bps.size - 5) {
                 sb.append("#")
-                        .append(i + 1)
-                        .append(' ')
-                        .append(String.format("%.2f", bp.getPP()))
-                        .append(' ')
-                        .append(String.format("%.2f", 100 * bp.getAccuracy()))
-                        .append('%')
-                        .append(' ')
-                        .append(bp.getRank());
-                if (!bp.getMods().isEmpty()) {
-                    sb.append(" +");
-                    for (var m : bp.getMods()) {
-                        sb.append(m).append(' ');
+                    .append(i + 1)
+                    .append(' ')
+                    .append(String.format("%.2f", bp.pp))
+                    .append(' ')
+                    .append(String.format("%.2f", 100 * bp.accuracy))
+                    .append('%')
+                    .append(' ')
+                    .append(bp.rank)
+                if (!bp.mods.isEmpty()) {
+                    sb.append(" +")
+                    for (m in bp.mods) {
+                        sb.append(m).append(' ')
                     }
                 }
-                sb.append('\n');
+                sb.append('\n')
             } else if (i == 5) {
-                sb.append("...").append('\n');
+                sb.append("...").append('\n')
             }
-            allPP += bp.getPP(); //统计总数
-            if (!bp.getMods().isEmpty()) {
-                for (int j = 0; j < bp.getMods().size(); j++) {
-                    String mod = bp.getMods().get(j);
-                    if (!modTreeMap.containsKey(mod)) modTreeMap.put(mod, new intValue());
-                    else modTreeMap.get(mod).add();
+            allPP += bp.pp.toDouble() //统计总数
+            if (!bp.mods.isEmpty()) {
+                for (j in bp.mods.indices) {
+                    val mod = bp.mods[j]
+                    if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
+                    else modTreeMap[mod]!!.incrementAndGet()
                 }
             }
-            if (bp.getRank().contains("S")) sSum++;
-            if (bp.getRank().contains("X")) {
-                sSum++;
-                xSum++;
+            if (bp.rank.contains("S")) sSum++
+            if (bp.rank.contains("X")) {
+                sSum++
+                xSum++
             }
-            if (bp.isPerfect()) fcSum++;
+            if (bp.isPerfect) fcSum++
         }
-        sb.append("——————————").append('\n');
-        sb.append("模组数量: \n");
+        sb.append("——————————").append('\n')
+        sb.append("模组数量: \n")
 
-        AtomicInteger c = new AtomicInteger();
+        val c = AtomicInteger()
 
-        modTreeMap.forEach((mod, sum) -> {
-            c.getAndIncrement();
-            sb.append(mod).append(' ').append(sum.value).append("x; ");
+        modTreeMap.forEach { (mod: String, sum) ->
+            c.getAndIncrement()
+            sb.append(mod).append(' ').append(sum.get()).append("x; ")
             if (c.get() == 2) {
-                c.set(0);
-                sb.append('\n');
+                c.set(0)
+                sb.append('\n')
             }
-        });
+        }
 
-        sb.append("\nS+ 评级: ").append(sSum);
-        if (xSum != 0) sb.append("\n     其中 SS: ").append(xSum);
+        sb.append("\nS+ 评级: ").append(sSum)
+        if (xSum != 0) sb.append("\n     其中 SS: ").append(xSum)
 
         sb.append('\n').append("完美 FC: ").append(fcSum).append('\n')
-                .append("平均: ").append(String.format("%.2f", allPP / bps.size())).append("PP").append('\n')
-                .append("差值: ").append(String.format("%.2f", bps.getFirst().getPP() - bps.getLast().getPP())).append("PP");
+            .append("平均: ").append(String.format("%.2f", allPP / bps.size)).append("PP").append('\n')
+            .append("差值: ").append(String.format("%.2f", bps.first().getPP() - bps.last().getPP())).append("PP")
 
-        return sb.toString().split("\n");
+        return sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     }
 
-    public String[] getAllMsgI(List<Score> bps, String name, OsuMode mode) {
-        if (bps.isEmpty()) return new String[0];
-        var sb = new StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n');
+    fun getAllMsgI(bps: List<Score>, name: String?, mode: String?): Array<String?> {
+        if (bps.isEmpty()) return arrayOfNulls(0)
+        val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
-        var BP1 = bps.getFirst();
-        var BP1BPM = BP1.getBeatMap().getBPM();
-        float BP1Length = BP1.getBeatMap().getTotalLength();
+        val BP1: Score = bps.first()
+        val BP1BPM = BP1.beatMap.bpm
+        val BP1Length = BP1.beatMap.totalLength.toFloat()
 
-        float star;
-        float maxStar = BP1.getBeatMap().getStarRating();
-        float minStar = maxStar;
-        float maxBPM = BP1BPM;
-        float minBPM = maxBPM;
-        int maxCombo = BP1.getMaxCombo();
-        int minCombo = maxCombo;
-        float maxLength = BP1Length;
-        float minLength = maxLength;
+        var star: Float
+        var maxStar = BP1.beatMap.starRating
+        var minStar = maxStar
+        var maxBPM = BP1BPM
+        var minBPM = maxBPM
+        var maxCombo = BP1.maxCombo
+        var minCombo = maxCombo
+        var maxLength = BP1Length
+        var minLength = maxLength
 
-        int maxComboBP = 0;
-        int minComboBP = 0;
-        int maxLengthBP = 0;
-        int minLengthBP = 0;
-        int maxStarBP = 0;
-        int minStarBP = 0;
+        var maxComboBP = 0
+        var minComboBP = 0
+        var maxLengthBP = 0
+        var minLengthBP = 0
+        var maxStarBP = 0
+        var minStarBP = 0
 
-        float avgLength = 0f;
-        int avgCombo = 0;
-        float avgStar = 0f;
+        var avgLength = 0f
+        var avgCombo = 0
+        var avgStar = 0f
 
-        int maxTTHPPBP = 0;
-        float maxTTHPP = 0f;
-        float nowPP = 0f;
+        var maxTTHPPBP = 0
+        var maxTTHPP = 0f
+        var nowPP = 0f
 
-        TreeMap<String, modData> modSum = new TreeMap<>(); //各个mod的数量
+        val modSum = TreeMap<String, modData>() //各个mod的数量
 
-        TreeMap<Long, mapperData> mapperSum = new TreeMap<>();
-        DecimalFormat decimalFormat = new DecimalFormat("0.00"); //acc格式
+        val mapperSum = TreeMap<Long, mapperData>()
+        val decimalFormat = DecimalFormat("0.00") //acc格式
 
-        for (int i = 0; i < bps.size(); i++) {
-            var bp = bps.get(i);
-            var b = bp.getBeatMap();
-            float length = b.getTotalLength();
-            float bpm = b.getBPM();
-            bp.getMods().forEach(r -> {
+        for (i in bps.indices) {
+            val bp = bps[i]
+            val b = bp.beatMap
+            val length = b.totalLength.toFloat()
+            val bpm = b.bpm
+            bp.mods.forEach(Consumer { r: String ->
                 if (modSum.containsKey(r)) {
-                    modSum.get(r).add(Optional.ofNullable(bp.getWeightedPP()).orElse(0f));
+                    modSum[r]!!.add(Optional.ofNullable(bp.weightedPP).orElse(0f))
                 } else {
-                    modSum.put(r, new modData(Optional.ofNullable(bp.getWeightedPP()).orElse(0f)));
+                    modSum[r] = modData(Optional.ofNullable(bp.weightedPP).orElse(0f))
                 }
-            });
+            })
 
-            avgLength += length;
-            star =  bp.getBeatMap().getStarRating();
-            avgStar += star;
+            avgLength += length
+            star = bp.beatMap.starRating
+            avgStar += star
 
             if (bpm < minBPM) {
-                minBPM = bpm;
+                minBPM = bpm
             } else if (bpm >= maxBPM) {
-                maxBPM = bpm;
+                maxBPM = bpm
             }
 
             if (star < minStar) {
-                minStarBP = i;
-                minStar = star;
+                minStarBP = i
+                minStar = star
             } else if (star > maxStar) {
-                maxStarBP = i;
-                maxStar = star;
+                maxStarBP = i
+                maxStar = star
             }
 
             if (length < minLength) {
-                minLengthBP = i;
-                minLength = length;
+                minLengthBP = i
+                minLength = length
             } else if (length > maxLength) {
-                maxLengthBP = i;
-                maxLength = length;
+                maxLengthBP = i
+                maxLength = length
             }
 
-            if (bp.getMaxCombo() < minCombo) {
-                minComboBP = i;
-                minCombo = bp.getMaxCombo();
-            } else if (bp.getMaxCombo() > maxCombo) {
-                maxComboBP = i;
-                maxCombo = bp.getMaxCombo();
+            if (bp.maxCombo < minCombo) {
+                minComboBP = i
+                minCombo = bp.maxCombo
+            } else if (bp.maxCombo > maxCombo) {
+                maxComboBP = i
+                maxCombo = bp.maxCombo
             }
-            avgCombo += bp.getMaxCombo();
+            avgCombo += bp.maxCombo
 
-            float tthToPp = (bp.getPP()) / (b.getSliders() + b.getSpinners() + b.getCircles());
+            val tthToPp = (bp.pp) / (b.sliders + b.spinners + b.circles)
             if (maxTTHPP < tthToPp) {
-                maxTTHPPBP = i;
-                maxTTHPP = tthToPp;
+                maxTTHPPBP = i
+                maxTTHPP = tthToPp
             }
 
-            if (mapperSum.containsKey(b.getMapperID())) {
-                mapperSum.get(b.getMapperID()).add(bp.getPP());
+            if (mapperSum.containsKey(b.mapperID)) {
+                mapperSum[b.mapperID]!!.add(bp.pp)
             } else {
-                mapperSum.put(b.getMapperID(), new mapperData(bp.getPP(), b.getMapperID()));
+                mapperSum[b.mapperID] = mapperData(bp.pp, b.mapperID)
             }
-            nowPP += bp.getWeightedPP();
+            nowPP += bp.weightedPP
         }
-        avgCombo /= bps.size();
-        avgLength /= bps.size();
-        avgStar /= bps.size();
+        avgCombo /= bps.size
+        avgLength /= bps.size.toFloat()
+        avgStar /= bps.size.toFloat()
 
-        sb.append("平均时间: ").append(getTimeStr((int) avgLength)).append('\n');
-        sb.append("时间最长: BP").append(maxLengthBP + 1).append(' ').append(getTimeStr((int) maxLength)).append('\n');
-        sb.append("时间最短: BP").append(minLengthBP + 1).append(' ').append(getTimeStr((int) minLength)).append('\n');
-        sb.append("——————————").append('\n');
+        sb.append("平均时间: ").append(getTimeStr(avgLength.toInt())).append('\n')
+        sb.append("时间最长: BP").append(maxLengthBP + 1).append(' ').append(getTimeStr(maxLength.toInt())).append('\n')
+        sb.append("时间最短: BP").append(minLengthBP + 1).append(' ').append(getTimeStr(minLength.toInt())).append('\n')
+        sb.append("——————————").append('\n')
 
-        sb.append("平均连击: ").append(avgCombo).append('x').append('\n');
-        sb.append("连击最大: BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n');
-        sb.append("连击最小: BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n');
-        sb.append("——————————").append('\n');
+        sb.append("平均连击: ").append(avgCombo).append('x').append('\n')
+        sb.append("连击最大: BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n')
+        sb.append("连击最小: BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n')
+        sb.append("——————————").append('\n')
 
-        sb.append("平均星数: ").append(String.format("%.2f", avgStar)).append('*').append('\n');
-        sb.append("星数最高: BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*').append('\n');
-        sb.append("星数最低: BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*').append('\n');
-        sb.append("——————————").append('\n');
+        sb.append("平均星数: ").append(String.format("%.2f", avgStar)).append('*').append('\n')
+        sb.append("星数最高: BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*')
+            .append('\n')
+        sb.append("星数最低: BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*')
+            .append('\n')
+        sb.append("——————————").append('\n')
 
         sb.append("PP/TTH 比例最大: BP").append(maxTTHPPBP + 1)
-                .append("，为").append(decimalFormat.format(maxTTHPP)).append('倍').append('\n');
+            .append("，为").append(decimalFormat.format(maxTTHPP.toDouble())).append('倍').append('\n')
 
-        sb.append("BPM 区间: ").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM)).append('\n');
-        sb.append("——————————").append('\n');
+        sb.append("BPM 区间: ").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM))
+            .append('\n')
+        sb.append("——————————").append('\n')
 
-        sb.append("谱师: \n");
-        var mappers = mapperSum.values().stream()
-                .sorted((o1, o2) -> {
-                    if (o1.size != o2.size) return 2 * (o2.size - o1.size);
-                    return Float.compare(o2.allPP, o1.allPP);
-                })
-                .limit(9).toList();
-        var mappersId = mappers.stream().map(u -> u.uid).toList();
-        var mappersInfo = userApiService.getUsers(mappersId);
-        var mapperIdToInfo = new HashMap<Long, String>();
-        for (var node : mappersInfo) {
-            mapperIdToInfo.put(node.getUserID(), node.getUserName());
-        }
-        mappers.forEach(mapper -> {
-            try {
-                sb.append(mapperIdToInfo.get(mapper.uid)).append(": ").append(mapper.size).append("x ")
-                        .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
-            } catch (Exception e) {
-                sb.append("UID: ").append(mapper.uid).append(": ").append(mapper.size).append("x ")
-                        .append(decimalFormat.format(mapper.allPP)).append("PP").append('\n');
+        sb.append("谱师: \n")
+        val mappers = mapperSum.values.stream()
+            .sorted { o1: mapperData, o2: mapperData ->
+                if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
+                java.lang.Float.compare(o2.allPP, o1.allPP)
             }
-        });
-        sb.append("——————————").append('\n');
-        sb.append("模组数量: \n");
-        float finalAllPP = nowPP;
-        modSum.forEach((mod, sum) -> sb.append(mod).append(": ").append(sum.size).append("x ")
-                .append(decimalFormat.format(sum.getAllPP())).append("PP ")
-                .append('(').append(decimalFormat.format(100 * sum.getAllPP() / finalAllPP)).append('%').append(')')
-                .append('\n'));
-        return sb.toString().split("\n");
+            .limit(9).toList()
+        val mappersId = mappers.stream().map { u: mapperData -> u.uid }.toList()
+        val mappersInfo = userApiService.getUsers(mappersId)
+        val mapperIdToInfo = HashMap<Long, String>()
+        for (node in mappersInfo) {
+            mapperIdToInfo[node.userID] = node.userName
+        }
+        mappers.forEach(Consumer { mapper: mapperData ->
+            try {
+                sb.append(mapperIdToInfo[mapper.uid]).append(": ").append(mapper.size).append("x ")
+                    .append(decimalFormat.format(mapper.allPP.toDouble())).append("PP").append('\n')
+            } catch (e: Exception) {
+                sb.append("UID: ").append(mapper.uid).append(": ").append(mapper.size).append("x ")
+                    .append(decimalFormat.format(mapper.allPP.toDouble())).append("PP").append('\n')
+            }
+        })
+        sb.append("——————————").append('\n')
+        sb.append("模组数量: \n")
+        val finalAllPP = nowPP
+        modSum.forEach { (mod: String, sum: modData) ->
+            sb.append(mod).append(": ").append(sum.size).append("x ")
+                .append(decimalFormat.format(sum.allPP.toDouble())).append("PP ")
+                .append('(').append(decimalFormat.format((100 * sum.allPP / finalAllPP).toDouble())).append('%')
+                .append(')')
+                .append('\n')
+        }
+        return sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     }
 
-    static class mapperData {
-        float allPP;
-        int   size;
-        long  uid;
+    internal class mapperData(var allPP: Float, var uid: Long) {
+        var size: Int = 1
 
-        mapperData(float pp, long uid) {
-            allPP += pp;
-            size = 1;
-            this.uid = uid;
-        }
-
-        void add(float pp) {
-            allPP += pp;
-            size++;
-        }
-
-        public int getSize() {
-            return size;
-        }
-    }
-
-    static class modData {
-        float allPP;
-        int   size;
-
-        modData(float pp) {
-            allPP += pp;
-            size = 1;
-        }
-
-        void add(float pp) {
-            allPP += pp;
-            size++;
-        }
-
-        public float getAllPP() {
-            return allPP;
-        }
-
-        public int getSize() {
-            return size;
+        fun add(pp: Float) {
+            allPP += pp
+            size++
         }
     }
 
-    String getTimeStr(int l) {
-        if (l < 60) {
-            return STR."\{l}秒";
+    internal class modData(var allPP: Float) {
+        var size: Int = 1
+
+        fun add(pp: Float) {
+            allPP += pp
+            size++
+        }
+    }
+
+    fun getTimeStr(l: Int): String {
+        return if (l < 60) {
+            "${l}秒"
         } else {
-            return STR."\{l / 60}分\{l % 60}秒";
+            "${l / 60}分${l % 60}秒"
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(UUBAService::class.java)
     }
 }
 

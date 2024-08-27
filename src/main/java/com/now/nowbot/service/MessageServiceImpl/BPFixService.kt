@@ -31,9 +31,9 @@ import kotlin.math.pow
 
 @Service("BP_FIX")
 class BPFixService(
-    var imageService: ImageService? = null,
-    var scoreApiService: OsuScoreApiService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BPFixParam>, TencentMessageService<BPFixParam> {
 
     data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, Score>, val mode: OsuMode)
@@ -49,7 +49,7 @@ class BPFixService(
         val mode = getMode(matcher)
         val user = getUserWithOutRange(event, matcher, mode, AtomicBoolean()) ?: return false
 
-        val bpMap = scoreApiService!!.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
         data.value = BPFixParam(user, processBP(bpMap), mode.data!!)
 
@@ -75,7 +75,7 @@ class BPFixService(
         val mode = getMode(matcher)
         val user = getUserWithOutRange(event, matcher, mode, AtomicBoolean()) ?: throw Exception("没有找到要查询的玩家")
 
-        val bpMap = scoreApiService!!.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
         return BPFixParam(user, processBP(bpMap), mode.data!!)
     }
@@ -88,7 +88,7 @@ class BPFixService(
 
         bpMap.forEach { (index: Int, score: Score) ->
             beforeBpSumAtomic.updateAndGet { v: Float -> v + score.weightedPP }
-            beatmapApiService!!.applyBeatMapExtendFromDataBase(score)
+            beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
             val max = score.beatMap.maxCombo
             val combo = score.maxCombo
@@ -151,7 +151,7 @@ class BPFixService(
         val result = ScoreWithFcPP.copyOf(score)
         result.index = index + 1
         try {
-            val pp = beatmapApiService!!.getFcPP(score)
+            val pp = beatmapApiService.getFcPP(score)
             result.fcPP = pp.pp.toFloat()
         } catch (e: Exception) {
             log.error("bp 计算 pp 出错:", e)
@@ -170,7 +170,7 @@ class BPFixService(
         val fixData = fix(pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
 
         return try {
-            imageService!!.getPanelA7(user, fixData)
+            imageService.getPanelA7(user, fixData)
         } catch (e: java.lang.Exception) {
             log.error("理论最好成绩：渲染失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩")

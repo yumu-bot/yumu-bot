@@ -30,11 +30,9 @@ import kotlin.math.max
 
 @Service("PR_CARD")
 class ScorePRCardService(
-    var bindDao: BindDao? = null,
-    var userApiService: OsuUserApiService? = null,
-    var imageService: ImageService? = null,
-    var scoreApiService: OsuScoreApiService? = null,
-    var beatmapApiService: OsuBeatmapApiService? = null,
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 
     ) : MessageService<PRCardParam>, TencentMessageService<PRCardParam> {
     @JvmRecord
@@ -55,9 +53,9 @@ class ScorePRCardService(
 
         val offset = max(0.0, range.getValue(0, true).toDouble()).toInt()
         val scores = if (StringUtils.hasText(matcher.group("recent"))) {
-            scoreApiService!!.getRecent(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
         } else if (StringUtils.hasText(matcher.group("pass"))) {
-            scoreApiService!!.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
         } else {
             throw MiniCardException(MiniCardException.Type.MINI_Classification_Error)
         }
@@ -118,9 +116,9 @@ class ScorePRCardService(
         val offset = max(0, range.getValue(0, true))
 
         val scores = if (isRecentAll) {
-            scoreApiService!!.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
         } else {
-            scoreApiService!!.getRecent(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
         }
 
         if (range.data == null) throw ScoreException(ScoreException.Type.SCORE_Player_NotFound)
@@ -136,7 +134,7 @@ class ScorePRCardService(
 
     private fun getMessageChain(score: Score): MessageChain {
         try {
-            beatmapApiService!!.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatMapExtend(score)
         } catch (e: Exception) {
             throw MiniCardException(MiniCardException.Type.MINI_Map_FetchError)
         }
@@ -144,7 +142,7 @@ class ScorePRCardService(
         val image: ByteArray
 
         try {
-            image = imageService!!.getPanelGamma(score)
+            image = imageService.getPanelGamma(score)
         } catch (e: Exception) {
             log.error("迷你成绩面板：渲染失败", e)
             throw MiniCardException(MiniCardException.Type.MINI_Render_Error)

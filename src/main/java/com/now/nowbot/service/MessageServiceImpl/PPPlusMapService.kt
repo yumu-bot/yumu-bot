@@ -17,7 +17,7 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
 
 @Service("PP_PLUS_MAP")
-open class PPPlusMapService(
+class PPPlusMapService(
     private val performancePlusService: PerformancePlusService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
